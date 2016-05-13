@@ -112,9 +112,13 @@ for photo in pbar:
 
     download = photo.download(size)
 
-    with open(filepath, 'wb') as file:
-        for chunk in download.iter_content(chunk_size=1024): 
-            if chunk:
-                file.write(chunk)
+    if download:
+      with open(filepath, 'wb') as file:
+          for chunk in download.iter_content(chunk_size=1024): 
+              if chunk:
+                  file.write(chunk)
+    else:
+      tqdm.write("Could not download %s!" % photo.filename)
+
 
 print("All photos have been downloaded!")
