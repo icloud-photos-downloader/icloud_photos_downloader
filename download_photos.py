@@ -4,13 +4,13 @@
 iCloud Photos Downloader
 
 If your account has two-factor authentication enabled,
-you will be prompted for a code. 
+you will be prompted for a code.
 
-Note: Both regular login and two-factor authentication will expire after an interval set by Apple, 
+Note: Both regular login and two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months.
 
 Usage:
-  download_photos --username=<username> [--password=<password>] <download_directory> 
+  download_photos --username=<username> [--password=<password>] <download_directory>
   download_photos --username=<username> [--password=<password>] <download_directory>
                   [--size=original | --size=medium | --size=thumb]
   download_photos -h | --help
@@ -37,7 +37,7 @@ try:
                     '--size': Schema((lambda s: s in ('original', 'medium', 'thumb')),
                          error='--size must be one of: original, medium, thumb')
                 }, ignore_extra_keys=True)
-    
+
     sch.validate(arguments)
 
 except docopt.DocoptExit as e:
@@ -53,6 +53,9 @@ import click
 from tqdm import tqdm
 from dateutil.parser import parse
 from pyicloud import PyiCloudService
+import requests
+import socket
+import time
 
 print("Signing in...")
 
@@ -89,10 +92,41 @@ photos_count = len(all_photos.photos)
 base_download_dir = arguments['<download_directory>'].rstrip('/')
 size = arguments['--size']
 
+MAX_RETRIES = 5
+WAIT_SECONDS = 5
+
 print("Downloading %d %s photos to %s/ ..." % (photos_count, size, base_download_dir))
 
-pbar = tqdm(all_photos, total=photos_count)
 
+def download_with_retries(photo):
+    for i in range(MAX_RETRIES):
+        try:
+            download = photo.download(size)
+
+            if download:
+                with open(filepath, 'wb') as file:
+                    for chunk in download.iter_content(chunk_size=1024):
+                        if chunk:
+                            file.write(chunk)
+                return
+
+            else:
+                tqdm.write("Could not download %s, %s size does not exist." % (photo.filename, size))
+                return
+
+        except requests.exceptions.ConnectionError:
+            tqdm.write('HTTP connection failed, retrying...')
+
+        except socket.timeout:
+            tqdm.write('Download failed, retrying...')
+
+        time.sleep(WAIT_SECONDS)
+    else:
+        tqdm.write("Could not download %s! Try again later." % photo.filename)
+
+
+
+pbar = tqdm(all_photos, total=photos_count)
 for photo in pbar:
     created_date = parse(photo.created)
     date_path = '{:%Y/%m/%d}'.format(created_date)
@@ -105,20 +139,11 @@ for photo in pbar:
         pbar.set_description("%s already exists." % filepath)
         continue
 
-    pbar.set_description("Downloading %s to %s" % (photo.filename, filepath))        
+    pbar.set_description("Downloading %s to %s" % (photo.filename, filepath))
 
     if not os.path.exists(download_dir):
         os.makedirs(download_dir)
 
-    download = photo.download(size)
-
-    if download:
-      with open(filepath, 'wb') as file:
-          for chunk in download.iter_content(chunk_size=1024): 
-              if chunk:
-                  file.write(chunk)
-    else:
-      tqdm.write("Could not download %s!" % photo.filename)
-
+    download_with_retries(photo)
 
 print("All photos have been downloaded!")
