@@ -1,5 +1,6 @@
 docopt
 schema
 click
+python-dateutil
 pyicloud>=0.8.3
 tqdm>=4.5.0
