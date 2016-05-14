@@ -49,19 +49,27 @@ def download(directory, username, password, size, download_videos, force_size):
         print("Downloading %d %s photos to %s/ ..." % (photos_count, size, directory))
 
     pbar = tqdm(all_photos, total=photos_count)
+
     for photo in pbar:
-        if not download_videos and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            pbar.set_description("Skipping %s, only downloading photos." % photo.filename)
-            continue
+        for i in range(MAX_RETRIES):
+            try:
+                if not download_videos and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    pbar.set_description("Skipping %s, only downloading photos." % photo.filename)
+                    continue
 
-        created_date = parse(photo.created)
-        date_path = '{:%Y/%m/%d}'.format(created_date)
-        download_dir = '/'.join((directory, date_path))
+                created_date = parse(photo.created)
+                date_path = '{:%Y/%m/%d}'.format(created_date)
+                download_dir = '/'.join((directory, date_path))
 
-        if not os.path.exists(download_dir):
-            os.makedirs(download_dir)
+                if not os.path.exists(download_dir):
+                    os.makedirs(download_dir)
 
-        download_photo(photo, size, force_size, download_dir, pbar)
+                download_photo(photo, size, force_size, download_dir, pbar)
+                break
+
+            except (requests.exceptions.ConnectionError, socket.timeout):
+                tqdm.write('Connection failed, retrying after %d seconds...' % WAIT_SECONDS)
+                time.sleep(WAIT_SECONDS)
 
     print("All photos have been downloaded!")
 
@@ -142,8 +150,7 @@ def download_photo(photo, size, force_size, download_dir, pbar):
 
         except (requests.exceptions.ConnectionError, socket.timeout):
             tqdm.write('%s download failed, retrying after %d seconds...' % (photo.filename, WAIT_SECONDS))
-
-        time.sleep(WAIT_SECONDS)
+            time.sleep(WAIT_SECONDS)
     else:
         tqdm.write("Could not download %s! Maybe try again later." % photo.filename)
 
