@@ -129,15 +129,12 @@ def download_photo(photo, size, force_size, download_dir, pbar):
 
             return
 
-        except requests.exceptions.ConnectionError:
-            tqdm.write('HTTP connection failed, retrying...')
-
-        except socket.timeout:
-            tqdm.write('Download failed, retrying...')
+        except (requests.exceptions.ConnectionError, socket.timeout):
+            tqdm.write('Download failed, retrying after %d seconds...' % WAIT_SECONDS)
 
         time.sleep(WAIT_SECONDS)
     else:
-        tqdm.write("Could not download %s! Try again later." % photo.filename)
+        tqdm.write("Could not download %s! Maybe try again later." % photo.filename)
 
 
 if __name__ == '__main__':
