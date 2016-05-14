@@ -71,6 +71,9 @@ def download(directory, username, password, size, download_videos, force_size):
                 tqdm.write('Connection failed, retrying after %d seconds...' % WAIT_SECONDS)
                 time.sleep(WAIT_SECONDS)
 
+        else:
+            tqdm.write("Could not process %s! Maybe try again later." % photo.filename)
+
     print("All photos have been downloaded!")
 
 
