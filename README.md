@@ -73,6 +73,8 @@ at which point you will have to re-authenticate. This interval is currently two 
 
 * Run `crontab -e`, and add the following line:
 
-    0 * * * * /path/to/icloud_photos_downloader/cron_script.sh
+```
+0 * * * * /path/to/icloud_photos_downloader/cron_script.sh
+```
 
 Change to `0 */3 * * *` if you want to run every 3 hours, etc.
