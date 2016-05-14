@@ -148,7 +148,7 @@ def download_photo(photo, size, force_size, download_dir, pbar):
                         if chunk:
                             file.write(chunk)
             else:
-                tqdm.write("Could not download %s!" % photo.filename)
+                tqdm.write("Could not find URL to download %s for size %s!" % (photo.filename, size))
 
             return
 
