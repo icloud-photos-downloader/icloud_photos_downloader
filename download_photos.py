@@ -24,9 +24,15 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
     help='Image size to download (default: original)',
     type=click.Choice(['original', 'medium', 'thumb']),
     default='original')
+@click.option('--download-videos',
+    help='Download both videos and photos (default: only download photos)',
+    is_flag=True)
+@click.option('--force-size',
+    help='Only download the requested size (default: download original if requested size is not available)',
+    is_flag=True)
 
 
-def download(directory, username, password, size):
+def download(directory, username, password, size, download_videos, force_size):
     """Download all iCloud photos to a local directory"""
 
     icloud = authenticate(username, password)
@@ -36,10 +42,19 @@ def download(directory, username, password, size):
     photos_count = len(all_photos.photos)
 
     directory = directory.rstrip('/')
-    print("Downloading %d %s photos to %s/ ..." % (photos_count, size, directory))
+
+    if download_videos:
+        print("Downloading %d %s photos and videos to %s/ ..." % (photos_count, size, directory))
+    else:
+        print("Downloading %d %s photos to %s/ ..." % (photos_count, size, directory))
+
 
     pbar = tqdm(all_photos, total=photos_count)
     for photo in pbar:
+        if not download_videos and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            pbar.set_description("Skipping %s, only downloading photos." % photo.filename)
+            continue
+
         created_date = parse(photo.created)
         date_path = '{:%Y/%m/%d}'.format(created_date)
         download_dir = '/'.join((directory, date_path))
@@ -56,7 +71,7 @@ def download(directory, username, password, size):
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)
 
-        download_photo(photo, size, destination)
+        download_photo(photo, size, force_size, destination)
 
     print("All photos have been downloaded!")
 
@@ -95,10 +110,13 @@ def authenticate(username, password):
 MAX_RETRIES = 5
 WAIT_SECONDS = 5
 
-def download_photo(photo, size, destination):
+def download_photo(photo, size, force_size, destination):
     for i in range(MAX_RETRIES):
         try:
             download = photo.download(size)
+
+            if not download and not force_size:
+                download = photo.download('original')
 
             if download:
                 with open(destination, 'wb') as file:
