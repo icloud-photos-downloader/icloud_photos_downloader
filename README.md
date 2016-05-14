@@ -57,3 +57,15 @@ at which point you will have to re-authenticate. This interval is currently two 
       -h --help                 Show this screen.
       --version                 Show version.
 
+
+### Run once an hour on Linux
+
+    cp cron_script.sh.example cron_script.sh
+
+* Edit cron_script.sh with your username, password, and other options
+
+* Run `crontab -e`, and add the following line:
+
+    0 * * * * /path/to/icloud_photos_downloader/cron_script.sh
+
+Change to `0 */3 * * *` if you want to run every 3 hours, etc.
