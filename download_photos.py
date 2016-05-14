@@ -9,6 +9,10 @@ from tqdm import tqdm
 from dateutil.parser import parse
 from pyicloud import PyiCloudService
 
+# For retrying connection after timeouts and errors
+MAX_RETRIES = 5
+WAIT_SECONDS = 5
+
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
@@ -107,9 +111,6 @@ def authenticate(username, password):
 
     return icloud
 
-
-MAX_RETRIES = 5
-WAIT_SECONDS = 5
 
 def truncate_middle(s, n):
     if len(s) <= n:
