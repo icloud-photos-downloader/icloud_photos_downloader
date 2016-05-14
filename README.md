@@ -7,9 +7,9 @@
 
 ### Motivation
 
-* I wanted to download a copy of all my photos onto my Linux PC, and keep them up-to-date.
-* This would be pretty easy to set up in the Apple ecosystem (e.g. Mac Mini or Apple TV), but I have a Linux PC running Plex Media Server.
-* I want to download the "medium" size of photos whenever possible. They're big enough for slideshows, but still save some space. If "medium" is not available, then fall back to downloading the original size.
+* I use the Photos app on my MacBook, set to "Optimize Mac Storage". It stores full-resolution images in iCloud, and only stores thumbnails on my computer until they are requested.
+* I wanted to download a copy of all my photos onto my Linux PC. I also want to keep them updated.
+* I only want to download the "medium" size of photos whenever possible. They save some space while still being big enough for slideshows. If "medium" is not available, then fall back to downloading the original size.
 
 
 ### Installation
