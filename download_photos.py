@@ -109,25 +109,25 @@ def truncate_middle(s, n):
     return u'{0}...{1}'.format(s[:n_1], s[-n_2:])
 
 def download_photo(photo, size, force_size, download_dir, pbar):
+    filename_with_size = photo.filename.replace('.', '-%s.' % size)
+    download_path = '/'.join((download_dir, filename_with_size))
+
+    truncated_filename = truncate_middle(filename_with_size, 24)
+    truncated_path = truncate_middle(download_path, 72)
+
+    if os.path.isfile(download_path):
+        pbar.set_description("%s already exists." % truncated_path)
+        return
+
+    # Fall back to original if requested size is not available
+    if size not in photo.versions and not force_size and size != 'original':
+        download_photo(photo, 'original', True, download_dir, pbar)
+        return
+
+    pbar.set_description("Downloading %s to %s" % (truncated_filename, truncated_path))
+
     for i in range(MAX_RETRIES):
         try:
-            filename_with_size = photo.filename.replace('.', '-%s.' % size)
-            download_path = '/'.join((download_dir, filename_with_size))
-
-            truncated_filename = truncate_middle(filename_with_size, 24)
-            truncated_path = truncate_middle(download_path, 72)
-
-            if os.path.isfile(download_path):
-                pbar.set_description("%s already exists." % truncated_path)
-                return
-
-            # Fall back to original if requested size is not available
-            if size not in photo.versions and not force_size and size != 'original':
-                download_photo(photo, 'original', True, download_dir, pbar)
-                return
-
-            pbar.set_description("Downloading %s to %s" % (truncated_filename, truncated_path))
-
             download = photo.download(size)
 
             if download:
