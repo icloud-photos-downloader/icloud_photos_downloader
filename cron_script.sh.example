@@ -4,5 +4,5 @@ mypath=`realpath $0`
 cd `dirname $mypath`
 
 # Make sure only one instance is running
-pgrep -f download_photos.py ||
+pgrep -f download_photos.py && echo "download_photos.py is already running." ||
   /usr/bin/env python download_photos.py # --username=...
