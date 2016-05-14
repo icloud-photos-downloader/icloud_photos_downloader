@@ -1,4 +1,8 @@
 #!/bin/bash
+# Make sure we are in the right directory
+mypath=`realpath $0`
+cd `dirname $mypath`
+
 # Make sure only one instance is running
 pgrep -f download_photos.py ||
   /usr/bin/env python download_photos.py # --username=...
