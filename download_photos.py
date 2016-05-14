@@ -48,7 +48,6 @@ def download(directory, username, password, size, download_videos, force_size):
     else:
         print("Downloading %d %s photos to %s/ ..." % (photos_count, size, directory))
 
-
     pbar = tqdm(all_photos, total=photos_count)
     for photo in pbar:
         if not download_videos and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
@@ -59,19 +58,10 @@ def download(directory, username, password, size, download_videos, force_size):
         date_path = '{:%Y/%m/%d}'.format(created_date)
         download_dir = '/'.join((directory, date_path))
 
-        filename_with_size = photo.filename.replace('.', '-%s.' % size)
-        destination = '/'.join((download_dir, filename_with_size))
-
-        if os.path.isfile(destination):
-            pbar.set_description("%s already exists." % destination)
-            continue
-
-        pbar.set_description("Downloading %s to %s" % (photo.filename, destination))
-
         if not os.path.exists(download_dir):
             os.makedirs(download_dir)
 
-        download_photo(photo, size, force_size, destination)
+        download_photo(photo, size, force_size, download_dir, pbar)
 
     print("All photos have been downloaded!")
 
@@ -110,21 +100,32 @@ def authenticate(username, password):
 MAX_RETRIES = 5
 WAIT_SECONDS = 5
 
-def download_photo(photo, size, force_size, destination):
+def download_photo(photo, size, force_size, download_dir, pbar):
     for i in range(MAX_RETRIES):
         try:
+            filename_with_size = photo.filename.replace('.', '-%s.' % size)
+            download_path = '/'.join((download_dir, filename_with_size))
+
+            if os.path.isfile(download_path):
+                pbar.set_description("%s already exists." % download_path)
+                return
+
+            # Fall back to original if requested size is not available
+            if size not in photo.versions and not force_size and size != 'original':
+                download_photo(photo, 'original', True, download_dir, pbar)
+                return
+
+            pbar.set_description("Downloading %s to %s" % (photo.filename, download_path))
+
             download = photo.download(size)
 
-            if not download and not force_size:
-                download = photo.download('original')
-
             if download:
-                with open(destination, 'wb') as file:
+                with open(download_path, 'wb') as file:
                     for chunk in download.iter_content(chunk_size=1024):
                         if chunk:
                             file.write(chunk)
             else:
-                tqdm.write("Could not download %s, %s size does not exist." % (photo.filename, size))
+                tqdm.write("Could not download %s!" % (photo.filename, size))
 
             return
 
