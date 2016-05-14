@@ -100,14 +100,24 @@ def authenticate(username, password):
 MAX_RETRIES = 5
 WAIT_SECONDS = 5
 
+def truncate_middle(s, n):
+    if len(s) <= n:
+        return s
+    n_2 = int(n) / 2 - 3
+    n_1 = n - n_2 - 3
+    return '{0}...{1}'.format(s[:n_1], s[-n_2:])
+
 def download_photo(photo, size, force_size, download_dir, pbar):
     for i in range(MAX_RETRIES):
         try:
             filename_with_size = photo.filename.replace('.', '-%s.' % size)
             download_path = '/'.join((download_dir, filename_with_size))
 
+            truncated_filename = truncate_middle(filename_with_size, 24)
+            truncated_path = truncate_middle(download_path, 72)
+
             if os.path.isfile(download_path):
-                pbar.set_description("%s already exists." % download_path)
+                pbar.set_description("%s already exists." % truncated_path)
                 return
 
             # Fall back to original if requested size is not available
@@ -115,7 +125,7 @@ def download_photo(photo, size, force_size, download_dir, pbar):
                 download_photo(photo, 'original', True, download_dir, pbar)
                 return
 
-            pbar.set_description("Downloading %s to %s" % (photo.filename, download_path))
+            pbar.set_description("Downloading %s to %s" % (truncated_filename, truncated_path))
 
             download = photo.download(size)
 
@@ -125,12 +135,12 @@ def download_photo(photo, size, force_size, download_dir, pbar):
                         if chunk:
                             file.write(chunk)
             else:
-                tqdm.write("Could not download %s!" % (photo.filename, size))
+                tqdm.write("Could not download %s!" % photo.filename)
 
             return
 
         except (requests.exceptions.ConnectionError, socket.timeout):
-            tqdm.write('Download failed, retrying after %d seconds...' % WAIT_SECONDS)
+            tqdm.write('%s download failed, retrying after %d seconds...' % (photo.filename, WAIT_SECONDS))
 
         time.sleep(WAIT_SECONDS)
     else:
