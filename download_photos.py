@@ -50,8 +50,9 @@ def download(directory, username, password, size, download_videos, force_size):
 
     pbar = tqdm(all_photos, total=photos_count)
     for photo in pbar:
-        if not download_videos and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-            pbar.set_description("Skipping %s, only downloading photos." % photo.filename)
+        filename = photo.filename.decode('utf-8')
+        if not download_videos and not filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+            pbar.set_description("Skipping %s, only downloading photos." % filename)
             continue
 
         created_date = parse(photo.created)
@@ -101,8 +102,6 @@ MAX_RETRIES = 5
 WAIT_SECONDS = 5
 
 def truncate_middle(s, n):
-    # Ensure utf8
-    s = s.encode('utf-8')
     if len(s) <= n:
         return s
     n_2 = int(n) / 2 - 3
@@ -112,7 +111,8 @@ def truncate_middle(s, n):
 def download_photo(photo, size, force_size, download_dir, pbar):
     for i in range(MAX_RETRIES):
         try:
-            filename_with_size = photo.filename.replace('.', '-%s.' % size)
+            filename = photo.filename.decode('utf-8')
+            filename_with_size = filename.replace('.', '-%s.' % size)
             download_path = '/'.join((download_dir, filename_with_size))
 
             truncated_filename = truncate_middle(filename_with_size, 24)
@@ -137,16 +137,16 @@ def download_photo(photo, size, force_size, download_dir, pbar):
                         if chunk:
                             file.write(chunk)
             else:
-                tqdm.write("Could not download %s!" % photo.filename)
+                tqdm.write("Could not download %s!" % filename)
 
             return
 
         except (requests.exceptions.ConnectionError, socket.timeout):
-            tqdm.write('%s download failed, retrying after %d seconds...' % (photo.filename, WAIT_SECONDS))
+            tqdm.write('%s download failed, retrying after %d seconds...' % (filename, WAIT_SECONDS))
 
         time.sleep(WAIT_SECONDS)
     else:
-        tqdm.write("Could not download %s! Maybe try again later." % photo.filename)
+        tqdm.write("Could not download %s! Maybe try again later." % filename)
 
 
 if __name__ == '__main__':
