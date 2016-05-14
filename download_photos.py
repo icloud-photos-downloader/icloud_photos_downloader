@@ -101,8 +101,6 @@ MAX_RETRIES = 5
 WAIT_SECONDS = 5
 
 def truncate_middle(s, n):
-    # Ensure utf8
-    s = s.encode('utf-8')
     if len(s) <= n:
         return s
     n_2 = int(n) / 2 - 3
