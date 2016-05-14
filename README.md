@@ -5,6 +5,13 @@
 * Run it multiple times to download any new photos.
 
 
+### Motivation
+
+* I wanted to download a copy of all my photos onto my Linux PC, and keep them up-to-date.
+* This would be pretty easy to set up in the Apple ecosystem (e.g. Mac Mini or Apple TV), but I have a Linux PC running Plex Media Server.
+* I want to download the "medium" size of photos whenever possible. They're big enough for slideshows, but still save some space. If "medium" is not available, then fall back to downloading the original size.
+
+
 ### Installation
 
     # Clone the repo somewhere
