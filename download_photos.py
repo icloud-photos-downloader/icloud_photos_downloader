@@ -12,7 +12,7 @@ at which point you will have to re-authenticate. This interval is currently two 
 Usage:
   download_photos --username=<username> [--password=<password>] <download_directory>
   download_photos --username=<username> [--password=<password>] <download_directory>
-                  [--size=original | --size=medium | --size=thumb]
+                  [--size=(original|medium|thumb)]
   download_photos -h | --help
   download_photos --version
 
@@ -24,13 +24,13 @@ Options:
   --version                 Show version.
 """
 
-import docopt
+from docopt import docopt, DocoptExit
 from schema import Schema, And, Use, Optional, SchemaError
 import os
 import sys
 
 try:
-    arguments = docopt.docopt(__doc__, version='1.0.0')
+    arguments = docopt(__doc__, version='1.0.0')
 
     sch = Schema({ '<download_directory>': Schema(os.path.isdir,
                         error=('%s is not a valid directory' % arguments['<download_directory>'])),
@@ -40,16 +40,12 @@ try:
 
     sch.validate(arguments)
 
-except docopt.DocoptExit as e:
-    print e.message
-    sys.exit(1)
-
-except SchemaError as e:
+except (DocoptExit, SchemaError) as e:
     print e.message
     sys.exit(1)
 
 
-import click
+from click import prompt
 from tqdm import tqdm
 from dateutil.parser import parse
 from pyicloud import PyiCloudService
@@ -58,6 +54,7 @@ import socket
 import time
 
 print("Signing in...")
+sys.exit(1)
 
 if '--password' in arguments:
   icloud = PyiCloudService(arguments['--username'], arguments['--password'])
@@ -73,13 +70,13 @@ if icloud.requires_2fa:
         print "  %s: %s" % (i, device.get('deviceName',
             "SMS to %s" % device.get('phoneNumber')))
 
-    device = click.prompt('Which device would you like to use?', default=0)
+    device = prompt('Which device would you like to use?', default=0)
     device = devices[device]
     if not icloud.send_verification_code(device):
         print "Failed to send verification code"
         sys.exit(1)
 
-    code = click.prompt('Please enter validation code')
+    code = prompt('Please enter validation code')
     if not icloud.validate_verification_code(device, code):
         print "Failed to verify verification code"
         sys.exit(1)
