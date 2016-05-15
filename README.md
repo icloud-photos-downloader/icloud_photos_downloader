@@ -65,7 +65,7 @@ at which point you will have to re-authenticate. This interval is currently two 
       --version                 Show version.
 
 
-### Run once an hour on Linux
+### Run once an hour using Cron
 
     cp cron_script.sh.example cron_script.sh
 
