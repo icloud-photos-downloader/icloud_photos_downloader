@@ -58,11 +58,14 @@ at which point you will have to re-authenticate. This interval is currently two 
 
 
     Options:
-      --username=<username>     iCloud username (or email)
-      --password=<password>     iCloud password (optional if saved in keyring)
-      --size=<size>             Image size to download [default: original].
-      -h --help                 Show this screen.
-      --version                 Show version.
+      --username <username>           Your iCloud username or email address
+      --password <password>           Your iCloud password (leave blank if stored in keyring)
+      --size [original|medium|thumb]  Image size to download (default: original)
+      --download-videos               Download both videos and photos (default: only download photos)
+      --force-size                    Only download the requested size (default: download original if
+                                      requested size is not available)
+      -h, --help                      Show this message and exit.
+
 
 
 ### Run once an hour using Cron
