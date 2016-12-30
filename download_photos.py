@@ -91,12 +91,12 @@ def authenticate(username, password):
       icloud = PyiCloudService(username)
 
     if icloud.requires_2fa:
-        print "Two-factor authentication required. Your trusted devices are:"
+        print("Two-factor authentication required. Your trusted devices are:")
 
         devices = icloud.trusted_devices
         for i, device in enumerate(devices):
-            print "  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber')))
+            print ("  %s: %s" % (i, device.get('deviceName',
+                "SMS to %s" % device.get('phoneNumber'))))
 
         device = click.prompt('Which device would you like to use?', default=0)
         device = devices[device]
