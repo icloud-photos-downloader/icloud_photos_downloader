@@ -48,9 +48,9 @@ def download(directory, username, password, size, download_videos, force_size):
     directory = directory.rstrip('/')
 
     if download_videos:
-        print("Downloading %d %s photos and videos to %s/ ..." % (photos_count, size, directory))
+        print(("Downloading %d %s photos and videos to %s/ ..." % (photos_count, size, directory)))
     else:
-        print("Downloading %d %s photos to %s/ ..." % (photos_count, size, directory))
+        print(("Downloading %d %s photos to %s/ ..." % (photos_count, size, directory)))
 
     pbar = tqdm(all_photos, total=photos_count)
 
@@ -91,22 +91,22 @@ def authenticate(username, password):
       icloud = PyiCloudService(username)
 
     if icloud.requires_2fa:
-        print "Two-factor authentication required. Your trusted devices are:"
+        print("Two-factor authentication required. Your trusted devices are:")
 
         devices = icloud.trusted_devices
         for i, device in enumerate(devices):
-            print "  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber')))
+            print("  %s: %s" % (i, device.get('deviceName',
+                "SMS to %s" % device.get('phoneNumber'))))
 
         device = click.prompt('Which device would you like to use?', default=0)
         device = devices[device]
         if not icloud.send_verification_code(device):
-            print "Failed to send verification code"
+            print("Failed to send verification code")
             sys.exit(1)
 
         code = click.prompt('Please enter validation code')
         if not icloud.validate_verification_code(device, code):
-            print "Failed to verify verification code"
+            print("Failed to verify verification code")
             sys.exit(1)
 
     return icloud
@@ -115,10 +115,10 @@ def authenticate(username, password):
 def truncate_middle(s, n):
     if len(s) <= n:
         return s
-    n_2 = int(n) / 2 - 2
+    n_2 = int(n) // 2 - 2
     n_1 = n - n_2 - 4
     if n_2 < 1: n_2 = 1
-    return u'{0}...{1}'.format(s[:n_1], s[-n_2:])
+    return '{0}...{1}'.format(s[:n_1], s[-n_2:])
 
 def download_photo(photo, size, force_size, download_dir, pbar):
     filename_with_size = photo.filename.replace('.', '-%s.' % size)
