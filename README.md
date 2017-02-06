@@ -29,7 +29,7 @@
 You can store your password in the system keyring using the `icloud` command-line tool
 (installed with the `pyicloud` dependency):
 
-    >>> icloud --username=jappleseed@apple.com
+    $ icloud --username=jappleseed@apple.com
     ICloud Password for jappleseed@apple.com:
     Save password in keyring? (y/N)
 
@@ -41,7 +41,7 @@ If your account has two-factor authentication enabled, you will be prompted for 
 If you would like to delete a password stored in your system keyring,
 you can clear a stored password using the `--delete-from-keyring` command-line option:
 
-    >>> icloud --username=jappleseed@apple.com --delete-from-keyring
+    $ icloud --username=jappleseed@apple.com --delete-from-keyring
 
 
 Note: Both regular login and two-factor authentication will expire after an interval set by Apple,
