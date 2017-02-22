@@ -41,6 +41,10 @@ def download(directory, username, password, size, download_videos, force_size):
 
     icloud = authenticate(username, password)
 
+    # From: https://github.com/torarnv/pyicloud/tree/photos-update
+    print("Updating photos...")
+    icloud.photos.update()
+
     print("Looking up all photos...")
     all_photos = icloud.photos.all
     photos_count = len(all_photos.photos)
