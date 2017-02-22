@@ -125,11 +125,12 @@ def truncate_middle(s, n):
     return '{0}...{1}'.format(s[:n_1], s[-n_2:])
 
 def download_photo(photo, size, force_size, download_dir, pbar):
-    filename_with_size = photo.filename.replace('.', '-%s.' % size)
+    # Strip any non-ascii characters.
+    filename_with_size = photo.filename.encode('utf-8').decode('ascii','ignore').replace('.', '-%s.' % size)
     download_path = '/'.join((download_dir, filename_with_size))
 
-    truncated_filename = truncate_middle(filename_with_size.encode('utf-8'), 24)
-    truncated_path = truncate_middle(download_path.encode('utf-8'), 72)
+    truncated_filename = truncate_middle(filename_with_size, 24)
+    truncated_path = truncate_middle(download_path, 72)
 
     if os.path.isfile(download_path):
         pbar.set_description("%s already exists." % truncated_path)
