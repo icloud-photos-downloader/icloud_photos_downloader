@@ -4,6 +4,14 @@
 * Works on Mac and Linux.
 * Run it multiple times to download any new photos.
 
+# PLEASE NOTE
+
+There's currently a bug in the [pyicloud](https://github.com/picklepete/pyicloud) library, where recent photos aren't being updated. You can install a fixed version with this command:
+
+```bash
+sudo pip install git+https://github.com/torarnv/pyicloud.git@photos-update
+```
+
 
 ### Motivation
 
