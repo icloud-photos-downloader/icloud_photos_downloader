@@ -128,8 +128,8 @@ def download_photo(photo, size, force_size, download_dir, pbar):
     filename_with_size = photo.filename.replace('.', '-%s.' % size)
     download_path = '/'.join((download_dir, filename_with_size))
 
-    truncated_filename = truncate_middle(filename_with_size.decode('ascii', 'ignore'), 24)
-    truncated_path = truncate_middle(download_path.decode('ascii', 'ignore'), 72)
+    truncated_filename = truncate_middle(filename_with_size.encode('utf-8'), 24)
+    truncated_path = truncate_middle(download_path.encode('utf-8'), 72)
 
     if os.path.isfile(download_path):
         pbar.set_description("%s already exists." % truncated_path)
