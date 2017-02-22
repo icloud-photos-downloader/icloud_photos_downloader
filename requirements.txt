@@ -3,5 +3,5 @@ schema
 click
 python-dateutil
 requests
--e git+https://github.com/torarnv/pyicloud.git@photos-update
 tqdm>=4.5.0
+git+https://github.com/torarnv/pyicloud.git@photos-update#egg=pyicloud
