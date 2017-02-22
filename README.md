@@ -8,7 +8,9 @@
 ### Motivation
 
 * I use the Photos app on my MacBook, set to "Optimize Mac Storage". It stores full-resolution images in iCloud, and only stores thumbnails on my computer until they are requested.
-* I wanted to download a copy of all my photos onto my Linux PC. I also want to keep them updated.
+* I wanted to download a copy of all my photos onto my Linux PC, because:
+  * I use Plex, which doesn't integrate with iCloud. So now I can display photo slideshows on my TV.
+  * I just like having a backup of all my photos on my own hard-drive.
 * I only want to download the "medium" size of photos whenever possible. They save some space while still being big enough for slideshows. If "medium" is not available, then fall back to downloading the original size.
 
 
