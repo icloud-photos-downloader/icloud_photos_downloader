@@ -101,8 +101,7 @@ def download(directory, username, password, size, download_videos, force_size, a
             if not download_videos \
                 and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
 
-                progress_bar.set_description(
-                    "Skipping %s, only downloading photos." % photo.filename)
+                print "Skipping %s, only downloading photos." % photo.filename
                 continue
 
             created_date = parse(photo.created)
