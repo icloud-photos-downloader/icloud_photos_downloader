@@ -35,9 +35,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Only download the requested size ' + \
                    '(default: download original if requested size is not available)',
               is_flag=True)
+@click.option('--auto-delete',
+              help='Scans the "Recently Deleted" folder and deletes any files found in there. ' + \
+                   'If you restore the photo in iCloud, it will be downloaded again.',
+              is_flag=True)
 
 
-def download(directory, username, password, size, download_videos, force_size):
+def download(directory, username, password, size, download_videos, force_size, auto_delete):
     """Download all iCloud photos to a local directory"""
 
     icloud = authenticate(username, password)
@@ -86,8 +90,31 @@ def download(directory, username, password, size, download_videos, force_size):
         else:
             tqdm.write("Could not process %s! Maybe try again later." % photo.filename)
 
-    print("All photos have been downloaded!")
+    print "All photos have been downloaded!"
 
+    if auto_delete:
+        print "Deleting any photos found in 'Recently Deleted'..."
+
+        recently_deleted_photos = icloud.photos.albums['Recently Deleted']
+
+        for photo in recently_deleted_photos:
+            if not download_videos \
+                and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+
+                progress_bar.set_description(
+                    "Skipping %s, only downloading photos." % photo.filename)
+                continue
+
+            created_date = parse(photo.created)
+            date_path = '{:%Y/%m/%d}'.format(created_date)
+            download_dir = '/'.join((directory, date_path))
+
+            filename = filename_with_size(photo, size)
+            path = '/'.join((download_dir, filename))
+
+            if os.path.exists(path):
+                print "Deleting %s!" % path
+                os.remove(path)
 
 
 def authenticate(username, password):

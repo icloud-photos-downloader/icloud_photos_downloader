@@ -63,6 +63,7 @@ at which point you will have to re-authenticate. This interval is currently two 
     ./download_photos --username=<username> [--password=<password>] <download_directory>
     ./download_photos --username=<username> [--password=<password>] <download_directory>
                       [--size=(original|medium|thumb)]
+                      --auto-delete
     ./download_photos -h | --help
     ./download_photos --version
 
@@ -74,11 +75,13 @@ at which point you will have to re-authenticate. This interval is currently two 
       --download-videos               Download both videos and photos (default: only download photos)
       --force-size                    Only download the requested size (default: download original if
                                       requested size is not available)
+      --auto-delete                   Scans the "Recently Deleted" folder and deletes any files found in there.
+                                      If you restore the photo in iCloud, it will be downloaded again.
       -h, --help                      Show this message and exit.
 
 
 
-### Run once an hour using Cron
+### Run once every 3 hours using Cron
 
     cp cron_script.sh.example cron_script.sh
 
@@ -87,7 +90,5 @@ at which point you will have to re-authenticate. This interval is currently two 
 * Run `crontab -e`, and add the following line:
 
 ```
-0 * * * * /path/to/icloud_photos_downloader/cron_script.sh
+0 */3 * * * /path/to/icloud_photos_downloader/cron_script.sh
 ```
-
-Change to `0 */3 * * *` if you want to run every 3 hours, etc.
