@@ -22,11 +22,11 @@
     # Install dependencies
     sudo pip install -r requirements.txt
 
-    # Please note that requirements.txt references a patched version of the pyicloud library.
-    # We are using the [#photos-update branch](https://github.com/picklepete/pyicloud/pull/100),
-    # which has a fix for updating recent photos.
-    # You can install this branch manually by running:
-    #   pip install git+https://github.com/torarnv/pyicloud.git@photos-update
+Please note that requirements.txt references a patched version of the pyicloud library.
+We are using the [#photos-update branch](https://github.com/picklepete/pyicloud/pull/100),
+which has a fix for updating recent photos. You can install this branch manually by running:
+
+    pip install git+https://github.com/torarnv/pyicloud.git@photos-update
 
 ### Authentication
 
