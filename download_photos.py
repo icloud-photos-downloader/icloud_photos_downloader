@@ -7,7 +7,7 @@ import requests
 import time
 from tqdm import tqdm
 from dateutil.parser import parse
-from pyicloud import PyiCloudService
+import pyicloud
 
 # For retrying connection after timeouts and errors
 MAX_RETRIES = 5
@@ -48,7 +48,24 @@ def download(directory, username, password, size, download_videos, force_size, a
 
     # From: https://github.com/torarnv/pyicloud/tree/photos-update
     print "Updating photos..."
-    icloud.photos.update()
+    try:
+        icloud.photos.update()
+    except pyicloud.exceptions.PyiCloudAPIResponseError as exception:
+        print exception
+        print
+        print(
+            "This error usually means that Apple's servers are getting ready "
+            "to send you data about your photos.")
+        print(
+            "This process can take around 5-10 minutes, and it only happens when "
+            "you run the script for the very first time.")
+        print "Please wait a few minutes, then try again."
+        print
+        print(
+            "(If you are still seeing this message after 30 minutes, "
+            "then please open an issue on GitHub.)")
+        print
+        sys.exit(1)
 
     print "Looking up all photos..."
     all_photos = icloud.photos.all
@@ -120,9 +137,9 @@ def authenticate(username, password):
     print "Signing in..."
 
     if password:
-      icloud = PyiCloudService(username, password)
+      icloud = pyicloud.PyiCloudService(username, password)
     else:
-      icloud = PyiCloudService(username)
+      icloud = pyicloud.PyiCloudService(username)
 
     if icloud.requires_2fa:
         print "Two-factor authentication required. Your trusted devices are:"

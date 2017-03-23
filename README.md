@@ -79,6 +79,18 @@ at which point you will have to re-authenticate. This interval is currently two 
                                       If you restore the photo in iCloud, it will be downloaded again.
       -h, --help                      Show this message and exit.
 
+### Error on first run
+
+The first time you run the script, you will probably see an error message like this:
+
+```
+Bad Request (400)
+```
+
+This error usually means that Apple's servers are getting ready to send you data about your photos.
+This process can take around 5-10 minutes, so please wait a few minutes, then try again.
+
+(If you are still seeing this message after 30 minutes, then please open an issue on GitHub.)
 
 
 ### Run once every 3 hours using Cron
