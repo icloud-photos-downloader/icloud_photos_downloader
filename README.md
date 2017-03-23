@@ -4,15 +4,6 @@
 * Works on Mac and Linux.
 * Run it multiple times to download any new photos.
 
-# PLEASE NOTE
-
-There's currently a bug in the [pyicloud](https://github.com/picklepete/pyicloud) library, where recent photos aren't being updated. You can install a fixed version with this command:
-
-```bash
-sudo pip install git+https://github.com/torarnv/pyicloud.git@photos-update
-```
-
-
 ### Motivation
 
 * I use the Photos app on my MacBook, set to "Optimize Mac Storage". It stores full-resolution images in iCloud, and only stores thumbnails on my computer until they are requested.
@@ -31,6 +22,10 @@ sudo pip install git+https://github.com/torarnv/pyicloud.git@photos-update
     # Install dependencies
     sudo pip install -r requirements.txt
 
+    # Please note that requirements.txt references a patched version of the pyicloud library.
+    # We are using the #photos-update branch, which has a fix for updating recent photos.
+    # You can install this branch manually by running:
+    #   pip install git+https://github.com/torarnv/pyicloud.git@photos-update
 
 ### Authentication
 
