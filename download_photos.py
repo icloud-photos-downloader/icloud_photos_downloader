@@ -22,8 +22,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               metavar='<username>',
               prompt='iCloud username/email')
 @click.option('--password',
-              help='Your iCloud password (leave blank if stored in keyring)',
-              metavar='<password>')
+              help='Your iCloud password',
+              metavar='<password>',
+              prompt='iCloud password')
 @click.option('--size',
               help='Image size to download (default: original)',
               type=click.Choice(['original', 'medium', 'thumb']),
@@ -141,11 +142,7 @@ def download(directory, username, password, size, download_videos, force_size, a
 
 def authenticate(username, password):
     print "Signing in..."
-
-    if password:
-      icloud = pyicloud.PyiCloudService(username, password)
-    else:
-      icloud = pyicloud.PyiCloudService(username)
+    icloud = pyicloud.PyiCloudService(username, password)
 
     if icloud.requires_2fa:
         print "Two-factor authentication required. Your trusted devices are:"

@@ -31,34 +31,20 @@ which has a fix for updating recent photos. You can install this branch manually
 
 ### Authentication
 
-*(Taken from [the pyicloud docs](https://github.com/picklepete/pyicloud#authentication))*
+If your account has two-factor authentication enabled,
+you will be prompted for a code when you run the script.
 
-You can store your password in the system keyring using the `icloud` command-line tool
-(installed with the `pyicloud` dependency):
+Two-factor authentication will expire after an interval set by Apple,
+at which point you will have to re-authenticate.
+This interval is currently two months.
 
-    $ icloud --username=jappleseed@apple.com
-    ICloud Password for jappleseed@apple.com:
-    Save password in keyring? (y/N)
-
-If you have stored a password in the keyring, you will not be required to provide a password
-when running the script.
-
-If your account has two-factor authentication enabled, you will be prompted for a code on the first run.
-
-If you would like to delete a password stored in your system keyring,
-you can clear a stored password using the `--delete-from-keyring` command-line option:
-
-    $ icloud --username=jappleseed@apple.com --delete-from-keyring
-
-
-Note: Both regular login and two-factor authentication will expire after an interval set by Apple,
-at which point you will have to re-authenticate. This interval is currently two months.
+NOTE: Using the [system keyring to store your iCloud password](https://github.com/picklepete/pyicloud#authentication) is not supported, because this is an automated script. Just provide your iCloud password by using the `--password` option.
 
 
 ### Usage
 
-    ./download_photos --username=<username> [--password=<password>] <download_directory>
-    ./download_photos --username=<username> [--password=<password>] <download_directory>
+    ./download_photos --username=<username> --password=<password> <download_directory>
+    ./download_photos --username=<username> --password=<password> <download_directory>
                       [--size=(original|medium|thumb)]
                       --auto-delete
     ./download_photos -h | --help
@@ -67,7 +53,7 @@ at which point you will have to re-authenticate. This interval is currently two 
 
     Options:
       --username <username>           Your iCloud username or email address
-      --password <password>           Your iCloud password (leave blank if stored in keyring)
+      --password <password>           Your iCloud password
       --size [original|medium|thumb]  Image size to download (default: original)
       --download-videos               Download both videos and photos (default: only download photos)
       --force-size                    Only download the requested size (default: download original if
