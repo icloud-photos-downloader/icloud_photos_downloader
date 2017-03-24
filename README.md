@@ -1,7 +1,7 @@
 # iCloud Photos Downloader
 
 * A command-line tool to download all your iCloud photos.
-* Works on Mac and Linux.
+* Works on Mac, Linux, and Windows.
 * Run it multiple times to download any new photos.
 
 ### Motivation
