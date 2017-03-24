@@ -117,22 +117,16 @@ def download(directory, username, password, size, download_videos, force_size, a
     print "All photos have been downloaded!"
 
     if auto_delete:
-        print "Deleting any photos found in 'Recently Deleted'..."
+        print "Deleting any files found in 'Recently Deleted'..."
 
-        recently_deleted_photos = icloud.photos.albums['Recently Deleted']
+        recently_deleted = icloud.photos.albums['Recently Deleted']
 
-        for photo in recently_deleted_photos:
-            if not download_videos \
-                and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
-
-                print "Skipping %s, only downloading photos." % photo.filename
-                continue
-
-            created_date = parse(photo.created)
+        for media in recently_deleted:
+            created_date = parse(media.created)
             date_path = '{:%Y/%m/%d}'.format(created_date)
             download_dir = '/'.join((directory, date_path))
 
-            filename = filename_with_size(photo, size)
+            filename = filename_with_size(media, size)
             path = '/'.join((download_dir, filename))
 
             if os.path.exists(path):
