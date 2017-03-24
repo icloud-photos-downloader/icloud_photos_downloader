@@ -69,8 +69,8 @@ def download(directory, username, password, size, download_videos, force_size, a
         sys.exit(1)
 
     print "Looking up all photos..."
-    all_photos = icloud.photos.all
-    photos_count = len(all_photos.photos)
+    all_photos = icloud.photos.all.photos
+    photos_count = len(all_photos)
 
     directory = directory.rstrip('/')
 
