@@ -87,10 +87,16 @@ def download(directory, username, password, size, download_videos, force_size, a
                     and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
 
                     progress_bar.set_description(
-                      "Skipping %s, only downloading photos." % photo.filename)
+                        "Skipping %s, only downloading photos." % photo.filename)
                     continue
 
-                created_date = parse(photo.created)
+                created_date = None
+                try:
+                    created_date = parse(photo.created)
+                except TypeError:
+                    print "Could not find created date for photo!"
+                    continue
+
                 date_path = '{:%Y/%m/%d}'.format(created_date)
                 download_dir = '/'.join((directory, date_path))
 
