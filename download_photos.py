@@ -29,57 +29,46 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Image size to download (default: original)',
               type=click.Choice(['original', 'medium', 'thumb']),
               default='original')
+@click.option('--recent',
+              help='Number of recent photos to download (default: download all photos)',
+              type=click.IntRange(0))
 @click.option('--download-videos',
               help='Download both videos and photos (default: only download photos)',
               is_flag=True)
 @click.option('--force-size',
               help='Only download the requested size ' + \
-                   '(default: download original if requested size is not available)',
+                   '(default: download original if size is not available)',
               is_flag=True)
 @click.option('--auto-delete',
               help='Scans the "Recently Deleted" folder and deletes any files found in there. ' + \
-                   'If you restore the photo in iCloud, it will be downloaded again.',
+                   '(If you restore the photo in iCloud, it will be downloaded again.)',
               is_flag=True)
 
 
-def download(directory, username, password, size, download_videos, force_size, auto_delete):
+def download(directory, username, password, size, recent, \
+    download_videos, force_size, auto_delete):
     """Download all iCloud photos to a local directory"""
 
-    icloud = authenticate(username, password)
+    directory = directory.rstrip('/')
 
-    # From: https://github.com/torarnv/pyicloud/tree/photos-update
-    print "Updating photos..."
-    try:
-        icloud.photos.update()
-    except pyicloud.exceptions.PyiCloudAPIResponseError as exception:
-        print exception
-        print
-        print(
-            "This error usually means that Apple's servers are getting ready "
-            "to send you data about your photos.")
-        print(
-            "This process can take around 5-10 minutes, and it only happens when "
-            "you run the script for the very first time.")
-        print "Please wait a few minutes, then try again."
-        print
-        print(
-            "(If you are still seeing this message after 30 minutes, "
-            "then please open an issue on GitHub.)")
-        print
-        sys.exit(1)
+    icloud = authenticate(username, password)
+    updatePhotos(icloud)
 
     print "Looking up all photos..."
-    all_photos = icloud.photos.all.photos
-    photos_count = len(all_photos)
+    photos = icloud.photos.all.photos
 
-    directory = directory.rstrip('/')
+    # Optional: Only download the x most recent photos.
+    if recent is not None:
+        photos = photos[slice(recent * -1, None)]
+
+    photos_count = len(photos)
 
     if download_videos:
         print "Downloading %d %s photos and videos to %s/ ..." % (photos_count, size, directory)
     else:
         print "Downloading %d %s photos to %s/ ..." % (photos_count, size, directory)
 
-    progress_bar = tqdm(all_photos, total=photos_count)
+    progress_bar = tqdm(photos, total=photos_count)
 
     for photo in progress_bar:
         for _ in range(MAX_RETRIES):
@@ -159,6 +148,27 @@ def authenticate(username, password):
 
     return icloud
 
+# See: https://github.com/picklepete/pyicloud/pull/100
+def updatePhotos(icloud):
+    print "Updating photos..."
+    try:
+        icloud.photos.update()
+    except pyicloud.exceptions.PyiCloudAPIResponseError as exception:
+        print exception
+        print
+        print(
+            "This error usually means that Apple's servers are getting ready "
+            "to send you data about your photos.")
+        print(
+            "This process can take around 5-10 minutes, and it only happens when "
+            "you run the script for the very first time.")
+        print "Please wait a few minutes, then try again."
+        print
+        print(
+            "(If you are still seeing this message after 30 minutes, "
+            "then please open an issue on GitHub.)")
+        print
+        sys.exit(1)
 
 def truncate_middle(s, n):
     if len(s) <= n:

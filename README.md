@@ -43,24 +43,35 @@ NOTE: Using the [system keyring to store your iCloud password](https://github.co
 
 ### Usage
 
-    ./download_photos --username=<username> --password=<password> <download_directory>
-    ./download_photos --username=<username> --password=<password> <download_directory>
-                      [--size=(original|medium|thumb)]
-                      --auto-delete
-    ./download_photos -h | --help
-    ./download_photos --version
-
+    $ ./download_photos.py <download_directory>
+                           --username=<username> --password=<password>
+                           [--size=(original|medium|thumb)]
+                           [--recent <integer>]
+                           --auto-delete
 
     Options:
       --username <username>           Your iCloud username or email address
       --password <password>           Your iCloud password
       --size [original|medium|thumb]  Image size to download (default: original)
+      --recent INTEGER                Number of recent photos to download (default: download all photos)
       --download-videos               Download both videos and photos (default: only download photos)
-      --force-size                    Only download the requested size (default: download original if
-                                      requested size is not available)
-      --auto-delete                   Scans the "Recently Deleted" folder and deletes any files found in there.
-                                      If you restore the photo in iCloud, it will be downloaded again.
+      --force-size                    Only download the requested size
+                                      (default: download original if size is not available)
+      --auto-delete                   Scans the "Recently Deleted" folder and deletes any files
+                                      found in there. (If you restore the photo in iCloud,
+                                      it will be downloaded again.)
       -h, --help                      Show this message and exit.
+
+
+Example:
+
+    $ ./download_photos.py ./Photos \
+        --username=testuser@example.com \
+        --password=pass1234 \
+        --size=original \
+        --recent 500 \
+        --auto-delete
+
 
 ### Error on first run
 
