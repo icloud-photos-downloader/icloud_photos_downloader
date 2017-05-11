@@ -44,7 +44,7 @@ def list_photos(directory, username, password, size, download_videos, force_size
     icloud.photos.update()
     all_photos = icloud.photos.all
 
-    directory = directory.rstrip('/')
+    directory = os.path.normpath(directory)
 
     for photo in all_photos:
         for _ in range(MAX_RETRIES):
@@ -55,13 +55,13 @@ def list_photos(directory, username, password, size, download_videos, force_size
 
                 created_date = parse(photo.created)
                 date_path = '{:%Y/%m/%d}'.format(created_date)
-                download_dir = '/'.join((directory, date_path))
+                download_dir = os.path.join(directory, date_path)
 
                 # Strip any non-ascii characters.
                 filename = photo.filename.encode('utf-8') \
                     .decode('ascii', 'ignore').replace('.', '-%s.' % size)
 
-                download_path = '/'.join((download_dir, filename))
+                download_path = os.path.join(download_dir, filename)
                 print download_path
 
                 break
