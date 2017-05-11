@@ -54,7 +54,7 @@ def download(directory, username, password, size, recent, \
     until_found, download_videos, force_size, auto_delete):
     """Download all iCloud photos to a local directory"""
 
-    directory = directory.rstrip('/')
+    directory = os.path.normpath(directory)
 
     icloud = authenticate(username, password)
 
@@ -97,7 +97,7 @@ def download(directory, username, password, size, recent, \
                 created_date = photo.created
 
                 date_path = '{:%Y/%m/%d}'.format(created_date)
-                download_dir = '/'.join((directory, date_path))
+                download_dir = os.path.join(directory, date_path)
 
                 if not os.path.exists(download_dir):
                     os.makedirs(download_dir)
@@ -137,10 +137,10 @@ def download(directory, username, password, size, recent, \
         for media in recently_deleted:
             created_date = media.created
             date_path = '{:%Y/%m/%d}'.format(created_date)
-            download_dir = '/'.join((directory, date_path))
+            download_dir = os.path.join(directory, date_path)
 
             filename = filename_with_size(media, size)
-            path = '/'.join((download_dir, filename))
+            path = os.path.join(download_dir, filename)
 
             if os.path.exists(path):
                 print("Deleting %s!" % path)
@@ -192,7 +192,7 @@ def filename_with_size(photo, size):
 def local_download_path(photo, size, download_dir):
     # Strip any non-ascii characters.
     filename = filename_with_size(photo, size)
-    download_path = '/'.join((download_dir, filename))
+    download_path = os.path.join(download_dir, filename)
 
     return download_path
 
