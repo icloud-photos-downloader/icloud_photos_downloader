@@ -56,7 +56,6 @@ def download(directory, username, password, size, recent, \
     directory = directory.rstrip('/')
 
     icloud = authenticate(username, password)
-    test_api(icloud)
 
     print "Looking up all photos..."
     photos = icloud.photos.all
@@ -171,17 +170,6 @@ def authenticate(username, password):
             sys.exit(1)
 
     return icloud
-
-# See: https://github.com/picklepete/pyicloud/pull/100
-def test_api(icloud):
-    try:
-        icloud.photos
-    except pyicloud.exceptions.PyiCloudAPIResponseError as exception:
-        print exception
-        print
-        print "This error usually means that Apple is attempting to throttle its usage of the api"
-        print "Please wait a few minutes, then try again."
-        sys.exit(1)
 
 def truncate_middle(s, n):
     if len(s) <= n:

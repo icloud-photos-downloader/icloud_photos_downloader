@@ -41,7 +41,6 @@ def list_photos(directory, username, password, size, download_videos, force_size
     """Prints out file path of photos that will be downloaded"""
 
     icloud = authenticate(username, password)
-    icloud.photos.update()
     all_photos = icloud.photos.all
 
     directory = directory.rstrip('/')
