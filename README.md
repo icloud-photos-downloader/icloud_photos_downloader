@@ -52,6 +52,9 @@ NOTE: Using the [system keyring to store your iCloud password](https://github.co
       --password <password>           Your iCloud password
       --size [original|medium|thumb]  Image size to download (default: original)
       --recent INTEGER                Number of recent photos to download (default: download all photos)
+      --until-found INTEGER RANGE     Download most recently added photos until we
+                                      find x number of previously downloaded
+                                      consecutive photos (default: download all photos)
       --download-videos               Download both videos and photos (default: only download photos)
       --force-size                    Only download the requested size
                                       (default: download original if size is not available)

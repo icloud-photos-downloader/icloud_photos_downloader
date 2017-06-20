@@ -53,7 +53,7 @@ def list_photos(directory, username, password, size, download_videos, force_size
                     and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
                     continue
 
-                created_date = parse(photo.created)
+                created_date = photo.created
                 date_path = '{:%Y/%m/%d}'.format(created_date)
                 download_dir = '/'.join((directory, date_path))
 

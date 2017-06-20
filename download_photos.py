@@ -5,6 +5,7 @@ import sys
 import socket
 import requests
 import time
+import itertools
 from tqdm import tqdm
 from dateutil.parser import parse
 import pyicloud
@@ -32,6 +33,9 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--recent',
               help='Number of recent photos to download (default: download all photos)',
               type=click.IntRange(0))
+@click.option('--until-found',
+              help='Download most recently added photos until we find x number of previously downloaded consecutive photos (default: download all photos)',
+              type=click.IntRange(0))
 @click.option('--download-videos',
               help='Download both videos and photos (default: only download photos)',
               is_flag=True)
@@ -46,29 +50,39 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def download(directory, username, password, size, recent, \
-    download_videos, force_size, auto_delete):
+    until_found, download_videos, force_size, auto_delete):
     """Download all iCloud photos to a local directory"""
 
     directory = directory.rstrip('/')
 
     icloud = authenticate(username, password)
-    updatePhotos(icloud)
+    test_api(icloud)
 
     print "Looking up all photos..."
-    photos = icloud.photos.all.photos
+    photos = icloud.photos.all
+    photos_count = len(photos)
 
     # Optional: Only download the x most recent photos.
     if recent is not None:
-        photos = photos[slice(recent * -1, None)]
+        photos_count = recent
+        photos = (p for i,p in enumerate(photos) if i < recent)
 
-    photos_count = len(photos)
+    kwargs = {'total': photos_count}
+
+    if until_found is not None:
+        del kwargs['total']
+        photos_count = '???'
+
+        # ensure photos iterator doesn't have a known length
+        photos = (p for p in photos)
 
     if download_videos:
-        print "Downloading %d %s photos and videos to %s/ ..." % (photos_count, size, directory)
+        print "Downloading %s %s photos and videos to %s/ ..." % (photos_count, size, directory)
     else:
-        print "Downloading %d %s photos to %s/ ..." % (photos_count, size, directory)
+        print "Downloading %s %s photos to %s/ ..." % (photos_count, size, directory)
 
-    progress_bar = tqdm(photos, total=photos_count)
+    consecutive_files_found = 0
+    progress_bar = tqdm(photos, **kwargs)
 
     for photo in progress_bar:
         for _ in range(MAX_RETRIES):
@@ -80,12 +94,7 @@ def download(directory, username, password, size, recent, \
                         "Skipping %s, only downloading photos." % photo.filename)
                     continue
 
-                created_date = None
-                try:
-                    created_date = parse(photo.created)
-                except TypeError:
-                    print "Could not find created date for photo!"
-                    continue
+                created_date = photo.created
 
                 date_path = '{:%Y/%m/%d}'.format(created_date)
                 download_dir = '/'.join((directory, date_path))
@@ -93,7 +102,16 @@ def download(directory, username, password, size, recent, \
                 if not os.path.exists(download_dir):
                     os.makedirs(download_dir)
 
-                download_photo(photo, size, force_size, download_dir, progress_bar)
+                download_path = local_download_path(photo, size, download_dir)
+                if os.path.isfile(download_path):
+                    if until_found is not None:
+                        consecutive_files_found += 1
+                    progress_bar.set_description("%s already exists." % truncate_middle(download_path, 96))
+                    break
+
+                download_photo(photo, download_path, size, force_size, download_dir, progress_bar)
+                if until_found is not None:
+                    consecutive_files_found = 0
                 break
 
             except (requests.exceptions.ConnectionError, socket.timeout):
@@ -103,6 +121,12 @@ def download(directory, username, password, size, recent, \
         else:
             tqdm.write("Could not process %s! Maybe try again later." % photo.filename)
 
+        if until_found is not None and consecutive_files_found >= until_found:
+            tqdm.write('Found %d consecutive previusly downloaded photos.  Exiting' % until_found)
+            progress_bar.close()
+            break
+
+
     print "All photos have been downloaded!"
 
     if auto_delete:
@@ -111,7 +135,7 @@ def download(directory, username, password, size, recent, \
         recently_deleted = icloud.photos.albums['Recently Deleted']
 
         for media in recently_deleted:
-            created_date = parse(media.created)
+            created_date = media.created
             date_path = '{:%Y/%m/%d}'.format(created_date)
             download_dir = '/'.join((directory, date_path))
 
@@ -149,25 +173,14 @@ def authenticate(username, password):
     return icloud
 
 # See: https://github.com/picklepete/pyicloud/pull/100
-def updatePhotos(icloud):
-    print "Updating photos..."
+def test_api(icloud):
     try:
-        icloud.photos.update()
+        icloud.photos
     except pyicloud.exceptions.PyiCloudAPIResponseError as exception:
         print exception
         print
-        print(
-            "This error usually means that Apple's servers are getting ready "
-            "to send you data about your photos.")
-        print(
-            "This process can take around 5-10 minutes, and it only happens when "
-            "you run the script for the very first time.")
+        print "This error usually means that Apple is attempting to throttle its usage of the api"
         print "Please wait a few minutes, then try again."
-        print
-        print(
-            "(If you are still seeing this message after 30 minutes, "
-            "then please open an issue on GitHub.)")
-        print
         sys.exit(1)
 
 def truncate_middle(s, n):
@@ -182,24 +195,22 @@ def filename_with_size(photo, size):
     return photo.filename.encode('utf-8') \
         .decode('ascii', 'ignore').replace('.', '-%s.' % size)
 
-def download_photo(photo, size, force_size, download_dir, progress_bar):
+def local_download_path(photo, size, download_dir):
     # Strip any non-ascii characters.
     filename = filename_with_size(photo, size)
     download_path = '/'.join((download_dir, filename))
 
-    truncated_filename = truncate_middle(filename, 24)
-    truncated_path = truncate_middle(download_path, 72)
+    return download_path
 
-    if os.path.isfile(download_path):
-        progress_bar.set_description("%s already exists." % truncated_path)
-        return
+def download_photo(photo, download_path, size, force_size, download_dir, progress_bar):
+    truncated_path = truncate_middle(download_path, 96)
 
     # Fall back to original if requested size is not available
     if size not in photo.versions and not force_size and size != 'original':
-        download_photo(photo, 'original', True, download_dir, progress_bar)
+        download_photo(photo, download_path, 'original', True, download_dir, progress_bar)
         return
 
-    progress_bar.set_description("Downloading %s to %s" % (truncated_filename, truncated_path))
+    progress_bar.set_description("Downloading %s" % truncated_path)
 
     for _ in range(MAX_RETRIES):
         try:
