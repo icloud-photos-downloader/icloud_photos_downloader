@@ -45,6 +45,7 @@ NOTE: Using the [system keyring to store your iCloud password](https://github.co
                            --password=<password>
                            [--size=(original|medium|thumb)]
                            [--recent <integer>]
+                           [--until-found <integer>]
                            [--auto-delete]
 
     Options:
