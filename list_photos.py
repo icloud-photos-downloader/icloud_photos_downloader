@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import click
 import os
 import sys
@@ -61,7 +62,7 @@ def list_photos(directory, username, password, size, download_videos, force_size
                     .decode('ascii', 'ignore').replace('.', '-%s.' % size)
 
                 download_path = '/'.join((download_dir, filename))
-                print download_path
+                print(download_path)
 
                 break
 
@@ -76,25 +77,25 @@ def authenticate(username, password):
       icloud = PyiCloudService(username)
 
     if icloud.requires_2fa:
-        print "Two-factor authentication required. Your trusted devices are:"
+        print("Two-factor authentication required. Your trusted devices are:")
 
         devices = icloud.trusted_devices
         for i, device in enumerate(devices):
-            print "  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber')))
+            print("  %s: %s" % (i, device.get('deviceName',
+                "SMS to %s" % device.get('phoneNumber'))))
 
         device = click.prompt('Which device would you like to use?', default=0)
         device = devices[device]
         if not icloud.send_verification_code(device):
-            print "Failed to send verification code"
+            print("Failed to send verification code")
             sys.exit(1)
 
         code = click.prompt('Please enter validation code')
         if not icloud.validate_verification_code(device, code):
-            print "Failed to verify verification code"
+            print("Failed to verify verification code")
             sys.exit(1)
 
-        print "Great, you're all set up. Now re-run the script to print out filenames."
+        print("Great, you're all set up. Now re-run the script to print out filenames.")
         sys.exit(1)
 
     return icloud

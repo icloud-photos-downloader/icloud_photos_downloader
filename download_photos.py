@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 import click
 import os
 import sys
@@ -57,7 +58,7 @@ def download(directory, username, password, size, recent, \
 
     icloud = authenticate(username, password)
 
-    print "Looking up all photos..."
+    print("Looking up all photos...")
     photos = icloud.photos.all
     photos_count = len(photos)
 
@@ -76,9 +77,9 @@ def download(directory, username, password, size, recent, \
         photos = (p for p in photos)
 
     if download_videos:
-        print "Downloading %s %s photos and videos to %s/ ..." % (photos_count, size, directory)
+        print("Downloading %s %s photos and videos to %s/ ..." % (photos_count, size, directory))
     else:
-        print "Downloading %s %s photos to %s/ ..." % (photos_count, size, directory)
+        print("Downloading %s %s photos to %s/ ..." % (photos_count, size, directory))
 
     consecutive_files_found = 0
     progress_bar = tqdm(photos, **kwargs)
@@ -126,10 +127,10 @@ def download(directory, username, password, size, recent, \
             break
 
 
-    print "All photos have been downloaded!"
+    print("All photos have been downloaded!")
 
     if auto_delete:
-        print "Deleting any files found in 'Recently Deleted'..."
+        print("Deleting any files found in 'Recently Deleted'...")
 
         recently_deleted = icloud.photos.albums['Recently Deleted']
 
@@ -142,31 +143,31 @@ def download(directory, username, password, size, recent, \
             path = '/'.join((download_dir, filename))
 
             if os.path.exists(path):
-                print "Deleting %s!" % path
+                print("Deleting %s!" % path)
                 os.remove(path)
 
 
 def authenticate(username, password):
-    print "Signing in..."
+    print("Signing in...")
     icloud = pyicloud.PyiCloudService(username, password)
 
     if icloud.requires_2fa:
-        print "Two-factor authentication required. Your trusted devices are:"
+        print("Two-factor authentication required. Your trusted devices are:")
 
         devices = icloud.trusted_devices
         for i, device in enumerate(devices):
-            print "  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber')))
+            print("  %s: %s" % (i, device.get('deviceName',
+                "SMS to %s" % device.get('phoneNumber'))))
 
         device = click.prompt('Which device would you like to use?', default=0)
         device = devices[device]
         if not icloud.send_verification_code(device):
-            print "Failed to send verification code"
+            print("Failed to send verification code")
             sys.exit(1)
 
         code = click.prompt('Please enter validation code')
         if not icloud.validate_verification_code(device, code):
-            print "Failed to verify verification code"
+            print("Failed to verify verification code")
             sys.exit(1)
 
     return icloud
