@@ -19,12 +19,9 @@
     git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
     cd icloud_photos_downloader
 
-    # Install dependencies
+    # Install dependencies (Linux)
     sudo pip install -r requirements.txt
 
-(Please note that `requirements.txt` references a patched version of the
-[pyicloud](https://github.com/picklepete/pyicloud) library. We are using the [#photos-update branch](https://github.com/picklepete/pyicloud/pull/100),
-which has a fix for updating recent photos.)
 
 ### Authentication
 
