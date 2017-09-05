@@ -97,3 +97,25 @@ This process can take around 5-10 minutes, so please wait a few minutes, then tr
 ```
 0 */3 * * * /path/to/icloud_photos_downloader/cron_script.sh
 ```
+
+### Docker
+
+* Build the image:
+
+```
+$ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
+$ cd icloud_photos_downloader.git/docker
+$ docker build -t icloud_photos_downloader .
+```
+
+* Usage:
+
+```
+$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloader ./download_photos.py \
+    --username=testuser@example.com \
+    --password=pass1234 \
+    --size=original \
+    --recent 500 \
+    --auto-delete \
+    /data
+```
