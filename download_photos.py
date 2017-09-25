@@ -26,8 +26,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               prompt='iCloud username/email')
 @click.option('--password',
               help='Your iCloud password',
-              metavar='<password>',
-              prompt='iCloud password')
+              metavar='<password>')
 @click.option('--size',
               help='Image size to download (default: original)',
               type=click.Choice(['original', 'medium', 'thumb']),

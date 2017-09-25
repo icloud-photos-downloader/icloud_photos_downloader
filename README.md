@@ -37,17 +37,30 @@ or you can send to a different email address with `--notification-email`.
 
 If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
 
-NOTE: Using the [system keyring to store your iCloud password](https://github.com/picklepete/pyicloud#authentication) is not currently supported.
-Just provide your iCloud password by using the `--password` option.
-From a security perspective, storing your password in plaintext is equivalent to storing
-it in a keychain that automatically unlocks when the server reboots.
+
+#### System Keyring
+
+You can store your password in the system keyring using the `icloud` command-line tool
+(installed with the `pyicloud` dependency):
+
+    $ icloud --username=jappleseed@apple.com
+    ICloud Password for jappleseed@apple.com:
+    Save password in keyring? (y/N)
+
+If you have stored a password in the keyring, you will not be required to provide a password
+when running the script.
+
+If you would like to delete a password stored in your system keyring,
+you can clear a stored password using the `--delete-from-keyring` command-line option:
+
+    $ icloud --username=jappleseed@apple.com --delete-from-keyring
 
 
 ### Usage
 
     $ ./download_photos.py <download_directory>
                            --username=<username>
-                           --password=<password>
+                           [--password=<password>]
                            [--size=(original|medium|thumb)]
                            [--recent <integer>]
                            [--until-found <integer>]
@@ -55,7 +68,7 @@ it in a keychain that automatically unlocks when the server reboots.
 
     Options:
       --username <username>           Your iCloud username or email address
-      --password <password>           Your iCloud password
+      --password <password>           Your iCloud password (leave blank if stored in system keyring)
       --size [original|medium|thumb]  Image size to download (default: original)
       --recent INTEGER                Number of recent photos to download (default: download all photos)
       --until-found INTEGER RANGE     Download most recently added photos until we
