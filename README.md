@@ -29,10 +29,18 @@ If your account has two-factor authentication enabled,
 you will be prompted for a code when you run the script.
 
 Two-factor authentication will expire after an interval set by Apple,
-at which point you will have to re-authenticate.
-This interval is currently two months.
+at which point you will have to re-authenticate. This interval is currently two months.
 
-NOTE: Using the [system keyring to store your iCloud password](https://github.com/picklepete/pyicloud#authentication) is not supported, because this is an automated script. Just provide your iCloud password by using the `--password` option.
+You can receive an email notification when two-factor authentication expires by passing the
+`--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
+or you can send to a different email address with `--notification-email`.
+
+If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
+
+NOTE: Using the [system keyring to store your iCloud password](https://github.com/picklepete/pyicloud#authentication) is not currently supported.
+Just provide your iCloud password by using the `--password` option.
+From a security perspective, storing your password in plaintext is equivalent to storing
+it in a keychain that automatically unlocks when the server reboots.
 
 
 ### Usage
@@ -59,6 +67,15 @@ NOTE: Using the [system keyring to store your iCloud password](https://github.co
       --auto-delete                   Scans the "Recently Deleted" folder and deletes any files
                                       found in there. (If you restore the photo in iCloud,
                                       it will be downloaded again.)
+
+      --smtp-username <smtp_username>
+                                      Your SMTP username, for sending email notifications when
+                                      two-step authentication expires.
+      --smtp-password <smtp_password>
+                                      Your SMTP password, for sending email notifications when
+                                      two-step authentication expires.
+      --notification-email <notification_email>
+                                      Email address where you would like to receive email notifications. Default: SMTP username
       -h, --help                      Show this message and exit.
 
 

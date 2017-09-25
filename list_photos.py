@@ -8,12 +8,12 @@ import requests
 import time
 from tqdm import tqdm
 from dateutil.parser import parse
-from pyicloud import PyiCloudService
+
+from authentication import authenticate
 
 # For retrying connection after timeouts and errors
 MAX_RETRIES = 5
 WAIT_SECONDS = 5
-
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
@@ -36,12 +36,24 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Only download the requested size ' + \
                    '(default: download original if requested size is not available)',
               is_flag=True)
+@click.option('--smtp-username',
+              help='Your SMTP username, for sending email notifications.',
+              metavar='<smtp_username>')
+@click.option('--smtp-password',
+              help='Your SMTP password, for sending email notifications.',
+              metavar='<smtp_password>')
+@click.option('--notification-email',
+              help='Email address where you would like to receive notifications. Default: SMTP username',
+              metavar='<notification_email>')
 
-
-def list_photos(directory, username, password, size, download_videos, force_size):
+def list_photos(directory, username, password, size, download_videos, force_size, \
+    smtp_username, smtp_password, notification_email):
     """Prints out file path of photos that will be downloaded"""
 
-    icloud = authenticate(username, password)
+    if not notification_email:
+        notification_email = smtp_username
+
+    icloud = authenticate(username, password, smtp_username, smtp_password, notification_email)
     all_photos = icloud.photos.all
 
     directory = os.path.normpath(directory)
@@ -68,42 +80,6 @@ def list_photos(directory, username, password, size, download_videos, force_size
 
             except (requests.exceptions.ConnectionError, socket.timeout):
                 time.sleep(WAIT_SECONDS)
-
-
-def authenticate(username, password):
-    if password:
-      icloud = PyiCloudService(username, password)
-    else:
-      icloud = PyiCloudService(username)
-
-    if hasattr(icloud, 'requires_2sa'):
-        two_step_required = icloud.requires_2sa
-    else:
-        two_step_required = icloud.requires_2fa
-
-    if two_step_required:
-        print("Two-factor authentication required. Your trusted devices are:")
-
-        devices = icloud.trusted_devices
-        for i, device in enumerate(devices):
-            print("  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber'))))
-
-        device = click.prompt('Which device would you like to use?', default=0)
-        device = devices[device]
-        if not icloud.send_verification_code(device):
-            print("Failed to send verification code")
-            sys.exit(1)
-
-        code = click.prompt('Please enter validation code')
-        if not icloud.validate_verification_code(device, code):
-            print("Failed to verify verification code")
-            sys.exit(1)
-
-        print("Great, you're all set up. Now re-run the script to print out filenames.")
-        sys.exit(1)
-
-    return icloud
 
 if __name__ == '__main__':
     list_photos()

@@ -9,7 +9,8 @@ import time
 import itertools
 from tqdm import tqdm
 from dateutil.parser import parse
-import pyicloud
+
+from authentication import authenticate
 
 # For retrying connection after timeouts and errors
 MAX_RETRIES = 5
@@ -49,14 +50,28 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                    '(If you restore the photo in iCloud, it will be downloaded again.)',
               is_flag=True)
 
+@click.option('--smtp-username',
+              help='Your SMTP username, for sending email notifications when two-step authentication expires.',
+              metavar='<smtp_username>')
+@click.option('--smtp-password',
+              help='Your SMTP password, for sending email notifications when two-step authentication expires.',
+              metavar='<smtp_password>')
+@click.option('--notification-email',
+              help='Email address where you would like to receive email notifications. Default: SMTP username',
+              metavar='<notification_email>')
+
 
 def download(directory, username, password, size, recent, \
-    until_found, download_videos, force_size, auto_delete):
+    until_found, download_videos, force_size, auto_delete, \
+    smtp_username, smtp_password, notification_email):
     """Download all iCloud photos to a local directory"""
 
-    directory = os.path.normpath(directory)
+    if not notification_email:
+        notification_email = smtp_username
 
-    icloud = authenticate(username, password)
+    icloud = authenticate(username, password, smtp_username, smtp_password, notification_email)
+
+    directory = os.path.normpath(directory)
 
     print("Looking up all photos...")
     photos = icloud.photos.all
@@ -145,37 +160,6 @@ def download(directory, username, password, size, recent, \
             if os.path.exists(path):
                 print("Deleting %s!" % path)
                 os.remove(path)
-
-
-def authenticate(username, password):
-    print("Signing in...")
-    icloud = pyicloud.PyiCloudService(username, password)
-
-    if hasattr(icloud, 'requires_2sa'):
-        two_step_required = icloud.requires_2sa
-    else:
-        two_step_required = icloud.requires_2fa
-
-    if two_step_required:
-        print("Two-factor authentication required. Your trusted devices are:")
-
-        devices = icloud.trusted_devices
-        for i, device in enumerate(devices):
-            print("  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber'))))
-
-        device = click.prompt('Which device would you like to use?', default=0)
-        device = devices[device]
-        if not icloud.send_verification_code(device):
-            print("Failed to send verification code")
-            sys.exit(1)
-
-        code = click.prompt('Please enter validation code')
-        if not icloud.validate_verification_code(device, code):
-            print("Failed to verify verification code")
-            sys.exit(1)
-
-    return icloud
 
 def truncate_middle(s, n):
     if len(s) <= n:
