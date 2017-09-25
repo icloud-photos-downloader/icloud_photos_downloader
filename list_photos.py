@@ -76,8 +76,12 @@ def authenticate(username, password):
     else:
       icloud = PyiCloudService(username)
 
-    if icloud.requires_2fa:
-        print("Two-factor authentication required. Your trusted devices are:")
+    if callable(icloud.requires_2sa):
+        if icloud.requires_2sa:
+            print("Two-factor authentication required. Your trusted devices are:")
+    else
+        if icloud.requires_2fa:
+            print("Two-factor authentication required. Your trusted devices are:")
 
         devices = icloud.trusted_devices
         for i, device in enumerate(devices):
