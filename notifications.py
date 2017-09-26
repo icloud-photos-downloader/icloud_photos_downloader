@@ -1,13 +1,14 @@
 from smtplib import SMTP
 import datetime
 
-def send_two_step_expired_notification(smtp_email, smtp_password, to_addr):
+def send_two_step_expired_notification(smtp_email, smtp_password, \
+	smtp_host, smtp_port, smtp_no_tls, to_addr):
 	print("Sending two_step_expired notification via email...")
 	smtp = SMTP()
 	smtp.set_debuglevel(0)
-	smtp.connect('smtp.gmail.com', 587)
-	smtp.ehlo()
-	smtp.starttls()
+	smtp.connect(smtp_host, smtp_port)
+	if not smtp_no_tls:
+		smtp.starttls()
 	smtp.login(smtp_email, smtp_password)
 
 	subj = "icloud_photos_downloader: Two step authentication has expired"

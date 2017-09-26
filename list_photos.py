@@ -36,24 +36,40 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Only download the requested size ' + \
                    '(default: download original if requested size is not available)',
               is_flag=True)
+
 @click.option('--smtp-username',
-              help='Your SMTP username, for sending email notifications.',
+              help='Your SMTP username, for sending email notifications when two-step authentication expires.',
               metavar='<smtp_username>')
 @click.option('--smtp-password',
-              help='Your SMTP password, for sending email notifications.',
+              help='Your SMTP password, for sending email notifications when two-step authentication expires.',
               metavar='<smtp_password>')
+@click.option('--smtp-host',
+              help='Your SMTP server host. Defaults to: smtp.gmail.com',
+              metavar='<smtp_host>',
+              default='smtp.gmail.com')
+@click.option('--smtp-port',
+              help='Your SMTP server port. Default: 587 (Gmail)',
+              metavar='<smtp_port>',
+              type=click.IntRange(0),
+              default=587)
+@click.option('--smtp-no-tls',
+              help='Pass this flag to disable TLS for SMTP (TLS is required for Gmail)',
+              metavar='<smtp_no_tls>',
+              is_flag=True)
 @click.option('--notification-email',
-              help='Email address where you would like to receive notifications. Default: SMTP username',
+              help='Email address where you would like to receive email notifications. Default: SMTP username',
               metavar='<notification_email>')
 
 def list_photos(directory, username, password, size, download_videos, force_size, \
-    smtp_username, smtp_password, notification_email):
+    smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
+    notification_email):
     """Prints out file path of photos that will be downloaded"""
 
     if not notification_email:
         notification_email = smtp_username
 
-    icloud = authenticate(username, password, smtp_username, smtp_password, notification_email)
+    icloud = authenticate(username, password, \
+        smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, notification_email)
     all_photos = icloud.photos.all
 
     directory = os.path.normpath(directory)

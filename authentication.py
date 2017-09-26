@@ -1,7 +1,11 @@
+import sys
+import click
 from pyicloud import PyiCloudService
 from notifications import send_two_step_expired_notification
 
-def authenticate(username, password, smtp_username, smtp_password, notification_email):
+def authenticate(username, password, \
+    smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
+    notification_email):
     if password:
       icloud = PyiCloudService(username, password)
     else:
@@ -15,7 +19,8 @@ def authenticate(username, password, smtp_username, smtp_password, notification_
     if icloud.requires_2fa:
         if smtp_username and smtp_password:
             # If running in the background, send a notification email.
-            send_two_step_expired_notification(smtp_username, smtp_password, notification_email)
+            send_two_step_expired_notification(smtp_username, smtp_password, \
+                smtp_host, smtp_port, smtp_no_tls, notification_email)
             exit()
 
         print("Two-factor authentication required. Your trusted devices are:")
@@ -36,7 +41,9 @@ def authenticate(username, password, smtp_username, smtp_password, notification_
             print("Failed to verify verification code")
             sys.exit(1)
 
-        print("Great, you're all set up. Now re-run the script to print out filenames.")
+        print("Great, you're all set up. The script can now be run without user interaction.")
+        print("You can set up email notifications to receive a notification when two-step authentication expires.")
+        print("Use --help to view information about SMTP options.")
         sys.exit(1)
 
     return icloud
