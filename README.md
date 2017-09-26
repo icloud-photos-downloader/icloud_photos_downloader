@@ -64,32 +64,55 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                            [--size=(original|medium|thumb)]
                            [--recent <integer>]
                            [--until-found <integer>]
+                           [--download-videos]
                            [--auto-delete]
+                           [--only-print-filenames]
+                           [--smtp-username <smtp_username>]
+                           [--smtp-password <smtp_password>]
+                           [--smtp-host <smtp_host>]
+                           [--smtp-port <smtp_port>]
+                           [--smtp-no-tls]
+                           [--notification-email <notification_email>]
 
     Options:
-      --username <username>           Your iCloud username or email address
-      --password <password>           Your iCloud password (leave blank if stored in system keyring)
-      --size [original|medium|thumb]  Image size to download (default: original)
-      --recent INTEGER                Number of recent photos to download (default: download all photos)
-      --until-found INTEGER RANGE     Download most recently added photos until we
-                                      find x number of previously downloaded
-                                      consecutive photos (default: download all photos)
-      --download-videos               Download both videos and photos (default: only download photos)
-      --force-size                    Only download the requested size
-                                      (default: download original if size is not available)
-      --auto-delete                   Scans the "Recently Deleted" folder and deletes any files
-                                      found in there. (If you restore the photo in iCloud,
-                                      it will be downloaded again.)
-
-      --smtp-username <smtp_username>
-                                      Your SMTP username, for sending email notifications when
-                                      two-step authentication expires.
-      --smtp-password <smtp_password>
-                                      Your SMTP password, for sending email notifications when
-                                      two-step authentication expires.
-      --notification-email <notification_email>
-                                      Email address where you would like to receive email notifications. Default: SMTP username
-      -h, --help                      Show this message and exit.
+        --username <username>           Your iCloud username or email address
+        --password <password>           Your iCloud password
+        --size [original|medium|thumb]  Image size to download (default: original)
+        --recent INTEGER RANGE          Number of recent photos to download
+                                        (default: download all photos)
+        --until-found INTEGER RANGE     Download most recently added photos until we
+                                        find x number of previously downloaded
+                                        consecutive photos (default: download all
+                                        photos)
+        --download-videos               Download both videos and photos (default:
+                                        only download photos)
+        --force-size                    Only download the requested size (default:
+                                        download original if size is not available)
+        --auto-delete                   Scans the "Recently Deleted" folder and
+                                        deletes any files found in there. (If you
+                                        restore the photo in iCloud, it will be
+                                        downloaded again.)
+        --only-print-filenames          Only prints the filenames of all files that
+                                        will be downloaded. (Does not download any
+                                        files.)
+        --smtp-username <smtp_username>
+                                        Your SMTP username, for sending email
+                                        notifications when two-step authentication
+                                        expires.
+        --smtp-password <smtp_password>
+                                        Your SMTP password, for sending email
+                                        notifications when two-step authentication
+                                        expires.
+        --smtp-host <smtp_host>         Your SMTP server host. Defaults to:
+                                        smtp.gmail.com
+        --smtp-port <smtp_port>         Your SMTP server port. Default: 587 (Gmail)
+        --smtp-no-tls                   Pass this flag to disable TLS for SMTP (TLS
+                                        is required for Gmail)
+        --notification-email <notification_email>
+                                        Email address where you would like to
+                                        receive email notifications. Default: SMTP
+                                        username
+        -h, --help                      Show this message and exit.
 
 
 Example:
