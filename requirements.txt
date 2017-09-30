@@ -3,5 +3,5 @@ schema
 click
 python-dateutil
 requests
-tqdm>=4.5.0
+tqdm==4.5.0
 git+https://github.com/picklepete/pyicloud.git#egg=pyicloud
