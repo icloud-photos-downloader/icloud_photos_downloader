@@ -11,12 +11,7 @@ def authenticate(username, password, \
     else:
       icloud = PyiCloudService(username)
 
-    # Fixes bug in pyicloud - https://github.com/picklepete/pyicloud/pull/149
-    # Rename to requires_2sa (with fallback) after this is merged.
-    if hasattr(icloud, 'requires_2sa'):
-        icloud.requires_2fa = icloud.requires_2sa
-
-    if icloud.requires_2fa:
+    if icloud.requires_2sa:
         if smtp_username and smtp_password:
             # If running in the background, send a notification email.
             send_two_step_expired_notification(smtp_username, smtp_password, \

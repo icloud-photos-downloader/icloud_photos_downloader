@@ -4,4 +4,4 @@ click
 python-dateutil
 requests
 tqdm>=4.5.0
-git+https://github.com/chadj/pyicloud.git@ckdatabasews#egg=pyicloud
+git+https://github.com/picklepete/pyicloud.git#egg=pyicloud
