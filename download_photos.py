@@ -90,6 +90,9 @@ def download(directory, username, password, size, recent, \
     icloud = authenticate(username, password, \
         smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, notification_email)
 
+    if hasattr(directory, 'decode'):
+        directory = directory.decode('utf-8')
+
     directory = os.path.normpath(directory)
 
     if not only_print_filenames:
