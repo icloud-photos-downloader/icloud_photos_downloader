@@ -67,6 +67,8 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                            [--download-videos]
                            [--auto-delete]
                            [--only-print-filenames]
+                           [--folder-structure=({:%Y/%m/%d})]
+                           [--set-exit-datetime]
                            [--smtp-username <smtp_username>]
                            [--smtp-password <smtp_password>]
                            [--smtp-host <smtp_host>]
@@ -95,6 +97,8 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
         --only-print-filenames          Only prints the filenames of all files that
                                         will be downloaded. (Does not download any
                                         files.)
+        --folder-structure              Folder structure. Default is {:%Y/%m/%d}.
+        --set-exit-datetime             Set exif DateTimeOriginal tag if it's missing.
         --smtp-username <smtp_username>
                                         Your SMTP username, for sending email
                                         notifications when two-step authentication
