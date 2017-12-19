@@ -279,11 +279,13 @@ def get_datetime(path):
 def set_datetime(path, date):
     try:
         exif_dict = piexif.load(path)
+        exif_dict.get('1st')[306] = date
         exif_dict.get('Exif')[36867] = date
+        exif_dict.get('Exif')[36868] = date
         exif_bytes = piexif.dump(exif_dict)
         piexif.insert(exif_bytes, path)
     except:
-        return
+       return
 
 if __name__ == '__main__':
     download()
