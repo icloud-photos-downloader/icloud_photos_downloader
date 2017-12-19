@@ -60,7 +60,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               metavar='<folder_structure>',
               default='{:%Y/%m/%d}')
 @click.option('--set-exif-datetime',
-              help='Set exif DateTimeOriginal tag if it's missing.',
+              help='Writing exif DateTimeOriginal tag from file creation date, if it\'s not exists. ',
               is_flag=True)
 @click.option('--smtp-username',
               help='Your SMTP username, for sending email notifications when two-step authentication expires.',
