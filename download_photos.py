@@ -8,6 +8,7 @@ import time
 import itertools
 import pyicloud
 import piexif
+from pyicloud.exceptions import PyiCloudAPIResponseError
 from tqdm import tqdm
 from tzlocal import get_localzone
 
@@ -262,7 +263,7 @@ def download_photo(photo, download_path, size, force_size, download_dir, progres
                     (photo.filename, size))
 
 
-        except (requests.exceptions.ConnectionError, socket.timeout):
+        except (requests.exceptions.ConnectionError, socket.timeout, PyiCloudAPIResponseError):
             tqdm.write(
                 '%s download failed, retrying after %d seconds...' %
                 (photo.filename, WAIT_SECONDS))
