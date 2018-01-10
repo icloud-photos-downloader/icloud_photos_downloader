@@ -172,3 +172,13 @@ $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloa
     --auto-delete \
     /data
 ```
+
+
+### Support Development
+
+<a href="https://www.buymeacoffee.com/ndbroadbent"><img src="https://www.buymeacoffee.com/assets/img/custom_images/white_img.png" alt="Buy Me A Coffee" style="height: 41px !important;width: 174px !important;box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;-webkit-box-shadow: 0px 3px 2px 0px rgba(190, 190, 190, 0.5) !important;" target="_blank"></a>
+
+* *Bitcoin (BTC)*: 15eSc6JiwBtxte9zak44ZFhw9bkKWaMGAe
+* *Bitcoin Cash (BCH)*: 157a1zxtY7vozdkrom2aSiVu4oZ6JkXpSU
+* *Ethereum (ETH)*: 0x080300A117758EC601b7b6c501afE3571E5cA1c3
+* *Litecoin (LTC)*: LP7pURasgBVU8FMh4Rx2WW45iWCnMoGDMD
