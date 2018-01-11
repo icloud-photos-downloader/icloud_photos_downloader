@@ -7,6 +7,8 @@ import socket
 import requests
 import time
 import itertools
+
+from pyicloud.exceptions import PyiCloudAPIResponseError
 from tqdm import tqdm
 from dateutil.parser import parse
 
@@ -121,6 +123,10 @@ def download(directory, username, password, size, recent, \
             print("Downloading %s %s photos to %s/ ..." % (photos_count, size, directory))
 
     consecutive_files_found = 0
+
+    # Not using ASCII characters to fill the meter (it may crash)
+    kwargs['ascii'] = False
+
     if only_print_filenames:
         progress_bar = photos
     else:
@@ -202,7 +208,7 @@ def truncate_middle(s, n):
     n_2 = int(n) // 2 - 2
     n_1 = n - n_2 - 4
     if n_2 < 1: n_2 = 1
-    return '{0}...{1}'.format(s[:n_1], s[-n_2:])
+    return '{0}...{1}'.format(s[:n_1].encode('utf-8'), s[-n_2:].encode('utf-8'))
 
 def filename_with_size(photo, size):
     return photo.filename.encode('utf-8') \
@@ -242,7 +248,7 @@ def download_photo(photo, download_path, size, force_size, download_dir, progres
                     (photo.filename, size))
 
 
-        except (requests.exceptions.ConnectionError, socket.timeout):
+        except (requests.exceptions.ConnectionError, socket.timeout, PyiCloudAPIResponseError):
             tqdm.write(
                 '%s download failed, retrying after %d seconds...' %
                 (photo.filename, WAIT_SECONDS))
