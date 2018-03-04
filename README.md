@@ -68,7 +68,7 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                            [--auto-delete]
                            [--only-print-filenames]
                            [--folder-structure=({:%Y/%m/%d})]
-                           [--set-exit-datetime]
+                           [--set-exif-datetime]
                            [--smtp-username <smtp_username>]
                            [--smtp-password <smtp_password>]
                            [--smtp-host <smtp_host>]
@@ -99,7 +99,7 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                                         will be downloaded. (Does not download any
                                         files.)
         --folder-structure              Folder structure. Default is {:%Y/%m/%d}.
-        --set-exit-datetime             Writing exif DateTimeOriginal tag from file creation date, if it's not exists.
+        --set-exif-datetime             Writing exif DateTimeOriginal tag from file creation date, if it's not exists.
         --smtp-username <smtp_username>
                                         Your SMTP username, for sending email
                                         notifications when two-step authentication
