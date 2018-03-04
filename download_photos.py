@@ -2,14 +2,13 @@
 from __future__ import print_function
 import click
 import os
-import sys
 import socket
 import requests
 import time
 import itertools
 import piexif
 from tqdm import tqdm
-from dateutil.parser import parse
+from tzlocal import get_localzone
 
 from authentication import authenticate
 
@@ -143,7 +142,7 @@ def download(directory, username, password, size, recent, \
                             "Skipping %s, only downloading photos." % photo.filename)
                     continue
 
-                created_date = photo.created
+                created_date = photo.created.astimezone(get_localzone())
 
                 date_path = (folder_structure).format(created_date)
                 download_dir = os.path.join(directory, date_path)
@@ -164,10 +163,13 @@ def download(directory, username, password, size, recent, \
                 else:
                     download_photo(photo, download_path, size, force_size, download_dir, progress_bar)
 
-                if set_exif_datetime \
-                    and photo.filename.lower().endswith(('.jpg', '.jpeg')) \
-                    and not get_datetime(download_path):
-                        set_datetime(download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
+                if set_exif_datetime and not only_print_filenames:
+                    if photo.filename.lower().endswith(('.jpg', '.jpeg')):
+                        if not get_datetime(download_path):
+                            set_datetime(download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
+                    else:
+                        timestamp = time.mktime(created_date.timetuple())
+                        os.utime(download_path, (timestamp, timestamp))
 
                 if until_found is not None:
                     consecutive_files_found = 0
