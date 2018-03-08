@@ -2,13 +2,13 @@
 from __future__ import print_function
 import click
 import os
-import sys
 import socket
 import requests
 import time
 import itertools
+import piexif
 from tqdm import tqdm
-from dateutil.parser import parse
+from tzlocal import get_localzone
 
 from authentication import authenticate
 
@@ -52,7 +52,13 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               help='Only prints the filenames of all files that will be downloaded. ' + \
                 '(Does not download any files.)',
               is_flag=True)
-
+@click.option('--folder-structure',
+              help='Folder structure (default: {:%Y/%m/%d})',
+              metavar='<folder_structure>',
+              default='{:%Y/%m/%d}')
+@click.option('--set-exif-datetime',
+              help='Writing exif DateTimeOriginal tag from file creation date, if it\'s not exists. ',
+              is_flag=True)
 @click.option('--smtp-username',
               help='Your SMTP username, for sending email notifications when two-step authentication expires.',
               metavar='<smtp_username>')
@@ -79,7 +85,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 def download(directory, username, password, size, recent, \
     until_found, download_videos, force_size, auto_delete, \
-    only_print_filenames, \
+    only_print_filenames, folder_structure, set_exif_datetime, \
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
     notification_email):
     """Download all iCloud photos to a local directory"""
@@ -136,9 +142,9 @@ def download(directory, username, password, size, recent, \
                             "Skipping %s, only downloading photos." % photo.filename)
                     continue
 
-                created_date = photo.created
+                created_date = photo.created.astimezone(get_localzone())
 
-                date_path = '{:%Y/%m/%d}'.format(created_date)
+                date_path = (folder_structure).format(created_date)
                 download_dir = os.path.join(directory, date_path)
 
                 if not os.path.exists(download_dir):
@@ -156,6 +162,14 @@ def download(directory, username, password, size, recent, \
                     print(download_path)
                 else:
                     download_photo(photo, download_path, size, force_size, download_dir, progress_bar)
+
+                if set_exif_datetime and not only_print_filenames:
+                    if photo.filename.lower().endswith(('.jpg', '.jpeg')):
+                        if not get_datetime(download_path):
+                            set_datetime(download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
+                    else:
+                        timestamp = time.mktime(created_date.timetuple())
+                        os.utime(download_path, (timestamp, timestamp))
 
                 if until_found is not None:
                     consecutive_files_found = 0
@@ -186,7 +200,7 @@ def download(directory, username, password, size, recent, \
 
             for media in recently_deleted:
                 created_date = media.created
-                date_path = '{:%Y/%m/%d}'.format(created_date)
+                date_path = (folder_structure).format(created_date)
                 download_dir = os.path.join(directory, date_path)
 
                 filename = filename_with_size(media, size)
@@ -250,6 +264,24 @@ def download_photo(photo, download_path, size, force_size, download_dir, progres
     else:
         tqdm.write("Could not download %s! Maybe try again later." % photo.filename)
 
+def get_datetime(path):
+    try:
+        exif_dict = piexif.load(path)
+        date = exif_dict.get('Exif').get(36867)
+    except:
+        date = None
+    return date
+
+def set_datetime(path, date):
+    try:
+        exif_dict = piexif.load(path)
+        exif_dict.get('1st')[306] = date
+        exif_dict.get('Exif')[36867] = date
+        exif_dict.get('Exif')[36868] = date
+        exif_bytes = piexif.dump(exif_dict)
+        piexif.insert(exif_bytes, path)
+    except:
+       return
 
 if __name__ == '__main__':
     download()
