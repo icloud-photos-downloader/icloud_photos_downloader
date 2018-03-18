@@ -1,15 +1,20 @@
 import sys
+import getpass
 import click
-from pyicloud import PyiCloudService
+import pyicloud
 from notifications import send_two_step_expired_notification
 
 def authenticate(username, password, \
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
     notification_email):
-    if password:
-      icloud = PyiCloudService(username, password)
-    else:
-      icloud = PyiCloudService(username)
+    try:
+      # If password not provided on command line variable will be set to None
+      # and PyiCloud will attempt to retrieve from it's keyring
+      icloud = pyicloud.PyiCloudService(username, password)
+    except pyicloud.exceptions.NoStoredPasswordAvailable:
+      # Prompt for password if not stored in PyiCloud's keyring
+      password = getpass.getpass()
+      icloud = pyicloud.PyiCloudService(username, password)
 
     if icloud.requires_2sa:
         if smtp_username and smtp_password:

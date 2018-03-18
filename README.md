@@ -76,7 +76,8 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
 
     Options:
         --username <username>           Your iCloud username or email address
-        --password <password>           Your iCloud password
+        --password <password>           Your iCloud password (default: use PyiCloud
+                                        keyring or prompt for password)
         --size [original|medium|thumb]  Image size to download (default: original)
         --recent INTEGER RANGE          Number of recent photos to download
                                         (default: download all photos)
