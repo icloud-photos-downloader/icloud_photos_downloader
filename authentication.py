@@ -23,27 +23,36 @@ def authenticate(username, password, \
                 smtp_host, smtp_port, smtp_no_tls, notification_email)
             exit()
 
-        print("Two-factor authentication required. Your trusted devices are:")
+        print("Two-step/two-factor authentication is required.")
 
         devices = icloud.trusted_devices
-        for i, device in enumerate(devices):
-            print("  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber'))))
+        devices_count = len(devices)
+        if devices_count == 0:
+            device_index = 0
+        else:
+            for i, device in enumerate(devices):
+                print("  %s: %s" % (i, device.get('deviceName',
+                    "SMS to %s" % device.get('phoneNumber'))))
+            print("  %s: Enter two-factor authentication code" % devices_count)
+            device_index = click.prompt('Please choose an option:', default=0, type=click.IntRange(0, devices_count))
 
-        device = click.prompt('Which device would you like to use?', default=0)
-        device = devices[device]
-        if not icloud.send_verification_code(device):
-            print("Failed to send verification code")
-            sys.exit(1)
+        if device_index == devices_count:
+            # We're using the 2FA code that was automatically sent to the user's device,
+            # so can just use an empty dict()
+            device = dict()
+        else:
+            device = devices[device_index]
+            if not icloud.send_verification_code(device):
+                print("Failed to send two-factor authentication code")
+                sys.exit(1)
 
-        code = click.prompt('Please enter validation code')
+        code = click.prompt('Please enter two-factor authentication code')
         if not icloud.validate_verification_code(device, code):
-            print("Failed to verify verification code")
+            print("Failed to verify two-factor authentication code")
             sys.exit(1)
 
         print("Great, you're all set up. The script can now be run without user interaction.")
-        print("You can set up email notifications to receive a notification when two-step authentication expires.")
-        print("Use --help to view information about SMTP options.")
-        sys.exit(1)
+        print("You can also set up email notifications for when the two-step authentication expires.")
+        print("(Use --help to view information about SMTP options.)")
 
     return icloud
