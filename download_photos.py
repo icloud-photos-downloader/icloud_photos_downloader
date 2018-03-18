@@ -236,10 +236,10 @@ def download_photo(photo, download_path, size, force_size, download_dir, progres
             download_url = photo.download(size)
 
             if download_url:
-                with open(download_path, 'wb') as file:
+                with open(download_path, 'wb') as file_obj:
                     for chunk in download_url.iter_content(chunk_size=1024):
                         if chunk:
-                            file.write(chunk)
+                            file_obj.write(chunk)
                 break
 
             else:
