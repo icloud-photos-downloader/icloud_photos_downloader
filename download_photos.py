@@ -7,6 +7,7 @@ import socket
 import requests
 import time
 import itertools
+import pyicloud
 from tqdm import tqdm
 from dateutil.parser import parse
 
@@ -165,6 +166,10 @@ def download(directory, username, password, size, recent, \
                 if not only_print_filenames:
                     tqdm.write('Connection failed, retrying after %d seconds...' % WAIT_SECONDS)
                 time.sleep(WAIT_SECONDS)
+            except pyicloud.exceptions.PyiCloudAPIResponseError:
+                if not only_print_filenames:
+                    tqdm.write('Session error, re-authenticating...')
+                icloud.authenticate()
 
         else:
             if not only_print_filenames:
