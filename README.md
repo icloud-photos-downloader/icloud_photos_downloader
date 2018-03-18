@@ -20,6 +20,7 @@
     cd icloud_photos_downloader
 
     # Install dependencies (Linux)
+    # Note: This will install a fork of the latest pyicloud with some bug fixes
     sudo pip install -r requirements.txt
 
 
