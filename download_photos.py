@@ -26,7 +26,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
               metavar='<username>',
               prompt='iCloud username/email')
 @click.option('--password',
-              help='Your iCloud password',
+              help='Your iCloud password '
+                   '(default: use PyiCloud keyring or prompt for password)',
               metavar='<password>')
 @click.option('--size',
               help='Image size to download (default: original)',
