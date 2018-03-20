@@ -168,7 +168,8 @@ def download(directory, username, password, size, recent, \
                 if only_print_filenames:
                     print(download_path)
                 else:
-                    download_photo(photo, download_path, size, force_size, download_dir, progress_bar)
+                    download_photo(icloud, photo, download_path, size, force_size,
+                                   download_dir, progress_bar, only_print_filenames)
 
                 if set_exif_datetime and not only_print_filenames:
                     if photo.filename.lower().endswith(('.jpg', '.jpeg')):
@@ -186,10 +187,6 @@ def download(directory, username, password, size, recent, \
                 if not only_print_filenames:
                     tqdm.write('Connection failed, retrying after %d seconds...' % WAIT_SECONDS)
                 time.sleep(WAIT_SECONDS)
-            except pyicloud.exceptions.PyiCloudAPIResponseError:
-                if not only_print_filenames:
-                    tqdm.write('Session error, re-authenticating...')
-                icloud.authenticate()
 
         else:
             if not only_print_filenames:
@@ -204,22 +201,23 @@ def download(directory, username, password, size, recent, \
     if not only_print_filenames:
         print("All photos have been downloaded!")
 
-        if auto_delete:
+    if auto_delete:
+        if not only_print_filenames:
             print("Deleting any files found in 'Recently Deleted'...")
 
-            recently_deleted = icloud.photos.albums['Recently Deleted']
+        recently_deleted = icloud.photos.albums['Recently Deleted']
 
-            for media in recently_deleted:
-                created_date = media.created
-                date_path = (folder_structure).format(created_date)
-                download_dir = os.path.join(directory, date_path)
+        for media in recently_deleted:
+            created_date = media.created
+            date_path = (folder_structure).format(created_date)
+            download_dir = os.path.join(directory, date_path)
 
-                filename = filename_with_size(media, size)
-                path = os.path.join(download_dir, filename)
+            filename = filename_with_size(media, size)
+            path = os.path.join(download_dir, filename)
 
-                if os.path.exists(path):
-                    print("Deleting %s!" % path)
-                    os.remove(path)
+            if os.path.exists(path):
+                print("Deleting %s!" % path)
+                os.remove(path)
 
 def truncate_middle(s, n):
     if len(s) <= n:
@@ -240,15 +238,18 @@ def local_download_path(photo, size, download_dir):
 
     return download_path
 
-def download_photo(photo, download_path, size, force_size, download_dir, progress_bar):
+
+def download_photo(icloud, photo, download_path, size, force_size, download_dir, progress_bar, only_print_filenames):
     truncated_path = truncate_middle(download_path, 96)
 
     # Fall back to original if requested size is not available
     if size not in photo.versions and not force_size and size != 'original':
-        download_photo(photo, download_path, 'original', True, download_dir, progress_bar)
+        download_photo(icloud, photo, download_path, 'original',
+                       True, download_dir, progress_bar, only_print_filenames)
         return
 
-    progress_bar.set_description("Downloading %s" % truncated_path)
+    if not only_print_filenames:
+        progress_bar.set_description("Downloading %s" % truncated_path)
 
     for _ in range(MAX_RETRIES):
         try:
@@ -261,19 +262,24 @@ def download_photo(photo, download_path, size, force_size, download_dir, progres
                             file_obj.write(chunk)
                 break
 
-            else:
+            elif not only_print_filenames:
                 tqdm.write(
                     "Could not find URL to download %s for size %s!" %
                     (photo.filename, size))
 
-
-        except (requests.exceptions.ConnectionError, socket.timeout, PyiCloudAPIResponseError):
-            tqdm.write(
-                '%s download failed, retrying after %d seconds...' %
-                (photo.filename, WAIT_SECONDS))
-            time.sleep(WAIT_SECONDS)
+        except (requests.exceptions.ConnectionError, socket.timeout, PyiCloudAPIResponseError) as e:
+            if e.message == 'Invalid global session':
+                if not only_print_filenames:
+                    tqdm.write('Session error, re-authenticating...')
+                icloud.authenticate()
+            else:
+                if not only_print_filenames:
+                    tqdm.write(
+                        '%s download failed, retrying after %d seconds...' %
+                        (photo.filename, WAIT_SECONDS))
+                time.sleep(WAIT_SECONDS)
     else:
-        tqdm.write("Could not download %s! Maybe try again later." % photo.filename)
+        tqdm.write("Could not download %s! Please try again later." % photo.filename)
 
 def get_datetime(path):
     try:
