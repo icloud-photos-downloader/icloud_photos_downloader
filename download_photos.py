@@ -143,7 +143,7 @@ def download(directory, username, password, size, recent, \
         for _ in range(MAX_RETRIES):
             try:
                 if not download_videos \
-                    and not photo.filename.lower().endswith(('.png', '.jpg', '.jpeg')):
+                    and not photo.filename.lower().endswith(('.heic', '.png', '.jpg', '.jpeg')):
                     if not only_print_filenames:
                         progress_bar.set_description(
                             "Skipping %s, only downloading photos." % photo.filename)
