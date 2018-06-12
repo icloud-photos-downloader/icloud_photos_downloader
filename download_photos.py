@@ -158,7 +158,9 @@ def download(directory, username, password, size, recent, \
                     os.makedirs(download_dir)
 
                 download_path = local_download_path(photo, size, download_dir)
-                if os.path.isfile(download_path):
+                download_path_without_size = local_download_path(photo, None, download_dir)
+                # add a check if the "simple" name of the file is found if the size is original
+                if os.path.isfile(download_path) or (size =='original' and os.path.isfile(download_path_without_size)):
                     if until_found is not None:
                         consecutive_files_found += 1
                     if not only_print_filenames:
@@ -231,9 +233,17 @@ def filename_with_size(photo, size):
     return photo.filename.encode('utf-8') \
         .decode('ascii', 'ignore').replace('.', '-%s.' % size)
 
-def local_download_path(photo, size, download_dir):
+def filename_without_size(photo):
+    return photo.filename.encode('utf-8') \
+        .decode('ascii', 'ignore')
+
+def local_download_path(photo, size:None, download_dir):
     # Strip any non-ascii characters.
-    filename = filename_with_size(photo, size)
+    if not size is None:
+        filename = filename_with_size(photo, size)
+    else:
+        filename = filename_without_size(photo)
+
     download_path = os.path.join(download_dir, filename)
 
     return download_path
