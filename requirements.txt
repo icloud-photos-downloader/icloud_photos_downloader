@@ -1,8 +1,8 @@
-docopt
-schema
-click
-python-dateutil
-requests
+./vendor/pyicloud-0.9.1.zip
+docopt==0.6.2
+schema==0.6.6
+click==6.7
+python_dateutil==2.6.1
+requests==2.18.4
 tqdm==4.5.0
-git+https://github.com/ndbroadbent/pyicloud.git#egg=pyicloud
-piexif
+piexif==1.0.13
