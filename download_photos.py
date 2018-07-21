@@ -147,7 +147,7 @@ def download(directory, username, password, size, recent, \
                     if not only_print_filenames:
                         progress_bar.set_description(
                             "Skipping %s, only downloading photos." % photo.filename)
-                    continue
+                    break
 
                 created_date = photo.created.astimezone(get_localzone())
 
