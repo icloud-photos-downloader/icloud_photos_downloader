@@ -253,11 +253,11 @@ def download_photo(icloud, photo, download_path, size, force_size, download_dir,
 
     for _ in range(MAX_RETRIES):
         try:
-            download_url = photo.download(size)
+            photo_response = photo.download(size)
 
-            if download_url:
+            if photo_response:
                 with open(download_path, 'wb') as file_obj:
-                    for chunk in download_url.iter_content(chunk_size=1024):
+                    for chunk in photo_response.iter_content(chunk_size=1024):
                         if chunk:
                             file_obj.write(chunk)
                 break
