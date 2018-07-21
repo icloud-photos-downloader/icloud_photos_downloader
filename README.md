@@ -21,6 +21,7 @@
 
     # Install dependencies (Linux)
     # Note: This will install a fork of the latest pyicloud with some bug fixes
+    # Also note that you may not need sudo for `pip install`.
     sudo pip install -r requirements.txt
 
 
