@@ -237,7 +237,7 @@ def filename_without_size(photo):
     return photo.filename.encode('utf-8') \
         .decode('ascii', 'ignore')
 
-def local_download_path(photo, size:None, download_dir):
+def local_download_path(photo, size, download_dir):
     # Strip any non-ascii characters.
     if not size is None:
         filename = filename_with_size(photo, size)
