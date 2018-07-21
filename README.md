@@ -19,7 +19,7 @@
     git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
     cd icloud_photos_downloader
 
-    # Install dependencies (Linux)
+    # Install dependencies (Linux or Mac)
     # Note: This will install a fork of the latest pyicloud with some bug fixes
     # Also note that you may not need sudo for `pip install`.
     sudo pip install -r requirements.txt
