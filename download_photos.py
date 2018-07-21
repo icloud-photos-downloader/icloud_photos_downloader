@@ -40,8 +40,8 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--until-found',
               help='Download most recently added photos until we find x number of previously downloaded consecutive photos (default: download all photos)',
               type=click.IntRange(0))
-@click.option('--download-videos',
-              help='Download both videos and photos (default: only download photos)',
+@click.option('--skip-videos',
+              help='Don\'t download any videos (default: Download both photos and videos)',
               is_flag=True)
 @click.option('--force-size',
               help='Only download the requested size ' + \
@@ -87,7 +87,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 
 def download(directory, username, password, size, recent, \
-    until_found, download_videos, force_size, auto_delete, \
+    until_found, skip_videos, force_size, auto_delete, \
     only_print_filenames, folder_structure, set_exif_datetime, \
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
     notification_email):
@@ -105,7 +105,10 @@ def download(directory, username, password, size, recent, \
     directory = os.path.normpath(directory)
 
     if not only_print_filenames:
-        print("Looking up all photos...")
+        if skip_videos:
+            print("Looking up all photos...")
+        else:
+            print("Looking up all photos and videos...")
     photos = icloud.photos.all
     photos_count = len(photos)
 
@@ -124,7 +127,7 @@ def download(directory, username, password, size, recent, \
         photos = (p for p in photos)
 
     if not only_print_filenames:
-        if download_videos:
+        if not skip_videos:
             print("Downloading %s %s photos and videos to %s/ ..." % (photos_count, size, directory))
         else:
             print("Downloading %s %s photos to %s/ ..." % (photos_count, size, directory))
@@ -142,7 +145,7 @@ def download(directory, username, password, size, recent, \
     for photo in progress_bar:
         for _ in range(MAX_RETRIES):
             try:
-                if not download_videos \
+                if skip_videos \
                     and not photo.item_type == "image":
                     if not only_print_filenames:
                         progress_bar.set_description(

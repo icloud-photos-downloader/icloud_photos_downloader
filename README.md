@@ -89,8 +89,8 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                                         find x number of previously downloaded
                                         consecutive photos (default: download all
                                         photos)
-        --download-videos               Download both videos and photos (default:
-                                        only download photos)
+        --skip-videos                   Don't download any videos (default: Download
+                                        both photos and videos)
         --force-size                    Only download the requested size (default:
                                         download original if size is not available)
         --auto-delete                   Scans the "Recently Deleted" folder and
@@ -100,8 +100,10 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
         --only-print-filenames          Only prints the filenames of all files that
                                         will be downloaded. (Does not download any
                                         files.)
-        --folder-structure              Folder structure. Default is {:%Y/%m/%d}.
-        --set-exif-datetime             Write the DateTimeOriginal exif tag from file creation date, if it doesn't exist.
+        --folder-structure <folder_structure>
+                                        Folder structure (default: {:%Y/%m/%d})
+        --set-exif-datetime             Writing exif DateTimeOriginal tag from file
+                                        creation date, if it's not exists.
         --smtp-username <smtp_username>
                                         Your SMTP username, for sending email
                                         notifications when two-step authentication
@@ -120,7 +122,6 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                                         receive email notifications. Default: SMTP
                                         username
         -h, --help                      Show this message and exit.
-
 
 Example:
 
