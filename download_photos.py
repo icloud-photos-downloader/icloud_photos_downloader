@@ -288,6 +288,12 @@ def download_photo(icloud, photo, download_path, size, force_size, download_dir,
                         '%s download failed, retrying after %d seconds...' %
                         (photo.filename, WAIT_SECONDS))
                 time.sleep(WAIT_SECONDS)
+
+        except IOError:
+            print("IOError while writing file to %s! "
+                "You might have run out of disk space, or the file "
+                "might be too large for your OS. "
+                "Skipping this file..." % download_path)
     else:
         tqdm.write("Could not download %s! Please try again later." % photo.filename)
 
