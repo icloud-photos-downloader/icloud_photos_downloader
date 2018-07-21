@@ -12,7 +12,7 @@ from pyicloud.exceptions import PyiCloudAPIResponseError
 from tqdm import tqdm
 from tzlocal import get_localzone
 
-from authentication import authenticate
+from icloud_photos.authentication import authenticate
 
 # For retrying connection after timeouts and errors
 MAX_RETRIES = 5
@@ -114,10 +114,10 @@ def download(directory, username, password, size, recent, \
         photos_count = recent
         photos = itertools.islice(photos, recent)
 
-    kwargs = {'total': photos_count}
+    tqdm_kwargs = {'total': photos_count}
 
     if until_found is not None:
-        del kwargs['total']
+        del tqdm_kwargs['total']
         photos_count = '???'
 
         # ensure photos iterator doesn't have a known length
@@ -132,12 +132,12 @@ def download(directory, username, password, size, recent, \
     consecutive_files_found = 0
 
     # Not using ASCII characters to fill the meter (it may crash)
-    kwargs['ascii'] = False
+    tqdm_kwargs['ascii'] = False
 
     if only_print_filenames:
         progress_bar = photos
     else:
-        progress_bar = tqdm(photos, **kwargs)
+        progress_bar = tqdm(photos, **tqdm_kwargs)
 
     for photo in progress_bar:
         for _ in range(MAX_RETRIES):
@@ -218,14 +218,6 @@ def download(directory, username, password, size, recent, \
             if os.path.exists(path):
                 print("Deleting %s!" % path)
                 os.remove(path)
-
-def truncate_middle(s, n):
-    if len(s) <= n:
-        return s
-    n_2 = int(n) // 2 - 2
-    n_1 = n - n_2 - 4
-    if n_2 < 1: n_2 = 1
-    return '{0}...{1}'.format(s[:n_1].encode('utf-8'), s[-n_2:].encode('utf-8'))
 
 def filename_with_size(photo, size):
     return photo.filename.encode('utf-8') \
