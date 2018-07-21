@@ -132,7 +132,7 @@ def download(directory, username, password, size, recent, \
     consecutive_files_found = 0
 
     # Not using ASCII characters to fill the meter (it may crash)
-    kwargs['ascii'] = False
+    kwargs['ascii'] = True
 
     if only_print_filenames:
         progress_bar = photos
