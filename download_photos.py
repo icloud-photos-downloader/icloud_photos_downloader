@@ -297,6 +297,7 @@ def download_photo(icloud, photo, download_path, size, force_size, download_dir,
                 "You might have run out of disk space, or the file "
                 "might be too large for your OS. "
                 "Skipping this file..." % download_path)
+            break
     else:
         tqdm.write("Could not download %s! Please try again later." % photo.filename)
 
