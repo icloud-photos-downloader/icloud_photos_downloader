@@ -66,7 +66,6 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
                            [--size=(original|medium|thumb)]
                            [--recent <integer>]
                            [--until-found <integer>]
-                           [--download-videos]
                            [--auto-delete]
                            [--only-print-filenames]
                            [--folder-structure=({:%Y/%m/%d})]
