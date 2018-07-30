@@ -4,16 +4,47 @@
 * Works on Mac, Linux, and Windows.
 * Run it multiple times to download any new photos.
 
-### Why?
+## Requirements
 
-* I use the Photos app on my MacBook, set to "Optimize Mac Storage". It stores full-resolution images in iCloud, and only stores thumbnails on my computer until they are requested.
-* I want to download a copy of all my photos onto my Linux PC, because:
-  * I use Plex instead of an Apple TV. Now I can display photo slideshows with Plex.
-  * I like having a backup of all my photos on my own hard-drive.
-* I only want to download the "medium" size of all my photos. They save some space while still being big enough for slideshows. If "medium" is not available, then fall back to downloading the original size.
+* Python 2.7, >= 3.4
+  * *Python 2.6 is not supported.*
+* pip
+
+### How to install Python & pip
+
+#### Windows
+
+[Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
+
+#### Mac (Homebrew)
+
+Install [Homebrew](https://brew.sh/):
+
+```
+/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+Then install Python:
+
+```
+brew install python
+```
+
+----------------------------------
+
+Alternatively, you can
+[download the Python 3.7.0 installer](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
 
 
-### Installation
+#### Linux (Ubuntu)
+
+```
+sudo apt-get update
+sudo apt-get install -y python
+```
+
+
+## Install iCloud Photos Downloader
 
     # Clone the repo somewhere
     git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
@@ -25,7 +56,7 @@
     sudo pip install -r requirements.txt
 
 
-### Authentication
+## Authentication
 
 If your account has two-factor authentication enabled,
 you will be prompted for a code when you run the script.
@@ -40,7 +71,7 @@ or you can send to a different email address with `--notification-email`.
 If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
 
 
-#### System Keyring
+### System Keyring
 
 You can store your password in the system keyring using the `icloud` command-line tool
 (installed with the `pyicloud` dependency):
@@ -58,7 +89,7 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
     $ icloud --username=jappleseed@apple.com --delete-from-keyring
 
 
-### Usage
+## Usage
 
     $ ./download_photos.py <download_directory>
                            --username=<username>
@@ -134,7 +165,7 @@ Example:
         --auto-delete
 
 
-### Error on first run
+## Error on first run
 
 The first time you run the script, you will probably see an error message like this:
 
@@ -148,7 +179,7 @@ This process can take around 5-10 minutes, so please wait a few minutes, then tr
 (If you are still seeing this message after 30 minutes, then please open an issue on GitHub.)
 
 
-### Run once every 3 hours using Cron
+## Run once every 3 hours using Cron
 
     cp cron_script.sh.example cron_script.sh
 
@@ -160,7 +191,7 @@ This process can take around 5-10 minutes, so please wait a few minutes, then tr
 0 */3 * * * /path/to/icloud_photos_downloader/cron_script.sh
 ```
 
-### Docker
+## Docker
 
 * Build the image:
 
@@ -183,7 +214,7 @@ $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloa
 ```
 
 
-### Support Development
+## Support Development
 
 <a href='https://ko-fi.com/ndbroadbent' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Buy Me a Coffee' /></a>
 
