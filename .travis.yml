@@ -1,0 +1,11 @@
+language: python
+python:
+  - "2.6"
+  - "2.7"
+  - "3.4"
+  - "3.6"
+install:
+  - pip install -r requirements.txt
+
+# Just make sure the script can run without crashing
+script: ./download_photos.py --help
