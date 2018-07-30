@@ -1,7 +1,7 @@
 import sys
 import getpass
 import click
-import pyicloud
+import pyicloud_ipd
 import logging
 
 class TwoStepAuthRequiredError(Exception):
@@ -14,12 +14,12 @@ def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
     try:
         # If password not provided on command line variable will be set to None
         # and PyiCloud will attempt to retrieve from it's keyring
-        icloud = pyicloud.PyiCloudService(
+        icloud = pyicloud_ipd.PyiCloudService(
             username, password, client_id=client_id)
-    except pyicloud.exceptions.NoStoredPasswordAvailable:
+    except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
         # Prompt for password if not stored in PyiCloud's keyring
         password = getpass.getpass()
-        icloud = pyicloud.PyiCloudService(
+        icloud = pyicloud_ipd.PyiCloudService(
             username, password, client_id=client_id)
 
     if icloud.requires_2sa:

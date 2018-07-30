@@ -8,8 +8,8 @@ import requests
 import time
 import logging
 import itertools
-import pyicloud
-from pyicloud.exceptions import PyiCloudAPIResponseError
+import pyicloud_ipd
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from tqdm import tqdm
 from tzlocal import get_localzone
 
@@ -119,7 +119,7 @@ def main(directory, username, password, size, recent, \
     should_send_2sa_notification = smtp_username is not None
     try:
         icloud = authenticate(username, password, should_send_2sa_notification,
-        client_id=os.environ['CLIENT_ID'])
+                              client_id=os.environ.get('CLIENT_ID'))
     except TwoStepAuthRequiredError:
         send_two_step_expired_notification(
             smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls,
