@@ -19,14 +19,14 @@ class ListingRecentPhotosTestCase(TestCase):
                 '--recent', '5',
                 '--only-print-filenames',
                 '--no-progress-bar',
-                './'
+                'tests/fixtures/Photos'
             ])
             filenames = result.output.splitlines()
             self.assertEqual(len(filenames), 5)
-            self.assertEqual(filenames[0], './2018/07/30/IMG_7408-original.JPG')
-            self.assertEqual(filenames[1], './2018/07/30/IMG_7407-original.JPG')
-            self.assertEqual(filenames[2], './2018/07/30/IMG_7405-original.MOV')
-            self.assertEqual(filenames[3], './2018/07/30/IMG_7404-original.MOV')
-            self.assertEqual(filenames[4], './2018/07/30/IMG_7403-original.MOV')
+            self.assertEqual(filenames[0], 'tests/fixtures/Photos/2018/07/30/IMG_7408-original.JPG')
+            self.assertEqual(filenames[1], 'tests/fixtures/Photos/2018/07/30/IMG_7407-original.JPG')
+            self.assertEqual(filenames[2], 'tests/fixtures/Photos/2018/07/30/IMG_7405-original.MOV')
+            self.assertEqual(filenames[3], 'tests/fixtures/Photos/2018/07/30/IMG_7404-original.MOV')
+            self.assertEqual(filenames[4], 'tests/fixtures/Photos/2018/07/30/IMG_7403-original.MOV')
 
             assert result.exit_code == 0
