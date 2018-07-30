@@ -13,7 +13,7 @@ class AuthenticationTestCase(unittest.TestCase):
                              client_id='EC5646DE-9423-11E8-BF21-14109FE0B321')
 
         self.assertTrue(
-            'Invalid email/password combination.' in context.exception)
+            'Invalid email/password combination.' in str(context.exception))
 
     def test_2sa_required(self):
         with vcr.use_cassette('tests/vcr_cassettes/auth_requires_2sa.yml'):
@@ -28,7 +28,7 @@ class AuthenticationTestCase(unittest.TestCase):
                              client_id='EC5646DE-9423-11E8-BF21-14109FE0B321')
 
             self.assertTrue(
-                'Two-step/two-factor authentication is required!' in context.exception)
+                'Two-step/two-factor authentication is required!' in str(context.exception))
 
     def test_successful_auth(self):
         with vcr.use_cassette('tests/vcr_cassettes/successful_auth.yml'):

@@ -1,3 +1,16 @@
 #!/bin/bash
 set -e
-pytest
+echo "Running tests with Python 2..."
+if which python2.7 > /dev/null 2>&1; then
+  python2.7 -m pytest
+else
+  python pytest
+fi
+
+echo
+echo "Running tests with Python 3..."
+if which python3 > /dev/null 2>&1; then
+  python3 -m pytest
+else
+  echo "python3 not found"
+fi
