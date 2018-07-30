@@ -1,6 +1,7 @@
 from unittest import TestCase
 from vcr import VCR
 from mock import patch
+from freezegun import freeze_time
 import smtplib
 import os
 import click
@@ -12,6 +13,7 @@ import pyicloud_ipd
 vcr = VCR(decode_compressed_response=True)
 
 class EmailNotificationsTestCase(TestCase):
+    @freeze_time("2018-01-01")
     def test_2sa_required_email_notification(self):
         with vcr.use_cassette('tests/vcr_cassettes/auth_requires_2sa.yml'):
             with patch('smtplib.SMTP') as smtp:
@@ -32,5 +34,12 @@ class EmailNotificationsTestCase(TestCase):
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
             smtp_instance.sendmail.assert_called_once_with(
-                u'jdoe+smtp@gmail.com', u'jdoe+notifications@gmail.com',
-                u'From: iCloud Photos Downloader <jdoe+smtp@gmail.com>\nTo: jdoe+notifications@gmail.com\nSubject: icloud_photos_downloader: Two step authentication has expired\nDate: 31/07/2018 06:27\n\nHello,\n\nTwo-step authentication has expired for the icloud_photos_downloader script.\nPlease log in to your server and run the script manually to update two-step authentication.')
+                'jdoe+smtp@gmail.com',
+                'jdoe+notifications@gmail.com',
+                'From: iCloud Photos Downloader <jdoe+smtp@gmail.com>\n'
+                'To: jdoe+notifications@gmail.com\n'
+                'Subject: icloud_photos_downloader: Two step authentication has expired\n'
+                'Date: 01/01/2018 00:00\n\nHello,\n\n'
+                'Two-step authentication has expired for the icloud_photos_downloader script.\n'
+                'Please log in to your server and run the script manually to update two-step '
+                'authentication.')

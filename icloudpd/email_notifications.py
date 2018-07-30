@@ -2,10 +2,9 @@ import smtplib
 import datetime
 import logging
 
-def send_two_step_expired_notification(smtp_email, smtp_password, \
-    smtp_host, smtp_port, smtp_no_tls, to_addr):
-    if not to_addr:
-        to_addr = smtp_email
+def send_two_step_expired_notification(
+    smtp_email, smtp_password, smtp_host, smtp_port, smtp_no_tls, to_addr):
+    to_addr = to_addr if to_addr else smtp_email
     logger = logging.getLogger('icloudpd')
     logger.info("Sending 'two-step expired' notification via email...")
     smtp = smtplib.SMTP()
