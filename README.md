@@ -18,10 +18,10 @@
 
 #### Mac
 
-Install [Homebrew](https://brew.sh/):
+Install [Homebrew](https://brew.sh/) (if not already installed):
 
 ```
-/usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
 Then install Python:
