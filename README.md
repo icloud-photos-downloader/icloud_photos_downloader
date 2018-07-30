@@ -164,16 +164,15 @@ Example:
 
 ## Error on first run
 
-The first time you run the script, you will probably see an error message like this:
+When you run the script for the first time, you might see an error message like this:
 
 ```
 Bad Request (400)
 ```
 
-This error usually means that Apple's servers are getting ready to send you data about your photos.
-This process can take around 5-10 minutes, so please wait a few minutes, then try again.
+This error often happens because your account hasn't used the iCloud API before, so Apple's servers need to do some work to prepare some information about your photos. This process can take around 5-10 minutes, so please wait a few minutes and try again.
 
-(If you are still seeing this message after 30 minutes, then please open an issue on GitHub.)
+If you are still seeing this message after 30 minutes, then please open an issue on GitHub and post all of the output from the script.
 
 
 ## Run once every 3 hours using Cron
