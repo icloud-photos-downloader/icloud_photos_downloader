@@ -1,7 +1,7 @@
 def truncate_middle(s, n):
     if len(s) <= n:
         return s
-    if n < 1:
+    if n < 0:
         raise ValueError("n must be greater than or equal to 1")
     if n <= 3:
         return '...'[0:n]

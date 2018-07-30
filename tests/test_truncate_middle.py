@@ -12,7 +12,6 @@ class TruncateMiddleTestCase(TestCase):
         assert truncate_middle("test_filename.jpg", 3) == "..."
         assert truncate_middle("test_filename.jpg", 2) == ".."
         assert truncate_middle("test_filename.jpg", 1) == "."
-        with self.assertRaises(ValueError):
-            truncate_middle("test_filename.jpg", 0)
+        assert truncate_middle("test_filename.jpg", 0) == ""
         with self.assertRaises(ValueError):
             truncate_middle("test_filename.jpg", -1)
