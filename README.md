@@ -30,10 +30,8 @@ Then install Python:
 brew install python
 ```
 
-----------------------------------
-
 Alternatively, you can
-[download the Python 3.7.0 installer](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
+[download the Python 3.7.0 installer for Mac](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
 
 
 #### Linux (Ubuntu)
