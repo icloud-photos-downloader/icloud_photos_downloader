@@ -1,12 +1,12 @@
-def truncate_middle(s, n):
-    if len(s) <= n:
-        return s
-    if n < 0:
+def truncate_middle(str, length):
+    if len(str) <= length:
+        return str
+    if length < 0:
         raise ValueError("n must be greater than or equal to 1")
-    if n <= 3:
-        return '...'[0:n]
-    n_2 = int(n) // 2 - 2
-    n_1 = n - n_2 - 4
-    if n_2 < 1:
-        n_2 = 1
-    return '{0}...{1}'.format(s[:n_1], s[-n_2:])
+    if length <= 3:
+        return '...'[0:length]
+    end_length = int(length) // 2 - 2
+    start_length = length - end_length - 4
+    if end_length < 1:
+        end_length = 1
+    return '{0}...{1}'.format(str[:start_length], str[-end_length:])
