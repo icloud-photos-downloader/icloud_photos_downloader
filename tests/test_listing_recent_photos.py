@@ -3,7 +3,7 @@ from vcr import VCR
 import os
 import click
 from click.testing import CliRunner
-from download_photos import main
+from icloudpd.base import main
 
 vcr = VCR(decode_compressed_response=True)
 

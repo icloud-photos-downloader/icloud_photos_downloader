@@ -1,7 +1,7 @@
 from unittest import TestCase
 import click
 from click.testing import CliRunner
-from download_photos import main
+from icloudpd.base import main
 
 class CliTestCase(TestCase):
     def test_cli(self):
