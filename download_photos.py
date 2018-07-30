@@ -88,17 +88,31 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--notification-email',
               help='Email address where you would like to receive email notifications. Default: SMTP username',
               metavar='<notification_email>')
+@click.option('--log-level',
+              help='Log level (default: debug)',
+              type=click.Choice(['debug', 'info', 'error']),
+              default='info')
+@click.option('--no-progress-bar',
+              help='Disables the one-line progress bar and prints log messages on separate lines (Disabled by default when there is no tty attached)',
+              is_flag=True)
 
 def download(directory, username, password, size, recent, \
     until_found, skip_videos, force_size, auto_delete, \
     only_print_filenames, folder_structure, set_exif_datetime, \
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
-    notification_email):
+    notification_email, log_level, no_progress_bar):
     """Download all iCloud photos to a local directory"""
 
     logger = setup_logger()
     if only_print_filenames:
         logger.disable(logging.ERROR)
+    else:
+        if log_level == 'debug':
+            logger.setLevel(logging.DEBUG)
+        elif log_level == 'info':
+            logger.setLevel(logging.INFO)
+        elif log_level == 'error':
+            logger.setLevel(logging.ERROR)
 
     should_send_2sa_notification = smtp_username is not None
     try:
@@ -142,9 +156,10 @@ def download(directory, username, password, size, recent, \
     # Use only ASCII characters in progress bar
     tqdm_kwargs['ascii'] = True
 
-    # Skip progress bar if we're only printing the filenames,
+    # Skip the one-line progress bar if we're only printing the filenames,
+    # progress bar is explicity disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
-    if only_print_filenames or not sys.stdout.isatty():
+    if only_print_filenames or no_progress_bar or not sys.stdout.isatty():
         photos_enumerator = photos
     else:
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
