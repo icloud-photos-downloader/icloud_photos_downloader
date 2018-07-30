@@ -3,7 +3,7 @@ import logging
 from logging import DEBUG, INFO, ERROR, NOTSET
 
 class iCloudPDLogger(logging.Logger):
-    def __init__(self, name, level=DEBUG):
+    def __init__(self, name, level=INFO):
         logging.Logger.__init__(self, name, level)
         self.tqdm = None
 

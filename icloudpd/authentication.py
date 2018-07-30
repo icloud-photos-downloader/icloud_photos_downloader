@@ -7,23 +7,25 @@ import logging
 class TwoStepAuthRequiredError(Exception):
     pass
 
-def authenticate(username, password, raise_error_on_2sa=False):
+def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
     logger = logging.getLogger('icloudpd')
 
     logger.debug('Authenticating...')
     try:
         # If password not provided on command line variable will be set to None
         # and PyiCloud will attempt to retrieve from it's keyring
-        icloud = pyicloud.PyiCloudService(username, password)
+        icloud = pyicloud.PyiCloudService(
+            username, password, client_id=client_id)
     except pyicloud.exceptions.NoStoredPasswordAvailable:
         # Prompt for password if not stored in PyiCloud's keyring
         password = getpass.getpass()
-        icloud = pyicloud.PyiCloudService(username, password)
+        icloud = pyicloud.PyiCloudService(
+            username, password, client_id=client_id)
 
     if icloud.requires_2sa:
         if raise_error_on_2sa:
             raise TwoStepAuthRequiredError(
-                "Two-step/two-factor authentication is required.")
+                "Two-step/two-factor authentication is required!")
         logger.info("Two-step/two-factor authentication is required!")
         request_2sa(icloud, logger)
     return icloud

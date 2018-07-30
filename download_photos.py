@@ -25,7 +25,9 @@ WAIT_SECONDS = 5
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
-@click.argument('directory', type=click.Path(exists=True), metavar='<directory>')
+@click.argument('directory',
+    type=click.Path(exists=True),
+    metavar='<directory>')
 @click.option('--username',
               help='Your iCloud username or email address',
               metavar='<username>',
@@ -56,7 +58,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
                    '(If you restore the photo in iCloud, it will be downloaded again.)',
               is_flag=True)
 @click.option('--only-print-filenames',
-              help='Only prints the filenames of all files that will be downloaded. ' + \
+              help='Only prints the filenames of all files that will be downloaded (not including files that are already downloaded.)' + \
                 '(Does not download or delete any files.)',
               is_flag=True)
 @click.option('--folder-structure',
@@ -91,12 +93,12 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--log-level',
               help='Log level (default: debug)',
               type=click.Choice(['debug', 'info', 'error']),
-              default='info')
+              default='debug')
 @click.option('--no-progress-bar',
               help='Disables the one-line progress bar and prints log messages on separate lines (Disabled by default when there is no tty attached)',
               is_flag=True)
 
-def download(directory, username, password, size, recent, \
+def main(directory, username, password, size, recent, \
     until_found, skip_videos, force_size, auto_delete, \
     only_print_filenames, folder_structure, set_exif_datetime, \
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
@@ -105,7 +107,7 @@ def download(directory, username, password, size, recent, \
 
     logger = setup_logger()
     if only_print_filenames:
-        logger.disable(logging.ERROR)
+        logger.disabled = True
     else:
         if log_level == 'debug':
             logger.setLevel(logging.DEBUG)
@@ -116,7 +118,8 @@ def download(directory, username, password, size, recent, \
 
     should_send_2sa_notification = smtp_username is not None
     try:
-        icloud = authenticate(username, password, should_send_2sa_notification)
+        icloud = authenticate(username, password, should_send_2sa_notification,
+        client_id=os.environ['CLIENT_ID'])
     except TwoStepAuthRequiredError:
         send_two_step_expired_notification(
             smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls,
@@ -225,7 +228,7 @@ def download(directory, username, password, size, recent, \
             break
 
     if only_print_filenames:
-        exit()
+        exit(0)
 
     logger.info("All photos have been downloaded!")
 
@@ -313,4 +316,4 @@ def download_photo(icloud, photo, download_path, size, force_size, download_dir)
         logger.tqdm_write("Could not download %s! Please try again later." % photo.filename)
 
 if __name__ == '__main__':
-    download()
+    main()

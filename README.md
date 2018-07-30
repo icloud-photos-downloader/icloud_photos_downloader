@@ -209,6 +209,20 @@ $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloa
     /data
 ```
 
+## Contributing
+
+Install dependencies:
+
+```
+sudo pip install -r requirements.txt
+sudo pip install -r requirements-test.txt
+```
+
+Run tests:
+
+```
+pytest
+```
 
 ## Support Development
 

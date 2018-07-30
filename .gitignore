@@ -1,6 +1,7 @@
 cron_script.sh
 Photos/
 __pycache__
+.pytest_cache
 .cache
 *.pyc
 .idea
