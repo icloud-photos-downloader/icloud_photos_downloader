@@ -1,11 +1,11 @@
-import unittest
+from unittest import TestCase
 from vcr import VCR
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 import pyicloud_ipd
 
 vcr = VCR(decode_compressed_response=True)
 
-class AuthenticationTestCase(unittest.TestCase):
+class AuthenticationTestCase(TestCase):
     def test_failed_auth(self):
         with vcr.use_cassette('tests/vcr_cassettes/failed_auth.yml'):
             with self.assertRaises(pyicloud_ipd.exceptions.PyiCloudFailedLoginException) as context:

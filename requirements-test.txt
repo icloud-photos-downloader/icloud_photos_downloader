@@ -1,4 +1,5 @@
 pytest
+mock
 vcrpy
 pytest-cov
 coveralls

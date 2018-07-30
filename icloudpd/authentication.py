@@ -9,7 +9,6 @@ class TwoStepAuthRequiredError(Exception):
 
 def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
     logger = logging.getLogger('icloudpd')
-
     logger.debug('Authenticating...')
     try:
         # If password not provided on command line variable will be set to None

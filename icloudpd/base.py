@@ -15,7 +15,7 @@ from tzlocal import get_localzone
 
 from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
-from icloudpd.notifications import send_two_step_expired_notification
+from icloudpd.email_notifications import send_two_step_expired_notification
 from icloudpd.truncate_middle import truncate_middle
 from icloudpd.exif_datetime import get_exif_datetime, set_exif_datetime
 
@@ -125,7 +125,7 @@ def main(directory, username, password, size, recent, \
         send_two_step_expired_notification(
             smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls,
             notification_email)
-        exit()
+        exit(1)
 
     if hasattr(directory, 'decode'):
         directory = directory.decode('utf-8')

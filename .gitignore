@@ -9,3 +9,4 @@ __pycache__
 *.pyc
 .idea
 .coverage
+htmlcov
