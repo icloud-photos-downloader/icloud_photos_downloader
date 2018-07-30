@@ -8,3 +8,4 @@ __pycache__
 .cache
 *.pyc
 .idea
+.coverage
