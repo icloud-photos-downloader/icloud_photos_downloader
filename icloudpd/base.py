@@ -97,6 +97,7 @@ CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.option('--no-progress-bar',
               help='Disables the one-line progress bar and prints log messages on separate lines (Disabled by default when there is no tty attached)',
               is_flag=True)
+@click.version_option()
 
 def main(directory, username, password, size, recent, \
     until_found, skip_videos, force_size, auto_delete, \

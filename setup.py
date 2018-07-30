@@ -26,7 +26,7 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'icloudpd = download_photos:main'
+            'icloudpd = icloudpd.base:main'
         ]
     },
 )

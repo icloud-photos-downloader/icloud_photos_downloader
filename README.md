@@ -44,14 +44,11 @@ sudo apt-get install -y python
 
 ## Install iCloud Photos Downloader
 
-    # Clone the repo somewhere
-    git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
-    cd icloud_photos_downloader
+```
+sudo pip install icloudpd
+```
 
-    # Install dependencies (Linux or Mac)
-    # (You might not need sudo for `pip install` on your system.)
-    sudo pip install -r requirements.txt
-
+> Note: You may not need sudo for `pip install` on your system.
 
 ## Authentication
 
@@ -85,27 +82,26 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
 
     $ icloud --username=jappleseed@apple.com --delete-from-keyring
 
-
 ## Usage
 
-    $ ./download_photos.py <download_directory>
-                           --username=<username>
-                           [--password=<password>]
-                           [--size=(original|medium|thumb)]
-                           [--recent <integer>]
-                           [--until-found <integer>]
-                           [--skip-videos]
-                           [--force-size]
-                           [--auto-delete]
-                           [--only-print-filenames]
-                           [--folder-structure=({:%Y/%m/%d})]
-                           [--set-exif-datetime]
-                           [--smtp-username <smtp_username>]
-                           [--smtp-password <smtp_password>]
-                           [--smtp-host <smtp_host>]
-                           [--smtp-port <smtp_port>]
-                           [--smtp-no-tls]
-                           [--notification-email <notification_email>]
+    $ icloudpd <download_directory>
+               --username=<username>
+               [--password=<password>]
+               [--size=(original|medium|thumb)]
+               [--recent <integer>]
+               [--until-found <integer>]
+               [--skip-videos]
+               [--force-size]
+               [--auto-delete]
+               [--only-print-filenames]
+               [--folder-structure=({:%Y/%m/%d})]
+               [--set-exif-datetime]
+               [--smtp-username <smtp_username>]
+               [--smtp-password <smtp_password>]
+               [--smtp-host <smtp_host>]
+               [--smtp-port <smtp_port>]
+               [--smtp-no-tls]
+               [--notification-email <notification_email>]
 
     Options:
         --username <username>           Your iCloud username or email address
@@ -154,7 +150,7 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
 
 Example:
 
-    $ ./download_photos.py ./Photos \
+    $ icloudpd ./Photos \
         --username=testuser@example.com \
         --password=pass1234 \
         --size=original \
@@ -200,7 +196,7 @@ $ docker build -t icloud_photos_downloader .
 * Usage:
 
 ```
-$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloader ./download_photos.py \
+$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloader ./icloudpd/base.py \
     --username=testuser@example.com \
     --password=pass1234 \
     --size=original \
