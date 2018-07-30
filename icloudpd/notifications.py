@@ -3,6 +3,8 @@ import datetime
 
 def send_two_step_expired_notification(smtp_email, smtp_password, \
 	smtp_host, smtp_port, smtp_no_tls, to_addr):
+  if not to_addr:
+  	to_addr = smtp_email
 	print("Sending two_step_expired notification via email...")
 	smtp = SMTP()
 	smtp.set_debuglevel(0)
@@ -16,8 +18,8 @@ def send_two_step_expired_notification(smtp_email, smtp_password, \
 
 	message_text = """Hello,
 
-Just letting you know that two-step authentication has expired for the icloud_photos_downloader script.
-Please log in to your server and update two-step authentication.
+Two-step authentication has expired for the icloud_photos_downloader script.
+Please log in to your server and run the script manually to update two-step authentication.
 """
 
 	from_addr = "iCloud Photos Downloader <" + smtp_email + ">"

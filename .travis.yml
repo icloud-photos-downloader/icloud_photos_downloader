@@ -7,4 +7,6 @@ install:
   - pip install -r requirements.txt
 
 # Just make sure the script can run without crashing
-script: ./download_photos.py --help
+script:
+  - ./download_photos.py --help
+  - pytest
