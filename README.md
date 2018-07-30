@@ -16,7 +16,7 @@
 
 [Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
 
-#### Mac (Homebrew)
+#### Mac
 
 Install [Homebrew](https://brew.sh/):
 
@@ -49,8 +49,7 @@ sudo apt-get install -y python
     cd icloud_photos_downloader
 
     # Install dependencies (Linux or Mac)
-    # Note: This will install a fork of the latest pyicloud with some bug fixes
-    # Also note that you may not need sudo for `pip install`.
+    # (You might not need sudo for `pip install` on your system.)
     sudo pip install -r requirements.txt
 
 
