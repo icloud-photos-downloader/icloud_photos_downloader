@@ -1,6 +1,6 @@
-pytest
-mock
-freezegun
-vcrpy
-pytest-cov
+pytest==3.6.4
+mock==2.0.0
+freezegun==0.3.10
+vcrpy==1.13.0
+pytest-cov==2.5.1
 coveralls
