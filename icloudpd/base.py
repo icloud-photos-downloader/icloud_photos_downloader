@@ -17,6 +17,8 @@ from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 from icloudpd.email_notifications import send_two_step_expired_notification
 from icloudpd.truncate_middle import truncate_middle
+from icloudpd.autodelete import autodelete_photos
+from icloudpd.paths import local_download_path
 from icloudpd import exif_datetime
 
 # For retrying connection after timeouts and errors
@@ -165,8 +167,11 @@ def main(directory, username, password, size, recent, \
     # Skip the one-line progress bar if we're only printing the filenames,
     # progress bar is explicity disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
-    if only_print_filenames or no_progress_bar or not sys.stdout.isatty():
+    if not os.environ.get('FORCE_TQDM') and (
+        only_print_filenames or no_progress_bar or not sys.stdout.isatty()
+    ):
         photos_enumerator = photos
+        logger.set_tqdm(None)
     else:
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
         logger.set_tqdm(photos_enumerator)
@@ -181,7 +186,7 @@ def main(directory, username, password, size, recent, \
                         break
                 created_date = photo.created.astimezone(get_localzone())
 
-                date_path = (folder_structure).format(created_date)
+                date_path = folder_structure.format(created_date)
                 download_dir = os.path.join(directory, date_path)
 
                 if not os.path.exists(download_dir):
@@ -224,9 +229,6 @@ def main(directory, username, password, size, recent, \
                 logger.tqdm_write('Connection failed, retrying after %d seconds...' % WAIT_SECONDS)
                 time.sleep(WAIT_SECONDS)
 
-        else:
-            logger.tqdm_write("Could not process %s! Maybe try again later." % photo.filename)
-
         if until_found is not None and consecutive_files_found >= until_found:
             logger.tqdm_write('Found %d consecutive previusly downloaded photos. Exiting' % until_found)
             if hasattr(photos_enumerator, 'close'):
@@ -239,39 +241,7 @@ def main(directory, username, password, size, recent, \
     logger.info("All photos have been downloaded!")
 
     if auto_delete:
-        logger.info("Deleting any files found in 'Recently Deleted'...")
-
-        recently_deleted = icloud.photos.albums['Recently Deleted']
-
-        for media in recently_deleted:
-            created_date = media.created
-            date_path = (folder_structure).format(created_date)
-            download_dir = os.path.join(directory, date_path)
-
-            filename = filename_with_size(media, size)
-            path = os.path.join(download_dir, filename)
-
-            if os.path.exists(path):
-                logger.info("Deleting %s!" % path)
-                os.remove(path)
-
-def filename_with_size(photo, size):
-    return photo.filename.encode('utf-8') \
-        .decode('ascii', 'ignore').replace('.', '-%s.' % size)
-
-def filename_without_size(photo):
-    return photo.filename.encode('utf-8') \
-        .decode('ascii', 'ignore')
-
-def local_download_path(photo, size, download_dir):
-    # Strip any non-ascii characters.
-    if not size is None:
-        filename = filename_with_size(photo, size)
-    else:
-        filename = filename_without_size(photo)
-    download_path = os.path.join(download_dir, filename)
-    return download_path
-
+        autodelete_photos(icloud, folder_structure, directory)
 
 def download_photo(icloud, photo, download_path, size, force_size, download_dir):
     logger = setup_logger()
@@ -289,7 +259,6 @@ def download_photo(icloud, photo, download_path, size, force_size, download_dir)
     for _ in range(MAX_RETRIES):
         try:
             photo_response = photo.download(size)
-
             if photo_response:
                 with open(download_path, 'wb') as file_obj:
                     for chunk in photo_response.iter_content(chunk_size=1024):
@@ -303,7 +272,7 @@ def download_photo(icloud, photo, download_path, size, force_size, download_dir)
                     (photo.filename, size))
 
         except (requests.exceptions.ConnectionError, socket.timeout, PyiCloudAPIResponseError) as e:
-            if e.message == 'Invalid global session':
+            if 'Invalid global session' in str(e):
                 logger.tqdm_write('Session error, re-authenticating...')
                 icloud.authenticate()
             else:

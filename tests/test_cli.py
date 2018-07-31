@@ -39,6 +39,22 @@ class CliTestCase(TestCase):
             ])
             assert result.exit_code == 0
 
+    def test_tqdm(self):
+        if not os.path.exists('tests/fixtures/Photos'):
+            os.makedirs('tests/fixtures/Photos')
+        with vcr.use_cassette('tests/vcr_cassettes/listing_photos.yml'):
+            # Force tqdm progress bar via ENV var
+            os.environ['FORCE_TQDM'] = 'yes'
+            runner = CliRunner()
+            result = runner.invoke(main, [
+                '--username', 'jdoe@gmail.com',
+                '--password', 'password1',
+                '--recent', '0',
+                'tests/fixtures/Photos'
+            ])
+            del os.environ['FORCE_TQDM']
+            assert result.exit_code == 0
+
 
     def test_unicode_directory(self):
         with vcr.use_cassette('tests/vcr_cassettes/listing_photos.yml'):
