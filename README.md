@@ -188,18 +188,16 @@ If you are still seeing this message after 30 minutes, then please open an issue
 
 ## Docker
 
-* Build the image:
+This script is available in a Docker image: `docker pull ndbroadbent/icloudpd`
 
-```
-$ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
-$ cd icloud_photos_downloader.git/docker
-$ docker build -t icloud_photos_downloader .
-```
+Usage:
 
-* Usage:
+```bash
+# Downloads all photos to ./Photos
 
-```
-$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloud_photos_downloader ./icloudpd/base.py \
+$ docker pull ndbroadbent/icloudpd
+$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
+    icloudpd \
     --username=testuser@example.com \
     --password=pass1234 \
     --size=original \
@@ -222,6 +220,16 @@ Run tests:
 ```
 pytest
 ```
+
+
+### Building the Docker image:
+
+```
+$ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
+$ cd icloud_photos_downloader/docker
+$ docker build -t ndbroadbent/icloudpd .
+```
+
 
 ## Support Development
 
