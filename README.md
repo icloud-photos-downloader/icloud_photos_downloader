@@ -1,7 +1,7 @@
 # iCloud Photos Downloader
 
-[![Build Status](https://travis-ci.org/jdoe/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/jdoe/icloud_photos_downloader)
-[![Coverage Status](https://coveralls.io/repos/github/jdoe/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/jdoe/icloud_photos_downloader?branch=master)
+[![Build Status](https://travis-ci.org/ndbroadbent/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/ndbroadbent/icloud_photos_downloader)
+[![Coverage Status](https://coveralls.io/repos/github/ndbroadbent/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/ndbroadbent/icloud_photos_downloader?branch=master)
 
 * A command-line tool to download all your iCloud photos.
 * Works on Mac, Linux, and Windows.
@@ -188,15 +188,15 @@ If you are still seeing this message after 30 minutes, then please open an issue
 
 ## Docker
 
-This script is available in a Docker image: `docker pull jdoe/icloudpd`
+This script is available in a Docker image: `docker pull ndbroadbent/icloudpd`
 
 Usage:
 
 ```bash
 # Downloads all photos to ./Photos
 
-$ docker pull jdoe/icloudpd
-$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data jdoe/icloudpd:latest \
+$ docker pull ndbroadbent/icloudpd
+$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
     icloudpd \
     --username=testuser@example.com \
     --password=pass1234 \
@@ -225,9 +225,9 @@ pytest
 ### Building the Docker image:
 
 ```
-$ git clone https://github.com/jdoe/icloud_photos_downloader.git
+$ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
 $ cd icloud_photos_downloader/docker
-$ docker build -t jdoe/icloudpd .
+$ docker build -t ndbroadbent/icloudpd .
 ```
 
 
