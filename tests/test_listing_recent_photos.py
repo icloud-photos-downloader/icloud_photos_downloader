@@ -10,7 +10,8 @@ vcr = VCR(decode_compressed_response=True)
 
 class ListingRecentPhotosTestCase(TestCase):
     def test_listing_recent_photos(self):
-        shutil.rmtree('tests/fixtures/Photos')
+        if os.path.exists('tests/fixtures/Photos'):
+            shutil.rmtree('tests/fixtures/Photos')
         os.makedirs('tests/fixtures/Photos')
 
         # Note - This test uses the same cassette as test_download_photos.py

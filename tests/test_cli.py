@@ -15,6 +15,8 @@ class CliTestCase(TestCase):
         assert result.exit_code == 0
 
     def test_log_levels(self):
+        if not os.path.exists('tests/fixtures/Photos'):
+            os.makedirs('tests/fixtures/Photos')
         with vcr.use_cassette('tests/vcr_cassettes/listing_photos.yml'):
             # Pass fixed client ID via environment variable
             os.environ['CLIENT_ID'] = 'DE309E26-942E-11E8-92F5-14109FE0B321'

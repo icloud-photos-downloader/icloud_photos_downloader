@@ -18,7 +18,8 @@ class DownloadPhotoTestCase(TestCase):
         self._caplog = caplog
 
     def test_download_photos(self):
-        shutil.rmtree('tests/fixtures/Photos')
+        if os.path.exists('tests/fixtures/Photos'):
+            shutil.rmtree('tests/fixtures/Photos')
         os.makedirs('tests/fixtures/Photos')
 
         with vcr.use_cassette('tests/vcr_cassettes/listing_photos.yml'):
@@ -49,7 +50,8 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_download_photos_and_set_exif(self):
-        shutil.rmtree('tests/fixtures/Photos')
+        if os.path.exists('tests/fixtures/Photos'):
+            shutil.rmtree('tests/fixtures/Photos')
         os.makedirs('tests/fixtures/Photos')
         with mock.patch.object(icloudpd.exif_datetime, 'get_photo_exif') as get_exif_patched:
             get_exif_patched.return_value = False
@@ -84,7 +86,8 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_download_photos_and_exif_exceptions(self):
-        shutil.rmtree('tests/fixtures/Photos')
+        if os.path.exists('tests/fixtures/Photos'):
+            shutil.rmtree('tests/fixtures/Photos')
         os.makedirs('tests/fixtures/Photos')
 
         with mock.patch.object(piexif, 'load') as piexif_patched:
@@ -125,7 +128,8 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_skip_existing_downloads(self):
-        shutil.rmtree('tests/fixtures/Photos')
+        if os.path.exists('tests/fixtures/Photos'):
+            shutil.rmtree('tests/fixtures/Photos')
         os.makedirs('tests/fixtures/Photos/2018/07/31/')
         shutil.copyfile(
             'tests/fixtures/IMG_7409-original.JPG',
@@ -158,7 +162,8 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_until_found(self):
-        shutil.rmtree('tests/fixtures/Photos')
+        if os.path.exists('tests/fixtures/Photos'):
+            shutil.rmtree('tests/fixtures/Photos')
         os.makedirs('tests/fixtures/Photos/2018/07/31/')
         shutil.copyfile(
             'tests/fixtures/IMG_7409-original.JPG',

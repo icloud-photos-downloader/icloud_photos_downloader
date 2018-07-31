@@ -46,6 +46,8 @@ class AuthenticationTestCase(TestCase):
                          client_id='EC5646DE-9423-11E8-BF21-14109FE0B321')
 
     def test_password_prompt(self):
+        if not os.path.exists('tests/fixtures/Photos'):
+            os.makedirs('tests/fixtures/Photos')
         with vcr.use_cassette('tests/vcr_cassettes/listing_photos.yml'):
             os.environ['CLIENT_ID'] = 'DE309E26-942E-11E8-92F5-14109FE0B321'
             runner = CliRunner()
