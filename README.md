@@ -1,7 +1,7 @@
 # iCloud Photos Downloader
 
-[![Build Status](https://travis-ci.org/ndbroadbent/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/ndbroadbent/icloud_photos_downloader)
-[![Coverage Status](https://coveralls.io/repos/github/ndbroadbent/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/ndbroadbent/icloud_photos_downloader?branch=master)
+[![Build Status](https://travis-ci.org/jdoe/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/jdoe/icloud_photos_downloader)
+[![Coverage Status](https://coveralls.io/repos/github/jdoe/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/jdoe/icloud_photos_downloader?branch=master)
 
 * A command-line tool to download all your iCloud photos.
 * Works on Mac, Linux, and Windows.
@@ -188,15 +188,15 @@ If you are still seeing this message after 30 minutes, then please open an issue
 
 ## Docker
 
-This script is available in a Docker image: `docker pull ndbroadbent/icloudpd`
+This script is available in a Docker image: `docker pull jdoe/icloudpd`
 
 Usage:
 
 ```bash
 # Downloads all photos to ./Photos
 
-$ docker pull ndbroadbent/icloudpd
-$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
+$ docker pull jdoe/icloudpd
+$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data jdoe/icloudpd:latest \
     icloudpd \
     --username=testuser@example.com \
     --password=pass1234 \
@@ -225,15 +225,15 @@ pytest
 ### Building the Docker image:
 
 ```
-$ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
+$ git clone https://github.com/jdoe/icloud_photos_downloader.git
 $ cd icloud_photos_downloader/docker
-$ docker build -t ndbroadbent/icloudpd .
+$ docker build -t jdoe/icloudpd .
 ```
 
 
 ## Support Development
 
-<a href='https://ko-fi.com/ndbroadbent' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Buy Me a Coffee' /></a>
+<a href='https://ko-fi.com/jdoe' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Buy Me a Coffee' /></a>
 
 * *Bitcoin (BTC)*: 15eSc6JiwBtxte9zak44ZFhw9bkKWaMGAe
 * *Bitcoin Cash (BCH)*: 157a1zxtY7vozdkrom2aSiVu4oZ6JkXpSU

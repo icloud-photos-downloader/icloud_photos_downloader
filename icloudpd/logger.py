@@ -23,13 +23,14 @@ class iCloudPDLogger(logging.Logger):
         else:
             self.tqdm.write(message)
 
+
 def setup_logger(loglevel=DEBUG):
     logging.setLoggerClass(iCloudPDLogger)
-    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
-                                  datefmt='%Y-%m-%d %H:%M:%S')
-    stdout_handler = logging.StreamHandler(stream=sys.stdout)
-    stdout_handler.setFormatter(formatter)
     logger = logging.getLogger('icloudpd')
     logger.setLevel(loglevel)
+    formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
+                                    datefmt='%Y-%m-%d %H:%M:%S')
+    stdout_handler = logging.StreamHandler(stream=sys.stdout)
+    stdout_handler.setFormatter(formatter)
     logger.addHandler(stdout_handler)
     return logger

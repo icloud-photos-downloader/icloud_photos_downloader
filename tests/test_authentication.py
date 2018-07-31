@@ -1,7 +1,11 @@
 from unittest import TestCase
 from vcr import VCR
+import os
+import click
+from click.testing import CliRunner
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 import pyicloud_ipd
+from icloudpd.base import main
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -35,3 +39,20 @@ class AuthenticationTestCase(TestCase):
             authenticate('jdoe@gmail.com',
                          'password1',
                          client_id='EC5646DE-9423-11E8-BF21-14109FE0B321')
+
+    def test_password_prompt(self):
+        with vcr.use_cassette('tests/vcr_cassettes/listing_photos.yml'):
+            os.environ['CLIENT_ID'] = 'DE309E26-942E-11E8-92F5-14109FE0B321'
+            runner = CliRunner()
+            result = runner.invoke(main, [
+                '--username', 'jdoe@gmail.com',
+                '--recent', '0',
+                '--no-progress-bar',
+                'tests/fixtures/Photos'
+            ], input='password1\n')
+            self.assertIn('DEBUG    Authenticating...', result.output)
+            self.assertIn(
+                'DEBUG    Looking up all photos and videos...', result.output)
+            self.assertIn(
+                'INFO     All photos have been downloaded!', result.output)
+            assert result.exit_code == 0

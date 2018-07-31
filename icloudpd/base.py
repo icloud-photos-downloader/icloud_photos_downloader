@@ -105,11 +105,13 @@ def main(directory, username, password, size, recent, \
     smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, \
     notification_email, log_level, no_progress_bar):
     """Download all iCloud photos to a local directory"""
-
     logger = setup_logger()
     if only_print_filenames:
         logger.disabled = True
     else:
+        # Need to make sure disabled is reset to the correct value,
+        # because the logger instance is shared between tests.
+        logger.disabled = False
         if log_level == 'debug':
             logger.setLevel(logging.DEBUG)
         elif log_level == 'info':

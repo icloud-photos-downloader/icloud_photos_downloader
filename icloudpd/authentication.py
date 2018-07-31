@@ -1,5 +1,4 @@
 import sys
-import getpass
 import click
 import pyicloud_ipd
 import logging
@@ -17,7 +16,8 @@ def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
             username, password, client_id=client_id)
     except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
         # Prompt for password if not stored in PyiCloud's keyring
-        password = getpass.getpass()
+        password = click.prompt(
+            "iCloud Password", hide_input=True)
         icloud = pyicloud_ipd.PyiCloudService(
             username, password, client_id=client_id)
 
@@ -32,9 +32,8 @@ def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
 def request_2sa(icloud, logger):
     devices = icloud.trusted_devices
     devices_count = len(devices)
-    if devices_count == 0:
-        device_index = 0
-    else:
+    device_index = 0
+    if devices_count > 0:
         for i, device in enumerate(devices):
             print("  %s: %s" % (i, device.get('deviceName',
                 "SMS to %s" % device.get('phoneNumber'))))
@@ -55,9 +54,8 @@ def request_2sa(icloud, logger):
     if not icloud.validate_verification_code(device, code):
         logger.error("Failed to verify two-factor authentication code")
         sys.exit(1)
-
     logger.info(
-        "Great, you're all set up. The script can now be run without"
+        "Great, you're all set up. The script can now be run without "
         "user interaction until 2SA expires.\n"
         "You can set up email notifications for when "
         "the two-step authentication expires.\n"
