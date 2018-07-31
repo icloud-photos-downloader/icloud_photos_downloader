@@ -206,6 +206,7 @@ def main(directory, username, password, size, recent, \
                     if set_exif_datetime:
                         if photo.filename.lower().endswith(('.jpg', '.jpeg')):
                             if not exif_datetime.get_photo_exif(download_path):
+                                # %Y:%m:%d is the correct format.
                                 date_str = created_date.strftime("%Y:%m:%d %H:%M:%S")
                                 logger.debug(
                                     'Setting EXIF timestamp for %s: %s' % (download_path, date_str))

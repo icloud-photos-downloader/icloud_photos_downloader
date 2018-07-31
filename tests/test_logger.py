@@ -21,12 +21,10 @@ class LoggerTestCase(TestCase):
         test_logger.debug(u'Test debug output')
         test_logger.error(u'Test error output')
         output = string_io.getvalue().strip()
-        self.assertIn(
-            '2018-01-01 07:00:00 INFO     Test info output', output)
-        self.assertIn(
-            '2018-01-01 07:00:00 DEBUG    Test debug output', output)
-        self.assertIn(
-            '2018-01-01 07:00:00 ERROR    Test error output', output)
+        self.assertIn('2018-01-01', output)
+        self.assertIn('INFO     Test info output', output)
+        self.assertIn('DEBUG    Test debug output', output)
+        self.assertIn('ERROR    Test error output', output)
 
     def test_logger_tqdm_fallback(self):
         logging.setLoggerClass(iCloudPDLogger)

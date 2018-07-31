@@ -77,8 +77,9 @@ class DownloadPhotoTestCase(TestCase):
                 self.assertIn(
                     'INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG',
                     self._caplog.text)
+                # YYYY:MM:DD is the correct format.
                 self.assertIn(
-                    'DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG: 2018:07:31 14:22:24',
+                    'DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG: 2018:07:31',
                     self._caplog.text)
                 self.assertIn(
                     'INFO     All photos have been downloaded!',
