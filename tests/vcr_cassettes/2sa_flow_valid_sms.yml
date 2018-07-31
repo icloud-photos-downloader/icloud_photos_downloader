@@ -24,12 +24,6 @@ interactions:
       Content-Type: [application/json; charset=UTF-8]
       Date: ['Tue, 31 Jul 2018 11:58:49 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      Set-Cookie: ['X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9x-MCtmTHYG5gFzQl2nKboWGCFMPm1an6x_ztK0zn1b4kZ2yNg~~";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9y7H9Oz7XMUPbmU5VH0uYYRX8ZoAFRHJ-ObtPLUcpVYFHL4sZg~~";Path=/;Domain=.icloud.com;Secure',
-        'X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De97Y4gsvHzx6qtOS36xOUdygRLm6mJLt3QUBRbPwNT2_ZYRDrMw~~";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~";Expires=Sat,
-          29-Sep-2018 11:58:49 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly']
       Strict-Transport-Security: [max-age=31536000; includeSubDomains]
       X-Apple-Jingle-Correlation-Key: [J4DLZQ37IVDGDIKZGN73GUWCGQ]
       X-Apple-Request-UUID: [4f06bcc3-7f45-4661-a159-337fb352c234]
@@ -46,10 +40,6 @@ interactions:
       Accept: ['*/*']
       Accept-Encoding: ['gzip, deflate']
       Connection: [keep-alive]
-      Cookie: ['X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De97Y4gsvHzx6qtOS36xOUdygRLm6mJLt3QUBRbPwNT2_ZYRDrMw~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9x-MCtmTHYG5gFzQl2nKboWGCFMPm1an6x_ztK0zn1b4kZ2yNg~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9y7H9Oz7XMUPbmU5VH0uYYRX8ZoAFRHJ-ObtPLUcpVYFHL4sZg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -84,10 +74,6 @@ interactions:
       Accept-Encoding: ['gzip, deflate']
       Connection: [keep-alive]
       Content-Length: ['82']
-      Cookie: ['X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De97Y4gsvHzx6qtOS36xOUdygRLm6mJLt3QUBRbPwNT2_ZYRDrMw~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9x-MCtmTHYG5gFzQl2nKboWGCFMPm1an6x_ztK0zn1b4kZ2yNg~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9y7H9Oz7XMUPbmU5VH0uYYRX8ZoAFRHJ-ObtPLUcpVYFHL4sZg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -122,10 +108,6 @@ interactions:
       Accept-Encoding: ['gzip, deflate']
       Connection: [keep-alive]
       Content-Length: ['134']
-      Cookie: ['X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De97Y4gsvHzx6qtOS36xOUdygRLm6mJLt3QUBRbPwNT2_ZYRDrMw~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9x-MCtmTHYG5gFzQl2nKboWGCFMPm1an6x_ztK0zn1b4kZ2yNg~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9y7H9Oz7XMUPbmU5VH0uYYRX8ZoAFRHJ-ObtPLUcpVYFHL4sZg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -142,11 +124,6 @@ interactions:
       Content-Type: [application/json; charset=UTF-8]
       Date: ['Tue, 31 Jul 2018 11:59:25 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      Set-Cookie: ['X-APPLE-WEBAUTH-HSA-LOGIN=;Expires=Thu, 01-Jan-1970 00:00:01 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81VoDxlsi_U1av6HP7HLcswBXwAuiBTHhb2bnp8O_cHd95yUenw~~";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-HSA-TRUST-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81T233m6mBC91JOQuUpZNrAMHKLcw3wFkGRZ8Tfs5o7vPhbqUjg~~";Expires=Mon,
-          29-Oct-2018 11:59:25 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly', 'X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81bbeMd9yiW-MbWfvq3MD8BId5GqVXG4BQgZ8LQty55m-_eSv6g~~";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146";Path=/;Domain=.icloud.com;Secure;HttpOnly']
       Strict-Transport-Security: [max-age=31536000; includeSubDomains]
       X-Apple-Jingle-Correlation-Key: [YZO2CIALNBEG5HEFJDLX7T5BIM]
       X-Apple-Request-UUID: [c65da120-0b68-486e-9c85-48d77fcfa143]
@@ -165,11 +142,6 @@ interactions:
       Accept-Encoding: ['gzip, deflate']
       Connection: [keep-alive]
       Content-Length: ['88']
-      Cookie: ['X-APPLE-WEBAUTH-HSA-TRUST-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81T233m6mBC91JOQuUpZNrAMHKLcw3wFkGRZ8Tfs5o7vPhbqUjg~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81bbeMd9yiW-MbWfvq3MD8BId5GqVXG4BQgZ8LQty55m-_eSv6g~~";
-          X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81VoDxlsi_U1av6HP7HLcswBXwAuiBTHhb2bnp8O_cHd95yUenw~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De9y7H9Oz7XMUPbmU5VH0uYYRX8ZoAFRHJ-ObtPLUcpVYFHL4sZg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -187,18 +159,6 @@ interactions:
       Content-Type: [application/json; charset=UTF-8]
       Date: ['Tue, 31 Jul 2018 11:59:27 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      Set-Cookie: [X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6AXLj0aBdrd/tdgmC0DG9gTUJQauTDz6n4njKbBVmqSIfZPwgdPn0l7RvEv1wAd8ZbeTfpUMgm7tRP8yNFbyc/86mpQwuG9wk5P+sd8IJQuzVe2Uu9LGdAY9kVz9d62dvjW4E4n12jSmxBCM+O4BqyqyERm7Ncs9VPEYN06CZnAQCl2JssiHosA==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6AeKg+XP3pPtyNVrNFTe5Xp/Z0VpIE9EhjIjowW/D8Pzt1gS1/KnXHc13BWYp4fgY88s9uyoqo6dgKxwnZmrAiO/z8xGB+OTkY50p3nRAFHAUgRXeJ19dtaRC+LZcpI/E30uw7xjSUYvJW2DbAoJJxX1vDAnqs2S6m3nhLESFxjqtRJz7xTqEiQ==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AQHZrGuCHRy/69W3eBOoblOpo3fqj7M55I1jcusJ0Qjaxh/k41gH5U3gx3VkQsNGXTPdrOrWZdkYFrpAbizNQWnNLypMn4kmI0nwzTAGHfmW9SsK1WmiPzHDFxUvnRKIIfBnVTPQ1CtvspfUld473rnt7H5CHCXYpQp6kaDbfdjosXqi/pBI7Q==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6ATtN+3AiC5qHPfJR1B4xfj9pIJaS55hXO48dPUT+ZBvKUc10o+8Wz9NJ1LSU/YU/DX1ZzPTPEh0aJoGeC1lRNXraqjzmEa40fnjnHTib1zbsWpOaiAcuCxD6Dy8+rLA20mUoJOYM8x+t5Y8Wt1NFmpm/7YLz8aTGpM7+CuxmWg+7jk5sUG9Gbw==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6ARpnNKc1Smbx4CHqSvL/uO73Po9f+I26vmac211ycyqNcks1AvQKWnuFKks55KtRwgjVl2XI5g2BDEql415986GA0eOVUqvpCfKkUWhCH8UY0NwWeuFiOssKsH4XJG4D8Zs5Bh0/aWyTbk7NB2FAlWK2ArgQJCTpgw40fYz9u9xUPdbMWXW9bw==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AWap1U7aG1eeIR/eyftvtw4LpeCN2secChtmfWhILbTbL7i8ddX+GEWs0vIZXIxqcIm1aENmm5ibRmkvtss9RV/4PCc97ssSZfWNRZI9yolFgOYhLNcvN6wXx9E+q/JlRJPcweRg/PMNXBWA8rsfKcaic4vJsH27xS1dqFbJHDNRaXEVrZeAxA==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6Afv5ErYp42A8pQy7mZ53e4vUxUeNB3kHQY+9v9F7lFusyQP6AhEI+aQ+7tNzgVtJ86xcRHyDsmEHg5UzE9QURwjdCBwKXfbX66Ik2WDi1JUDe0+wIi+a60z40PLyD49Povb7fO0O+SWRF36Jzpoe3AGVwDFJPA0/yDTD9kYq4EpUlpAPIZpbmA==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AdLUPCOR4/OAdF4yDUyyaKaWdm0dQmz7Nl0i8ARt0i8Et+tonCCpfisPJ3kKVL1wwGA1tAhJAogOc6RKvZQ74yQssZLC8oGeFFjAaDNeyC6Nx5fSoyzx/g86VIyzKiVMOsk/1xZMsTqj2pnKmM56khX9yBFB0MaeAlRufcei4oPNHGK0Mc1oLw==";Path=/;Domain=.icloud.com;Secure;HttpOnly,
-        'X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUTGIpHs4P8eHmd8OpFowqNMQw7mYGSKaoRtGiB6c_GvTSwGv5g~~";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUWzNfjuOfF9MWkwUUArkXaQR80XtYFFU5pLMcqBhqYP7qMYbrg~~";Path=/;Domain=.icloud.com;Secure',
-        'X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUSzd9y2y7Yf25Bgz8bk_5EhG_BmqsV_0fe-5AWhBSahzJEZ3Jw~~";Path=/;Domain=.icloud.com;Secure;HttpOnly',
-        'X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146";Path=/;Domain=.icloud.com;Secure;HttpOnly']
       Strict-Transport-Security: [max-age=31536000; includeSubDomains]
       X-Apple-Jingle-Correlation-Key: [LT24XXWHMFBG5IDZEXNU4TDFK4]
       X-Apple-Request-UUID: [5cf5cbde-c761-426e-a079-25db4e4c6557]
@@ -217,19 +177,6 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['81']
       Content-type: [text/plain]
-      Cookie: ['X-APPLE-WEBAUTH-HSA-TRUST-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81T233m6mBC91JOQuUpZNrAMHKLcw3wFkGRZ8Tfs5o7vPhbqUjg~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUTGIpHs4P8eHmd8OpFowqNMQw7mYGSKaoRtGiB6c_GvTSwGv5g~~";
-          X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AQHZrGuCHRy/69W3eBOoblOpo3fqj7M55I1jcusJ0Qjaxh/k41gH5U3gx3VkQsNGXTPdrOrWZdkYFrpAbizNQWnNLypMn4kmI0nwzTAGHfmW9SsK1WmiPzHDFxUvnRKIIfBnVTPQ1CtvspfUld473rnt7H5CHCXYpQp6kaDbfdjosXqi/pBI7Q==";
-          X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6AXLj0aBdrd/tdgmC0DG9gTUJQauTDz6n4njKbBVmqSIfZPwgdPn0l7RvEv1wAd8ZbeTfpUMgm7tRP8yNFbyc/86mpQwuG9wk5P+sd8IJQuzVe2Uu9LGdAY9kVz9d62dvjW4E4n12jSmxBCM+O4BqyqyERm7Ncs9VPEYN06CZnAQCl2JssiHosA==";
-          X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6ARpnNKc1Smbx4CHqSvL/uO73Po9f+I26vmac211ycyqNcks1AvQKWnuFKks55KtRwgjVl2XI5g2BDEql415986GA0eOVUqvpCfKkUWhCH8UY0NwWeuFiOssKsH4XJG4D8Zs5Bh0/aWyTbk7NB2FAlWK2ArgQJCTpgw40fYz9u9xUPdbMWXW9bw==";
-          X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6Afv5ErYp42A8pQy7mZ53e4vUxUeNB3kHQY+9v9F7lFusyQP6AhEI+aQ+7tNzgVtJ86xcRHyDsmEHg5UzE9QURwjdCBwKXfbX66Ik2WDi1JUDe0+wIi+a60z40PLyD49Povb7fO0O+SWRF36Jzpoe3AGVwDFJPA0/yDTD9kYq4EpUlpAPIZpbmA==";
-          X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AWap1U7aG1eeIR/eyftvtw4LpeCN2secChtmfWhILbTbL7i8ddX+GEWs0vIZXIxqcIm1aENmm5ibRmkvtss9RV/4PCc97ssSZfWNRZI9yolFgOYhLNcvN6wXx9E+q/JlRJPcweRg/PMNXBWA8rsfKcaic4vJsH27xS1dqFbJHDNRaXEVrZeAxA==";
-          X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6AeKg+XP3pPtyNVrNFTe5Xp/Z0VpIE9EhjIjowW/D8Pzt1gS1/KnXHc13BWYp4fgY88s9uyoqo6dgKxwnZmrAiO/z8xGB+OTkY50p3nRAFHAUgRXeJ19dtaRC+LZcpI/E30uw7xjSUYvJW2DbAoJJxX1vDAnqs2S6m3nhLESFxjqtRJz7xTqEiQ==";
-          X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6ATtN+3AiC5qHPfJR1B4xfj9pIJaS55hXO48dPUT+ZBvKUc10o+8Wz9NJ1LSU/YU/DX1ZzPTPEh0aJoGeC1lRNXraqjzmEa40fnjnHTib1zbsWpOaiAcuCxD6Dy8+rLA20mUoJOYM8x+t5Y8Wt1NFmpm/7YLz8aTGpM7+CuxmWg+7jk5sUG9Gbw==";
-          X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AdLUPCOR4/OAdF4yDUyyaKaWdm0dQmz7Nl0i8ARt0i8Et+tonCCpfisPJ3kKVL1wwGA1tAhJAogOc6RKvZQ74yQssZLC8oGeFFjAaDNeyC6Nx5fSoyzx/g86VIyzKiVMOsk/1xZMsTqj2pnKmM56khX9yBFB0MaeAlRufcei4oPNHGK0Mc1oLw==";
-          X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUSzd9y2y7Yf25Bgz8bk_5EhG_BmqsV_0fe-5AWhBSahzJEZ3Jw~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUWzNfjuOfF9MWkwUUArkXaQR80XtYFFU5pLMcqBhqYP7qMYbrg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -255,7 +202,6 @@ interactions:
       Content-Type: [application/json; charset=UTF-8]
       Date: ['Tue, 31 Jul 2018 11:59:28 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      Set-Cookie: ['X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgTyARDmdzLmljbG91ZC5hdXRovQAB79_iRk94adgrLezQ6MAoEcu08Y5SaqjYhH8Li7EcjM1F4yepV5rJ_3cGkjv-SU__0ItQyGVpe26bzMislN4CeM5m3QDjhvb2akfEP4k1ad_3ZsubsXwokDYWl2dgamIvKwJgg1-eJ17zDY0OBE_J1KMf-Q~~";Path=/;Domain=.icloud.com;Secure;HttpOnly']
       Strict-Transport-Security: [max-age=31536000; includeSubDomains;]
       X-Apple-CloudKit-Version: ['1.0']
       X-Apple-Request-UUID: [9ca52f84-cef3-4818-8beb-9ad71d062730]
@@ -275,19 +221,6 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['85']
       Content-type: [text/plain]
-      Cookie: ['X-APPLE-WEBAUTH-HSA-TRUST-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81T233m6mBC91JOQuUpZNrAMHKLcw3wFkGRZ8Tfs5o7vPhbqUjg~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUTGIpHs4P8eHmd8OpFowqNMQw7mYGSKaoRtGiB6c_GvTSwGv5g~~";
-          X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AQHZrGuCHRy/69W3eBOoblOpo3fqj7M55I1jcusJ0Qjaxh/k41gH5U3gx3VkQsNGXTPdrOrWZdkYFrpAbizNQWnNLypMn4kmI0nwzTAGHfmW9SsK1WmiPzHDFxUvnRKIIfBnVTPQ1CtvspfUld473rnt7H5CHCXYpQp6kaDbfdjosXqi/pBI7Q==";
-          X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6AXLj0aBdrd/tdgmC0DG9gTUJQauTDz6n4njKbBVmqSIfZPwgdPn0l7RvEv1wAd8ZbeTfpUMgm7tRP8yNFbyc/86mpQwuG9wk5P+sd8IJQuzVe2Uu9LGdAY9kVz9d62dvjW4E4n12jSmxBCM+O4BqyqyERm7Ncs9VPEYN06CZnAQCl2JssiHosA==";
-          X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6ARpnNKc1Smbx4CHqSvL/uO73Po9f+I26vmac211ycyqNcks1AvQKWnuFKks55KtRwgjVl2XI5g2BDEql415986GA0eOVUqvpCfKkUWhCH8UY0NwWeuFiOssKsH4XJG4D8Zs5Bh0/aWyTbk7NB2FAlWK2ArgQJCTpgw40fYz9u9xUPdbMWXW9bw==";
-          X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6Afv5ErYp42A8pQy7mZ53e4vUxUeNB3kHQY+9v9F7lFusyQP6AhEI+aQ+7tNzgVtJ86xcRHyDsmEHg5UzE9QURwjdCBwKXfbX66Ik2WDi1JUDe0+wIi+a60z40PLyD49Povb7fO0O+SWRF36Jzpoe3AGVwDFJPA0/yDTD9kYq4EpUlpAPIZpbmA==";
-          X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AWap1U7aG1eeIR/eyftvtw4LpeCN2secChtmfWhILbTbL7i8ddX+GEWs0vIZXIxqcIm1aENmm5ibRmkvtss9RV/4PCc97ssSZfWNRZI9yolFgOYhLNcvN6wXx9E+q/JlRJPcweRg/PMNXBWA8rsfKcaic4vJsH27xS1dqFbJHDNRaXEVrZeAxA==";
-          X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6AeKg+XP3pPtyNVrNFTe5Xp/Z0VpIE9EhjIjowW/D8Pzt1gS1/KnXHc13BWYp4fgY88s9uyoqo6dgKxwnZmrAiO/z8xGB+OTkY50p3nRAFHAUgRXeJ19dtaRC+LZcpI/E30uw7xjSUYvJW2DbAoJJxX1vDAnqs2S6m3nhLESFxjqtRJz7xTqEiQ==";
-          X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6ATtN+3AiC5qHPfJR1B4xfj9pIJaS55hXO48dPUT+ZBvKUc10o+8Wz9NJ1LSU/YU/DX1ZzPTPEh0aJoGeC1lRNXraqjzmEa40fnjnHTib1zbsWpOaiAcuCxD6Dy8+rLA20mUoJOYM8x+t5Y8Wt1NFmpm/7YLz8aTGpM7+CuxmWg+7jk5sUG9Gbw==";
-          X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AdLUPCOR4/OAdF4yDUyyaKaWdm0dQmz7Nl0i8ARt0i8Et+tonCCpfisPJ3kKVL1wwGA1tAhJAogOc6RKvZQ74yQssZLC8oGeFFjAaDNeyC6Nx5fSoyzx/g86VIyzKiVMOsk/1xZMsTqj2pnKmM56khX9yBFB0MaeAlRufcei4oPNHGK0Mc1oLw==";
-          X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgTyARDmdzLmljbG91ZC5hdXRovQAB79_iRk94adgrLezQ6MAoEcu08Y5SaqjYhH8Li7EcjM1F4yepV5rJ_3cGkjv-SU__0ItQyGVpe26bzMislN4CeM5m3QDjhvb2akfEP4k1ad_3ZsubsXwokDYWl2dgamIvKwJgg1-eJ17zDY0OBE_J1KMf-Q~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUWzNfjuOfF9MWkwUUArkXaQR80XtYFFU5pLMcqBhqYP7qMYbrg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -865,7 +798,6 @@ interactions:
       Content-Type: [application/json; charset=UTF-8]
       Date: ['Tue, 31 Jul 2018 12:00:58 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      Set-Cookie: ['X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgT3oRDmdzLmljbG91ZC5hdXRovQBjBoGHa0iwMDQKpLafBgEdfUZFKr0NE8Z_dOmtdCT91pbq5mP8r65sBgvCUfF2KbCVBK-MdSrpVFbIeySAVdzUETxQwRwcOy-dkmwIFcebaHdts77YLXBRk4ulf_YWJWqWA6YtS2GcOKO8pRi_SFbzDOSJNg~~";Path=/;Domain=.icloud.com;Secure;HttpOnly']
       Strict-Transport-Security: [max-age=31536000; includeSubDomains;]
       Transfer-Encoding: [chunked]
       Via: ['xrail:nk11p00ic-ztdj17111301.me.com:8301:18H44:grp31', 'icloudedge:si03p00ic-zteu070515:7401:18RC341:Singapore']
@@ -887,19 +819,6 @@ interactions:
       Connection: [keep-alive]
       Content-Length: ['278']
       Content-type: [text/plain]
-      Cookie: ['X-APPLE-WEBAUTH-HSA-TRUST-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTx0RDmdzLmljbG91ZC5hdXRovQChdE7IGUeloNlYPHaEaUFpLU6yzNz1wMeDdQYyn3HtOzNds5Mc2iE1Pbj5jo2BoteaCB0E_mzszp_zWraPXpO1jyMzrEf4jLr6pZG_hYX81T233m6mBC91JOQuUpZNrAMHKLcw3wFkGRZ8Tfs5o7vPhbqUjg~~";
-          X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUTGIpHs4P8eHmd8OpFowqNMQw7mYGSKaoRtGiB6c_GvTSwGv5g~~";
-          X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AQHZrGuCHRy/69W3eBOoblOpo3fqj7M55I1jcusJ0Qjaxh/k41gH5U3gx3VkQsNGXTPdrOrWZdkYFrpAbizNQWnNLypMn4kmI0nwzTAGHfmW9SsK1WmiPzHDFxUvnRKIIfBnVTPQ1CtvspfUld473rnt7H5CHCXYpQp6kaDbfdjosXqi/pBI7Q==";
-          X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6AXLj0aBdrd/tdgmC0DG9gTUJQauTDz6n4njKbBVmqSIfZPwgdPn0l7RvEv1wAd8ZbeTfpUMgm7tRP8yNFbyc/86mpQwuG9wk5P+sd8IJQuzVe2Uu9LGdAY9kVz9d62dvjW4E4n12jSmxBCM+O4BqyqyERm7Ncs9VPEYN06CZnAQCl2JssiHosA==";
-          X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6ARpnNKc1Smbx4CHqSvL/uO73Po9f+I26vmac211ycyqNcks1AvQKWnuFKks55KtRwgjVl2XI5g2BDEql415986GA0eOVUqvpCfKkUWhCH8UY0NwWeuFiOssKsH4XJG4D8Zs5Bh0/aWyTbk7NB2FAlWK2ArgQJCTpgw40fYz9u9xUPdbMWXW9bw==";
-          X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6Afv5ErYp42A8pQy7mZ53e4vUxUeNB3kHQY+9v9F7lFusyQP6AhEI+aQ+7tNzgVtJ86xcRHyDsmEHg5UzE9QURwjdCBwKXfbX66Ik2WDi1JUDe0+wIi+a60z40PLyD49Povb7fO0O+SWRF36Jzpoe3AGVwDFJPA0/yDTD9kYq4EpUlpAPIZpbmA==";
-          X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AWap1U7aG1eeIR/eyftvtw4LpeCN2secChtmfWhILbTbL7i8ddX+GEWs0vIZXIxqcIm1aENmm5ibRmkvtss9RV/4PCc97ssSZfWNRZI9yolFgOYhLNcvN6wXx9E+q/JlRJPcweRg/PMNXBWA8rsfKcaic4vJsH27xS1dqFbJHDNRaXEVrZeAxA==";
-          X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6AeKg+XP3pPtyNVrNFTe5Xp/Z0VpIE9EhjIjowW/D8Pzt1gS1/KnXHc13BWYp4fgY88s9uyoqo6dgKxwnZmrAiO/z8xGB+OTkY50p3nRAFHAUgRXeJ19dtaRC+LZcpI/E30uw7xjSUYvJW2DbAoJJxX1vDAnqs2S6m3nhLESFxjqtRJz7xTqEiQ==";
-          X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6ATtN+3AiC5qHPfJR1B4xfj9pIJaS55hXO48dPUT+ZBvKUc10o+8Wz9NJ1LSU/YU/DX1ZzPTPEh0aJoGeC1lRNXraqjzmEa40fnjnHTib1zbsWpOaiAcuCxD6Dy8+rLA20mUoJOYM8x+t5Y8Wt1NFmpm/7YLz8aTGpM7+CuxmWg+7jk5sUG9Gbw==";
-          X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AdLUPCOR4/OAdF4yDUyyaKaWdm0dQmz7Nl0i8ARt0i8Et+tonCCpfisPJ3kKVL1wwGA1tAhJAogOc6RKvZQ74yQssZLC8oGeFFjAaDNeyC6Nx5fSoyzx/g86VIyzKiVMOsk/1xZMsTqj2pnKmM56khX9yBFB0MaeAlRufcei4oPNHGK0Mc1oLw==";
-          X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgT3oRDmdzLmljbG91ZC5hdXRovQBjBoGHa0iwMDQKpLafBgEdfUZFKr0NE8Z_dOmtdCT91pbq5mP8r65sBgvCUfF2KbCVBK-MdSrpVFbIeySAVdzUETxQwRwcOy-dkmwIFcebaHdts77YLXBRk4ulf_YWJWqWA6YtS2GcOKO8pRi_SFbzDOSJNg~~";
-          X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFtgTx4RDmdzLmljbG91ZC5hdXRovQB3ai-cmbnyi7xWsCrPmXgZsNENuX2RAJRdkp0B7CjHnX3_yF0lwGVWn55cqYcs7rIFMv3F7d4vruMv_BUg2ykEqMth9dnLjFuOHnTVb47dUWzNfjuOfF9MWkwUUArkXaQR80XtYFFU5pLMcqBhqYP7qMYbrg~~";
-          X_APPLE_WEB_KB-G8OEZNFVULTVFHAMBBCQAU36-EO="v=1:t=IAAAAAAABLwIAAAAAFtgTvkRDmdzLmljbG91ZC5hdXRovQADvQTr8FQL7evWWZ-7Wn08TAYLXpKCthXlrW0TZXpvnsw7QQg_gMKTKsrcUQh9wGXcyFiudODVKDrG6-95lgalH5eyjUWkkyY045TPg6De92slFELzB0QtNaSIEkHZHcHSBVczC85yTkXM8yrZuM1aGD5VYw~~"']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
@@ -928,7 +847,6 @@ interactions:
       Content-Type: [application/json; charset=UTF-8]
       Date: ['Tue, 31 Jul 2018 12:00:59 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      Set-Cookie: ['X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFtgT3sRDmdzLmljbG91ZC5hdXRovQAY5u4_sD--jCm33VZPy7RbU2rbQTrd8F1-i3YpFlLMQ8o3Wx-H1N047HLQGHxoP_ybgakHTTcRyXOqUGWmYINRqqjgm3xWHengumuM6sUcMzVrEDC5qRlvKA77iHe_Q3QcH6p0E000QE3xUgvdHSJgIXq_sA~~";Path=/;Domain=.icloud.com;Secure;HttpOnly']
       Strict-Transport-Security: [max-age=31536000; includeSubDomains;]
       Transfer-Encoding: [chunked]
       Via: ['xrail:nk11p00ic-ztdj17111601.me.com:8301:18H44:grp31', 'icloudedge:si03p00ic-zteu070515:7401:18RC341:Singapore']

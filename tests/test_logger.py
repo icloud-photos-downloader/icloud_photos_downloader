@@ -29,7 +29,7 @@ class LoggerTestCase(TestCase):
             '2018-01-01 07:00:00 ERROR    Test error output', output)
 
     def test_logger_tqdm_fallback(self):
-        setup_logger()
+        logging.setLoggerClass(iCloudPDLogger)
         logger = logging.getLogger('icloudpd-test')
         logger.info = MagicMock()
         logger.set_tqdm_description('foo')

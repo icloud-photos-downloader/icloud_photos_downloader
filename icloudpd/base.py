@@ -17,7 +17,7 @@ from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 from icloudpd.email_notifications import send_two_step_expired_notification
 from icloudpd.truncate_middle import truncate_middle
-from icloudpd.exif_datetime import get_exif_datetime, set_exif_datetime
+from icloudpd import exif_datetime
 
 # For retrying connection after timeouts and errors
 MAX_RETRIES = 5
@@ -179,7 +179,6 @@ def main(directory, username, password, size, recent, \
                         logger.set_tqdm_description(
                             "Skipping %s, only downloading photos." % photo.filename)
                         break
-
                 created_date = photo.created.astimezone(get_localzone())
 
                 date_path = (folder_structure).format(created_date)
@@ -206,8 +205,11 @@ def main(directory, username, password, size, recent, \
 
                     if set_exif_datetime:
                         if photo.filename.lower().endswith(('.jpg', '.jpeg')):
-                            if not get_exif_datetime(download_path):
-                                set_exif_datetime(
+                            if not exif_datetime.get_photo_exif(download_path):
+                                date_str = created_date.strftime("%Y:%m:%d %H:%M:%S")
+                                logger.debug(
+                                    'Setting EXIF timestamp for %s: %s' % (download_path, date_str))
+                                exif_datetime.set_photo_exif(
                                     download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
                         else:
                             timestamp = time.mktime(created_date.timetuple())
@@ -271,7 +273,7 @@ def local_download_path(photo, size, download_dir):
 
 
 def download_photo(icloud, photo, download_path, size, force_size, download_dir):
-    logger = logging.getLogger('icloudpd')
+    logger = setup_logger()
 
     truncated_path = truncate_middle(download_path, 96)
 

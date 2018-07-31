@@ -1,13 +1,13 @@
 import sys
 import click
 import pyicloud_ipd
-import logging
+from icloudpd.logger import setup_logger
 
 class TwoStepAuthRequiredError(Exception):
     pass
 
 def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
-    logger = logging.getLogger('icloudpd')
+    logger = setup_logger()
     logger.debug('Authenticating...')
     try:
         # If password not provided on command line variable will be set to None

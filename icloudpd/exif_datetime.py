@@ -1,14 +1,16 @@
 import piexif
+from icloudpd.logger import setup_logger
 
-def get_exif_datetime(path):
+def get_photo_exif(path):
     try:
         exif_dict = piexif.load(path)
-        date = exif_dict.get('Exif').get(36867)
+        return exif_dict.get('Exif').get(36867)
     except:
-        date = None
-    return date
+        logger = setup_logger()
+        logger.debug("Error fetching EXIF data for %s" % path)
+        return None
 
-def set_exif_datetime(path, date):
+def set_photo_exif(path, date):
     try:
         exif_dict = piexif.load(path)
         exif_dict.get('1st')[306] = date
@@ -17,4 +19,6 @@ def set_exif_datetime(path, date):
         exif_bytes = piexif.dump(exif_dict)
         piexif.insert(exif_bytes, path)
     except:
-       return
+        logger = setup_logger()
+        logger.debug("Error setting EXIF data for %s" % path)
+        return

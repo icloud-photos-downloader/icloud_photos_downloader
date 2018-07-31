@@ -1,5 +1,6 @@
 from unittest import TestCase
 from vcr import VCR
+import pytest
 import os
 import click
 from click.testing import CliRunner
@@ -10,6 +11,10 @@ from icloudpd.base import main
 vcr = VCR(decode_compressed_response=True)
 
 class AuthenticationTestCase(TestCase):
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+
     def test_failed_auth(self):
         with vcr.use_cassette('tests/vcr_cassettes/failed_auth.yml'):
             with self.assertRaises(pyicloud_ipd.exceptions.PyiCloudFailedLoginException) as context:
@@ -50,9 +55,9 @@ class AuthenticationTestCase(TestCase):
                 '--no-progress-bar',
                 'tests/fixtures/Photos'
             ], input='password1\n')
-            self.assertIn('DEBUG    Authenticating...', result.output)
+            self.assertIn('DEBUG    Authenticating...', self._caplog.text)
             self.assertIn(
-                'DEBUG    Looking up all photos and videos...', result.output)
+                'DEBUG    Looking up all photos and videos...', self._caplog.text)
             self.assertIn(
-                'INFO     All photos have been downloaded!', result.output)
+                'INFO     All photos have been downloaded!', self._caplog.text)
             assert result.exit_code == 0
