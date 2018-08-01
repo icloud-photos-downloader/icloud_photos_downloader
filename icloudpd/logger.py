@@ -17,10 +17,10 @@ class IPDLogger(logging.Logger):
         """Sets the tqdm progress bar"""
         self.tqdm = tdqm
 
-    def set_tqdm_description(self, desc):
+    def set_tqdm_description(self, desc, loglevel=INFO):
         """Set tqdm progress bar description, fallback to logging"""
         if self.tqdm is None:
-            self.info(desc)
+            self.log(loglevel, desc)
         else:
             self.tqdm.set_description(desc)
 

@@ -97,7 +97,6 @@ Example:
     $ icloudpd ./Photos \
         --username=testuser@example.com \
         --password=pass1234 \
-        --size=original \
         --recent 500 \
         --auto-delete
 
@@ -256,6 +255,8 @@ Before submitting a pull request, please check the following:
   * Run `./scripts/format`
 * No [pylint](https://www.pylint.org/) errors
   * Run `./scripts/lint` (or `pylint icloudpd`)
+* If you've added or changed any command-line options,
+  please update the [Usage](#usage) section in the README.
 
 If you need to make any changes to the `pyicloud` library,
 `icloudpd` uses a fork of this library that has been renamed to `pyicloud-ipd`.

@@ -30,18 +30,20 @@ class LoggerTestCase(TestCase):
     def test_logger_tqdm_fallback(self):
         logging.setLoggerClass(IPDLogger)
         logger = logging.getLogger("icloudpd-test")
-        logger.info = MagicMock()
+        logger.log = MagicMock()
         logger.set_tqdm_description("foo")
-        logger.info.assert_called_once_with("foo")
+        logger.log.assert_called_once_with(logging.INFO, "foo")
 
         logger.log = MagicMock()
-        logger.tqdm_write("foo")
-        logger.log.assert_called_once_with(logging.INFO, "foo")
+        logger.tqdm_write("bar")
+        logger.log.assert_called_once_with(logging.INFO, "bar")
 
         logger.set_tqdm(MagicMock())
         logger.tqdm.write = MagicMock()
         logger.tqdm.set_description = MagicMock()
-        logger.set_tqdm_description("bar")
-        logger.tqdm.set_description.assert_called_once_with("bar")
-        logger.tqdm_write("bar")
-        logger.tqdm.write.assert_called_once_with("bar")
+        logger.log = MagicMock()
+        logger.set_tqdm_description("baz")
+        logger.tqdm.set_description.assert_called_once_with("baz")
+        logger.tqdm_write("qux")
+        logger.tqdm.write.assert_called_once_with("qux")
+        logger.log.assert_not_called

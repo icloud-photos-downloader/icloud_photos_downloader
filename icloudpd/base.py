@@ -227,11 +227,12 @@ def main(
 
     plural_suffix = "" if photos_count == 1 else "s"
     video_suffix = ""
+    photos_count_str = "the first" if photos_count == 1 else photos_count
     if not skip_videos:
         video_suffix = " or video" if photos_count == 1 else " and videos"
     logger.info(
         "Downloading %s %s photo%s%s to %s/ ...",
-        photos_count, size, plural_suffix, video_suffix, directory
+        photos_count_str, size, plural_suffix, video_suffix, directory
     )
 
     consecutive_files_found = 0
@@ -269,7 +270,14 @@ def main(
 
             download_size = size
             # Fall back to original if requested size is not available
-            if size not in photo.versions and not force_size and size != "original":
+            if size not in photo.versions and size != "original":
+                if force_size:
+                    filename = photo.filename.encode(
+                        "utf-8").decode("ascii", "ignore")
+                    logger.set_tqdm_description(
+                        "%s size does not exist for %s. Skipping..." %
+                        (size, filename), logging.ERROR)
+                    break
                 download_size = "original"
 
             download_path = local_download_path(

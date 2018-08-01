@@ -180,7 +180,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Downloading 1 original photo to tests/fixtures/Photos/ ...",
+                    "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -231,7 +231,7 @@ class DownloadPhotoTestCase(TestCase):
                 "DEBUG    Looking up all photos and videos...", self._caplog.text
             )
             self.assertIn(
-                "INFO     Downloading 1 original photo or video to tests/fixtures/Photos/ ...",
+                "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -345,7 +345,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Downloading 1 original photo to tests/fixtures/Photos/ ...",
+                    "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -570,7 +570,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading 1 thumb photo or video to tests/fixtures/Photos/ ...",
+                        "INFO     Downloading the first thumb photo or video to tests/fixtures/Photos/ ...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -586,5 +586,58 @@ class DownloadPhotoTestCase(TestCase):
                         "tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
                         "original",
                     )
+
+                    assert result.exit_code == 0
+
+    def test_force_size(self):
+        base_dir = "tests/fixtures/Photos"
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch.object(PhotoAsset, "versions") as pa:
+                pa.return_value = ["original", "medium"]
+
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    # Pass fixed client ID via environment variable
+                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    runner = CliRunner()
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--size",
+                            "thumb",
+                            "--force-size",
+                            "--no-progress-bar",
+                            base_dir,
+                        ],
+                    )
+                    print(result.exception)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Downloading the first thumb photo or video to tests/fixtures/Photos/ ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded!", self._caplog.text
+                    )
+                    dp_patched.assert_not_called
 
                     assert result.exit_code == 0
