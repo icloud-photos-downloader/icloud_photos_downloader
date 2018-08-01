@@ -17,9 +17,9 @@ class iCloudPDLogger(logging.Logger):
         else:
             self.tqdm.set_description(desc)
 
-    def tqdm_write(self, message):
+    def tqdm_write(self, message, loglevel=INFO):
         if self.tqdm is None:
-            self.info(message)
+            self.log(loglevel, message)
         else:
             self.tqdm.write(message)
 

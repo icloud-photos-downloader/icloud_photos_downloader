@@ -4,26 +4,24 @@ import click
 import os
 import sys
 import socket
-import requests
 import time
 import logging
 import itertools
 import pyicloud_ipd
+from requests.exceptions import ConnectionError
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from tqdm import tqdm
 from tzlocal import get_localzone
 
 from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
+from icloudpd import download
 from icloudpd.email_notifications import send_two_step_expired_notification
 from icloudpd.truncate_middle import truncate_middle
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.paths import local_download_path
 from icloudpd import exif_datetime
-
-# For retrying connection after timeouts and errors
-MAX_RETRIES = 5
-WAIT_SECONDS = 5
+from icloudpd.constants import MAX_RETRIES, WAIT_SECONDS
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar='<options>')
@@ -131,8 +129,9 @@ def main(directory, username, password, size, recent, \
             notification_email)
         exit(1)
 
+    # For Python 2.7
     if hasattr(directory, 'decode'):
-        directory = directory.decode('utf-8')
+        directory = directory.decode('utf-8')  # pragma: no cover
     directory = os.path.normpath(directory)
 
     logger.debug("Looking up all photos%s..." % ("" if skip_videos else " and videos"))
@@ -152,11 +151,16 @@ def main(directory, username, password, size, recent, \
         # ensure photos iterator doesn't have a known length
         photos = (p for p in photos)
 
+    plural_suffix = '' if photos_count == 1 else 's'
+    video_suffix = ''
+    if not skip_videos:
+        video_suffix = ' or video' if photos_count == 1 else ' and videos'
     logger.info(
-        "Downloading %s %s photos%s to %s/ ..." % (
+        "Downloading %s %s photo%s%s to %s/ ..." % (
             photos_count,
             size,
-            "" if skip_videos else " and videos",
+            plural_suffix,
+            video_suffix,
             directory))
 
     consecutive_files_found = 0
@@ -178,59 +182,65 @@ def main(directory, username, password, size, recent, \
 
     for photo in photos_enumerator:
         for _ in range(MAX_RETRIES):
-            try:
-                if skip_videos \
-                    and not photo.item_type == "image":
-                        logger.set_tqdm_description(
-                            "Skipping %s, only downloading photos." % photo.filename)
-                        break
-                created_date = photo.created.astimezone(get_localzone())
-
-                date_path = folder_structure.format(created_date)
-                download_dir = os.path.join(directory, date_path)
-
-                if not os.path.exists(download_dir):
-                    os.makedirs(download_dir)
-
-                download_path = local_download_path(photo, size, download_dir)
-                download_path_without_size = local_download_path(photo, None, download_dir)
-                # add a check if the "simple" name of the file is found if the size is original
-                if os.path.isfile(download_path) or (size =='original' and os.path.isfile(download_path_without_size)):
-                    if until_found is not None:
-                        consecutive_files_found += 1
+            if skip_videos \
+                and not photo.item_type == "image":
                     logger.set_tqdm_description(
-                        "%s already exists." % truncate_middle(download_path, 96))
+                        "Skipping %s, only downloading photos." % photo.filename)
                     break
+            created_date = photo.created.astimezone(get_localzone())
 
-                if only_print_filenames:
-                    print(download_path)
-                else:
-                    download_photo(icloud, photo, download_path, size, force_size,
-                                   download_dir)
+            date_path = folder_structure.format(created_date)
+            download_dir = os.path.join(directory, date_path)
 
-                    if set_exif_datetime:
-                        if photo.filename.lower().endswith(('.jpg', '.jpeg')):
-                            if not exif_datetime.get_photo_exif(download_path):
-                                # %Y:%m:%d is the correct format.
-                                date_str = created_date.strftime("%Y:%m:%d %H:%M:%S")
-                                logger.debug(
-                                    'Setting EXIF timestamp for %s: %s' % (download_path, date_str))
-                                exif_datetime.set_photo_exif(
-                                    download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
-                        else:
-                            timestamp = time.mktime(created_date.timetuple())
-                            os.utime(download_path, (timestamp, timestamp))
+            if not os.path.exists(download_dir):
+                os.makedirs(download_dir)
 
+            download_size = size
+            # Fall back to original if requested size is not available
+            if size not in photo.versions and not force_size and size != 'original':
+                download_size = 'original'
+
+            download_path = local_download_path(photo, download_size, download_dir)
+            download_path_without_size = local_download_path(photo, None, download_dir)
+            # add a check if the "simple" name of the file is found if the size is original
+            if os.path.isfile(download_path) or (
+                download_size == 'original' and
+                os.path.isfile(download_path_without_size)
+            ):
                 if until_found is not None:
-                    consecutive_files_found = 0
+                    consecutive_files_found += 1
+                logger.set_tqdm_description(
+                    "%s already exists." % truncate_middle(download_path, 96))
                 break
 
-            except (requests.exceptions.ConnectionError, socket.timeout):
-                logger.tqdm_write('Connection failed, retrying after %d seconds...' % WAIT_SECONDS)
-                time.sleep(WAIT_SECONDS)
+            if only_print_filenames:
+                print(download_path)
+            else:
+                truncated_path = truncate_middle(download_path, 96)
+                logger.set_tqdm_description("Downloading %s" % truncated_path)
+
+                download_result = download.download_photo(
+                    icloud, photo, download_path, download_size)
+
+                if download_result and set_exif_datetime:
+                    if photo.filename.lower().endswith(('.jpg', '.jpeg')):
+                        if not exif_datetime.get_photo_exif(download_path):
+                            # %Y:%m:%d looks wrong but it's the correct format
+                            date_str = created_date.strftime("%Y:%m:%d %H:%M:%S")
+                            logger.debug(
+                                'Setting EXIF timestamp for %s: %s' % (download_path, date_str))
+                            exif_datetime.set_photo_exif(
+                                download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
+                    else:
+                        timestamp = time.mktime(created_date.timetuple())
+                        os.utime(download_path, (timestamp, timestamp))
+
+            if until_found is not None:
+                consecutive_files_found = 0
+            break
 
         if until_found is not None and consecutive_files_found >= until_found:
-            logger.tqdm_write('Found %d consecutive previusly downloaded photos. Exiting' % until_found)
+            logger.tqdm_write('Found %d consecutive previously downloaded photos. Exiting' % until_found)
             if hasattr(photos_enumerator, 'close'):
                 photos_enumerator.close()
             break
@@ -242,53 +252,3 @@ def main(directory, username, password, size, recent, \
 
     if auto_delete:
         autodelete_photos(icloud, folder_structure, directory)
-
-def download_photo(icloud, photo, download_path, size, force_size, download_dir):
-    logger = setup_logger()
-
-    truncated_path = truncate_middle(download_path, 96)
-
-    # Fall back to original if requested size is not available
-    if size not in photo.versions and not force_size and size != 'original':
-        download_photo(icloud, photo, download_path, 'original',
-                       True, download_dir)
-        return
-
-    logger.set_tqdm_description("Downloading %s" % truncated_path)
-
-    for _ in range(MAX_RETRIES):
-        try:
-            photo_response = photo.download(size)
-            if photo_response:
-                with open(download_path, 'wb') as file_obj:
-                    for chunk in photo_response.iter_content(chunk_size=1024):
-                        if chunk:
-                            file_obj.write(chunk)
-                break
-
-            else:
-                logger.tqdm_write(
-                    "Could not find URL to download %s for size %s!" %
-                    (photo.filename, size))
-
-        except (requests.exceptions.ConnectionError, socket.timeout, PyiCloudAPIResponseError) as e:
-            if 'Invalid global session' in str(e):
-                logger.tqdm_write('Session error, re-authenticating...')
-                icloud.authenticate()
-            else:
-                logger.tqdm_write(
-                    '%s download failed, retrying after %d seconds...' %
-                    (photo.filename, WAIT_SECONDS))
-                time.sleep(WAIT_SECONDS)
-
-        except IOError:
-            logger.error("IOError while writing file to %s! "
-                "You might have run out of disk space, or the file "
-                "might be too large for your OS. "
-                "Skipping this file..." % download_path)
-            break
-    else:
-        logger.tqdm_write("Could not download %s! Please try again later." % photo.filename)
-
-if __name__ == '__main__':
-    main()

@@ -33,9 +33,9 @@ class LoggerTestCase(TestCase):
         logger.set_tqdm_description('foo')
         logger.info.assert_called_once_with('foo')
 
-        logger.info = MagicMock()
+        logger.log = MagicMock()
         logger.tqdm_write('foo')
-        logger.info.assert_called_once_with('foo')
+        logger.log.assert_called_once_with(logging.INFO, 'foo')
 
         logger.set_tqdm(MagicMock())
         logger.tqdm.write = MagicMock()
