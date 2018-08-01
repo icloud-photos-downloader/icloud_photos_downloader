@@ -173,7 +173,7 @@ Bad Request (400)
 
 This error often happens because your account hasn't used the iCloud API before, so Apple's servers need to prepare some information about your photos. This process can take around 5-10 minutes, so please wait a few minutes and try again.
 
-If you are still seeing this message after 30 minutes, then please open an issue on GitHub and post all of the output from the script.
+If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/ndbroadbent/icloud_photos_downloader/issues/new) and post the script output.
 
 
 ## Cron Task
