@@ -1,0 +1,6 @@
+#!/bin/bash
+set -e
+cd docker
+docker build -t ndbroadbent/icloudpd .
+
+# docker push ndbroadbent/icloudpd
