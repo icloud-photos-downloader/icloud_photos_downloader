@@ -2,6 +2,7 @@ import sys
 import logging
 from logging import DEBUG, INFO, ERROR, NOTSET
 
+
 class iCloudPDLogger(logging.Logger):
     def __init__(self, name, level=INFO):
         logging.Logger.__init__(self, name, level)
@@ -26,17 +27,18 @@ class iCloudPDLogger(logging.Logger):
 
 def setup_logger(loglevel=DEBUG):
     logging.setLoggerClass(iCloudPDLogger)
-    logger = logging.getLogger('icloudpd')
+    logger = logging.getLogger("icloudpd")
     logger.setLevel(loglevel)
     has_stdout_handler = False
     for handler in logger.handlers:
-        if handler.name == 'stdoutLogger':
+        if handler.name == "stdoutLogger":
             has_stdout_handler = True
     if not has_stdout_handler:
-        formatter = logging.Formatter(fmt='%(asctime)s %(levelname)-8s %(message)s',
-                                        datefmt='%Y-%m-%d %H:%M:%S')
+        formatter = logging.Formatter(
+            fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
         stdout_handler = logging.StreamHandler(stream=sys.stdout)
         stdout_handler.setFormatter(formatter)
-        stdout_handler.name = 'stdoutLogger'
+        stdout_handler.name = "stdoutLogger"
         logger.addHandler(stdout_handler)
     return logger

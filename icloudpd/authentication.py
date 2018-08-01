@@ -3,31 +3,32 @@ import click
 import pyicloud_ipd
 from icloudpd.logger import setup_logger
 
+
 class TwoStepAuthRequiredError(Exception):
     pass
 
+
 def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
     logger = setup_logger()
-    logger.debug('Authenticating...')
+    logger.debug("Authenticating...")
     try:
         # If password not provided on command line variable will be set to None
         # and PyiCloud will attempt to retrieve from it's keyring
-        icloud = pyicloud_ipd.PyiCloudService(
-            username, password, client_id=client_id)
+        icloud = pyicloud_ipd.PyiCloudService(username, password, client_id=client_id)
     except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
         # Prompt for password if not stored in PyiCloud's keyring
-        password = click.prompt(
-            "iCloud Password", hide_input=True)
-        icloud = pyicloud_ipd.PyiCloudService(
-            username, password, client_id=client_id)
+        password = click.prompt("iCloud Password", hide_input=True)
+        icloud = pyicloud_ipd.PyiCloudService(username, password, client_id=client_id)
 
     if icloud.requires_2sa:
         if raise_error_on_2sa:
             raise TwoStepAuthRequiredError(
-                "Two-step/two-factor authentication is required!")
+                "Two-step/two-factor authentication is required!"
+            )
         logger.info("Two-step/two-factor authentication is required!")
         request_2sa(icloud, logger)
     return icloud
+
 
 def request_2sa(icloud, logger):
     devices = icloud.trusted_devices
@@ -35,10 +36,14 @@ def request_2sa(icloud, logger):
     device_index = 0
     if devices_count > 0:
         for i, device in enumerate(devices):
-            print("  %s: %s" % (i, device.get('deviceName',
-                "SMS to %s" % device.get('phoneNumber'))))
+            print(
+                "  %s: %s"
+                % (i, device.get("deviceName", "SMS to %s" % device.get("phoneNumber")))
+            )
         print("  %s: Enter two-factor authentication code" % devices_count)
-        device_index = click.prompt('Please choose an option:', default=0, type=click.IntRange(0, devices_count))
+        device_index = click.prompt(
+            "Please choose an option:", default=0, type=click.IntRange(0, devices_count)
+        )
 
     if device_index == devices_count:
         # We're using the 2FA code that was automatically sent to the user's device,
@@ -50,7 +55,7 @@ def request_2sa(icloud, logger):
             logger.error("Failed to send two-factor authentication code")
             sys.exit(1)
 
-    code = click.prompt('Please enter two-factor authentication code')
+    code = click.prompt("Please enter two-factor authentication code")
     if not icloud.validate_verification_code(device, code):
         logger.error("Failed to verify two-factor authentication code")
         sys.exit(1)
@@ -59,4 +64,5 @@ def request_2sa(icloud, logger):
         "user interaction until 2SA expires.\n"
         "You can set up email notifications for when "
         "the two-step authentication expires.\n"
-        "(Use --help to view information about SMTP options.)")
+        "(Use --help to view information about SMTP options.)"
+    )
