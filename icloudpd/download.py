@@ -1,18 +1,18 @@
-"""Download file to path, with retries and error handling"""
+"""Handles file downloads with retries and error handling"""
 
 import socket
 import time
 import logging
-from requests.exceptions import ConnectionError
-from icloudpd.logger import setup_logger
-from icloudpd.string_helpers import truncate_middle
+from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from icloudpd.logger import setup_logger
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
 
 
 def download_photo(icloud, photo, download_path, size):
+    """Download the photo to path, with retries and error handling"""
     logger = setup_logger()
 
     for _ in range(constants.MAX_RETRIES):
@@ -25,16 +25,15 @@ def download_photo(icloud, photo, download_path, size):
                             file_obj.write(chunk)
                 return True
 
-            else:
-                logger.tqdm_write(
-                    "Could not find URL to download %s for size %s!"
-                    % (photo.filename, size),
-                    logging.ERROR,
-                )
-                break
+            logger.tqdm_write(
+                "Could not find URL to download %s for size %s!"
+                % (photo.filename, size),
+                logging.ERROR,
+            )
+            break
 
-        except (ConnectionError, socket.timeout, PyiCloudAPIResponseError) as e:
-            if "Invalid global session" in str(e):
+        except (ConnectionError, socket.timeout, PyiCloudAPIResponseError) as ex:
+            if "Invalid global session" in str(ex):
                 logger.tqdm_write(
                     "Session error, re-authenticating...",
                     logging.ERROR)
@@ -55,7 +54,7 @@ def download_photo(icloud, photo, download_path, size):
                 "IOError while writing file to %s! "
                 "You might have run out of disk space, or the file "
                 "might be too large for your OS. "
-                "Skipping this file..." % download_path
+                "Skipping this file...", download_path
             )
             break
     else:

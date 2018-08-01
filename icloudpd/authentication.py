@@ -50,7 +50,10 @@ def request_2sa(icloud, logger):
                 (i, device.get(
                     "deviceName", "SMS to %s" %
                     device.get("phoneNumber"))))
+
+        # pylint: disable-msg=superfluous-parens
         print("  %s: Enter two-factor authentication code" % devices_count)
+        # pylint: enable-msg=superfluous-parens
         device_index = click.prompt(
             "Please choose an option:",
             default=0,

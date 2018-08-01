@@ -13,7 +13,7 @@ from tzlocal import get_localzone
 from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 from icloudpd import download
-from icloudpd.email_notifications import send_two_step_expired_notification
+from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.string_helpers import truncate_middle
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.paths import local_download_path
@@ -143,6 +143,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     is_flag=True,
 )
 @click.version_option()
+#pylint: disable-msg=too-many-arguments,too-many-statements,too-many-branches,too-many-locals
 def main(
         directory,
         username,
@@ -189,7 +190,7 @@ def main(
             client_id=os.environ.get("CLIENT_ID"),
         )
     except TwoStepAuthRequiredError:
-        send_two_step_expired_notification(
+        send_2sa_notification(
             smtp_username,
             smtp_password,
             smtp_host,
@@ -241,7 +242,7 @@ def main(
     # progress bar is explicity disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
     if not os.environ.get("FORCE_TQDM") and (
-        only_print_filenames or no_progress_bar or not sys.stdout.isatty()
+            only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     ):
         photos_enumerator = photos
         logger.set_tqdm(None)
@@ -249,6 +250,7 @@ def main(
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
         logger.set_tqdm(photos_enumerator)
 
+    #pylint: disable-msg=too-many-nested-blocks
     for photo in photos_enumerator:
         for _ in range(MAX_RETRIES):
             if skip_videos and not photo.item_type == "image":
