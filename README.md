@@ -38,6 +38,8 @@ pip install icloudpd
                [--smtp-port <smtp_port>]
                [--smtp-no-tls]
                [--notification-email <notification_email>]
+               [--log-level=(debug|info|error)]
+               [--no-progress-bar]
 
     Options:
         --username <username>           Your iCloud username or email address
@@ -82,6 +84,12 @@ pip install icloudpd
                                         Email address where you would like to
                                         receive email notifications. Default: SMTP
                                         username
+        --log-level [debug|info|error]  Log level (default: debug)
+        --no-progress-bar               Disables the one-line progress bar and
+                                        prints log messages on separate lines
+                                        (Progress bar is disabled by default if
+                                        there is no tty attached)
+        --version                       Show the version and exit.
         -h, --help                      Show this message and exit.
 
 Example:
@@ -214,13 +222,12 @@ Usage:
 
 $ docker pull ndbroadbent/icloudpd
 $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
-    icloudpd \
+    icloudpd /data \
     --username=testuser@example.com \
     --password=pass1234 \
     --size=original \
     --recent 500 \
-    --auto-delete \
-    /data
+    --auto-delete
 ```
 
 ## Contributing
