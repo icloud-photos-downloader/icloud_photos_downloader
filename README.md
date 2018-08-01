@@ -222,6 +222,18 @@ Run tests:
 pytest
 ```
 
+Before submitting a pull request, please check the following:
+
+* All tests pass on Python 2.7 and 3.6
+  * Run `./scripts/test`
+* 100% test coverage
+  * After running `./scripts/test`, you will see the test coverage results in the output
+  * You can also open the HTML report at: `./htmlcov/index.html`
+* Code is formatted with [autopep8](https://github.com/hhatto/autopep8)
+  * Run `./scripts/format`
+* No [pylint](https://www.pylint.org/) errors
+  * Run `./scripts/lint` (or `pylint icloudpd`)
+
 
 ### Building the Docker image:
 

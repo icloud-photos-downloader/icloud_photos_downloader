@@ -4,7 +4,9 @@ import smtplib
 import datetime
 from icloudpd.logger import setup_logger
 
-#pylint: disable-msg=too-many-arguments
+# pylint: disable-msg=too-many-arguments
+
+
 def send_2sa_notification(
         smtp_email, smtp_password, smtp_host, smtp_port, smtp_no_tls, to_addr
 ):

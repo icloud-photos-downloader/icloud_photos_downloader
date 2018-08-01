@@ -143,7 +143,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     is_flag=True,
 )
 @click.version_option()
-#pylint: disable-msg=too-many-arguments,too-many-statements,too-many-branches,too-many-locals
+# pylint: disable-msg=too-many-arguments,too-many-statements
+# pylint: disable-msg=too-many-branches,too-many-locals
 def main(
         directory,
         username,
@@ -250,7 +251,7 @@ def main(
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
         logger.set_tqdm(photos_enumerator)
 
-    #pylint: disable-msg=too-many-nested-blocks
+    # pylint: disable-msg=too-many-nested-blocks
     for photo in photos_enumerator:
         for _ in range(MAX_RETRIES):
             if skip_videos and not photo.item_type == "image":

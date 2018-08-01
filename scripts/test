@@ -10,7 +10,7 @@ fi
 echo
 echo "Running tests with Python 3... (HTML coverage report)"
 if which python3 > /dev/null 2>&1; then
-  python3 -m pytest --cov=icloudpd --cov-report html
+  python3 -m pytest --cov=icloudpd --cov-report html --cov-report term
 else
   echo "python3 not found"
 fi
