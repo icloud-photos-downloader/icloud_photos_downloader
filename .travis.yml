@@ -7,7 +7,9 @@ install:
   - pip install -r requirements.txt
   - pip install -r requirements-test.txt
 
-script: py.test --cov=icloudpd
+script:
+  - py.test --cov=icloudpd
+  - pylint icloudpd
 
 after_success:
   - coveralls
