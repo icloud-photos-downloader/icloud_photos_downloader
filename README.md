@@ -5,86 +5,18 @@
 # iCloud Photos Downloader
 
 * A command-line tool to download all your iCloud photos.
-* Works on Mac, Linux, and Windows.
-* Run it multiple times to download any new photos.
+* Works on Linux, and Windows, and MacOS.
+* Run as [a scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
 
-## Requirements
+## Install
 
-* Python 2.7, >= 3.4
-  * *Python 2.6 is not supported.*
-* pip
-
-### How to install Python & pip
-
-#### Windows
-
-[Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
-
-#### Mac
-
-Install [Homebrew](https://brew.sh/) (if not already installed):
+`icloudpd` is a Python package that can be installed using `pip`:
 
 ```
-which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+pip install icloudpd
 ```
 
-Then install Python:
-
-```
-brew install python
-```
-
-Alternatively, you can
-[download the Python 3.7.0 installer for Mac](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
-
-
-#### Linux (Ubuntu)
-
-```
-sudo apt-get update
-sudo apt-get install -y python
-```
-
-
-## Install iCloud Photos Downloader
-
-```
-sudo pip install icloudpd
-```
-
-> Note: You may not need sudo for `pip install` on your system.
-
-## Authentication
-
-If your account has two-factor authentication enabled,
-you will be prompted for a code when you run the script.
-
-Two-factor authentication will expire after an interval set by Apple,
-at which point you will have to re-authenticate. This interval is currently two months.
-
-You can receive an email notification when two-factor authentication expires by passing the
-`--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
-or you can send to a different email address with `--notification-email`.
-
-If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
-
-
-### System Keyring
-
-You can store your password in the system keyring using the `icloud` command-line tool
-(installed with the `pyicloud` dependency):
-
-    $ icloud --username=jappleseed@apple.com
-    ICloud Password for jappleseed@apple.com:
-    Save password in keyring? (y/N)
-
-If you have stored a password in the keyring, you will not be required to provide a password
-when running the script.
-
-If you would like to delete a password stored in your system keyring,
-you can clear a stored password using the `--delete-from-keyring` command-line option:
-
-    $ icloud --username=jappleseed@apple.com --delete-from-keyring
+> If you need to install Python, see the [Requirements](#requirements) section for instructions.
 
 ## Usage
 
@@ -162,6 +94,75 @@ Example:
         --auto-delete
 
 
+## Requirements
+
+* Python 2.7 or Python 3.4+
+  * *Python 2.6 is not supported.*
+* pip
+
+### Install Python & pip
+
+#### Windows
+
+* [Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
+
+#### Mac
+
+* Install [Homebrew](https://brew.sh/) (if not already installed):
+
+```
+which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+* Install Python (includes `pip`):
+
+```
+brew install python
+```
+
+> Alternatively, you can [download the Python 3.7.0 installer for Mac](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
+
+
+#### Linux (Ubuntu)
+
+```
+sudo apt-get update
+sudo apt-get install -y python
+```
+
+## Authentication
+
+If your account has two-factor authentication enabled,
+you will be prompted for a code when you run the script.
+
+Two-factor authentication will expire after an interval set by Apple,
+at which point you will have to re-authenticate. This interval is currently two months.
+
+You can receive an email notification when two-factor authentication expires by passing the
+`--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
+or you can send to a different email address with `--notification-email`.
+
+If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
+
+
+### System Keyring
+
+You can store your password in the system keyring using the `icloud` command-line tool
+(installed with the `pyicloud` dependency):
+
+    $ icloud --username=jappleseed@apple.com
+    ICloud Password for jappleseed@apple.com:
+    Save password in keyring? (y/N)
+
+If you have stored a password in the keyring, you will not be required to provide a password
+when running the script.
+
+If you would like to delete a password stored in your system keyring,
+you can clear a stored password using the `--delete-from-keyring` command-line option:
+
+    $ icloud --username=jappleseed@apple.com --delete-from-keyring
+
+
 ## Error on first run
 
 When you run the script for the first time, you might see an error message like this:
@@ -175,17 +176,32 @@ This error often happens because your account hasn't used the iCloud API before,
 If you are still seeing this message after 30 minutes, then please open an issue on GitHub and post all of the output from the script.
 
 
-## Run once every 3 hours using Cron
+## Cron Task
 
-    cp cron_script.sh.example cron_script.sh
-
-* Edit cron_script.sh with your username, password, and other options
-
-* Run `crontab -e`, and add the following line:
+Follow these instructions to run `icloudpd` as a scheduled cron task.
 
 ```
-0 */3 * * * /path/to/icloud_photos_downloader/cron_script.sh
+# Clone the git repo somewhere
+git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
+cd icloud_photos_downloader
+
+# Copy the example cron script
+cp cron_script.sh.example cron_script.sh
 ```
+
+* Update `cron_script.sh` with your username, password, and other options
+
+* Edit your "crontab" with `crontab -e`, then add the following line:
+
+```
+0 */6 * * * /path/to/icloud_photos_downloader/cron_script.sh
+```
+
+Now the script will run every 6 hours to download any new photos and videos.
+
+> If you provide SMTP credentials, the script will send an email notification
+> whenever two-step authentication expires.
+
 
 ## Docker
 

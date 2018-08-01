@@ -1,8 +1,11 @@
 #!/bin/bash
-# Make sure we are in the right directory
-mypath=`realpath $0`
-cd `dirname $mypath`
+# Make sure it's not already running
+pgrep -f icloudpd && echo "icloudpd is already running." && exit
 
-# Make sure only one instance is running
-pgrep -f icloudpd && echo "icloudpd is already running." ||
-  icloudpd # --username=...
+icloudpd \
+  --username=testuser@example.com \
+  --password=pass1234 \
+  --size=original \
+  --recent 500 \
+  --auto-delete \
+  /your/photos/directory
