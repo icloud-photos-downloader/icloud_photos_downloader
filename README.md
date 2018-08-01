@@ -6,7 +6,7 @@
 
 * A command-line tool to download all your iCloud photos.
 * Works on Linux, and Windows, and MacOS.
-* Run as [a scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
+* Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
 
 ## Install
 
