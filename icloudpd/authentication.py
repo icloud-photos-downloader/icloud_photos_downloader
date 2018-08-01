@@ -1,3 +1,5 @@
+"""Handles username/password authentication and two-step authentication"""
+
 import sys
 import click
 import pyicloud_ipd
@@ -5,10 +7,13 @@ from icloudpd.logger import setup_logger
 
 
 class TwoStepAuthRequiredError(Exception):
-    pass
-
+    """
+    Raised when 2SA is required. base.py catches this exception
+    and sends an email notification.
+    """
 
 def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
+    """Authenticate with iCloud username and password"""
     logger = setup_logger()
     logger.debug("Authenticating...")
     try:
@@ -31,6 +36,7 @@ def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
 
 
 def request_2sa(icloud, logger):
+    """Request two-step authentication. Prompts for SMS or device"""
     devices = icloud.trusted_devices
     devices_count = len(devices)
     device_index = 0

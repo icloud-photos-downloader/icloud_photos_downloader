@@ -1,15 +1,12 @@
 #!/usr/bin/env python
+"""Main script that uses Click to parse command-line arguments"""
 from __future__ import print_function
-import click
 import os
 import sys
-import socket
 import time
 import logging
 import itertools
-import pyicloud_ipd
-from requests.exceptions import ConnectionError
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+import click
 from tqdm import tqdm
 from tzlocal import get_localzone
 
@@ -21,7 +18,7 @@ from icloudpd.truncate_middle import truncate_middle
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.paths import local_download_path
 from icloudpd import exif_datetime
-from icloudpd.constants import MAX_RETRIES, WAIT_SECONDS
+from icloudpd.constants import MAX_RETRIES
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -53,7 +50,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--until-found",
-    help="Download most recently added photos until we find x number of previously downloaded consecutive photos (default: download all photos)",
+    help="Download most recently added photos until we find x number of "
+    "previously downloaded consecutive photos (default: download all photos)",
     type=click.IntRange(0),
 )
 @click.option(
@@ -75,7 +73,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--only-print-filenames",
-    help="Only prints the filenames of all files that will be downloaded (not including files that are already downloaded.)"
+    help="Only prints the filenames of all files that will be downloaded "
+    "(not including files that are already downloaded.)"
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
@@ -92,12 +91,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--smtp-username",
-    help="Your SMTP username, for sending email notifications when two-step authentication expires.",
+    help="Your SMTP username, for sending email notifications when "
+    "two-step authentication expires.",
     metavar="<smtp_username>",
 )
 @click.option(
     "--smtp-password",
-    help="Your SMTP password, for sending email notifications when two-step authentication expires.",
+    help="Your SMTP password, for sending email notifications when "
+    "two-step authentication expires.",
     metavar="<smtp_password>",
 )
 @click.option(
@@ -121,7 +122,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--notification-email",
-    help="Email address where you would like to receive email notifications. Default: SMTP username",
+    help="Email address where you would like to receive email notifications. "
+    "Default: SMTP username",
     metavar="<notification_email>",
 )
 @click.option(
@@ -132,31 +134,32 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--no-progress-bar",
-    help="Disables the one-line progress bar and prints log messages on separate lines (Disabled by default when there is no tty attached)",
+    help="Disables the one-line progress bar and prints log messages on separate lines "
+    "(Disabled by default when there is no tty attached)",
     is_flag=True,
 )
 @click.version_option()
 def main(
-    directory,
-    username,
-    password,
-    size,
-    recent,
-    until_found,
-    skip_videos,
-    force_size,
-    auto_delete,
-    only_print_filenames,
-    folder_structure,
-    set_exif_datetime,
-    smtp_username,
-    smtp_password,
-    smtp_host,
-    smtp_port,
-    smtp_no_tls,
-    notification_email,
-    log_level,
-    no_progress_bar,
+        directory,
+        username,
+        password,
+        size,
+        recent,
+        until_found,
+        skip_videos,
+        force_size,
+        auto_delete,
+        only_print_filenames,
+        folder_structure,
+        set_exif_datetime,
+        smtp_username,
+        smtp_password,
+        smtp_host,
+        smtp_port,
+        smtp_no_tls,
+        notification_email,
+        log_level,
+        no_progress_bar,
 ):
     """Download all iCloud photos to a local directory"""
     logger = setup_logger()
@@ -197,7 +200,7 @@ def main(
         directory = directory.decode("utf-8")  # pragma: no cover
     directory = os.path.normpath(directory)
 
-    logger.debug("Looking up all photos%s..." % ("" if skip_videos else " and videos"))
+    logger.debug("Looking up all photos%s...", "" if skip_videos else " and videos")
     photos = icloud.photos.all
     photos_count = len(photos)
 
@@ -219,8 +222,8 @@ def main(
     if not skip_videos:
         video_suffix = " or video" if photos_count == 1 else " and videos"
     logger.info(
-        "Downloading %s %s photo%s%s to %s/ ..."
-        % (photos_count, size, plural_suffix, video_suffix, directory)
+        "Downloading %s %s photo%s%s to %s/ ...",
+        photos_count, size, plural_suffix, video_suffix, directory
     )
 
     consecutive_files_found = 0
@@ -264,8 +267,8 @@ def main(
             download_path_without_size = local_download_path(photo, None, download_dir)
             # add a check if the "simple" name of the file is found if the size is original
             if os.path.isfile(download_path) or (
-                download_size == "original"
-                and os.path.isfile(download_path_without_size)
+                    download_size == "original" and
+                    os.path.isfile(download_path_without_size)
             ):
                 if until_found is not None:
                     consecutive_files_found += 1
@@ -290,8 +293,8 @@ def main(
                             # %Y:%m:%d looks wrong but it's the correct format
                             date_str = created_date.strftime("%Y:%m:%d %H:%M:%S")
                             logger.debug(
-                                "Setting EXIF timestamp for %s: %s"
-                                % (download_path, date_str)
+                                "Setting EXIF timestamp for %s: %s",
+                                download_path, date_str
                             )
                             exif_datetime.set_photo_exif(
                                 download_path,
