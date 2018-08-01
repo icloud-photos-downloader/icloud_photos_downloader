@@ -4,7 +4,7 @@ import logging
 from freezegun import freeze_time
 from io import StringIO
 import sys
-from icloudpd.logger import setup_logger, iCloudPDLogger
+from icloudpd.logger import setup_logger, IPDLogger
 
 
 class LoggerTestCase(TestCase):
@@ -28,7 +28,7 @@ class LoggerTestCase(TestCase):
         self.assertIn("ERROR    Test error output", output)
 
     def test_logger_tqdm_fallback(self):
-        logging.setLoggerClass(iCloudPDLogger)
+        logging.setLoggerClass(IPDLogger)
         logger = logging.getLogger("icloudpd-test")
         logger.info = MagicMock()
         logger.set_tqdm_description("foo")

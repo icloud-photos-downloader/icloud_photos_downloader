@@ -1,24 +1,30 @@
+"""Custom logging class and setup function"""
+
 import sys
 import logging
-from logging import DEBUG, INFO, ERROR, NOTSET
+from logging import DEBUG, INFO
 
 
-class iCloudPDLogger(logging.Logger):
+class IPDLogger(logging.Logger):
+    """Custom logger class with support for tqdm progress bar"""
     def __init__(self, name, level=INFO):
         logging.Logger.__init__(self, name, level)
         self.tqdm = None
 
     # If tdqm progress bar is not set, we just write regular log messages
     def set_tqdm(self, tdqm):
+        """Sets the tqdm progress bar"""
         self.tqdm = tdqm
 
     def set_tqdm_description(self, desc):
+        """Set tqdm progress bar description, fallback to logging"""
         if self.tqdm is None:
             self.info(desc)
         else:
             self.tqdm.set_description(desc)
 
     def tqdm_write(self, message, loglevel=INFO):
+        """Write to tqdm progress bar, fallback to logging"""
         if self.tqdm is None:
             self.log(loglevel, message)
         else:
@@ -26,7 +32,8 @@ class iCloudPDLogger(logging.Logger):
 
 
 def setup_logger(loglevel=DEBUG):
-    logging.setLoggerClass(iCloudPDLogger)
+    """Set up logger and add stdout handler"""
+    logging.setLoggerClass(IPDLogger)
     logger = logging.getLogger("icloudpd")
     logger.setLevel(loglevel)
     has_stdout_handler = False

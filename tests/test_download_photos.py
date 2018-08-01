@@ -9,6 +9,7 @@ import mock
 from mock import call, ANY
 from click.testing import CliRunner
 import piexif
+from piexif._exceptions import InvalidImageDataError
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
@@ -156,7 +157,7 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs("tests/fixtures/Photos")
 
         with mock.patch.object(piexif, "load") as piexif_patched:
-            piexif_patched.side_effect = Exception
+            piexif_patched.side_effect = InvalidImageDataError
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable

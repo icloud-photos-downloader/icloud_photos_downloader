@@ -14,7 +14,7 @@ from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 from icloudpd import download
 from icloudpd.email_notifications import send_two_step_expired_notification
-from icloudpd.truncate_middle import truncate_middle
+from icloudpd.string_helpers import truncate_middle
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.paths import local_download_path
 from icloudpd import exif_datetime

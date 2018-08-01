@@ -1,9 +1,11 @@
+"""Download file to path, with retries and error handling"""
+
 import socket
 import time
 import logging
 from requests.exceptions import ConnectionError
 from icloudpd.logger import setup_logger
-from icloudpd.truncate_middle import truncate_middle
+from icloudpd.string_helpers import truncate_middle
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
