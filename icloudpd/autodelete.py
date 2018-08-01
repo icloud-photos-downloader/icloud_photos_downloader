@@ -5,6 +5,7 @@ import os
 from icloudpd.logger import setup_logger
 from icloudpd.paths import local_download_path
 
+
 def autodelete_photos(icloud, folder_structure, directory):
     """
     Scans the "Recently Deleted" folder and deletes any matching files

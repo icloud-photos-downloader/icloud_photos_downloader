@@ -35,9 +35,12 @@ def download_photo(icloud, photo, download_path, size):
 
         except (ConnectionError, socket.timeout, PyiCloudAPIResponseError) as e:
             if "Invalid global session" in str(e):
-                logger.tqdm_write("Session error, re-authenticating...", logging.ERROR)
+                logger.tqdm_write(
+                    "Session error, re-authenticating...",
+                    logging.ERROR)
                 icloud.authenticate()
-                # Wait a few seconds in case there are issues with Apple's servers
+                # Wait a few seconds in case there are issues with Apple's
+                # servers
                 time.sleep(constants.WAIT_SECONDS)
             else:
                 logger.tqdm_write(

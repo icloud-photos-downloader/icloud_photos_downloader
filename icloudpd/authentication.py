@@ -12,6 +12,7 @@ class TwoStepAuthRequiredError(Exception):
     and sends an email notification.
     """
 
+
 def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
     """Authenticate with iCloud username and password"""
     logger = setup_logger()
@@ -19,11 +20,13 @@ def authenticate(username, password, raise_error_on_2sa=False, client_id=None):
     try:
         # If password not provided on command line variable will be set to None
         # and PyiCloud will attempt to retrieve from it's keyring
-        icloud = pyicloud_ipd.PyiCloudService(username, password, client_id=client_id)
+        icloud = pyicloud_ipd.PyiCloudService(
+            username, password, client_id=client_id)
     except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
         # Prompt for password if not stored in PyiCloud's keyring
         password = click.prompt("iCloud Password", hide_input=True)
-        icloud = pyicloud_ipd.PyiCloudService(username, password, client_id=client_id)
+        icloud = pyicloud_ipd.PyiCloudService(
+            username, password, client_id=client_id)
 
     if icloud.requires_2sa:
         if raise_error_on_2sa:
@@ -43,13 +46,17 @@ def request_2sa(icloud, logger):
     if devices_count > 0:
         for i, device in enumerate(devices):
             print(
-                "  %s: %s"
-                % (i, device.get("deviceName", "SMS to %s" % device.get("phoneNumber")))
-            )
+                "  %s: %s" %
+                (i, device.get(
+                    "deviceName", "SMS to %s" %
+                    device.get("phoneNumber"))))
         print("  %s: Enter two-factor authentication code" % devices_count)
         device_index = click.prompt(
-            "Please choose an option:", default=0, type=click.IntRange(0, devices_count)
-        )
+            "Please choose an option:",
+            default=0,
+            type=click.IntRange(
+                0,
+                devices_count))
 
     if device_index == devices_count:
         # We're using the 2FA code that was automatically sent to the user's device,

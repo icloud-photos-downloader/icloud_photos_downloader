@@ -1,0 +1,3 @@
+#!/bin/bash
+set -e
+autopep8 -r --in-place --aggressive --aggressive icloudpd/

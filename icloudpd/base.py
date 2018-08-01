@@ -24,7 +24,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
-@click.argument("directory", type=click.Path(exists=True), metavar="<directory>")
+@click.argument(
+    "directory",
+    type=click.Path(
+        exists=True),
+    metavar="<directory>")
 @click.option(
     "--username",
     help="Your iCloud username or email address",
@@ -200,7 +204,9 @@ def main(
         directory = directory.decode("utf-8")  # pragma: no cover
     directory = os.path.normpath(directory)
 
-    logger.debug("Looking up all photos%s...", "" if skip_videos else " and videos")
+    logger.debug(
+        "Looking up all photos%s...",
+        "" if skip_videos else " and videos")
     photos = icloud.photos.all
     photos_count = len(photos)
 
@@ -263,9 +269,12 @@ def main(
             if size not in photo.versions and not force_size and size != "original":
                 download_size = "original"
 
-            download_path = local_download_path(photo, download_size, download_dir)
-            download_path_without_size = local_download_path(photo, None, download_dir)
-            # add a check if the "simple" name of the file is found if the size is original
+            download_path = local_download_path(
+                photo, download_size, download_dir)
+            download_path_without_size = local_download_path(
+                photo, None, download_dir)
+            # add a check if the "simple" name of the file is found if the size
+            # is original
             if os.path.isfile(download_path) or (
                     download_size == "original" and
                     os.path.isfile(download_path_without_size)
@@ -291,7 +300,8 @@ def main(
                     if photo.filename.lower().endswith((".jpg", ".jpeg")):
                         if not exif_datetime.get_photo_exif(download_path):
                             # %Y:%m:%d looks wrong but it's the correct format
-                            date_str = created_date.strftime("%Y:%m:%d %H:%M:%S")
+                            date_str = created_date.strftime(
+                                "%Y:%m:%d %H:%M:%S")
                             logger.debug(
                                 "Setting EXIF timestamp for %s: %s",
                                 download_path, date_str

@@ -1,5 +1,6 @@
 """String helper functions"""
 
+
 def truncate_middle(string, length):
     """Truncates a string to a maximum length, inserting "..." in the middle"""
     if len(string) <= length:
