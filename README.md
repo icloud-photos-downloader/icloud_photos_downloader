@@ -250,6 +250,13 @@ Before submitting a pull request, please check the following:
 * No [pylint](https://www.pylint.org/) errors
   * Run `./scripts/lint` (or `pylint icloudpd`)
 
+If you need to make any changes to the `pyicloud` library,
+`icloudpd` uses a fork of this library that has been renamed to `pyicloud-ipd`.
+Please clone my [pyicloud fork](https://github.com/ndbroadbent/pyicloud)
+and check out the [pyicloud-ipd](https://github.com/ndbroadbent/pyicloud/tree/pyicloud-ipd)
+branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
+[ndbroadbent/pyicloud](https://github.com/ndbroadbent/pyicloud).
+
 
 ### Building the Docker image:
 
