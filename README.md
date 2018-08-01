@@ -132,7 +132,7 @@ sudo apt-get install -y python
 
 ## Authentication
 
-If your account has two-factor authentication enabled,
+If your Apple account has two-factor authentication enabled,
 you will be prompted for a code when you run the script.
 
 Two-factor authentication will expire after an interval set by Apple,
