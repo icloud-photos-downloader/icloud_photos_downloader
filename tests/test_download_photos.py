@@ -6,6 +6,8 @@ import logging
 import click
 import pytest
 import mock
+import tzlocal
+import datetime
 from mock import call, ANY
 from click.testing import CliRunner
 import piexif
@@ -633,6 +635,62 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     self.assertIn(
                         "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded!", self._caplog.text
+                    )
+                    dp_patched.assert_not_called
+
+                    assert result.exit_code == 0
+
+
+    def test_invalid_creation_date(self):
+        base_dir = "tests/fixtures/Photos"
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
+                # Can't mock `astimezone` because it's a readonly property, so have to
+                # create a new class that inherits from datetime.datetime
+                class NewDateTime(datetime.datetime):
+                    def astimezone(self, tz=None):
+                        raise ValueError('Invalid date')
+                dt_mock.return_value = NewDateTime(2018,1,1,0,0,0)
+
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    # Pass fixed client ID via environment variable
+                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    runner = CliRunner()
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--no-progress-bar",
+                            base_dir,
+                        ],
+                    )
+                    print(result.exception)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
                         self._caplog.text,
                     )
                     self.assertIn(
