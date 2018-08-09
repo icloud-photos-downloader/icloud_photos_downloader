@@ -255,9 +255,15 @@ def main(
     # pylint: disable-msg=too-many-nested-blocks
     for photo in photos_enumerator:
         for _ in range(MAX_RETRIES):
-            if skip_videos and not photo.item_type == "image":
+            if skip_videos and photo.item_type != "image":
                 logger.set_tqdm_description(
                     "Skipping %s, only downloading photos." % photo.filename
+                )
+                break
+            if photo.item_type != "image" and photo.item_type != "movie":
+                logger.set_tqdm_description(
+                    "Skipping %s, only download photos and videos. "
+                    "(Item type was: %s)" % (photo.filename, photo.item_type)
                 )
                 break
             try:

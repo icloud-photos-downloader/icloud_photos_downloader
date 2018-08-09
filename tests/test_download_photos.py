@@ -699,3 +699,54 @@ class DownloadPhotoTestCase(TestCase):
                     dp_patched.assert_not_called
 
                     assert result.exit_code == 0
+
+
+    def test_unknown_item_type(self):
+        base_dir = "tests/fixtures/Photos"
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch.object(PhotoAsset, "item_type", new_callable=mock.PropertyMock) as it_mock:
+                it_mock.return_value = 'unknown'
+
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    # Pass fixed client ID via environment variable
+                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    runner = CliRunner()
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--no-progress-bar",
+                            base_dir,
+                        ],
+                    )
+                    print(result.exception)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Skipping IMG_7409.JPG, only download photos and videos. (Item type was: unknown)",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded!", self._caplog.text
+                    )
+                    dp_patched.assert_not_called
+
+                    assert result.exit_code == 0
