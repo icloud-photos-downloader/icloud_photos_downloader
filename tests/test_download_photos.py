@@ -741,7 +741,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Skipping IMG_7409.JPG, only download photos and videos. (Item type was: unknown)",
+                        "INFO     Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
                         self._caplog.text,
                     )
                     self.assertIn(

@@ -262,7 +262,7 @@ def main(
                 break
             if photo.item_type != "image" and photo.item_type != "movie":
                 logger.set_tqdm_description(
-                    "Skipping %s, only download photos and videos. "
+                    "Skipping %s, only downloading photos and videos. "
                     "(Item type was: %s)" % (photo.filename, photo.item_type)
                 )
                 break
