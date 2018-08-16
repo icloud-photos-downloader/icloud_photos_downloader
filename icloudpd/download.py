@@ -11,7 +11,7 @@ from icloudpd.logger import setup_logger
 from icloudpd import constants
 
 
-def download_photo(icloud, photo, download_path, size):
+def download_media(icloud, photo, download_path, size):
     """Download the photo to path, with retries and error handling"""
     logger = setup_logger()
 

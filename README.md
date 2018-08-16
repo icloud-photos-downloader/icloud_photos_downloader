@@ -8,13 +8,6 @@
 * Works on Linux, Windows, and MacOS.
 * Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
 
-### Support for Live Photos
-
-Unfortunately we don't currently support Live Photos (see [issue #90](https://github.com/ndbroadbent/icloud_photos_downloader/issues/90).)
-If you need to back up your Live Photos, please consider
-[donating to fund the development of this feature](https://www.gofundme.com/live-photo-support-for-icloudpd). Thanks!
-
-
 ## Install
 
 `icloudpd` is a Python package that can be installed using `pip`:
@@ -34,6 +27,7 @@ pip install icloudpd
                [--recent <integer>]
                [--until-found <integer>]
                [--skip-videos]
+               [--skip-live-photos]
                [--force-size]
                [--auto-delete]
                [--only-print-filenames]
@@ -61,6 +55,8 @@ pip install icloudpd
                                         photos)
         --skip-videos                   Don't download any videos (default: Download
                                         both photos and videos)
+        --skip-live-photos              Don't download any live photos (default:
+                                        Download live photos)
         --force-size                    Only download the requested size (default:
                                         download original if size is not available)
         --auto-delete                   Scans the "Recently Deleted" folder and

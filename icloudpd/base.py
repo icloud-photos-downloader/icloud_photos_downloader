@@ -48,6 +48,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     default="original",
 )
 @click.option(
+    "--live-photo-size",
+    help="Live Photo size to download (default: original)",
+    type=click.Choice(["original", "medium", "thumb"]),
+    default="original",
+)
+@click.option(
     "--recent",
     help="Number of recent photos to download (default: download all photos)",
     type=click.IntRange(0),
@@ -60,7 +66,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--skip-videos",
-    help="Don't download any videos (default: Download both photos and videos)",
+    help="Don't download any videos (default: Download all photos and videos)",
+    is_flag=True,
+)
+@click.option(
+    "--skip-live-photos",
+    help="Don't download any live photos (default: Download live photos)",
     is_flag=True,
 )
 @click.option(
@@ -150,9 +161,11 @@ def main(
         username,
         password,
         size,
+        live_photo_size,
         recent,
         until_found,
         skip_videos,
+        skip_live_photos,
         force_size,
         auto_delete,
         only_print_filenames,
@@ -307,38 +320,66 @@ def main(
                 logger.set_tqdm_description(
                     "%s already exists." % truncate_middle(download_path, 96)
                 )
-                break
-
-            if only_print_filenames:
-                print(download_path)
             else:
-                truncated_path = truncate_middle(download_path, 96)
-                logger.set_tqdm_description("Downloading %s" % truncated_path)
+                if until_found is not None:
+                    consecutive_files_found = 0
 
-                download_result = download.download_photo(
-                    icloud, photo, download_path, download_size
-                )
+                if only_print_filenames:
+                    print(download_path)
+                else:
+                    truncated_path = truncate_middle(download_path, 96)
+                    logger.set_tqdm_description(
+                        "Downloading %s" %
+                        truncated_path)
 
-                if download_result and set_exif_datetime:
-                    if photo.filename.lower().endswith((".jpg", ".jpeg")):
-                        if not exif_datetime.get_photo_exif(download_path):
-                            # %Y:%m:%d looks wrong but it's the correct format
-                            date_str = created_date.strftime(
-                                "%Y:%m:%d %H:%M:%S")
-                            logger.debug(
-                                "Setting EXIF timestamp for %s: %s",
-                                download_path, date_str
-                            )
-                            exif_datetime.set_photo_exif(
-                                download_path,
-                                created_date.strftime("%Y:%m:%d %H:%M:%S"),
-                            )
+                    download_result = download.download_media(
+                        icloud, photo, download_path, download_size
+                    )
+
+                    if download_result and set_exif_datetime:
+                        if photo.filename.lower().endswith((".jpg", ".jpeg")):
+                            if not exif_datetime.get_photo_exif(download_path):
+                                # %Y:%m:%d looks wrong but it's the correct format
+                                date_str = created_date.strftime(
+                                    "%Y:%m:%d %H:%M:%S")
+                                logger.debug(
+                                    "Setting EXIF timestamp for %s: %s",
+                                    download_path, date_str
+                                )
+                                exif_datetime.set_photo_exif(
+                                    download_path,
+                                    created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                                )
+                        else:
+                            timestamp = time.mktime(created_date.timetuple())
+                            os.utime(download_path, (timestamp, timestamp))
+
+            # Also download the live photo if present
+            if not skip_live_photos:
+                lp_size = live_photo_size + "Video"
+                if lp_size in photo.versions:
+                    version = photo.versions[lp_size]
+                    # Add size to filename
+                    filename = version['filename'].replace(
+                        ".MOV", "-%s.MOV" % live_photo_size)
+                    lp_download_path = os.path.join(download_dir, filename)
+
+                    if only_print_filenames:
+                        print(lp_download_path)
                     else:
-                        timestamp = time.mktime(created_date.timetuple())
-                        os.utime(download_path, (timestamp, timestamp))
+                        if os.path.isfile(lp_download_path):
+                            logger.set_tqdm_description(
+                                "%s already exists." %
+                                truncate_middle(
+                                    lp_download_path, 96))
+                            break
 
-            if until_found is not None:
-                consecutive_files_found = 0
+                        truncated_path = truncate_middle(lp_download_path, 96)
+                        logger.set_tqdm_description(
+                            "Downloading %s" % truncated_path)
+                        download.download_media(
+                            icloud, photo, lp_download_path, lp_size)
+
             break
 
         if until_found is not None and consecutive_files_found >= until_found:

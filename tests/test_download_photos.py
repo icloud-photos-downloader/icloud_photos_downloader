@@ -27,7 +27,7 @@ class DownloadPhotoTestCase(TestCase):
     def inject_fixtures(self, caplog):
         self._caplog = caplog
 
-    def test_download_photos(self):
+    def test_download_and_skip_existing_photos(self):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
@@ -50,6 +50,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--recent",
                     "5",
                     "--skip-videos",
+                    "--skip-live-photos",
                     "--set-exif-datetime",
                     "--no-progress-bar",
                     "tests/fixtures/Photos",
@@ -63,6 +64,10 @@ class DownloadPhotoTestCase(TestCase):
             )
             self.assertIn(
                 "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "IMG_7409.LIVE-original.MOV",
                 self._caplog.text,
             )
             self.assertIn(
@@ -125,6 +130,7 @@ class DownloadPhotoTestCase(TestCase):
                             "4",
                             "--set-exif-datetime",
                             # '--skip-videos',
+                            # "--skip-live-photos",
                             "--no-progress-bar",
                             "tests/fixtures/Photos",
                         ],
@@ -175,6 +181,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--recent",
                         "1",
                         "--skip-videos",
+                        "--skip-live-photos",
                         "--set-exif-datetime",
                         "--no-progress-bar",
                         "tests/fixtures/Photos",
@@ -206,10 +213,8 @@ class DownloadPhotoTestCase(TestCase):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos/2018/07/31/")
-        shutil.copyfile(
-            "tests/fixtures/IMG_7409-original.JPG",
-            "tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
-        )
+        open("tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG", "a").close()
+        open("tests/fixtures/Photos/2018/07/31/IMG_7409.LIVE-original.MOV", "a").close()
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -225,6 +230,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--recent",
                     "1",
                     # '--skip-videos',
+                    # "--skip-live-photos",
                     "--no-progress-bar",
                     "tests/fixtures/Photos",
                 ],
@@ -238,6 +244,10 @@ class DownloadPhotoTestCase(TestCase):
             )
             self.assertIn(
                 "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG already exists.",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409.LIVE-original.MOV already exists.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -256,20 +266,25 @@ class DownloadPhotoTestCase(TestCase):
         files_to_skip = []
 
         files_to_download.append("2018/07/31/IMG_7409-original.JPG")
+        files_to_download.append("2018/07/31/IMG_7409.LIVE-original.MOV")
         files_to_skip.append("2018/07/30/IMG_7408-original.JPG")
+        files_to_skip.append("2018/07/30/IMG_7408.LIVE-original.MOV")
         files_to_download.append("2018/07/30/IMG_7407-original.JPG")
+        files_to_download.append("2018/07/30/IMG_7407.LIVE-original.MOV")
         files_to_skip.append("2018/07/30/IMG_7405-original.MOV")
         files_to_skip.append("2018/07/30/IMG_7404-original.MOV")
         files_to_download.append("2018/07/30/IMG_7403-original.MOV")
         files_to_download.append("2018/07/30/IMG_7402-original.MOV")
         files_to_skip.append("2018/07/30/IMG_7401-original.MOV")
         files_to_skip.append("2018/07/30/IMG_7400-original.JPG")
+        files_to_skip.append("2018/07/30/IMG_7400.LIVE-original.MOV")
         files_to_skip.append("2018/07/30/IMG_7399-original.JPG")
+        files_to_download.append("2018/07/30/IMG_7399.LIVE-original.MOV")
 
         for f in files_to_skip:
             open("%s/%s" % (base_dir, f), "a").close()
 
-        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
@@ -293,7 +308,9 @@ class DownloadPhotoTestCase(TestCase):
                 print(result.exception)
                 expected_calls = list(
                     map(
-                        lambda f: call(ANY, ANY, "%s/%s" % (base_dir, f), "original"),
+                        lambda f: call(
+                            ANY, ANY, "%s/%s" % (base_dir, f),
+                            "originalVideo" if f.endswith('LIVE-original.MOV') else "original"),
                         files_to_download,
                     )
                 )
@@ -341,6 +358,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--recent",
                         "1",
                         "--skip-videos",
+                        "--skip-live-photos",
                         "--no-progress-bar",
                         "tests/fixtures/Photos",
                     ],
@@ -398,6 +416,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--recent",
                                 "1",
                                 "--skip-videos",
+                                "--skip-live-photos",
                                 "--no-progress-bar",
                                 "tests/fixtures/Photos",
                             ],
@@ -455,6 +474,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--recent",
                                 "1",
                                 "--skip-videos",
+                                "--skip-live-photos",
                                 "--no-progress-bar",
                                 "tests/fixtures/Photos",
                             ],
@@ -540,7 +560,7 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
             with mock.patch.object(PhotoAsset, "versions") as pa:
@@ -597,7 +617,7 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
             with mock.patch.object(PhotoAsset, "versions") as pa:
@@ -651,7 +671,7 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
             with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
@@ -707,7 +727,7 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        with mock.patch("icloudpd.download.download_photo") as dp_patched:
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
             with mock.patch.object(PhotoAsset, "item_type", new_callable=mock.PropertyMock) as it_mock:
