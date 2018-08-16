@@ -49,7 +49,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--live-photo-size",
-    help="Live Photo size to download (default: original)",
+    help="Live Photo video size to download (default: original)",
     type=click.Choice(["original", "medium", "thumb"]),
     default="original",
 )

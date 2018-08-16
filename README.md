@@ -24,6 +24,7 @@ pip install icloudpd
                --username=<username>
                [--password=<password>]
                [--size=(original|medium|thumb)]
+               [--live-photo-size=(original|medium|thumb)]
                [--recent <integer>]
                [--until-found <integer>]
                [--skip-videos]
@@ -47,6 +48,9 @@ pip install icloudpd
         --password <password>           Your iCloud password (default: use PyiCloud
                                         keyring or prompt for password)
         --size [original|medium|thumb]  Image size to download (default: original)
+        --live-photo-size [original|medium|thumb]
+                                        Live Photo video size to download (default:
+                                        original)
         --recent INTEGER RANGE          Number of recent photos to download
                                         (default: download all photos)
         --until-found INTEGER RANGE     Download most recently added photos until we
