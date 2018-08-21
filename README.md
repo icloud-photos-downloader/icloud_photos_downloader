@@ -50,8 +50,7 @@ pip install icloudpd
                                         keyring or prompt for password)
         --cookie-directory </cookie/directory>
                                         Directory to store cookies for
-                                        authentication (default: /tmp/pyicloud on
-                                        Linux)
+                                        authentication (default: ~/.pyicloud)
         --size [original|medium|thumb]  Image size to download (default: original)
         --live-photo-size [original|medium|thumb]
                                         Live Photo video size to download (default:
