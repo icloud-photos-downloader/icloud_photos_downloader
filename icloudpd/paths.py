@@ -9,10 +9,10 @@ def local_download_path(media, size, download_dir):
     return download_path
 
 
-def filename_with_size(media, size=None):
-    """Returns the filename with size, e.g. IMG1234-original.jpg"""
+def filename_with_size(media, size):
+    """Returns the filename with size, e.g. IMG1234.jpg, IMG1234-small.jpg"""
     # Strip any non-ascii characters.
     filename = media.filename.encode("utf-8").decode("ascii", "ignore")
-    if size is None:
+    if size == 'original':
         return filename
-    return filename.replace(".", "-%s." % size)
+    return ("-%s." % size).join(filename.rsplit(".", 1))

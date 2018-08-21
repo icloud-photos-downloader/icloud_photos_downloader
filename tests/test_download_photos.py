@@ -33,8 +33,8 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs("tests/fixtures/Photos")
 
         os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        open("tests/fixtures/Photos/2018/07/30/IMG_7408-original.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/30/IMG_7407-original.JPG", "a").close()
+        open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a").close()
+        open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a").close()
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -63,19 +63,19 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                 self._caplog.text,
             )
             self.assertNotIn(
-                "IMG_7409.LIVE-original.MOV",
+                "IMG_7409.MOV",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408-original.JPG already exists.",
+                "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408.JPG already exists.",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/30/IMG_7407-original.JPG already exists.",
+                "INFO     tests/fixtures/Photos/2018/07/30/IMG_7407.JPG already exists.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -97,8 +97,8 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs("tests/fixtures/Photos")
 
         os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        open("tests/fixtures/Photos/2018/07/30/IMG_7408-original.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/30/IMG_7407-original.JPG", "a").close()
+        open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a").close()
+        open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a").close()
 
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
@@ -146,12 +146,12 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                         self._caplog.text,
                     )
                     # YYYY:MM:DD is the correct format.
                     self.assertIn(
-                        "DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG: 2018:07:31",
+                        "DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG: 2018:07:31",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -193,15 +193,15 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "DEBUG    Error fetching EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                    "DEBUG    Error fetching EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "DEBUG    Error setting EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                    "DEBUG    Error setting EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -213,8 +213,8 @@ class DownloadPhotoTestCase(TestCase):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos/2018/07/31/")
-        open("tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/31/IMG_7409.LIVE-original.MOV", "a").close()
+        open("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", "a").close()
+        open("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", "a").close()
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -243,11 +243,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG already exists.",
+                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409.JPG already exists.",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409.LIVE-original.MOV already exists.",
+                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409.MOV already exists.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -265,24 +265,24 @@ class DownloadPhotoTestCase(TestCase):
         files_to_download = []
         files_to_skip = []
 
-        files_to_download.append("2018/07/31/IMG_7409-original.JPG")
-        files_to_download.append("2018/07/31/IMG_7409.LIVE-original.MOV")
-        files_to_skip.append("2018/07/30/IMG_7408-original.JPG")
-        files_to_skip.append("2018/07/30/IMG_7408.LIVE-original.MOV")
-        files_to_download.append("2018/07/30/IMG_7407-original.JPG")
-        files_to_download.append("2018/07/30/IMG_7407.LIVE-original.MOV")
-        files_to_skip.append("2018/07/30/IMG_7405-original.MOV")
-        files_to_skip.append("2018/07/30/IMG_7404-original.MOV")
-        files_to_download.append("2018/07/30/IMG_7403-original.MOV")
-        files_to_download.append("2018/07/30/IMG_7402-original.MOV")
-        files_to_skip.append("2018/07/30/IMG_7401-original.MOV")
-        files_to_skip.append("2018/07/30/IMG_7400-original.JPG")
-        files_to_skip.append("2018/07/30/IMG_7400.LIVE-original.MOV")
-        files_to_skip.append("2018/07/30/IMG_7399-original.JPG")
-        files_to_download.append("2018/07/30/IMG_7399.LIVE-original.MOV")
+        files_to_download.append(("2018/07/31/IMG_7409.JPG", "photo"))
+        files_to_download.append(("2018/07/31/IMG_7409-medium.MOV", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7408.JPG", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7408-medium.MOV", "photo"))
+        files_to_download.append(("2018/07/30/IMG_7407.JPG", "photo"))
+        files_to_download.append(("2018/07/30/IMG_7407-medium.MOV", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7405.MOV", "video"))
+        files_to_skip.append(("2018/07/30/IMG_7404.MOV", "video"))
+        files_to_download.append(("2018/07/30/IMG_7403.MOV", "video"))
+        files_to_download.append(("2018/07/30/IMG_7402.MOV", "video"))
+        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo"))
+        files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))
 
         for f in files_to_skip:
-            open("%s/%s" % (base_dir, f), "a").close()
+            open("%s/%s" % (base_dir, f[0]), "a").close()
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -297,6 +297,8 @@ class DownloadPhotoTestCase(TestCase):
                         "jdoe@gmail.com",
                         "--password",
                         "password1",
+                        "--live-photo-size",
+                        "medium",
                         "--until-found",
                         "3",
                         "--recent",
@@ -309,8 +311,10 @@ class DownloadPhotoTestCase(TestCase):
                 expected_calls = list(
                     map(
                         lambda f: call(
-                            ANY, ANY, "%s/%s" % (base_dir, f),
-                            "originalVideo" if f.endswith('LIVE-original.MOV') else "original"),
+                            ANY, ANY, "%s/%s" % (base_dir, f[0]),
+                            "mediumVideo" if (
+                                f[1] == 'photo' and f[0].endswith('.MOV')
+                            ) else "original"),
                         files_to_download,
                     )
                 )
@@ -325,7 +329,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 for f in files_to_skip:
-                    expected_message = "INFO     %s/%s already exists." % (base_dir, f)
+                    expected_message = "INFO     %s/%s already exists." % (base_dir, f[0])
                     self.assertIn(expected_message, self._caplog.text)
 
                 self.assertIn(
@@ -370,7 +374,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 self.assertIn(
                     "ERROR    IOError while writing file to "
-                    "tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG! "
+                    "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG! "
                     "You might have run out of disk space, or the file might "
                     "be too large for your OS. Skipping this file...",
                     self._caplog.text,
@@ -596,7 +600,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -605,7 +609,7 @@ class DownloadPhotoTestCase(TestCase):
                     dp_patched.assert_called_once_with(
                         ANY,
                         ANY,
-                        "tests/fixtures/Photos/2018/07/31/IMG_7409-original.JPG",
+                        "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
                         "original",
                     )
 

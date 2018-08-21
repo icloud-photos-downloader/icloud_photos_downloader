@@ -316,14 +316,17 @@ def main(
 
             download_path = local_download_path(
                 photo, download_size, download_dir)
-            download_path_without_size = local_download_path(
-                photo, None, download_dir)
-            # add a check if the "simple" name of the file is found if the size
-            # is original
-            if os.path.isfile(download_path) or (
-                    download_size == "original" and
-                    os.path.isfile(download_path_without_size)
-            ):
+
+            file_exists = os.path.isfile(download_path)
+            if not file_exists and download_size == "original":
+                # Deprecation - We used to download files like IMG_1234-original.jpg,
+                # so we need to check for these.
+                # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
+                original_download_path = ("-%s." % size).join(
+                    download_path.rsplit(".", 1))
+                file_exists = os.path.isfile(original_download_path)
+
+            if file_exists:
                 if until_found is not None:
                     consecutive_files_found += 1
                 logger.set_tqdm_description(
@@ -368,9 +371,11 @@ def main(
                 lp_size = live_photo_size + "Video"
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
-                    # Add size to filename
-                    filename = version['filename'].replace(
-                        ".MOV", "-%s.MOV" % live_photo_size)
+                    filename = version['filename']
+                    if live_photo_size != 'original':
+                        # Add size to filename if not original
+                        filename = filename.replace(
+                            ".MOV", "-%s.MOV" % live_photo_size)
                     lp_download_path = os.path.join(download_dir, filename)
 
                     if only_print_filenames:

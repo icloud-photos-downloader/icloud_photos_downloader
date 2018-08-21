@@ -28,10 +28,8 @@ class AutodeletePhotosTestCase(TestCase):
         open("tests/fixtures/Photos/2018/07/30/IMG_7406.MOV", "a").close()
         os.makedirs("tests/fixtures/Photos/2018/07/26/")
         open("tests/fixtures/Photos/2018/07/26/IMG_7383.PNG", "a").close()
-        open("tests/fixtures/Photos/2018/07/26/IMG_7383-original.PNG", "a").close()
         os.makedirs("tests/fixtures/Photos/2018/07/12/")
         open("tests/fixtures/Photos/2018/07/12/IMG_7190.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/12/IMG_7190-original.JPG", "a").close()
         open("tests/fixtures/Photos/2018/07/12/IMG_7190-medium.JPG", "a").close()
 
         # Should not be deleted
@@ -83,15 +81,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Deleting tests/fixtures/Photos/2018/07/26/IMG_7383-original.PNG",
-                self._caplog.text,
-            )
-            self.assertIn(
                 "INFO     Deleting tests/fixtures/Photos/2018/07/12/IMG_7190.JPG",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     Deleting tests/fixtures/Photos/2018/07/12/IMG_7190-original.JPG",
                 self._caplog.text,
             )
             self.assertIn(
