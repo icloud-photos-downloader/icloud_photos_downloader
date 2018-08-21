@@ -23,6 +23,7 @@ pip install icloudpd
     $ icloudpd <download_directory>
                --username=<username>
                [--password=<password>]
+               [--cookie-directory=</cookie/directory>]
                [--size=(original|medium|thumb)]
                [--live-photo-size=(original|medium|thumb)]
                [--recent <integer>]
@@ -47,6 +48,10 @@ pip install icloudpd
         --username <username>           Your iCloud username or email address
         --password <password>           Your iCloud password (default: use PyiCloud
                                         keyring or prompt for password)
+        --cookie-directory </cookie/directory>
+                                        Directory to store cookies for
+                                        authentication (default: /tmp/pyicloud on
+                                        Linux)
         --size [original|medium|thumb]  Image size to download (default: original)
         --live-photo-size [original|medium|thumb]
                                         Live Photo video size to download (default:
@@ -151,6 +156,8 @@ you will be prompted for a code when you run the script.
 
 Two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months.
+
+Authentication cookies will be stored in a temp directory (`/tmp/pyicloud` on Linux, or `/var/tmp/...` on MacOS.) This directory can be configured with the `--cookie-directory` option.
 
 You can receive an email notification when two-factor authentication expires by passing the
 `--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,

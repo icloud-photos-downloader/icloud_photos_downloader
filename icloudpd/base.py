@@ -42,6 +42,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     metavar="<password>",
 )
 @click.option(
+    "--cookie-directory",
+    help="Directory to store cookies for authentication "
+    "(default: ~/.pyicloud)",
+    metavar="</cookie/directory>",
+    default="~/.pyicloud",
+)
+@click.option(
     "--size",
     help="Image size to download (default: original)",
     type=click.Choice(["original", "medium", "thumb"]),
@@ -160,6 +167,7 @@ def main(
         directory,
         username,
         password,
+        cookie_directory,
         size,
         live_photo_size,
         recent,
@@ -200,6 +208,7 @@ def main(
         icloud = authenticate(
             username,
             password,
+            cookie_directory,
             should_send_2sa_notification,
             client_id=os.environ.get("CLIENT_ID"),
         )
