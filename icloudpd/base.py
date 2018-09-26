@@ -203,7 +203,7 @@ def main(
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
 
-    should_send_2sa_notification = smtp_username is not None
+    should_send_2sa_notification = smtp_username is not None or notification_email is not None
     try:
         icloud = authenticate(
             username,
