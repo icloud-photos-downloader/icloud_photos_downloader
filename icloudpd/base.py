@@ -7,6 +7,7 @@ import time
 import logging
 import itertools
 import click
+import subprocess
 from tqdm import tqdm
 from tzlocal import get_localzone
 
@@ -163,6 +164,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
+@click.option(
+   "--notification-script",
+   type=click.Path(),
+   help="Runs an external script when two factor authentication expires."
+   "(path required: /path/to/my/script.sh)",
+)
 def main(
         directory,
         username,
@@ -187,6 +194,7 @@ def main(
         notification_email,
         log_level,
         no_progress_bar,
+        notification_script,
 ):
     """Download all iCloud photos to a local directory"""
     logger = setup_logger()
@@ -213,14 +221,17 @@ def main(
             client_id=os.environ.get("CLIENT_ID"),
         )
     except TwoStepAuthRequiredError:
-        send_2sa_notification(
-            smtp_username,
-            smtp_password,
-            smtp_host,
-            smtp_port,
-            smtp_no_tls,
-            notification_email,
-        )
+        if notification_script is not None:
+            subprocess.call([notification_script]),
+        if smtp_username is not None:
+            send_2sa_notification(
+                smtp_username,
+                smtp_password,
+                smtp_host,
+                smtp_port,
+                smtp_no_tls,
+                notification_email,
+            )
         exit(1)
 
     # For Python 2.7
