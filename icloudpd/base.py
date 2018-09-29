@@ -6,8 +6,9 @@ import sys
 import time
 import logging
 import itertools
-import click
 import subprocess
+import click
+
 from tqdm import tqdm
 from tzlocal import get_localzone
 
@@ -171,30 +172,30 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
 def main(
-    directory,
-    username,
-    password,
-    cookie_directory,
-    size,
-    live_photo_size,
-    recent,
-    until_found,
-    skip_videos,
-    skip_live_photos,
-    force_size,
-    auto_delete,
-    only_print_filenames,
-    folder_structure,
-    set_exif_datetime,
-    smtp_username,
-    smtp_password,
-    smtp_host,
-    smtp_port,
-    smtp_no_tls,
-    notification_email,
-    log_level,
-    no_progress_bar,
-    notification_script,
+        directory,
+        username,
+        password,
+        cookie_directory,
+        size,
+        live_photo_size,
+        recent,
+        until_found,
+        skip_videos,
+        skip_live_photos,
+        force_size,
+        auto_delete,
+        only_print_filenames,
+        folder_structure,
+        set_exif_datetime,
+        smtp_username,
+        smtp_password,
+        smtp_host,
+        smtp_port,
+        smtp_no_tls,
+        notification_email,
+        log_level,
+        no_progress_bar,
+        notification_script,
 ):
     """Download all iCloud photos to a local directory"""
     logger = setup_logger()
@@ -285,7 +286,7 @@ def main(
     # progress bar is explicity disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
     if not os.environ.get("FORCE_TQDM") and (
-        only_print_filenames or no_progress_bar or not sys.stdout.isatty()
+            only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     ):
         photos_enumerator = photos
         logger.set_tqdm(None)
