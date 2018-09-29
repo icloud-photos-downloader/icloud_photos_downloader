@@ -150,6 +150,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     metavar="<notification_email>",
 )
 @click.option(
+    "--notification-script",
+    type=click.Path(),
+    help="Runs an external script when two factor authentication expires. "
+    "(path required: /path/to/my/script.sh)",
+)
+@click.option(
     "--log-level",
     help="Log level (default: debug)",
     type=click.Choice(["debug", "info", "error"]),
@@ -164,37 +170,31 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
-@click.option(
-   "--notification-script",
-   type=click.Path(),
-   help="Runs an external script when two factor authentication expires."
-   "(path required: /path/to/my/script.sh)",
-)
 def main(
-        directory,
-        username,
-        password,
-        cookie_directory,
-        size,
-        live_photo_size,
-        recent,
-        until_found,
-        skip_videos,
-        skip_live_photos,
-        force_size,
-        auto_delete,
-        only_print_filenames,
-        folder_structure,
-        set_exif_datetime,
-        smtp_username,
-        smtp_password,
-        smtp_host,
-        smtp_port,
-        smtp_no_tls,
-        notification_email,
-        log_level,
-        no_progress_bar,
-        notification_script,
+    directory,
+    username,
+    password,
+    cookie_directory,
+    size,
+    live_photo_size,
+    recent,
+    until_found,
+    skip_videos,
+    skip_live_photos,
+    force_size,
+    auto_delete,
+    only_print_filenames,
+    folder_structure,
+    set_exif_datetime,
+    smtp_username,
+    smtp_password,
+    smtp_host,
+    smtp_port,
+    smtp_no_tls,
+    notification_email,
+    log_level,
+    no_progress_bar,
+    notification_script,
 ):
     """Download all iCloud photos to a local directory"""
     logger = setup_logger()
@@ -211,19 +211,23 @@ def main(
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
 
-    should_send_2sa_notification = smtp_username is not None or notification_email is not None
+    raise_error_on_2sa = (
+        smtp_username is not None
+        or notification_email is not None
+        or notification_script is not None
+    )
     try:
         icloud = authenticate(
             username,
             password,
             cookie_directory,
-            should_send_2sa_notification,
+            raise_error_on_2sa,
             client_id=os.environ.get("CLIENT_ID"),
         )
     except TwoStepAuthRequiredError:
         if notification_script is not None:
-            subprocess.call([notification_script]),
-        if smtp_username is not None:
+            subprocess.call([notification_script])
+        if smtp_username is not None or notification_email is not None:
             send_2sa_notification(
                 smtp_username,
                 smtp_password,
@@ -265,7 +269,11 @@ def main(
         video_suffix = " or video" if photos_count == 1 else " and videos"
     logger.info(
         "Downloading %s %s photo%s%s to %s/ ...",
-        photos_count_str, size, plural_suffix, video_suffix, directory
+        photos_count_str,
+        size,
+        plural_suffix,
+        video_suffix,
+        directory,
     )
 
     consecutive_files_found = 0
@@ -277,7 +285,7 @@ def main(
     # progress bar is explicity disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
     if not os.environ.get("FORCE_TQDM") and (
-            only_print_filenames or no_progress_bar or not sys.stdout.isatty()
+        only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     ):
         photos_enumerator = photos
         logger.set_tqdm(None)
@@ -304,7 +312,7 @@ def main(
             except ValueError:
                 logger.set_tqdm_description(
                     "Could not convert photo created date to local timezone (%s)" %
-                    photo.created, logging.ERROR)
+                    photo.created, logging.ERROR, )
                 created_date = photo.created
 
             date_path = folder_structure.format(created_date)
@@ -321,7 +329,7 @@ def main(
                         "utf-8").decode("ascii", "ignore")
                     logger.set_tqdm_description(
                         "%s size does not exist for %s. Skipping..." %
-                        (size, filename), logging.ERROR)
+                        (size, filename), logging.ERROR, )
                     break
                 download_size = "original"
 
@@ -334,7 +342,8 @@ def main(
                 # so we need to check for these.
                 # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
                 original_download_path = ("-%s." % size).join(
-                    download_path.rsplit(".", 1))
+                    download_path.rsplit(".", 1)
+                )
                 file_exists = os.path.isfile(original_download_path)
 
             if file_exists:
@@ -367,7 +376,8 @@ def main(
                                     "%Y:%m:%d %H:%M:%S")
                                 logger.debug(
                                     "Setting EXIF timestamp for %s: %s",
-                                    download_path, date_str
+                                    download_path,
+                                    date_str,
                                 )
                                 exif_datetime.set_photo_exif(
                                     download_path,
@@ -382,11 +392,12 @@ def main(
                 lp_size = live_photo_size + "Video"
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
-                    filename = version['filename']
-                    if live_photo_size != 'original':
+                    filename = version["filename"]
+                    if live_photo_size != "original":
                         # Add size to filename if not original
                         filename = filename.replace(
-                            ".MOV", "-%s.MOV" % live_photo_size)
+                            ".MOV", "-%s.MOV" %
+                            live_photo_size)
                     lp_download_path = os.path.join(download_dir, filename)
 
                     if only_print_filenames:
@@ -394,16 +405,17 @@ def main(
                     else:
                         if os.path.isfile(lp_download_path):
                             logger.set_tqdm_description(
-                                "%s already exists." %
-                                truncate_middle(
-                                    lp_download_path, 96))
+                                "%s already exists."
+                                % truncate_middle(lp_download_path, 96)
+                            )
                             break
 
                         truncated_path = truncate_middle(lp_download_path, 96)
                         logger.set_tqdm_description(
                             "Downloading %s" % truncated_path)
                         download.download_media(
-                            icloud, photo, lp_download_path, lp_size)
+                            icloud, photo, lp_download_path, lp_size
+                        )
 
             break
 

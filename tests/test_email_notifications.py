@@ -42,7 +42,9 @@ class EmailNotificationsTestCase(TestCase):
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
-            smtp_instance.login.assert_called_once_with("jdoe+smtp@gmail.com", "password1")
+            smtp_instance.login.assert_called_once_with(
+                "jdoe+smtp@gmail.com", "password1"
+            )
             smtp_instance.sendmail.assert_called_once_with(
                 "jdoe+smtp@gmail.com",
                 "jdoe+notifications@gmail.com",
@@ -92,3 +94,26 @@ class EmailNotificationsTestCase(TestCase):
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
+
+    @freeze_time("2018-01-01")
+    def test_2sa_required_notification_script(self):
+        with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
+            with patch("subprocess.call") as subprocess_patched:
+                # Pass fixed client ID via environment variable
+                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                runner = CliRunner()
+                result = runner.invoke(
+                    main,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--notification-script",
+                        "./test_script.sh",
+                        "tests/fixtures/Photos",
+                    ],
+                )
+                print(result.output)
+                assert result.exit_code == 1
+            subprocess_patched.assert_called_once_with(["./test_script.sh"])

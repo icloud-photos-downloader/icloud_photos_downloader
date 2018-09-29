@@ -41,6 +41,7 @@ pip install icloudpd
                [--smtp-port <smtp_port>]
                [--smtp-no-tls]
                [--notification-email <notification_email>]
+               [--notification-script PATH]
                [--log-level=(debug|info|error)]
                [--no-progress-bar]
 
@@ -95,6 +96,9 @@ pip install icloudpd
                                         Email address where you would like to
                                         receive email notifications. Default: SMTP
                                         username
+        --notification-script PATH      Runs an external script when two factor
+                                        authentication expires. (path required:
+                                        /path/to/my/script.sh)
         --log-level [debug|info|error]  Log level (default: debug)
         --no-progress-bar               Disables the one-line progress bar and
                                         prints log messages on separate lines
