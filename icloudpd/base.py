@@ -20,7 +20,8 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.paths import local_download_path
 from icloudpd import exif_datetime
-from icloudpd.constants import MAX_RETRIES
+# Must import the constants object so that we can mock values in tests.
+from icloudpd import constants
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -248,6 +249,24 @@ def main(
         "Looking up all photos%s...",
         "" if skip_videos else " and videos")
     photos = icloud.photos.all
+
+    def photos_exception_handler(ex, retries):
+        """Handles session errors in the PhotoAlbum photos iterator"""
+        if "Invalid global session" in str(ex):
+            if retries > constants.MAX_RETRIES:
+                logger.tqdm_write(
+                    "iCloud re-authentication failed! Please try again later."
+                )
+                raise ex
+            logger.tqdm_write(
+                "Session error, re-authenticating...",
+                logging.ERROR)
+            icloud.authenticate()
+            # Wait a few seconds in case there are issues with Apple's servers
+            time.sleep(constants.WAIT_SECONDS)
+
+    photos.exception_handler = photos_exception_handler
+
     photos_count = len(photos)
 
     # Optional: Only download the x most recent photos.
@@ -283,7 +302,7 @@ def main(
     tqdm_kwargs["ascii"] = True
 
     # Skip the one-line progress bar if we're only printing the filenames,
-    # progress bar is explicity disabled,
+    # or if the progress bar is explicity disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
     if not os.environ.get("FORCE_TQDM") and (
             only_print_filenames or no_progress_bar or not sys.stdout.isatty()
@@ -296,7 +315,7 @@ def main(
 
     # pylint: disable-msg=too-many-nested-blocks
     for photo in photos_enumerator:
-        for _ in range(MAX_RETRIES):
+        for _ in range(constants.MAX_RETRIES):
             if skip_videos and photo.item_type != "image":
                 logger.set_tqdm_description(
                     "Skipping %s, only downloading photos." % photo.filename

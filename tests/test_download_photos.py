@@ -8,11 +8,12 @@ import pytest
 import mock
 import tzlocal
 import datetime
+import traceback
 from mock import call, ANY
 from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
-from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
@@ -20,6 +21,17 @@ from icloudpd.base import main
 import icloudpd.constants
 
 vcr = VCR(decode_compressed_response=True)
+
+def print_result_exception(result):
+    ex = result.exception
+    if ex:
+        # This only works on Python 3
+        if hasattr(ex, '__traceback__'):
+            print(''.join(
+                traceback.format_exception(
+                    etype=type(ex), value=ex, tb=ex.__traceback__)))
+        else:
+            print(ex)
 
 
 class DownloadPhotoTestCase(TestCase):
@@ -56,7 +68,8 @@ class DownloadPhotoTestCase(TestCase):
                     "tests/fixtures/Photos",
                 ],
             )
-            print(result.exception)
+            print_result_exception(result)
+
             self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 "INFO     Downloading 5 original photos to tests/fixtures/Photos/ ...",
@@ -135,7 +148,7 @@ class DownloadPhotoTestCase(TestCase):
                             "tests/fixtures/Photos",
                         ],
                     )
-                    print(result.exception)
+                    print_result_exception(result)
 
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos...",
@@ -187,6 +200,8 @@ class DownloadPhotoTestCase(TestCase):
                         "tests/fixtures/Photos",
                     ],
                 )
+                print_result_exception(result)
+
                 self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
                     "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
@@ -235,6 +250,8 @@ class DownloadPhotoTestCase(TestCase):
                     "tests/fixtures/Photos",
                 ],
             )
+            print_result_exception(result)
+
             self.assertIn(
                 "DEBUG    Looking up all photos and videos...", self._caplog.text
             )
@@ -307,7 +324,8 @@ class DownloadPhotoTestCase(TestCase):
                         base_dir,
                     ],
                 )
-                print(result.exception)
+                print_result_exception(result)
+
                 expected_calls = list(
                     map(
                         lambda f: call(
@@ -367,6 +385,8 @@ class DownloadPhotoTestCase(TestCase):
                         "tests/fixtures/Photos",
                     ],
                 )
+                print_result_exception(result)
+
                 self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
                     "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
@@ -381,7 +401,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
-    def test_handle_session_error(self):
+    def test_handle_session_error_during_download(self):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
@@ -425,6 +445,8 @@ class DownloadPhotoTestCase(TestCase):
                                 "tests/fixtures/Photos",
                             ],
                         )
+                        print_result_exception(result)
+
                         # Error msg should be repeated 5 times
                         assert (
                             self._caplog.text.count(
@@ -438,6 +460,66 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         assert result.exit_code == 0
+
+    def test_handle_session_error_during_photo_iteration(self):
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+
+            def mock_raise_response_error(offset):
+                raise PyiCloudAPIResponseError("Invalid global session", 100)
+
+            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+                with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
+                    pa_photos_request.side_effect = mock_raise_response_error
+
+                    # Let the initial authenticate() call succeed,
+                    # but do nothing on the second try.
+                    orig_authenticate = PyiCloudService.authenticate
+
+                    def mocked_authenticate(self):
+                        if not hasattr(self, "already_authenticated"):
+                            orig_authenticate(self)
+                            setattr(self, "already_authenticated", True)
+
+                    with mock.patch.object(
+                        PyiCloudService, "authenticate", new=mocked_authenticate
+                    ):
+                        runner = CliRunner()
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--skip-videos",
+                                "--skip-live-photos",
+                                "--no-progress-bar",
+                                "tests/fixtures/Photos",
+                            ],
+                        )
+                        print_result_exception(result)
+
+                        # Error msg should be repeated 5 times
+                        assert (
+                            self._caplog.text.count(
+                                "Session error, re-authenticating..."
+                            )
+                            == 5
+                        )
+
+                        self.assertIn(
+                            "INFO     iCloud re-authentication failed! Please try again later.",
+                            self._caplog.text,
+                        )
+                        assert result.exit_code == -1
 
     def test_handle_connection_error(self):
         if os.path.exists("tests/fixtures/Photos"):
@@ -483,6 +565,8 @@ class DownloadPhotoTestCase(TestCase):
                                 "tests/fixtures/Photos",
                             ],
                         )
+                        print_result_exception(result)
+
                         # Error msg should be repeated 5 times
                         assert (
                             self._caplog.text.count(
@@ -523,7 +607,7 @@ class DownloadPhotoTestCase(TestCase):
                         base_dir,
                     ],
                 )
-                print(result.exception)
+                print_result_exception(result)
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos...", self._caplog.text
@@ -589,8 +673,7 @@ class DownloadPhotoTestCase(TestCase):
                             base_dir,
                         ],
                     )
-                    print(result.exception)
-
+                    print_result_exception(result)
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos...",
                         self._caplog.text,
@@ -647,7 +730,7 @@ class DownloadPhotoTestCase(TestCase):
                             base_dir,
                         ],
                     )
-                    print(result.exception)
+                    print_result_exception(result)
 
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos...",
@@ -703,7 +786,7 @@ class DownloadPhotoTestCase(TestCase):
                             base_dir,
                         ],
                     )
-                    print(result.exception)
+                    print_result_exception(result)
 
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos...",
@@ -754,7 +837,7 @@ class DownloadPhotoTestCase(TestCase):
                             base_dir,
                         ],
                     )
-                    print(result.exception)
+                    print_result_exception(result)
 
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos...",
