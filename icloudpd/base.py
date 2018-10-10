@@ -261,9 +261,12 @@ def main(
             logger.tqdm_write(
                 "Session error, re-authenticating...",
                 logging.ERROR)
+            if retries > 1:
+                # If the first reauthentication attempt failed,
+                # start waiting a few seconds before retrying in case
+                # there are some issues with the Apple servers
+                time.sleep(constants.WAIT_SECONDS)
             icloud.authenticate()
-            # Wait a few seconds in case there are issues with Apple's servers
-            time.sleep(constants.WAIT_SECONDS)
 
     photos.exception_handler = photos_exception_handler
 

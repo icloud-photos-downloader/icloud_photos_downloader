@@ -413,7 +413,7 @@ class DownloadPhotoTestCase(TestCase):
             def mock_raise_response_error(arg):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
 
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+            with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAsset, "download") as pa_download:
                     pa_download.side_effect = mock_raise_response_error
 
@@ -459,6 +459,9 @@ class DownloadPhotoTestCase(TestCase):
                             "INFO     Could not download IMG_7409.JPG! Please try again later.",
                             self._caplog.text,
                         )
+
+                        # Make sure we only call sleep 4 times (skip the first retry)
+                        self.assertEquals(sleep_mock.call_count, 4)
                         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self):
@@ -473,7 +476,7 @@ class DownloadPhotoTestCase(TestCase):
             def mock_raise_response_error(offset):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
 
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+            with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
                     pa_photos_request.side_effect = mock_raise_response_error
 
@@ -519,6 +522,9 @@ class DownloadPhotoTestCase(TestCase):
                             "INFO     iCloud re-authentication failed! Please try again later.",
                             self._caplog.text,
                         )
+                        # Make sure we only call sleep 4 times (skip the first retry)
+                        self.assertEquals(sleep_mock.call_count, 4)
+
                         assert result.exit_code == -1
 
     def test_handle_connection_error(self):
