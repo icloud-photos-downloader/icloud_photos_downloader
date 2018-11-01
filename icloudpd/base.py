@@ -69,12 +69,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.IntRange(0),
 )
 @click.option(
-    "--until-found",
-    help="Download most recently added photos until we find x number of "
-    "previously downloaded consecutive photos (default: download all photos)",
-    type=click.IntRange(0),
-)
-@click.option(
     "--skip-videos",
     help="Don't download any videos (default: Download all photos and videos)",
     is_flag=True,
@@ -180,7 +174,6 @@ def main(
         size,
         live_photo_size,
         recent,
-        until_found,
         skip_videos,
         skip_live_photos,
         force_size,
@@ -279,12 +272,6 @@ def main(
 
     tqdm_kwargs = {"total": photos_count}
 
-    if until_found is not None:
-        del tqdm_kwargs["total"]
-        photos_count = "???"
-        # ensure photos iterator doesn't have a known length
-        photos = (p for p in photos)
-
     plural_suffix = "" if photos_count == 1 else "s"
     video_suffix = ""
     photos_count_str = "the first" if photos_count == 1 else photos_count
@@ -298,8 +285,6 @@ def main(
         video_suffix,
         directory,
     )
-
-    consecutive_files_found = 0
 
     # Use only ASCII characters in progress bar
     tqdm_kwargs["ascii"] = True
@@ -316,8 +301,8 @@ def main(
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
         logger.set_tqdm(photos_enumerator)
 
-    # pylint: disable-msg=too-many-nested-blocks
-    for photo in photos_enumerator:
+    # internal function for actually downloading the photos
+    def download_photo(photo):
         for _ in range(constants.MAX_RETRIES):
             if skip_videos and photo.item_type != "image":
                 logger.set_tqdm_description(
@@ -370,15 +355,10 @@ def main(
                 file_exists = os.path.isfile(original_download_path)
 
             if file_exists:
-                if until_found is not None:
-                    consecutive_files_found += 1
                 logger.set_tqdm_description(
                     "%s already exists." % truncate_middle(download_path, 96)
                 )
             else:
-                if until_found is not None:
-                    consecutive_files_found = 0
-
                 if only_print_filenames:
                     print(download_path)
                 else:
@@ -442,14 +422,10 @@ def main(
 
             break
 
-        if until_found is not None and consecutive_files_found >= until_found:
-            logger.tqdm_write(
-                "Found %d consecutive previously downloaded photos. Exiting"
-                % until_found
-            )
-            if hasattr(photos_enumerator, "close"):
-                photos_enumerator.close()
-            break
+    # pylint: disable-msg=too-many-nested-blocks
+    for photo in photos_enumerator:
+        # insert call here
+        download_photo(photo)
 
     if only_print_filenames:
         exit(0)
