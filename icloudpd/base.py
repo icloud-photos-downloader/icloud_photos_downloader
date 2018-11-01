@@ -8,6 +8,7 @@ import logging
 import itertools
 import subprocess
 import click
+import pickle
 
 from tqdm import tqdm
 from tzlocal import get_localzone
@@ -165,6 +166,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "(Progress bar is disabled by default if there is no tty attached)",
     is_flag=True,
 )
+@click.option(
+    "--clear-cache",
+    help="Clears the downloaded files cache and will re-check for all physical files",
+    is_flag=True,
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -192,6 +198,7 @@ def main(
         log_level,
         no_progress_bar,
         notification_script,
+        clear_cache,
 ):
     """Download all iCloud photos to a local directory"""
     logger = setup_logger()
@@ -303,6 +310,19 @@ def main(
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
         logger.set_tqdm(photos_enumerator)
 
+    # Configure the cache, either by loading from disk or creating a new one
+    downloaded_photos = set()  # cache of photos we've already downloaded 
+    cache_file = "downloaded_photos_cache.p"
+    if os.path.exists(cache_file):
+        if clear_cache:
+            os.remove(cache_file)
+            logger.info("Found and removed cache file.")
+        else:
+            downloaded_photos = pickle.load( open(cache_file, "rb" ) )
+            logger.info("Cache shows %s files previously downloaded.", len(downloaded_photos), )
+    else:
+        logger.info("No cache found, starting one.")
+
     # internal function for actually downloading the photos
     def download_photo(photo):
         for _ in range(constants.MAX_RETRIES):
@@ -346,51 +366,63 @@ def main(
             download_path = local_download_path(
                 photo, download_size, download_dir)
 
-            file_exists = os.path.isfile(download_path)
-            if not file_exists and download_size == "original":
-                # Deprecation - We used to download files like IMG_1234-original.jpg,
-                # so we need to check for these.
-                # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
-                original_download_path = ("-%s." % size).join(
-                    download_path.rsplit(".", 1)
-                )
-                file_exists = os.path.isfile(original_download_path)
+            in_cache = download_path in downloaded_photos
 
-            if file_exists:
+            if in_cache:
                 logger.set_tqdm_description(
-                    "%s already exists." % truncate_middle(download_path, 96)
+                    "%s is in the cache." % truncate_middle(download_path, 96)
                 )
             else:
-                if only_print_filenames:
-                    print(download_path)
-                else:
-                    truncated_path = truncate_middle(download_path, 96)
-                    logger.set_tqdm_description(
-                        "Downloading %s" %
-                        truncated_path)
-
-                    download_result = download.download_media(
-                        icloud, photo, download_path, download_size
+                file_exists = os.path.isfile(download_path)
+                if not file_exists and download_size == "original":
+                    # Deprecation - We used to download files like IMG_1234-original.jpg,
+                    # so we need to check for these.
+                    # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
+                    original_download_path = ("-%s." % size).join(
+                        download_path.rsplit(".", 1)
                     )
+                    file_exists = os.path.isfile(original_download_path)
 
-                    if download_result and set_exif_datetime:
-                        if photo.filename.lower().endswith((".jpg", ".jpeg")):
-                            if not exif_datetime.get_photo_exif(download_path):
-                                # %Y:%m:%d looks wrong but it's the correct format
-                                date_str = created_date.strftime(
-                                    "%Y:%m:%d %H:%M:%S")
-                                logger.debug(
-                                    "Setting EXIF timestamp for %s: %s",
-                                    download_path,
-                                    date_str,
-                                )
-                                exif_datetime.set_photo_exif(
-                                    download_path,
-                                    created_date.strftime("%Y:%m:%d %H:%M:%S"),
-                                )
-                        else:
-                            timestamp = time.mktime(created_date.timetuple())
-                            os.utime(download_path, (timestamp, timestamp))
+                if file_exists:
+                    logger.set_tqdm_description(
+                        "%s already exists." % truncate_middle(download_path, 96)
+                    )
+                    downloaded_photos.add(download_path)  # add to cache so we don't check next time
+                else:
+                    if only_print_filenames:
+                        print(download_path)
+                    else:
+                        truncated_path = truncate_middle(download_path, 96)
+                        logger.set_tqdm_description(
+                            "Downloading %s" %
+                            truncated_path)
+
+                        download_result = download.download_media(
+                            icloud, photo, download_path, download_size
+                        )
+
+                        # cache that we downloaded this file
+                        if download_result:
+                            downloaded_photos.add(download_path)
+
+                        if download_result and set_exif_datetime:
+                            if photo.filename.lower().endswith((".jpg", ".jpeg")):
+                                if not exif_datetime.get_photo_exif(download_path):
+                                    # %Y:%m:%d looks wrong but it's the correct format
+                                    date_str = created_date.strftime(
+                                        "%Y:%m:%d %H:%M:%S")
+                                    logger.debug(
+                                        "Setting EXIF timestamp for %s: %s",
+                                        download_path,
+                                        date_str,
+                                    )
+                                    exif_datetime.set_photo_exif(
+                                        download_path,
+                                        created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                                    )
+                            else:
+                                timestamp = time.mktime(created_date.timetuple())
+                                os.utime(download_path, (timestamp, timestamp))
 
             # Also download the live photo if present
             if not skip_live_photos:
@@ -408,19 +440,23 @@ def main(
                     if only_print_filenames:
                         print(lp_download_path)
                     else:
-                        if os.path.isfile(lp_download_path):
+                        if lp_download_path in downloaded_photos or os.path.isfile(lp_download_path):
                             logger.set_tqdm_description(
                                 "%s already exists."
                                 % truncate_middle(lp_download_path, 96)
                             )
+                            downloaded_photos.add(lp_download_path)
                             break
 
                         truncated_path = truncate_middle(lp_download_path, 96)
                         logger.set_tqdm_description(
                             "Downloading %s" % truncated_path)
-                        download.download_media(
+                        download_result = download.download_media(
                             icloud, photo, lp_download_path, lp_size
                         )
+                        # add to cache
+                        if download_result:
+                            downloaded_photos.add(lp_download_path)
 
             break
 
@@ -437,3 +473,6 @@ def main(
 
     if auto_delete:
         autodelete_photos(icloud, folder_structure, directory)
+
+    ## save the cache
+    pickle.dump(downloaded_photos, open(cache_file, 'wb'))
