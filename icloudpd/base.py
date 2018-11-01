@@ -315,20 +315,16 @@ def main(
 
     cache_file = "downloaded_photos_cache.p"
     downloaded_photos = load_cache(cache_file)
-    cached_ids_file = "downloaded_ids_cache.p"
-    downloaded_ids = load_cache(cached_ids_file)
+    # cached_ids_file = "downloaded_ids_cache.p"
+    # downloaded_ids = load_cache(cached_ids_file)
 
     def add_to_cache(download_path, photo_id):
         downloaded_photos.add(download_path)
-        downloaded_ids.add(photo_id)
+        # downloaded_ids.add(photo_id)
 
     def save_caches():
         pickle.dump(downloaded_photos, open(cache_file, 'wb'))
-        pickle.dump(downloaded_ids, open(cached_ids_file, 'wb'))
-
-
-    # remove the cached ids from the enumerator
-    photos = filter(lambda photo: photo.id not in downloaded_ids, photos)
+        # pickle.dump(downloaded_ids, open(cached_ids_file, 'wb'))
 
     # Use only ASCII characters in progress bar
     tqdm_kwargs["ascii"] = True
