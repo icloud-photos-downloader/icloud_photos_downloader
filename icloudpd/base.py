@@ -23,6 +23,8 @@ from icloudpd import exif_datetime
 # Must import the constants object so that we can mock values in tests.
 from icloudpd import constants
 
+from concurrent.futures import ThreadPoolExecutor
+
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
@@ -423,9 +425,10 @@ def main(
             break
 
     # pylint: disable-msg=too-many-nested-blocks
-    for photo in photos_enumerator:
-        # insert call here
-        download_photo(photo)
+    with ThreadPoolExecutor() as executor:
+        for photo in photos_enumerator:
+            executor.submit(download_photo, photo)
+            # download_photo(photo)
 
     if only_print_filenames:
         exit(0)
