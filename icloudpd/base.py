@@ -9,6 +9,7 @@ import itertools
 import subprocess
 import click
 import pickle
+import signal
 
 from tqdm import tqdm
 from tzlocal import get_localzone
@@ -27,7 +28,6 @@ from icloudpd import constants
 from concurrent.futures import ThreadPoolExecutor
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
-
 
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
 @click.argument(
@@ -318,10 +318,17 @@ def main(
             os.remove(cache_file)
             logger.info("Found and removed cache file.")
         else:
-            downloaded_photos = pickle.load( open(cache_file, "rb" ) )
+            downloaded_photos = pickle.load(open(cache_file, "rb"))
             logger.info("Cache shows %s files previously downloaded.", len(downloaded_photos), )
     else:
         logger.info("No cache found, starting one.")
+
+    # register handler to save cache on ctrl-c, also lets you ctrl-c no matter which thread catches it
+    def signal_handler(sig, frame):
+        print("\nCtrl-C detected, saving cache and exiting...")
+        pickle.dump(downloaded_photos, open(cache_file, 'wb'))
+        sys.exit(0)
+    signal.signal(signal.SIGINT, signal_handler)
 
     # internal function for actually downloading the photos
     def download_photo(photo):
