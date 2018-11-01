@@ -26,6 +26,7 @@ from icloudpd import exif_datetime
 from icloudpd import constants
 
 from concurrent.futures import ThreadPoolExecutor
+import concurrent.futures.thread
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -325,12 +326,6 @@ def main(
         pickle.dump(downloaded_photos, open(cache_file, 'wb'))
         pickle.dump(downloaded_ids, open(cached_ids_file, 'wb'))
 
-    # register handler to save cache on ctrl-c, also lets you ctrl-c no matter which thread catches it
-    def signal_handler(sig, frame):
-        print("\nCtrl-C detected, saving cache and exiting...")
-        save_caches()
-        sys.exit(0)
-    signal.signal(signal.SIGINT, signal_handler)
 
     # remove the cached ids from the enumerator
     photos = filter(lambda photo: photo.id not in downloaded_ids, photos)
@@ -489,9 +484,24 @@ def main(
 
     # pylint: disable-msg=too-many-nested-blocks
     with ThreadPoolExecutor() as executor:
+        # register handler to save cache on ctrl-c, also lets you ctrl-c no matter which thread catches it
+        def signal_handler(sig, frame):
+            print("\nCtrl-C detected, saving cache and exiting...")
+            executor.shutdown(wait=False)
+            # non-graceful shutdown - haven't found a better way to do this...
+            executor._threads.clear()
+            concurrent.futures.thread._threads_queues.clear()
+            save_caches()
+            sys.exit(0)
+        signal.signal(signal.SIGINT, signal_handler)
+
+        logger.debug('kicking off executor...')
+
         for photo in photos_enumerator:
             executor.submit(download_photo, photo)
             # download_photo(photo)
+
+        logger.debug('finished kicking off executor')
 
     if only_print_filenames:
         exit(0)
