@@ -295,6 +295,45 @@ def main(
         directory,
     )
 
+    # Configure the caches, either by loading from disk or creating a new one
+
+    def load_cache(cache_file):
+        cache_object = set()  # cache of photos we've already downloaded 
+        if os.path.exists(cache_file):
+            if clear_cache:
+                os.remove(cache_file)
+                logger.info("Found and removed cache file.")
+            else:
+                cache_object = pickle.load(open(cache_file, "rb"))
+                logger.info("Cache shows %s files previously downloaded.", len(cache_object), )
+        else:
+            logger.info("No cache found, starting one.")
+
+        return cache_object
+
+    cache_file = "downloaded_photos_cache.p"
+    downloaded_photos = load_cache(cache_file)
+    cached_ids_file = "downloaded_ids_cache.p"
+    downloaded_ids = load_cache(cached_ids_file)
+
+    def add_to_cache(download_path, photo_id):
+        downloaded_photos.add(download_path)
+        downloaded_ids.add(photo_id)
+
+    def save_caches():
+        pickle.dump(downloaded_photos, open(cache_file, 'wb'))
+        pickle.dump(downloaded_ids, open(cached_ids_file, 'wb'))
+
+    # register handler to save cache on ctrl-c, also lets you ctrl-c no matter which thread catches it
+    def signal_handler(sig, frame):
+        print("\nCtrl-C detected, saving cache and exiting...")
+        save_caches()
+        sys.exit(0)
+    signal.signal(signal.SIGINT, signal_handler)
+
+    # remove the cached ids from the enumerator
+    photos = filter(lambda photo: photo.id not in downloaded_ids, photos)
+
     # Use only ASCII characters in progress bar
     tqdm_kwargs["ascii"] = True
 
@@ -309,26 +348,6 @@ def main(
     else:
         photos_enumerator = tqdm(photos, **tqdm_kwargs)
         logger.set_tqdm(photos_enumerator)
-
-    # Configure the cache, either by loading from disk or creating a new one
-    downloaded_photos = set()  # cache of photos we've already downloaded 
-    cache_file = "downloaded_photos_cache.p"
-    if os.path.exists(cache_file):
-        if clear_cache:
-            os.remove(cache_file)
-            logger.info("Found and removed cache file.")
-        else:
-            downloaded_photos = pickle.load(open(cache_file, "rb"))
-            logger.info("Cache shows %s files previously downloaded.", len(downloaded_photos), )
-    else:
-        logger.info("No cache found, starting one.")
-
-    # register handler to save cache on ctrl-c, also lets you ctrl-c no matter which thread catches it
-    def signal_handler(sig, frame):
-        print("\nCtrl-C detected, saving cache and exiting...")
-        pickle.dump(downloaded_photos, open(cache_file, 'wb'))
-        sys.exit(0)
-    signal.signal(signal.SIGINT, signal_handler)
 
     # internal function for actually downloading the photos
     def download_photo(photo):
@@ -394,7 +413,7 @@ def main(
                     logger.set_tqdm_description(
                         "%s already exists." % truncate_middle(download_path, 96)
                     )
-                    downloaded_photos.add(download_path)  # add to cache so we don't check next time
+                    add_to_cache(download_path, photo.id) # add to cache so we don't check next time
                 else:
                     if only_print_filenames:
                         print(download_path)
@@ -410,7 +429,7 @@ def main(
 
                         # cache that we downloaded this file
                         if download_result:
-                            downloaded_photos.add(download_path)
+                            add_to_cache(download_path, photo.id) # add to cache so we don't check next time
 
                         if download_result and set_exif_datetime:
                             if photo.filename.lower().endswith((".jpg", ".jpeg")):
@@ -452,7 +471,7 @@ def main(
                                 "%s already exists."
                                 % truncate_middle(lp_download_path, 96)
                             )
-                            downloaded_photos.add(lp_download_path)
+                            add_to_cache(lp_download_path, photo.id) # add to cache so we don't check next time                            
                             break
 
                         truncated_path = truncate_middle(lp_download_path, 96)
@@ -463,7 +482,7 @@ def main(
                         )
                         # add to cache
                         if download_result:
-                            downloaded_photos.add(lp_download_path)
+                            add_to_cache(download_path, photo.id) # add to cache so we don't check next time
 
             break
 
@@ -481,5 +500,5 @@ def main(
     if auto_delete:
         autodelete_photos(icloud, folder_structure, directory)
 
-    ## save the cache
-    pickle.dump(downloaded_photos, open(cache_file, 'wb'))
+    ## save the caches
+    save_caches()

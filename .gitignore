@@ -12,3 +12,4 @@ __pycache__
 .coverage
 htmlcov
 downloaded_photos_cache.p
+downloaded_ids_cache.p
