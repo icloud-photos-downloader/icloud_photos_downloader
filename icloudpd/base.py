@@ -83,21 +83,21 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--force-size",
-    help="Only download the requested size "
-    + "(default: download original if size is not available)",
+    help="Only download the requested size " +
+         "(default: download original if size is not available)",
     is_flag=True,
 )
 @click.option(
     "--auto-delete",
-    help='Scans the "Recently Deleted" folder and deletes any files found in there. '
-    + "(If you restore the photo in iCloud, it will be downloaded again.)",
+    help='Scans the "Recently Deleted" folder and deletes any files found in there. ' +
+         "(If you restore the photo in iCloud, it will be downloaded again.)",
     is_flag=True,
 )
 @click.option(
     "--only-print-filenames",
     help="Only prints the filenames of all files that will be downloaded "
-    "(not including files that are already downloaded.)"
-    + "(Does not download or delete any files.)",
+         "(not including files that are already downloaded.)" +
+         "(Does not download or delete any files.)",
     is_flag=True,
 )
 @click.option(
@@ -216,9 +216,9 @@ def main(
             logger.setLevel(logging.ERROR)
 
     raise_error_on_2sa = (
-        smtp_username is not None
-        or notification_email is not None
-        or notification_script is not None
+        smtp_username is not None or
+        notification_email is not None or
+        notification_script is not None
     )
     try:
         icloud = authenticate(
@@ -298,7 +298,7 @@ def main(
     # Configure the caches, either by loading from disk or creating a new one
 
     def load_cache(cache_file):
-        cache_object = set()  # cache of photos we've already downloaded 
+        cache_object = set()  # cache of photos we've already downloaded
         if os.path.exists(cache_file):
             if clear_cache:
                 os.remove(cache_file)
@@ -413,7 +413,7 @@ def main(
                     logger.set_tqdm_description(
                         "%s already exists." % truncate_middle(download_path, 96)
                     )
-                    add_to_cache(download_path, photo.id) # add to cache so we don't check next time
+                    add_to_cache(download_path, photo.id)  # add to cache so we don't check next time
                 else:
                     if only_print_filenames:
                         print(download_path)
@@ -429,7 +429,7 @@ def main(
 
                         # cache that we downloaded this file
                         if download_result:
-                            add_to_cache(download_path, photo.id) # add to cache so we don't check next time
+                            add_to_cache(download_path, photo.id)  # add to cache so we don't check next time
 
                         if download_result and set_exif_datetime:
                             if photo.filename.lower().endswith((".jpg", ".jpeg")):
@@ -471,7 +471,7 @@ def main(
                                 "%s already exists."
                                 % truncate_middle(lp_download_path, 96)
                             )
-                            add_to_cache(lp_download_path, photo.id) # add to cache so we don't check next time                            
+                            add_to_cache(lp_download_path, photo.id)  # add to cache so we don't check next time
                             break
 
                         truncated_path = truncate_middle(lp_download_path, 96)
@@ -482,7 +482,7 @@ def main(
                         )
                         # add to cache
                         if download_result:
-                            add_to_cache(download_path, photo.id) # add to cache so we don't check next time
+                            add_to_cache(download_path, photo.id)  # add to cache so we don't check next time
 
             break
 
@@ -500,5 +500,5 @@ def main(
     if auto_delete:
         autodelete_photos(icloud, folder_structure, directory)
 
-    ## save the caches
+    # save the caches
     save_caches()
