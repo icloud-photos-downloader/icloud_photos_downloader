@@ -326,6 +326,14 @@ def main(
         pickle.dump(downloaded_photos, open(cache_file, 'wb'))
         # pickle.dump(downloaded_ids, open(cached_ids_file, 'wb'))
 
+    # register handler to save cache on ctrl-c, should let you ctrl-c no matter which thread catches it
+    # this doesn't always work to actuall stop it on ctrl-c, but it does seem to at least save the cache
+    def signal_handler(sig, frame):
+        print("\nCtrl-C detected, saving cache and exiting...")
+        save_caches()
+        sys.exit(0)
+    signal.signal(signal.SIGINT, signal_handler)
+
     # Use only ASCII characters in progress bar
     tqdm_kwargs["ascii"] = True
 
@@ -480,24 +488,9 @@ def main(
 
     # pylint: disable-msg=too-many-nested-blocks
     with ThreadPoolExecutor() as executor:
-        # register handler to save cache on ctrl-c, should let you ctrl-c no matter which thread catches it
-        def signal_handler(sig, frame):
-            print("\nCtrl-C detected, saving cache and exiting...")
-            executor.shutdown(wait=False)
-            # non-graceful shutdown - haven't found a better way to do this...
-            executor._threads.clear()
-            concurrent.futures.thread._threads_queues.clear()
-            save_caches()
-            sys.exit(0)
-        signal.signal(signal.SIGINT, signal_handler)
-
-        logger.debug('kicking off executor...')
-
         for photo in photos_enumerator:
             executor.submit(download_photo, photo)
             # download_photo(photo)
-
-        logger.debug('finished kicking off executor')
 
     if only_print_filenames:
         exit(0)
