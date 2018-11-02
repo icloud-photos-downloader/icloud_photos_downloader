@@ -480,7 +480,7 @@ def main(
 
     # pylint: disable-msg=too-many-nested-blocks
     with ThreadPoolExecutor() as executor:
-        # register handler to save cache on ctrl-c, also lets you ctrl-c no matter which thread catches it
+        # register handler to save cache on ctrl-c, should let you ctrl-c no matter which thread catches it
         def signal_handler(sig, frame):
             print("\nCtrl-C detected, saving cache and exiting...")
             executor.shutdown(wait=False)
