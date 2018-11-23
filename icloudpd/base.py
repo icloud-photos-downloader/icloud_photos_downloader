@@ -8,6 +8,7 @@ import logging
 import itertools
 import subprocess
 import click
+import json
 
 from tqdm import tqdm
 from tzlocal import get_localzone
@@ -345,7 +346,19 @@ def main(
                 os.makedirs(download_dir)
 
             download_size = size
-            # Fall back to original if requested size is not available
+
+            try:
+                versions = photo.versions
+            except KeyError as ex:
+                print("KeyError: %s attribute was not found in the photo fields!" % ex)
+                with open('icloudpd-photo-error.json', 'w') as outfile:
+                    json.dump(photo._master_record['fields'], outfile)
+                print("icloudpd has saved the photo record to: ./icloudpd-photo-error.json")
+                print("Please create a Gist with the contents of this file: https://gist.github.com")
+                print("Then create an issue on GitHub: https://github.com/ndbroadbent/icloud_photos_downloader/issues")
+                print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
+                break
+
             if size not in photo.versions and size != "original":
                 if force_size:
                     filename = photo.filename.encode(

@@ -8,7 +8,6 @@ import pytest
 import mock
 import tzlocal
 import datetime
-import traceback
 from mock import call, ANY
 from click.testing import CliRunner
 import piexif
@@ -19,20 +18,9 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 import icloudpd.constants
+from tests.helpers.print_result_exception import print_result_exception
 
 vcr = VCR(decode_compressed_response=True)
-
-def print_result_exception(result):
-    ex = result.exception
-    if ex:
-        # This only works on Python 3
-        if hasattr(ex, '__traceback__'):
-            print(''.join(
-                traceback.format_exception(
-                    etype=type(ex), value=ex, tb=ex.__traceback__)))
-        else:
-            print(ex)
-
 
 class DownloadPhotoTestCase(TestCase):
     @pytest.fixture(autouse=True)
