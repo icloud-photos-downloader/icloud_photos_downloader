@@ -4,6 +4,7 @@ import os
 import shutil
 import click
 from click.testing import CliRunner
+import json
 import mock
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
@@ -75,35 +76,49 @@ class ListingRecentPhotosTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos_missing_filenameEnc.yml"):
             with mock.patch("icloudpd.base.open", create=True) as mock_open:
-                # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--only-print-filenames",
-                        "--no-progress-bar",
-                        "tests/fixtures/Photos",
-                    ],
-                )
-                print_result_exception(result)
+                with mock.patch.object(json, "dump") as mock_json:
+                    # Pass fixed client ID via environment variable
+                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    runner = CliRunner()
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--only-print-filenames",
+                            "--no-progress-bar",
+                            "tests/fixtures/Photos",
+                        ],
+                    )
+                    print_result_exception(result)
 
-                self.assertEqual.__self__.maxDiff = None
-                self.assertEqual("""\
+                    self.assertEqual.__self__.maxDiff = None
+                    self.assertEqual("""\
 KeyError: 'filenameEnc' attribute was not found in the photo fields!
 icloudpd has saved the photo record to: ./icloudpd-photo-error.json
 Please create a Gist with the contents of this file: https://gist.github.com
 Then create an issue on GitHub: https://github.com/ndbroadbent/icloud_photos_downloader/issues
 Include a link to the Gist in your issue, so that we can see what went wrong.
 
-""" , result.output
-                )
-                mock_open.assert_called_once_with('icloudpd-photo-error.json', 'w')
-
-                assert result.exit_code == 0
+""" , result.output)
+                    mock_open.assert_called_once_with('icloudpd-photo-error.json', 'w')
+                    mock_json.assert_called_once()
+                    # Check a few keys in the dict
+                    first_arg = mock_json.call_args_list[0][0][0]
+                    self.assertEqual(
+                        first_arg['master_record']['recordName'],
+                        'AY6c+BsE0jjaXx9tmVGJM1D2VcEO')
+                    self.assertEqual(
+                        first_arg['master_record']['fields']['resVidSmallHeight']['value'],
+                        581)
+                    self.assertEqual(
+                        first_arg['asset_record']['recordName'],
+                        'F2A23C38-0020-42FE-A273-2923ADE3CAED')
+                    self.assertEqual(
+                        first_arg['asset_record']['fields']['assetDate']['value'],
+                        1533021744816)
+                    assert result.exit_code == 0

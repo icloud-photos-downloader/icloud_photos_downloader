@@ -352,7 +352,10 @@ def main(
             except KeyError as ex:
                 print("KeyError: %s attribute was not found in the photo fields!" % ex)
                 with open('icloudpd-photo-error.json', 'w') as outfile:
-                    json.dump(photo._master_record['fields'], outfile)
+                    json.dump({
+                        "master_record": photo._master_record,
+                        "asset_record": photo._asset_record
+                    }, outfile)
                 print("icloudpd has saved the photo record to: ./icloudpd-photo-error.json")
                 print("Please create a Gist with the contents of this file: https://gist.github.com")
                 print("Then create an issue on GitHub: https://github.com/ndbroadbent/icloud_photos_downloader/issues")
