@@ -768,7 +768,8 @@ interactions:
         : {\n        \"value\" : 581,\n        \"type\" : \"INT64\"\n      },\n      \"itemType\"
         : {\n        \"value\" : \"public.jpeg\",\n        \"type\" : \"STRING\"\n
         \     },\n      \"resJPEGThumbFingerprint\" : {\n        \"value\" : \"AfUG5knGXZGAUdjilPQHcFw5MQAz\",\n
-        \       \"type\" : \"STRING\"\n      },\n
+        \       \"type\" : \"STRING\"\n      },\n      \"filenameEnc\" : {\n        \"value\"
+        : \"SU1HXzc0MDkuSlBH\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n
         \     \"originalOrientation\" : {\n        \"value\" : 6,\n        \"type\"
         : \"INT64\"\n      },\n      \"resOriginalVidComplFileType\" : {\n        \"value\"
         : \"com.apple.quicktime-movie\",\n        \"type\" : \"STRING\"\n      },\n
@@ -801,8 +802,7 @@ interactions:
         : 2048,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AY6c+BsE0jjaXx9tmVGJM1D2VcEO\",\n
         \         \"size\" : 1884695,\n          \"wrappingKey\" : \"Aj375aJi6sEmqgJPj64+7Q==\",\n
-        \         \"referenceChecksum\" : \"AfUMnLhKAW8bwnMCwMMXLMKCslue\",\n          \"downloadURL\"
-        : \"https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/${f}?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ\"\n
+        \         \"referenceChecksum\" : \"AfUMnLhKAW8bwnMCwMMXLMKCslue\"
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
         : {\n        \"value\" : \"com.apple.quicktime-movie\",\n        \"type\"
         : \"STRING\"\n      },\n      \"resVidSmallRes\" : {\n        \"value\" :
@@ -916,7 +916,8 @@ interactions:
         : 640,\n        \"type\" : \"INT64\"\n      },\n      \"itemType\" : {\n        \"value\"
         : \"public.jpeg\",\n        \"type\" : \"STRING\"\n      },\n      \"resJPEGThumbFingerprint\"
         : {\n        \"value\" : \"AQAuVFu8Cm2CaM3Nt2rTQu42Knyc\",\n        \"type\"
-        : \"STRING\"\n      },\n           \"originalOrientation\"
+        : \"STRING\"\n      },\n      \"filenameEnc\" : {\n        \"value\" : \"SU1HXzc0MDcuSlBH\",\n
+        \       \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"originalOrientation\"
         : {\n        \"value\" : 6,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalVidComplFileType\"
         : {\n        \"value\" : \"com.apple.quicktime-movie\",\n        \"type\"
         : \"STRING\"\n      },\n      \"resJPEGMedFileType\" : {\n        \"value\"
@@ -989,7 +990,8 @@ interactions:
         : 360,\n        \"type\" : \"INT64\"\n      },\n      \"itemType\" : {\n        \"value\"
         : \"com.apple.quicktime-movie\",\n        \"type\" : \"STRING\"\n      },\n
         \     \"resJPEGThumbFingerprint\" : {\n        \"value\" : \"AWJEWY0Ehxh/4quVIfzrasqxg/Do\",\n
-        \       \"type\" : \"STRING\"\n      },\n
+        \       \"type\" : \"STRING\"\n      },\n      \"filenameEnc\" : {\n        \"value\"
+        : \"SU1HXzc0MDUuTU9W\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n
         \     \"originalOrientation\" : {\n        \"value\" : 1,\n        \"type\"
         : \"INT64\"\n      },\n      \"resJPEGMedFileType\" : {\n        \"value\"
         : \"public.jpeg\",\n        \"type\" : \"STRING\"\n      },\n      \"resJPEGThumbWidth\"
