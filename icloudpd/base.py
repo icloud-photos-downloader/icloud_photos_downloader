@@ -7,8 +7,8 @@ import time
 import logging
 import itertools
 import subprocess
-import click
 import json
+import click
 
 from tqdm import tqdm
 from tzlocal import get_localzone
@@ -350,19 +350,29 @@ def main(
             try:
                 versions = photo.versions
             except KeyError as ex:
-                print("KeyError: %s attribute was not found in the photo fields!" % ex)
+                print(
+                    "KeyError: %s attribute was not found in the photo fields!" %
+                    ex)
                 with open('icloudpd-photo-error.json', 'w') as outfile:
+                    # pylint: disable=protected-access
                     json.dump({
                         "master_record": photo._master_record,
                         "asset_record": photo._asset_record
                     }, outfile)
-                print("icloudpd has saved the photo record to: ./icloudpd-photo-error.json")
-                print("Please create a Gist with the contents of this file: https://gist.github.com")
-                print("Then create an issue on GitHub: https://github.com/ndbroadbent/icloud_photos_downloader/issues")
-                print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
+                    # pylint: enable=protected-access
+                print("icloudpd has saved the photo record to: "
+                      "./icloudpd-photo-error.json")
+                print("Please create a Gist with the contents of this file: "
+                      "https://gist.github.com")
+                print(
+                    "Then create an issue on GitHub: "
+                    "https://github.com/ndbroadbent/icloud_photos_downloader/issues")
+                print(
+                    "Include a link to the Gist in your issue, so that we can "
+                    "see what went wrong.\n")
                 break
 
-            if size not in photo.versions and size != "original":
+            if size not in versions and size != "original":
                 if force_size:
                     filename = photo.filename.encode(
                         "utf-8").decode("ascii", "ignore")
