@@ -3,6 +3,6 @@ docopt==0.6.2
 schema==0.6.6
 click==6.7
 python_dateutil==2.6.1
-requests==2.18.4
+requests>=2.20.0
 tqdm==4.14
 piexif==1.0.13
