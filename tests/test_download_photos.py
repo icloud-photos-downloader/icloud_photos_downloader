@@ -90,6 +90,17 @@ class DownloadPhotoTestCase(TestCase):
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
             )
+
+            # Check that file was downloaded
+            self.assertTrue(
+                os.path.exists("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG"))
+            # Check that mtime was updated to the photo creation date
+            photo_mtime = os.path.getmtime("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG")
+            photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime)
+            self.assertEquals(
+                "2018-07-31 14:22:24",
+                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+
             assert result.exit_code == 0
 
     def test_download_photos_and_set_exif(self):
@@ -752,54 +763,57 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
+        # with mock.patch("icloudpd.download.download_media") as dp_patched:
+        #     dp_patched.return_value = True
 
-            with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
-                # Can't mock `astimezone` because it's a readonly property, so have to
-                # create a new class that inherits from datetime.datetime
-                class NewDateTime(datetime.datetime):
-                    def astimezone(self, tz=None):
-                        raise ValueError('Invalid date')
-                dt_mock.return_value = NewDateTime(2018,1,1,0,0,0)
+        with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
+            # Can't mock `astimezone` because it's a readonly property, so have to
+            # create a new class that inherits from datetime.datetime
+            class NewDateTime(datetime.datetime):
+                def astimezone(self, tz=None):
+                    raise ValueError('Invalid date')
+            dt_mock.return_value = NewDateTime(2018,1,1,0,0,0)
 
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-                    # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
-                    result = runner.invoke(
-                        main,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--no-progress-bar",
-                            base_dir,
-                        ],
-                    )
-                    print_result_exception(result)
+            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                # Pass fixed client ID via environment variable
+                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                runner = CliRunner()
+                result = runner.invoke(
+                    main,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        base_dir,
+                    ],
+                )
+                print_result_exception(result)
 
-                    self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
-                    )
-                    dp_patched.assert_not_called
-
-                    assert result.exit_code == 0
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     Downloading tests/fixtures/Photos/2018/01/01/IMG_7409.JPG",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     All photos have been downloaded!", self._caplog.text
+                )
+                assert result.exit_code == 0
 
 
     def test_unknown_item_type(self):
