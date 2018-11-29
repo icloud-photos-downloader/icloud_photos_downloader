@@ -763,9 +763,6 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        # with mock.patch("icloudpd.download.download_media") as dp_patched:
-        #     dp_patched.return_value = True
-
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
