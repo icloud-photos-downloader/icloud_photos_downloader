@@ -4,9 +4,9 @@
 
 # iCloud Photos Downloader
 
-* A command-line tool to download all your iCloud photos.
-* Works on Linux, Windows, and MacOS.
-* Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
+- A command-line tool to download all your iCloud photos.
+- Works on Linux, Windows, and MacOS.
+- Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
 
 ## Install
 
@@ -115,35 +115,33 @@ Example:
         --recent 500 \
         --auto-delete
 
-
 ## Requirements
 
-* Python 2.7 or Python 3.4+
-  * *Python 2.6 is not supported.*
-* pip
+- Python 2.7 or Python 3.4+
+  - _Python 2.6 is not supported._
+- pip
 
 ### Install Python & pip
 
 #### Windows
 
-* [Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
+- [Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
 
 #### Mac
 
-* Install [Homebrew](https://brew.sh/) (if not already installed):
+- Install [Homebrew](https://brew.sh/) (if not already installed):
 
 ```
 which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-* Install Python (includes `pip`):
+- Install Python (includes `pip`):
 
 ```
 brew install python
 ```
 
 > Alternatively, you can [download the Python 3.7.0 installer for Mac](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
-
 
 #### Linux (Ubuntu)
 
@@ -168,7 +166,6 @@ or you can send to a different email address with `--notification-email`.
 
 If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
 
-
 ### System Keyring
 
 You can store your password in the system keyring using the `icloud` command-line tool
@@ -186,7 +183,6 @@ you can clear a stored password using the `--delete-from-keyring` command-line o
 
     $ icloud --username=jappleseed@apple.com --delete-from-keyring
 
-
 ## Error on first run
 
 When you run the script for the first time, you might see an error message like this:
@@ -198,7 +194,6 @@ Bad Request (400)
 This error often happens because your account hasn't used the iCloud API before, so Apple's servers need to prepare some information about your photos. This process can take around 5-10 minutes, so please wait a few minutes and try again.
 
 If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/ndbroadbent/icloud_photos_downloader/issues/new) and post the script output.
-
 
 ## Cron Task
 
@@ -213,9 +208,9 @@ cd icloud_photos_downloader
 cp cron_script.sh.example cron_script.sh
 ```
 
-* Update `cron_script.sh` with your username, password, and other options
+- Update `cron_script.sh` with your username, password, and other options
 
-* Edit your "crontab" with `crontab -e`, then add the following line:
+- Edit your "crontab" with `crontab -e`, then add the following line:
 
 ```
 0 */6 * * * /path/to/icloud_photos_downloader/cron_script.sh
@@ -225,7 +220,6 @@ Now the script will run every 6 hours to download any new photos and videos.
 
 > If you provide SMTP credentials, the script will send an email notification
 > whenever two-step authentication expires.
-
 
 ## Docker
 
@@ -263,16 +257,16 @@ pytest
 
 Before submitting a pull request, please check the following:
 
-* All tests pass on Python 2.7 and 3.6
-  * Run `./scripts/test`
-* 100% test coverage
-  * After running `./scripts/test`, you will see the test coverage results in the output
-  * You can also open the HTML report at: `./htmlcov/index.html`
-* Code is formatted with [autopep8](https://github.com/hhatto/autopep8)
-  * Run `./scripts/format`
-* No [pylint](https://www.pylint.org/) errors
-  * Run `./scripts/lint` (or `pylint icloudpd`)
-* If you've added or changed any command-line options,
+- All tests pass on Python 2.7 and 3.6
+  - Run `./scripts/test`
+- 100% test coverage
+  - After running `./scripts/test`, you will see the test coverage results in the output
+  - You can also open the HTML report at: `./htmlcov/index.html`
+- Code is formatted with [autopep8](https://github.com/hhatto/autopep8)
+  - Run `./scripts/format`
+- No [pylint](https://www.pylint.org/) errors
+  - Run `./scripts/lint` (or `pylint icloudpd`)
+- If you've added or changed any command-line options,
   please update the [Usage](#usage) section in the README.
 
 If you need to make any changes to the `pyicloud` library,
@@ -282,7 +276,6 @@ and check out the [pyicloud-ipd](https://github.com/ndbroadbent/pyicloud/tree/py
 branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
 [ndbroadbent/pyicloud](https://github.com/ndbroadbent/pyicloud).
 
-
 ### Building the Docker image:
 
 ```
@@ -291,10 +284,9 @@ $ cd icloud_photos_downloader/docker
 $ docker build -t ndbroadbent/icloudpd .
 ```
 
-
 ## Support Development
 
 <a href='https://ko-fi.com/ndbroadbent' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Buy Me a Coffee' /></a>
 
-* *Bitcoin (BTC)*: 15eSc6JiwBtxte9zak44ZFhw9bkKWaMGAe
-* *Ethereum (ETH)*: 0x080300A117758EC601b7b6c501afE3571E5cA1c3
+- _Bitcoin (BTC)_: 15eSc6JiwBtxte9zak44ZFhw9bkKWaMGAe
+- _Ethereum (ETH)_: 0x080300A117758EC601b7b6c501afE3571E5cA1c3
