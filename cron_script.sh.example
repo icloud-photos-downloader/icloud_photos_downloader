@@ -3,7 +3,7 @@
 pgrep -f icloudpd && echo "icloudpd is already running." && exit
 
 icloudpd /your/photos/directory \
-  --username=testuser@example.com \
-  --password=pass1234 \
+  --username testuser@example.com \
+  --password pass1234 \
   --recent 500 \
   --auto-delete

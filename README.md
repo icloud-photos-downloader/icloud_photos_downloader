@@ -21,11 +21,11 @@ pip install icloudpd
 ## Usage
 
     $ icloudpd <download_directory>
-               --username=<username>
-               [--password=<password>]
-               [--cookie-directory=</cookie/directory>]
-               [--size=(original|medium|thumb)]
-               [--live-photo-size=(original|medium|thumb)]
+               --username <username>
+               [--password <password>]
+               [--cookie-directory </cookie/directory>]
+               [--size (original|medium|thumb)]
+               [--live-photo-size (original|medium|thumb)]
                [--recent <integer>]
                [--until-found <integer>]
                [--skip-videos]
@@ -33,7 +33,7 @@ pip install icloudpd
                [--force-size]
                [--auto-delete]
                [--only-print-filenames]
-               [--folder-structure=({:%Y/%m/%d})]
+               [--folder-structure ({:%Y/%m/%d})]
                [--set-exif-datetime]
                [--smtp-username <smtp_username>]
                [--smtp-password <smtp_password>]
@@ -42,7 +42,7 @@ pip install icloudpd
                [--smtp-no-tls]
                [--notification-email <notification_email>]
                [--notification-script PATH]
-               [--log-level=(debug|info|error)]
+               [--log-level (debug|info|error)]
                [--no-progress-bar]
 
     Options:
@@ -110,8 +110,8 @@ pip install icloudpd
 Example:
 
     $ icloudpd ./Photos \
-        --username=testuser@example.com \
-        --password=pass1234 \
+        --username testuser@example.com \
+        --password pass1234 \
         --recent 500 \
         --auto-delete
 
@@ -171,7 +171,7 @@ If you want to send notification emails using your Gmail account, and you have e
 You can store your password in the system keyring using the `icloud` command-line tool
 (installed with the `pyicloud` dependency):
 
-    $ icloud --username=jappleseed@apple.com
+    $ icloud --username jappleseed@apple.com
     ICloud Password for jappleseed@apple.com:
     Save password in keyring? (y/N)
 
@@ -181,7 +181,7 @@ when running the script.
 If you would like to delete a password stored in your system keyring,
 you can clear a stored password using the `--delete-from-keyring` command-line option:
 
-    $ icloud --username=jappleseed@apple.com --delete-from-keyring
+    $ icloud --username jappleseed@apple.com --delete-from-keyring
 
 ## Error on first run
 
@@ -233,9 +233,9 @@ Usage:
 $ docker pull ndbroadbent/icloudpd
 $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
     icloudpd /data \
-    --username=testuser@example.com \
-    --password=pass1234 \
-    --size=original \
+    --username testuser@example.com \
+    --password pass1234 \
+    --size original \
     --recent 500 \
     --auto-delete
 ```
