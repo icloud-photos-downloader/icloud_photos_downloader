@@ -96,9 +96,9 @@ class DownloadPhotoTestCase(TestCase):
                 os.path.exists("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG"))
             # Check that mtime was updated to the photo creation date
             photo_mtime = os.path.getmtime("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG")
-            photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime)
+            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
             self.assertEquals(
-                "2018-07-31 14:22:24",
+                "2018-07-31 07:22:24",
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
             assert result.exit_code == 0
