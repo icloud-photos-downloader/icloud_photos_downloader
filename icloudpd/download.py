@@ -20,7 +20,7 @@ def update_mtime(photo, download_path):
         try:
             created_date = photo.created.astimezone(
                 get_localzone())
-        except ValueError:
+        except (ValueError, OSError):
             # We already show the timezone conversion error in base.py,
             # when generating the download directory.
             # So just return silently without touching the mtime.

@@ -333,10 +333,10 @@ def main(
                 break
             try:
                 created_date = photo.created.astimezone(get_localzone())
-            except ValueError:
+            except (ValueError, OSError):
                 logger.set_tqdm_description(
                     "Could not convert photo created date to local timezone (%s)" %
-                    photo.created, logging.ERROR, )
+                    photo.created, logging.ERROR)
                 created_date = photo.created
 
             date_path = folder_structure.format(created_date)
