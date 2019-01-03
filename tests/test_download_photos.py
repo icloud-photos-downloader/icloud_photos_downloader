@@ -1,6 +1,7 @@
 from unittest import TestCase
 from vcr import VCR
 import os
+import sys
 import shutil
 import logging
 import click
@@ -807,6 +808,71 @@ class DownloadPhotoTestCase(TestCase):
                     "INFO     Downloading tests/fixtures/Photos/2018/01/01/IMG_7409.JPG",
                     self._caplog.text,
                 )
+                self.assertIn(
+                    "INFO     All photos have been downloaded!", self._caplog.text
+                )
+                assert result.exit_code == 0
+
+    def test_invalid_creation_year(self):
+        base_dir = "tests/fixtures/Photos"
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
+            # Can't mock `astimezone` because it's a readonly property, so have to
+            # create a new class that inherits from datetime.datetime
+            class NewDateTime(datetime.datetime):
+                def astimezone(self, tz=None):
+                    raise ValueError('Invalid date')
+            dt_mock.return_value = NewDateTime(5,1,1,0,0,0)
+
+            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                # Pass fixed client ID via environment variable
+                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                runner = CliRunner()
+                result = runner.invoke(
+                    main,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        base_dir,
+                    ],
+                )
+                print_result_exception(result)
+
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                    self._caplog.text,
+                )
+                if sys.version_info[0] < 3:
+                    self.assertIn(
+                        "ERROR    Photo created date was not valid (0005-01-01 00:00:00)",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Downloading tests/fixtures/Photos/1970/01/01/IMG_7409.JPG",
+                        self._caplog.text,
+                    )
+                else:
+                    self.assertIn(
+                        "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Downloading tests/fixtures/Photos/0005/01/01/IMG_7409.JPG",
+                        self._caplog.text,
+                    )
                 self.assertIn(
                     "INFO     All photos have been downloaded!", self._caplog.text
                 )

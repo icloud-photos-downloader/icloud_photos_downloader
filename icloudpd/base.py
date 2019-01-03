@@ -4,6 +4,7 @@ from __future__ import print_function
 import os
 import sys
 import time
+import datetime
 import logging
 import itertools
 import subprocess
@@ -339,7 +340,19 @@ def main(
                     photo.created, logging.ERROR)
                 created_date = photo.created
 
-            date_path = folder_structure.format(created_date)
+            try:
+                date_path = folder_structure.format(created_date)
+            except (ValueError): # pragma: no cover
+                # This error only seems to happen in Python 2
+                logger.set_tqdm_description(
+                    "Photo created date was not valid (%s)" %
+                    photo.created, logging.ERROR)
+                # e.g. ValueError: year=5 is before 1900
+                # (https://github.com/ndbroadbent/icloud_photos_downloader/issues/122)
+                # Just use the Unix epoch
+                created_date = datetime.datetime.fromtimestamp(0)
+                date_path = folder_structure.format(created_date)
+
             download_dir = os.path.join(directory, date_path)
 
             if not os.path.exists(download_dir):
