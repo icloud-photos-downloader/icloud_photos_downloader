@@ -342,7 +342,7 @@ def main(
 
             try:
                 date_path = folder_structure.format(created_date)
-            except (ValueError): # pragma: no cover
+            except ValueError:  # pragma: no cover
                 # This error only seems to happen in Python 2
                 logger.set_tqdm_description(
                     "Photo created date was not valid (%s)" %
