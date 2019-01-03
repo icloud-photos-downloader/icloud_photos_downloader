@@ -856,6 +856,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 if sys.version_info[0] < 3:
+                    # Python 2.7
                     self.assertIn(
                         "ERROR    Photo created date was not valid (0005-01-01 00:00:00)",
                         self._caplog.text,
@@ -869,10 +870,18 @@ class DownloadPhotoTestCase(TestCase):
                         "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
                         self._caplog.text,
                     )
-                    self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/0005/01/01/IMG_7409.JPG",
-                        self._caplog.text,
-                    )
+                    if sys.version_info[1] >= 7:
+                        # Python 3.7
+                        self.assertIn(
+                            "INFO     Downloading tests/fixtures/Photos/0005/01/01/IMG_7409.JPG",
+                            self._caplog.text,
+                        )
+                    else:
+                        # Python 3.6
+                        self.assertIn(
+                            "INFO     Downloading tests/fixtures/Photos/5/01/01/IMG_7409.JPG",
+                            self._caplog.text,
+                        )
                 self.assertIn(
                     "INFO     All photos have been downloaded!", self._caplog.text
                 )
