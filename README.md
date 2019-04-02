@@ -35,6 +35,7 @@ pip install icloudpd
                [--only-print-filenames]
                [--folder-structure ({:%Y/%m/%d})]
                [--set-exif-datetime]
+               [--convert]
                [--smtp-username <smtp_username>]
                [--smtp-password <smtp_password>]
                [--smtp-host <smtp_host>]
@@ -79,6 +80,8 @@ pip install icloudpd
                                         Folder structure (default: {:%Y/%m/%d})
         --set-exif-datetime             Write the DateTimeOriginal exif tag from
                                         file creation date, if it doesn't exist.
+        --convert                       Convert downloaded HEIC files to JPG using
+                                        ImageMagick.
         --smtp-username <smtp_username>
                                         Your SMTP username, for sending email
                                         notifications when two-step authentication
@@ -182,6 +185,38 @@ If you would like to delete a password stored in your system keyring,
 you can clear a stored password using the `--delete-from-keyring` command-line option:
 
     $ icloud --username jappleseed@apple.com --delete-from-keyring
+
+## HEIC to JPG Conversion
+
+HEIC to JPG conversion relies on the ImageMagick library, which must be installed on your system.
+
+#### Windows
+
+- [Download ImageMagick 7.0+](https://imagemagick.org/download/binaries/ImageMagick-7.0.8-36-Q16-x64-dll.exe)
+
+#### Mac
+
+```
+brew install --with-libheif imagemagick
+```
+
+#### Linux (Ubuntu)
+
+Ubuntu does not have the latest version of ImageMagick, which includes HEIC decoding support. The latest version must be compiled from source and installed.
+
+```
+sudo add-apt-repository ppa:strukturag/libheif
+sudo apt update
+sudo apt install libheif-dev libjpeg-dev
+
+wget http://www.imagemagick.org/download/ImageMagick.tar.gz
+tar -xvf ImageMagick.tar.gz
+cd ImageMagick-7.0.*
+./configure
+make
+sudo make install
+sudo ldconfig /usr/local/lib
+```
 
 ## Error on first run
 

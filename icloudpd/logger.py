@@ -6,6 +6,7 @@ from logging import DEBUG, INFO
 
 
 class IPDLogger(logging.Logger):
+
     """Custom logger class with support for tqdm progress bar"""
 
     def __init__(self, name, level=INFO):

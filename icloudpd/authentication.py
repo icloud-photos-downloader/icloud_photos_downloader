@@ -7,6 +7,7 @@ from icloudpd.logger import setup_logger
 
 
 class TwoStepAuthRequiredError(Exception):
+
     """
     Raised when 2SA is required. base.py catches this exception
     and sends an email notification.

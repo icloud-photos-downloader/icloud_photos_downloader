@@ -861,10 +861,16 @@ class DownloadPhotoTestCase(TestCase):
                         "ERROR    Photo created date was not valid (0005-01-01 00:00:00)",
                         self._caplog.text,
                     )
-                    self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/1970/01/01/IMG_7409.JPG",
-                        self._caplog.text,
-                    )
+                    try:
+                        self.assertIn(
+                            "INFO     Downloading tests/fixtures/Photos/1970/01/01/IMG_7409.JPG",
+                            self._caplog.text,
+                        )
+                    except:
+                        self.assertIn(
+                            "INFO     Downloading tests/fixtures/Photos/1969/12/31/IMG_7409.JPG",
+                            self._caplog.text,
+                        )
                 else:
                     self.assertIn(
                         "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",

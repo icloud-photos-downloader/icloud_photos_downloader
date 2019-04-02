@@ -117,6 +117,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     is_flag=True,
 )
 @click.option(
+    "--convert",
+    help="Convert downloaded HEIC files to JPG using ImageMagick.",
+    is_flag=True,
+)
+@click.option(
     "--smtp-username",
     help="Your SMTP username, for sending email notifications when "
     "two-step authentication expires.",
@@ -190,6 +195,7 @@ def main(
         only_print_filenames,
         folder_structure,
         set_exif_datetime,
+        convert,
         smtp_username,
         smtp_password,
         smtp_host,
@@ -448,6 +454,21 @@ def main(
                         else:
                             timestamp = time.mktime(created_date.timetuple())
                             os.utime(download_path, (timestamp, timestamp))
+
+                    # Convert HEIC images to JPG
+                    if download_result and photo.filename.lower().endswith('.heic') and convert:
+                        logger.set_tqdm_description(
+                            "Converting %s to JPG" %
+                            photo.filename
+                        )
+                        cmd = "magick convert {0} {0}.JPG".format(
+                            download_path).split(" ")
+
+                        if subprocess.call(cmd) != 0:
+                            logger.error(
+                                "Error converting HEIC file %s to JPG",
+                                photo.filename
+                            )
 
             # Also download the live photo if present
             if not skip_live_photos:
