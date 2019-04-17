@@ -29,19 +29,20 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
-@click.argument(
-    "directory",
-    type=click.Path(
-        exists=True),
+#@click.argument(
+@click.option(
+    "-d", "--directory",
+    help="Local directory that should be used for download",
+    type=click.Path(exists=True),
     metavar="<directory>")
 @click.option(
-    "--username",
+    "-u", "--username",
     help="Your iCloud username or email address",
     metavar="<username>",
     prompt="iCloud username/email",
 )
 @click.option(
-    "--password",
+    "-p", "--password",
     help="Your iCloud password "
     "(default: use PyiCloud keyring or prompt for password)",
     metavar="<password>",
@@ -75,6 +76,17 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     help="Download most recently added photos until we find x number of "
     "previously downloaded consecutive photos (default: download all photos)",
     type=click.IntRange(0),
+)
+@click.option(
+    "-a", "--album",
+    help="Album to download (default: All Photos)",
+    metavar="<album>",
+    default="All Photos",
+)
+@click.option(
+    "-l", "--list-albums",
+    help="Lists the avaliable albums",
+    is_flag=True,
 )
 @click.option(
     "--skip-videos",
@@ -183,6 +195,8 @@ def main(
         live_photo_size,
         recent,
         until_found,
+        album,
+        list_albums,
         skip_videos,
         skip_live_photos,
         force_size,
@@ -242,15 +256,25 @@ def main(
             )
         exit(1)
 
+    if album == "":
+        photos = icloud.photos.all
+    else:
+        photos = icloud.photos.albums[album]
+
+    if list_albums:
+        albums = icloud.photos.albums
+        print(*albums, sep = "\n")
+        exit(0)
+    
     # For Python 2.7
     if hasattr(directory, "decode"):
         directory = directory.decode("utf-8")  # pragma: no cover
     directory = os.path.normpath(directory)
 
     logger.debug(
-        "Looking up all photos%s...",
-        "" if skip_videos else " and videos")
-    photos = icloud.photos.all
+        "Looking up all photos%s from album %s...",
+        "" if skip_videos else " and videos",
+        album)
 
     def photos_exception_handler(ex, retries):
         """Handles session errors in the PhotoAlbum photos iterator"""
