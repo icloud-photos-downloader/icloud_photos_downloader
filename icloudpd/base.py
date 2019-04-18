@@ -265,7 +265,7 @@ def main(
         albums = icloud.photos.albums
         print(*albums, sep="\n")
         exit(0)
-    
+
     # For Python 2.7
     if hasattr(directory, "decode"):
         directory = directory.decode("utf-8")  # pragma: no cover
