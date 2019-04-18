@@ -33,6 +33,7 @@ class ListingRecentPhotosTestCase(TestCase):
                     "5",
                     "--only-print-filenames",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
             )
@@ -91,6 +92,7 @@ class ListingRecentPhotosTestCase(TestCase):
                             "5",
                             "--only-print-filenames",
                             "--no-progress-bar",
+                            "-d",
                             "tests/fixtures/Photos",
                         ],
                     )
@@ -144,6 +146,7 @@ class ListingRecentPhotosTestCase(TestCase):
                             "1",
                             "--only-print-filenames",
                             "--no-progress-bar",
+                            "-d",
                             "tests/fixtures/Photos",
                         ],
                     )

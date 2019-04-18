@@ -34,6 +34,7 @@ class EmailNotificationsTestCase(TestCase):
                         "password1",
                         "--notification-email",
                         "jdoe+notifications@gmail.com",
+                        "-d",
                         "tests/fixtures/Photos",
                     ],
                 )
@@ -74,6 +75,7 @@ class EmailNotificationsTestCase(TestCase):
                         "--smtp-no-tls",
                         "--notification-email",
                         "jdoe+notifications@gmail.com",
+                        "-d",
                         "tests/fixtures/Photos",
                     ],
                 )
@@ -111,6 +113,7 @@ class EmailNotificationsTestCase(TestCase):
                         "password1",
                         "--notification-script",
                         "./test_script.sh",
+                        "-d",
                         "tests/fixtures/Photos",
                     ],
                 )

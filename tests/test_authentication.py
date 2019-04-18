@@ -70,13 +70,14 @@ class AuthenticationTestCase(TestCase):
                     "--recent",
                     "0",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
                 input="password1\n",
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...", self._caplog.text
+                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
