@@ -263,7 +263,7 @@ def main(
 
     if list_albums:
         albums = icloud.photos.albums
-        print(*albums, sep = "\n")
+        print(*albums, sep="\n")
         exit(0)
     
     # For Python 2.7
