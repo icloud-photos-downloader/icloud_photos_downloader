@@ -33,6 +33,7 @@ class CliTestCase(TestCase):
                     "0",
                     "--log-level",
                     "info",
+                    "-d"
                     "tests/fixtures/Photos",
                 ],
             )
@@ -49,6 +50,7 @@ class CliTestCase(TestCase):
                     "0",
                     "--log-level",
                     "error",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
             )
@@ -70,6 +72,7 @@ class CliTestCase(TestCase):
                     "password1",
                     "--recent",
                     "0",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
             )
@@ -92,6 +95,7 @@ class CliTestCase(TestCase):
                     "0",
                     "--log-level",
                     "info",
+                    "-d",
                     "tests/fixtures/相片",
                 ],
             )

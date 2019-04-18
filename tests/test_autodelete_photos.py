@@ -51,10 +51,11 @@ class AutodeletePhotosTestCase(TestCase):
                     "0",
                     "--skip-videos",
                     "--auto-delete",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
             )
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
                 "INFO     Downloading 0 original photos to tests/fixtures/Photos/ ...",
                 self._caplog.text,

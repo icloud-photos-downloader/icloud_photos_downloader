@@ -54,12 +54,13 @@ class DownloadPhotoTestCase(TestCase):
                     "--skip-live-photos",
                     "--set-exif-datetime",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
             )
             print_result_exception(result)
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
                 "INFO     Downloading 5 original photos to tests/fixtures/Photos/ ...",
                 self._caplog.text,
@@ -145,13 +146,14 @@ class DownloadPhotoTestCase(TestCase):
                             # '--skip-videos',
                             # "--skip-live-photos",
                             "--no-progress-bar",
+                            "-d",
                             "tests/fixtures/Photos",
                         ],
                     )
                     print_result_exception(result)
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -197,12 +199,13 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-live-photos",
                         "--set-exif-datetime",
                         "--no-progress-bar",
+                        "-d",
                         "tests/fixtures/Photos",
                     ],
                 )
                 print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
                     self._caplog.text,
@@ -247,13 +250,14 @@ class DownloadPhotoTestCase(TestCase):
                     # '--skip-videos',
                     # "--skip-live-photos",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
             )
             print_result_exception(result)
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...", self._caplog.text
+                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
                 "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
@@ -321,6 +325,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--recent",
                         "20",
                         "--no-progress-bar",
+                        "-d",
                         base_dir,
                     ],
                 )
@@ -339,7 +344,7 @@ class DownloadPhotoTestCase(TestCase):
                 dp_patched.assert_has_calls(expected_calls)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...", self._caplog.text
+                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
                 )
                 self.assertIn(
                     "INFO     Downloading ??? original photos and videos to tests/fixtures/Photos/ ...",
@@ -382,12 +387,13 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-videos",
                         "--skip-live-photos",
                         "--no-progress-bar",
+                        "-d"
                         "tests/fixtures/Photos",
                     ],
                 )
                 print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
                     self._caplog.text,
@@ -442,6 +448,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-videos",
                                 "--skip-live-photos",
                                 "--no-progress-bar",
+                                "-d",
                                 "tests/fixtures/Photos",
                             ],
                         )
@@ -505,6 +512,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-videos",
                                 "--skip-live-photos",
                                 "--no-progress-bar",
+                                "-d",
                                 "tests/fixtures/Photos",
                             ],
                         )
@@ -568,6 +576,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-videos",
                                 "--skip-live-photos",
                                 "--no-progress-bar",
+                                "-d",
                                 "tests/fixtures/Photos",
                             ],
                         )
@@ -610,13 +619,14 @@ class DownloadPhotoTestCase(TestCase):
                         "--recent",
                         "3",
                         "--no-progress-bar",
+                        "-d",
                         base_dir,
                     ],
                 )
                 print_result_exception(result)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...", self._caplog.text
+                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
                 )
                 self.assertIn(
                     "INFO     Downloading 3 original photos and videos to tests/fixtures/Photos/ ...",
@@ -676,12 +686,13 @@ class DownloadPhotoTestCase(TestCase):
                             "--size",
                             "thumb",
                             "--no-progress-bar",
+                            "-d",
                             base_dir,
                         ],
                     )
                     print_result_exception(result)
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -733,13 +744,14 @@ class DownloadPhotoTestCase(TestCase):
                             "thumb",
                             "--force-size",
                             "--no-progress-bar",
+                            "-d",
                             base_dir,
                         ],
                     )
                     print_result_exception(result)
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -787,13 +799,14 @@ class DownloadPhotoTestCase(TestCase):
                         "1",
                         "--skip-live-photos",
                         "--no-progress-bar",
+                        "-d",
                         base_dir,
                     ],
                 )
                 print_result_exception(result)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
+                    "DEBUG    Looking up all photos and videos from album All Photos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -842,13 +855,14 @@ class DownloadPhotoTestCase(TestCase):
                         "1",
                         "--skip-live-photos",
                         "--no-progress-bar",
+                        "-d",
                         base_dir,
                     ],
                 )
                 print_result_exception(result)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
+                    "DEBUG    Looking up all photos and videos from album All Photos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -914,13 +928,14 @@ class DownloadPhotoTestCase(TestCase):
                             "--recent",
                             "1",
                             "--no-progress-bar",
+                            "-d",
                             base_dir,
                         ],
                     )
                     print_result_exception(result)
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
                         self._caplog.text,
                     )
                     self.assertIn(

@@ -30,6 +30,7 @@ class TwoStepAuthTestCase(TestCase):
                     "--recent",
                     "0",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
                 input="1\n901431\n",
@@ -54,6 +55,7 @@ class TwoStepAuthTestCase(TestCase):
                     "--recent",
                     "0",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
                 input="1\n654321\n",
@@ -75,7 +77,7 @@ class TwoStepAuthTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...", self._caplog.text
+                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
@@ -96,6 +98,7 @@ class TwoStepAuthTestCase(TestCase):
                     "--recent",
                     "0",
                     "--no-progress-bar",
+                    "-d",
                     "tests/fixtures/Photos",
                 ],
                 input="0\n123456\n",
@@ -117,7 +120,7 @@ class TwoStepAuthTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...", self._caplog.text
+                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
@@ -142,6 +145,7 @@ class TwoStepAuthTestCase(TestCase):
                         "--recent",
                         "0",
                         "--no-progress-bar",
+                        "-d",
                         "tests/fixtures/Photos",
                     ],
                     input="0\n",
