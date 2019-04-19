@@ -1,3 +1,9 @@
+# CURRENTLY UNMAINTAINED
+
+I hope this tool is useful for you! Unfortunately I don't use it anymore, and I don't want to keep working on it. Please let me know if you want to help maintain it and respond to the GitHub issues and pull requests. Thanks!
+
+---------
+
 [![Build Status](https://travis-ci.org/ndbroadbent/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/ndbroadbent/icloud_photos_downloader)
 [![Coverage Status](https://coveralls.io/repos/github/ndbroadbent/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/ndbroadbent/icloud_photos_downloader?branch=master)
 [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
