@@ -28,12 +28,15 @@ pip install icloudpd
 
     $ icloudpd <download_directory>
                --username <username>
-               [--password <password>]
+               [-p, --password <password>]
+               [-d, --directory <directory>]
                [--cookie-directory </cookie/directory>]
                [--size (original|medium|thumb)]
                [--live-photo-size (original|medium|thumb)]
                [--recent <integer>]
                [--until-found <integer>]
+               [-a, --album <album>]
+               [-l, --list-albums]
                [--skip-videos]
                [--skip-live-photos]
                [--force-size]
