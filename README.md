@@ -315,15 +315,6 @@ branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
 
 ```
 $ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
-$ cd icloud_photos_downloader/docker
+$ cd icloud_photos_downloader/
 $ docker build -t ndbroadbent/icloudpd .
 ```
-
-## Support Development
-
-<a href='https://www.patreon.com/bePatron?u=4428237' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://c5.patreon.com/external/logo/become_a_patron_button.png' border='0' alt='Buy Me a Coffee' /></a>
-
-<a href='https://ko-fi.com/ndbroadbent' target='_blank'><img height='36' style='border:0px;height:36px;' src='https://az743702.vo.msecnd.net/cdn/kofi4.png?v=0' border='0' alt='Buy Me a Coffee' /></a>
-
-- _Bitcoin (BTC)_: 15eSc6JiwBtxte9zak44ZFhw9bkKWaMGAe
-- _Ethereum (ETH)_: 0x080300A117758EC601b7b6c501afE3571E5cA1c3
