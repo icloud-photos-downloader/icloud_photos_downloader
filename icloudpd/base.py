@@ -256,10 +256,9 @@ def main(
             )
         exit(1)
 
-    if album == "":
-        photos = icloud.photos.all
-    else:
-        photos = icloud.photos.albums[album]
+    #photos = icloud.photos.all
+    # shoud be identical to album="All Photos". This is default, so it can be omitted.
+    photos = icloud.photos.albums[album]
 
     if list_albums:
         albums = icloud.photos.albums
