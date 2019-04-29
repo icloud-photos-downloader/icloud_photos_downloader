@@ -42,9 +42,9 @@ class ListingAlbumsTestCase(TestCase):
 
             # seems like the number of albums is changing. Test disabled.
             # self.assertEqual(len(albums), 41)
-            self.assertTrue("All Photos" in albums)
-            self.assertTrue("Time-lapse" in albums)
-            self.assertTrue("Recently Deleted" in albums)
-            self.assertTrue("Favorites" in albums)
+            self.assertIn("All Photos", albums)
+            self.assertIn("Time-lapse", albums)
+            self.assertIn("Recently Deleted", albums)
+            self.assertIn("Favorites", albums)
 
             assert result.exit_code == 0
