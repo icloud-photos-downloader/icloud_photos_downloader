@@ -1,0 +1,657 @@
+interactions:
+- request:
+    body: '{"apple_id": "jdoe@gmail.com", "password": "password1", "extended_login":
+      false}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '87'
+      Cookie:
+      - X-APPLE-WEBAUTH-HSA-TRUST-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8iMRDmdzLmljbG91ZC5hdXRovQC85cG4zJBbdBCdB1vgowm5sABRm7HYfY61GpEUXcxASXaRf7Wp9f80mUaRo4WF8yTn16PvLWDJmNQeT2slVHEPNlzdrfnSFWn7VftAkQmQ3gjypxohF7ZCgS45kpEG3FjR-1tLMCXLs_bY5Xuis8OteQUtag~~";
+        X_APPLE_WEB_KB-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8hMRDmdzLmljbG91ZC5hdXRovQDtcfU1UjxOfmatejqo4w0FyqgHkZVJ3uAC-YFwI6qda4pzUbK4pDCh6LpJZ2fE8lS_9ww3O3ol2gam2UDNq3qZQpZ7o0u0dVUynJvB27X--nuAt_tXpQJK5BeMoFxgh_cZjNsisF1vOJg1KXzQ5hPuVMXF3Q~~"
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://setup.icloud.com/setup/ws/1/login?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321
+  response:
+    body:
+      string: "{\"dsInfo\":{\"lastName\":\"Doe\",\"iCDPEnabled\":false,\"tantorMigrated\"\
+        :false,\"dsid\":\"220791670\",\"hsaEnabled\":true,\"ironcadeMigrated\":true,\"\
+        locale\":\"de-de_DE\",\"brZoneConsolidated\":false,\"isManagedAppleID\":false,\"\
+        gilligan-invited\":\"true\",\"appleIdAliases\":[\"jdoe@me.com\",\"\
+        jdoe@icloud.com\"],\"hsaVersion\":2,\"isPaidDeveloper\":false,\"countryCode\"\
+        :\"DEU\",\"notificationId\":\"82947cdd-51e8-4295-884b-a87ceb766e06\",\"primaryEmailVerified\"\
+        :true,\"aDsID\":\"000639-05-90e49afe-d7fc-48fd-85a1-af16160afd6a\",\"locked\"\
+        :false,\"hasICloudQualifyingDevice\":true,\"primaryEmail\":\"jdoe@gmail.com\"\
+        ,\"appleIdEntries\":[{\"isPrimary\":true,\"type\":\"EMAIL\",\"value\":\"jdoe@gmail.com\"\
+        },{\"type\":\"EMAIL\",\"value\":\"jdoe@me.com\"},{\"type\":\"EMAIL\"\
+        ,\"value\":\"jdoe@icloud.com\"}],\"gilligan-enabled\":\"true\",\"fullName\"\
+        :\"John Doe\",\"languageCode\":\"de-de\",\"appleId\":\"jdoe@gmail.com\"\
+        ,\"firstName\":\"John\",\"iCloudAppleIdAlias\":\"jdoe@icloud.com\"\
+        ,\"notesMigrated\":true,\"hasPaymentInfo\":false,\"pcsDeleted\":false,\"appleIdAlias\"\
+        :\"jdoe@me.com\",\"brMigrated\":true,\"statusCode\":2},\"hasMinimumDeviceForPhotosWeb\"\
+        :true,\"iCDPEnabled\":false,\"webservices\":{\"reminders\":{\"url\":\"https://p38-remindersws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"notes\":{\"url\":\"https://p43-notesws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"mail\":{\"url\":\"https://p43-mailws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"ckdatabasews\":{\"pcsRequired\":true,\"url\":\"\
+        https://p38-ckdatabasews.icloud.com:443\",\"status\":\"active\"},\"photosupload\"\
+        :{\"pcsRequired\":true,\"url\":\"https://p38-uploadphotosws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"photos\":{\"pcsRequired\":true,\"uploadUrl\":\"\
+        https://p38-uploadphotosws.icloud.com:443\",\"url\":\"https://p38-photosws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"drivews\":{\"pcsRequired\":true,\"url\":\"https://p38-drivews.icloud.com:443\"\
+        ,\"status\":\"active\"},\"uploadimagews\":{\"url\":\"https://p38-uploadimagews.icloud.com:443\"\
+        ,\"status\":\"active\"},\"schoolwork\":{},\"cksharews\":{\"url\":\"https://p38-ckshare.icloud.com:443\"\
+        ,\"status\":\"active\"},\"findme\":{\"url\":\"https://p38-fmipweb.icloud.com:443\"\
+        ,\"status\":\"active\"},\"ckdeviceservice\":{\"url\":\"https://p38-ckdevice.icloud.com:443\"\
+        },\"iworkthumbnailws\":{\"url\":\"https://p38-iworkthumbnailws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"calendar\":{\"url\":\"https://p38-calendarws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"docws\":{\"pcsRequired\":true,\"url\":\"https://p38-docws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"settings\":{\"url\":\"https://p38-settingsws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"ubiquity\":{\"url\":\"https://p38-ubiquityws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"streams\":{\"url\":\"https://p38-streams.icloud.com:443\"\
+        ,\"status\":\"active\"},\"keyvalue\":{\"url\":\"https://p38-keyvalueservice.icloud.com:443\"\
+        ,\"status\":\"active\"},\"archivews\":{\"url\":\"https://p38-archivews.icloud.com:443\"\
+        ,\"status\":\"active\"},\"push\":{\"url\":\"https://p38-pushws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"iwmb\":{\"url\":\"https://p38-iwmb.icloud.com:443\"\
+        ,\"status\":\"active\"},\"iworkexportws\":{\"url\":\"https://p38-iworkexportws.icloud.com:443\"\
+        ,\"status\":\"active\"},\"geows\":{\"url\":\"https://p38-geows.icloud.com:443\"\
+        ,\"status\":\"active\"},\"account\":{\"iCloudEnv\":{\"shortId\":\"p\",\"vipSuffix\"\
+        :\"prod\"},\"url\":\"https://p38-setup.icloud.com:443\",\"status\":\"active\"\
+        },\"fmf\":{\"url\":\"https://p38-fmfweb.icloud.com:443\",\"status\":\"active\"\
+        },\"contacts\":{\"url\":\"https://p38-contactsws.icloud.com:443\",\"status\"\
+        :\"active\"}},\"pcsEnabled\":true,\"configBag\":{\"urls\":{\"accountCreateUI\"\
+        :\"https://appleid.apple.com/widget/account/?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d#!create\"\
+        ,\"accountLoginUI\":\"https://idmsa.apple.com/appleauth/auth/signin?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d\"\
+        ,\"accountLogin\":\"https://setup.icloud.com/setup/ws/1/accountLogin\",\"\
+        accountRepairUI\":\"https://appleid.apple.com/widget/account/?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d#!repair\"\
+        ,\"downloadICloudTerms\":\"https://setup.icloud.com/setup/ws/1/downloadLiteTerms\"\
+        ,\"repairDone\":\"https://setup.icloud.com/setup/ws/1/repairDone\",\"accountAuthorizeUI\"\
+        :\"https://idmsa.apple.com/appleauth/auth/authorize/signin?client_id=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d\"\
+        ,\"vettingUrlForEmail\":\"https://id.apple.com/IDMSEmailVetting/vetShareEmail\"\
+        ,\"accountCreate\":\"https://setup.icloud.com/setup/ws/1/createLiteAccount\"\
+        ,\"getICloudTerms\":\"https://setup.icloud.com/setup/ws/1/getTerms\",\"vettingUrlForPhone\"\
+        :\"https://id.apple.com/IDMSEmailVetting/vetSharePhone\"},\"accountCreateEnabled\"\
+        :\"true\"},\"hsaTrustedBrowser\":true,\"appsOrder\":[\"mail\",\"contacts\"\
+        ,\"calendar\",\"photos\",\"iclouddrive\",\"notes2\",\"reminders\",\"pages\"\
+        ,\"numbers\",\"keynote\",\"newspublisher\",\"fmf\",\"find\",\"settings\"],\"\
+        version\":2,\"isExtendedLogin\":false,\"pcsServiceIdentitiesIncluded\":true,\"\
+        hsaChallengeRequired\":false,\"requestInfo\":{\"country\":\"DE\",\"timeZone\"\
+        :\"GMT+1\",\"region\":\"HE\"},\"pcsDeleted\":false,\"iCloudInfo\":{\"SafariBookmarksHasMigratedToCloudKit\"\
+        :true},\"apps\":{\"calendar\":{},\"reminders\":{},\"keynote\":{\"isQualifiedForBeta\"\
+        :true},\"settings\":{\"canLaunchWithOneFactor\":true},\"mail\":{},\"numbers\"\
+        :{\"isQualifiedForBeta\":true},\"photos\":{},\"pages\":{\"isQualifiedForBeta\"\
+        :true},\"find\":{\"canLaunchWithOneFactor\":true},\"notes2\":{},\"iclouddrive\"\
+        :{},\"newspublisher\":{\"isHidden\":true},\"fmf\":{},\"contacts\":{}}}"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - https://www.icloud.com
+      Apple-Originating-System:
+      - UnknownOriginatingSystem
+      Cache-Control:
+      - no-cache, no-store, private
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Thu, 09 May 2019 19:08:25 GMT
+      Server:
+      - AppleHttpServer/70a91026
+      Set-Cookie:
+      - X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6Aet0kFgu22Q4v11Y/qOmlfbGfGmIUWbq7iLV4XgmvgI/SdE8R4ECLd8+tODOaHWTio4U9gOHEaB+7qqIFkImSgH06gUQRotD1OU8PnTOabk6W0VdmlbHeAQE6ULtSzG7XVscsiCcu5aLxA8JJtkfGnMURxfQWXLZOyWpwhwdBqH2NHaEdYxmiQ==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6Adciqu4xi/81ZPC13IkyLFVFtr/GsgtNA0HXRnnGQgXNPlVRAbgXG/QvUYvyC9D1uKdIntFx/UMqhXDhaU5K81X77DFl7DBwI7WaT32vreJWnnfh1xVsVBSx6I2T3zchWKSdsDszFDU9Z4hsk6DIw+LGjgawT4St6sNxxnlT4+i57V+Fyeka9A==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AfmAQWi6rxOCCulNRk1tj3kF2wLD7kv0YqXm8NsDKtKSBEcAY8GubLQhVQOCfRHxcDTp4OTfLemlO3qPhyuFkVa0VGOeNCIolBYVoQE9H5e+peGabTU++yv5Ve20rXwAjh8vLNvo78PxD1dTH8ynfLdAUpcaieWsJMFejPIJp7iDsmiI9o7qjw==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AbYqqDtTyT+1iBw09mXnbJkLgfk2Js0Uz34hBKAx6xub5M8neMiZaMSc15oS6KpI29jUZE6DKBTJIsX7aqIiwF6ps/FoG0oI3mQwqwZcCYvLz4T4QWOtY5+Gt47LbMfkyKW0e41JF4uqgntZBQyHhycE8WDcWNxzCOOVsGk1Rj1bVjiA5zp3ug==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6AW6Gir1yEDwLQD0HgUcF3b8+d5gdgkfaQo2wQFwO568nsfVCXRsLVO9Zi1EpDhZPCaOeJ4wxZulXJxqFrMrVwOEUPXD4auTaARLSnuFu+ku/zaR1PNvNLGhVJNDeGT7KN6RGg59CViLOQCsBo2HWAVgDRojSSKTXCozQjkOlmo0ECl3sG6lfkg==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AdQ4u7cfpuNFrgK9DjTxgFFOKpa5Izbx41cE631vVcOPbxcSgf5PW5Pk5JZxFxm0uVUblDFRa6/tnoDI1ni5X5IQj9AasZaV5JWjxwr6s78OjIk7//Z/VdJqwfhVaqfQFe9tI/dgB4gvInqdSkL5mako8nf1MHQCMQZA6lhXx75EZ89/Rg5ZeQ==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6AfLfcn8J/HQ8lxyiQfSLE3S+lNTE38l+3QSLLPE6CCaZqewgrXQ0RnltMRhH0SYZhFp5ri4FEamk7ynO2lg4aXa6ubTSvpk9VO92yqrd7I7BkLh6O7+Xy/elmaZ0MvD0dKWyeiqgl21tdKjoF7z71oY2j0UNGb+FIzIsivmUGY7opeTxtpbDbw==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AXDzBhH/Uqo2sq+Saaqbg00cX5njb3+8b3GwX/4yeRRQ0/9j8WEDDT07ZS/6RXiNGZ4QIW+Dr8DjHEkZe1z+QSZxPle7eZUrqDoOOBvTMo336k0Rv/o6m873zMuXebZSvMsNFmmmV6h7EWC4wFQVmzA06yUsqfVaGnVS3MhQ1YdIO0yHAxnELw==";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTrdyLXuVSPEQTcWV5w50PS_Azhjbb-HFG_w6bQS7fObvGRYVdQ~~";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";Path=/;Domain=.icloud.com;Secure
+      - X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTn8e8w8cEKFkFglizdCuIac2hu4mY-ORpCJLg90bisJJTipVEA~~";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      - X-APPLE-WEBAUTH-USER="v=1:s=0:d=220791670";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains
+      X-Apple-Jingle-Correlation-Key:
+      - QKKHZXKR5BBJLCCLVB6OW5TOAY
+      X-Apple-Request-UUID:
+      - 82947cdd-51e8-4295-884b-a87ceb766e06
+      X-Responding-Instance:
+      - setupservice:45300303:pv43p53ic-zteg01101601:8003:1907B259:93f6a337c
+      access-control-expose-headers:
+      - X-Apple-Request-UUID
+      - Via
+      apple-seq:
+      - '0'
+      apple-tk:
+      - 'false'
+      content-length:
+      - '5226'
+      via:
+      - icloudedge:ds12p00ic-ztde01131201:7401:19RC123:Dusseldorf
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"query":{"recordType":"CheckIndexingState"},"zoneID":{"zoneName":"PrimarySync"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '81'
+      Content-type:
+      - text/plain
+      Cookie:
+      - X-APPLE-WEBAUTH-HSA-TRUST-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8iMRDmdzLmljbG91ZC5hdXRovQC85cG4zJBbdBCdB1vgowm5sABRm7HYfY61GpEUXcxASXaRf7Wp9f80mUaRo4WF8yTn16PvLWDJmNQeT2slVHEPNlzdrfnSFWn7VftAkQmQ3gjypxohF7ZCgS45kpEG3FjR-1tLMCXLs_bY5Xuis8OteQUtag~~";
+        X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTrdyLXuVSPEQTcWV5w50PS_Azhjbb-HFG_w6bQS7fObvGRYVdQ~~";
+        X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AfmAQWi6rxOCCulNRk1tj3kF2wLD7kv0YqXm8NsDKtKSBEcAY8GubLQhVQOCfRHxcDTp4OTfLemlO3qPhyuFkVa0VGOeNCIolBYVoQE9H5e+peGabTU++yv5Ve20rXwAjh8vLNvo78PxD1dTH8ynfLdAUpcaieWsJMFejPIJp7iDsmiI9o7qjw==";
+        X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6Aet0kFgu22Q4v11Y/qOmlfbGfGmIUWbq7iLV4XgmvgI/SdE8R4ECLd8+tODOaHWTio4U9gOHEaB+7qqIFkImSgH06gUQRotD1OU8PnTOabk6W0VdmlbHeAQE6ULtSzG7XVscsiCcu5aLxA8JJtkfGnMURxfQWXLZOyWpwhwdBqH2NHaEdYxmiQ==";
+        X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6AW6Gir1yEDwLQD0HgUcF3b8+d5gdgkfaQo2wQFwO568nsfVCXRsLVO9Zi1EpDhZPCaOeJ4wxZulXJxqFrMrVwOEUPXD4auTaARLSnuFu+ku/zaR1PNvNLGhVJNDeGT7KN6RGg59CViLOQCsBo2HWAVgDRojSSKTXCozQjkOlmo0ECl3sG6lfkg==";
+        X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6AfLfcn8J/HQ8lxyiQfSLE3S+lNTE38l+3QSLLPE6CCaZqewgrXQ0RnltMRhH0SYZhFp5ri4FEamk7ynO2lg4aXa6ubTSvpk9VO92yqrd7I7BkLh6O7+Xy/elmaZ0MvD0dKWyeiqgl21tdKjoF7z71oY2j0UNGb+FIzIsivmUGY7opeTxtpbDbw==";
+        X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AdQ4u7cfpuNFrgK9DjTxgFFOKpa5Izbx41cE631vVcOPbxcSgf5PW5Pk5JZxFxm0uVUblDFRa6/tnoDI1ni5X5IQj9AasZaV5JWjxwr6s78OjIk7//Z/VdJqwfhVaqfQFe9tI/dgB4gvInqdSkL5mako8nf1MHQCMQZA6lhXx75EZ89/Rg5ZeQ==";
+        X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6Adciqu4xi/81ZPC13IkyLFVFtr/GsgtNA0HXRnnGQgXNPlVRAbgXG/QvUYvyC9D1uKdIntFx/UMqhXDhaU5K81X77DFl7DBwI7WaT32vreJWnnfh1xVsVBSx6I2T3zchWKSdsDszFDU9Z4hsk6DIw+LGjgawT4St6sNxxnlT4+i57V+Fyeka9A==";
+        X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AbYqqDtTyT+1iBw09mXnbJkLgfk2Js0Uz34hBKAx6xub5M8neMiZaMSc15oS6KpI29jUZE6DKBTJIsX7aqIiwF6ps/FoG0oI3mQwqwZcCYvLz4T4QWOtY5+Gt47LbMfkyKW0e41JF4uqgntZBQyHhycE8WDcWNxzCOOVsGk1Rj1bVjiA5zp3ug==";
+        X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AXDzBhH/Uqo2sq+Saaqbg00cX5njb3+8b3GwX/4yeRRQ0/9j8WEDDT07ZS/6RXiNGZ4QIW+Dr8DjHEkZe1z+QSZxPle7eZUrqDoOOBvTMo336k0Rv/o6m873zMuXebZSvMsNFmmmV6h7EWC4wFQVmzA06yUsqfVaGnVS3MhQ1YdIO0yHAxnELw==";
+        X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTn8e8w8cEKFkFglizdCuIac2hu4mY-ORpCJLg90bisJJTipVEA~~";
+        X-APPLE-WEBAUTH-USER="v=1:s=0:d=220791670"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";
+        X_APPLE_WEB_KB-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8hMRDmdzLmljbG91ZC5hdXRovQDtcfU1UjxOfmatejqo4w0FyqgHkZVJ3uAC-YFwI6qda4pzUbK4pDCh6LpJZ2fE8lS_9ww3O3ol2gam2UDNq3qZQpZ7o0u0dVUynJvB27X--nuAt_tXpQJK5BeMoFxgh_cZjNsisF1vOJg1KXzQ5hPuVMXF3Q~~"
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p38-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=220791670&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body:
+      string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_dfc991c9-6f13-4b37-846b-606e3f31186e\"\
+        ,\n    \"recordType\" : \"CheckIndexingState\",\n    \"fields\" : {\n    \
+        \  \"progress\" : {\n        \"value\" : 100,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"state\" : {\n        \"value\" : \"FINISHED\",\n     \
+        \   \"type\" : \"STRING\"\n      }\n    },\n    \"pluginFields\" : { },\n\
+        \    \"recordChangeTag\" : \"0\",\n    \"created\" : {\n      \"timestamp\"\
+        \ : 1557428907534,\n      \"userRecordName\" : \"_10\",\n      \"deviceID\"\
+        \ : \"1\"\n    },\n    \"modified\" : {\n      \"timestamp\" : 1557428907534,\n\
+        \      \"userRecordName\" : \"_10\",\n      \"deviceID\" : \"1\"\n    },\n\
+        \    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\" : \"PrimarySync\"\
+        ,\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n  \
+        \    \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  } ],\n  \"syncToken\"\
+        \ : \"AQAAAAAAAl1ef/////////+Yc23JwndEs5IcW5R32T2B\"\n}"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - https://www.icloud.com
+      Access-Control-Expose-Headers:
+      - X-Apple-Request-UUID, X-Responding-Instance
+      - Via
+      Apple-Originating-System:
+      - UnknownOriginatingSystem
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Thu, 09 May 2019 19:08:27 GMT
+      Server:
+      - AppleHttpServer/70a91026
+      Set-Cookie:
+      - X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqsRDmdzLmljbG91ZC5hdXRovQDLt0yBmlWeKEqUCK4Rb2q8PqCfrUifzfJJ8teReO_K45G1o0NcMXVUOA82EQfoxuHRTelz_j76GhB6arROQOtiEw5l-Gnkb3azTRqRLOy62fHR87-_1kOHvTu_lFJhNeMJcj5lL_vXw4xl_V9VRPGzw_bbyA~~";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains;
+      Transfer-Encoding:
+      - chunked
+      X-Apple-CloudKit-Version:
+      - '1.0'
+      X-Apple-Request-UUID:
+      - f316e055-fac0-42ff-9384-f71448659d0a
+      X-Responding-Instance:
+      - ckdatabasews:43800301:pv33p38ic-ztbu02202401:8201:1907B315:c2912146310
+      apple-seq:
+      - '0'
+      apple-tk:
+      - 'false'
+      content-length:
+      - '846'
+      via:
+      - xrail:pv43p00ic-zteu05012101.me.com:8301:18H183:grp41
+      - icloudedge:ds12p01ic-ztde01141501:7401:19RC123:Dusseldorf
+    status:
+      code: 200
+      message: OK
+- request:
+    body: '{"query":{"recordType":"CPLAlbumByPositionLive"},"zoneID":{"zoneName":"PrimarySync"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '85'
+      Content-type:
+      - text/plain
+      Cookie:
+      - X-APPLE-WEBAUTH-HSA-TRUST-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8iMRDmdzLmljbG91ZC5hdXRovQC85cG4zJBbdBCdB1vgowm5sABRm7HYfY61GpEUXcxASXaRf7Wp9f80mUaRo4WF8yTn16PvLWDJmNQeT2slVHEPNlzdrfnSFWn7VftAkQmQ3gjypxohF7ZCgS45kpEG3FjR-1tLMCXLs_bY5Xuis8OteQUtag~~";
+        X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTrdyLXuVSPEQTcWV5w50PS_Azhjbb-HFG_w6bQS7fObvGRYVdQ~~";
+        X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AfmAQWi6rxOCCulNRk1tj3kF2wLD7kv0YqXm8NsDKtKSBEcAY8GubLQhVQOCfRHxcDTp4OTfLemlO3qPhyuFkVa0VGOeNCIolBYVoQE9H5e+peGabTU++yv5Ve20rXwAjh8vLNvo78PxD1dTH8ynfLdAUpcaieWsJMFejPIJp7iDsmiI9o7qjw==";
+        X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6Aet0kFgu22Q4v11Y/qOmlfbGfGmIUWbq7iLV4XgmvgI/SdE8R4ECLd8+tODOaHWTio4U9gOHEaB+7qqIFkImSgH06gUQRotD1OU8PnTOabk6W0VdmlbHeAQE6ULtSzG7XVscsiCcu5aLxA8JJtkfGnMURxfQWXLZOyWpwhwdBqH2NHaEdYxmiQ==";
+        X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6AW6Gir1yEDwLQD0HgUcF3b8+d5gdgkfaQo2wQFwO568nsfVCXRsLVO9Zi1EpDhZPCaOeJ4wxZulXJxqFrMrVwOEUPXD4auTaARLSnuFu+ku/zaR1PNvNLGhVJNDeGT7KN6RGg59CViLOQCsBo2HWAVgDRojSSKTXCozQjkOlmo0ECl3sG6lfkg==";
+        X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6AfLfcn8J/HQ8lxyiQfSLE3S+lNTE38l+3QSLLPE6CCaZqewgrXQ0RnltMRhH0SYZhFp5ri4FEamk7ynO2lg4aXa6ubTSvpk9VO92yqrd7I7BkLh6O7+Xy/elmaZ0MvD0dKWyeiqgl21tdKjoF7z71oY2j0UNGb+FIzIsivmUGY7opeTxtpbDbw==";
+        X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AdQ4u7cfpuNFrgK9DjTxgFFOKpa5Izbx41cE631vVcOPbxcSgf5PW5Pk5JZxFxm0uVUblDFRa6/tnoDI1ni5X5IQj9AasZaV5JWjxwr6s78OjIk7//Z/VdJqwfhVaqfQFe9tI/dgB4gvInqdSkL5mako8nf1MHQCMQZA6lhXx75EZ89/Rg5ZeQ==";
+        X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6Adciqu4xi/81ZPC13IkyLFVFtr/GsgtNA0HXRnnGQgXNPlVRAbgXG/QvUYvyC9D1uKdIntFx/UMqhXDhaU5K81X77DFl7DBwI7WaT32vreJWnnfh1xVsVBSx6I2T3zchWKSdsDszFDU9Z4hsk6DIw+LGjgawT4St6sNxxnlT4+i57V+Fyeka9A==";
+        X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AbYqqDtTyT+1iBw09mXnbJkLgfk2Js0Uz34hBKAx6xub5M8neMiZaMSc15oS6KpI29jUZE6DKBTJIsX7aqIiwF6ps/FoG0oI3mQwqwZcCYvLz4T4QWOtY5+Gt47LbMfkyKW0e41JF4uqgntZBQyHhycE8WDcWNxzCOOVsGk1Rj1bVjiA5zp3ug==";
+        X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AXDzBhH/Uqo2sq+Saaqbg00cX5njb3+8b3GwX/4yeRRQ0/9j8WEDDT07ZS/6RXiNGZ4QIW+Dr8DjHEkZe1z+QSZxPle7eZUrqDoOOBvTMo336k0Rv/o6m873zMuXebZSvMsNFmmmV6h7EWC4wFQVmzA06yUsqfVaGnVS3MhQ1YdIO0yHAxnELw==";
+        X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqsRDmdzLmljbG91ZC5hdXRovQDLt0yBmlWeKEqUCK4Rb2q8PqCfrUifzfJJ8teReO_K45G1o0NcMXVUOA82EQfoxuHRTelz_j76GhB6arROQOtiEw5l-Gnkb3azTRqRLOy62fHR87-_1kOHvTu_lFJhNeMJcj5lL_vXw4xl_V9VRPGzw_bbyA~~";
+        X-APPLE-WEBAUTH-USER="v=1:s=0:d=220791670"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";
+        X_APPLE_WEB_KB-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8hMRDmdzLmljbG91ZC5hdXRovQDtcfU1UjxOfmatejqo4w0FyqgHkZVJ3uAC-YFwI6qda4pzUbK4pDCh6LpJZ2fE8lS_9ww3O3ol2gam2UDNq3qZQpZ7o0u0dVUynJvB27X--nuAt_tXpQJK5BeMoFxgh_cZjNsisF1vOJg1KXzQ5hPuVMXF3Q~~"
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p38-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=220791670&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body:
+      string: "{\n  \"records\" : [ {\n    \"recordName\" : \"----Root-Folder----\"\
+        ,\n    \"recordType\" : \"CPLAlbum\",\n    \"fields\" : {\n      \"recordModificationDate\"\
+        \ : {\n        \"value\" : 1545202692118,\n        \"type\" : \"TIMESTAMP\"\
+        \n      },\n      \"sortAscending\" : {\n        \"value\" : 1,\n        \"\
+        type\" : \"INT64\"\n      },\n      \"sortType\" : {\n        \"value\" :\
+        \ 0,\n        \"type\" : \"INT64\"\n      },\n      \"albumType\" : {\n  \
+        \      \"value\" : 3,\n        \"type\" : \"INT64\"\n      },\n      \"position\"\
+        \ : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\
+        \n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\" :\
+        \ \"34sz\",\n    \"created\" : {\n      \"timestamp\" : 1428692188711,\n \
+        \     \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"586750801BB87512E6D78B7B50A8D45F00F8B375BAB00DDAC4B1B5D617CE5D01\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1545202694700,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"F9E7401705D29E8C0239EDC0E383B5570BE8136C36083C45EFC90BB702978DCB\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"2076BCB0-C481-4175-8F14-7A0E8EFAF02B\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1555410486949,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        QmlsZGVycmFobWVu\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n  \
+        \    \"position\" : {\n        \"value\" : 654,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"\
+        type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"3aab\",\n    \"created\" : {\n      \"timestamp\" : 1555410487696,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"CC7FFBD5DE9A7605F79638C77C38960B79A76DD061358C66A338AE3C43F87A8E\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1555410487696,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"CC7FFBD5DE9A7605F79638C77C38960B79A76DD061358C66A338AE3C43F87A8E\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"1EB42751-25E0-437F-951D-5A5EB7140BD5\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        Sm/MiHJn\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"position\"\
+        \ : {\n        \"value\" : 1032,\n        \"type\" : \"INT64\"\n      },\n\
+        \      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\" : \"\
+        INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os7\",\n    \"created\" : {\n      \"timestamp\" : 1523900004244,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"910BDF84DA6B417F76C73F9E314AE1A7D102B8D1183D5000955D3A4B4F96E68C\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364230,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"1D1A8AD0-070E-496B-9F6B-2FFD36BC3CD5\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        RmVyaWVuaGF1cw==\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n  \
+        \    \"position\" : {\n        \"value\" : 1040,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"\
+        type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2orx\",\n    \"created\" : {\n      \"timestamp\" : 1482150519008,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"BE373717FEF6C77210DAED3C3F7C41E5D627970226181D7F3DB7BE02CCB42D99\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364227,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"4AEB5E06-904A-4FAE-8388-93555ED98FDB\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        VHJhc2ggKFBob3RvU3dlZXBlcik=\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n\
+        \      },\n      \"position\" : {\n        \"value\" : 1056,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n\
+        \        \"type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n\
+        \    \"recordChangeTag\" : \"2os6\",\n    \"created\" : {\n      \"timestamp\"\
+        \ : 1474263835122,\n      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364230,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"F2A86812-22F7-4B96-9BA2-6EF0BFFDB8EF\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        SG9jaHplaXQ=\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"\
+        position\" : {\n        \"value\" : 1088,\n        \"type\" : \"INT64\"\n\
+        \      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os3\",\n    \"created\" : {\n      \"timestamp\" : 1461409094060,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364229,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"0A7632D2-07BB-4C5A-B727-052303F97480\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        R2FyYWdlIHZvcmhlci9uYWNoaGVy\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n\
+        \      },\n      \"position\" : {\n        \"value\" : 1280,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n\
+        \        \"type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n\
+        \    \"recordChangeTag\" : \"2ory\",\n    \"created\" : {\n      \"timestamp\"\
+        \ : 1433956015325,\n      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364227,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"72F22BEC-3AFF-45E4-8F1D-1D98C0F1A69D\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        RmFocnpldWdl\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"\
+        position\" : {\n        \"value\" : 1536,\n        \"type\" : \"INT64\"\n\
+        \      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os8\",\n    \"created\" : {\n      \"timestamp\" : 1433857691338,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364230,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"67BF5262-8DC6-489D-9056-8C5C6491EA7D\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        UnVudGFzdGlj\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"\
+        position\" : {\n        \"value\" : 22528,\n        \"type\" : \"INT64\"\n\
+        \      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2orw\",\n    \"created\" : {\n      \"timestamp\" : 1462725777752,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"586750801BB87512E6D78B7B50A8D45F00F8B375BAB00DDAC4B1B5D617CE5D01\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364226,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"CB6A72E2-7813-4018-9BF1-D70D5E856EE4\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        V29obndhZ2Vu\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"\
+        position\" : {\n        \"value\" : 30720,\n        \"type\" : \"INT64\"\n\
+        \      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os4\",\n    \"created\" : {\n      \"timestamp\" : 1445883721420,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364229,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"426490EA-35C8-477B-90D5-F6B8489C516F\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        TW9uc3Rlcg==\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"\
+        position\" : {\n        \"value\" : 36864,\n        \"type\" : \"INT64\"\n\
+        \      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os9\",\n    \"created\" : {\n      \"timestamp\" : 1434143594211,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"586750801BB87512E6D78B7B50A8D45F00F8B375BAB00DDAC4B1B5D617CE5D01\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364231,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"38909D3A-7B05-42D6-895C-9B603FC9D69B\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        MjQuMDkuMjAwOQ==\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n  \
+        \    \"position\" : {\n        \"value\" : 41984,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"\
+        type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2orz\",\n    \"created\" : {\n      \"timestamp\" : 1433857637043,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364227,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"9DBA991D-A2D5-4266-B60A-09011E7A1BB3\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        TGFtaW5hdCBTdGFkdGhhZ2Vu\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n    \
+        \  },\n      \"position\" : {\n        \"value\" : 56320,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n\
+        \        \"type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n\
+        \    \"recordChangeTag\" : \"2os2\",\n    \"created\" : {\n      \"timestamp\"\
+        \ : 1436861050753,\n      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"deviceID\" : \"586750801BB87512E6D78B7B50A8D45F00F8B375BAB00DDAC4B1B5D617CE5D01\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364228,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"27867DE7-6B4C-4666-929D-1D67768DC1DB\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        QmFieSBNYXR0aSAyMDA5\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n\
+        \      \"position\" : {\n        \"value\" : 67584,\n        \"type\" : \"\
+        INT64\"\n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n   \
+        \     \"type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n\
+        \    \"recordChangeTag\" : \"2os5\",\n    \"created\" : {\n      \"timestamp\"\
+        \ : 1433857637042,\n      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364229,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"D83EE9A0-2595-49B5-892E-52BBEA8DE8CD\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        MzAuMDYuMjAwOQ==\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n  \
+        \    \"position\" : {\n        \"value\" : 69632,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"\
+        type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os1\",\n    \"created\" : {\n      \"timestamp\" : 1433857637042,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"788CBD2AB4D84448BC3C3DBBFF52D90FE710722302BD2A57F43BB4F385CC2ABC\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364228,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"A4E5781F-56C7-4C5D-B5C4-1F749E40C22C\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1539074340364,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 0,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        V2hhdHNBcHA=\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n      \"\
+        position\" : {\n        \"value\" : 70656,\n        \"type\" : \"INT64\"\n\
+        \      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"2os0\",\n    \"created\" : {\n      \"timestamp\" : 1487187585479,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"CC7FFBD5DE9A7605F79638C77C38960B79A76DD061358C66A338AE3C43F87A8E\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1539074364228,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  }, {\n    \"recordName\"\
+        \ : \"F36A6773-8723-493D-A989-074490C1B5A0\",\n    \"recordType\" : \"CPLAlbum\"\
+        ,\n    \"fields\" : {\n      \"recordModificationDate\" : {\n        \"value\"\
+        \ : 1555414719755,\n        \"type\" : \"TIMESTAMP\"\n      },\n      \"sortAscending\"\
+        \ : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\n      },\n  \
+        \    \"sortType\" : {\n        \"value\" : 1,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"albumType\" : {\n        \"value\" : 0,\n        \"type\"\
+        \ : \"INT64\"\n      },\n      \"albumNameEnc\" : {\n        \"value\" : \"\
+        VGF1ZmUgRm90b3M=\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n  \
+        \    \"position\" : {\n        \"value\" : 71680,\n        \"type\" : \"INT64\"\
+        \n      },\n      \"sortTypeExt\" : {\n        \"value\" : 0,\n        \"\
+        type\" : \"INT64\"\n      }\n    },\n    \"pluginFields\" : { },\n    \"recordChangeTag\"\
+        \ : \"3ad9\",\n    \"created\" : {\n      \"timestamp\" : 1550387747540,\n\
+        \      \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n     \
+        \ \"deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"modified\" : {\n      \"timestamp\" : 1555414721312,\n   \
+        \   \"userRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\",\n      \"\
+        deviceID\" : \"41021242195767C000E240D5460721671357E26EAC8C4235522EE21D5DD6FBE4\"\
+        \n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"\
+        \ : \"PrimarySync\",\n      \"ownerRecordName\" : \"_ab776cbd7a4be817e6258511022b3e3c\"\
+        ,\n      \"zoneType\" : \"REGULAR_CUSTOM_ZONE\"\n    }\n  } ],\n  \"syncToken\"\
+        \ : \"AQAAAAAAAl1ef/////////+Yc23JwndEs5IcW5R32T2B\"\n}"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - https://www.icloud.com
+      Access-Control-Expose-Headers:
+      - X-Apple-Request-UUID, X-Responding-Instance
+      - Via
+      Apple-Originating-System:
+      - UnknownOriginatingSystem
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Thu, 09 May 2019 19:08:29 GMT
+      Server:
+      - AppleHttpServer/70a91026
+      Set-Cookie:
+      - X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeq0RDmdzLmljbG91ZC5hdXRovQDmZF-YVbJ5rTF5UrMN_Uub8YDaaOQSFBO8IpiELfSOVv-TQ1cnsCyAmS-6wcVYXbhbXTZJ1AhdORThnWcG9_fjnRk7PbSQDiF8KBrBSnYGasdow2cvgMuOE3xQBdzqqejjBgzrQ-StgFZyhVmxoSjyB4YX2w~~";Path=/;Domain=.icloud.com;Secure;HttpOnly
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains;
+      Transfer-Encoding:
+      - chunked
+      X-Apple-CloudKit-Version:
+      - '1.0'
+      X-Apple-Request-UUID:
+      - 97501b75-cac7-47f4-a1d8-613c86e52598
+      X-Responding-Instance:
+      - ckdatabasews:43803301:pv33p38ic-ztbu02193901:8201:1907B315:c2912146310
+      apple-seq:
+      - '0'
+      apple-tk:
+      - 'false'
+      content-length:
+      - '23497'
+      via:
+      - xrail:pv43p00ic-zteu05012101.me.com:8301:18H183:grp41
+      - icloudedge:ds12p01ic-ztde01141501:7401:19RC123:Dusseldorf
+    status:
+      code: 200
+      message: OK
+version: 1

@@ -18,8 +18,7 @@ class ListingAlbumsTestCase(TestCase):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
 
-        # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette("tests/vcr_cassettes/listing_albums.yml"):
             # Pass fixed client ID via environment variable
             os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
             runner = CliRunner()
@@ -40,8 +39,6 @@ class ListingAlbumsTestCase(TestCase):
             print_result_exception(result)
             albums = result.output.splitlines()
 
-            # seems like the number of albums is changing. Test disabled.
-            # self.assertEqual(len(albums), 41)
             self.assertIn("All Photos", albums)
             self.assertIn("Time-lapse", albums)
             self.assertIn("Recently Deleted", albums)
