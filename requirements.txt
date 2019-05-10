@@ -1,4 +1,4 @@
-pyicloud_ipd==0.9.9
+pyicloud_ipd==0.10.0
 docopt==0.6.2
 schema==0.6.6
 click==6.7

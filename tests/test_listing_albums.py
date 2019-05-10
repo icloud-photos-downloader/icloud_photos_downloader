@@ -39,8 +39,8 @@ class ListingAlbumsTestCase(TestCase):
             print_result_exception(result)
             albums = result.output.splitlines()
 
-            # All photos only available with python3?!
-            # self.assertIn("All Photos", albums)
+            self.assertIn("All Photos", albums)
+            self.assertIn("WhatsApp", albums)
             self.assertIn("Time-lapse", albums)
             self.assertIn("Recently Deleted", albums)
             self.assertIn("Favorites", albums)

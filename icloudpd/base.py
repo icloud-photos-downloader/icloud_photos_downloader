@@ -29,7 +29,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
 
 @click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
-#@click.argument(
+# @click.argument(
 @click.option(
     "-d", "--directory",
     help="Local directory that should be used for download",
@@ -256,13 +256,19 @@ def main(
             )
         exit(1)
 
-    #photos = icloud.photos.all
-    # shoud be identical to album="All Photos". This is default, so it can be omitted.
+    # Default album is "All Photos", so this is the same as
+    # calling `icloud.photos.all`.
     photos = icloud.photos.albums[album]
 
     if list_albums:
-        albums = icloud.photos.albums
-        print(*albums, sep="\n")
+        albums_dict = icloud.photos.albums
+        # Python2: itervalues, Python3: values()
+        if sys.version_info[0] >= 3:
+            albums = albums_dict.values()  # pragma: no cover
+        else:
+            albums = albums_dict.itervalues()  # pragma: no cover
+        album_titles = [str(a) for a in albums]
+        print(*album_titles, sep="\n")
         exit(0)
 
     # For Python 2.7
