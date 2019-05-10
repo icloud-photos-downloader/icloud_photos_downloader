@@ -71,6 +71,8 @@ pip install icloudpd
                                         find x number of previously downloaded
                                         consecutive photos (default: download all
                                         photos)
+        -a, --album <album>             Album to download (default: All Photos)
+        -l, --list-albums               Lists the avaliable albums
         --skip-videos                   Don't download any videos (default: Download
                                         both photos and videos)
         --skip-live-photos              Don't download any live photos (default:
