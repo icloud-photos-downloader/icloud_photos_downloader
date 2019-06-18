@@ -350,17 +350,17 @@ def main(
     # pylint: disable-msg=too-many-nested-blocks
     for photo in photos_enumerator:
         for _ in range(constants.MAX_RETRIES):
-            if skip_videos and photo.item_type != "image":
-                logger.set_tqdm_description(
-                    "Skipping %s, only downloading photos." % photo.filename
-                )
-                break
-            if photo.item_type != "image" and photo.item_type != "movie":
-                logger.set_tqdm_description(
-                    "Skipping %s, only downloading photos and videos. "
-                    "(Item type was: %s)" % (photo.filename, photo.item_type)
-                )
-                break
+            # if skip_videos and photo.item_type != "image":
+            #     logger.set_tqdm_description(
+            #         "Skipping %s, only downloading photos." % photo.filename
+            #     )
+            #     break
+            # if photo.item_type != "image" and photo.item_type != "movie":
+            #     logger.set_tqdm_description(
+            #         "Skipping %s, only downloading photos and videos. "
+            #         "(Item type was: %s)" % (photo.filename, photo.item_type)
+            #     )
+            #     break
             try:
                 created_date = photo.created.astimezone(get_localzone())
             except (ValueError, OSError):
