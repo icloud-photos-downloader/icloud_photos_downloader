@@ -26,8 +26,8 @@ pip install icloudpd
 
 ## Usage
 
-    $ icloudpd <download_directory>
-               --username <username>
+    $ icloudpd -d --directory <download_directory>
+               -u --username <username>
                [-p, --password <password>]
                [-d, --directory <directory>]
                [--cookie-directory </cookie/directory>]
@@ -120,7 +120,7 @@ pip install icloudpd
 
 Example:
 
-    $ icloudpd ./Photos \
+    $ icloudpd --directory ./Photos \
         --username testuser@example.com \
         --password pass1234 \
         --recent 500 \
@@ -243,7 +243,7 @@ Usage:
 
 $ docker pull ndbroadbent/icloudpd
 $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
-    icloudpd /data \
+    icloudpd --directory /data \
     --username testuser@example.com \
     --password pass1234 \
     --size original \
