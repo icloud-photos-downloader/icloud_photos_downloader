@@ -526,7 +526,7 @@ def main(
             return threads_num
         return 1
 
-    download_qeue = queue.Queue(get_threads_count())
+    download_queue = queue.Queue(get_threads_count())
     consecutive_files_found = Counter(0)
 
     def should_break(counter):
@@ -536,12 +536,12 @@ def main(
     def worker(counter):
         """Threaded worker"""
         while True:
-            item = download_qeue.get()
+            item = download_queue.get()
             if item is None:
                 break
 
             download_photo(counter, item)
-            download_qeue.task_done()
+            download_queue.task_done()
 
     threads = []
     for _ in range(get_threads_count()):
@@ -560,15 +560,15 @@ def main(
                     "Found %d consecutive previously downloaded photos. Exiting" %
                     until_found)
                 break
-            download_qeue.put(next(photos_iterator))
+            download_queue.put(next(photos_iterator))
         except StopIteration:
             break
 
     if not should_break(consecutive_files_found):
-        download_qeue.join()
+        download_queue.join()
 
     for _ in threads:
-        download_qeue.put(None)
+        download_queue.put(None)
 
     for thread in threads:
         thread.join()
