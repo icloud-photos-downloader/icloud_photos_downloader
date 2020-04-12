@@ -269,7 +269,7 @@ def main(
                 smtp_no_tls,
                 notification_email,
             )
-        exit(1)
+        sys.exit(1)
 
     # Default album is "All Photos", so this is the same as
     # calling `icloud.photos.all`.
@@ -574,7 +574,7 @@ def main(
         thread.join()
 
     if only_print_filenames:
-        exit(0)
+        sys.exit(0)
 
     logger.info("All photos have been downloaded!")
 
