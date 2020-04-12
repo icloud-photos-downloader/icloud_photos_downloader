@@ -885,7 +885,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                            "INFO     Downloading tests/fixtures/Photos/0005/01/01/IMG_7409.JPG",
+                            "INFO     Downloading tests/fixtures/Photos/5/01/01/IMG_7409.JPG",
                             self._caplog.text,
                     )
                 self.assertIn(
