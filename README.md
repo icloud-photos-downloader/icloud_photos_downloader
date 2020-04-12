@@ -53,6 +53,7 @@ pip install icloudpd
                [--notification-script PATH]
                [--log-level (debug|info|error)]
                [--no-progress-bar]
+               [--threads-num <threads>]
 
     Options:
         --username <username>           Your iCloud username or email address
@@ -115,6 +116,8 @@ pip install icloudpd
                                         prints log messages on separate lines
                                         (Progress bar is disabled by default if
                                         there is no tty attached)
+        --threads-num INTEGER RANGE     Number of cpu threads(default: cpu count *
+                                        5)
         --version                       Show the version and exit.
         -h, --help                      Show this message and exit.
 
