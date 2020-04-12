@@ -2,6 +2,7 @@
 # pylint: skip-file
 from multiprocessing import RawValue, Lock
 
+
 class Counter(object):
     def __init__(self, value=0):
         self.initial_value = value

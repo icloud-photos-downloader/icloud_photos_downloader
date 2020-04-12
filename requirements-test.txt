@@ -5,3 +5,4 @@ vcrpy==1.13.0
 pytest-cov==2.5.1
 pylint
 coveralls
+autopep8
