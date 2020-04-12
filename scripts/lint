@@ -1,8 +1,5 @@
 #!/bin/bash
 # (There are some small differences between Python 2 and 3)
 set -e
-echo "Running pylint for Python 2..."
-python2 -m pylint icloudpd
-echo
 echo "Running pylint for Python 3..."
 python3 -m pylint icloudpd/

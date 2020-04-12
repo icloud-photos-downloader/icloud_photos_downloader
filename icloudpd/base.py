@@ -399,7 +399,7 @@ def main(
         if not os.path.exists(download_dir):
             try:
                 os.makedirs(download_dir)
-            except OSError: # pragma: no cover
+            except OSError:  # pragma: no cover
                 pass        # pragma: no cover
 
         download_size = size
@@ -523,7 +523,7 @@ def main(
     def get_threads_count():
         """Disable threads if we have until_found or recent arguments"""
         if until_found is None and recent is None:
-            return threads_num # pragma: no cover
+            return threads_num  # pragma: no cover
         return 1
 
     download_queue = queue.Queue(get_threads_count())

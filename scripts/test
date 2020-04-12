@@ -1,16 +1,4 @@
 #!/bin/bash
 set -e
-echo "Running tests with Python 2..."
-if which python2.7 > /dev/null 2>&1; then
-  python2.7 -m pytest --cov=icloudpd
-else
-  python pytest --cov=icloudpd
-fi
-
-echo
 echo "Running tests with Python 3... (HTML coverage report)"
-if which python3 > /dev/null 2>&1; then
-  python3 -m pytest --cov=icloudpd --cov-report html --cov-report term
-else
-  echo "python3 not found"
-fi
+python3 -m pytest --cov=icloudpd --cov-report html --cov-report term

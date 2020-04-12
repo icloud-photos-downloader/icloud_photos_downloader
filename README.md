@@ -131,8 +131,8 @@ Example:
 
 ## Requirements
 
-- Python 2.7 or Python 3.4+
-  - _Python 2.6 is not supported._
+- Python 3.4+
+  - _Python 2.x is not supported._
 - pip
 
 ### Install Python & pip
@@ -271,7 +271,7 @@ pytest
 
 Before submitting a pull request, please check the following:
 
-- All tests pass on Python 2.7 and 3.6
+- All tests pass
   - Run `./scripts/test`
 - 100% test coverage
   - After running `./scripts/test`, you will see the test coverage results in the output
