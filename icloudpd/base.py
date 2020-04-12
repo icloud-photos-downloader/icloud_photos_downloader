@@ -284,7 +284,7 @@ def main(
             albums = albums_dict.itervalues()  # pragma: no cover
         album_titles = [str(a) for a in albums]
         print(*album_titles, sep="\n")
-        exit(0)
+        sys.exit(0)
 
     # For Python 2.7
     if hasattr(directory, "decode"):
