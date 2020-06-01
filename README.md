@@ -1,6 +1,8 @@
-# CURRENTLY UNMAINTAINED
+# Community Maintained
 
-I hope this tool is useful for you! Unfortunately I don't use it anymore, and I don't want to keep working on it. Please let me know if you want to help maintain it and respond to the GitHub issues and pull requests. Thanks!
+I hope this tool is useful for you! Unfortunately I don't use it personally anymore, and I don't want to spend lots of time working on it. Please let me know if you want to help maintain it and respond to the GitHub issues and pull requests.
+
+However, I'm happy to accept any pull requests to keep the project working if the code is high quality and has 100% test coverage. Thanks a lot for your help!
 
 ---------
 
