@@ -34,8 +34,10 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs("tests/fixtures/Photos")
 
         os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a").close()
+        with open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a") as f:
+            f.truncate(1151066)
+        with open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a") as f:
+            f.truncate(656257)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -111,8 +113,10 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs("tests/fixtures/Photos")
 
         os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a").close()
+        with open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a") as f:
+            f.truncate(1151066)
+        with open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a") as f:
+            f.truncate(656257)
 
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
@@ -231,8 +235,10 @@ class DownloadPhotoTestCase(TestCase):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos/2018/07/31/")
-        open("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", "a").close()
-        open("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", "a").close()
+        with open("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", "a") as f:
+            f.truncate(1884695)
+        with open("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", "a") as f:
+            f.truncate(3294075)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -288,22 +294,23 @@ class DownloadPhotoTestCase(TestCase):
 
         files_to_download.append(("2018/07/31/IMG_7409.JPG", "photo"))
         files_to_download.append(("2018/07/31/IMG_7409-medium.MOV", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7408.JPG", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7408-medium.MOV", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7408.JPG", "photo", 1151066))
+        files_to_skip.append(("2018/07/30/IMG_7408-medium.MOV", "photo", 894467))
         files_to_download.append(("2018/07/30/IMG_7407.JPG", "photo"))
         files_to_download.append(("2018/07/30/IMG_7407-medium.MOV", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7405.MOV", "video"))
-        files_to_skip.append(("2018/07/30/IMG_7404.MOV", "video"))
+        files_to_skip.append(("2018/07/30/IMG_7405.MOV", "video", 36491351))
+        files_to_skip.append(("2018/07/30/IMG_7404.MOV", "video", 225935003))
         files_to_download.append(("2018/07/30/IMG_7403.MOV", "video"))
         files_to_download.append(("2018/07/30/IMG_7402.MOV", "video"))
-        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo"))
+        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo", 565699696))
+        files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo", 2308885))
+        files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
+        files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo", 2251047))
         files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))
 
         for f in files_to_skip:
-            open("%s/%s" % (base_dir, f[0]), "a").close()
+            with open("%s/%s" % (base_dir, f[0]), "a") as fi:
+                fi.truncate(f[2])
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
