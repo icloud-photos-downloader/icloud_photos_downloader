@@ -9,7 +9,7 @@ FROM base as test
 
 RUN mkdir Photos
 RUN pip install -r requirements-test.txt
-RUN py.test --cov=icloudpd
+RUN py.test --cov=icloudpd --timeout=3
 RUN pylint icloudpd
 
 FROM base as runtime

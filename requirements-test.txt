@@ -6,3 +6,4 @@ pytest-cov==2.5.1
 pylint
 coveralls
 autopep8
+pytest-timeout==1.4.2
