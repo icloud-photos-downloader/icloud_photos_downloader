@@ -951,3 +951,113 @@ class DownloadPhotoTestCase(TestCase):
                     dp_patched.assert_not_called
 
                     assert result.exit_code == 0
+
+    def test_download_and_dedup_existing_photos(self):
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        os.makedirs("tests/fixtures/Photos/2018/07/31/")
+        with open("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", "a") as f:
+            f.truncate(1)
+        with open("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", "a") as f:
+            f.truncate(1)
+        os.makedirs("tests/fixtures/Photos/2018/07/30/")
+        with open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a") as f:
+            f.truncate(1151066)
+        with open("tests/fixtures/Photos/2018/07/30/IMG_7408.MOV", "a") as f:
+            f.truncate(1606512)
+
+        # Download the first photo, but mock the video download
+        orig_download = PhotoAsset.download
+
+        def mocked_download(self, size):
+            if not hasattr(PhotoAsset, "already_downloaded"):
+                response = orig_download(self, size)
+                setattr(PhotoAsset, "already_downloaded", True)
+                return response
+            return mock.MagicMock()
+
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                # Pass fixed client ID via environment variable
+                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                runner = CliRunner()
+                result = runner.invoke(
+                    main,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "5",
+                        "--skip-videos",
+                        # "--set-exif-datetime",
+                        "--no-progress-bar",
+                        "-d",
+                        "tests/fixtures/Photos",
+                        "--threads-num",
+                        "1"
+                    ],
+                )
+                print_result_exception(result)
+
+                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    "INFO     Downloading 5 original photos to tests/fixtures/Photos/ ...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG de-dupped.",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV de-dupped.",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408.JPG already exists.",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408.MOV already exists.",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
+                )
+                self.assertIn(
+                    "INFO     Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
+                )
+                self.assertIn(
+                    "INFO     All photos have been downloaded!", self._caplog.text
+                )
+
+                # Check that file was downloaded
+                self.assertTrue(
+                    os.path.exists("tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG"))
+                # Check that mtime was updated to the photo creation date
+                photo_mtime = os.path.getmtime("tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG")
+                photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+                self.assertEquals(
+                    "2018-07-31 07:22:24",
+                    photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+                self.assertTrue(
+                    os.path.exists("tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV"))
+                photo_mtime = os.path.getmtime("tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV")
+                photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+                self.assertEquals(
+                    "2018-07-31 07:22:24",
+                    photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+
+                assert result.exit_code == 0
+
