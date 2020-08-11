@@ -952,7 +952,7 @@ class DownloadPhotoTestCase(TestCase):
 
                     assert result.exit_code == 0
 
-    def test_download_and_dedup_existing_photos(self):
+    def test_download_and_dedupe_existing_photos(self):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
@@ -1009,7 +1009,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG de-dupped.",
+                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG deduplicated.",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1017,7 +1017,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV de-dupped.",
+                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV deduplicated.",
                     self._caplog.text,
                 )
                 self.assertIn(

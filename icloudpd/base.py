@@ -461,7 +461,7 @@ def main(
                     download_path.rsplit(".", 1)
                 )
                 logger.set_tqdm_description(
-                    "%s de-dupped." % truncate_middle(download_path, 96)
+                    "%s deduplicated." % truncate_middle(download_path, 96)
                 )
                 file_exists = os.path.isfile(download_path)
             if file_exists:
@@ -529,7 +529,7 @@ def main(
                                 lp_download_path.rsplit(".", 1)
                             )
                             logger.set_tqdm_description(
-                                "%s de-dupped." % truncate_middle(lp_download_path, 96)
+                                "%s deduplicated." % truncate_middle(lp_download_path, 96)
                             )
                             lp_file_exists = os.path.isfile(lp_download_path)
                         if lp_file_exists:
