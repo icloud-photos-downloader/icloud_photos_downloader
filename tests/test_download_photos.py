@@ -178,7 +178,7 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     assert result.exit_code == 0
 
-    def test_download_photos_and_exif_exceptions(self):
+    def test_download_photos_and_get_exif_exceptions(self):
         if os.path.exists("tests/fixtures/Photos"):
             shutil.rmtree("tests/fixtures/Photos")
         os.makedirs("tests/fixtures/Photos")
@@ -1061,3 +1061,59 @@ class DownloadPhotoTestCase(TestCase):
 
                 assert result.exit_code == 0
 
+
+    def test_download_photos_and_set_exif_exceptions(self):
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with mock.patch.object(piexif, "insert") as piexif_patched:
+            piexif_patched.side_effect = InvalidImageDataError
+            with mock.patch(
+                "icloudpd.exif_datetime.get_photo_exif"
+            ) as get_exif_patched:
+                get_exif_patched.return_value = False
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    # Pass fixed client ID via environment variable
+                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    runner = CliRunner()
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--set-exif-datetime",
+                            "--no-progress-bar",
+                            "-d",
+                            "tests/fixtures/Photos",
+                        ],
+                    )
+                    print_result_exception(result)
+
+                    self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG: 2018:07:31 07:22:24",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "DEBUG    Error setting EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded!", self._caplog.text
+                    )
+                    assert result.exit_code == 0
