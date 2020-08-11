@@ -25,9 +25,12 @@ def update_mtime(photo, download_path):
             # when generating the download directory.
             # So just return silently without touching the mtime.
             return
-        ctime = time.mktime(created_date.timetuple())
-        os.utime(download_path, (ctime, ctime))
+        set_utime(download_path, created_date)
 
+def set_utime(download_path, created_date):
+    """Set date & time of the file"""
+    ctime = time.mktime(created_date.timetuple())
+    os.utime(download_path, (ctime, ctime))
 
 def download_media(icloud, photo, download_path, size):
     """Download the photo to path, with retries and error handling"""

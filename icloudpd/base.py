@@ -472,7 +472,10 @@ def main(
                 )
 
                 if download_result:
-                    if photo.filename.lower().endswith((".jpg", ".jpeg")) and set_exif_datetime and not exif_datetime.get_photo_exif(download_path):
+                    download.set_utime(download_path, created_date)
+                    if set_exif_datetime and \
+                        photo.filename.lower().endswith((".jpg", ".jpeg")) and \
+                        not exif_datetime.get_photo_exif(download_path):
                         # %Y:%m:%d looks wrong but it's the correct format
                         date_str = created_date.strftime(
                             "%Y:%m:%d %H:%M:%S")
@@ -485,8 +488,6 @@ def main(
                             download_path,
                             created_date.strftime("%Y:%m:%d %H:%M:%S"),
                         )
-                    timestamp = time.mktime(created_date.timetuple())
-                    os.utime(download_path, (timestamp, timestamp))
 
         # Also download the live photo if present
         if not skip_live_photos:
