@@ -472,7 +472,6 @@ def main(
                 )
 
                 if download_result:
-                    download.set_utime(download_path, created_date)
                     if set_exif_datetime and \
                         photo.filename.lower().endswith((".jpg", ".jpeg")) and \
                         not exif_datetime.get_photo_exif(download_path):
@@ -488,6 +487,7 @@ def main(
                             download_path,
                             created_date.strftime("%Y:%m:%d %H:%M:%S"),
                         )
+                    download.set_utime(download_path, created_date)
 
         # Also download the live photo if present
         if not skip_live_photos:

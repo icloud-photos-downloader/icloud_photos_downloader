@@ -307,7 +307,7 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
-            with mock.patch("icloudpd.download.set_utime") as ut_patched:
+            with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
@@ -669,7 +669,7 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
-            with mock.patch("icloudpd.download.set_utime") as ut_patched:
+            with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
 
                 with mock.patch.object(PhotoAsset, "versions") as pa:
