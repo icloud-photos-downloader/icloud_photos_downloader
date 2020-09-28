@@ -1,8 +1,8 @@
-pytest==3.6.4
-mock==2.0.0
+pytest==6.0.1
+mock==4.0.2
 freezegun==0.3.10
-vcrpy==1.13.0
-pytest-cov==2.5.1
+vcrpy==4.1.0
+pytest-cov==2.10.0
 pylint
 coveralls
 autopep8
