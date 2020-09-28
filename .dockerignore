@@ -1,0 +1,14 @@
+build/
+dist/
+icloudpd.egg-info
+cron_script.sh
+Photos/
+.vscode
+__pycache__
+.pytest_cache
+.cache
+*.pyc
+.idea
+.coverage
+htmlcov
+.git

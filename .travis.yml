@@ -7,7 +7,7 @@ install:
   - pip install -r requirements-test.txt
 
 script:
-  - py.test --cov=icloudpd
+  - py.test --cov=icloudpd --timeout=3
   - pylint icloudpd
 
 after_success:
