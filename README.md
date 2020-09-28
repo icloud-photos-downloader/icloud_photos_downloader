@@ -248,12 +248,26 @@ Usage:
 
 $ docker pull ndbroadbent/icloudpd
 $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
-    icloudpd /data \
+    -v $(pwd)/cookies:/cookies \
+    -e TZ=America/Los_Angeles \
+    icloudpd --directory /data \
+    --cookie-directory /cookies \
+    --folder-structure {:%Y/%Y-%m-%d} \
     --username testuser@example.com \
     --password pass1234 \
     --size original \
     --recent 500 \
     --auto-delete
+```
+
+On Windows:
+- use `%cd%` instead of `$(pwd)`
+- or full path, e.g. `-v c:/photos/icloud:/data`
+
+Building image locally:
+```bash
+$ docker build . -t icloudpd
+$ docker run -it --rm icloudpd:latest icloudpd --version
 ```
 
 ## Contributing
