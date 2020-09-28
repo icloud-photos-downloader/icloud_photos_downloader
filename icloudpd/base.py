@@ -484,24 +484,23 @@ def main(
                     icloud, photo, download_path, download_size
                 )
 
-                if download_result and set_exif_datetime:
-                    if photo.filename.lower().endswith((".jpg", ".jpeg")):
-                        if not exif_datetime.get_photo_exif(download_path):
-                            # %Y:%m:%d looks wrong but it's the correct format
-                            date_str = created_date.strftime(
-                                "%Y:%m:%d %H:%M:%S")
-                            logger.debug(
-                                "Setting EXIF timestamp for %s: %s",
-                                download_path,
-                                date_str,
-                            )
-                            exif_datetime.set_photo_exif(
-                                download_path,
-                                created_date.strftime("%Y:%m:%d %H:%M:%S"),
-                            )
-                    else:
-                        timestamp = time.mktime(created_date.timetuple())
-                        os.utime(download_path, (timestamp, timestamp))
+                if download_result:
+                    if set_exif_datetime and \
+                        photo.filename.lower().endswith((".jpg", ".jpeg")) and \
+                        not exif_datetime.get_photo_exif(download_path):
+                        # %Y:%m:%d looks wrong but it's the correct format
+                        date_str = created_date.strftime(
+                            "%Y:%m:%d %H:%M:%S")
+                        logger.debug(
+                            "Setting EXIF timestamp for %s: %s",
+                            download_path,
+                            date_str,
+                        )
+                        exif_datetime.set_photo_exif(
+                            download_path,
+                            created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                        )
+                    download.set_utime(download_path, created_date)
 
         # Also download the live photo if present
         if not skip_live_photos:

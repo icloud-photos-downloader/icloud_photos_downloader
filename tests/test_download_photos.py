@@ -314,59 +314,61 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-                # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--live-photo-size",
-                        "medium",
-                        "--until-found",
-                        "3",
-                        "--recent",
-                        "20",
-                        "--no-progress-bar",
-                        "-d",
-                        base_dir,
-                    ],
-                )
-                print_result_exception(result)
-
-                expected_calls = list(
-                    map(
-                        lambda f: call(
-                            ANY, ANY, "%s/%s" % (base_dir, f[0]),
-                            "mediumVideo" if (
-                                f[1] == 'photo' and f[0].endswith('.MOV')
-                            ) else "original"),
-                        files_to_download,
+            with mock.patch("icloudpd.download.os.utime") as ut_patched:
+                ut_patched.return_value = None
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    # Pass fixed client ID via environment variable
+                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    runner = CliRunner()
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--live-photo-size",
+                            "medium",
+                            "--until-found",
+                            "3",
+                            "--recent",
+                            "20",
+                            "--no-progress-bar",
+                            "-d",
+                            base_dir,
+                        ],
                     )
-                )
-                dp_patched.assert_has_calls(expected_calls)
+                    print_result_exception(result)
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-                )
-                self.assertIn(
-                    "INFO     Downloading ??? original photos and videos to tests/fixtures/Photos/ ...",
-                    self._caplog.text,
-                )
+                    expected_calls = list(
+                        map(
+                            lambda f: call(
+                                ANY, ANY, "%s/%s" % (base_dir, f[0]),
+                                "mediumVideo" if (
+                                    f[1] == 'photo' and f[0].endswith('.MOV')
+                                ) else "original"),
+                            files_to_download,
+                        )
+                    )
+                    dp_patched.assert_has_calls(expected_calls)
 
-                for f in files_to_skip:
-                    expected_message = "INFO     %s/%s already exists." % (base_dir, f[0])
-                    self.assertIn(expected_message, self._caplog.text)
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
+                    )
+                    self.assertIn(
+                        "INFO     Downloading ??? original photos and videos to tests/fixtures/Photos/ ...",
+                        self._caplog.text,
+                    )
 
-                self.assertIn(
-                    "INFO     Found 3 consecutive previously downloaded photos. Exiting",
-                    self._caplog.text,
-                )
-                assert result.exit_code == 0
+                    for f in files_to_skip:
+                        expected_message = "INFO     %s/%s already exists." % (base_dir, f[0])
+                        self.assertIn(expected_message, self._caplog.text)
+
+                    self.assertIn(
+                        "INFO     Found 3 consecutive previously downloaded photos. Exiting",
+                        self._caplog.text,
+                    )
+                    assert result.exit_code == 0
 
     def test_handle_io_error(self):
         if os.path.exists("tests/fixtures/Photos"):
@@ -674,53 +676,56 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
-            with mock.patch.object(PhotoAsset, "versions") as pa:
-                pa.return_value = ["original", "medium"]
+            with mock.patch("icloudpd.download.os.utime") as ut_patched:
+                ut_patched.return_value = None
 
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-                    # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
-                    result = runner.invoke(
-                        main,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--size",
-                            "thumb",
-                            "--no-progress-bar",
-                            "-d",
-                            base_dir,
-                        ],
-                    )
-                    print_result_exception(result)
-                    self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     Downloading the first thumb photo or video to tests/fixtures/Photos/ ...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
-                    )
-                    dp_patched.assert_called_once_with(
-                        ANY,
-                        ANY,
-                        "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
-                        "original",
-                    )
+                with mock.patch.object(PhotoAsset, "versions") as pa:
+                    pa.return_value = ["original", "medium"]
 
-                    assert result.exit_code == 0
+                    with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                        # Pass fixed client ID via environment variable
+                        os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        runner = CliRunner()
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--size",
+                                "thumb",
+                                "--no-progress-bar",
+                                "-d",
+                                base_dir,
+                            ],
+                        )
+                        print_result_exception(result)
+                        self.assertIn(
+                            "DEBUG    Looking up all photos and videos from album All Photos...",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            "INFO     Downloading the first thumb photo or video to tests/fixtures/Photos/ ...",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            "INFO     All photos have been downloaded!", self._caplog.text
+                        )
+                        dp_patched.assert_called_once_with(
+                            ANY,
+                            ANY,
+                            "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                            "original",
+                        )
+
+                        assert result.exit_code == 0
 
     def test_force_size(self):
         base_dir = "tests/fixtures/Photos"
