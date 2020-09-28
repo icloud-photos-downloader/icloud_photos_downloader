@@ -4,9 +4,10 @@ set -e
 ICLOUDPD_VERSION="$(cat setup.py | grep version= | cut -d'"' -f 2)"
 echo "Current icloudpd version: ${ICLOUDPD_VERSION}"
 
+cp ./dist/icloudpd* ./icloudpd-latest-py2.py3-none-any.whl
 docker build \
-  --build-arg "ICLOUDPD_VERSION=${ICLOUDPD_VERSION}" \
   -t ndbroadbent/icloudpd \
+  -f Dockerfile.release \
   .
 
 docker push ndbroadbent/icloudpd
