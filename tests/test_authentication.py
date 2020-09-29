@@ -5,7 +5,7 @@ import os
 import click
 from click.testing import CliRunner
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
-import pyicloud_ipd
+import pyicloud
 from icloudpd.base import main
 
 vcr = VCR(decode_compressed_response=True)
@@ -19,7 +19,7 @@ class AuthenticationTestCase(TestCase):
     def test_failed_auth(self):
         with vcr.use_cassette("tests/vcr_cassettes/failed_auth.yml"):
             with self.assertRaises(
-                pyicloud_ipd.exceptions.PyiCloudFailedLoginException
+                pyicloud.exceptions.PyiCloudFailedLoginException
             ) as context:
                 authenticate(
                     "bad_username",

@@ -13,9 +13,9 @@ from mock import call, ANY
 from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum
-from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud.services.photos import PhotoAsset, PhotoAlbum
+from pyicloud.base import PyiCloudService
+from pyicloud.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 import icloudpd.constants

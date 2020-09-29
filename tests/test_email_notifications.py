@@ -8,7 +8,7 @@ import click
 from click.testing import CliRunner
 from icloudpd.base import main
 
-import pyicloud_ipd
+import pyicloud
 
 vcr = VCR(decode_compressed_response=True)
 

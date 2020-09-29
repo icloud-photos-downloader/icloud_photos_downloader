@@ -2,7 +2,7 @@
 
 import sys
 import click
-import pyicloud_ipd
+import pyicloud
 from icloudpd.logger import setup_logger
 
 
@@ -26,14 +26,14 @@ def authenticate(
     try:
         # If password not provided on command line variable will be set to None
         # and PyiCloud will attempt to retrieve from it's keyring
-        icloud = pyicloud_ipd.PyiCloudService(
+        icloud = pyicloud.PyiCloudService(
             username, password,
             cookie_directory=cookie_directory,
             client_id=client_id)
-    except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
+    except pyicloud.exceptions.NoStoredPasswordAvailable:
         # Prompt for password if not stored in PyiCloud's keyring
         password = click.prompt("iCloud Password", hide_input=True)
-        icloud = pyicloud_ipd.PyiCloudService(
+        icloud = pyicloud.PyiCloudService(
             username, password,
             cookie_directory=cookie_directory,
             client_id=client_id)
