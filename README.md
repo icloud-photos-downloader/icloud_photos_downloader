@@ -125,7 +125,7 @@ pip install icloudpd
 
 Example:
 
-    $ icloudpd ./Photos \
+    $ icloudpd --directory ./Photos \
         --username testuser@example.com \
         --password pass1234 \
         --recent 500 \
