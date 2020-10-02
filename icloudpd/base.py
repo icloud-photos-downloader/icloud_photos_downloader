@@ -28,6 +28,8 @@ from icloudpd import exif_datetime
 from icloudpd import constants
 from icloudpd.counter import Counter
 
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+
 try:
     import Queue as queue
 except ImportError:
@@ -133,7 +135,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--set-exif-datetime",
-    help="Write the DateTimeOriginal exif tag from file creation date, if it doesn't exist.",
+    help="Write the DateTimeOriginal exif tag from file creation date, " +
+    "if it doesn't exist.",
     is_flag=True,
 )
 @click.option(
@@ -185,12 +188,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.Choice(["debug", "info", "error"]),
     default="debug",
 )
-@click.option(
-    "--no-progress-bar",
-    help="Disables the one-line progress bar and prints log messages on separate lines "
-    "(Progress bar is disabled by default if there is no tty attached)",
-    is_flag=True,
-)
+@click.option("--no-progress-bar",
+              help="Disables the one-line progress bar and prints log messages on separate lines "
+              "(Progress bar is disabled by default if there is no tty attached)",
+              is_flag=True,
+              )
 @click.option(
     "--threads-num",
     help="Number of cpu threads(default: cpu count * 5)",
@@ -273,22 +275,21 @@ def main(
 
     # Default album is "All Photos", so this is the same as
     # calling `icloud.photos.all`.
-    photos = icloud.photos.albums[album]
+    # After 6 or 7 runs within 1h Apple blocks the API for some time. In that case exit.
+    try:
+        photos = icloud.photos.albums[album]
+    except PyiCloudAPIResponseError as e:
+        # TODO: come up with a nicer message to the user. For now take the exception text
+        print(e)
+        exit(1)
 
     if list_albums:
         albums_dict = icloud.photos.albums
-        # Python2: itervalues, Python3: values()
-        if sys.version_info[0] >= 3:
-            albums = albums_dict.values()  # pragma: no cover
-        else:
-            albums = albums_dict.itervalues()  # pragma: no cover
+        albums = albums_dict.values()  # pragma: no cover
         album_titles = [str(a) for a in albums]
         print(*album_titles, sep="\n")
         sys.exit(0)
 
-    # For Python 2.7
-    if hasattr(directory, "decode"):
-        directory = directory.decode("utf-8")  # pragma: no cover
     directory = os.path.normpath(directory)
 
     logger.debug(
@@ -485,9 +486,8 @@ def main(
                 )
 
                 if download_result:
-                    if set_exif_datetime and \
-                        photo.filename.lower().endswith((".jpg", ".jpeg")) and \
-                        not exif_datetime.get_photo_exif(download_path):
+                    if set_exif_datetime and photo.filename.lower().endswith(
+                            (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(download_path):
                         # %Y:%m:%d looks wrong but it's the correct format
                         date_str = created_date.strftime(
                             "%Y:%m:%d %H:%M:%S")
@@ -528,8 +528,9 @@ def main(
                                 lp_download_path.rsplit(".", 1)
                             )
                             logger.set_tqdm_description(
-                                "%s deduplicated." % truncate_middle(lp_download_path, 96)
-                            )
+                                "%s deduplicated." %
+                                truncate_middle(
+                                    lp_download_path, 96))
                             lp_file_exists = os.path.isfile(lp_download_path)
                         if lp_file_exists:
                             logger.set_tqdm_description(
