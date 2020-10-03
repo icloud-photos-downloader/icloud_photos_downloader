@@ -69,12 +69,14 @@ def download_media(icloud, photo, download_path, size):
 
                 icloud.authenticate()
             else:
+                # you end up here when p.e. throttleing by Apple happens
+                wait_time = (retries + 1) * constants.WAIT_SECONDS
                 logger.tqdm_write(
                     "Error downloading %s, retrying after %d seconds..."
-                    % (photo.filename, constants.WAIT_SECONDS),
+                    % (photo.filename, wait_time),
                     logging.ERROR,
                 )
-                time.sleep(constants.WAIT_SECONDS)
+                time.sleep(wait_time)
 
         except IOError:
             logger.error(

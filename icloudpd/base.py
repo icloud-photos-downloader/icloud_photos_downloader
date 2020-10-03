@@ -16,6 +16,8 @@ import click
 from tqdm import tqdm
 from tzlocal import get_localzone
 
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+
 from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 from icloudpd import download
@@ -27,8 +29,6 @@ from icloudpd import exif_datetime
 # Must import the constants object so that we can mock values in tests.
 from icloudpd import constants
 from icloudpd.counter import Counter
-
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 
 try:
     import Queue as queue
@@ -278,10 +278,10 @@ def main(
     # After 6 or 7 runs within 1h Apple blocks the API for some time. In that case exit.
     try:
         photos = icloud.photos.albums[album]
-    except PyiCloudAPIResponseError as e:
-        # TODO: come up with a nicer message to the user. For now take the exception text
-        print(e)
-        exit(1)
+    except PyiCloudAPIResponseError as err:
+        # For later: come up with a nicer message to the user. For now take the exception text
+        print(err)
+        sys.exit(1)
 
     if list_albums:
         albums_dict = icloud.photos.albums
@@ -312,7 +312,7 @@ def main(
                 # If the first reauthentication attempt failed,
                 # start waiting a few seconds before retrying in case
                 # there are some issues with the Apple servers
-                time.sleep(constants.WAIT_SECONDS)
+                time.sleep(constants.WAIT_SECONDS * retries)
             icloud.authenticate()
 
     photos.exception_handler = photos_exception_handler
@@ -454,6 +454,7 @@ def main(
             file_exists = os.path.isfile(original_download_path)
 
         if file_exists:
+            # for later: this crashes if download-size medium is specified
             file_size = os.stat(download_path).st_size
             version = photo.versions[download_size]
             photo_size = version["size"]
