@@ -390,7 +390,10 @@ def main(
             created_date = photo.created
 
         try:
-            date_path = folder_structure.format(created_date)
+            if folder_structure == "none":
+                date_path = ""
+            else:
+                date_path = folder_structure.format(created_date)
         except ValueError:  # pragma: no cover
             # This error only seems to happen in Python 2
             logger.set_tqdm_description(
