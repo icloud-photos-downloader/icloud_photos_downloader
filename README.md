@@ -91,6 +91,7 @@ pip install icloudpd
                                         files.)
         --folder-structure <folder_structure>
                                         Folder structure (default: {:%Y/%m/%d})
+                                        Set to 'none' to download all files to base directory.               
         --set-exif-datetime             Write the DateTimeOriginal exif tag from
                                         file creation date, if it doesn't exist.
         --smtp-username <smtp_username>
