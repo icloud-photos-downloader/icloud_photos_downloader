@@ -277,11 +277,7 @@ def main(
 
     if list_albums:
         albums_dict = icloud.photos.albums
-        # Python2: itervalues, Python3: values()
-        if sys.version_info[0] >= 3:
-            albums = albums_dict.values()  # pragma: no cover
-        else:
-            albums = albums_dict.itervalues()  # pragma: no cover
+        albums = albums_dict.values()  # pragma: no cover
         album_titles = [str(a) for a in albums]
         print(*album_titles, sep="\n")
         sys.exit(0)
