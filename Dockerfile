@@ -1,6 +1,6 @@
 # This image is mainly used for development and testing
 
-FROM python:3.7 as base
+FROM python:3.9 as base
 
 WORKDIR /app
 COPY requirements.txt .
