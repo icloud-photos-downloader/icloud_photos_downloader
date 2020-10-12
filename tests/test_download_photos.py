@@ -13,7 +13,7 @@ from mock import call, ANY
 from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotosService
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
@@ -56,6 +56,8 @@ class DownloadPhotoTestCase(TestCase):
                     "--skip-live-photos",
                     "--set-exif-datetime",
                     "--no-progress-bar",
+                    "--threads-num",
+                    1,
                     "-d",
                     "tests/fixtures/Photos",
                 ],
@@ -150,6 +152,8 @@ class DownloadPhotoTestCase(TestCase):
                             # '--skip-videos',
                             # "--skip-live-photos",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
                             "tests/fixtures/Photos",
                         ],
@@ -203,6 +207,8 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-live-photos",
                         "--set-exif-datetime",
                         "--no-progress-bar",
+                        "--threads-num",
+                        1,
                         "-d",
                         "tests/fixtures/Photos",
                     ],
@@ -256,6 +262,8 @@ class DownloadPhotoTestCase(TestCase):
                     # '--skip-videos',
                     # "--skip-live-photos",
                     "--no-progress-bar",
+                    "--threads-num",
+                    1,
                     "-d",
                     "tests/fixtures/Photos",
                 ],
@@ -334,6 +342,8 @@ class DownloadPhotoTestCase(TestCase):
                             "--recent",
                             "20",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
                             base_dir,
                         ],
@@ -396,6 +406,8 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-videos",
                         "--skip-live-photos",
                         "--no-progress-bar",
+                        "--threads-num",
+                        1,
                         "-d"
                         "tests/fixtures/Photos",
                     ],
@@ -457,6 +469,8 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-videos",
                                 "--skip-live-photos",
                                 "--no-progress-bar",
+                                "--threads-num",
+                                1,
                                 "-d",
                                 "tests/fixtures/Photos",
                             ],
@@ -521,6 +535,8 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-videos",
                                 "--skip-live-photos",
                                 "--no-progress-bar",
+                                "--threads-num",
+                                1,
                                 "-d",
                                 "tests/fixtures/Photos",
                             ],
@@ -585,6 +601,8 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-videos",
                                 "--skip-live-photos",
                                 "--no-progress-bar",
+                                "--threads-num",
+                                1,
                                 "-d",
                                 "tests/fixtures/Photos",
                             ],
@@ -604,6 +622,57 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         assert result.exit_code == 0
+
+    def test_handle_albums_error(self):
+        if os.path.exists("tests/fixtures/Photos"):
+            shutil.rmtree("tests/fixtures/Photos")
+        os.makedirs("tests/fixtures/Photos")
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+
+            def mock_raise_response_error():
+                raise PyiCloudAPIResponseError("Api Error", 100)
+
+            with mock.patch.object(PhotosService, "_fetch_folders") as pa_photos_request:
+                pa_photos_request.side_effect = mock_raise_response_error
+
+                # Let the initial authenticate() call succeed,
+                # but do nothing on the second try.
+                orig_authenticate = PyiCloudService.authenticate
+
+                def mocked_authenticate(self):
+                    if not hasattr(self, "already_authenticated"):
+                        orig_authenticate(self)
+                        setattr(self, "already_authenticated", True)
+
+                with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+                    with mock.patch.object(
+                        PyiCloudService, "authenticate", new=mocked_authenticate
+                    ):
+                        runner = CliRunner()
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--skip-videos",
+                                "--skip-live-photos",
+                                "--no-progress-bar",
+                                "--threads-num",
+                                1,
+                                "-d",
+                                "tests/fixtures/Photos",
+                            ],
+                        )
+                        print_result_exception(result)
+
+                        assert result.exit_code == 1
 
     def test_missing_size(self):
         base_dir = "tests/fixtures/Photos"
@@ -628,6 +697,8 @@ class DownloadPhotoTestCase(TestCase):
                         "--recent",
                         "3",
                         "--no-progress-bar",
+                        "--threads-num",
+                        1,
                         "-d",
                         base_dir,
                     ],
@@ -698,6 +769,8 @@ class DownloadPhotoTestCase(TestCase):
                                 "--size",
                                 "thumb",
                                 "--no-progress-bar",
+                                "--threads-num",
+                                1,
                                 "-d",
                                 base_dir,
                             ],
@@ -756,6 +829,8 @@ class DownloadPhotoTestCase(TestCase):
                             "thumb",
                             "--force-size",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
                             base_dir,
                         ],
@@ -811,6 +886,8 @@ class DownloadPhotoTestCase(TestCase):
                         "1",
                         "--skip-live-photos",
                         "--no-progress-bar",
+                        "--threads-num",
+                        1,
                         "-d",
                         base_dir,
                     ],
@@ -867,6 +944,8 @@ class DownloadPhotoTestCase(TestCase):
                         "1",
                         "--skip-live-photos",
                         "--no-progress-bar",
+                        "--threads-num",
+                        1,
                         "-d",
                         base_dir,
                     ],
@@ -932,6 +1011,8 @@ class DownloadPhotoTestCase(TestCase):
                             "--recent",
                             "1",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
                             base_dir,
                         ],
@@ -1095,6 +1176,8 @@ class DownloadPhotoTestCase(TestCase):
                             "--skip-live-photos",
                             "--set-exif-datetime",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
                             "tests/fixtures/Photos",
                         ],
