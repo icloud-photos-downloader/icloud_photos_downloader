@@ -29,14 +29,15 @@ class DownloadPhotoTestCase(TestCase):
         self._caplog = caplog
 
     def test_download_and_skip_existing_photos(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
-        os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        with open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a") as f:
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        with open(os.path.join(base_dir, "2018/07/30/IMG_7408.JPG"), "a") as f:
             f.truncate(1151066)
-        with open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a") as f:
+        with open(os.path.join(base_dir, "2018/07/30/IMG_7407.JPG"), "a") as f:
             f.truncate(656257)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
@@ -59,18 +60,18 @@ class DownloadPhotoTestCase(TestCase):
                     "--threads-num",
                     1,
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
             )
             print_result_exception(result)
 
             self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
-                "INFO     Downloading 5 original photos to tests/fixtures/Photos/ ...",
+                f"INFO     Downloading 5 original photos to {base_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
             self.assertNotIn(
@@ -78,11 +79,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408.JPG already exists.",
+                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists.",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/30/IMG_7407.JPG already exists.",
+                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -110,14 +111,15 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_download_photos_and_set_exif(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
-        os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        with open("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", "a") as f:
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        with open(os.path.join(base_dir, "2018/07/30/IMG_7408.JPG"), "a") as f:
             f.truncate(1151066)
-        with open("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", "a") as f:
+        with open(os.path.join(base_dir, "2018/07/30/IMG_7407.JPG"), "a") as f:
             f.truncate(656257)
 
         # Download the first photo, but mock the video download
@@ -155,7 +157,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--threads-num",
                             1,
                             "-d",
-                            "tests/fixtures/Photos",
+                            base_dir,
                         ],
                     )
                     print_result_exception(result)
@@ -165,16 +167,16 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading 4 original photos and videos to tests/fixtures/Photos/ ...",
+                        f"INFO     Downloading 4 original photos and videos to {base_dir} ...",
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
                     # YYYY:MM:DD is the correct format.
                     self.assertIn(
-                        "DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG: 2018:07:31",
+                        f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: 2018:07:31 07:22:24", # TODO On windows it is picked as 00:22:24
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -183,9 +185,10 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_download_photos_and_get_exif_exceptions(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch.object(piexif, "load") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
@@ -210,26 +213,26 @@ class DownloadPhotoTestCase(TestCase):
                         "--threads-num",
                         1,
                         "-d",
-                        "tests/fixtures/Photos",
+                        base_dir,
                     ],
                 )
                 print_result_exception(result)
 
                 self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
+                    f"INFO     Downloading the first original photo to {base_dir} ...",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "DEBUG    Error fetching EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                    f"DEBUG    Error fetching EXIF data for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "DEBUG    Error setting EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                    f"DEBUG    Error setting EXIF data for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -238,12 +241,15 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_skip_existing_downloads(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos/2018/07/31/")
-        with open("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", "a") as f:
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        os.makedirs(os.path.join(base_dir, "2018/07/31"))
+        with open(os.path.join(base_dir, "2018/07/31/IMG_7409.JPG"), "a") as f:
             f.truncate(1884695)
-        with open("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", "a") as f:
+        with open(os.path.join(base_dir, "2018/07/31/IMG_7409.MOV"), "a") as f:
             f.truncate(3294075)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
@@ -265,7 +271,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--threads-num",
                     1,
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
             )
             print_result_exception(result)
@@ -274,15 +280,15 @@ class DownloadPhotoTestCase(TestCase):
                 "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
-                "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                f"INFO     Downloading the first original photo or video to {base_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409.JPG already exists.",
+                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists.",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409.MOV already exists.",
+                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -291,11 +297,13 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_until_found(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos/2018/07/30/")
-        os.makedirs("tests/fixtures/Photos/2018/07/31/")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        os.makedirs(os.path.join(base_dir, "2018/07/31/"))
 
         files_to_download = []
         files_to_skip = []
@@ -310,14 +318,14 @@ class DownloadPhotoTestCase(TestCase):
         files_to_skip.append(("2018/07/30/IMG_7404.MOV", "video", 225935003))
         files_to_download.append(("2018/07/30/IMG_7403.MOV", "video"))
         files_to_download.append(("2018/07/30/IMG_7402.MOV", "video"))
-        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo", 565699696))
+        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo", 565699696))   # TODO large files on Windows times out
         files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo", 2308885))
         files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
         files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo", 2251047))
-        files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))
+        files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))   # TODO this should not be downloaded, correct?
 
         for f in files_to_skip:
-            with open("%s/%s" % (base_dir, f[0]), "a") as fi:
+            with open(os.path.join(base_dir, f[0]), "a") as fi:
                 fi.truncate(f[2])
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
@@ -353,7 +361,7 @@ class DownloadPhotoTestCase(TestCase):
                     expected_calls = list(
                         map(
                             lambda f: call(
-                                ANY, ANY, "%s/%s" % (base_dir, f[0]),
+                                ANY, ANY, os.path.join(base_dir, os.path.normpath(f[0])),
                                 "mediumVideo" if (
                                     f[1] == 'photo' and f[0].endswith('.MOV')
                                 ) else "original"),
@@ -366,12 +374,12 @@ class DownloadPhotoTestCase(TestCase):
                         "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
                     )
                     self.assertIn(
-                        "INFO     Downloading ??? original photos and videos to tests/fixtures/Photos/ ...",
+                        f"INFO     Downloading ??? original photos and videos to {base_dir} ...",
                         self._caplog.text,
                     )
 
                     for f in files_to_skip:
-                        expected_message = "INFO     %s/%s already exists." % (base_dir, f[0])
+                        expected_message = f"INFO     {os.path.join(base_dir, os.path.normpath(f[0]))} already exists." 
                         self.assertIn(expected_message, self._caplog.text)
 
                     self.assertIn(
@@ -381,9 +389,10 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_handle_io_error(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -408,20 +417,20 @@ class DownloadPhotoTestCase(TestCase):
                         "--no-progress-bar",
                         "--threads-num",
                         1,
-                        "-d"
-                        "tests/fixtures/Photos",
+                        "-d",
+                        base_dir,
                     ],
                 )
                 print_result_exception(result)
 
                 self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
+                    f"INFO     Downloading the first original photo to {base_dir} ...",
                     self._caplog.text,
                 )
                 self.assertIn(
                     "ERROR    IOError while writing file to "
-                    "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG! "
+                    f"{os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}! "
                     "You might have run out of disk space, or the file might "
                     "be too large for your OS. Skipping this file...",
                     self._caplog.text,
@@ -429,9 +438,10 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_handle_session_error_during_download(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -472,7 +482,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--threads-num",
                                 1,
                                 "-d",
-                                "tests/fixtures/Photos",
+                                base_dir,
                             ],
                         )
                         print_result_exception(result)
@@ -495,9 +505,10 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -538,7 +549,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--threads-num",
                                 1,
                                 "-d",
-                                "tests/fixtures/Photos",
+                                base_dir,
                             ],
                         )
                         print_result_exception(result)
@@ -561,9 +572,10 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == -1
 
     def test_handle_connection_error(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -604,7 +616,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--threads-num",
                                 1,
                                 "-d",
-                                "tests/fixtures/Photos",
+                                base_dir,
                             ],
                         )
                         print_result_exception(result)
@@ -624,9 +636,10 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_handle_albums_error(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -667,7 +680,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--threads-num",
                                 1,
                                 "-d",
-                                "tests/fixtures/Photos",
+                                base_dir,
                             ],
                         )
                         print_result_exception(result)
@@ -675,10 +688,10 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 1
 
     def test_missing_size(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch.object(PhotoAsset, "download") as pa_download:
             pa_download.return_value = False
@@ -709,7 +722,7 @@ class DownloadPhotoTestCase(TestCase):
                     "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
                 )
                 self.assertIn(
-                    "INFO     Downloading 3 original photos and videos to tests/fixtures/Photos/ ...",
+                    f"INFO     Downloading 3 original photos and videos to {base_dir} ...",
                     self._caplog.text,
                 )
 
@@ -739,10 +752,10 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_size_fallback_to_original(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -781,11 +794,11 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            "INFO     Downloading the first thumb photo or video to tests/fixtures/Photos/ ...",
+                            f"INFO     Downloading the first thumb photo or video to {base_dir} ...",
                             self._caplog.text,
                         )
                         self.assertIn(
-                            "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                             self._caplog.text,
                         )
                         self.assertIn(
@@ -794,17 +807,17 @@ class DownloadPhotoTestCase(TestCase):
                         dp_patched.assert_called_once_with(
                             ANY,
                             ANY,
-                            "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                            f"{os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                             "original",
                         )
 
                         assert result.exit_code == 0
 
     def test_force_size(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -842,7 +855,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading the first thumb photo or video to tests/fixtures/Photos/ ...",
+                        f"INFO     Downloading the first thumb photo or video to {base_dir} ...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -858,10 +871,10 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_invalid_creation_date(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
@@ -899,7 +912,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                    f"INFO     Downloading the first original photo or video to {base_dir} ...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -907,7 +920,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading tests/fixtures/Photos/2018/01/01/IMG_7409.JPG",
+                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -916,10 +929,10 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_invalid_creation_year(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
@@ -957,28 +970,17 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                    f"INFO     Downloading the first original photo or video to {base_dir} ...",
                     self._caplog.text,
                 )
-                if sys.version_info[0] < 3:
-                    # Python 2.7
-                    self.assertIn(
-                        "ERROR    Photo created date was not valid (0005-01-01 00:00:00)",
+                self.assertIn(
+                    "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
                         self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/1970/01/01/IMG_7409.JPG",
-                        self._caplog.text,
-                    )
-                else:
-                    self.assertIn(
-                        "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                            "INFO     Downloading tests/fixtures/Photos/5/01/01/IMG_7409.JPG",
-                            self._caplog.text,
-                    )
+                )
                 self.assertIn(
                     "INFO     All photos have been downloaded!", self._caplog.text
                 )
@@ -986,10 +988,10 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_unknown_item_type(self):
-        base_dir = "tests/fixtures/Photos"
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -1024,7 +1026,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading the first original photo or video to tests/fixtures/Photos/ ...",
+                        f"INFO     Downloading the first original photo or video to {base_dir} ...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -1039,9 +1041,10 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         os.makedirs("tests/fixtures/Photos/2018/07/31/")
         with open("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", "a") as f:
@@ -1082,7 +1085,7 @@ class DownloadPhotoTestCase(TestCase):
                         # "--set-exif-datetime",
                         "--no-progress-bar",
                         "-d",
-                        "tests/fixtures/Photos",
+                        base_dir,
                         "--threads-num",
                         "1"
                     ],
@@ -1091,31 +1094,31 @@ class DownloadPhotoTestCase(TestCase):
 
                 self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Downloading 5 original photos to tests/fixtures/Photos/ ...",
+                    f"INFO     Downloading 5 original photos to {base_dir} ...",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG deduplicated.",
+                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated.",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-1884695.JPG",
+                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV deduplicated.",
+                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated.",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409-3294075.MOV",
+                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408.JPG already exists.",
+                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists.",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     tests/fixtures/Photos/2018/07/30/IMG_7408.MOV already exists.",
+                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.MOV'))} already exists.",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1149,9 +1152,10 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_download_photos_and_set_exif_exceptions(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
@@ -1179,29 +1183,89 @@ class DownloadPhotoTestCase(TestCase):
                             "--threads-num",
                             1,
                             "-d",
-                            "tests/fixtures/Photos",
+                            base_dir,
                         ],
                     )
                     print_result_exception(result)
 
                     self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                     self.assertIn(
-                        "INFO     Downloading the first original photo to tests/fixtures/Photos/ ...",
+                        f"INFO     Downloading the first original photo to {base_dir} ...",
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Downloading tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "DEBUG    Setting EXIF timestamp for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG: 2018:07:31 07:22:24",
+                        f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: 2018:07:31 07:22:24", # TODO On windows it is picked as 00:22:24
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "DEBUG    Error setting EXIF data for tests/fixtures/Photos/2018/07/31/IMG_7409.JPG",
+                        f"DEBUG    Error setting EXIF data for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
                     self.assertIn(
                         "INFO     All photos have been downloaded!", self._caplog.text
                     )
                     assert result.exit_code == 0
+
+    def test_download_chinese(self):
+        base_dir = os.path.normpath("tests/fixtures/中文")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+            runner = CliRunner()
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f'INFO     Downloading the first original photo to {base_dir} ...',
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded!", self._caplog.text
+            )
+
+            # Check that file was downloaded
+            self.assertTrue(
+                os.path.exists("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG"))
+            # Check that mtime was updated to the photo creation date
+            photo_mtime = os.path.getmtime("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG")
+            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+            self.assertEquals(
+                "2018-07-31 07:22:24",
+                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+
+            assert result.exit_code == 0

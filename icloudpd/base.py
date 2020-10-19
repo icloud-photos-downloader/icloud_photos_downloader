@@ -338,7 +338,7 @@ def main(
     if not skip_videos:
         video_suffix = " or video" if photos_count == 1 else " and videos"
     logger.info(
-        "Downloading %s %s photo%s%s to %s/ ...",
+        "Downloading %s %s photo%s%s to %s ...",
         photos_count_str,
         size,
         plural_suffix,
@@ -395,7 +395,7 @@ def main(
             created_date = datetime.datetime.fromtimestamp(0)
             date_path = folder_structure.format(created_date)
 
-        download_dir = os.path.join(directory, date_path)
+        download_dir = os.path.normpath(os.path.join(directory, date_path))
 
         if not os.path.exists(download_dir):
             try:
