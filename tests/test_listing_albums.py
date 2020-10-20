@@ -31,8 +31,6 @@ class ListingAlbumsTestCase(TestCase):
                     "password1",
                     "--list-albums",
                     "--no-progress-bar",
-                    "-d",
-                    "tests/fixtures/Photos",
                 ],
             )
 
