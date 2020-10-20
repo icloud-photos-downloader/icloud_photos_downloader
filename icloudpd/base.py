@@ -232,6 +232,7 @@ def main(
         threads_num,
 ):
     """Download all iCloud photos to a local directory"""
+
     logger = setup_logger()
     if only_print_filenames:
         logger.disabled = True
@@ -245,6 +246,11 @@ def main(
             logger.setLevel(logging.INFO)
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
+
+    # check required directory param only if not list albums
+    if not list_albums and not directory:
+        print('--directory or --list-albums are required')
+        sys.exit(2)
 
     raise_error_on_2sa = (
         smtp_username is not None
