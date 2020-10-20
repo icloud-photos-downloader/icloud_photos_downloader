@@ -13,9 +13,10 @@ vcr = VCR(decode_compressed_response=True)
 
 class ListingRecentPhotosTestCase(TestCase):
     def test_listing_recent_photos(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
@@ -33,8 +34,10 @@ class ListingRecentPhotosTestCase(TestCase):
                     "5",
                     "--only-print-filenames",
                     "--no-progress-bar",
+                    "--threads-num",
+                    1,
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
             )
             print_result_exception(result)
@@ -42,37 +45,38 @@ class ListingRecentPhotosTestCase(TestCase):
 
             self.assertEqual(len(filenames), 8)
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", filenames[0]
+                os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")), filenames[0]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", filenames[1]
+                os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.MOV")), filenames[1]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", filenames[2]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")), filenames[2]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7408.MOV", filenames[3]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")), filenames[3]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", filenames[4]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7407.JPG")), filenames[4]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7407.MOV", filenames[5]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7407.MOV")), filenames[5]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7405.MOV", filenames[6]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7405.MOV")), filenames[6]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7404.MOV", filenames[7]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7404.MOV")), filenames[7]
             )
 
 
             assert result.exit_code == 0
 
     def test_listing_recent_photos_with_missing_filenameEnc(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos_missing_filenameEnc.yml"):
@@ -92,8 +96,10 @@ class ListingRecentPhotosTestCase(TestCase):
                             "5",
                             "--only-print-filenames",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
-                            "tests/fixtures/Photos",
+                            base_dir,
                         ],
                     )
                     print_result_exception(result)
@@ -104,19 +110,19 @@ class ListingRecentPhotosTestCase(TestCase):
 
                     # self.assertEqual(len(filenames), 5)
                     self.assertEqual(
-                        "tests/fixtures/Photos/2018/07/31/AY6c_BsE0jja.JPG", filenames[0]
+                        os.path.join(base_dir, os.path.normpath("2018/07/31/AY6c_BsE0jja.JPG")), filenames[0]
                     )
                     self.assertEqual(
-                        "tests/fixtures/Photos/2018/07/31/AY6c_BsE0jja.MOV", filenames[1]
+                        os.path.join(base_dir, os.path.normpath("2018/07/31/AY6c_BsE0jja.MOV")), filenames[1]
                     )
                     self.assertEqual(
-                        "tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", filenames[2]
+                        os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")), filenames[2]
                     )
                     self.assertEqual(
-                        "tests/fixtures/Photos/2018/07/30/IMG_7408.MOV", filenames[3]
+                        os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")), filenames[3]
                     )
                     self.assertEqual(
-                        "tests/fixtures/Photos/2018/07/30/AZ_wAGT9P6jh.JPG", filenames[4]
+                        os.path.join(base_dir, os.path.normpath("2018/07/30/AZ_wAGT9P6jh.JPG")), filenames[4]
                     )
                     assert result.exit_code == 0
 
@@ -124,9 +130,10 @@ class ListingRecentPhotosTestCase(TestCase):
     # This was used to solve the missing filenameEnc error. I found
     # another case where it might crash. (Maybe Apple changes the downloadURL key)
     def test_listing_recent_photos_with_missing_downloadURL(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos_missing_downloadUrl.yml"):
@@ -146,8 +153,10 @@ class ListingRecentPhotosTestCase(TestCase):
                             "1",
                             "--only-print-filenames",
                             "--no-progress-bar",
+                            "--threads-num",
+                            1,
                             "-d",
-                            "tests/fixtures/Photos",
+                            base_dir,
                         ],
                     )
                     print_result_exception(result)

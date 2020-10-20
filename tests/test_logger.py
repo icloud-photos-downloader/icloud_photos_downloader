@@ -5,10 +5,13 @@ from freezegun import freeze_time
 from io import StringIO
 import sys
 from icloudpd.logger import setup_logger, IPDLogger
+import pytest
 
 
 class LoggerTestCase(TestCase):
     # Tests the formatter that is set up in setup_logger()
+    @pytest.mark.skipif(sys.platform == 'win32',
+                    reason="does not run on windows -- wrong dates")
     @freeze_time("2018-01-01 00:00")
     def test_logger_output(self):
         logger = setup_logger()
