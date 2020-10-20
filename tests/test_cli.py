@@ -5,6 +5,7 @@ import os
 import click
 from click.testing import CliRunner
 from icloudpd.base import main
+import shutil
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -100,6 +101,29 @@ class CliTestCase(TestCase):
                 ],
             )
             assert result.exit_code == 0
+
+    def test_missing_directory(self):
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "0",
+                "--log-level",
+                "info",
+                "-d",
+                base_dir
+            ],
+        )
+        assert result.exit_code == 2
 
     def test_missing_directory_param(self):
         runner = CliRunner()
