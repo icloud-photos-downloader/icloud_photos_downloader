@@ -10,7 +10,6 @@ import itertools
 import subprocess
 import json
 import threading
-import multiprocessing
 import click
 
 from tqdm import tqdm
@@ -195,9 +194,9 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
               )
 @click.option(
     "--threads-num",
-    help="Number of cpu threads(default: cpu count * 5)",
+    help="Number of cpu threads (default: 1)",
     type=click.IntRange(1),
-    default=multiprocessing.cpu_count() * 5,
+    default=1,
 )
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
