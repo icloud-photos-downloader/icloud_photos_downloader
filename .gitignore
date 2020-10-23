@@ -1,3 +1,4 @@
+.DS_Store
 build/
 dist/
 icloudpd.egg-info
@@ -10,5 +11,6 @@ __pycache__
 *.pyc
 .idea
 .coverage
+.coverage.*
 htmlcov
 icloudpd-latest-py2.py3-none-any.whl

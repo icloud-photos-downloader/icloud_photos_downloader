@@ -1,3 +1,3 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 autopep8 -r --in-place --aggressive --aggressive icloudpd/

@@ -1,3 +1,4 @@
 #!/bin/bash
-set -e
+set -euo pipefail
+
 python setup.py bdist_wheel --universal

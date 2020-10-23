@@ -1,0 +1,17 @@
+#!/bin/bash
+set -euo pipefail
+CURRENT_DIR=$(dirname "$0")
+ROOT_DIR="$(realpath $(dirname "$0")/..)"
+
+$CURRENT_DIR/build_docker
+
+ICLOUDPD_VERSION="$(cat "$ROOT_DIR/setup.py" | grep version= | cut -d'"' -f 2)"
+echo "Pushing Docker images for icloudpd version: ${ICLOUDPD_VERSION}"
+
+set +x
+# The :latest tag is counterintuitive - It is only updated when pushing
+# an untagged image, and it is not updated automatically when we push
+# a versioned tag. We need to push twice to update both tags.
+docker push "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}"
+docker push "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}-alpine"
+docker push "ndbroadbent/icloudpd:latest"
