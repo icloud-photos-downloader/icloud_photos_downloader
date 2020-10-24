@@ -208,7 +208,7 @@ Bad Request (400)
 
 This error often happens because your account hasn't used the iCloud API before, so Apple's servers need to prepare some information about your photos. This process can take around 5-10 minutes, so please wait a few minutes and try again.
 
-If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/ndbroadbent/icloud_photos_downloader/issues/new) and post the script output.
+If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new) and post the script output.
 
 ## Cron Task
 
@@ -216,7 +216,7 @@ Follow these instructions to run `icloudpd` as a scheduled cron task.
 
 ```
 # Clone the git repo somewhere
-git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
+git clone https://github.com/icloud-photos-downloader/icloud_photos_downloader.git
 cd icloud_photos_downloader
 
 # Copy the example cron script
@@ -300,15 +300,15 @@ Before submitting a pull request, please check the following:
 
 If you need to make any changes to the `pyicloud` library,
 `icloudpd` uses a fork of this library that has been renamed to `pyicloud-ipd`.
-Please clone my [pyicloud fork](https://github.com/ndbroadbent/pyicloud)
-and check out the [pyicloud-ipd](https://github.com/ndbroadbent/pyicloud/tree/pyicloud-ipd)
+Please clone my [pyicloud fork](https://github.com/icloud-photos-downloader/pyicloud)
+and check out the [pyicloud-ipd](https://github.com/icloud-photos-downloader/pyicloud/tree/pyicloud-ipd)
 branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
-[ndbroadbent/pyicloud](https://github.com/ndbroadbent/pyicloud).
+[icloud-photos-downloader/pyicloud](https://github.com/icloud-photos-downloader/pyicloud).
 
 ### Building the Docker image:
 
 ```
-$ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
+$ git clone https://github.com/icloud-photos-downloader/icloud_photos_downloader.git
 $ cd icloud_photos_downloader
 $ docker build -t icloudpd/icloudpd .
 ```

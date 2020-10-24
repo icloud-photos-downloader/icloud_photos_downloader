@@ -395,7 +395,7 @@ def main(
                 "Photo created date was not valid (%s)" %
                 photo.created, logging.ERROR)
             # e.g. ValueError: year=5 is before 1900
-            # (https://github.com/ndbroadbent/icloud_photos_downloader/issues/122)
+            # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
             # Just use the Unix epoch
             created_date = datetime.datetime.fromtimestamp(0)
             date_path = folder_structure.format(created_date)
@@ -429,7 +429,7 @@ def main(
                   "https://gist.github.com")
             print(
                 "Then create an issue on GitHub: "
-                "https://github.com/ndbroadbent/icloud_photos_downloader/issues")
+                "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues")
             print(
                 "Include a link to the Gist in your issue, so that we can "
                 "see what went wrong.\n")

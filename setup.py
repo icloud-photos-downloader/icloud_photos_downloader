@@ -6,7 +6,7 @@ with open("requirements.txt") as f:
 setup(
     name="icloudpd",
     version="1.6.2",
-    url="https://github.com/ndbroadbent/icloud_photos_downloader",
+    url="https://github.com/icloud-photos-downloader/icloud_photos_downloader",
     description=(
         "icloudpd is a command-line tool to download photos and videos from iCloud."
     ),

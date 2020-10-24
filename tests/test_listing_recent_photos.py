@@ -166,7 +166,7 @@ class ListingRecentPhotosTestCase(TestCase):
 KeyError: 'downloadURL' attribute was not found in the photo fields!
 icloudpd has saved the photo record to: ./icloudpd-photo-error.json
 Please create a Gist with the contents of this file: https://gist.github.com
-Then create an issue on GitHub: https://github.com/ndbroadbent/icloud_photos_downloader/issues
+Then create an issue on GitHub: https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues
 Include a link to the Gist in your issue, so that we can see what went wrong.
 
 """ , result.output)
