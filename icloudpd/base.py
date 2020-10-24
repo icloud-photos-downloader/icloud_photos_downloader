@@ -280,11 +280,13 @@ def main(
 
     # Default album is "All Photos", so this is the same as
     # calling `icloud.photos.all`.
-    # After 6 or 7 runs within 1h Apple blocks the API for some time. In that case exit.
+    # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
+    # case exit.
     try:
         photos = icloud.photos.albums[album]
     except PyiCloudAPIResponseError as err:
-        # For later: come up with a nicer message to the user. For now take the exception text
+        # For later: come up with a nicer message to the user. For now take the
+        # exception text
         print(err)
         sys.exit(1)
 
