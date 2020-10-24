@@ -8,9 +8,9 @@ echo "Current icloudpd version: ${ICLOUDPD_VERSION}"
 
 cp ./dist/icloudpd* ./icloudpd-latest-py2.py3-none-any.whl
 docker build \
-  -t "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}" \
+  -t "icloudpd/icloudpd:${ICLOUDPD_VERSION}" \
   -f "Dockerfile.release" \
   "$ROOT_DIR"
 
-docker tag "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}" "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}-alpine"
-docker tag "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}" "ndbroadbent/icloudpd:latest"
+docker tag "icloudpd/icloudpd:${ICLOUDPD_VERSION}" "icloudpd/icloudpd:${ICLOUDPD_VERSION}-alpine"
+docker tag "icloudpd/icloudpd:${ICLOUDPD_VERSION}" "icloudpd/icloudpd:latest"

@@ -238,15 +238,15 @@ Now the script will run every 6 hours to download any new photos and videos.
 
 ## Docker
 
-This script is available in a Docker image: `docker pull ndbroadbent/icloudpd`
+This script is available in a Docker image: `docker pull icloudpd/icloudpd`
 
 Usage:
 
 ```bash
 # Downloads all photos to ./Photos
 
-$ docker pull ndbroadbent/icloudpd
-$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data ndbroadbent/icloudpd:latest \
+$ docker pull icloudpd/icloudpd
+$ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloudpd/icloudpd:latest \
     -v $(pwd)/cookies:/cookies \
     -e TZ=America/Los_Angeles \
     icloudpd --directory /data \
@@ -310,5 +310,5 @@ branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
 ```
 $ git clone https://github.com/ndbroadbent/icloud_photos_downloader.git
 $ cd icloud_photos_downloader
-$ docker build -t ndbroadbent/icloudpd .
+$ docker build -t icloudpd/icloudpd .
 ```

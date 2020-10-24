@@ -12,6 +12,6 @@ set +x
 # The :latest tag is counterintuitive - It is only updated when pushing
 # an untagged image, and it is not updated automatically when we push
 # a versioned tag. We need to push twice to update both tags.
-docker push "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}"
-docker push "ndbroadbent/icloudpd:${ICLOUDPD_VERSION}-alpine"
-docker push "ndbroadbent/icloudpd:latest"
+docker push "icloudpd/icloudpd:${ICLOUDPD_VERSION}"
+docker push "icloudpd/icloudpd:${ICLOUDPD_VERSION}-alpine"
+docker push "icloudpd/icloudpd:latest"
