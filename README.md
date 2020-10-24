@@ -179,7 +179,7 @@ You can receive an email notification when two-factor authentication expires by 
 `--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
 or you can send to a different email address with `--notification-email`.
 
-If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at https://myaccount.google.com/apppasswords
+If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at <https://myaccount.google.com/apppasswords>
 
 ### System Keyring
 
@@ -260,6 +260,7 @@ $ docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloudpd/icloudpd:lat
 ```
 
 On Windows:
+
 - use `%cd%` instead of `$(pwd)`
 - or full path, e.g. `-v c:/photos/icloud:/data`
 
@@ -305,7 +306,7 @@ and check out the [pyicloud-ipd](https://github.com/icloud-photos-downloader/pyi
 branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
 [icloud-photos-downloader/pyicloud](https://github.com/icloud-photos-downloader/pyicloud).
 
-### Building the Docker image:
+### Building the Docker image
 
 ```
 $ git clone https://github.com/icloud-photos-downloader/icloud_photos_downloader.git

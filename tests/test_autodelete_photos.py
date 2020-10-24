@@ -2,13 +2,9 @@ from unittest import TestCase
 from vcr import VCR
 import os
 import shutil
-import click
 import pytest
-import mock
 from click.testing import CliRunner
-import piexif
 from icloudpd.base import main
-import icloudpd.exif_datetime
 
 vcr = VCR(decode_compressed_response=True, record_mode="new_episodes")
 

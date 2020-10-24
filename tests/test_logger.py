@@ -1,11 +1,11 @@
 from unittest import TestCase
-from mock import MagicMock
 import logging
-from freezegun import freeze_time
 from io import StringIO
 import sys
-from icloudpd.logger import setup_logger, IPDLogger
+from mock import MagicMock
+from freezegun import freeze_time
 import pytest
+from icloudpd.logger import setup_logger, IPDLogger
 
 
 class LoggerTestCase(TestCase):

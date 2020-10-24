@@ -23,7 +23,9 @@ def autodelete_photos(icloud, folder_structure, directory):
         download_dir = os.path.join(directory, date_path)
 
         for size in [None, "original", "medium", "thumb"]:
-            path = os.path.normpath(local_download_path(media, size, download_dir))
+            path = os.path.normpath(
+                local_download_path(
+                    media, size, download_dir))
             if os.path.exists(path):
                 logger.info("Deleting %s!", path)
                 os.remove(path)

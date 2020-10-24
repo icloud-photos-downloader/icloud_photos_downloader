@@ -3,11 +3,8 @@ from vcr import VCR
 import os
 import sys
 import shutil
-import logging
-import click
 import pytest
 import mock
-import tzlocal
 import datetime
 from mock import call, ANY
 from click.testing import CliRunner
@@ -18,7 +15,6 @@ from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
-import icloudpd.constants
 from tests.helpers.print_result_exception import print_result_exception
 
 vcr = VCR(decode_compressed_response=True)
@@ -104,7 +100,7 @@ class DownloadPhotoTestCase(TestCase):
             # Check that mtime was updated to the photo creation date
             photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
             photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
-            self.assertEquals(
+            self.assertEqual(
                 "2018-07-31 07:22:24",
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -505,7 +501,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                         # Make sure we only call sleep 4 times (skip the first retry)
-                        self.assertEquals(sleep_mock.call_count, 4)
+                        self.assertEqual(sleep_mock.call_count, 4)
                         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self):
@@ -571,7 +567,7 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         # Make sure we only call sleep 4 times (skip the first retry)
-                        self.assertEquals(sleep_mock.call_count, 4)
+                        self.assertEqual(sleep_mock.call_count, 4)
 
                         assert result.exit_code == -1
 
@@ -1143,14 +1139,14 @@ class DownloadPhotoTestCase(TestCase):
                 # Check that mtime was updated to the photo creation date
                 photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
                 photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
-                self.assertEquals(
+                self.assertEqual(
                     "2018-07-31 07:22:24",
                     photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
                 self.assertTrue(
                     os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))))
                 photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
                 photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
-                self.assertEquals(
+                self.assertEqual(
                     "2018-07-31 07:22:24",
                     photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
@@ -1272,7 +1268,7 @@ class DownloadPhotoTestCase(TestCase):
             # Check that mtime was updated to the photo creation date
             photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG')))
             photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
-            self.assertEquals(
+            self.assertEqual(
                 "2018-07-31 07:22:24",
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
