@@ -5,13 +5,13 @@ name: Quality Checks
 
 on:
   push:
-    branches: [ master ]
+    # branches: [ master ]
   pull_request:
-    branches: [ master ]
+    # branches: [ master ]
   workflow_dispatch:
 
 jobs:
-  build:
+  quality_checks_ubuntu_python38:
 
     runs-on: ubuntu-latest
 
