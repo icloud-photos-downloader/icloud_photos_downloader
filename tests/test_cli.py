@@ -1,11 +1,10 @@
 # coding=utf-8
 from unittest import TestCase
-from vcr import VCR
 import os
-import click
+import shutil
+from vcr import VCR
 from click.testing import CliRunner
 from icloudpd.base import main
-import shutil
 
 vcr = VCR(decode_compressed_response=True)
 

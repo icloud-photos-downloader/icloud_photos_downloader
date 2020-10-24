@@ -2,13 +2,9 @@ from unittest import TestCase
 from vcr import VCR
 from mock import patch
 from freezegun import freeze_time
-import smtplib
 import os
-import click
 from click.testing import CliRunner
 from icloudpd.base import main
-
-import pyicloud_ipd
 
 vcr = VCR(decode_compressed_response=True)
 
