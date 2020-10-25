@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  quality_checks_ubuntu_python39:
+  quality_checks_ubuntu_python:
 
     runs-on: ubuntu-latest
     strategy:
