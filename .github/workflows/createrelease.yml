@@ -16,7 +16,7 @@ jobs:
       - name: Retrieve version and Changelog
         run: |
           echo ::set-env name=ICLOUDPD_VERSION::$(cat "$ROOT_DIR/setup.py" | grep version= | cut -d'"' -f 2)
-          echo ::set-env name=ICLOUDPD_CHANGELOG::$(git log --pretty="%h - %s (%an)" $(git tag -l | tail -n 1)..HEAD)          
+          echo ::set-env name=ICLOUDPD_CHANGELOG::$(git log --pretty="%h - %s (%an)" $(git tag -l | tail -n 2 | head -n 1)..HEAD)          
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
