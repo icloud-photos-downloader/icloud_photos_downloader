@@ -132,15 +132,14 @@ Example:
 
 ## Requirements
 
-- Python 3.4+
-  - _Python 2.x is not supported._
+- Python 3.6+
 - pip
 
 ### Install Python & pip
 
 #### Windows
 
-- [Download Python 3.7.0](https://www.python.org/ftp/python/3.7.0/python-3.7.0.exe)
+- [Download Python 3.x](https://www.python.org/downloads/windows/)
 
 #### Mac
 
@@ -156,7 +155,7 @@ which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.github
 brew install python
 ```
 
-> Alternatively, you can [download the Python 3.7.0 installer for Mac](https://www.python.org/ftp/python/3.7.0/python-3.7.0-macosx10.9.pkg).
+> Alternatively, you can [download the latest Python 3.x installer for Mac](https://www.python.org/downloads/mac-osx/).
 
 #### Linux (Ubuntu)
 
