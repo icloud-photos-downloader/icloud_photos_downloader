@@ -1,5 +1,7 @@
 ## Unreleased
 
+- feat: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
+
 ## 1.6.2 (2020-10-23)
 
 - Began recording updates in `CHANGELOG.md`
