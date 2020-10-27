@@ -295,7 +295,7 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows")
+                    reason="requires large timeout on windows to create big files")
     def test_until_found(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -322,7 +322,6 @@ class DownloadPhotoTestCase(TestCase):
         files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo", 2308885))
         files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
         files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo", 2251047))
-        files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))   # TODO this should not be downloaded, correct?
 
         for f in files_to_skip:
             with open(os.path.join(base_dir, f[0]), "a") as fi:
