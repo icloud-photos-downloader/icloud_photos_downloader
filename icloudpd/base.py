@@ -188,7 +188,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
               )
 @click.option(
     "--threads-num",
-    help="Number of cpu threads -- depricated. To be removed in future version",
+    help="Number of cpu threads -- deprecated. To be removed in future version",
     type=click.IntRange(1),
     default=1,
 )
