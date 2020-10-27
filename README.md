@@ -118,7 +118,7 @@ pip install icloudpd
                                         prints log messages on separate lines
                                         (Progress bar is disabled by default if
                                         there is no tty attached)
-        --threads-num INTEGER RANGE     Number of cpu threads (default: 1)
+        --threads-num INTEGER RANGE     Number of cpu threads -- depricated. To be removed in future version
         --version                       Show the version and exit.
         -h, --help                      Show this message and exit.
 
