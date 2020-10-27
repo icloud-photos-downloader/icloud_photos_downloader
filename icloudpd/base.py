@@ -403,13 +403,6 @@ def main(
             date_path = folder_structure.format(created_date)
 
         download_dir = os.path.normpath(os.path.join(directory, date_path))
-
-        if not os.path.exists(download_dir):
-            try:
-                os.makedirs(download_dir)
-            except OSError:  # pragma: no cover
-                pass        # pragma: no cover
-
         download_size = size
 
         try:
