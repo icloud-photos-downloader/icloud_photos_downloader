@@ -1,11 +1,10 @@
 from unittest import TestCase
-from vcr import VCR
 import os
 import shutil
-import click
-from click.testing import CliRunner
 import json
 import mock
+from vcr import VCR
+from click.testing import CliRunner
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 
@@ -80,7 +79,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
         # make sure the directory does not exist yet.
         # Should only be created after download, not after just --print-filenames
-        self.assertFalse(not os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
+        self.assertFalse(os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
@@ -107,7 +106,8 @@ class ListingRecentPhotosTestCase(TestCase):
             print_result_exception(result)
             # make sure the directory still does not exist.
             # Should only be created after download, not after just --print-filenames
-            self.assertFalse(not os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
+            self.assertFalse(
+                os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
 
             assert result.exit_code == 0
 
@@ -149,19 +149,24 @@ class ListingRecentPhotosTestCase(TestCase):
 
                     # self.assertEqual(len(filenames), 5)
                     self.assertEqual(
-                        os.path.join(base_dir, os.path.normpath("2018/07/31/AY6c_BsE0jja.JPG")), filenames[0]
+                        os.path.join(base_dir, os.path.normpath("2018/07/31/AY6c_BsE0jja.JPG")),
+                        filenames[0]
                     )
                     self.assertEqual(
-                        os.path.join(base_dir, os.path.normpath("2018/07/31/AY6c_BsE0jja.MOV")), filenames[1]
+                        os.path.join(base_dir, os.path.normpath("2018/07/31/AY6c_BsE0jja.MOV")),
+                        filenames[1]
                     )
                     self.assertEqual(
-                        os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")), filenames[2]
+                        os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")),
+                        filenames[2]
                     )
                     self.assertEqual(
-                        os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")), filenames[3]
+                        os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")),
+                        filenames[3]
                     )
                     self.assertEqual(
-                        os.path.join(base_dir, os.path.normpath("2018/07/30/AZ_wAGT9P6jh.JPG")), filenames[4]
+                        os.path.join(base_dir, os.path.normpath("2018/07/30/AZ_wAGT9P6jh.JPG")),
+                        filenames[4]
                     )
                     assert result.exit_code == 0
 
@@ -226,4 +231,3 @@ Include a link to the Gist in your issue, so that we can see what went wrong.
                         first_arg['asset_record']['fields']['assetDate']['value'],
                         1533021744816)
                     assert result.exit_code == 0
-
