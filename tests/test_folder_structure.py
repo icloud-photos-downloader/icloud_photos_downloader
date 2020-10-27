@@ -1,8 +1,9 @@
 from unittest import TestCase
-from vcr import VCR
 import os
+from os.path import normpath
 import shutil
 from click.testing import CliRunner
+from vcr import VCR
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 
@@ -42,28 +43,28 @@ class FolderStructureTestCase(TestCase):
 
             self.assertEqual(len(filenames), 8)
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/31/IMG_7409.JPG", filenames[0]
+                normpath("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG"), filenames[0]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/31/IMG_7409.MOV", filenames[1]
+                normpath("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV"), filenames[1]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7408.JPG", filenames[2]
+                normpath("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG"), filenames[2]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7408.MOV", filenames[3]
+                normpath("tests/fixtures/Photos/2018/07/30/IMG_7408.MOV"), filenames[3]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7407.JPG", filenames[4]
+                normpath("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG"), filenames[4]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7407.MOV", filenames[5]
+                normpath("tests/fixtures/Photos/2018/07/30/IMG_7407.MOV"), filenames[5]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7405.MOV", filenames[6]
+                normpath("tests/fixtures/Photos/2018/07/30/IMG_7405.MOV"), filenames[6]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/2018/07/30/IMG_7404.MOV", filenames[7]
+                normpath("tests/fixtures/Photos/2018/07/30/IMG_7404.MOV"), filenames[7]
             )
 
             assert result.exit_code == 0
@@ -100,28 +101,28 @@ class FolderStructureTestCase(TestCase):
 
             self.assertEqual(len(filenames), 8)
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7409.JPG", filenames[0]
+                normpath("tests/fixtures/Photos/IMG_7409.JPG"), filenames[0]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7409.MOV", filenames[1]
+                normpath("tests/fixtures/Photos/IMG_7409.MOV"), filenames[1]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7408.JPG", filenames[2]
+                normpath("tests/fixtures/Photos/IMG_7408.JPG"), filenames[2]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7408.MOV", filenames[3]
+                normpath("tests/fixtures/Photos/IMG_7408.MOV"), filenames[3]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7407.JPG", filenames[4]
+                normpath("tests/fixtures/Photos/IMG_7407.JPG"), filenames[4]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7407.MOV", filenames[5]
+                normpath("tests/fixtures/Photos/IMG_7407.MOV"), filenames[5]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7405.MOV", filenames[6]
+                normpath("tests/fixtures/Photos/IMG_7405.MOV"), filenames[6]
             )
             self.assertEqual(
-                "tests/fixtures/Photos/IMG_7404.MOV", filenames[7]
+                normpath("tests/fixtures/Photos/IMG_7404.MOV"), filenames[7]
             )
 
             assert result.exit_code == 0
