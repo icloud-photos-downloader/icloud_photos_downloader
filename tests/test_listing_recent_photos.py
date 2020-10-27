@@ -12,6 +12,7 @@ from tests.helpers.print_result_exception import print_result_exception
 vcr = VCR(decode_compressed_response=True)
 
 class ListingRecentPhotosTestCase(TestCase):
+
     def test_listing_recent_photos(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -69,6 +70,44 @@ class ListingRecentPhotosTestCase(TestCase):
                 os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7404.MOV")), filenames[7]
             )
 
+            assert result.exit_code == 0
+
+    def test_listing_photos_does_not_create_folders(self):
+        base_dir = os.path.normpath("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        # make sure the directory does not exist yet.
+        # Should only be created after download, not after just --print-filenames
+        self.assertFalse(not os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
+
+        # Note - This test uses the same cassette as test_download_photos.py
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
+            runner = CliRunner()
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "5",
+                    "--only-print-filenames",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                ],
+            )
+            print_result_exception(result)
+            # make sure the directory still does not exist.
+            # Should only be created after download, not after just --print-filenames
+            self.assertFalse(not os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
 
             assert result.exit_code == 0
 
