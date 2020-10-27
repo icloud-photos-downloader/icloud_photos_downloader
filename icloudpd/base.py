@@ -128,7 +128,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d})",
+    help="Folder structure (default: {:%Y/%m/%d}). "
+    "If set to 'none' all photos will just be placed into the download directory",
     metavar="<folder_structure>",
     default="{:%Y/%m/%d}",
 )
