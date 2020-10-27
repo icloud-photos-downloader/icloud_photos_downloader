@@ -322,6 +322,7 @@ class DownloadPhotoTestCase(TestCase):
         files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo", 2308885))
         files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
         files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo", 2251047))
+        files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))
 
         for f in files_to_skip:
             with open(os.path.join(base_dir, f[0]), "a") as fi:
@@ -385,6 +386,11 @@ class DownloadPhotoTestCase(TestCase):
                         "INFO     Found 3 consecutive previously downloaded photos. Exiting",
                         self._caplog.text,
                     )
+                    self.assertNotIn(
+                        f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7399-medium.MOV'))} already exists.", 
+                        self._caplog.text
+                    )
+
                     assert result.exit_code == 0
 
     def test_handle_io_error(self):
