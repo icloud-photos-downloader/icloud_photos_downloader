@@ -6,7 +6,6 @@ ROOT_DIR="$(realpath $(dirname "$0")/..)"
 ICLOUDPD_VERSION="$(cat "$ROOT_DIR/setup.py" | grep version= | cut -d'"' -f 2)"
 echo "Current icloudpd version: ${ICLOUDPD_VERSION}"
 
-cp ./dist/icloudpd* ./icloudpd-latest-py2.py3-none-any.whl
 docker build \
   -t "icloudpd/icloudpd:${ICLOUDPD_VERSION}" \
   -f "Dockerfile.release" \

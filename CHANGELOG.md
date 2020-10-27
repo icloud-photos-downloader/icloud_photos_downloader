@@ -1,5 +1,7 @@
 ## Unreleased
 
+- fix: docker works on Windows #192
+
 ## 1.6.2 (2020-10-23)
 
 - Began recording updates in `CHANGELOG.md`
