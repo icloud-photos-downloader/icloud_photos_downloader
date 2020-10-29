@@ -391,7 +391,7 @@ def main(
             created_date = photo.created
 
         try:
-            if folder_structure == "none":
+            if folder_structure.lower() == "none":
                 date_path = ""
             else:
                 date_path = folder_structure.format(created_date)
