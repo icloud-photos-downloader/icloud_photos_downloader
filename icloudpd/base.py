@@ -9,7 +9,6 @@ import logging
 import itertools
 import subprocess
 import json
-import threading
 import click
 
 from tqdm import tqdm
@@ -28,11 +27,6 @@ from icloudpd import exif_datetime
 # Must import the constants object so that we can mock values in tests.
 from icloudpd import constants
 from icloudpd.counter import Counter
-
-try:
-    import Queue as queue
-except ImportError:
-    import queue
 
 CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 
@@ -195,7 +189,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
               )
 @click.option(
     "--threads-num",
-    help="Number of cpu threads (default: 1)",
+    help="Number of cpu threads -- deprecated. To be removed in future version",
     type=click.IntRange(1),
     default=1,
 )
@@ -229,7 +223,7 @@ def main(
         log_level,
         no_progress_bar,
         notification_script,
-        threads_num,
+        threads_num,    # pylint: disable=W0613
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -550,37 +544,11 @@ def main(
                             icloud, photo, lp_download_path, lp_size
                         )
 
-    def get_threads_count():
-        """Disable threads if we have until_found or recent arguments"""
-        if until_found is None and recent is None:
-            return threads_num  # pragma: no cover
-        return 1
-
-    download_queue = queue.Queue(get_threads_count())
     consecutive_files_found = Counter(0)
 
     def should_break(counter):
         """Exit if until_found condition is reached"""
         return until_found is not None and counter.value() >= until_found
-
-    def worker(counter):
-        """Threaded worker"""
-        while True:
-            item = download_queue.get()
-            if item is None:
-                break
-
-            download_photo(counter, item)
-            download_queue.task_done()
-
-    threads = []
-    for _ in range(get_threads_count()):
-        thread = threading.Thread(
-            target=worker, args=(
-                consecutive_files_found, ))
-        thread.daemon = True
-        thread.start()
-        threads.append(thread)
 
     photos_iterator = iter(photos_enumerator)
     while True:
@@ -590,18 +558,10 @@ def main(
                     "Found %d consecutive previously downloaded photos. Exiting" %
                     until_found)
                 break
-            download_queue.put(next(photos_iterator))
+            item = next(photos_iterator)
+            download_photo(consecutive_files_found, item)
         except StopIteration:
             break
-
-    if not should_break(consecutive_files_found):
-        download_queue.join()
-
-    for _ in threads:
-        download_queue.put(None)
-
-    for thread in threads:
-        thread.join()
 
     if only_print_filenames:
         sys.exit(0)
