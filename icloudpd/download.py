@@ -36,6 +36,15 @@ def download_media(icloud, photo, download_path, size):
     """Download the photo to path, with retries and error handling"""
     logger = setup_logger()
 
+    # get back the directory for the file to be downloaded and create it if not there already
+    download_dir = os.path.dirname(download_path)
+
+    if not os.path.exists(download_dir):
+        try:
+            os.makedirs(download_dir)
+        except OSError:  # pragma: no cover
+            pass         # pragma: no cover
+
     for retries in range(constants.MAX_RETRIES):
         try:
             photo_response = photo.download(size)
