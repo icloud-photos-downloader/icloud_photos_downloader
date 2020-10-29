@@ -12,3 +12,5 @@ __pycache__
 .coverage
 .coverage.*
 .git
+tests/fixures
+tests/__pycache__

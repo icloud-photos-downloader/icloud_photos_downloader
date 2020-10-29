@@ -1,5 +1,11 @@
+# Changelog
+
 ## Unreleased
 
+- feature: Folder structure can be set to 'none' instead of a date pattern,
+so all photos will be placed directly into the download directory.
+- fix: Empty directory structure being created #185
+- feature: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
 - fix: docker works on Windows #192
 
 ## 1.6.2 (2020-10-23)
@@ -13,5 +19,5 @@
 
 ## Earlier Versions
 
-Please refer to the commit history in GitHub: 
-https://github.com/icloud-photos-downloader/icloud_photos_downloader/commits/master
+Please refer to the commit history in GitHub:
+<https://github.com/icloud-photos-downloader/icloud_photos_downloader/commits/master>
