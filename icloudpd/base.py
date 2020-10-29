@@ -122,7 +122,8 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d})",
+    help="Folder structure (default: {:%Y/%m/%d}). "
+    "If set to 'none' all photos will just be placed into the download directory",
     metavar="<folder_structure>",
     default="{:%Y/%m/%d}",
 )
@@ -384,7 +385,10 @@ def main(
             created_date = photo.created
 
         try:
-            date_path = folder_structure.format(created_date)
+            if folder_structure.lower() == "none":
+                date_path = ""
+            else:
+                date_path = folder_structure.format(created_date)
         except ValueError:  # pragma: no cover
             # This error only seems to happen in Python 2
             logger.set_tqdm_description(
@@ -397,13 +401,6 @@ def main(
             date_path = folder_structure.format(created_date)
 
         download_dir = os.path.normpath(os.path.join(directory, date_path))
-
-        if not os.path.exists(download_dir):
-            try:
-                os.makedirs(download_dir)
-            except OSError:  # pragma: no cover
-                pass        # pragma: no cover
-
         download_size = size
 
         try:

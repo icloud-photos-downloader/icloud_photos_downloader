@@ -90,7 +90,9 @@ pip install icloudpd
                                         will be downloaded. (Does not download any
                                         files.)
         --folder-structure <folder_structure>
-                                        Folder structure (default: {:%Y/%m/%d})
+                                        Folder structure (default: {:%Y/%m/%d}). If
+                                        set to 'none' all photos will just be placed
+                                        into the download directory
         --set-exif-datetime             Write the DateTimeOriginal exif tag from
                                         file creation date, if it doesn't exist.
         --smtp-username <smtp_username>
