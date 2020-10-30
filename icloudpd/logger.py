@@ -2,7 +2,7 @@
 
 import sys
 import logging
-from logging import DEBUG, INFO
+from logging import INFO
 
 
 class IPDLogger(logging.Logger):
@@ -32,11 +32,10 @@ class IPDLogger(logging.Logger):
             self.tqdm.write(message)
 
 
-def setup_logger(loglevel=DEBUG):
+def setup_logger():
     """Set up logger and add stdout handler"""
     logging.setLoggerClass(IPDLogger)
     logger = logging.getLogger("icloudpd")
-    logger.setLevel(loglevel)
     has_stdout_handler = False
     for handler in logger.handlers:
         if handler.name == "stdoutLogger":
