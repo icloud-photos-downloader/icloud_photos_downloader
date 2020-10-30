@@ -7,6 +7,7 @@
 so all photos will be placed directly into the download directory.
 - fix: Empty directory structure being created #185
 - feature: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
+- fix: documentation issues, first adressed in #141
 
 ## 1.6.2 (2020-10-23)
 
