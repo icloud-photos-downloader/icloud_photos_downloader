@@ -182,7 +182,7 @@ If you would like to delete a password stored in your system keyring,
 you can clear a stored password using the `--delete-from-keyring` command-line option:
 
 ``` sh
-cloud --username jappleseed@apple.com --delete-from-keyring
+icloud --username jappleseed@apple.com --delete-from-keyring
 ```
 
 ## Error on first run
@@ -256,48 +256,4 @@ Building image locally:
 ```bash
 docker build . -t icloudpd
 docker run -it --rm icloudpd:latest icloudpd --version
-```
-
-## Contributing
-
-Install dependencies:
-
-``` sh
-sudo pip install -r requirements.txt
-sudo pip install -r requirements-test.txt
-```
-
-Run tests:
-
-``` sh
-pytest
-```
-
-Before submitting a pull request, please check the following:
-
-- All tests pass
-  - Run `./scripts/test`
-- 100% test coverage
-  - After running `./scripts/test`, you will see the test coverage results in the output
-  - You can also open the HTML report at: `./htmlcov/index.html`
-- Code is formatted with [autopep8](https://github.com/hhatto/autopep8)
-  - Run `./scripts/format`
-- No [pylint](https://www.pylint.org/) errors
-  - Run `./scripts/lint` (or `pylint icloudpd`)
-- If you've added or changed any command-line options,
-  please update the [Usage](#usage) section in the README.
-
-If you need to make any changes to the `pyicloud` library,
-`icloudpd` uses a fork of this library that has been renamed to `pyicloud-ipd`.
-Please clone my [pyicloud fork](https://github.com/icloud-photos-downloader/pyicloud)
-and check out the [pyicloud-ipd](https://github.com/icloud-photos-downloader/pyicloud/tree/pyicloud-ipd)
-branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
-[icloud-photos-downloader/pyicloud](https://github.com/icloud-photos-downloader/pyicloud).
-
-### Building the Docker image
-
-``` sh
-git clone https://github.com/icloud-photos-downloader/icloud_photos_downloader.git
-cd icloud_photos_downloader
-docker build -t icloudpd/icloudpd .
 ```
