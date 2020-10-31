@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.7.0 (2020-11-1)
+
 - fix: --log-level option [#194](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/194)
 - feature: Folder structure can be set to 'none' instead of a date pattern,
 so all photos will be placed directly into the download directory.
