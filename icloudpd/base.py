@@ -9,9 +9,9 @@ import logging
 import itertools
 import subprocess
 import json
+import urllib
 import click
 import requests
-import urllib
 
 
 from tqdm import tqdm
