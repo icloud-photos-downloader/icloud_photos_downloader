@@ -174,7 +174,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     metavar="<notification_email>",
 )
 @click.option(
-    "--server-jiang-secretkey",
+    "--server-secretkey",
     help="secretKey is the key where you get from serverJiang(http://sc.ftqq.com/).",
     metavar="<server_secretkey>",
 )
