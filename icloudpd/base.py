@@ -282,7 +282,7 @@ def main(
             )
         if server_secretkey is not None:
             requests.get(
-                "https://sc.ftqq.com/" + server_secretkey + ".send?text=" + urllib.encode("the icloud downloader two-factor is overdated")
+                "https://sc.ftqq.com/" + server_secretkey + ".send?text=" + urllib.urlencode("the icloud downloader two-factor is overdated")
             )
         sys.exit(1)
 
