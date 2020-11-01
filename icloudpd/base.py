@@ -169,14 +169,14 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--notification-email",
-    help="Email address where you would like to receive email notifications. "
+    help="Email address where you would like to receive email notifications. ",
     "Default: SMTP username",
     metavar="<notification_email>",
 )
 @click.option(
-    "--server-jiang-secretKey",
-    help="secretKey is the key where you get from serverJiang(http://sc.ftqq.com/)."
-    metavar="<server_jiang_secretKey>"
+    "--server-jiang-secretkey",
+    help="secretKey is the key where you get from serverJiang(http://sc.ftqq.com/).",
+    metavar="<server_secretkey>",
 )
 @click.option(
     "--notification-script",
@@ -228,7 +228,7 @@ def main(
         smtp_port,
         smtp_no_tls,
         notification_email,
-        server_jiang_secretKey,
+        server_secretkey,
         log_level,
         no_progress_bar,
         notification_script,
@@ -280,9 +280,9 @@ def main(
                 smtp_no_tls,
                 notification_email,
             )
-        if server_jiang_secretKey is not None:
+        if server_secretkey is not None:
             requests.get(
-                "https://sc.ftqq.com/" + server_jiang_secretKey + ".send?text=" + urllib.encode("the icloud downloader two-factor is overdated")
+                "https://sc.ftqq.com/" + server_secretkey + ".send?text=" + urllib.encode("the icloud downloader two-factor is overdated")
             )
         sys.exit(1)
 
