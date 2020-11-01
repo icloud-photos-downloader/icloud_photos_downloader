@@ -169,7 +169,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "--notification-email",
-    help="Email address where you would like to receive email notifications. ",
+    help="Email address where you would like to receive email notifications. "
     "Default: SMTP username",
     metavar="<notification_email>",
 )
