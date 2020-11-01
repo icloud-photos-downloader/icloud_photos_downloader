@@ -53,6 +53,7 @@ pip install icloudpd
                [--smtp-no-tls]
                [--notification-email <notification_email>]
                [--notification-script PATH]
+               [--server-secretkey <server_secretkey>]
                [--log-level (debug|info|error)]
                [--no-progress-bar]
                [--threads-num <threads>]
@@ -115,6 +116,7 @@ pip install icloudpd
         --notification-script PATH      Runs an external script when two factor
                                         authentication expires. (path required:
                                         /path/to/my/script.sh)
+        --server-secretkey              [serverChan](http://sc.ftqq.com/3.version) wechat notifaction
         --log-level [debug|info|error]  Log level (default: debug)
         --no-progress-bar               Disables the one-line progress bar and
                                         prints log messages on separate lines
