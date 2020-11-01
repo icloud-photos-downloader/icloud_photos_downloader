@@ -23,32 +23,26 @@ def authenticate(
     """Authenticate with iCloud username and password"""
     logger = setup_logger()
     logger.debug("Authenticating...")
-    # try:
-    #     # If password not provided on command line variable will be set to None
-    #     # and PyiCloud will attempt to retrieve from it's keyring
-    #     icloud = pyicloud_ipd.PyiCloudService(
-    #         username, password,
-    #         cookie_directory=cookie_directory,
-    #         client_id=client_id)
-    # except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
-    #     # Prompt for password if not stored in PyiCloud's keyring
-    #     password = click.prompt("iCloud Password", hide_input=True)
-    #     icloud = pyicloud_ipd.PyiCloudService(
-    #         username, password,
-    #         cookie_directory=cookie_directory,
-    #         client_id=client_id)
+    try:
+        # If password not provided on command line variable will be set to None
+        # and PyiCloud will attempt to retrieve from it's keyring
+        icloud = pyicloud_ipd.PyiCloudService(
+            username, password,
+            cookie_directory=cookie_directory,
+            client_id=client_id)
+    except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
+        # Prompt for password if not stored in PyiCloud's keyring
+        password = click.prompt("iCloud Password", hide_input=True)
+        icloud = pyicloud_ipd.PyiCloudService(
+            username, password,
+            cookie_directory=cookie_directory,
+            client_id=client_id)
 
-    # if icloud.requires_2sa:
-    #     if raise_error_on_2sa:
-    #         raise TwoStepAuthRequiredError(
-    #             "Two-step/two-factor authentication is required!"
-    #         )
-    #     logger.info("Two-step/two-factor authentication is required!")
-    #     request_2sa(icloud, logger)
-    if True:
-        raise TwoStepAuthRequiredError(
-            "Two-step/two-factor authentication is required!"
-        )
+    if icloud.requires_2sa:
+        if raise_error_on_2sa:
+            raise TwoStepAuthRequiredError(
+                "Two-step/two-factor authentication is required!"
+            )
         logger.info("Two-step/two-factor authentication is required!")
         request_2sa(icloud, logger)
     return icloud
