@@ -10,6 +10,9 @@ import itertools
 import subprocess
 import json
 import click
+import requests
+import urllib
+
 
 from tqdm import tqdm
 from tzlocal import get_localzone
@@ -171,6 +174,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     metavar="<notification_email>",
 )
 @click.option(
+    "--server-jiang-secretKey",
+    help="secretKey is the key where you get from serverJiang(http://sc.ftqq.com/)."
+    metavar="<server_jiang_secretKey>"
+)
+@click.option(
     "--notification-script",
     type=click.Path(),
     help="Runs an external script when two factor authentication expires. "
@@ -220,6 +228,7 @@ def main(
         smtp_port,
         smtp_no_tls,
         notification_email,
+        server_jiang_secretKey,
         log_level,
         no_progress_bar,
         notification_script,
@@ -270,6 +279,10 @@ def main(
                 smtp_port,
                 smtp_no_tls,
                 notification_email,
+            )
+        if server_jiang_secretKey is not None:
+            requests.get(
+                "https://sc.ftqq.com/" + server_jiang_secretKey + ".send?text=" + urllib.encode("the icloud downloader two-factor is overdated")
             )
         sys.exit(1)
 
