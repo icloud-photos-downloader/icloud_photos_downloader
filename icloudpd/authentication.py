@@ -45,7 +45,7 @@ def authenticate(
     #         )
     #     logger.info("Two-step/two-factor authentication is required!")
     #     request_2sa(icloud, logger)
-    if true:
+    if True:
         raise TwoStepAuthRequiredError(
             "Two-step/two-factor authentication is required!"
         )
