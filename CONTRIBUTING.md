@@ -24,6 +24,7 @@ There are some requirements for pull requests:
   please update the [Usage](README.md#usage) section in the README.md.
 - Make sure your change is documented in the
 [Unreleased](CHANGELOG.md#unreleased) section in the CHANGELOG.md.
+- We aim to push out a Release once a week (Fridays),  if there is at least one new change in CHANGELOG.
 
 If you need to make any changes to the `pyicloud` library,
 `icloudpd` uses a fork of this library that has been renamed to `pyicloud-ipd`.
