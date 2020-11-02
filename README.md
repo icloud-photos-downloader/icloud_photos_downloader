@@ -1,16 +1,4 @@
-# Community Maintained
-
-I hope this tool is useful for you! Unfortunately I don't use it personally anymore, and I don't want to spend lots of time working on it. Please let me know if you want to help maintain it and respond to the GitHub issues and pull requests.
-
-However, I'm happy to accept any pull requests to keep the project working if the code is high quality and has 100% test coverage. Thanks a lot for your help!
-
----------
-
-[![Build Status](https://travis-ci.org/ndbroadbent/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/ndbroadbent/icloud_photos_downloader)
-[![Coverage Status](https://coveralls.io/repos/github/ndbroadbent/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/ndbroadbent/icloud_photos_downloader?branch=master)
-[![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-# iCloud Photos Downloader
+# iCloud Photos Downloader ![Quality Checks](https://github.com/icloud-photos-downloader/icloud_photos_downloader/workflows/Quality%20Checks/badge.svg) [![Build Status](https://travis-ci.org/ndbroadbent/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/ndbroadbent/icloud_photos_downloader) [![Coverage Status](https://coveralls.io/repos/github/ndbroadbent/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/ndbroadbent/icloud_photos_downloader?branch=master) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 - A command-line tool to download all your iCloud photos.
 - Works on Linux, Windows, and MacOS.
@@ -257,3 +245,7 @@ Building image locally:
 docker build . -t icloudpd
 docker run -it --rm icloudpd:latest icloudpd --version
 ```
+
+## Contributing
+
+Want to contribute to iCloud Photos Downloader? Awesome! Check out the [contributing guidelines](CONTRIBUTING.md) to get involved.

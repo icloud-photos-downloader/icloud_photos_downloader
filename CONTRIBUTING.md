@@ -1,4 +1,8 @@
-# Contributing
+# Contributing iCloud Photos Downloader
+
+Help wanted!  We'd love your contributions to iCloud Photos Downloader. You don't have to know how to code to be able to help!
+
+Please review the following guidelines before contributing.  Also, feel free to propose changes to these guidelines by updating this file and submitting a pull request.
 
 When contributing to this repository, please first discuss the change you wish to make via issue,
 email, or any other method with the owners of this repository before making a change.
