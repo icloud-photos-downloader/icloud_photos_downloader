@@ -4,6 +4,8 @@
 - Works on Linux, Windows, and MacOS.
 - Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
 
+This tool is developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)...). We aim to release new versions once a week (Friday), if there is something worth delivering.
+
 ## Install
 
 `icloudpd` is a Python package that can be installed using `pip`:
