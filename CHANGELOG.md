@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: --only-print-filenames option displays filenames (live photos) of files that have already been downloaded #200
+
 ## 1.7.0 (2020-11-1)
 
 - fix: --log-level option [#194](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/194)
