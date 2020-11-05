@@ -516,7 +516,7 @@ def main(
 
                 lp_file_exists = os.path.isfile(lp_download_path)
 
-                if only_print_filenames:
+                if only_print_filenames and not lp_file_exists:
                     print(lp_download_path)
                 else:
                     if lp_file_exists:

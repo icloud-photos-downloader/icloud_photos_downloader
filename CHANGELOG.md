@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: --only-print-filenames option displays filenames (live photos) of files that have already been downloaded #200
 - fix: docker works on Windows #192
 
 ## 1.7.0 (2020-11-1)
