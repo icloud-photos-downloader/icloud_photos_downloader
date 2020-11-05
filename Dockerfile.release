@@ -10,11 +10,11 @@ RUN set -xe && \
     rm -r /root/.cache
 
 ARG ICLOUDPD_VERSION
-ADD icloudpd-latest-py2.py3-none-any.whl /tmp
+COPY dist/* /tmp
 RUN set -xe \
-  && pip install /tmp/icloudpd-latest-py2.py3-none-any.whl \
+  && pip install /tmp/icloudpd-${ICLOUDPD_VERSION}-py2.py3-none-any.whl \
   && icloudpd --version \
   && icloud -h | head -n1
 
-RUN adduser -D -h /home/user -u 1000 user
-USER user
+# RUN adduser -D -h /home/user -u 1000 user
+# USER user

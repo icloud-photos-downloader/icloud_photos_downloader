@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: --only-print-filenames option displays filenames (live photos) of files that have already been downloaded #200
+- fix: docker works on Windows #192
 
 ## 1.7.0 (2020-11-1)
 
@@ -11,6 +12,8 @@
 so all photos will be placed directly into the download directory.
 - fix: Empty directory structure being created #185
 - feature: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
+- fix: documentation issues, first adressed in #141 and seperated contribution
+info from README.md into CONTRIBUTING.md
 
 ## 1.6.2 (2020-10-23)
 
