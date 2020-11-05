@@ -3,7 +3,7 @@ mock==4.0.2
 freezegun==0.3.10
 vcrpy==4.1.1
 pytest-cov==2.10.1
-pylint
-coveralls
-autopep8
+pylint==2.6.0
+coveralls==2.1.2
+autopep8==1.5.4
 pytest-timeout==1.4.2
