@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: docker works on Windows #192
+
 ## 1.7.0 (2020-11-1)
 
 - fix: --log-level option [#194](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/194)
