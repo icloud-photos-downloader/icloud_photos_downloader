@@ -491,7 +491,9 @@ def main(
                         date_str = created_date.strftime(
                             "%Y-%m-%d %H:%M:%S%z")
                         logger.debug(
-                            f"Setting EXIF timestamp for {download_path}: {date_str}",
+                            "Setting EXIF timestamp for %s: %s",
+                            download_path,
+                            date_str,
                         )
                         exif_datetime.set_photo_exif(
                             download_path,
