@@ -1,5 +1,11 @@
 #!/bin/bash
 set -euo pipefail
+
+# realpath not availabe on Mac by default...
+realpath() {
+    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+}
+
 CURRENT_DIR=$(dirname "$0")
 ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
@@ -9,6 +15,7 @@ echo "Current icloudpd version: ${ICLOUDPD_VERSION}"
 docker build \
   -t "icloudpd/icloudpd:${ICLOUDPD_VERSION}" \
   -f "Dockerfile.release" \
+  --build-arg ICLOUDPD_VERSION=${ICLOUDPD_VERSION} \
   "$ROOT_DIR"
 
 docker tag "icloudpd/icloudpd:${ICLOUDPD_VERSION}" "icloudpd/icloudpd:${ICLOUDPD_VERSION}-alpine"
