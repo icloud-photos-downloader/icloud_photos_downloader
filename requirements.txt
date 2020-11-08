@@ -2,7 +2,7 @@ pyicloud_ipd==0.10.1
 docopt==0.6.2
 schema==0.7.2
 click==6.7
-python_dateutil==2.6.1
+python_dateutil==2.8.1
 requests>=2.20.0
 tqdm==4.51.0
 piexif==1.1.3

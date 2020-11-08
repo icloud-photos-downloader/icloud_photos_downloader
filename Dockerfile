@@ -10,10 +10,12 @@ FROM base as test
 
 RUN mkdir Photos
 COPY requirements-test.txt .
-RUN pip install -r requirements-test.txt
+COPY requirements-dev.txt .
+COPY scripts/install_deps scripts/install_deps
+RUN scripts/install_deps
 COPY . .
-RUN py.test --cov=icloudpd --timeout=3 --cov-report term-missing
-RUN pylint icloudpd
+RUN scripts/test
+RUN scripts/lint
 
 FROM base as runtime
 
