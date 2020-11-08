@@ -14,6 +14,7 @@ COPY requirements-dev.txt .
 COPY scripts/install_deps scripts/install_deps
 RUN scripts/install_deps
 COPY . .
+ENV TZ="America/Los_Angeles"
 RUN scripts/test
 RUN scripts/lint
 

@@ -6,15 +6,12 @@ from mock import MagicMock
 from freezegun import freeze_time
 import pytest
 from icloudpd.logger import setup_logger, IPDLogger
+import datetime
 
 
 class LoggerTestCase(TestCase):
     # Tests the formatter that is set up in setup_logger()
-    @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows -- wrong dates")
-    @pytest.mark.skipif(sys.platform == 'darwin',
-                    reason="does not run on macos -- wrong dates")
-    @freeze_time("2018-01-01 00:00")
+    @freeze_time("2018-01-01 00:00:00-0000")
     def test_logger_output(self):
         logger = setup_logger()
         test_logger = logging.getLogger("icloudpd-test")
@@ -27,7 +24,9 @@ class LoggerTestCase(TestCase):
         test_logger.debug(u"Test debug output")
         test_logger.error(u"Test error output")
         output = string_io.getvalue().strip()
-        self.assertIn("2018-01-01", output)
+        # 2018:01:01 00:00:00 utc
+        expectedDatetime = datetime.datetime(2018,1,1,0,0,0,tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S")
+        self.assertIn(expectedDatetime, output)
         self.assertIn("INFO     Test info output", output)
         self.assertIn("DEBUG    Test debug output", output)
         self.assertIn("ERROR    Test error output", output)

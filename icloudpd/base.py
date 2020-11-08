@@ -489,11 +489,9 @@ def main(
                             (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(download_path):
                         # %Y:%m:%d looks wrong but it's the correct format
                         date_str = created_date.strftime(
-                            "%Y:%m:%d %H:%M:%S")
+                            "%Y-%m-%d %H:%M:%S%z")
                         logger.debug(
-                            "Setting EXIF timestamp for %s: %s",
-                            download_path,
-                            date_str,
+                            f"Setting EXIF timestamp for {download_path}: {date_str}",
                         )
                         exif_datetime.set_photo_exif(
                             download_path,
