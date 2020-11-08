@@ -108,6 +108,8 @@ class DownloadPhotoTestCase(TestCase):
 
     @pytest.mark.skipif(sys.platform == 'win32',
                     reason="does not run on windows -- wrong dates")
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                    reason="does not run on macos -- wrong dates")
     def test_download_photos_and_set_exif(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -935,6 +937,8 @@ class DownloadPhotoTestCase(TestCase):
 
     @pytest.mark.skipif(sys.platform == 'win32',
                     reason="does not run on windows")
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                    reason="does not run on mac")
     def test_invalid_creation_year(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -1160,6 +1164,8 @@ class DownloadPhotoTestCase(TestCase):
 
     @pytest.mark.skipif(sys.platform == 'win32',
                     reason="does not run on windows -- wrong dates")
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                    reason="does not run on macos -- wrong dates")
     def test_download_photos_and_set_exif_exceptions(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
