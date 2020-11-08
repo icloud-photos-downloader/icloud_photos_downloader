@@ -106,10 +106,6 @@ class DownloadPhotoTestCase(TestCase):
 
             assert result.exit_code == 0
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows -- wrong dates")
-    @pytest.mark.skipif(sys.platform == 'darwin',
-                    reason="does not run on macos -- wrong dates")
     def test_download_photos_and_set_exif(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -174,9 +170,10 @@ class DownloadPhotoTestCase(TestCase):
                         f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
-                    # YYYY:MM:DD is the correct format.
+                    # 2018:07:31 07:22:24 utc
+                    expectedDatetime = datetime.datetime(2018,7,31,7,22,24,tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
                     self.assertIn(
-                        f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: 2018:07:31 07:22:24", # TODO On windows it is picked as 00:22:24
+                        f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -296,8 +293,6 @@ class DownloadPhotoTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="requires large timeout on windows to create big files")
     def test_until_found(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -1162,10 +1157,6 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows -- wrong dates")
-    @pytest.mark.skipif(sys.platform == 'darwin',
-                    reason="does not run on macos -- wrong dates")
     def test_download_photos_and_set_exif_exceptions(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
@@ -1212,8 +1203,10 @@ class DownloadPhotoTestCase(TestCase):
                         f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
+                    # 2018:07:31 07:22:24 utc
+                    expectedDatetime = datetime.datetime(2018,7,31,7,22,24,tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
                     self.assertIn(
-                        f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: 2018:07:31 07:22:24", # TODO On windows it is picked as 00:22:24
+                        f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
                         self._caplog.text,
                     )
                     self.assertIn(
