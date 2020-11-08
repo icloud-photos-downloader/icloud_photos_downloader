@@ -5,7 +5,6 @@ FROM python:3.9 as base
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
-COPY . .
 
 FROM base as test
 
@@ -20,6 +19,7 @@ RUN scripts/lint
 
 FROM base as runtime
 
+COPY . .
 RUN python setup.py install
 
 # copy from test to ensure test stage runs before runtime stage in buildx
