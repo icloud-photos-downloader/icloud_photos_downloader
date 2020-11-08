@@ -11,4 +11,4 @@ ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
 echo "Running tests with Python 3... (HTML coverage report)"
 cd $ROOT_DIR
-python3 -m pytest --cov=icloudpd --cov-report html --timeout=3 --cov-report term-missing
+python3 -m pytest --cov=icloudpd --cov-report html --cov-report term-missing
