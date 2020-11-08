@@ -293,8 +293,6 @@ class DownloadPhotoTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="requires large timeout on windows to create big files")
     def test_until_found(self):
         base_dir = os.path.normpath("tests/fixtures/Photos")
         if os.path.exists(base_dir):
