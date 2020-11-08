@@ -12,6 +12,8 @@ class LoggerTestCase(TestCase):
     # Tests the formatter that is set up in setup_logger()
     @pytest.mark.skipif(sys.platform == 'win32',
                     reason="does not run on windows -- wrong dates")
+    @pytest.mark.skipif(sys.platform == 'darwin',
+                    reason="does not run on macos -- wrong dates")
     @freeze_time("2018-01-01 00:00")
     def test_logger_output(self):
         logger = setup_logger()
