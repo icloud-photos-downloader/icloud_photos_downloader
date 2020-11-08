@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 set -euo pipefail
 pip3 install -r requirements.txt
 pip3 install -r requirements-test.txt
