@@ -12,9 +12,7 @@ RUN set -xe && \
 ARG ICLOUDPD_VERSION
 COPY dist/* /tmp
 RUN set -xe \
+  && pip install wheel==0.35.1 \
   && pip install /tmp/icloudpd-${ICLOUDPD_VERSION}-py2.py3-none-any.whl \
   && icloudpd --version \
   && icloud -h | head -n1
-
-# RUN adduser -D -h /home/user -u 1000 user
-# USER user
