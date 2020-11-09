@@ -1,9 +1,11 @@
 #!/bin/bash
 set -euo pipefail
+
 # realpath not availabe on Mac by default...
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
+
 CURRENT_DIR=$(dirname "$0")
 ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
