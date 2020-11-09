@@ -1,0 +1,15 @@
+#!/usr/bin/env python3
+
+import sys
+
+with open(sys.argv[1]) as file:
+  releases = 0
+
+  for i, line in enumerate(file):
+      if line.startswith('##'):
+        releases += 1
+
+      if releases == 2:
+        print(line, end='')
+
+file.close()
