@@ -65,7 +65,6 @@ jobs:
     - uses: actions/checkout@v2
 
     - name: Set up Docker Buildx
-      if: endsWith(github.ref, env.ICLOUDPD_VERSION)
       uses: docker/setup-buildx-action@v1
 
     - name: Build
