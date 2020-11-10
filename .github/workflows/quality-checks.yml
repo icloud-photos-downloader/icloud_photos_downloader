@@ -57,3 +57,21 @@ jobs:
       run: |
         scripts/build
         
+  validation_docker_ubuntu:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up Docker Buildx
+      if: endsWith(github.ref, env.ICLOUDPD_VERSION)
+      uses: docker/setup-buildx-action@v1
+
+    - name: Build
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64
+        push: false
