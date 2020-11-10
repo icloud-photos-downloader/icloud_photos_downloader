@@ -1,2 +1,3 @@
 twine==2.0.0
 wheel==0.35.1
+setuptools>=50.3

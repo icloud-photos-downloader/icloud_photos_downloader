@@ -25,6 +25,7 @@ jobs:
         # check if the tag matches the version in setup.py
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         run: |
+          python -m pip install --upgrade pip
           scripts/install_deps
       - name: Build and publish
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
