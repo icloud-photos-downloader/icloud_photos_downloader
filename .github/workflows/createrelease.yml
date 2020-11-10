@@ -25,8 +25,8 @@ jobs:
         # check if the tag matches the version in setup.py
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install setuptools
+          python3 -m pip install --upgrade pip
+          python3 -m pip install setuptools
           scripts/install_deps
       - name: Build and publish
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
@@ -34,14 +34,14 @@ jobs:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python setup.py bdist_wheel --universal
+          python3 setup.py bdist_wheel --universal
           echo ICLOUDPD_ASSET_PATH=$(find dist -name '*whl') >> $GITHUB_ENV
           echo "::debug::${{env.ICLOUDPD_ASSET_PATH}}"
           echo ICLOUDPD_ASSET_NAME=$(basename $(find dist -name '*whl')) >> $GITHUB_ENV
           # Variable not read correctly?!
           #echo ICLOUDPD_ASSET_NAME=$(basename ${{env.ICLOUDPD_ASSET_PATH}}) >> $GITHUB_ENV
           echo "::debug::${{env.ICLOUDPD_ASSET_NAME}}"
-          python -m twine upload --repository testpypi dist/*
+          python3 -m twine upload --repository testpypi dist/*
       - name: Create Release
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         id: create_release
