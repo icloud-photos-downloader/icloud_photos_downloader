@@ -1,4 +1,6 @@
+.DS_Store
 build/
+dist/
 htmlcov/
 icloudpd.egg-info
 cron_script.sh
@@ -14,3 +16,5 @@ __pycache__
 .git
 tests/fixures
 tests/__pycache__
+.venv
+venv

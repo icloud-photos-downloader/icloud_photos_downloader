@@ -9,8 +9,7 @@ RUN pip install -r requirements.txt
 FROM base as test
 
 RUN mkdir Photos
-COPY requirements-test.txt .
-COPY requirements-dev.txt .
+COPY requirements*.txt .
 COPY scripts/install_deps scripts/install_deps
 RUN scripts/install_deps
 COPY . .

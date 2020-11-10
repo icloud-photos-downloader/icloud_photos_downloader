@@ -8,15 +8,17 @@ import json
 import mock
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
+import inspect
 
 vcr = VCR(decode_compressed_response=True)
 
 class ListingAlbumsTestCase(TestCase):
 
     def test_listing_albums(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_albums.yml"):
             # Pass fixed client ID via environment variable

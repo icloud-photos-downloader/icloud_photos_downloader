@@ -7,6 +7,8 @@ import click
 from click.testing import CliRunner
 from icloudpd.base import main
 from pyicloud_ipd import PyiCloudService
+import inspect
+import shutil
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -17,6 +19,11 @@ class TwoStepAuthTestCase(TestCase):
         self._caplog = caplog
 
     def test_2sa_flow_invalid_device_2fa(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_invalid_device.yml"):
             os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
             runner = CliRunner()
@@ -31,7 +38,7 @@ class TwoStepAuthTestCase(TestCase):
                     "0",
                     "--no-progress-bar",
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
                 input="1\n901431\n",
             )
@@ -42,6 +49,11 @@ class TwoStepAuthTestCase(TestCase):
             assert result.exit_code == 1
 
     def test_2sa_flow_device_2fa(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_device.yml"):
             os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
             runner = CliRunner()
@@ -56,7 +68,7 @@ class TwoStepAuthTestCase(TestCase):
                     "0",
                     "--no-progress-bar",
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
                 input="1\n654321\n",
             )
@@ -85,6 +97,11 @@ class TwoStepAuthTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_2sa_flow_sms(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_sms.yml"):
             os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
             runner = CliRunner()
@@ -99,7 +116,7 @@ class TwoStepAuthTestCase(TestCase):
                     "0",
                     "--no-progress-bar",
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
                 input="0\n123456\n",
             )
@@ -128,6 +145,11 @@ class TwoStepAuthTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_2sa_flow_sms_failed(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_sms.yml"):
             with mock.patch.object(
                 PyiCloudService, "send_verification_code"
@@ -146,7 +168,7 @@ class TwoStepAuthTestCase(TestCase):
                         "0",
                         "--no-progress-bar",
                         "-d",
-                        "tests/fixtures/Photos",
+                        base_dir,
                     ],
                     input="0\n",
                 )

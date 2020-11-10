@@ -16,6 +16,7 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
+import inspect
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -25,7 +26,7 @@ class DownloadPhotoTestCase(TestCase):
         self._caplog = caplog
 
     def test_download_and_skip_existing_photos(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -107,7 +108,7 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_download_photos_and_set_exif(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -182,7 +183,7 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_download_photos_and_get_exif_exceptions(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -238,7 +239,7 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_skip_existing_downloads(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -294,7 +295,7 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_until_found(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -391,7 +392,7 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_handle_io_error(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -440,7 +441,7 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_handle_session_error_during_download(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -507,7 +508,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -574,7 +575,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == -1
 
     def test_handle_connection_error(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -638,7 +639,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_handle_albums_error(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -690,7 +691,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 1
 
     def test_missing_size(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -754,7 +755,7 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_size_fallback_to_original(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -816,7 +817,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_force_size(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -873,7 +874,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_invalid_creation_date(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -935,7 +936,7 @@ class DownloadPhotoTestCase(TestCase):
     @pytest.mark.skipif(sys.platform == 'darwin',
                     reason="does not run on mac")
     def test_invalid_creation_year(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -994,7 +995,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_unknown_item_type(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1047,7 +1048,7 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1158,7 +1159,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_download_photos_and_set_exif_exceptions(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)

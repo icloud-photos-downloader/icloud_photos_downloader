@@ -7,13 +7,14 @@ from vcr import VCR
 from click.testing import CliRunner
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
+import inspect
 
 vcr = VCR(decode_compressed_response=True)
 
 class ListingRecentPhotosTestCase(TestCase):
 
     def test_listing_recent_photos(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -72,7 +73,7 @@ class ListingRecentPhotosTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_listing_photos_does_not_create_folders(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -112,7 +113,7 @@ class ListingRecentPhotosTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_listing_recent_photos_with_missing_filenameEnc(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -174,7 +175,7 @@ class ListingRecentPhotosTestCase(TestCase):
     # This was used to solve the missing filenameEnc error. I found
     # another case where it might crash. (Maybe Apple changes the downloadURL key)
     def test_listing_recent_photos_with_missing_downloadURL(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
