@@ -27,6 +27,8 @@ jobs:
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install setuptools
+          # this section should be updated. p.e. wheel is installed too late.
+          # this leads to unnecessary warnings
           scripts/install_deps
       - name: Build and publish
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
@@ -41,7 +43,9 @@ jobs:
           # Variable not read correctly?!
           #echo ICLOUDPD_ASSET_NAME=$(basename ${{env.ICLOUDPD_ASSET_PATH}}) >> $GITHUB_ENV
           echo "::debug::${{env.ICLOUDPD_ASSET_NAME}}"
-          python3 -m twine upload --repository testpypi dist/*
+          python3 -m twine upload dist/*
+          #python3 -m twine upload --repository testpypi dist/*
+          # todo: put repo in github secret for flexibility
       - name: Create Release
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         id: create_release
