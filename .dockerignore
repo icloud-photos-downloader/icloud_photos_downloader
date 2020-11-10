@@ -14,3 +14,5 @@ __pycache__
 .git
 tests/fixures
 tests/__pycache__
+.venv
+venv

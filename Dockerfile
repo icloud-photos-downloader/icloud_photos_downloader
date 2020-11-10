@@ -3,14 +3,16 @@
 FROM python:3.9 as base
 
 WORKDIR /app
+# explicit requirements because runtime does not need ALL dependencies
+COPY requirements-pip.txt .
 COPY requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install -r requirements-pip.txt
+RUN pip install --use-feature=2020-resolver  -r requirements.txt
 
 FROM base as test
 
 RUN mkdir Photos
-COPY requirements-test.txt .
-COPY requirements-dev.txt .
+COPY requirements*.txt .
 COPY scripts/install_deps scripts/install_deps
 RUN scripts/install_deps
 COPY . .
