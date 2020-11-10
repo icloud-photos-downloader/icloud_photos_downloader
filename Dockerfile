@@ -6,8 +6,8 @@ WORKDIR /app
 # explicit requirements because runtime does not need ALL dependencies
 COPY requirements-pip.txt .
 COPY requirements.txt .
-RUN pip install -r requirements-pip.txt
-RUN pip install --use-feature=2020-resolver  -r requirements.txt
+RUN pip3 install -r requirements-pip.txt
+RUN pip3 install --use-feature=2020-resolver -r requirements.txt
 
 FROM base as test
 
