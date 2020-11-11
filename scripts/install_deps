@@ -1,6 +1,4 @@
 #!/bin/bash
 set -euo pipefail
-python3 -m pip install --upgrade "pip>=20.2"
-pip3 install --use-feature=2020-resolver -r requirements.txt
-pip3 install --use-feature=2020-resolver -r requirements-test.txt
-pip3 install --use-feature=2020-resolver -r requirements-dev.txt
+pip3 install -r requirements-pip.txt
+pip3 install --use-feature=2020-resolver -r requirements.txt -r requirements-test.txt -r requirements-dev.txt
