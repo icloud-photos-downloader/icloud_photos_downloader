@@ -6,6 +6,7 @@ from click.testing import CliRunner
 from vcr import VCR
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
+import inspect
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -13,16 +14,18 @@ class FolderStructureTestCase(TestCase):
 
     # This is basically a copy of the listing_recent_photos test #
     def test_default_folder_structure(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         ### Tests if the default directory structure is constructed correctly ###
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -35,7 +38,7 @@ class FolderStructureTestCase(TestCase):
                     "--only-print-filenames",
                     "--no-progress-bar",
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
             )
             print_result_exception(result)
@@ -43,43 +46,45 @@ class FolderStructureTestCase(TestCase):
 
             self.assertEqual(len(filenames), 8)
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/31/IMG_7409.JPG"), filenames[0]
+                os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")), filenames[0]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/31/IMG_7409.MOV"), filenames[1]
+                os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.MOV")), filenames[1]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/30/IMG_7408.JPG"), filenames[2]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")), filenames[2]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/30/IMG_7408.MOV"), filenames[3]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")), filenames[3]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/30/IMG_7407.JPG"), filenames[4]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7407.JPG")), filenames[4]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/30/IMG_7407.MOV"), filenames[5]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7407.MOV")), filenames[5]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/30/IMG_7405.MOV"), filenames[6]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7405.MOV")), filenames[6]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/2018/07/30/IMG_7404.MOV"), filenames[7]
+                os.path.join(base_dir, os.path.normpath("2018/07/30/IMG_7404.MOV")), filenames[7]
             )
 
             assert result.exit_code == 0
 
 
     def test_folder_structure_none(self):
-        if os.path.exists("tests/fixtures/Photos"):
-            shutil.rmtree("tests/fixtures/Photos")
-        os.makedirs("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -93,7 +98,7 @@ class FolderStructureTestCase(TestCase):
                     "--folder-structure=none",
                     "--no-progress-bar",
                     "-d",
-                    "tests/fixtures/Photos",
+                    base_dir,
                 ],
             )
             print_result_exception(result)
@@ -101,28 +106,28 @@ class FolderStructureTestCase(TestCase):
 
             self.assertEqual(len(filenames), 8)
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7409.JPG"), filenames[0]
+                os.path.join(base_dir, os.path.normpath("IMG_7409.JPG")), filenames[0]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7409.MOV"), filenames[1]
+                os.path.join(base_dir, os.path.normpath("IMG_7409.MOV")), filenames[1]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7408.JPG"), filenames[2]
+                os.path.join(base_dir, os.path.normpath("IMG_7408.JPG")), filenames[2]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7408.MOV"), filenames[3]
+                os.path.join(base_dir, os.path.normpath("IMG_7408.MOV")), filenames[3]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7407.JPG"), filenames[4]
+                os.path.join(base_dir, os.path.normpath("IMG_7407.JPG")), filenames[4]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7407.MOV"), filenames[5]
+                os.path.join(base_dir, os.path.normpath("IMG_7407.MOV")), filenames[5]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7405.MOV"), filenames[6]
+                os.path.join(base_dir, os.path.normpath("IMG_7405.MOV")), filenames[6]
             )
             self.assertEqual(
-                normpath("tests/fixtures/Photos/IMG_7404.MOV"), filenames[7]
+                os.path.join(base_dir, os.path.normpath("IMG_7404.MOV")), filenames[7]
             )
 
             assert result.exit_code == 0

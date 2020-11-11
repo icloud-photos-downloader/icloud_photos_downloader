@@ -16,6 +16,7 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
+import inspect
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -25,7 +26,7 @@ class DownloadPhotoTestCase(TestCase):
         self._caplog = caplog
 
     def test_download_and_skip_existing_photos(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -38,8 +39,9 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -107,7 +109,7 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_download_photos_and_set_exif(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -135,8 +137,9 @@ class DownloadPhotoTestCase(TestCase):
                 get_exif_patched.return_value = False
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -182,7 +185,7 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_download_photos_and_get_exif_exceptions(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -192,8 +195,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -238,7 +242,7 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_skip_existing_downloads(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -251,8 +255,9 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -294,7 +299,7 @@ class DownloadPhotoTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_until_found(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -331,8 +336,9 @@ class DownloadPhotoTestCase(TestCase):
                 ut_patched.return_value = None
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -391,20 +397,19 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_handle_io_error(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-            # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-
             with mock.patch("icloudpd.download.open", create=True) as m:
                 # Raise IOError when we try to write to the destination file
                 m.side_effect = IOError
 
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -440,14 +445,13 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_handle_session_error_during_download(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error(arg):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -468,7 +472,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -507,14 +513,13 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error(offset):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -535,7 +540,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -574,14 +581,13 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == -1
 
     def test_handle_connection_error(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error(arg):
                 raise ConnectionError("Connection Error")
@@ -602,7 +608,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -638,14 +646,13 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_handle_albums_error(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error():
                 raise PyiCloudAPIResponseError("Api Error", 100)
@@ -666,7 +673,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -690,7 +699,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 1
 
     def test_missing_size(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -700,8 +709,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -754,7 +764,7 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_size_fallback_to_original(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -770,8 +780,9 @@ class DownloadPhotoTestCase(TestCase):
 
                     with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                         # Pass fixed client ID via environment variable
-                        os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -816,7 +827,7 @@ class DownloadPhotoTestCase(TestCase):
                         assert result.exit_code == 0
 
     def test_force_size(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -829,8 +840,9 @@ class DownloadPhotoTestCase(TestCase):
 
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -873,7 +885,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_invalid_creation_date(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -888,8 +900,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -935,7 +948,7 @@ class DownloadPhotoTestCase(TestCase):
     @pytest.mark.skipif(sys.platform == 'darwin',
                     reason="does not run on mac")
     def test_invalid_creation_year(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -950,8 +963,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -994,7 +1008,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_unknown_item_type(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1007,8 +1021,9 @@ class DownloadPhotoTestCase(TestCase):
 
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -1047,7 +1062,7 @@ class DownloadPhotoTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1076,8 +1091,9 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -1158,7 +1174,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_download_photos_and_set_exif_exceptions(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1171,8 +1187,9 @@ class DownloadPhotoTestCase(TestCase):
                 get_exif_patched.return_value = False
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -1226,8 +1243,9 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [

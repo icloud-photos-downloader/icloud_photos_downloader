@@ -5,6 +5,8 @@ from freezegun import freeze_time
 import os
 from click.testing import CliRunner
 from icloudpd.base import main
+import inspect
+import shutil
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -12,11 +14,17 @@ vcr = VCR(decode_compressed_response=True)
 class EmailNotificationsTestCase(TestCase):
     @freeze_time("2018-01-01")
     def test_2sa_required_email_notification(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -31,7 +39,7 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-email",
                         "jdoe+notifications@gmail.com",
                         "-d",
-                        "tests/fixtures/Photos",
+                        base_dir,
                     ],
                 )
                 print(result.output)
@@ -56,11 +64,17 @@ class EmailNotificationsTestCase(TestCase):
 
     @freeze_time("2018-01-01")
     def test_2sa_notification_without_smtp_login_and_tls(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -72,7 +86,7 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-email",
                         "jdoe+notifications@gmail.com",
                         "-d",
-                        "tests/fixtures/Photos",
+                        base_dir,
                     ],
                 )
                 print(result.output)
@@ -95,11 +109,17 @@ class EmailNotificationsTestCase(TestCase):
 
     @freeze_time("2018-01-01")
     def test_2sa_required_notification_script(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
             with patch("subprocess.call") as subprocess_patched:
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -110,7 +130,7 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-script",
                         "./test_script.sh",
                         "-d",
-                        "tests/fixtures/Photos",
+                        base_dir,
                     ],
                 )
                 print(result.output)
