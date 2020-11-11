@@ -1,6 +1,5 @@
 .DS_Store
 build/
-dist/
 htmlcov/
 icloudpd.egg-info
 cron_script.sh
