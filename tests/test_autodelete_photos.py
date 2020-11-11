@@ -5,6 +5,7 @@ import shutil
 import pytest
 from click.testing import CliRunner
 from icloudpd.base import main
+import inspect
 
 vcr = VCR(decode_compressed_response=True, record_mode="new_episodes")
 
@@ -15,7 +16,7 @@ class AutodeletePhotosTestCase(TestCase):
         self._caplog = caplog
 
     def test_autodelete_photos(self):
-        base_dir = os.path.normpath("tests/fixtures/Photos")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -35,8 +36,9 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/autodelete_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
