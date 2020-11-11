@@ -22,8 +22,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -71,8 +72,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -115,8 +117,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
             with patch("subprocess.call") as subprocess_patched:
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [

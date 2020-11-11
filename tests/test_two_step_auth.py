@@ -25,8 +25,9 @@ class TwoStepAuthTestCase(TestCase):
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_invalid_device.yml"):
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -55,8 +56,9 @@ class TwoStepAuthTestCase(TestCase):
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_device.yml"):
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -103,8 +105,9 @@ class TwoStepAuthTestCase(TestCase):
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_sms.yml"):
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -155,8 +158,9 @@ class TwoStepAuthTestCase(TestCase):
                 PyiCloudService, "send_verification_code"
             ) as svc_mocked:
                 svc_mocked.return_value = False
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [

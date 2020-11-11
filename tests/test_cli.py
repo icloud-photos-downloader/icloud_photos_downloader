@@ -35,8 +35,9 @@ class CliTestCase(TestCase):
             self._caplog.clear()
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -58,7 +59,6 @@ class CliTestCase(TestCase):
             for text in not_expected:
                 self.assertNotIn(text, self._caplog.text)
 
-    @pytest.mark.skip(reason="does not work with xdist")
     def test_tqdm(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if not os.path.exists(base_dir):
@@ -66,8 +66,10 @@ class CliTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Force tqdm progress bar via ENV var
-            os.environ["FORCE_TQDM"] = "yes"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "FORCE_TQDM": "yes",
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -81,14 +83,14 @@ class CliTestCase(TestCase):
                     base_dir,
                 ],
             )
-            del os.environ["FORCE_TQDM"]
             assert result.exit_code == 0
 
     def test_unicode_directory(self):
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [

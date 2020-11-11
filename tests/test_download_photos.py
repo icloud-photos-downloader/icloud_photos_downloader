@@ -39,8 +39,9 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -136,8 +137,9 @@ class DownloadPhotoTestCase(TestCase):
                 get_exif_patched.return_value = False
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -193,8 +195,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -252,8 +255,9 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -332,8 +336,9 @@ class DownloadPhotoTestCase(TestCase):
                 ut_patched.return_value = None
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -398,14 +403,13 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-            # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-
             with mock.patch("icloudpd.download.open", create=True) as m:
                 # Raise IOError when we try to write to the destination file
                 m.side_effect = IOError
 
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -448,7 +452,6 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error(arg):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -469,7 +472,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -515,7 +520,6 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error(offset):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -536,7 +540,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -582,7 +588,6 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error(arg):
                 raise ConnectionError("Connection Error")
@@ -603,7 +608,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -646,7 +653,6 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
 
             def mock_raise_response_error():
                 raise PyiCloudAPIResponseError("Api Error", 100)
@@ -667,7 +673,9 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -701,8 +709,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -771,8 +780,9 @@ class DownloadPhotoTestCase(TestCase):
 
                     with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                         # Pass fixed client ID via environment variable
-                        os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                        runner = CliRunner()
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
                         result = runner.invoke(
                             main,
                             [
@@ -830,8 +840,9 @@ class DownloadPhotoTestCase(TestCase):
 
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -889,8 +900,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -951,8 +963,9 @@ class DownloadPhotoTestCase(TestCase):
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -1008,8 +1021,9 @@ class DownloadPhotoTestCase(TestCase):
 
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -1077,8 +1091,9 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
-                os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                runner = CliRunner()
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
                 result = runner.invoke(
                     main,
                     [
@@ -1172,8 +1187,9 @@ class DownloadPhotoTestCase(TestCase):
                 get_exif_patched.return_value = False
                 with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                     # Pass fixed client ID via environment variable
-                    os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    runner = CliRunner()
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
                     result = runner.invoke(
                         main,
                         [
@@ -1227,8 +1243,9 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [

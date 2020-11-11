@@ -33,8 +33,9 @@ class DownloadLivePhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/download_live_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -87,8 +88,9 @@ class DownloadLivePhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/download_live_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
@@ -152,8 +154,9 @@ class DownloadLivePhotoTestCase(TestCase):
 
         with vcr.use_cassette("tests/vcr_cassettes/download_live_photos.yml"):
             # Pass fixed client ID via environment variable
-            os.environ["CLIENT_ID"] = "DE309E26-942E-11E8-92F5-14109FE0B321"
-            runner = CliRunner()
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
             result = runner.invoke(
                 main,
                 [
