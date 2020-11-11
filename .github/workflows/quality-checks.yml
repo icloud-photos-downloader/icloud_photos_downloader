@@ -11,7 +11,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  quality_checks_ubuntu_python:
+  check_quality:
 
     runs-on: ubuntu-latest
     strategy:
@@ -36,7 +36,7 @@ jobs:
       run: |
         scripts/test
 
-  validation_build_ubuntu_python:
+  validate_build:
 
     runs-on: ubuntu-latest
     strategy:
@@ -61,7 +61,7 @@ jobs:
       run: |
         scripts/build_docker
         
-  validation_docker_ubuntu:
+  validate_dev_docker:
 
     runs-on: ubuntu-latest
 
