@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: dev docker build on windows correctly manages crlf for scripts
+
 ## 1.7.1 (2020-11-10)
 
 - fix: --only-print-filenames option displays filenames (live photos) of files that have already been downloaded #200
