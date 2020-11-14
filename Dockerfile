@@ -13,7 +13,7 @@ FROM base as test
 
 RUN apt-get update && apt-get install -y dos2unix
 RUN mkdir Photos
-COPY requirements*.txt .
+COPY requirements*.txt ./
 COPY scripts/install_deps scripts/install_deps
 RUN dos2unix scripts/install_deps
 RUN scripts/install_deps
