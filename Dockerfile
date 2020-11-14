@@ -11,11 +11,14 @@ RUN pip3 install --use-feature=2020-resolver -r requirements.txt
 
 FROM base as test
 
+RUN apt-get update && apt-get install -y dos2unix
 RUN mkdir Photos
-COPY requirements*.txt .
+COPY requirements*.txt ./
 COPY scripts/install_deps scripts/install_deps
+RUN dos2unix scripts/install_deps
 RUN scripts/install_deps
 COPY . .
+RUN dos2unix scripts/*
 ENV TZ="America/Los_Angeles"
 RUN scripts/test
 RUN scripts/lint
