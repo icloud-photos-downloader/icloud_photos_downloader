@@ -55,15 +55,15 @@ class DownloadLivePhotoTestCase(TestCase):
             print_result_exception(result)
 
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV'))}",
+                f"INFO     Downloading {os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV')}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
+                f"INFO     Downloading {os.path.normpath('2020/11/04/IMG_0514.HEIC')}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0516.HEIC'))}",
+                f"INFO     Downloading {os.path.normpath('2020/11/04/IMG_0516.HEIC')}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -117,19 +117,19 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
+                f"INFO     Downloading {os.path.normpath('2020/11/04/IMG_0514.HEIC')}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV'))} already exists.",
+                f"INFO     {os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV')} already exists.",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
+                f"INFO     Downloading {os.path.normpath('2020/11/04/IMG_0514.HEIC')}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0516.HEIC'))} already exists.",
+                f"INFO     {os.path.normpath('2020/11/04/IMG_0516.HEIC')} already exists.",
                 self._caplog.text,
             )
             self.assertIn(

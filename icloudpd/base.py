@@ -438,9 +438,10 @@ def main(
                 return
             download_size = "original"
 
+        # full path to the file to download
         download_path = local_download_path(
             photo, download_size, download_dir)
-
+        
         file_exists = os.path.isfile(download_path)
         if not file_exists and download_size == "original":
             # Deprecation - We used to download files like IMG_1234-original.jpg,
@@ -460,22 +461,28 @@ def main(
                 download_path = ("-%s." % photo_size).join(
                     download_path.rsplit(".", 1)
                 )
+                # filepath below download_dir to shorten output
+                download_filename = download_path[len(directory)+1:]
                 logger.set_tqdm_description(
-                    "%s deduplicated." % truncate_middle(download_path, 96)
+                    "%s deduplicated." % truncate_middle(download_filename, 60)
                 )
                 file_exists = os.path.isfile(download_path)
             if file_exists:
                 counter.increment()
+                # filepath below download_dir to shorten output
+                download_filename = download_path[len(directory)+1:]
                 logger.set_tqdm_description(
-                    "%s already exists." % truncate_middle(download_path, 96)
+                    "%s already exists." % truncate_middle(download_filename, 60)
                 )
-
-        if not file_exists:
+        else: # file does not exist
             counter.reset()
             if only_print_filenames:
                 print(download_path)
             else:
-                truncated_path = truncate_middle(download_path, 96)
+                # filepath below download_dir to shorten output
+                download_filename = download_path[len(directory)+1:]
+
+                truncated_path = truncate_middle(download_filename, 60)
                 logger.set_tqdm_description(
                     "Downloading %s" %
                     truncated_path)
@@ -516,30 +523,36 @@ def main(
 
                 lp_file_exists = os.path.isfile(lp_download_path)
 
+                # todo: rework this
                 if only_print_filenames and not lp_file_exists:
                     print(lp_download_path)
                 else:
-                    if lp_file_exists:
+                    if lp_file_exists: # live photo movie part is alreay there
                         lp_file_size = os.stat(lp_download_path).st_size
                         lp_photo_size = version["size"]
                         if lp_file_size != lp_photo_size:
                             lp_download_path = ("-%s." % lp_photo_size).join(
                                 lp_download_path.rsplit(".", 1)
                             )
+                            # filepath below download_dir to shorten output
+                            lp_download_filename = lp_download_path[len(directory)+1:]
                             logger.set_tqdm_description(
                                 "%s deduplicated." %
                                 truncate_middle(
-                                    lp_download_path, 96))
+                                    lp_download_filename, 60))
                             lp_file_exists = os.path.isfile(lp_download_path)
                         if lp_file_exists:
+                            # filepath below download_dir to shorten output
+                            lp_download_filename = lp_download_path[len(directory)+1:]
                             logger.set_tqdm_description(
                                 "%s already exists."
-                                % truncate_middle(lp_download_path, 96)
+                                % truncate_middle(lp_download_filename, 60)
                             )
-                    if not lp_file_exists:
-                        truncated_path = truncate_middle(lp_download_path, 96)
+                    else: # live photo movie part is alreay there
+                        # filepath below download_dir to shorten output
+                        lp_download_filename = lp_download_path[len(directory)+1:]
                         logger.set_tqdm_description(
-                            "Downloading %s" % truncated_path)
+                            "Downloading %s" % truncate_middle(lp_download_filename, 60))
                         download.download_media(
                             icloud, photo, lp_download_path, lp_size
                         )
