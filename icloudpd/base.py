@@ -120,13 +120,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option(
-    "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d}). "
-    "If set to 'none' all photos will just be placed into the download directory",
-    metavar="<folder_structure>",
-    default="{:%Y/%m/%d}",
-)
+@click.option("--folder-structure",
+              help="Folder structure (default: {:%Y/%m/%d}). "
+              "If set to 'none' all photos will just be placed into the download directory",
+              metavar="<folder_structure>",
+              default="{:%Y/%m/%d}",
+              )
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -187,12 +186,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
               "(Progress bar is disabled by default if there is no tty attached)",
               is_flag=True,
               )
-@click.option(
-    "--threads-num",
-    help="Number of cpu threads -- deprecated. To be removed in future version",
-    type=click.IntRange(1),
-    default=1,
-)
+@click.option("--threads-num",
+              help="Number of cpu threads -- deprecated. To be removed in future version",
+              type=click.IntRange(1),
+              default=1,
+              )
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -441,7 +439,7 @@ def main(
         # full path to the file to download
         download_path = local_download_path(
             photo, download_size, download_dir)
-        
+
         file_exists = os.path.isfile(download_path)
         if not file_exists and download_size == "original":
             # Deprecation - We used to download files like IMG_1234-original.jpg,
@@ -462,7 +460,7 @@ def main(
                     download_path.rsplit(".", 1)
                 )
                 # filepath below download_dir to shorten output
-                download_filename = download_path[len(directory)+1:]
+                download_filename = download_path[len(directory) + 1:]
                 logger.set_tqdm_description(
                     "%s deduplicated." % truncate_middle(download_filename, 60)
                 )
@@ -470,17 +468,18 @@ def main(
             if file_exists:
                 counter.increment()
                 # filepath below download_dir to shorten output
-                download_filename = download_path[len(directory)+1:]
+                download_filename = download_path[len(directory) + 1:]
                 logger.set_tqdm_description(
-                    "%s already exists." % truncate_middle(download_filename, 60)
-                )
-        else: # file does not exist
+                    "%s already exists." %
+                    truncate_middle(
+                        download_filename, 60))
+        else:  # file does not exist
             counter.reset()
             if only_print_filenames:
                 print(download_path)
             else:
                 # filepath below download_dir to shorten output
-                download_filename = download_path[len(directory)+1:]
+                download_filename = download_path[len(directory) + 1:]
 
                 truncated_path = truncate_middle(download_filename, 60)
                 logger.set_tqdm_description(
@@ -523,11 +522,11 @@ def main(
 
                 lp_file_exists = os.path.isfile(lp_download_path)
 
-                # todo: rework this
+                # for later: rework this
                 if only_print_filenames and not lp_file_exists:
                     print(lp_download_path)
                 else:
-                    if lp_file_exists: # live photo movie part is alreay there
+                    if lp_file_exists:  # live photo movie part is alreay there
                         lp_file_size = os.stat(lp_download_path).st_size
                         lp_photo_size = version["size"]
                         if lp_file_size != lp_photo_size:
@@ -535,7 +534,8 @@ def main(
                                 lp_download_path.rsplit(".", 1)
                             )
                             # filepath below download_dir to shorten output
-                            lp_download_filename = lp_download_path[len(directory)+1:]
+                            lp_download_filename = lp_download_path[len(
+                                directory) + 1:]
                             logger.set_tqdm_description(
                                 "%s deduplicated." %
                                 truncate_middle(
@@ -543,16 +543,20 @@ def main(
                             lp_file_exists = os.path.isfile(lp_download_path)
                         if lp_file_exists:
                             # filepath below download_dir to shorten output
-                            lp_download_filename = lp_download_path[len(directory)+1:]
+                            lp_download_filename = lp_download_path[len(
+                                directory) + 1:]
                             logger.set_tqdm_description(
                                 "%s already exists."
                                 % truncate_middle(lp_download_filename, 60)
                             )
-                    else: # live photo movie part is alreay there
+                    else:  # live photo movie part is alreay there
                         # filepath below download_dir to shorten output
-                        lp_download_filename = lp_download_path[len(directory)+1:]
+                        lp_download_filename = lp_download_path[len(
+                            directory) + 1:]
                         logger.set_tqdm_description(
-                            "Downloading %s" % truncate_middle(lp_download_filename, 60))
+                            "Downloading %s" %
+                            truncate_middle(
+                                lp_download_filename, 60))
                         download.download_media(
                             icloud, photo, lp_download_path, lp_size
                         )
