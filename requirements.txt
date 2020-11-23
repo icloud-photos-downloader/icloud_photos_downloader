@@ -3,5 +3,5 @@ schema==0.7.2
 click==6.7
 python_dateutil==2.8.1
 requests>=2.20.0
-tqdm==4.52.0
+tqdm==4.53.0
 piexif==1.1.3
