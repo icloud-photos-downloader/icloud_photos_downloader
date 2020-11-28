@@ -26,9 +26,11 @@ Please note we have a [code of conduct](#code_of_conduct), please follow it in a
 
 ## How can I contribute?
 
+There are several ways to help this project. Let us know about missing features, or report errors. You could even help others by responding to questions about using the project in the [issue tracker on GitHub][issues-section].
+
 ### Feature requests
 
-We're always looking for suggestions to improve our application. If you have a suggestion to improve an existing feature, or would like to suggest a completely new feature for KeePassXC, please use the [issue tracker on GitHub][issues-section].
+We're always looking for suggestions to improve our application. If you have a suggestion to improve an existing feature, or would like to suggest a completely new feature, please use the [issue tracker on GitHub][issues-section].
 
 ### Bug reports
 
@@ -43,7 +45,7 @@ email, or any other method with the owners of this repository before making a ch
 
 ### Your first code contribution
 
-Unsure where to begin contributing to KeePassXC? You can start by looking through these `good first issue` and `help-wanted` issues:
+Unsure where to begin contributing to this project? You can start by looking through these `good first issue` and `help-wanted` issues:
 
 * [Good first issues][good+first+issue] – issues which should only require a few lines of code, and a test or two.
 * ['Help wanted' issues][help-wanted] – issues which should be a bit more involved than `beginner` issues.
