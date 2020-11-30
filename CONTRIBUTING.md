@@ -47,8 +47,8 @@ email, or any other method with the owners of this repository before making a ch
 
 Unsure where to begin contributing to this project? You can start by looking through these `good first issue` and `help-wanted` issues:
 
-* [Good first issues][good+first+issue] – issues which should only require a few lines of code, and a test or two.
-* ['Help wanted' issues][help-wanted] – issues which should be a bit more involved than `beginner` issues.
+* [Good first issues](good+first+issue) – issues which should only require a few lines of code, and a test or two.
+* ['Help wanted' issues](help-wanted) – issues which should be a bit more involved than `beginner` issues.
 
 Both issue lists are sorted by total number of comments. While not perfect, looking at the number of comments on an issue can give a general idea of how much an impact a given change will have.
 
