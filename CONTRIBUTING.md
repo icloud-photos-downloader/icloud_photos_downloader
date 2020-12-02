@@ -20,9 +20,7 @@ Please review the following guidelines before contributing.  Also, feel free to 
 
 [Setting up the development environment](#setting_up_the_development_environment)
 
-[Code of Conduct](#code_of_conduct)
-
-Please note we have a [code of conduct](#code_of_conduct), please follow it in all your interactions with the project.
+Please note we have a [Code of Conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
 
 ## How can I contribute?
 
@@ -57,7 +55,7 @@ Both issue lists are sorted by total number of comments. While not perfect, look
 There are some requirements for pull requests:
 
 * All bugfixes should be covered (before/after scenario) with a corresponding
-  unit test. All other tests pass. Run `./scripts/test`
+  unit test, refer to [How to write a unit test](#how-to-write-a-unit-test) All other tests pass. Run `./scripts/test`
 * 100% test coverage also for new features is expected.
   * After running `./scripts/test`, you will see the test coverage results in the output
   * You can also open the HTML report at: `./htmlcov/index.html`
@@ -99,77 +97,29 @@ cd icloud_photos_downloader
 docker build -t icloudpd/icloudpd .
 ```
 
-## Code of Conduct
+## How to write a unit test
 
-### Our Pledge
+The unit tests are a very important asset of this project. Due to our 100% test coverage we can savely use great tools like [Dependabot](dependabot.com) and be sure that the implementation of a new feature or fixing of a bug does not lead to further issues.
 
-In the interest of fostering an open and welcoming environment, we as
-contributors and maintainers pledge to making participation in our project and
-our community a harassment-free experience for everyone, regardless of age, body
-size, disability, ethnicity, gender identity and expression, level of experience,
-nationality, personal appearance, race, religion, or sexual identity and
-orientation.
+We're relying on [pytest](pytest.org) for the creation of our tests and [VCR.py](https://github.com/kevin1024/vcrpy) for automatic mocking of the communication to iCloud. This makes the creation of testcases rather simple as you don't have to deal with the communication to iCloud itself and can just fokus on the "real test". Both tools maintain great howtos that can be found here:
 
-### Our Standards
+* pytest documentation: https://docs.pytest.org/en/stable/
+* VCR.py documentation: https://vcrpy.readthedocs.io/en/latest/
 
-Examples of behavior that contributes to creating a positive environment
-include:
+It is highly recommented to have a look at those.
 
-* Using welcoming and inclusive language
-* Being respectful of differing viewpoints and experiences
-* Gracefully accepting constructive criticism
-* Focusing on what is best for the community
-* Showing empathy towards other community members
+The process is mostly like this (assuming we're talking about a bug fix here...)
 
-Examples of unacceptable behavior by participants include:
+1. Is there already a related testcase existing? If so you can just check if an existing test needs to check for another situation.
+1. If not, then you need to make sure you have correspnding test-data at hand; that means: your iCloud photos library should have a constellation that leads to the error in `icloudpd`.
+1. Add a test-function that runs `icloudpd` with the necessary start parameters, referencing to a new cassette file.
+1. **VERY IMPORTANT:** the real iCloud response is cached, so every image is saved in the cassette. That means:
+   1. Don't use private photos!
+   1. keep the dataset small (p.e. using `--recent`)
+   1. Remove your personal information from the cached REST-response (Name, email adresses)
+1. Go back to the previous step and verify again that you followed the recommendations!
+1. Now you can start adding tests.
 
-* The use of sexualized language or imagery and unwelcome sexual attention or
-advances
-* Trolling, insulting/derogatory comments, and personal or political attacks
-* Public or private harassment
-* Publishing others' private information, such as a physical or electronic
-  address, without explicit permission
-* Other conduct which could reasonably be considered inappropriate in a
-  professional setting
+Refer to the existing tests for inspiration. A very simple test to to understand the basic idea might be the test for the listing of albums option in `tests/test_listing_albums.py`.
 
-### Our Responsibilities
-
-Project maintainers are responsible for clarifying the standards of acceptable
-behavior and are expected to take appropriate and fair corrective action in
-response to any instances of unacceptable behavior.
-
-Project maintainers have the right and responsibility to remove, edit, or
-reject comments, commits, code, wiki edits, issues, and other contributions
-that are not aligned to this Code of Conduct, or to ban temporarily or
-permanently any contributor for other behaviors that they deem inappropriate,
-threatening, offensive, or harmful.
-
-### Scope
-
-This Code of Conduct applies both within project spaces and in public spaces
-when an individual is representing the project or its community. Examples of
-representing a project or community include using an official project e-mail
-address, posting via an official social media account, or acting as an appointed
-representative at an online or offline event. Representation of a project may be
-further defined and clarified by project maintainers.
-
-### Enforcement
-
-Instances of abusive, harassing, or otherwise unacceptable behavior may be
-reported by contacting the project team by opening an [issue](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new). All
-complaints will be reviewed and investigated and will result in a response that
-is deemed necessary and appropriate to the circumstances. The project team is
-obligated to maintain confidentiality with regard to the reporter of an incident.
-Further details of specific enforcement policies may be posted separately.
-
-Project maintainers who do not follow or enforce the Code of Conduct in good
-faith may face temporary or permanent repercussions as determined by other
-members of the project's leadership.
-
-### Attribution
-
-This Code of Conduct is adapted from the [Contributor Covenant][homepage], version 1.4,
-available at [http://contributor-covenant.org/version/1/4][version]
-
-[homepage]: http://contributor-covenant.org
-[version]: http://contributor-covenant.org/version/1/4/
+When testing a bugfix it is important to test the faulty behavior and also the expected behavior.
