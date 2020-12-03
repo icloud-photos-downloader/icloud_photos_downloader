@@ -101,7 +101,7 @@ docker build -t icloudpd/icloudpd .
 
 The unit tests are a very important asset of this project. Due to our 100% test coverage we can savely use great tools like [Dependabot](dependabot.com) and be sure that the implementation of a new feature or fixing of a bug does not lead to further issues.
 
-We're relying on [pytest](pytest.org) for the creation of our tests and [VCR.py](https://github.com/kevin1024/vcrpy) for automatic mocking of the communication to iCloud. This makes the creation of testcases rather simple as you don't have to deal with the communication to iCloud itself and can just fokus on the "real test". Both tools maintain great howtos that can be found here:
+We're relying on [pytest](pytest.org) for the creation of our tests and [VCR.py](https://github.com/kevin1024/vcrpy) for automatic mocking of the communication to iCloud. This makes the creation of testcases rather simple as you don't have to deal with the communication to iCloud itself and can just focus on the "real test". Both tools maintain great howtos that can be found here:
 
 * pytest documentation: https://docs.pytest.org/en/stable/
 * VCR.py documentation: https://vcrpy.readthedocs.io/en/latest/
