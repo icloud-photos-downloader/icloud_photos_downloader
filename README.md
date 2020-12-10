@@ -223,9 +223,11 @@ Usage:
 # Downloads all photos to ./Photos
 
 docker pull icloudpd/icloudpd
-docker run -it --rm --name icloud -v $(pwd)/Photos:/data icloudpd/icloudpd:latest \
+docker run -it --rm --name icloud \
+    -v $(pwd)/Photos:/data \
     -v $(pwd)/cookies:/cookies \
     -e TZ=America/Los_Angeles \
+    icloudpd/icloudpd:latest \
     icloudpd --directory /data \
     --cookie-directory /cookies \
     --folder-structure {:%Y/%Y-%m-%d} \
