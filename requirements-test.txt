@@ -1,5 +1,5 @@
 pytest==6.1.2
-mock==4.0.2
+mock==4.0.3
 freezegun==1.0.0
 vcrpy==4.1.1
 pytest-cov==2.10.1
