@@ -2,8 +2,6 @@
 
 ## Unreleased
 
-## 1.7.2 (2021-01-04)
-
 - fix: smtp server_hostname cannot be an empty [#227](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/227)
 
 ## 1.7.1 (2020-11-15)

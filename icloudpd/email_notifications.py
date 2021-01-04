@@ -17,7 +17,6 @@ def send_2sa_notification(
     logger.info("Sending 'two-step expired' notification via email...")
     smtp = smtplib.SMTP(smtp_host, smtp_port)
     smtp.set_debuglevel(0)
-    smtp.connect(smtp_host, smtp_port)
     if not smtp_no_tls:
         smtp.starttls()
 
