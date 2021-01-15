@@ -3,6 +3,8 @@
 ## Unreleased
 
 - fix: smtp server_hostname cannot be an empty [#227](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/227)
+- fix: Warning for missing `tzinfo` in Docker image removed by adding `tzinfo`-package.
+[#286](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/286)
 
 ## 1.7.1 (2020-11-15)
 
