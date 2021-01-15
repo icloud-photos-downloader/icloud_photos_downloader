@@ -1,11 +1,11 @@
-.DS_Store
+**/.DS_Store
 build/
 htmlcov/
 icloudpd.egg-info
 cron_script.sh
 Photos/
 .vscode
-__pycache__
+**/__pycache__
 .pytest_cache/
 .cache
 *.pyc
@@ -13,7 +13,8 @@ __pycache__
 .coverage
 .coverage.*
 .git
-tests/fixures
-tests/__pycache__
+tests/fixtures/Photos
+tests/fixtures/中文
 .venv
 venv
+create/
