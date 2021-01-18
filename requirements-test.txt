@@ -2,7 +2,7 @@ pytest==6.2.1
 mock==4.0.3
 freezegun==1.0.0
 vcrpy==4.1.1
-pytest-cov==2.10.1
+pytest-cov==2.11.0
 pylint==2.6.0
 coveralls==2.2.0
 autopep8==1.5.4
