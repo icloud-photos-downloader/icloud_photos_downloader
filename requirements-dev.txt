@@ -1,3 +1,3 @@
-setuptools==51.1.2
+setuptools==51.3.3
 twine==2.0.0
 wheel==0.36.2
