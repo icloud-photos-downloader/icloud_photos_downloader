@@ -1,6 +1,6 @@
 pytest==6.2.2
 mock==4.0.3
-freezegun==1.0.0
+freezegun==1.1.0
 vcrpy==4.1.1
 pytest-cov==2.11.1
 pylint==2.6.0
