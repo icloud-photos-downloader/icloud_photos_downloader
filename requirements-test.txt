@@ -4,7 +4,7 @@ freezegun==1.0.0
 vcrpy==4.1.1
 pytest-cov==2.11.1
 pylint==2.6.0
-coveralls==2.2.0
+coveralls==3.0.1
 autopep8==1.5.5
 pytest-timeout==1.4.2
 pytest-xdist==2.2.1
