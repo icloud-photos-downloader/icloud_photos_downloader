@@ -8,11 +8,11 @@ from icloudpd.logger import setup_logger
 
 
 def send_2sa_notification(
-        smtp_email, smtp_password, smtp_host, smtp_port, smtp_no_tls, to_addr
+        smtp_username, smtp_password, smtp_host, smtp_port, smtp_no_tls, to_addr, from_addr
 ):
     """Send an email notification when 2SA is expired"""
-    to_addr = to_addr if to_addr else smtp_email
-    from_addr = smtp_email if smtp_email else to_addr
+    to_addr = to_addr if to_addr else smtp_username
+    from_addr = from_addr if from_addr else smtp_username
     logger = setup_logger()
     logger.info("Sending 'two-step expired' notification via email...")
     smtp = smtplib.SMTP(smtp_host, smtp_port)
@@ -23,8 +23,8 @@ def send_2sa_notification(
     if not smtp_no_tls:
         smtp.starttls()
 
-    if smtp_email is not None or smtp_password is not None:
-        smtp.login(smtp_email, smtp_password)
+    if smtp_username is not None or smtp_password is not None:
+        smtp.login(smtp_username, smtp_password)
 
     subj = "icloud_photos_downloader: Two step authentication has expired"
     date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
