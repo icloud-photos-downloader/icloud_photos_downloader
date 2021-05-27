@@ -52,6 +52,9 @@ Options:
                                   Download live photos)
   --force-size                    Only download the requested size (default:
                                   download original if size is not available)
+  --thumbnail                     Only download the first photo as thumbnail 
+                                  of album as it is shown in the device 
+                                  (-a, --album option is required)
   --auto-delete                   Scans the "Recently Deleted" folder and
                                   deletes any files found in there. (If you
                                   restore the photo in iCloud, it will be

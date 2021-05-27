@@ -193,6 +193,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.IntRange(1),
     default=1,
 )
+@click.option(
+    "--thumbnail",
+    help="Get the first photo of album as thumbnail as is shown in the device",
+    is_flag=True,
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -224,6 +229,7 @@ def main(
         no_progress_bar,
         notification_script,
         threads_num,    # pylint: disable=W0613
+        thumbnail,
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -321,6 +327,10 @@ def main(
 
     photos_count = len(photos)
 
+    if thumbnail and album is not None:
+        photos = itertools.islice(photos, photos.page_size-1, photos.page_size)
+        photos_count = 1
+
     # Optional: Only download the x most recent photos.
     if recent is not None:
         photos_count = recent
@@ -334,9 +344,9 @@ def main(
         # ensure photos iterator doesn't have a known length
         photos = (p for p in photos)
 
-    plural_suffix = "" if photos_count == 1 else "s"
+    plural_suffix = "" if photos_count == 1 or thumbnail else "s"
     video_suffix = ""
-    photos_count_str = "the first" if photos_count == 1 else photos_count
+    photos_count_str = "the first" if photos_count == 1 else "thumbnail" if thumbnail else photos_count
     if not skip_videos:
         video_suffix = " or video" if photos_count == 1 else " and videos"
     logger.info(

@@ -1295,3 +1295,51 @@ class DownloadPhotoTestCase(TestCase):
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
             assert result.exit_code == 0
+
+    def test_get_thumbnail_photo_of_album(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+
+            def mock_raise_response_error():
+                raise PyiCloudAPIResponseError("Api Error", 100)
+
+            with mock.patch.object(PhotosService, "_fetch_folders") as pa_photos_request:
+                pa_photos_request.side_effect = mock_raise_response_error
+
+                # Let the initial authenticate() call succeed,
+                # but do nothing on the second try.
+                orig_authenticate = PyiCloudService.authenticate
+
+                def mocked_authenticate(self):
+                    if not hasattr(self, "already_authenticated"):
+                        orig_authenticate(self)
+                        setattr(self, "already_authenticated", True)
+
+                with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+                    with mock.patch.object(
+                        PyiCloudService, "authenticate", new=mocked_authenticate
+                    ):
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--no-progress-bar",
+                                "--thumbnail",
+                                "--threads-num",
+                                1,
+                                "-d",
+                                base_dir,
+                            ],
+                        )
+                        print_result_exception(result)
