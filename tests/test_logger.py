@@ -51,3 +51,5 @@ class LoggerTestCase(TestCase):
         logger.tqdm_write("qux")
         logger.tqdm.write.assert_called_once_with("qux")
         logger.log.assert_not_called
+
+        logger.set_tqdm(None)
