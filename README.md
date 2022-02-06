@@ -21,7 +21,7 @@ pip install icloudpd
 [//]: # (This is now only a copy&paste from --help output)
 
 ``` plain
-Usage: icloudpd.py <options>
+Usage: icloudpd <options>
 
   Download all iCloud photos to a local directory
 
