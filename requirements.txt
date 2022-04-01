@@ -1,6 +1,6 @@
 pyicloud_ipd==0.10.1
 schema==0.7.4
-click==6.7
+click==8.1.2
 python_dateutil==2.8.2
 requests>=2.20.0
 tqdm==4.62.0
