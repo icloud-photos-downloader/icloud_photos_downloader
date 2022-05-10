@@ -9,8 +9,8 @@ import logging
 import itertools
 import subprocess
 import json
-import click
 import urllib
+import click
 
 from tqdm import tqdm
 from tzlocal import get_localzone
@@ -121,13 +121,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option(
-    "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d}). "
-    "If set to 'none' all photos will just be placed into the download directory",
-    metavar="<folder_structure>",
-    default="{:%Y/%m/%d}",
-)
+@click.option("--folder-structure",
+              help="Folder structure (default: {:%Y/%m/%d}). "
+              "If set to 'none' all photos will just be placed into the download directory",
+              metavar="<folder_structure>",
+              default="{:%Y/%m/%d}",
+              )
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -188,16 +187,15 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
               "(Progress bar is disabled by default if there is no tty attached)",
               is_flag=True,
               )
+@click.option("--threads-num",
+              help="Number of cpu threads -- deprecated. To be removed in future version",
+              type=click.IntRange(1),
+              default=1,
+              )
 @click.option(
-    "--threads-num",
-    help="Number of cpu threads -- deprecated. To be removed in future version",
-    type=click.IntRange(1),
-    default=1,
-)
-@click.option(
-    "--delete-on-download",
-    help='Delete the photo/video after downloading it.'
-    + ' The deleted item will be appear in the "Recently Deleted".'
+    "--delete-after-download",
+    help='Delete the photo/video after download it.'
+    + ' The deleted items will be appear in the "Recently Deleted".'
     + ' Therefore, should not combine with --auto-delete option.',
     is_flag=True,
 )
@@ -231,8 +229,8 @@ def main(
         log_level,
         no_progress_bar,
         notification_script,
-        threads_num,
-        delete_on_download,    # pylint: disable=W0613
+        threads_num,    # pylint: disable=W0613
+        delete_after_download,
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -255,7 +253,7 @@ def main(
         print('--directory or --list-albums are required')
         sys.exit(2)
 
-    if auto_delete and delete_on_download:
+    if auto_delete and delete_after_download:
         print('--auto-delete and --delete-on-download are mutually exclusive')
         sys.exit(2)
 
@@ -557,7 +555,11 @@ def main(
     def delete_photo(photo):
         """Delete a photo from the iCloud account."""
         logger.info("Deleting %s", photo.filename)
-        url = "{}/records/modify?{}".format(icloud.photos._service_endpoint, urllib.parse.urlencode(icloud.photos.params))
+        # pylint: disable=W0212
+        url = "{}/records/modify?{}".format(
+            icloud.photos._service_endpoint,
+            urllib.parse.urlencode(
+                icloud.photos.params))
         post_data = json.dumps(
             {
                 "atomic": True,
@@ -574,9 +576,9 @@ def main(
                 "zoneID": {"zoneName": "PrimarySync"}
             }
         )
-        icloud.photos.session.post(url,
-                                             data=post_data,
-                                             headers={"Content-type": "application/json"}).json()
+        icloud.photos.session.post(
+            url, data=post_data, headers={
+                "Content-type": "application/json"})
 
     consecutive_files_found = Counter(0)
 
@@ -594,7 +596,7 @@ def main(
                 break
             item = next(photos_iterator)
             download_photo(consecutive_files_found, item)
-            if delete_on_download:
+            if delete_after_download:
                 delete_photo(item)
         except StopIteration:
             break

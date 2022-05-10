@@ -44551,4 +44551,34 @@ interactions:
       apple-seq: ['0']
       apple-tk: ['false']
     status: {code: 200, message: OK}
+- request:
+    body: '{"atomic": true, "desiredKeys": ["isDeleted"], "operations": [{"operationType":
+      "update", "record": {"fields": {"isDeleted": {"value": 1}}, "recordChangeTag":
+      "49lh", "recordName": "F2A23C38-0020-42FE-A273-2923ADE3CAED", "recordType":
+      "CPLAsset"}}], "zoneID": {"zoneName": "PrimarySync"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '288'
+      Content-type:
+      - application/json
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p10-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=185776146&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body:
+      string: "{}"
+    headers:
+      Content-type: application/json
+    status: {code: 200, message: OK}
 version: 1

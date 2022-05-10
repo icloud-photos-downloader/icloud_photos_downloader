@@ -1295,3 +1295,58 @@ class DownloadPhotoTestCase(TestCase):
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
             assert result.exit_code == 0
+
+    def test_download_after_delete(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        with mock.patch.object(piexif, "insert") as piexif_patched:
+            piexif_patched.side_effect = InvalidImageDataError
+            with mock.patch(
+                "icloudpd.exif_datetime.get_photo_exif"
+            ) as get_exif_patched:
+                get_exif_patched.return_value = False
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    # Pass fixed client ID via environment variable
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--threads-num",
+                            1,
+                            "--delete-after-download",
+                            "-d",
+                            base_dir,
+                        ],
+                    )
+                    print_result_exception(result)
+
+                    self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo to {base_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     Deleting IMG_7409.JPG", self._caplog.text
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded!", self._caplog.text
+                    )
+                    assert result.exit_code == 0
