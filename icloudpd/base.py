@@ -254,7 +254,7 @@ def main(
         sys.exit(2)
 
     if auto_delete and delete_after_download:
-        print('--auto-delete and --delete-on-download are mutually exclusive')
+        print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
     raise_error_on_2sa = (

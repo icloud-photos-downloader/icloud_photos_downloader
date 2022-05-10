@@ -33,7 +33,7 @@ pip install icloudpd
 
 ## Usage
 
-[//]: # "This is now only a copy&paste from --help output"
+[//]: # (This is now only a copy&paste from --help output)
 
 ``` plain
 Usage: icloudpd-linux <options>
