@@ -14,5 +14,5 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install --upgrade pip
-      - run: pip install tox
+      - run: pip install tox vcr
       - run: tox -e py
