@@ -106,7 +106,7 @@ icloudpd --directory ./Photos \
 
 ## Requirements
 
-- Python 3.6+
+- Python 3.6-3.8
 - pip
 
 ### Install Python & pip
@@ -123,13 +123,18 @@ icloudpd --directory ./Photos \
 which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
-- Install Python (includes `pip`):
+- Install Python 3.8 (includes `pip`):
 
 ``` sh
-brew install python
+brew install python@3.8
 ```
 
 > Alternatively, you can [download the latest Python 3.x installer for Mac](https://www.python.org/downloads/mac-osx/).
+
+- A refined command will be required to install the icloudpd:
+``` sh
+pip3.8 install icloudpd
+```
 
 #### Linux (Ubuntu)
 
