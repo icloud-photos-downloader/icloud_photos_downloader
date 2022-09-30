@@ -2,5 +2,5 @@
 set -euo pipefail
 pip3 install -r requirements-pip.txt
 pip3 install -r requirements.txt -r requirements-test.txt -r requirements-dev.txt
-# pip3 install --upgrade keyring keyrings.alt
-pip3 install --upgrade git+https://github.com/picklepete/pyicloud.git
+pip3 install --upgrade keyring keyrings.alt
+# pip3 install --upgrade git+https://github.com/picklepete/pyicloud.git
