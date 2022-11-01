@@ -261,9 +261,6 @@ def main(
     if list_albums and list_libraries:
         print('--list-albums and --list-libraries can not be used together')
         sys.exit(2)
-    if album != 'All Photos' and library:
-        print('--library can not be used together with --album')
-        sys.exit(2)
 
     raise_error_on_2sa = (
         smtp_username is not None
@@ -292,36 +289,41 @@ def main(
             )
         sys.exit(1)
 
-    if list_albums:
-        albums_dict = icloud.photos.albums
-        albums = albums_dict.values()  # pragma: no cover
-        album_titles = [str(a) for a in albums]
-        print(*album_titles, sep="\n")
-        sys.exit(0)
-
     if list_libraries:
         libraries_dict = icloud.photos.libraries
         library_names = libraries_dict.keys()
         print(*library_names, sep="\n")
         sys.exit(0)
 
+    # Access to the selected library. Defaults to the primary photos object.
+    library_object = icloud.photos
+
     # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
     # case exit.
     try:
         if library:
             try:
-                photos = icloud.photos.libraries[library]
+                library_object = icloud.photos.libraries[library]
             except KeyError:
                 print("Unknown library: %s" % library)
-        else:
-            # Default album is "All Photos", so this is the same as
-            # calling `icloud.photos.all`.
-            photos = icloud.photos.albums[album]
+                sys.exit(1)
+
+        # Default album is "All Photos", so this is the same as
+        # calling `icloud.photos.all`.
+        photos = library_object.albums[album]
+
     except PyiCloudAPIResponseError as err:
         # For later: come up with a nicer message to the user. For now take the
         # exception text
         print(err)
         sys.exit(1)
+
+    if list_albums:
+        albums_dict = library_object.albums
+        albums = albums_dict.values()  # pragma: no cover
+        album_titles = [str(a) for a in albums]
+        print(*album_titles, sep="\n")
+        sys.exit(0)
 
     directory = os.path.normpath(directory)
 
@@ -601,4 +603,4 @@ def main(
     logger.info("All photos have been downloaded!")
 
     if auto_delete:
-        autodelete_photos(icloud, folder_structure, directory)
+        autodelete_photos(library_object, folder_structure, directory)
