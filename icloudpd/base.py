@@ -88,7 +88,18 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "-l", "--list-albums",
-    help="Lists the avaliable albums",
+    help="Lists the available albums",
+    is_flag=True,
+)
+@click.option(
+    "--library",
+    help="Library to download (default: Personal Library)",
+    metavar="<library>",
+    default="PrimarySync",
+)
+@click.option(
+    "--list-libraries",
+    help="Lists the available libraries",
     is_flag=True,
 )
 @click.option(
@@ -207,6 +218,8 @@ def main(
         until_found,
         album,
         list_albums,
+        library,
+        list_libraries,
         skip_videos,
         skip_live_photos,
         force_size,
@@ -242,8 +255,14 @@ def main(
             logger.setLevel(logging.ERROR)
 
     # check required directory param only if not list albums
-    if not list_albums and not directory:
-        print('--directory or --list-albums are required')
+    if not list_albums and not list_libraries and not directory:
+        print('--directory, --list-albums, or --list-libraries are required')
+        sys.exit(2)
+    if list_albums and list_libraries:
+        print('--list-albums and --list-libraries can not be used together')
+        sys.exit(2)
+    if album != 'All Photos' and library:
+        print('--library can not be used together with --album')
         sys.exit(2)
 
     raise_error_on_2sa = (
@@ -273,18 +292,6 @@ def main(
             )
         sys.exit(1)
 
-    # Default album is "All Photos", so this is the same as
-    # calling `icloud.photos.all`.
-    # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
-    # case exit.
-    try:
-        photos = icloud.photos.albums[album]
-    except PyiCloudAPIResponseError as err:
-        # For later: come up with a nicer message to the user. For now take the
-        # exception text
-        print(err)
-        sys.exit(1)
-
     if list_albums:
         albums_dict = icloud.photos.albums
         albums = albums_dict.values()  # pragma: no cover
@@ -292,12 +299,37 @@ def main(
         print(*album_titles, sep="\n")
         sys.exit(0)
 
+    if list_libraries:
+        libraries_dict = icloud.photos.libraries
+        library_names = libraries_dict.keys()
+        print(*library_names, sep="\n")
+        sys.exit(0)
+
+    # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
+    # case exit.
+    try:
+        if library:
+            try:
+                photos = icloud.photos.libraries[library]
+            except KeyError:
+                print("Unknown library: %s" % library)
+        else:
+            # Default album is "All Photos", so this is the same as
+            # calling `icloud.photos.all`.
+            photos = icloud.photos.albums[album]
+    except PyiCloudAPIResponseError as err:
+        # For later: come up with a nicer message to the user. For now take the
+        # exception text
+        print(err)
+        sys.exit(1)
+
     directory = os.path.normpath(directory)
 
     logger.debug(
-        "Looking up all photos%s from album %s...",
+        "Looking up all photos%s from album %s%s...",
         "" if skip_videos else " and videos",
-        album)
+        album,
+        " in library " + library if library else "")
 
     def photos_exception_handler(ex, retries):
         """Handles session errors in the PhotoAlbum photos iterator"""
