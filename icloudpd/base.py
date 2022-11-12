@@ -88,7 +88,7 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
 )
 @click.option(
     "-l", "--list-albums",
-    help="Lists the avaliable albums",
+    help="Lists the available albums",
     is_flag=True,
 )
 @click.option(
@@ -311,7 +311,7 @@ def main(
                 "Session error, re-authenticating...",
                 logging.ERROR)
             if retries > 1:
-                # If the first reauthentication attempt failed,
+                # If the first re-authentication attempt failed,
                 # start waiting a few seconds before retrying in case
                 # there are some issues with the Apple servers
                 time.sleep(constants.WAIT_SECONDS * retries)
@@ -352,7 +352,7 @@ def main(
     tqdm_kwargs["ascii"] = True
 
     # Skip the one-line progress bar if we're only printing the filenames,
-    # or if the progress bar is explicity disabled,
+    # or if the progress bar is explicitly disabled,
     # or if this is not a terminal (e.g. cron or piping output to file)
     if not os.environ.get("FORCE_TQDM") and (
             only_print_filenames or no_progress_bar or not sys.stdout.isatty()
@@ -487,7 +487,7 @@ def main(
                 if download_result:
                     if set_exif_datetime and photo.filename.lower().endswith(
                             (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(download_path):
-                        # %Y:%m:%d looks wrong but it's the correct format
+                        # %Y:%m:%d looks wrong, but it's the correct format
                         date_str = created_date.strftime(
                             "%Y-%m-%d %H:%M:%S%z")
                         logger.debug(

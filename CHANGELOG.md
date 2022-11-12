@@ -10,7 +10,7 @@
 
 ## 1.7.1 (2020-11-15)
 
-- fix: dev docker build on windows correctly manages crlf for scripts
+- fix: dev Docker build on Windows correctly manages crlf for scripts
 
 ## 1.7.1rc1 (2020-11-10)
 
@@ -24,7 +24,7 @@
 so all photos will be placed directly into the download directory.
 - fix: Empty directory structure being created #185
 - feature: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
-- fix: documentation issues, first adressed in #141 and seperated contribution
+- fix: documentation issues, first addressed in #141 and separated contribution
 info from README.md into CONTRIBUTING.md
 
 ## 1.6.2 (2020-10-23)

@@ -146,7 +146,7 @@ you will be prompted for a code when you run the script.
 Two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months.
 
-Authentication cookies will be stored in a temp directory (`/tmp/pyicloud` on Linux, or `/var/tmp/...` on MacOS.) This directory can be configured with the `--cookie-directory` option.
+Authentication cookies will be stored in a temp directory (`/tmp/pyicloud` on Linux, or `/var/tmp/...` on macOS.) This directory can be configured with the `--cookie-directory` option.
 
 You can receive an email notification when two-factor authentication expires by passing the
 `--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
