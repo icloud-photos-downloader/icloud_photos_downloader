@@ -2,7 +2,7 @@
 
 import sys
 import click
-import pyicloud_ipd
+import pyicloud
 from icloudpd.logger import setup_logger
 
 
@@ -26,24 +26,28 @@ def authenticate(
     try:
         # If password not provided on command line variable will be set to None
         # and PyiCloud will attempt to retrieve from it's keyring
-        icloud = pyicloud_ipd.PyiCloudService(
+        icloud = pyicloud.PyiCloudService(
             username, password,
             cookie_directory=cookie_directory,
             client_id=client_id)
-    except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
+    except pyicloud.exceptions.PyiCloudNoStoredPasswordAvailableException:
         # Prompt for password if not stored in PyiCloud's keyring
         password = click.prompt("iCloud Password", hide_input=True)
-        icloud = pyicloud_ipd.PyiCloudService(
+        icloud = pyicloud.PyiCloudService(
             username, password,
             cookie_directory=cookie_directory,
             client_id=client_id)
 
-    if icloud.requires_2sa:
+    if icloud.requires_2fa:
+        print("Two-factor authentication required.")
+        logger.info("Two-factor authentication is required!")
+        request_2fa(icloud, logger)
+    elif icloud.requires_2sa:
         if raise_error_on_2sa:
             raise TwoStepAuthRequiredError(
-                "Two-step/two-factor authentication is required!"
+                "Two-step authentication is required!"
             )
-        logger.info("Two-step/two-factor authentication is required!")
+        logger.info("Two-step authentication is required!")
         request_2sa(icloud, logger)
     return icloud
 
@@ -70,7 +74,7 @@ def request_2sa(icloud, logger):
             type=click.IntRange(
                 0,
                 devices_count))
-
+    #
     if device_index == devices_count:
         # We're using the 2FA code that was automatically sent to the user's device,
         # so can just use an empty dict()
@@ -91,4 +95,27 @@ def request_2sa(icloud, logger):
         "You can set up email notifications for when "
         "the two-step authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
+    )
+
+
+def request_2fa(icloud, logger):
+    code = input("Enter the code you received of one of your approved devices: ")
+    result = icloud.validate_2fa_code(code)
+    print("Code validation result: %s" % result)
+
+    if not result:
+        print("Failed to verify security code")
+        sys.exit(1)
+
+    if not icloud.is_trusted_session:
+        print("Session is not trusted. Requesting trust...")
+        result = icloud.trust_session()
+        print("Session trust result %s" % result)
+
+        if not result:
+            print("Failed to request trust. You will likely be prompted for the code again in the coming weeks")
+    
+    logger.info(
+        "Great, you're all set up. The script can now be run without "
+        "user interaction until 2FA expires.\n"
     )

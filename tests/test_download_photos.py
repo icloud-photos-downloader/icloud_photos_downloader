@@ -10,9 +10,9 @@ from mock import call, ANY
 from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotosService
-from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud.services.photos import PhotoAsset, PhotoAlbum, PhotosService
+from pyicloud.base import PyiCloudService
+from pyicloud.exceptions import PyiCloudAPIResponseException
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
@@ -454,7 +454,7 @@ class DownloadPhotoTestCase(TestCase):
             # Pass fixed client ID via environment variable
 
             def mock_raise_response_error(arg):
-                raise PyiCloudAPIResponseError("Invalid global session", 100)
+                raise PyiCloudAPIResponseException("Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAsset, "download") as pa_download:
@@ -522,7 +522,7 @@ class DownloadPhotoTestCase(TestCase):
             # Pass fixed client ID via environment variable
 
             def mock_raise_response_error(offset):
-                raise PyiCloudAPIResponseError("Invalid global session", 100)
+                raise PyiCloudAPIResponseException("Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
@@ -655,7 +655,7 @@ class DownloadPhotoTestCase(TestCase):
             # Pass fixed client ID via environment variable
 
             def mock_raise_response_error():
-                raise PyiCloudAPIResponseError("Api Error", 100)
+                raise PyiCloudAPIResponseException("Api Error", 100)
 
             with mock.patch.object(PhotosService, "_fetch_folders") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
