@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 from __future__ import print_function
+
 import os
 import sys
 import time
@@ -13,6 +14,8 @@ import click
 
 from tqdm import tqdm
 from tzlocal import get_localzone
+
+from future.moves.urllib.parse import urlencode
 
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 
