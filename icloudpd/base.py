@@ -559,9 +559,6 @@ def main(
     def auto_delete_downloaded_photos(photo, end=False):
         nonlocal photos_delete_list
         if photo is not None:
-            url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
-            headers = {'Content-type': 'text/plain'}
-
             mr = {'fields': {'isDeleted': {'value': 1}}}
             mr['recordChangeTag'] = photo._asset_record['recordChangeTag']
             mr['recordName'] = photo._asset_record['recordName']
@@ -576,6 +573,8 @@ def main(
                 operations=photos_delete_list,
                 zoneID={'zoneName': 'PrimarySync'},
             ))
+            url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
+            headers = {'Content-type': 'text/plain'}
             result = icloud.photos.session.post(
                 url,
                 data=post_data,
