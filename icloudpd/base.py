@@ -114,6 +114,11 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     is_flag=True,
 )
 @click.option(
+    "--auto-delete-downloaded",
+    help='Auto delete downloaded photo. ',
+    is_flag=True,
+)
+@click.option(
     "--only-print-filenames",
     help="Only prints the filenames of all files that will be downloaded "
     "(not including files that are already downloaded.)"
