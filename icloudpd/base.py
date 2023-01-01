@@ -566,7 +566,7 @@ def main(
             op = dict( operationType='update', record=mr)
             
             photos_delete_list.append(op)
-        if len(photos_delete_list) >= 100 or end is True:
+        if len(photos_delete_list) > 0 and (len(photos_delete_list) >= 100 or end is True):
             post_data = json.dumps(dict(
                 atomic=True,
                 desiredKeys=['isDeleted'],
