@@ -211,6 +211,7 @@ def main(
         skip_live_photos,
         force_size,
         auto_delete,
+        auto_delete_downloaded,
         only_print_filenames,
         folder_structure,
         set_exif_datetime,
@@ -251,6 +252,8 @@ def main(
         or notification_email is not None
         or notification_script is not None
     )
+
+    # authentication -> store information to `icloud` variable
     try:
         icloud = authenticate(
             username,
@@ -277,6 +280,7 @@ def main(
     # calling `icloud.photos.all`.
     # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
     # case exit.
+    # -> store in `photos` variable
     try:
         photos = icloud.photos.albums[album]
     except PyiCloudAPIResponseError as err:
@@ -438,8 +442,7 @@ def main(
                 return
             download_size = "original"
 
-        download_path = local_download_path(
-            photo, download_size, download_dir)
+        download_path = local_download_path(photo, download_size, download_dir)
 
         file_exists = os.path.isfile(download_path)
         if not file_exists and download_size == "original":
@@ -544,6 +547,29 @@ def main(
                             icloud, photo, lp_download_path, lp_size
                         )
 
+    def delete_photo(photo):
+        logger.info("delete photo")
+        url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
+        headers = {'Content-type': 'text/plain'}
+
+        mr = {'fields': {'isDeleted': {'value': 1}}}
+        mr['recordChangeTag'] = photo._asset_record['recordChangeTag']
+        mr['recordName'] = photo._asset_record['recordName']
+        mr['recordType'] = 'CPLAsset'
+        op = dict( operationType='update', record=mr)
+        post_data = json.dumps(dict(
+            atomic=True,
+            desiredKeys=['isDeleted'],
+            operations=[op],
+            zoneID={'zoneName': 'PrimarySync'},
+        ))
+        result = icloud.photos.session.post(
+            url,
+            data=post_data,
+            headers=headers,
+            ).json()
+        logger.info(result)
+    
     consecutive_files_found = Counter(0)
 
     def should_break(counter):
@@ -560,6 +586,8 @@ def main(
                 break
             item = next(photos_iterator)
             download_photo(consecutive_files_found, item)
+            if auto_delete_downloaded:
+                delete_photo(item)
         except StopIteration:
             break
 
