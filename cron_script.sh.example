@@ -6,4 +6,4 @@ icloudpd /your/photos/directory \
   --username testuser@example.com \
   --password pass1234 \
   --recent 500 \
-  --auto-delete
+  --auto-delete-downloaded

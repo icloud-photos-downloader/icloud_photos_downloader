@@ -579,8 +579,11 @@ def main(
                 url,
                 data=post_data,
                 headers=headers,
-                ).json()
-            logger.info(result)
+            )
+            # i dont know what is type of result, but know can converted to json, after that
+            # reload to json and count the return records array
+            j = json.loads(result.json())
+            logger.info('deleted: ', len(j[records]), ' photos!')
             # clear list after delete
             photos_delete_list = []
     
