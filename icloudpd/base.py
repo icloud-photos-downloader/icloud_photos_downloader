@@ -555,9 +555,9 @@ def main(
                             icloud, photo, lp_download_path, lp_size
                         )
     
-    photos_delete = []
+    photos_delete_list = []
     def auto_delete_downloaded_photos(photo, end=False):
-        global photos_delete
+        global photos_delete_list
         if photo is not None:
             url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
             headers = {'Content-type': 'text/plain'}
@@ -567,12 +567,12 @@ def main(
             mr['recordName'] = photo._asset_record['recordName']
             mr['recordType'] = 'CPLAsset'
             op = dict( operationType='update', record=mr)
-            photos_delete.append(op)
-        if len(photos_delete) >= 100 or end == True:
+            photos_delete_list.append(op)
+        if len(photos_delete_list) >= 100 or end == True:
             post_data = json.dumps(dict(
                 atomic=True,
                 desiredKeys=['isDeleted'],
-                operations=photos_delete,
+                operations=photos_delete_list,
                 zoneID={'zoneName': 'PrimarySync'},
             ))
             result = icloud.photos.session.post(
@@ -582,7 +582,7 @@ def main(
                 ).json()
             logger.info(result)
             # clear list after delete
-            photos_delete=[]
+            photos_delete_list = []
     
     consecutive_files_found = Counter(0)
 
