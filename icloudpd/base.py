@@ -570,6 +570,34 @@ def main(
             ).json()
         logger.info(result)
     
+    photos_delete=[]
+    def auto_delete(photo, end=False):
+        logger.info("delete photo")
+        url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
+        headers = {'Content-type': 'text/plain'}
+
+        mr = {'fields': {'isDeleted': {'value': 1}}}
+        mr['recordChangeTag'] = photo._asset_record['recordChangeTag']
+        mr['recordName'] = photo._asset_record['recordName']
+        mr['recordType'] = 'CPLAsset'
+        op = dict( operationType='update', record=mr)
+        photos_delete.append(op)
+        if len(photos_delete) >= 100 or end == True:
+            post_data = json.dumps(dict(
+                atomic=True,
+                desiredKeys=['isDeleted'],
+                operations=photos_delete,
+                zoneID={'zoneName': 'PrimarySync'},
+            ))
+            result = icloud.photos.session.post(
+                url,
+                data=post_data,
+                headers=headers,
+                ).json()
+            logger.info(result)
+            # clear list after delete
+            photos_delete=[]
+    
     consecutive_files_found = Counter(0)
 
     def should_break(counter):
@@ -587,7 +615,8 @@ def main(
             item = next(photos_iterator)
             download_photo(consecutive_files_found, item)
             if auto_delete_downloaded:
-                delete_photo(item)
+                auto_delete(item)
+                
         except StopIteration:
             break
 
