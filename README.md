@@ -56,6 +56,7 @@ Options:
                                   deletes any files found in there. (If you
                                   restore the photo in iCloud, it will be
                                   downloaded again.)
+  --auto-delete-downloaded        Auto delete downloaded photo from icloud.
   --only-print-filenames          Only prints the filenames of all files that
                                   will be downloaded (not including files that
                                   are already downloaded.)(Does not download
