@@ -549,16 +549,16 @@ def main(
     
     photos_delete=[]
     def auto_delete_downloaded_photos(photo, end=False):
-        logger.info("delete photo")
-        url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
-        headers = {'Content-type': 'text/plain'}
+        if photo is not None:
+            url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
+            headers = {'Content-type': 'text/plain'}
 
-        mr = {'fields': {'isDeleted': {'value': 1}}}
-        mr['recordChangeTag'] = photo._asset_record['recordChangeTag']
-        mr['recordName'] = photo._asset_record['recordName']
-        mr['recordType'] = 'CPLAsset'
-        op = dict( operationType='update', record=mr)
-        photos_delete.append(op)
+            mr = {'fields': {'isDeleted': {'value': 1}}}
+            mr['recordChangeTag'] = photo._asset_record['recordChangeTag']
+            mr['recordName'] = photo._asset_record['recordName']
+            mr['recordType'] = 'CPLAsset'
+            op = dict( operationType='update', record=mr)
+            photos_delete.append(op)
         if len(photos_delete) >= 100 or end == True:
             post_data = json.dumps(dict(
                 atomic=True,
@@ -601,6 +601,9 @@ def main(
         sys.exit(0)
 
     logger.info("All photos have been downloaded!")
+
+    if auto_delete_downloaded:
+        auto_delete_downloaded_photos(None, True)
 
     if auto_delete:
         autodelete_photos(icloud, folder_structure, directory)
