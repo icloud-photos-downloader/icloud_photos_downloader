@@ -546,32 +546,9 @@ def main(
                         download.download_media(
                             icloud, photo, lp_download_path, lp_size
                         )
-
-    def delete_photo(photo):
-        logger.info("delete photo")
-        url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
-        headers = {'Content-type': 'text/plain'}
-
-        mr = {'fields': {'isDeleted': {'value': 1}}}
-        mr['recordChangeTag'] = photo._asset_record['recordChangeTag']
-        mr['recordName'] = photo._asset_record['recordName']
-        mr['recordType'] = 'CPLAsset'
-        op = dict( operationType='update', record=mr)
-        post_data = json.dumps(dict(
-            atomic=True,
-            desiredKeys=['isDeleted'],
-            operations=[op],
-            zoneID={'zoneName': 'PrimarySync'},
-        ))
-        result = icloud.photos.session.post(
-            url,
-            data=post_data,
-            headers=headers,
-            ).json()
-        logger.info(result)
     
     photos_delete=[]
-    def auto_delete(photo, end=False):
+    def auto_delete_downloaded_photos(photo, end=False):
         logger.info("delete photo")
         url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
         headers = {'Content-type': 'text/plain'}
@@ -615,7 +592,7 @@ def main(
             item = next(photos_iterator)
             download_photo(consecutive_files_found, item)
             if auto_delete_downloaded:
-                auto_delete(item)
+                auto_delete_downloaded_photos(item)
                 
         except StopIteration:
             break
