@@ -580,11 +580,8 @@ def main(
                 data=post_data,
                 headers=headers,
             )
-            # i dont know what is type of result, but know can converted to json, after that
-            # reload to json and count the return records array
-            # result.json()
-            logger.info('typeof:', type(result))
-            logger.info('deleted: ' + len(photos_delete_list) + ' photos!')
+            statuscode = result.status_code
+            logger.info('Delete status code: ' + str(statuscode) + ', Delete len: ' + str(len(photos_delete_list)) + ' photos!')
             # clear list after delete
             photos_delete_list = []
     
