@@ -582,9 +582,9 @@ def main(
             )
             # i dont know what is type of result, but know can converted to json, after that
             # reload to json and count the return records array
-            result.json()
+            # result.json()
             logger.info('typeof:', type(result))
-            logger.info('deleted: ', len(photos_delete_list), ' photos!')
+            logger.info('deleted: ' + len(photos_delete_list) + ' photos!')
             # clear list after delete
             photos_delete_list = []
     
