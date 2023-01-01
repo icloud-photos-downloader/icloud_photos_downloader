@@ -557,6 +557,7 @@ def main(
     
     photos_delete_list = []
     def auto_delete_downloaded_photos(photo, end=False):
+        nonlocal photos_delete_list
         if photo is not None:
             url = '{}/records/modify?{}'.format(icloud.photos._service_endpoint, urlencode(icloud.photos.params))
             headers = {'Content-type': 'text/plain'}
