@@ -19,9 +19,9 @@ jobs:
         os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9]
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
@@ -46,7 +46,6 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9]
-        architecture: ["x86_64"]
         include:
           - os: macos-latest
             python-version: 3.9
@@ -54,9 +53,9 @@ jobs:
             python-version: 3.9
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v2
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     
@@ -79,14 +78,14 @@ jobs:
 
     - name: Build Release Executable
       run: |
-        pyinstaller --onefile icloudpd.py --name icloudpd-${{ matrix.os }}-${{ matrix.architecture }}
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{ matrix.os }}-x86_64
       if: matrix.python-version == '3.9'
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       if: matrix.python-version == '3.9'
       with:
-        name: binaries
+        name: artifacts
         if-no-files-found: error
         path: |
           dist/icloudpd-*
