@@ -15,6 +15,7 @@ Photos/
 .git
 tests/fixtures/Photos
 tests/fixtures/中文
+tests/fixtures/相片
 .venv
 venv
 create/
