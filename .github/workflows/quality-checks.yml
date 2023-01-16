@@ -53,6 +53,11 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    
+    - name: Install pip Windows
+      run: python.exe -m pip install -r requirements-pip.txt
+      if: matrix.os == 'windows.latest'
+
     - name: Install dependencies
       run: |
         scripts/install_deps
