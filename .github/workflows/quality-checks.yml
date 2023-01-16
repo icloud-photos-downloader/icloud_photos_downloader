@@ -61,7 +61,7 @@ jobs:
     - name: Build Release Docker
       run: |
         scripts/build_docker
-      if: matrix.python-version == '3.9'
+      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
 
     - name: Build Release Executable
       run: |
