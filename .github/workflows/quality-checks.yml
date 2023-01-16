@@ -72,12 +72,12 @@ jobs:
     - name: Build Release Docker
       run: |
         scripts/build_docker
-      if: matrix.python-version == "3.9"
+      if: matrix.python-version == '3.9'
 
     - name: Build Release Executable
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{ matrix.os }}-${{ matrix.architecture }}
-      if: matrix.python-version == "3.9"
+      if: matrix.python-version == '3.9'
 
   validate_dev_docker:
 
