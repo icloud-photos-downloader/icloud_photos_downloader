@@ -115,24 +115,24 @@ jobs:
 
     - name: Build Release Executable (Windows)
       run: |
-        pyinstaller --onefile icloudpd.py --name icloudpd-windows-amd64
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{env.ICLOUDPD_VERSION}}-windows-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'windows-latest' }}
 
     - name: Build Release Executable (Linux)
       run: |
-        pyinstaller --onefile icloudpd.py --name icloudpd-linux-amd64
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{env.ICLOUDPD_VERSION}}-linux-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest' }}
 
     - name: Build Release Executable (MacOS)
       run: |
-        pyinstaller --onefile icloudpd.py --name icloudpd-macos-amd64
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{env.ICLOUDPD_VERSION}}-macos-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'macos-latest' }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       if: ${{ matrix.python-version == '3.9' }}
       with:
-        name: artifacts
+        name: icloudpd-${{env.ICLOUDPD_VERSION}}-artifacts
         if-no-files-found: error
         path: |
           dist/icloudpd-*
