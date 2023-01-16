@@ -44,8 +44,14 @@ jobs:
         shell: bash
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+        os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9]
+        architecture: ["x86_64"]
+        include:
+          - os: macos-latest
+            python-version: 3.9
+          - os: windows-latest
+            python-version: 3.9
 
     steps:
     - uses: actions/checkout@v2
