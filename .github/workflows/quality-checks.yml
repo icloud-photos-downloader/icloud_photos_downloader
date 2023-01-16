@@ -54,12 +54,22 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Retrieve version and Changelog
+      run: |
+        echo ICLOUDPD_VERSION=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_ENV
+        echo "::debug::${{env.ICLOUDPD_VERSION}}"
+        echo 'ICLOUDPD_CHANGELOG<<EOF' >> $GITHUB_ENV
+        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_ENV
+        echo 'EOF' >> $GITHUB_ENV
+        echo "::debug::${{env.ICLOUDPD_CHANGELOG}}"
+
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install pip Windows
+    - name: Install pip (Windows)
       run: python.exe -m pip install -r requirements-pip.txt
       if: matrix.os == 'windows-latest'
 
@@ -71,10 +81,37 @@ jobs:
       run: |
         scripts/build
 
-    - name: Build Release Docker
-      run: |
-        scripts/build_docker
+    - name: Set up QEMU
       if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      uses: docker/setup-buildx-action@v2
+
+    - name: Builder instance name
+      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      run: echo ${{ steps.buildx.outputs.name }}
+
+    - name: Available platforms
+      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      run: echo ${{ steps.buildx.outputs.platforms }}
+
+    - name: Build Release Docker (Linux)
+      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      env:
+        ICLOUDPD_VERSION: ${{env.ICLOUDPD_VERSION}}
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: ./Dockerfile.release
+        platforms: linux/amd64,linux/arm64,linux/386
+        push: false
+        tags: |
+          icloudpd/icloudpd:latest
+          icloudpd/icloudpd:${{env.ICLOUDPD_VERSION}}
+        build-args: |
+          ICLOUDPD_VERSION=${{env.ICLOUDPD_VERSION}}
 
     - name: Build Release Executable (Windows)
       run: |
@@ -105,7 +142,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
