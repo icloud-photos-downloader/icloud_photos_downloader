@@ -56,7 +56,7 @@ jobs:
     
     - name: Install pip Windows
       run: python.exe -m pip install -r requirements-pip.txt
-      if: matrix.os == 'windows.latest'
+      if: matrix.os == 'windows-latest'
 
     - name: Install dependencies
       run: |
