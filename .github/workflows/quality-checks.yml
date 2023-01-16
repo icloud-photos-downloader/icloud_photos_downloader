@@ -17,17 +17,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        exclude:
-          # There is no build for Python 3.6 in ubuntu>20.04.
-          # This unclude can be removed when we drop support for Python 3.6.
-          - os: "ubuntu-latest"
-            python-version: "3.6"
-        include:
-          # There is no build for Python 3.6 in ubuntu>20.04.
-          # This unclude can be removed when we drop support for Python 3.6.
-          - os: "ubuntu-20.04"
-            python-version: "3.6"
+        python-version: [3.7, 3.8, 3.9]
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
@@ -52,17 +42,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.6, 3.7, 3.8, 3.9]
-        exclude:
-          # There is no build for Python 3.6 in ubuntu>20.04.
-          # This unclude can be removed when we drop support for Python 3.6.
-          - os: "ubuntu-latest"
-            python-version: "3.6"
-        include:
-          # There is no build for Python 3.6 in ubuntu>20.04.
-          # This unclude can be removed when we drop support for Python 3.6.
-          - os: "ubuntu-20.04"
-            python-version: "3.6"
+        python-version: [3.7, 3.8, 3.9]
 
     steps:
     - uses: actions/checkout@v2
