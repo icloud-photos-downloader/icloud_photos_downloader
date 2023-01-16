@@ -82,6 +82,15 @@ jobs:
         pyinstaller --onefile icloudpd.py --name icloudpd-${{ matrix.os }}-${{ matrix.architecture }}
       if: matrix.python-version == '3.9'
 
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      if: matrix.python-version == '3.9'
+      with:
+        name: binaries
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-*
+
   validate_dev_docker:
 
     runs-on: ubuntu-latest
