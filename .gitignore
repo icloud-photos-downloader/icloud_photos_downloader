@@ -4,6 +4,7 @@ dist/
 icloudpd.egg-info
 cron_script.sh
 Photos/
+tests/fixtures/**
 .vscode
 __pycache__
 .pytest_cache
