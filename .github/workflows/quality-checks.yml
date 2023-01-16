@@ -71,7 +71,7 @@ jobs:
     
     - name: Install pip (Windows)
       run: python.exe -m pip install -r requirements-pip.txt
-      if: matrix.os == 'windows-latest'
+      if: ${{ matrix.os == 'windows-latest' }}
 
     - name: Install dependencies
       run: |
@@ -82,23 +82,23 @@ jobs:
         scripts/build
 
     - name: Set up QEMU
-      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest' }}
       uses: docker/setup-qemu-action@v2
 
     - name: Set up Docker Buildx
-      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest' }}
       uses: docker/setup-buildx-action@v2
 
     - name: Builder instance name
-      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest' }}
       run: echo ${{ steps.buildx.outputs.name }}
 
     - name: Available platforms
-      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest' }}
       run: echo ${{ steps.buildx.outputs.platforms }}
 
     - name: Build Release Docker (Linux)
-      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest' }}
       env:
         ICLOUDPD_VERSION: ${{env.ICLOUDPD_VERSION}}
       uses: docker/build-push-action@v3
@@ -116,21 +116,21 @@ jobs:
     - name: Build Release Executable (Windows)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-windows-amd64
-      if: matrix.python-version == '3.9' && matrix.os == 'windows.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'windows.latest' }}
 
     - name: Build Release Executable (Linux)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-linux-amd64
-      if: matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu.latest' }}
 
     - name: Build Release Executable (MacOS)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-macos-amd64
-      if: matrix.python-version == '3.9' && matrix.os == 'macos.latest'
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'macos.latest' }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
-      if: matrix.python-version == '3.9'
+      if: ${{ matrix.python-version == '3.9' }}
       with:
         name: artifacts
         if-no-files-found: error
