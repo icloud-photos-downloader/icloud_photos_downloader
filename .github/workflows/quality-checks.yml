@@ -78,7 +78,7 @@ jobs:
 
     - name: Build Release Executable
       run: |
-        pyinstaller --onefile icloudpd.py --name icloudpd-${{ matrix.os }}-x86_64
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{ matrix.os }}-amd64
       if: matrix.python-version == '3.9'
 
     - name: Upload artifacts
