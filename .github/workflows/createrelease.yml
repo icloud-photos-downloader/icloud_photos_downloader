@@ -65,16 +65,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing its ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: ${{env.ICLOUDPD_ASSET_PATH}}
           asset_name: ${{env.ICLOUDPD_ASSET_NAME}}
           asset_content_type: application/zip
       - name: Set up QEMU
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        uses: docker/setup-qemu-action@v1
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        uses: docker/setup-buildx-action@v1
+        uses: docker/setup-buildx-action@v2
       -
         name: Builder instance name
         run: echo ${{ steps.buildx.outputs.name }}
@@ -83,7 +83,7 @@ jobs:
         run: echo ${{ steps.buildx.outputs.platforms }}
       - name: Login to DockerHub
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        uses: docker/login-action@v1
+        uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -91,7 +91,7 @@ jobs:
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         env:
           ICLOUDPD_VERSION: ${{env.ICLOUDPD_VERSION}}
-        uses: docker/build-push-action@v2
+        uses: docker/build-push-action@v3
         with:
           context: .
           file: ./Dockerfile.release
@@ -102,3 +102,4 @@ jobs:
             icloudpd/icloudpd:${{env.ICLOUDPD_VERSION}}
           build-args: |
             ICLOUDPD_VERSION=${{env.ICLOUDPD_VERSION}}
+            
