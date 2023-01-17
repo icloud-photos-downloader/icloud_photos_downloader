@@ -42,15 +42,11 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Retrieve version and Changelog
+      id: get_version
       run: |
-        echo ICLOUDPD_VERSION=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_ENV
-        echo "::debug::${{env.ICLOUDPD_VERSION}}"
-        echo 'ICLOUDPD_CHANGELOG<<EOF' >> $GITHUB_ENV
-        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_ENV
-        echo 'EOF' >> $GITHUB_ENV
-        echo "::debug::${{env.ICLOUDPD_CHANGELOG}}"
+        echo icloudpd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
     outputs:
-      icloudpd_version: ${{env.ICLOUDPD_VERSION}}
+      icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
 
   build:
     runs-on: ${{ matrix.os }}
