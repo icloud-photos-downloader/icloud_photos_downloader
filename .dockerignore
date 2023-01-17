@@ -13,8 +13,7 @@ Photos/
 .coverage
 .coverage.*
 .git
-tests/fixtures/Photos
-tests/fixtures/中文
+tests/fixtures/**
 .venv
 venv
 create/
