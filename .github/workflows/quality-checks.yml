@@ -37,7 +37,7 @@ jobs:
         scripts/test
 
   get_version:
-    runs-on: ubuntu-linux
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
 
@@ -45,8 +45,13 @@ jobs:
       id: get_version
       run: |
         echo icloudpd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+        echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
+        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+
     outputs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
+      icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build:
     runs-on: ${{ matrix.os }}
