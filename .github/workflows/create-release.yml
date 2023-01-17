@@ -116,7 +116,6 @@ jobs:
       run: echo ${{ steps.buildx.outputs.platforms }}
 
     - name: Login to DockerHub
-      if: endsWith(github.ref, needs.get_version.outputs.icloudpd_version)
       uses: docker/login-action@v2
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
@@ -151,7 +150,6 @@ jobs:
             dist/icloudpd-*.whl
 
       - name: Publish
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
