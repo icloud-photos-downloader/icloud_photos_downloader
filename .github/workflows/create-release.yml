@@ -138,9 +138,19 @@ jobs:
 
   publish_twine:
     runs-on: ubuntu-latest
+    needs: [build]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+      
+      - name: Install dependencies
+        run: |
+          scripts/install_deps
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -159,19 +169,18 @@ jobs:
           # todo: put repo in github secret for flexibility
 
   release:
-    name: Create Release
     needs: [get_version, build]
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
           path: |
-            dist/icloudpd-*
+            dist
 
       - name: Create Release
         uses: ncipollo/release-action@v1
