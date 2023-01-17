@@ -129,7 +129,6 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
-        if-no-files-found: error
         path: |
           dist/icloudpd-*
 
