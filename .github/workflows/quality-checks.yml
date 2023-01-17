@@ -49,6 +49,11 @@ jobs:
         scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT
 
+    - name: Log version and Changelog
+      run: |
+        echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
+        echo "icloudpd_changelog=${{steps.get_version.outputs.icloudpd_changelog}}"
+
     outputs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
@@ -118,6 +123,8 @@ jobs:
     needs: [get_version, build]
 
     steps:
+    - uses: actions/checkout@v3
+
     - name: Download artifacts
       uses: actions/download-artifact@v3
       with:
