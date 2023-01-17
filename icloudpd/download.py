@@ -6,7 +6,7 @@ import time
 import logging
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud.exceptions import PyiCloudAPIResponseException
 from icloudpd.logger import setup_logger
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
@@ -65,7 +65,7 @@ def download_media(icloud, photo, download_path, size):
             )
             break
 
-        except (ConnectionError, socket.timeout, PyiCloudAPIResponseError) as ex:
+        except (ConnectionError, socket.timeout, PyiCloudAPIResponseException) as ex:
             if "Invalid global session" in str(ex):
                 logger.tqdm_write(
                     "Session error, re-authenticating...",
