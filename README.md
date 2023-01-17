@@ -8,13 +8,28 @@ This tool is developed and maintained by volunteers (we are always looking for [
 
 ## Install
 
+There are three ways to run `icloudpd`:
+1. Download executable for your platform from the Github Release and run it
+1. Use Docker to download and run the tool (requires Docker installed, e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+1. Install the tool using `pip` from Python (requires Python and `pip` installed)
+
+### Download with Docker
+
+Docker automatically pulls images from the remote repository if necessary. To download explicitely, e.g. to force version update, use:
+
+```sh
+docker pull icloudpd/icloudpd
+```
+
+### Install using `pip`
+
 `icloudpd` is a Python package that can be installed using `pip`:
 
 ``` sh
 pip install icloudpd
 ```
 
-> If you need to install Python, see the [Requirements](#requirements) section for instructions.
+> If you need to install Python, see the [Appendix](#appendix) section for instructions.
 
 ## Usage
 
@@ -104,40 +119,6 @@ icloudpd --directory ./Photos \
 --auto-delete
 ```
 
-## Requirements
-
-- Python 3.6+
-- pip
-
-### Install Python & pip
-
-#### Windows
-
-- [Download Python 3.x](https://www.python.org/downloads/windows/)
-
-#### Mac
-
-- Install [Homebrew](https://brew.sh/) (if not already installed):
-
-``` sh
-which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-- Install Python (includes `pip`):
-
-``` sh
-brew install python
-```
-
-> Alternatively, you can [download the latest Python 3.x installer for Mac](https://www.python.org/downloads/mac-osx/).
-
-#### Linux (Ubuntu)
-
-``` sh
-sudo apt-get update
-sudo apt-get install -y python
-```
-
 ## Authentication
 
 If your Apple account has two-factor authentication enabled,
@@ -189,7 +170,7 @@ If you are still seeing this message after 30 minutes, then please [open an issu
 
 ## Cron Task
 
-Follow these instructions to run `icloudpd` as a scheduled cron task.
+Follow these instructions to run `icloudpd` from the source tree as a scheduled cron task.
 
 ``` sh
 # Clone the git repo somewhere
@@ -243,12 +224,49 @@ On Windows:
 - use `%cd%` instead of `$(pwd)`
 - or full path, e.g. `-v c:/photos/icloud:/data`
 
-Building image locally:
+Building image locally from the source tree:
 
 ```bash
 docker build . -t icloudpd
 docker run -it --rm icloudpd:latest icloudpd --version
 ```
+
+## Appendix
+
+### Install Python & pip
+
+Note that `icloudpd` works with python 3.9 and breaks on later versions of Python now.
+
+#### Windows
+
+- [Download Python 3.x](https://www.python.org/downloads/windows/)
+
+#### Mac
+
+- Install [Homebrew](https://brew.sh/) (if not already installed):
+
+``` sh
+which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+- Install Python (includes `pip`):
+
+``` sh
+brew install python
+```
+
+> Alternatively, you can [download the latest Python 3.x installer for Mac](https://www.python.org/downloads/mac-osx/).
+
+#### Linux (Ubuntu)
+
+``` sh
+sudo apt-get update
+sudo apt-get install -y python
+```
+
+### Install Docker Desktop
+
+To install Docker with user interface on Windows or Mac, download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ## Contributing
 
