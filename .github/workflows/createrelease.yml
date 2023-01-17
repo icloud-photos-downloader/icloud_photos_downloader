@@ -7,98 +7,201 @@ on:
 name: Create Release
 
 jobs:
+  get_version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Retrieve version and Changelog
+      id: get_version
+      run: |
+        echo icloudpd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+        echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
+        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+
+    - name: Log version and Changelog
+      run: |
+        echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
+        echo "icloudpd_changelog=${{steps.get_version.outputs.icloudpd_changelog}}"
+
+    outputs:
+      icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
+      icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
+
   build:
-    name: Create Release
+    runs-on: ${{ matrix.os }}
+    needs: [get_version]
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+        python-version: [3.9]
+        include:
+          - os: macos-latest
+            python-version: 3.9
+          - os: windows-latest
+            python-version: 3.9
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install pip (Windows)
+      run: python.exe -m pip install -r requirements-pip.txt
+      if: ${{ matrix.os == 'windows-latest' }}
+
+    - name: Install dependencies
+      run: |
+        scripts/install_deps
+
+    - name: Build
+      run: |
+        scripts/build
+
+    - name: Build Release Executable (Windows)
+      run: |
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'windows-latest' }}
+
+    - name: Build Release Executable (Linux)
+      run: |
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest' }}
+
+    - name: Build Release Executable (MacOS)
+      run: |
+        pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
+      if: ${{ matrix.python-version == '3.9' && matrix.os == 'macos-latest' }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      if: ${{ matrix.python-version == '3.9' }}
+      with:
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-*
+
+  build_publish_docker:
+    runs-on: ubuntu-latest
+    needs: [get_version, build]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v3
+      with:
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        path: |
+          dist/icloudpd-*
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Builder instance name
+      run: echo ${{ steps.buildx.outputs.name }}
+
+    - name: Available platforms
+      run: echo ${{ steps.buildx.outputs.platforms }}
+
+    - name: Login to DockerHub
+      if: endsWith(github.ref, needs.get_version.outputs.icloudpd_version)
+      uses: docker/login-action@v2
+      with:
+        username: ${{ secrets.DOCKERHUB_USERNAME }}
+        password: ${{ secrets.DOCKERHUB_PASSWORD }}
+
+    - name: Build Release Docker & Publish
+      env:
+        ICLOUDPD_VERSION: ${{needs.get_version.outputs.icloudpd_version}}
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: ./Dockerfile.release
+        platforms: linux/amd64,linux/arm64,linux/386
+        push: true
+        tags: |
+          icloudpd/icloudpd:latest
+          icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}
+        build-args: |
+          ICLOUDPD_VERSION=${{needs.get_version.outputs.icloudpd_version}}
+
+  publish_twine:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
-      - name: Retrieve version and Changelog
-        run: |
-          echo ICLOUDPD_VERSION=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_ENV
-          echo "::debug::${{env.ICLOUDPD_VERSION}}"
-          echo 'ICLOUDPD_CHANGELOG<<EOF' >> $GITHUB_ENV
-          scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
-          echo "::debug::${{env.ICLOUDPD_CHANGELOG}}"
-      - name: Install dependencies
-        # check if the tag matches the version in setup.py
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install setuptools
-          # this section should be updated. p.e. wheel is installed too late.
-          # this leads to unnecessary warnings
-          scripts/install_deps
-      - name: Build and publish
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist/icloudpd-*.whl
+
+      - name: Publish
         if: endsWith(github.ref, env.ICLOUDPD_VERSION)
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python3 setup.py bdist_wheel --universal
-          echo ICLOUDPD_ASSET_PATH=$(find dist -name '*whl') >> $GITHUB_ENV
-          echo "::debug::${{env.ICLOUDPD_ASSET_PATH}}"
-          echo ICLOUDPD_ASSET_NAME=$(basename $(find dist -name '*whl')) >> $GITHUB_ENV
-          # Variable not read correctly?!
-          #echo ICLOUDPD_ASSET_NAME=$(basename ${{env.ICLOUDPD_ASSET_PATH}}) >> $GITHUB_ENV
-          echo "::debug::${{env.ICLOUDPD_ASSET_NAME}}"
           python3 -m twine upload dist/*
           #python3 -m twine upload --repository testpypi dist/*
           # todo: put repo in github secret for flexibility
+
+  release:
+    name: Create Release
+    needs: [get_version, build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist/icloudpd-*
+
       - name: Create Release
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+        uses: ncipollo/release-action@v1
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          body: ${{ env.ICLOUDPD_CHANGELOG }}
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        id: upload-release-asset
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: ${{env.ICLOUDPD_ASSET_PATH}}
-          asset_name: ${{env.ICLOUDPD_ASSET_NAME}}
-          asset_content_type: application/zip
-      - name: Set up QEMU
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        uses: docker/setup-qemu-action@v2
-      - name: Set up Docker Buildx
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        uses: docker/setup-buildx-action@v2
-      -
-        name: Builder instance name
-        run: echo ${{ steps.buildx.outputs.name }}
-      -
-        name: Available platforms
-        run: echo ${{ steps.buildx.outputs.platforms }}
-      - name: Login to DockerHub
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        uses: docker/login-action@v2
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-      - name: Build and push
-        if: endsWith(github.ref, env.ICLOUDPD_VERSION)
-        env:
-          ICLOUDPD_VERSION: ${{env.ICLOUDPD_VERSION}}
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          file: ./Dockerfile.release
-          platforms: linux/amd64,linux/arm64,linux/386
-          push: true
-          tags: |
-            icloudpd/icloudpd:latest
-            icloudpd/icloudpd:${{env.ICLOUDPD_VERSION}}
-          build-args: |
-            ICLOUDPD_VERSION=${{env.ICLOUDPD_VERSION}}
+          artifacts: "dist/*"
+          body: ${{ needs.get_version.outputs.icloudpd_changelog }}
+
+      # - name: Create Release
+      #   if: endsWith(github.ref, needs.get_version.outputs.icloudpd_version)
+      #   id: create_release
+      #   uses: actions/create-release@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # This token is provided by Actions, you do not need to create your own token
+      #   with:
+      #     tag_name: ${{ github.ref }}
+      #     release_name: Release ${{ github.ref }}
+      #     body: ${{ needs.get_version.outputs.icloudpd_changelog }}
+      #     draft: false
+      #     prerelease: false
+
+      # - name: Upload Release Assets
+      #   if: endsWith(github.ref, needs.get_version.outputs.icloudpd_version)
+      #   id: upload-release-asset
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
+      #     asset_path: ${{env.ICLOUDPD_ASSET_PATH}}
+      #     asset_name: ${{env.ICLOUDPD_ASSET_NAME}}
+      #     asset_content_type: application/zip
