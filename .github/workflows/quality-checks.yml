@@ -20,6 +20,27 @@ jobs:
     steps:
       - run: |
           ls -la `which echo`
+      - uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Install pip (Windows)
+        run: python.exe -m pip install -r requirements-pip.txt
+
+      - name: Install dependencies
+        run: |
+          scripts/install_deps
+
+      - name: Copy
+        run: |
+          cp `which icloud` ./icloud.py
+
+      - name: Build Release Executables (Windows)
+        run: |
+          pyinstaller --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
 
   check_quality:
 
