@@ -11,6 +11,13 @@ on:
   workflow_dispatch:
 
 jobs:
+
+  test_win:
+    runs-on: windows-latest
+    steps:
+     - run: |
+        ls -la `which echo`
+
   check_quality:
 
     runs-on: ${{ matrix.os }}
