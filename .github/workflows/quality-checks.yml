@@ -18,9 +18,6 @@ jobs:
       run:
         shell: bash    
     steps:
-      - run: |
-          ls -la `which echo`
-
       - uses: actions/checkout@v3
 
       - name: Set up Python
@@ -34,16 +31,6 @@ jobs:
       - name: Install dependencies
         run: |
           scripts/install_deps
-
-      - name: Copy icloud
-        run: |
-          ls -la `which icloud`
-          cp -v `which icloud` icloud.py
-
-      - run: |
-          pwd
-          ls -la
-          cp icloud.py.exe icloud.py
 
       - name: Build Release Executables (Windows)
         run: |
