@@ -14,9 +14,12 @@ jobs:
 
   test_win:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash    
     steps:
-     - run: |
-        ls -la `which echo`
+      - run: |
+          ls -la `which echo`
 
   check_quality:
 
