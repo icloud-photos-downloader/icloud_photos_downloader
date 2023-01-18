@@ -25,7 +25,7 @@ def authenticate(
     logger.debug("Authenticating...")
     try:
         # If password not provided on command line variable will be set to None
-        # and PyiCloud will attempt to retrieve from it's keyring
+        # and PyiCloud will attempt to retrieve from its keyring
         icloud = pyicloud_ipd.PyiCloudService(
             username, password,
             cookie_directory=cookie_directory,

@@ -18,7 +18,7 @@ def send_2sa_notification(
     smtp = smtplib.SMTP(smtp_host, smtp_port)
     smtp.set_debuglevel(0)
     # leaving explicit call of connect to not break unit tests, even though it is
-    # called implicitly via cunstructor parameters
+    # called implicitly via constructor parameters
     smtp.connect(smtp_host, smtp_port)
     if not smtp_no_tls:
         smtp.starttls()
