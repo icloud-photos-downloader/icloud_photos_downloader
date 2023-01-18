@@ -97,16 +97,19 @@ jobs:
     - name: Build Release Executable (Windows)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
+        pyinstaller --onefile `which icloud --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'windows-latest' }}
 
     - name: Build Release Executable (Linux)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
+        pyinstaller --onefile `which icloud` --name icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest' }}
 
     - name: Build Release Executable (MacOS)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
+        pyinstaller --onefile `which icloud` --name icloud-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'macos-latest' }}
 
     - name: Upload artifacts
@@ -116,7 +119,7 @@ jobs:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
         if-no-files-found: error
         path: |
-          dist/icloudpd-*
+          dist/icloud*
 
   build_docker:
     runs-on: ubuntu-latest
@@ -130,7 +133,7 @@ jobs:
       with:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
         path: |
-          dist/icloudpd-*
+          dist/icloud*
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
