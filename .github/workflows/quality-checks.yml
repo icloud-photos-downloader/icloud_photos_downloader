@@ -94,19 +94,19 @@ jobs:
       run: |
         scripts/build
 
-    - name: Build Release Executable (Windows)
+    - name: Build Release Executables (Windows)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
-        pyinstaller --onefile `which icloud --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
+        pyinstaller --onefile `which icloud` --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'windows-latest' }}
 
-    - name: Build Release Executable (Linux)
+    - name: Build Release Executables (Linux)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
         pyinstaller --onefile `which icloud` --name icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
       if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest' }}
 
-    - name: Build Release Executable (MacOS)
+    - name: Build Release Executables (MacOS)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
         pyinstaller --onefile `which icloud` --name icloud-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
@@ -133,7 +133,7 @@ jobs:
       with:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
         path: |
-          dist/icloud*
+          dist
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
