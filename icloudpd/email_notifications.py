@@ -34,13 +34,8 @@ def send_2sa_notification(
 Two-step authentication has expired for the icloud_photos_downloader script.
 Please log in to your server and run the script manually to update two-step authentication."""
 
-    msg = "From: %s\nTo: %s\nSubject: %s\nDate: %s\n\n%s" % (
-        "iCloud Photos Downloader <" + from_addr + ">",
-        to_addr,
-        subj,
-        date,
-        message_text,
-    )
+    msg = f"From: iCloud Photos Downloader <{from_addr}>\n" + \
+        f"To: {to_addr}\nSubject: {subj}\nDate: {date}\n\n{message_text}"
 
     smtp.sendmail(from_addr, to_addr, msg)
     smtp.quit()

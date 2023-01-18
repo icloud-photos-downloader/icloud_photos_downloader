@@ -219,7 +219,7 @@ Then create an issue on GitHub: https://github.com/icloud-photos-downloader/iclo
 Include a link to the Gist in your issue, so that we can see what went wrong.
 
 """ , result.output)
-                    mock_open.assert_called_once_with('icloudpd-photo-error.json', 'w')
+                    mock_open.assert_called_once_with(file='icloudpd-photo-error.json', mode='w', encoding='utf8')
                     mock_json.assert_called_once()
                     # Check a few keys in the dict
                     first_arg = mock_json.call_args_list[0][0][0]
