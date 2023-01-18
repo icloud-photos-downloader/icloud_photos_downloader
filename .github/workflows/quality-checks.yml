@@ -37,19 +37,20 @@ jobs:
 
       - name: Copy icloud
         run: |
-          which icloud
+          ls -la `which icloud`
           cp -v `which icloud` icloud.py
 
       - run: |
           pwd
           ls -la
+          cp icloud.py.exe icloud.py
 
       - name: Build Release Executables (Windows)
         run: |
           pyinstaller --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
 
   check_quality:
-
+    needs: test_win
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -74,6 +75,7 @@ jobs:
         scripts/test
 
   get_version:
+    needs: test_win
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
@@ -201,6 +203,7 @@ jobs:
 
 
   build_dev_docker:
+    needs: test_win
 
     runs-on: ubuntu-latest
 
