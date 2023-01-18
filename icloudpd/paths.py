@@ -15,4 +15,4 @@ def filename_with_size(media, size):
     filename = media.filename.encode("utf-8").decode("ascii", "ignore")
     if size == 'original':
         return filename
-    return ("-%s." % size).join(filename.rsplit(".", 1))
+    return (f"-{size}.").join(filename.rsplit(".", 1))

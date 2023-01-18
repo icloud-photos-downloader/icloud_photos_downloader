@@ -27,10 +27,12 @@ def update_mtime(photo, download_path):
             return
         set_utime(download_path, created_date)
 
+
 def set_utime(download_path, created_date):
     """Set date & time of the file"""
     ctime = time.mktime(created_date.timetuple())
     os.utime(download_path, (ctime, ctime))
+
 
 def download_media(icloud, photo, download_path, size):
     """Download the photo to path, with retries and error handling"""
@@ -59,8 +61,7 @@ def download_media(icloud, photo, download_path, size):
                 return True
 
             logger.tqdm_write(
-                "Could not find URL to download %s for size %s!"
-                % (photo.filename, size),
+                f"Could not find URL to download {photo.filename} for size {size}!",
                 logging.ERROR,
             )
             break
@@ -81,8 +82,7 @@ def download_media(icloud, photo, download_path, size):
                 # you end up here when p.e. throttling by Apple happens
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
                 logger.tqdm_write(
-                    "Error downloading %s, retrying after %d seconds..."
-                    % (photo.filename, wait_time),
+                    f"Error downloading {photo.filename}, retrying after {wait_time} seconds...",
                     logging.ERROR,
                 )
                 time.sleep(wait_time)
@@ -97,7 +97,7 @@ def download_media(icloud, photo, download_path, size):
             break
     else:
         logger.tqdm_write(
-            "Could not download %s! Please try again later." % photo.filename
+            f"Could not download {photo.filename}! Please try again later."
         )
 
     return False
