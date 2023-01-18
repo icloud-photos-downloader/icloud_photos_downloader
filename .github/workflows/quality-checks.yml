@@ -37,7 +37,8 @@ jobs:
 
       - name: Copy icloud
         run: |
-          cp `which icloud` icloud.py
+          which icloud
+          cp -v `which icloud` icloud.py
 
       - run: |
           pwd
