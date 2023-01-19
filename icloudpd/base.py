@@ -50,10 +50,6 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     "(default: use PyiCloud keyring or prompt for password)",
     metavar="<password>",
 )
-@click.option("--china-mainland",
-              help="The country/region setting of your Apple ID is China mainland(中国大陆)",
-              is_flag=True,
-)
 @click.option(
     "--cookie-directory",
     help="Directory to store cookies for authentication "
@@ -204,7 +200,6 @@ def main(
         directory,
         username,
         password,
-        china_mainland,
         cookie_directory,
         size,
         live_photo_size,
@@ -263,7 +258,6 @@ def main(
             cookie_directory,
             raise_error_on_2sa,
             client_id=os.environ.get("CLIENT_ID"),
-            china_mainland=china_mainland,
         )
     except TwoStepAuthRequiredError:
         if notification_script is not None:

@@ -20,7 +20,6 @@ def authenticate(
         cookie_directory=None,
         raise_error_on_2sa=False,
         client_id=None,
-        china_mainland=False,
 ):
     """Authenticate with iCloud username and password"""
     logger = setup_logger()
@@ -32,7 +31,6 @@ def authenticate(
             username, password,
             cookie_directory=cookie_directory,
             client_id=client_id,
-            china_mainland=china_mainland,
         )
     except PyiCloudNoStoredPasswordAvailableException:
         # Prompt for password if not stored in PyiCloud's keyring

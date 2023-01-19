@@ -46,7 +46,6 @@ Options:
   -u, --username <username>       Your iCloud username or email address
   -p, --password <password>       Your iCloud password (default: use PyiCloud
                                   keyring or prompt for password)
-  --china-mainland                The country/region setting of your Apple ID is China mainland(中国大陆)
   --cookie-directory </cookie/directory>
                                   Directory to store cookies for
                                   authentication (default: ~/.pyicloud)
