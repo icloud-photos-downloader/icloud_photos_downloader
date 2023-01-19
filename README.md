@@ -36,7 +36,7 @@ pip install icloudpd
 [//]: # (This is now only a copy&paste from --help output)
 
 ``` plain
-Usage: icloudpd.py <options>
+Usage: icloudpd-linux <options>
 
   Download all iCloud photos to a local directory
 
@@ -60,7 +60,7 @@ Options:
                                   consecutive photos (default: download all
                                   photos)
   -a, --album <album>             Album to download (default: All Photos)
-  -l, --list-albums               Lists the avaliable albums
+  -l, --list-albums               Lists the available albums
   --skip-videos                   Don't download any videos (default: Download
                                   all photos and videos)
   --skip-live-photos              Don't download any live photos (default:
@@ -76,7 +76,9 @@ Options:
                                   are already downloaded.)(Does not download
                                   or delete any files.)
   --folder-structure <folder_structure>
-                                  Folder structure (default: {:%Y/%m/%d})
+                                  Folder structure (default: {:%Y/%m/%d}). If
+                                  set to 'none' all photos will just be placed
+                                  into the download directory
   --set-exif-datetime             Write the DateTimeOriginal exif tag from
                                   file creation date, if it doesn't exist.
   --smtp-username <smtp_username>
@@ -104,7 +106,8 @@ Options:
                                   prints log messages on separate lines
                                   (Progress bar is disabled by default if
                                   there is no tty attached)
-  --threads-num INTEGER RANGE     Number of cpu threads (default: 1)
+  --threads-num INTEGER RANGE     Number of cpu threads -- deprecated. To be
+                                  removed in future version
   --version                       Show the version and exit.
   -h, --help                      Show this message and exit.
 ```
@@ -137,8 +140,7 @@ If you want to send notification emails using your Gmail account, and you have e
 
 ### System Keyring
 
-You can store your password in the system keyring using the `icloud` command-line tool
-(installed with the `pyicloud` dependency):
+You can store your password in the system keyring using the `icloud` command-line tool:
 
 ``` plain
 $ icloud --username jappleseed@apple.com
@@ -170,23 +172,16 @@ If you are still seeing this message after 30 minutes, then please [open an issu
 
 ## Cron Task
 
-Follow these instructions to run `icloudpd` from the source tree as a scheduled cron task.
+You can run `icloudpd` using `cron` on platforms that support it:
 
-``` sh
-# Clone the git repo somewhere
-git clone https://github.com/icloud-photos-downloader/icloud_photos_downloader.git
-cd icloud_photos_downloader
-
-# Copy the example cron script
-cp cron_script.sh.example cron_script.sh
-```
+- copy the example cron script from source tree, e.g. `cp cron_script.sh.example cron_script.sh`
 
 - Update `cron_script.sh` with your username, password, and other options
 
 - Edit your "crontab" with `crontab -e`, then add the following line:
 
 ``` plain
-0 */6 * * * /path/to/icloud_photos_downloader/cron_script.sh
+0 */6 * * * /path/to/cron_script.sh
 ```
 
 Now the script will run every 6 hours to download any new photos and videos.
@@ -239,7 +234,7 @@ Note that `icloudpd` works with python 3.9 and breaks on later versions of Pytho
 
 #### Windows
 
-- [Download Python 3.x](https://www.python.org/downloads/windows/)
+- [Download Python 3.9](https://www.python.org/downloads/windows/)
 
 #### Mac
 
