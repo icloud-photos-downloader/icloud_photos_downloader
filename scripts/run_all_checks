@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 
-# realpath not availabe on Mac by default...
+# realpath not available on Mac by default...
 realpath() {
     [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }

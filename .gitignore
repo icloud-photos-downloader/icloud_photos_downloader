@@ -4,6 +4,7 @@ dist/
 icloudpd.egg-info
 cron_script.sh
 Photos/
+tests/fixtures/**
 .vscode
 __pycache__
 .pytest_cache
@@ -16,3 +17,4 @@ htmlcov
 icloudpd-latest-py2.py3-none-any.whl
 .venv
 venv
+*.spec

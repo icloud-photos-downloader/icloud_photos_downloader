@@ -86,6 +86,10 @@ class CliTestCase(TestCase):
             assert result.exit_code == 0
 
     def test_unicode_directory(self):
+        base_dir = os.path.normpath(f"tests/fixtures/相片")
+        if not os.path.exists(base_dir):
+            os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={

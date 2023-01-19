@@ -77,7 +77,7 @@ class DownloadLivePhotoTestCase(TestCase):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
-        # simulate that some of the expected files are there with corret sizes
+        # simulate that some expected files are there with correct sizes
         os.makedirs(os.path.join(base_dir, "2020/11/04"))
         # one photo and one movie are already there and should be skipped
         # Create dummies with the correct size
@@ -143,7 +143,7 @@ class DownloadLivePhotoTestCase(TestCase):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
-        # simulate that some of the expected files are there with corret sizes
+        # simulate that some expected files are there with correct sizes
         os.makedirs(os.path.join(base_dir, "2020/11/04"))
         # one photo and one movie are already there and should be skipped
         # Create dummies with the correct size
@@ -193,7 +193,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 filenames[2]
             )
 
-            # Double check that a mocked file does not get listed again. Its already there!
+            # Double check that a mocked file does not get listed again. It's already there!
             assert "2020/11/04/IMG_0514_HEVC.MOV" not in filenames
 
             assert result.exit_code == 0
