@@ -6,7 +6,7 @@ import os
 import click
 from click.testing import CliRunner
 from icloudpd.base import main
-from pyicloud_ipd import PyiCloudService
+from pyicloud import PyiCloudService
 import inspect
 import shutil
 
