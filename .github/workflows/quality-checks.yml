@@ -25,9 +25,6 @@ jobs:
         with:
           python-version: 3.9
 
-      - name: Install pip (Windows)
-        run: python.exe -m pip install -r requirements-pip.txt
-
       - name: Install dependencies
         run: |
           scripts/install_deps
