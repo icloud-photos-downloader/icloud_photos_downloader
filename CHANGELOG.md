@@ -2,8 +2,10 @@
 
 ## Unreleased
 
+## 1.7.3 (2022-01-20)
+
 - deprecating python 3.6
-- experimental: package icloudpd as one executable [#146](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/146)
+- experimental: package `icloudpd` & `icloud` as executables [#146](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/146)
 
 ## 1.7.2 (2021-01-16)
 
