@@ -121,12 +121,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option("--folder-structure",
-              help="Folder structure (default: {:%Y/%m/%d}). "
-              "If set to 'none' all photos will just be placed into the download directory",
-              metavar="<folder_structure>",
-              default="{:%Y/%m/%d}",
-              )
+@click.option(
+    "--folder-structure",
+    help="Folder structure (default: {:%Y/%m/%d}). "
+    "If set to 'none' all photos will just be placed into the download directory",
+    metavar="<folder_structure>",
+    default="{:%Y/%m/%d}",
+)
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -187,11 +188,12 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
               "(Progress bar is disabled by default if there is no tty attached)",
               is_flag=True,
               )
-@click.option("--threads-num",
-              help="Number of cpu threads -- deprecated. To be removed in future version",
-              type=click.IntRange(1),
-              default=1,
-              )
+@click.option(
+    "--threads-num",
+    help="Number of cpu threads -- deprecated. To be removed in future version",
+    type=click.IntRange(1),
+    default=1,
+)
 @click.option(
     "--delete-after-download",
     help='Delete the photo/video after download it.'
