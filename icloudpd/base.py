@@ -232,7 +232,7 @@ def main(
         no_progress_bar,
         notification_script,
         threads_num,    # pylint: disable=W0613
-        delete_after_download,
+        delete_after_download
 ):
     """Download all iCloud photos to a local directory"""
 
