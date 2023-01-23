@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- feature: a new command line option `--delete-after-download` to allow user to delete photos in the iCloud right after download is complete. #431
+- feature: a new command line option `--delete-after-download` to allow user to delete photos in the iCloud right after download is complete. [#431](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/431), [#368](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/368) [#314](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/314) [#124](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/124) [#332](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/332)
 
 ## 1.7.3 (2022-01-20)
 
