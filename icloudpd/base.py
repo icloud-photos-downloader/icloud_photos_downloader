@@ -9,6 +9,7 @@ import logging
 import itertools
 import subprocess
 import json
+import urllib
 import click
 
 from tqdm import tqdm
@@ -193,6 +194,13 @@ CONTEXT_SETTINGS = dict(help_option_names=["-h", "--help"])
     type=click.IntRange(1),
     default=1,
 )
+@click.option(
+    "--delete-after-download",
+    help='Delete the photo/video after download it.'
+    + ' The deleted items will be appear in the "Recently Deleted".'
+    + ' Therefore, should not combine with --auto-delete option.',
+    is_flag=True,
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -224,6 +232,7 @@ def main(
         no_progress_bar,
         notification_script,
         threads_num,    # pylint: disable=W0613
+        delete_after_download
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -244,6 +253,10 @@ def main(
     # check required directory param only if not list albums
     if not list_albums and not directory:
         print('--directory or --list-albums are required')
+        sys.exit(2)
+
+    if auto_delete and delete_after_download:
+        print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
     raise_error_on_2sa = (
@@ -541,6 +554,32 @@ def main(
                             icloud, photo, lp_download_path, lp_size
                         )
 
+    def delete_photo(photo):
+        """Delete a photo from the iCloud account."""
+        logger.info("Deleting %s", photo.filename)
+        # pylint: disable=W0212
+        url = f"{icloud.photos._service_endpoint}/records/modify?"\
+            f"{urllib.parse.urlencode(icloud.photos.params)}"
+        post_data = json.dumps(
+            {
+                "atomic": True,
+                "desiredKeys": ["isDeleted"],
+                "operations": [{
+                    "operationType": "update",
+                    "record": {
+                        "fields": {'isDeleted': {'value': 1}},
+                        "recordChangeTag": photo._asset_record["recordChangeTag"],
+                        "recordName": photo._asset_record["recordName"],
+                        "recordType": "CPLAsset",
+                    }
+                }],
+                "zoneID": {"zoneName": "PrimarySync"}
+            }
+        )
+        icloud.photos.session.post(
+            url, data=post_data, headers={
+                "Content-type": "application/json"})
+
     consecutive_files_found = Counter(0)
 
     def should_break(counter):
@@ -557,6 +596,8 @@ def main(
                 break
             item = next(photos_iterator)
             download_photo(consecutive_files_found, item)
+            if delete_after_download:
+                delete_photo(item)
         except StopIteration:
             break
 

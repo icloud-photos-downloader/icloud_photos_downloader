@@ -151,3 +151,20 @@ class CliTestCase(TestCase):
             ],
         )
         assert result.exit_code == 2
+
+    def test_conflict_options_delete_after_download_and_auto_delete(self):
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--delete-after-download",
+                "--auto-delete"
+            ],
+        )
+        assert result.exit_code == 2

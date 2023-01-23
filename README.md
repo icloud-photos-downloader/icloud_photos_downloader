@@ -108,6 +108,10 @@ Options:
                                   there is no tty attached)
   --threads-num INTEGER RANGE     Number of cpu threads -- deprecated. To be
                                   removed in future version
+  --delete-after-download         Delete the photo/video after download it.
+                                  The deleted items will be appear in the
+                                  "Recently Deleted". Therefore, should not
+                                  combine with --auto-delete option.
   --version                       Show the version and exit.
   -h, --help                      Show this message and exit.
 ```
