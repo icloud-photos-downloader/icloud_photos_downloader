@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: a new command line option `--delete-after-download` to allow user to delete photos in the iCloud right after download is complete. #431
+
 ## 1.7.3 (2022-01-20)
 
 - deprecating python 3.6
