@@ -558,10 +558,7 @@ def main(
         """Delete a photo from the iCloud account."""
         logger.info("Deleting %s", photo.filename)
         # pylint: disable=W0212
-        url = "{}/records/modify?{}".format(
-            icloud.photos._service_endpoint,
-            urllib.parse.urlencode(
-                icloud.photos.params))
+        url = f"{icloud.photos._service_endpoint}/records/modify?{urllib.parse.urlencode(icloud.photos.params)}"
         post_data = json.dumps(
             {
                 "atomic": True,
