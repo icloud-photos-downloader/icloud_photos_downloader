@@ -161,7 +161,8 @@ class CliTestCase(TestCase):
                 "jdoe@gmail.com",
                 "--password",
                 "password1",
-                "--list-albums",
+                "-d",
+                "/tmp",
                 "--delete-after-download",
                 "--auto-delete"
             ],
