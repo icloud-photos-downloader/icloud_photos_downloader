@@ -1,4 +1,4 @@
-setuptools==66.0.0
+setuptools==66.1.1
 twine==2.0.0
 wheel==0.38.4
 pyinstaller==5.7.0
