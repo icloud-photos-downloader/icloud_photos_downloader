@@ -161,8 +161,9 @@ class CliTestCase(TestCase):
                 "jdoe@gmail.com",
                 "--password",
                 "password1",
+                "--list-albums",
                 "--delete-after-download",
-                "--auto-delete",
+                "--auto-delete"
             ],
         )
         assert result.exit_code == 2
