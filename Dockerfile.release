@@ -1,4 +1,4 @@
-FROM alpine:3.15
+FROM alpine:3.17
 
 RUN set -xe && \
     apk add --no-cache python3 tzdata && \
@@ -14,7 +14,7 @@ RUN ln -fs /usr/share/zoneinfo/Etc/UTC /etc/localtime
 ARG ICLOUDPD_VERSION
 COPY dist/* /tmp
 RUN set -xe \
-  && pip install wheel==0.35.1 \
+  && pip install wheel==0.38.4 \
   && pip install /tmp/icloudpd-${ICLOUDPD_VERSION}-py2.py3-none-any.whl \
   && icloudpd --version \
   && icloud -h | head -n1

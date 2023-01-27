@@ -18,7 +18,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-        python-version: [3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -67,13 +67,8 @@ jobs:
         shell: bash
     strategy:
       matrix:
-        os: [ubuntu-latest]
-        python-version: [3.7, 3.8, 3.9]
-        include:
-          - os: macos-latest
-            python-version: 3.9
-          - os: windows-latest
-            python-version: 3.9
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        python-version: [3.11]
 
     steps:
     - uses: actions/checkout@v3
@@ -95,23 +90,22 @@ jobs:
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
         pyinstaller --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
-      if: ${{ matrix.python-version == '3.9' && matrix.os == 'windows-latest' }}
+      if: ${{ matrix.os == 'windows-latest' }}
 
     - name: Build Release Executables (Linux)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
         pyinstaller --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
-      if: ${{ matrix.python-version == '3.9' && matrix.os == 'ubuntu-latest' }}
+      if: ${{ matrix.os == 'ubuntu-latest' }}
 
     - name: Build Release Executables (MacOS)
       run: |
         pyinstaller --onefile icloudpd.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
         pyinstaller --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
-      if: ${{ matrix.python-version == '3.9' && matrix.os == 'macos-latest' }}
+      if: ${{ matrix.os == 'macos-latest' }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.python-version == '3.9' }}
       with:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
         if-no-files-found: error
