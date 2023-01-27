@@ -145,7 +145,8 @@ jobs:
       with:
         context: .
         file: ./Dockerfile.release
-        platforms: linux/amd64,linux/arm64,linux/386
+        platforms: linux/amd64,linux/arm64
+        #,linux/386
         push: false
         tags: |
           icloudpd/icloudpd:latest
