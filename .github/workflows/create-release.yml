@@ -56,9 +56,10 @@ jobs:
       run: |
         scripts/install_deps
 
-    - name: Build
+    - name: Build Python (Linux)
       run: |
         scripts/build
+      if: ${{ matrix.os == 'ubuntu-latest' }}
 
     - name: Build Release Executables (Windows)
       run: |
