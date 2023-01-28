@@ -451,7 +451,6 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-            # Pass fixed client ID via environment variable
 
             def mock_raise_response_error(arg):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -472,6 +471,7 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
+                        # Pass fixed client ID via environment variable
                         runner = CliRunner(env={
                             "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
                         })
@@ -519,7 +519,6 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-            # Pass fixed client ID via environment variable
 
             def mock_raise_response_error(offset):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -540,6 +539,7 @@ class DownloadPhotoTestCase(TestCase):
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
                     ):
+                        # Pass fixed client ID via environment variable
                         runner = CliRunner(env={
                             "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
                         })
@@ -578,7 +578,7 @@ class DownloadPhotoTestCase(TestCase):
                         # Make sure we only call sleep 4 times (skip the first retry)
                         self.assertEqual(sleep_mock.call_count, 4)
 
-                        assert result.exit_code == -1
+                        assert result.exit_code == 1
 
     def test_handle_connection_error(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")

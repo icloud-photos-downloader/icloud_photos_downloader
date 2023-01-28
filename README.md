@@ -11,7 +11,7 @@ This tool is developed and maintained by volunteers (we are always looking for [
 There are three ways to run `icloudpd`:
 1. Download executable for your platform from the Github Release and run it
 1. Use Docker to download and run the tool (requires Docker installed, e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-1. Install the tool using `pip` from Python (requires Python and `pip` installed)
+1. Run from the source (requires Python and `pip` installed)
 
 ### Download with Docker
 
@@ -21,7 +21,7 @@ Docker automatically pulls images from the remote repository if necessary. To do
 docker pull icloudpd/icloudpd
 ```
 
-### Install using `pip`
+### Running from the source
 
 `icloudpd` is a Python package that can be installed using `pip`:
 
@@ -234,11 +234,11 @@ docker run -it --rm icloudpd:latest icloudpd --version
 
 ### Install Python & pip
 
-Note that `icloudpd` works with python 3.9 and breaks on later versions of Python now.
+Note that `icloudpd` works with python 3.7+.
 
 #### Windows
 
-- [Download Python 3.9](https://www.python.org/downloads/windows/)
+- [Download Python](https://www.python.org/downloads/windows/)
 
 #### Mac
 
