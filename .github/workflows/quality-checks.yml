@@ -114,17 +114,10 @@ jobs:
 
   build_docker:
     runs-on: ubuntu-latest
-    needs: [get_version, build]
+    needs: [get_version]
 
     steps:
     - uses: actions/checkout@v3
-
-    - name: Download artifacts
-      uses: actions/download-artifact@v3
-      with:
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
-        path: |
-          dist
 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
@@ -139,16 +132,12 @@ jobs:
       run: echo ${{ steps.buildx.outputs.platforms }}
 
     - name: Build Release Docker
-      env:
-        ICLOUDPD_VERSION: ${{needs.get_version.outputs.icloudpd_version}}
       uses: docker/build-push-action@v3
       with:
         context: .
-        file: ./Dockerfile.release
+        file: ./Dockerfile
         platforms: linux/amd64,linux/arm64,linux/386
         push: false
         tags: |
           icloudpd/icloudpd:latest
           icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}
-        build-args: |
-          ICLOUDPD_VERSION=${{needs.get_version.outputs.icloudpd_version}}

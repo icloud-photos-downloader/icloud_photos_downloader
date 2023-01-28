@@ -1,38 +1,27 @@
-# This image is mainly used for development and testing
-
-FROM python:3.9 as base
+FROM python:3.11-alpine3.17 as build
 
 WORKDIR /app
-# explicit requirements because runtime does not need ALL dependencies
-COPY requirements-pip.txt .
-COPY requirements.txt .
-RUN pip3 install -r requirements-pip.txt
-RUN pip3 install -r requirements.txt
 
-FROM base as common
-RUN apt-get update && apt-get install -y dos2unix
-RUN mkdir Photos
-COPY requirements*.txt ./
-COPY scripts/install_deps scripts/install_deps
-RUN dos2unix scripts/install_deps
-RUN scripts/install_deps
-COPY . .
-RUN dos2unix scripts/*
 ENV TZ="America/Los_Angeles"
 
-FROM common as test
+RUN set -xe \
+  && apk update \
+  && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
 
-RUN scripts/test
-RUN scripts/lint
+COPY . .
 
-FROM common as build
+RUN pip3 install -r requirements-pip.txt -r requirements.txt -r requirements-dev.txt
 
-RUN scripts/build
+RUN pyinstaller -y icloudpd.py
+RUN pyinstaller -y icloud.py
+RUN cp dist/icloud/icloud dist/icloudpd/
 
-FROM python:3.9-alpine as runtime
+FROM alpine:3.17 as runtime
 
-COPY --from=build /app/dist/* /tmp
-RUN pip3 install /tmp/*.whl
+WORKDIR /app
 
-# copy from test to ensure test stage runs before runtime stage in buildx
-COPY --from=test /app/.coverage .
+COPY --from=build /app/dist/icloudpd .
+
+RUN set -xe \
+  && ln -s /app/icloudpd /usr/local/bin/icloudpd \
+  && ln -s /app/icloud /usr/local/bin/icloud 
