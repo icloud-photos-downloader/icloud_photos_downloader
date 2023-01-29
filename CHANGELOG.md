@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: keyring error [#539](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/539)
+
 ## 1.8.0 (2023-01-27)
 
 - update dependencies to solve [#539](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/539)
