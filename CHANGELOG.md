@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: remove mac binary unitl Apple signing is supported [#551](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/551)
 - fix: PyPI distribution [#549](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/549)
 - fix: keyring error [#539](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/539)
 
