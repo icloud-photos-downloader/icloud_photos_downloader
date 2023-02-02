@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: PyPI distribution [#549](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/549)
 - fix: keyring error [#539](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/539)
 
 ## 1.8.0 (2023-01-27)
