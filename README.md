@@ -200,7 +200,7 @@ This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.8.1
 Usage (Downloads all photos to ./Photos):
 
 ```bash
-docker run -it --rm --name icloud \
+docker run -it --rm --name icloudpd \
     -v $(pwd)/Photos:/data \
     -v $(pwd)/cookies:/cookies \
     -e TZ=America/Los_Angeles \
