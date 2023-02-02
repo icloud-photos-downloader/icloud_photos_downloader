@@ -1350,3 +1350,87 @@ class DownloadPhotoTestCase(TestCase):
                         "INFO     All photos have been downloaded!", self._caplog.text
                     )
                     assert result.exit_code == 0
+
+    def test_download_over_old_original_photos(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        with open(os.path.join(base_dir, "2018/07/30/IMG_7408-original.JPG"), "a") as f:
+            f.truncate(1151066)
+        with open(os.path.join(base_dir, "2018/07/30/IMG_7407.JPG"), "a") as f:
+            f.truncate(656257)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "5",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading 5 original photos to {base_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists.",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists.",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Skipping IMG_7405.MOV, only downloading photos.",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Skipping IMG_7404.MOV, only downloading photos.",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded!", self._caplog.text
+            )
+
+            # Check that file was downloaded
+            self.assertTrue(
+                os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))))
+            # Check that mtime was updated to the photo creation date
+            photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+            self.assertEqual(
+                "2018-07-31 07:22:24",
+                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+
+            assert result.exit_code == 0
+

@@ -452,6 +452,7 @@ def main(
         download_path = local_download_path(
             photo, download_size, download_dir)
 
+        original_download_path = None
         file_exists = os.path.isfile(download_path)
         if not file_exists and download_size == "original":
             # Deprecation - We used to download files like IMG_1234-original.jpg,
@@ -464,7 +465,7 @@ def main(
 
         if file_exists:
             # for later: this crashes if download-size medium is specified
-            file_size = os.stat(download_path).st_size
+            file_size = os.stat(original_download_path or download_path).st_size
             version = photo.versions[download_size]
             photo_size = version["size"]
             if file_size != photo_size:
