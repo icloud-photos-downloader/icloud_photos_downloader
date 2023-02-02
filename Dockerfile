@@ -12,7 +12,7 @@ COPY . .
 
 RUN pip3 install -r requirements-pip.txt -r requirements.txt -r requirements-dev.txt
 
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil icloudpd.py 
+RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil icloudpd.py icloud.py
 RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil icloud.py
 RUN cp dist/icloud/icloud dist/icloudpd/
 
