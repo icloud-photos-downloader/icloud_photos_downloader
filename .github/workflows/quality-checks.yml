@@ -99,12 +99,6 @@ jobs:
         pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
       if: ${{ matrix.os == 'ubuntu-latest' }}
 
-    - name: Build Release Executables (MacOS)
-      run: |
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
-      if: ${{ matrix.os == 'macos-latest' }}
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
