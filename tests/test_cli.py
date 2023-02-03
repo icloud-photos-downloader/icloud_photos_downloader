@@ -60,7 +60,7 @@ class CliTestCase(TestCase):
             for text in not_expected:
                 self.assertNotIn(text, self._caplog.text)
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
@@ -91,7 +91,7 @@ class CliTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
@@ -123,7 +123,7 @@ class CliTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
@@ -150,7 +150,7 @@ class CliTestCase(TestCase):
         )
         assert result.exit_code == 2
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
