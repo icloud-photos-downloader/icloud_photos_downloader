@@ -17,6 +17,7 @@ from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 import inspect
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -30,6 +31,14 @@ class DownloadLivePhotoTestCase(TestCase):
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
+
+        files_to_download = [
+            "2020/11/04/IMG_0516.HEIC",
+            "2020/11/04/IMG_0514.HEIC",
+            "2020/11/04/IMG_0514_HEVC.MOV",
+            "2020/11/04/IMG_0512.HEIC",
+            "2020/11/04/IMG_0512_HEVC.MOV"
+        ]
 
         with vcr.use_cassette("tests/vcr_cassettes/download_live_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -71,20 +80,37 @@ class DownloadLivePhotoTestCase(TestCase):
             )
             assert result.exit_code == 0
 
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download)
+
+        for file_name in files_to_download:
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"
+
     def test_skip_existing_live_photodownloads(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
+        files_to_create = [
+            ("2020/11/04/IMG_0516.HEIC", 1651485),
+            ("2020/11/04/IMG_0514_HEVC.MOV", 3951774),
+        ]
+
+        files_to_download = [
+            "2020/11/04/IMG_0514.HEIC",
+            "2020/11/04/IMG_0512.HEIC",
+            "2020/11/04/IMG_0512_HEVC.MOV"
+        ]
+
         # simulate that some expected files are there with correct sizes
         os.makedirs(os.path.join(base_dir, "2020/11/04"))
         # one photo and one movie are already there and should be skipped
         # Create dummies with the correct size
-        with open(os.path.join(base_dir, "2020/11/04/IMG_0516.HEIC"), "a") as f:
-            f.truncate(1651485)
-        with open(os.path.join(base_dir, "2020/11/04/IMG_0514_HEVC.MOV"), "a") as f:
-            f.truncate(3951774)
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
 
         with vcr.use_cassette("tests/vcr_cassettes/download_live_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -137,20 +163,38 @@ class DownloadLivePhotoTestCase(TestCase):
             )
             assert result.exit_code == 0
 
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download) + len(files_to_create)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"
+
     def test_skip_existing_live_photo_print_filenames(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
+        files_to_create = [
+            ("2020/11/04/IMG_0516.HEIC", 1651485),
+            ("2020/11/04/IMG_0514_HEVC.MOV", 3951774),
+        ]
+
+        files_to_download = [
+            "2020/11/04/IMG_0514.HEIC",
+            "2020/11/04/IMG_0512.HEIC",
+            "2020/11/04/IMG_0512_HEVC.MOV"
+        ]
+
         # simulate that some expected files are there with correct sizes
         os.makedirs(os.path.join(base_dir, "2020/11/04"))
         # one photo and one movie are already there and should be skipped
         # Create dummies with the correct size
-        with open(os.path.join(base_dir, "2020/11/04/IMG_0516.HEIC"), "a") as f:
-            f.truncate(1651485)
-        with open(os.path.join(base_dir, "2020/11/04/IMG_0514_HEVC.MOV"), "a") as f:
-            f.truncate(3951774)
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
 
         with vcr.use_cassette("tests/vcr_cassettes/download_live_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -180,6 +224,8 @@ class DownloadLivePhotoTestCase(TestCase):
 
             print (filenames)
 
+            assert len(filenames) == 3
+
             self.assertEqual(
                 os.path.join(base_dir, os.path.normpath("2020/11/04/IMG_0514.HEIC")),
                 filenames[0]
@@ -197,3 +243,10 @@ class DownloadLivePhotoTestCase(TestCase):
             assert "2020/11/04/IMG_0514_HEVC.MOV" not in filenames
 
             assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_create)
+
+        for file_name in ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"

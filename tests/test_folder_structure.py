@@ -7,6 +7,7 @@ from vcr import VCR
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 import inspect
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -19,6 +20,9 @@ class FolderStructureTestCase(TestCase):
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
+
+        files_to_download = [
+        ]
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
@@ -72,12 +76,21 @@ class FolderStructureTestCase(TestCase):
 
             assert result.exit_code == 0
 
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download)
+
+        for file_name in files_to_download:
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+
 
     def test_folder_structure_none(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
+
+        files_to_download = []
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
@@ -131,3 +144,11 @@ class FolderStructureTestCase(TestCase):
             )
 
             assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download)
+
+        for file_name in files_to_download:
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+
