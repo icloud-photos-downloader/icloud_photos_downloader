@@ -18,7 +18,7 @@ There are three ways to run `icloudpd`:
 Docker automatically pulls images from the remote repository if necessary. To download explicitely, e.g. to force version update, use:
 
 ```sh
-docker pull icloudpd/icloudpd
+docker pull icloudpd/icloudpd:1.8.1
 ```
 
 ### Running from the source
@@ -195,19 +195,16 @@ Now the script will run every 6 hours to download any new photos and videos.
 
 ## Docker
 
-This script is available in a Docker image: `docker pull icloudpd/icloudpd`
+This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.8.1`
 
-Usage:
+Usage (Downloads all photos to ./Photos):
 
 ```bash
-# Downloads all photos to ./Photos
-
-docker pull icloudpd/icloudpd
-docker run -it --rm --name icloud \
+docker run -it --rm --name icloudpd \
     -v $(pwd)/Photos:/data \
     -v $(pwd)/cookies:/cookies \
     -e TZ=America/Los_Angeles \
-    icloudpd/icloudpd:latest \
+    icloudpd/icloudpd:1.8.1 \
     icloudpd --directory /data \
     --cookie-directory /cookies \
     --folder-structure {:%Y/%Y-%m-%d} \
@@ -226,7 +223,7 @@ On Windows:
 Building image locally from the source tree:
 
 ```bash
-docker build . -t icloudpd
+docker build . -t icloudpd:dev
 docker run -it --rm icloudpd:latest icloudpd --version
 ```
 

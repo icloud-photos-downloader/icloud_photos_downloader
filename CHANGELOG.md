@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.8.1 (2023-02-03)
+
 - fix: avoid crash when downloading over legacy `-original` name [#338](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/338)
 - fix: remove mac binary unitl Apple signing is supported [#551](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/551)
 - fix: PyPI distribution [#549](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/549)
