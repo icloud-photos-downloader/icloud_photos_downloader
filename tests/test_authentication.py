@@ -7,6 +7,7 @@ import pyicloud_ipd
 from icloudpd.base import main
 from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
 import inspect
+import shutil
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -58,8 +59,9 @@ class AuthenticationTestCase(TestCase):
 
     def test_password_prompt(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -86,3 +88,5 @@ class AuthenticationTestCase(TestCase):
                 "INFO     All photos have been downloaded!", self._caplog.text
             )
             assert result.exit_code == 0
+
+        assert len(os.listdir(base_dir)) == 0

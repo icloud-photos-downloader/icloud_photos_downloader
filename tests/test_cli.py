@@ -87,8 +87,9 @@ class CliTestCase(TestCase):
 
     def test_unicode_directory(self):
         base_dir = os.path.normpath(f"tests/fixtures/相片")
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -111,6 +112,7 @@ class CliTestCase(TestCase):
                 ],
             )
             assert result.exit_code == 0
+        assert len(os.listdir(base_dir)) == 0
 
     def test_missing_directory(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")

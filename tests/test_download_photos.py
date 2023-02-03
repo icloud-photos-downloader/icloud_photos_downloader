@@ -17,6 +17,7 @@ from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 import inspect
+import pathlib
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -96,17 +97,20 @@ class DownloadPhotoTestCase(TestCase):
                 "INFO     All photos have been downloaded!", self._caplog.text
             )
 
-            # Check that file was downloaded
-            self.assertTrue(
-                os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))))
-            # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
-            self.assertEqual(
-                "2018-07-31 07:22:24",
-                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
-
             assert result.exit_code == 0
+
+        assert len(pathlib.Path(base_dir).glob("**")) == 5
+
+        # Check that file was downloaded
+        self.assertTrue(
+            os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))))
+        # Check that mtime was updated to the photo creation date
+        photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+        photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+        self.assertEqual(
+            "2018-07-31 07:22:24",
+            photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+
 
     def test_download_photos_and_set_exif(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
