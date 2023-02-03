@@ -1369,7 +1369,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_chinese(self):
-        base_dir = os.path.normpath("tests/fixtures/中文")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}/中文")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)

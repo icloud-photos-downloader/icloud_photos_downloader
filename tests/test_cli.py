@@ -118,7 +118,7 @@ class CliTestCase(TestCase):
                     "--log-level",
                     "info",
                     "-d",
-                    "tests/fixtures/相片",
+                    base_dir,
                 ],
             )
             assert result.exit_code == 0
