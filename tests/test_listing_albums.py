@@ -9,6 +9,7 @@ import mock
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 import inspect
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -47,3 +48,7 @@ class ListingAlbumsTestCase(TestCase):
             self.assertIn("Favorites", albums)
 
             assert result.exit_code == 0
+            
+        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+
+        assert sum(1 for _ in files_in_result) == 0
