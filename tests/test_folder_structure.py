@@ -76,7 +76,7 @@ class FolderStructureTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
@@ -145,7 +145,7 @@ class FolderStructureTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 

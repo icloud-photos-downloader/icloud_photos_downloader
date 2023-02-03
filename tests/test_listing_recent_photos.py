@@ -74,7 +74,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
 
         assert sum(1 for _ in files_in_result) == 0
 
@@ -119,7 +119,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
 
         assert sum(1 for _ in files_in_result) == 0
 
@@ -183,7 +183,7 @@ class ListingRecentPhotosTestCase(TestCase):
                     )
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
 
         assert sum(1 for _ in files_in_result) == 0
 
@@ -249,6 +249,6 @@ Include a link to the Gist in your issue, so that we can see what went wrong.
                         1533021744816)
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True, include_hidden=False)
 
         assert sum(1 for _ in files_in_result) == 0
