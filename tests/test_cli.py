@@ -7,6 +7,7 @@ import pytest
 from click.testing import CliRunner
 from icloudpd.base import main
 import inspect
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -59,10 +60,15 @@ class CliTestCase(TestCase):
             for text in not_expected:
                 self.assertNotIn(text, self._caplog.text)
 
+        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+
+        assert sum(1 for _ in files_in_result) == 0
+
     def test_tqdm(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
 
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             # Force tqdm progress bar via ENV var
@@ -85,8 +91,12 @@ class CliTestCase(TestCase):
             )
             assert result.exit_code == 0
 
+        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+
+        assert sum(1 for _ in files_in_result) == 0
+
     def test_unicode_directory(self):
-        base_dir = os.path.normpath(f"tests/fixtures/相片")
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}/相片")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -112,7 +122,10 @@ class CliTestCase(TestCase):
                 ],
             )
             assert result.exit_code == 0
-        assert len(os.listdir(base_dir)) == 0
+
+        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+
+        assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_directory(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
@@ -136,6 +149,10 @@ class CliTestCase(TestCase):
             ],
         )
         assert result.exit_code == 2
+
+        files_in_result = glob.glob("**/*.*", root_dir=base_dir, recursive=True, include_hidden=False)
+
+        assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_directory_param(self):
         runner = CliRunner()
