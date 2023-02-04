@@ -36,7 +36,7 @@ pip install icloudpd
 [//]: # (This is now only a copy&paste from --help output)
 
 ``` plain
-Usage: icloudpd-linux <options>
+Usage: icloudpd <options>
 
   Download all iCloud photos to a local directory
 
@@ -53,9 +53,9 @@ Options:
   --live-photo-size [original|medium|thumb]
                                   Live Photo video size to download (default:
                                   original)
-  --recent INTEGER RANGE          Number of recent photos to download
+  --recent INTEGER_RANGE          Number of recent photos to download
                                   (default: download all photos)
-  --until-found INTEGER RANGE     Download most recently added photos until we
+  --until-found INTEGER_RANGE     Download most recently added photos until we
                                   find x number of previously downloaded
                                   consecutive photos (default: download all
                                   photos)
@@ -106,7 +106,7 @@ Options:
                                   prints log messages on separate lines
                                   (Progress bar is disabled by default if
                                   there is no tty attached)
-  --threads-num INTEGER RANGE     Number of cpu threads -- deprecated. To be
+  --threads-num INTEGER_RANGE     Number of cpu threads -- deprecated. To be
                                   removed in future version
   --delete-after-download         Delete the photo/video after download it.
                                   The deleted items will be appear in the
