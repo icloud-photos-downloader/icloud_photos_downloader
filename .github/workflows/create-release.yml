@@ -118,6 +118,14 @@ jobs:
           icloudpd/icloudpd:latest
           icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}
 
+    - name: Update repo description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: icloudpd/icloudpd
+          short-description: ${{ github.event.repository.description }}
+
   publish_pypi:
     runs-on: ubuntu-latest
     needs: [get_version,build]
