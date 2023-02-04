@@ -1,9 +1,11 @@
-# This workflow will install Python dependencies, run tests and lint with a single version of Python
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+# This workflow will run docker multi platform build
+# It runs on merges to master and pull requests because it is very long
 
 name: Docker Build
 
 on:
+  push:
+    branches: [ master ]
   pull_request:
     # branches: [ master ]
   workflow_dispatch:
