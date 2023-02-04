@@ -4,6 +4,8 @@ WORKDIR /app
 
 ENV TZ="America/Los_Angeles"
 
+ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+
 RUN set -xe \
   && apk update \
   && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
