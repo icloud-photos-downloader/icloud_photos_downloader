@@ -132,7 +132,7 @@ jobs:
       with:
         context: .
         file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64,linux/386
+        platforms: linux/amd64
         push: false
         tags: |
           icloudpd/icloudpd:latest

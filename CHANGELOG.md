@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: add `linux/arm/v7` and `linux/arm/v6` docker image [#434](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/434)
+
 ## 1.8.1 (2023-02-03)
 
 - fix: avoid crash when downloading over legacy `-original` name [#338](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/338)
