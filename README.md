@@ -112,6 +112,8 @@ Options:
                                   The deleted items will be appear in the
                                   "Recently Deleted". Therefore, should not
                                   combine with --auto-delete option.
+  --domain [com|cn]               What iCloud root domain to use. Use 'cn' for
+                                  mainland China (default: 'com')
   --version                       Show the version and exit.
   -h, --help                      Show this message and exit.
 ```

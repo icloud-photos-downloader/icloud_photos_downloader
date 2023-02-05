@@ -18,7 +18,7 @@ from tzlocal import get_localzone
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 
 from icloudpd.logger import setup_logger
-from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
+from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 from icloudpd import download
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.string_helpers import truncate_middle
@@ -201,6 +201,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + ' Therefore, should not combine with --auto-delete option.',
     is_flag=True,
 )
+@click.option(
+    "--domain",
+    help="What iCloud root domain to use. Use 'cn' for mainland China (default: 'com')",
+    type=click.Choice(["com", "cn"]),
+    default="com",
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -232,7 +238,8 @@ def main(
         no_progress_bar,
         notification_script,
         threads_num,    # pylint: disable=W0613
-        delete_after_download
+        delete_after_download,
+        domain
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -265,7 +272,7 @@ def main(
         or notification_script is not None
     )
     try:
-        icloud = authenticate(
+        icloud = authenticator(domain)(
             username,
             password,
             cookie_directory,
@@ -465,7 +472,8 @@ def main(
 
         if file_exists:
             # for later: this crashes if download-size medium is specified
-            file_size = os.stat(original_download_path or download_path).st_size
+            file_size = os.stat(
+                original_download_path or download_path).st_size
             version = photo.versions[download_size]
             photo_size = version["size"]
             if file_size != photo_size:

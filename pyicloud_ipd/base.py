@@ -134,7 +134,7 @@ class PyiCloudService(object):
     """
 
     def __init__(
-        self, apple_id, password=None, cookie_directory=None, verify=True,
+        self, domain, apple_id, password=None, cookie_directory=None, verify=True,
         client_id=None
     ):
         if password is None:
@@ -147,8 +147,14 @@ class PyiCloudService(object):
         self._password_filter = PyiCloudPasswordFilter(password)
         logger.addFilter(self._password_filter)
 
-        self._home_endpoint = 'https://www.icloud.com'
-        self._setup_endpoint = 'https://setup.icloud.com/setup/ws/1'
+        if (domain == 'com'):
+            self._home_endpoint = 'https://www.icloud.com'
+            self._setup_endpoint = 'https://setup.icloud.com/setup/ws/1'
+        elif (domain == 'cn'):
+            self._home_endpoint = 'https://www.icloud.com.cn'
+            self._setup_endpoint = 'https://setup.icloud.com.cn/setup/ws/1'
+        else:
+            raise NotImplementedError(f"Domain '{domain}' is not supported yet")
 
         self._base_login_url = '%s/login' % self._setup_endpoint
 
