@@ -9,8 +9,10 @@ import sys
 import tempfile
 import os
 from re import match
+import urllib3
 
 from pyicloud_ipd.exceptions import (
+    PyiCloudConnectionException,
     PyiCloudFailedLoginException,
     PyiCloudAPIResponseError,
     PyiCloud2SARequiredError,
@@ -65,7 +67,10 @@ class PyiCloudSession(requests.Session):
 
         logger.debug("%s %s %s", args[0], args[1], kwargs.get('data', ''))
 
-        response = super(PyiCloudSession, self).request(*args, **kwargs)
+        try:
+            response = super(PyiCloudSession, self).request(*args, **kwargs)
+        except requests.exceptions.SSLError:
+            raise PyiCloudConnectionException("Error establishing secure connection. Try --domain parameter")
 
         content_type = response.headers.get('Content-Type', '').split(';')[0]
         json_mimetypes = ['application/json', 'text/json']
@@ -217,11 +222,17 @@ class PyiCloudService(object):
                 params=self.params,
                 data=json.dumps(data)
             )
+            resp = req.json()
         except PyiCloudAPIResponseError as error:
             msg = 'Invalid email/password combination.'
             raise PyiCloudFailedLoginException(msg, error)
 
-        resp = req.json()
+        # {'domainToUse': 'iCloud.com'}
+        domain_to_use = resp.get('domainToUse')
+        if domain_to_use != None:
+            msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
+            raise PyiCloudConnectionException(msg)
+
         self.params.update({'dsid': resp['dsInfo']['dsid']})
 
         if not os.path.exists(self._cookie_directory):

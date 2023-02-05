@@ -24,23 +24,20 @@ def authenticator(domain):
         """Authenticate with iCloud username and password"""
         logger = setup_logger()
         logger.debug("Authenticating...")
-        try:
-            # If password not provided on command line variable will be set to None
-            # and PyiCloud will attempt to retrieve from its keyring
-            icloud = pyicloud_ipd.PyiCloudService(
-                domain,
-                username, password,
-                cookie_directory=cookie_directory,
-                client_id=client_id,
-                )
-        except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
-            # Prompt for password if not stored in PyiCloud's keyring
-            password = click.prompt("iCloud Password", hide_input=True)
-            icloud = pyicloud_ipd.PyiCloudService(
-                domain,
-                username, password,
-                cookie_directory=cookie_directory,
-                client_id=client_id)
+        while True:
+            try:
+                # If password not provided on command line variable will be set to None
+                # and PyiCloud will attempt to retrieve from its keyring
+                icloud = pyicloud_ipd.PyiCloudService(
+                    domain,
+                    username, password,
+                    cookie_directory=cookie_directory,
+                    client_id=client_id,
+                    )
+                break
+            except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
+                # Prompt for password if not stored in PyiCloud's keyring
+                password = click.prompt("iCloud Password", hide_input=True)
 
         if icloud.requires_2sa:
             if raise_error_on_2sa:
