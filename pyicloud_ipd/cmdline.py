@@ -172,10 +172,19 @@ def main(args=None):
         help="Save device data to a file in the current directory.",
     )
 
+    parser.add_argument(
+        "--domain",
+        action="store",
+        dest="domain",
+        default="com",
+        help="Root Domain for requests to iCloud. com or cn",
+    )
+
     command_line = parser.parse_args(args)
 
     username = command_line.username
     password = command_line.password
+    domain   = command_line.domain
 
     if username and command_line.delete_from_keyring:
         utils.delete_password_in_keyring(username)
@@ -198,6 +207,7 @@ def main(args=None):
 
         try:
             api = pyicloud_ipd.PyiCloudService(
+                domain,
                 username.strip(),
                 password.strip()
             )

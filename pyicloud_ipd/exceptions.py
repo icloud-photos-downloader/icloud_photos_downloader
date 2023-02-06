@@ -3,6 +3,9 @@ class PyiCloudException(Exception):
     pass
 
 
+class PyiCloudConnectionException(PyiCloudException):
+    pass
+
 class PyiCloudNoDevicesException(PyiCloudException):
     pass
 
