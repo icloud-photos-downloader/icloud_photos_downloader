@@ -23,7 +23,7 @@ from icloudpd import download
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.string_helpers import truncate_middle
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.paths import local_download_path
+from icloudpd.paths import clean_filename, local_download_path
 from icloudpd import exif_datetime
 # Must import the constants object so that we can mock values in tests.
 from icloudpd import constants
@@ -385,14 +385,15 @@ def main(
 
     def download_photo(counter, photo):
         """internal function for actually downloading the photos"""
+        filename = clean_filename(photo.filename)
         if skip_videos and photo.item_type != "image":
             logger.set_tqdm_description(
-                f"Skipping {photo.filename}, only downloading photos."
+                f"Skipping {filename}, only downloading photos."
             )
             return
         if photo.item_type not in ("image", "movie"):
             logger.set_tqdm_description(
-                f"Skipping {photo.filename}, only downloading photos and videos. "
+                f"Skipping {filename}, only downloading photos and videos. "
                 f"(Item type was: {photo.item_type})"
             )
             return
@@ -449,8 +450,6 @@ def main(
 
         if size not in versions and size != "original":
             if force_size:
-                filename = photo.filename.encode(
-                    "utf-8").decode("ascii", "ignore")
                 logger.set_tqdm_description(
                     f"{size} size does not exist for {filename}. Skipping...", logging.ERROR, )
                 return
@@ -505,7 +504,7 @@ def main(
                 )
 
                 if download_result:
-                    if set_exif_datetime and photo.filename.lower().endswith(
+                    if set_exif_datetime and clean_filename(photo.filename).lower().endswith(
                             (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(download_path):
                         # %Y:%m:%d looks wrong, but it's the correct format
                         date_str = created_date.strftime(
@@ -565,7 +564,7 @@ def main(
 
     def delete_photo(photo):
         """Delete a photo from the iCloud account."""
-        logger.info("Deleting %s", photo.filename)
+        logger.info("Deleting %s", clean_filename(photo.filename))
         # pylint: disable=W0212
         url = f"{icloud.photos._service_endpoint}/records/modify?"\
             f"{urllib.parse.urlencode(icloud.photos.params)}"
