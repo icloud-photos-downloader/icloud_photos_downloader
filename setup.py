@@ -15,6 +15,7 @@ setup(
     license="MIT",
     packages=find_packages(),
     install_requires=required,
+    python_requires=">=3.7,<3.12",
     classifiers=[
         "Intended Audience :: Developers",
         "Operating System :: OS Independent",
