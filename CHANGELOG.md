@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: add `--notification-email-from` parameter [#496](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/496)
+
 ## 1.9.0 (2023-02-10)
 
 - fix: replace invalid chars in filenames with '_' [#378](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/378)

@@ -172,6 +172,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     metavar="<notification_email>",
 )
 @click.option(
+    "--notification-email-from",
+    help="Email address from which you would like to receive email notifications. "
+    "Default: SMTP username or notification-email",
+    metavar="<notification_email_from>",
+)
+@click.option(
     "--notification-script",
     type=click.Path(),
     help="Runs an external script when two factor authentication expires. "
@@ -234,6 +240,7 @@ def main(
         smtp_port,
         smtp_no_tls,
         notification_email,
+        notification_email_from,
         log_level,
         no_progress_bar,
         notification_script,
@@ -290,6 +297,7 @@ def main(
                 smtp_port,
                 smtp_no_tls,
                 notification_email,
+                notification_email_from,
             )
         sys.exit(1)
 
