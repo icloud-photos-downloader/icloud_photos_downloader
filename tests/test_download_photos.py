@@ -1618,7 +1618,7 @@ class DownloadPhotoTestCase(TestCase):
         files_to_download = [
             # <>:"/\|?*  -- windows
             # / & \0x00 -- linux
-            '2018/07/31/i_n_v_a_l_i_d_p_a_t_h_.JPG' #SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
+            '2018/07/31/i_n v_a_l_i_d_p_a_t_h_.JPG' #SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
         ]
 
         os.makedirs(os.path.join(base_dir, "2018/07/30/"))
