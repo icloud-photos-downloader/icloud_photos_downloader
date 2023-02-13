@@ -3,6 +3,11 @@ from setuptools import setup, find_packages
 with open("requirements.txt") as f:
     required = f.read().splitlines()
 
+# read the contents of your README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setup(
     name="icloudpd",
     version="1.9.0",
@@ -24,4 +29,6 @@ setup(
         "License :: OSI Approved :: MIT License",
     ],
     entry_points={"console_scripts": ["icloudpd = icloudpd.base:main"]},
+    long_description=long_description,
+    long_description_content_type='text/markdown'
 )
