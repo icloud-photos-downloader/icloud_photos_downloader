@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.10.0 (2023-02-17)
+
 - fix: allow spaces in filenames [#378](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/378)
 - feature: add `--notification-email-from` parameter [#496](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/496)
 
