@@ -118,6 +118,9 @@ Options:
                                   combine with --auto-delete option.
   --domain [com|cn]               What iCloud root domain to use. Use 'cn' for
                                   mainland China (default: 'com')
+  --watch-with-interval INTEGER RANGE
+                                  Run downloading in a infinite cycle, waiting
+                                  specified seconds between runs  [x>=1]                                  
   --version                       Show the version and exit.
   -h, --help                      Show this message and exit.
 ```
@@ -180,9 +183,20 @@ This error often happens because your account hasn't used the iCloud API before,
 
 If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new) and post the script output.
 
-## Cron Task
+## Watching iCloud for changes
 
-You can run `icloudpd` using `cron` on platforms that support it:
+Most used scenario is to run `icloudpd` to periodically download new photots from iCloud. This can be achieved with parameter or external `cron` task.
+
+> If you provide SMTP credentials, the script will send an email notification
+> whenever two-step authentication expires.
+
+### With `--watch-with-interval` parameter
+
+You can use `--watch-with-interval` parameter to keep `icloudpd` watching for iCloud changes. `icloudpd` will indefinately repeat downloading instructions with specified pause between them, except for authentication, which is performed only once.
+
+### With Cron task
+
+Alternatively, you can run `icloudpd` using `cron` on platforms that support it:
 
 - copy the example cron script from source tree, e.g. `cp cron_script.sh.example cron_script.sh`
 
@@ -196,8 +210,7 @@ You can run `icloudpd` using `cron` on platforms that support it:
 
 Now the script will run every 6 hours to download any new photos and videos.
 
-> If you provide SMTP credentials, the script will send an email notification
-> whenever two-step authentication expires.
+> `cron` tries to authenticate on each run 
 
 ## Docker
 
