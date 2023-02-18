@@ -18,7 +18,7 @@ There are three ways to run `icloudpd`:
 Docker automatically pulls images from the remote repository if necessary. To download explicitely, e.g. to force version update, use:
 
 ```sh
-docker pull icloudpd/icloudpd:1.8.1
+docker pull icloudpd/icloudpd:1.10.0
 ```
 
 ### Running from the source
@@ -98,6 +98,10 @@ Options:
                                   Email address where you would like to
                                   receive email notifications. Default: SMTP
                                   username
+  --notification-email-from <notification_email_from>
+                                  Email address from which you would like to
+                                  receive email notifications. Default: SMTP
+                                  username or notification-email
   --notification-script PATH      Runs an external script when two factor
                                   authentication expires. (path required:
                                   /path/to/my/script.sh)
@@ -197,7 +201,7 @@ Now the script will run every 6 hours to download any new photos and videos.
 
 ## Docker
 
-This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.8.1`
+This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.10.0`
 
 Usage (Downloads all photos to ./Photos):
 
@@ -206,7 +210,7 @@ docker run -it --rm --name icloudpd \
     -v $(pwd)/Photos:/data \
     -v $(pwd)/cookies:/cookies \
     -e TZ=America/Los_Angeles \
-    icloudpd/icloudpd:1.8.1 \
+    icloudpd/icloudpd:latest \
     icloudpd --directory /data \
     --cookie-directory /cookies \
     --folder-structure {:%Y/%Y-%m-%d} \
