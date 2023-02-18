@@ -273,6 +273,75 @@ def main(
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
+    sys.exit(
+        core(
+            directory,
+            username,
+            password,
+            cookie_directory,
+            size,
+            live_photo_size,
+            recent,
+            until_found,
+            album,
+            list_albums,
+            skip_videos,
+            skip_live_photos,
+            force_size,
+            auto_delete,
+            only_print_filenames,
+            folder_structure,
+            set_exif_datetime,
+            smtp_username,
+            smtp_password,
+            smtp_host,
+            smtp_port,
+            smtp_no_tls,
+            notification_email,
+            notification_email_from,
+            no_progress_bar,
+            notification_script,
+            delete_after_download,
+            domain,
+            logger
+        )
+    )
+
+# pylint: disable-msg=too-many-arguments,too-many-statements
+# pylint: disable-msg=too-many-branches,too-many-locals
+def core(
+        directory,
+        username,
+        password,
+        cookie_directory,
+        size,
+        live_photo_size,
+        recent,
+        until_found,
+        album,
+        list_albums,
+        skip_videos,
+        skip_live_photos,
+        force_size,
+        auto_delete,
+        only_print_filenames,
+        folder_structure,
+        set_exif_datetime,
+        smtp_username,
+        smtp_password,
+        smtp_host,
+        smtp_port,
+        smtp_no_tls,
+        notification_email,
+        notification_email_from,
+        no_progress_bar,
+        notification_script,
+        delete_after_download,
+        domain,
+        logger
+):
+    """Download all iCloud photos to a local directory"""
+
     raise_error_on_2sa = (
         smtp_username is not None
         or notification_email is not None
@@ -299,7 +368,7 @@ def main(
                 notification_email,
                 notification_email_from,
             )
-        sys.exit(1)
+        return 1
 
     # Default album is "All Photos", so this is the same as
     # calling `icloud.photos.all`.
@@ -311,14 +380,14 @@ def main(
         # For later: come up with a nicer message to the user. For now take the
         # exception text
         print(err)
-        sys.exit(1)
+        return 1
 
     if list_albums:
         albums_dict = icloud.photos.albums
         albums = albums_dict.values()  # pragma: no cover
         album_titles = [str(a) for a in albums]
         print(*album_titles, sep="\n")
-        sys.exit(0)
+        return 0
 
     directory = os.path.normpath(directory)
 
@@ -618,9 +687,11 @@ def main(
             break
 
     if only_print_filenames:
-        sys.exit(0)
+        return 0
 
     logger.info("All photos have been downloaded!")
 
     if auto_delete:
         autodelete_photos(icloud, folder_structure, directory)
+
+    return 0
