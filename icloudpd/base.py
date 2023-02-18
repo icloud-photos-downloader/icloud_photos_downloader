@@ -213,6 +213,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["com", "cn"]),
     default="com",
 )
+@click.option(
+    "--watch-with-interval",
+    help="Run downloading in a infinite cycle, waiting specified seconds between runs",
+    type=click.IntRange(1),
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -246,7 +251,8 @@ def main(
         notification_script,
         threads_num,    # pylint: disable=W0613
         delete_after_download,
-        domain
+        domain,
+        watch_with_interval
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -271,6 +277,11 @@ def main(
 
     if auto_delete and delete_after_download:
         print('--auto-delete and --delete-after-download are mutually exclusive')
+        sys.exit(2)
+
+
+    if watch_with_interval and (list_albums or only_print_filenames):
+        print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
         sys.exit(2)
 
     sys.exit(
@@ -310,7 +321,8 @@ def main(
             notification_script,
             delete_after_download,
             domain,
-            logger
+            logger,
+            watch_with_interval
         )
     )
 
@@ -545,7 +557,8 @@ def core(
         notification_script,
         delete_after_download,
         domain,
-        logger
+        logger,
+        watch_interval
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -579,149 +592,159 @@ def core(
 
     download_photo = downloader(icloud)
 
-    # Default album is "All Photos", so this is the same as
-    # calling `icloud.photos.all`.
-    # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
-    # case exit.
-    try:
-        photos = icloud.photos.albums[album]
-    except PyiCloudAPIResponseError as err:
-        # For later: come up with a nicer message to the user. For now take the
-        # exception text
-        print(err)
-        return 1
-
-    if list_albums:
-        albums_dict = icloud.photos.albums
-        albums = albums_dict.values()  # pragma: no cover
-        album_titles = [str(a) for a in albums]
-        print(*album_titles, sep="\n")
-        return 0
-
-    directory = os.path.normpath(directory)
-
-    logger.debug(
-        "Looking up all photos%s from album %s...",
-        "" if skip_videos else " and videos",
-        album)
-
-    def photos_exception_handler(ex, retries):
-        """Handles session errors in the PhotoAlbum photos iterator"""
-        if "Invalid global session" in str(ex):
-            if retries > constants.MAX_RETRIES:
-                logger.tqdm_write(
-                    "iCloud re-authentication failed! Please try again later."
-                )
-                raise ex
-            logger.tqdm_write(
-                "Session error, re-authenticating...",
-                logging.ERROR)
-            if retries > 1:
-                # If the first re-authentication attempt failed,
-                # start waiting a few seconds before retrying in case
-                # there are some issues with the Apple servers
-                time.sleep(constants.WAIT_SECONDS * retries)
-            icloud.authenticate()
-
-    photos.exception_handler = photos_exception_handler
-
-    photos_count = len(photos)
-
-    # Optional: Only download the x most recent photos.
-    if recent is not None:
-        photos_count = recent
-        photos = itertools.islice(photos, recent)
-
-    tqdm_kwargs = {"total": photos_count}
-
-    if until_found is not None:
-        del tqdm_kwargs["total"]
-        photos_count = "???"
-        # ensure photos iterator doesn't have a known length
-        photos = (p for p in photos)
-
-    plural_suffix = "" if photos_count == 1 else "s"
-    video_suffix = ""
-    photos_count_str = "the first" if photos_count == 1 else photos_count
-    if not skip_videos:
-        video_suffix = " or video" if photos_count == 1 else " and videos"
-    logger.info(
-        "Downloading %s %s photo%s%s to %s ...",
-        photos_count_str,
-        size,
-        plural_suffix,
-        video_suffix,
-        directory,
-    )
-
-    # Use only ASCII characters in progress bar
-    tqdm_kwargs["ascii"] = True
-
-    # Skip the one-line progress bar if we're only printing the filenames,
-    # or if the progress bar is explicitly disabled,
-    # or if this is not a terminal (e.g. cron or piping output to file)
-    if not os.environ.get("FORCE_TQDM") and (
-            only_print_filenames or no_progress_bar or not sys.stdout.isatty()
-    ):
-        photos_enumerator = photos
-        logger.set_tqdm(None)
-    else:
-        photos_enumerator = tqdm(photos, **tqdm_kwargs)
-        logger.set_tqdm(photos_enumerator)
-
-    def delete_photo(photo):
-        """Delete a photo from the iCloud account."""
-        logger.info("Deleting %s", clean_filename(photo.filename))
-        # pylint: disable=W0212
-        url = f"{icloud.photos._service_endpoint}/records/modify?"\
-            f"{urllib.parse.urlencode(icloud.photos.params)}"
-        post_data = json.dumps(
-            {
-                "atomic": True,
-                "desiredKeys": ["isDeleted"],
-                "operations": [{
-                    "operationType": "update",
-                    "record": {
-                        "fields": {'isDeleted': {'value': 1}},
-                        "recordChangeTag": photo._asset_record["recordChangeTag"],
-                        "recordName": photo._asset_record["recordName"],
-                        "recordType": "CPLAsset",
-                    }
-                }],
-                "zoneID": {"zoneName": "PrimarySync"}
-            }
-        )
-        icloud.photos.session.post(
-            url, data=post_data, headers={
-                "Content-type": "application/json"})
-
-    consecutive_files_found = Counter(0)
-
-    def should_break(counter):
-        """Exit if until_found condition is reached"""
-        return until_found is not None and counter.value() >= until_found
-
-    photos_iterator = iter(photos_enumerator)
     while True:
+
+        # Default album is "All Photos", so this is the same as
+        # calling `icloud.photos.all`.
+        # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
+        # case exit.
         try:
-            if should_break(consecutive_files_found):
+            photos = icloud.photos.albums[album]
+        except PyiCloudAPIResponseError as err:
+            # For later: come up with a nicer message to the user. For now take the
+            # exception text
+            print(err)
+            return 1
+
+        if list_albums:
+            albums_dict = icloud.photos.albums
+            albums = albums_dict.values()  # pragma: no cover
+            album_titles = [str(a) for a in albums]
+            print(*album_titles, sep="\n")
+            return 0
+
+        directory = os.path.normpath(directory)
+
+        logger.debug(
+            "Looking up all photos%s from album %s...",
+            "" if skip_videos else " and videos",
+            album)
+
+        def photos_exception_handler(ex, retries):
+            """Handles session errors in the PhotoAlbum photos iterator"""
+            if "Invalid global session" in str(ex):
+                if retries > constants.MAX_RETRIES:
+                    logger.tqdm_write(
+                        "iCloud re-authentication failed! Please try again later."
+                    )
+                    raise ex
                 logger.tqdm_write(
-                    f"Found {until_found} consecutive previously downloaded photos. Exiting"
-                )
+                    "Session error, re-authenticating...",
+                    logging.ERROR)
+                if retries > 1:
+                    # If the first re-authentication attempt failed,
+                    # start waiting a few seconds before retrying in case
+                    # there are some issues with the Apple servers
+                    time.sleep(constants.WAIT_SECONDS * retries)
+                icloud.authenticate()
+
+        photos.exception_handler = photos_exception_handler
+
+        photos_count = len(photos)
+
+        # Optional: Only download the x most recent photos.
+        if recent is not None:
+            photos_count = recent
+            photos = itertools.islice(photos, recent)
+
+        tqdm_kwargs = {"total": photos_count}
+
+        if until_found is not None:
+            del tqdm_kwargs["total"]
+            photos_count = "???"
+            # ensure photos iterator doesn't have a known length
+            photos = (p for p in photos)
+
+        plural_suffix = "" if photos_count == 1 else "s"
+        video_suffix = ""
+        photos_count_str = "the first" if photos_count == 1 else photos_count
+        if not skip_videos:
+            video_suffix = " or video" if photos_count == 1 else " and videos"
+        logger.info(
+            "Downloading %s %s photo%s%s to %s ...",
+            photos_count_str,
+            size,
+            plural_suffix,
+            video_suffix,
+            directory,
+        )
+
+        # Use only ASCII characters in progress bar
+        tqdm_kwargs["ascii"] = True
+
+        # Skip the one-line progress bar if we're only printing the filenames,
+        # or if the progress bar is explicitly disabled,
+        # or if this is not a terminal (e.g. cron or piping output to file)
+        skip_bar = not os.environ.get("FORCE_TQDM") and (
+                only_print_filenames or no_progress_bar or not sys.stdout.isatty())
+        if skip_bar:
+            photos_enumerator = photos
+            logger.set_tqdm(None)
+        else:
+            photos_enumerator = tqdm(photos, **tqdm_kwargs)
+            logger.set_tqdm(photos_enumerator)
+
+        def delete_photo(photo):
+            """Delete a photo from the iCloud account."""
+            logger.info("Deleting %s", clean_filename(photo.filename))
+            # pylint: disable=W0212
+            url = f"{icloud.photos._service_endpoint}/records/modify?"\
+                f"{urllib.parse.urlencode(icloud.photos.params)}"
+            post_data = json.dumps(
+                {
+                    "atomic": True,
+                    "desiredKeys": ["isDeleted"],
+                    "operations": [{
+                        "operationType": "update",
+                        "record": {
+                            "fields": {'isDeleted': {'value': 1}},
+                            "recordChangeTag": photo._asset_record["recordChangeTag"],
+                            "recordName": photo._asset_record["recordName"],
+                            "recordType": "CPLAsset",
+                        }
+                    }],
+                    "zoneID": {"zoneName": "PrimarySync"}
+                }
+            )
+            icloud.photos.session.post(
+                url, data=post_data, headers={
+                    "Content-type": "application/json"})
+
+        consecutive_files_found = Counter(0)
+
+        def should_break(counter):
+            """Exit if until_found condition is reached"""
+            return until_found is not None and counter.value() >= until_found
+
+        photos_iterator = iter(photos_enumerator)
+        while True:
+            try:
+                if should_break(consecutive_files_found):
+                    logger.tqdm_write(
+                        f"Found {until_found} consecutive previously downloaded photos. Exiting"
+                    )
+                    break
+                item = next(photos_iterator)
+                download_photo(consecutive_files_found, item)
+                if delete_after_download:
+                    delete_photo(item)
+            except StopIteration:
                 break
-            item = next(photos_iterator)
-            download_photo(consecutive_files_found, item)
-            if delete_after_download:
-                delete_photo(item)
-        except StopIteration:
+
+        if only_print_filenames:
+            return 0
+
+        logger.info("All photos have been downloaded!")
+
+        if auto_delete:
+            autodelete_photos(icloud, folder_structure, directory)
+
+        if watch_interval:
+            logger.info(f"Waiting for {watch_interval} sec...")
+            interval = range(1, watch_interval)
+            for _ in interval if skip_bar else tqdm(interval, desc="Waiting...", ascii=True):
+                time.sleep(1)
+        else:
             break
-
-    if only_print_filenames:
-        return 0
-
-    logger.info("All photos have been downloaded!")
-
-    if auto_delete:
-        autodelete_photos(icloud, folder_structure, directory)
 
     return 0
