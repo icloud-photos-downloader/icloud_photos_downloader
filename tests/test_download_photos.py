@@ -1661,3 +1661,73 @@ class DownloadPhotoTestCase(TestCase):
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
+    @pytest.mark.skip("not ready yet. may be not needed")
+    def test_download_watch(self):
+        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files_to_create = [
+            ("2018/07/30/IMG_7408.JPG", 1151066),
+            ("2018/07/30/IMG_7407.JPG", 656257),
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG'
+        ]
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
+
+        def my_sleep(target_duration):
+            counter = 0
+            def sleep_(duration):
+                if counter > duration:
+                    raise ValueError("SLEEP MOCK")
+                counter = counter + 1
+            return sleep_
+
+        with mock.patch("time.sleep") as sleep_patched:
+            # import random
+            target_duration = 1
+            sleep_patched.side_effect = my_sleep(target_duration)
+            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                # Pass fixed client ID via environment variable
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
+                result = runner.invoke(
+                    main,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "5",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--set-exif-datetime",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        1,
+                        "-d",
+                        base_dir,
+                        "--watch-with-interval",
+                        target_duration
+                    ],
+                )
+                print_result_exception(result)
+
+                assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+
