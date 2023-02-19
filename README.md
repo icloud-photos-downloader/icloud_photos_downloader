@@ -2,7 +2,8 @@
 
 - A command-line tool to download all your iCloud photos.
 - Works on Linux, Windows, and MacOS.
-- Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
+- Run as executable, docker container, or from the source
+- Run one time or continuously [watch for changes](#watching-icloud-for-changes) to keep a local backup of your photos and videos.
 
 This tool is developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)...). We aim to release new versions once a week (Friday), if there is something worth delivering.
 
@@ -243,7 +244,7 @@ Building image locally from the source tree:
 
 ```bash
 docker build . -t icloudpd:dev
-docker run -it --rm icloudpd:latest icloudpd --version
+docker run -it --rm icloudpd:dev icloudpd --version
 ```
 
 ## Appendix
