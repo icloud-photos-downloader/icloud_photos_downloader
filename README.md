@@ -82,6 +82,7 @@ Options:
                                   into the download directory
   --set-exif-datetime             Write the DateTimeOriginal exif tag from
                                   file creation date, if it doesn't exist.
+  --convert-jpg                   Convert all downloaded HEIC images to JPG.
   --smtp-username <smtp_username>
                                   Your SMTP username, for sending email
                                   notifications when two-step authentication
@@ -279,6 +280,36 @@ brew install python
 sudo apt-get update
 sudo apt-get install -y python
 ```
+
+### Install Pillow & pyheif
+In order to convert images from heic to JPG (`--convert-jpg`) you will need pyheif and Pillow. If you do not have libheif installed you will need to follow the OS specific steps below.
+``` sh
+python -m pip install Pillow
+python -m pip install pyheif
+```
+
+#### Windows
+- Install [Visual Studio Build Tools](https://visualstudio.microsoft.com/downloads/)
+- Install [vcpkg](https://github.com/microsoft/vcpkg#quick-start-windows) 
+- Build libheif via vcpkg: `vcpkg install libheif:x64-windows`
+- Copy libheif to your venv or python install:
+  - copy `vcpkg\installed\x64-windows\include\*` to `venv\include`
+  - copy `vcpkg\installed\x64-windows\bin\*` to `venv\Lib\site-packages`
+  - mkdir `venv\libs`
+  - copy `vcpkg\installed\x64-windows\lib\heif.lib` to `venv\libs`
+- Rerun the pip commands above and `pyheif` should install successfully.
+
+#### Linux (Ubuntu)
+The below was not required on Ubuntu 22.04.01 LTS with Python 3.10.6, however, older versions or may require these steps:
+- Install a compiler and libde265 dev: `apt update && apt install -y build-essential libde265-dev libffi-dev libheif-dev build-base zlib-dev jpeg-dev`
+- Build and install libheif:
+  - Install git: `apt install git`
+  - Install libheif: `git clone https://github.com/strukturag/libheif.git libheif && cd libheif && ./autogen.sh && ./configure && make -j4 && make install && ldconfig`
+- Rerun the pip commands above and `pyheif` should install successfully.
+
+#### Mac
+- todo: likely similar to ubuntu
+
 
 ### Install Docker Desktop
 

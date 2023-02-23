@@ -135,6 +135,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     is_flag=True,
 )
 @click.option(
+    "--convert-jpg",
+    help="Convert all downloaded HEIC images to JPG.",
+    is_flag=True,
+)
+@click.option(
     "--smtp-username",
     help="Your SMTP username, for sending email notifications when "
     "two-step authentication expires.",
@@ -239,6 +244,7 @@ def main(
         only_print_filenames,
         folder_structure,
         set_exif_datetime,
+        convert_jpg,
         smtp_username,
         smtp_password,
         smtp_host,
@@ -279,10 +285,23 @@ def main(
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
-
     if watch_with_interval and (list_albums or only_print_filenames):
         print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
         sys.exit(2)
+
+    if convert_jpg:
+        # Catch the Pillow/pyheif ModuleNotFoundError before downloading images.
+        try:
+            # pylint: disable-msg=import-outside-toplevel,unused-import
+            from icloudpd.convert import heif_to_jpg
+        except ModuleNotFoundError as mod_err:
+            if mod_err.name == "PIL":
+                print("Missing Pillow. See README for install instructions.")
+            elif mod_err.name == "pyheif":
+                print("Missing pyheif. See README for install instructions.")
+            else:
+                raise
+            sys.exit(2)
 
     sys.exit(
         core(
@@ -296,7 +315,8 @@ def main(
                 only_print_filenames,
                 set_exif_datetime,
                 skip_live_photos,
-                live_photo_size),
+                live_photo_size,
+                convert_jpg),
             directory,
             username,
             password,
@@ -340,7 +360,8 @@ def download_builder(
         only_print_filenames,
         set_exif_datetime,
         skip_live_photos,
-        live_photo_size):
+        live_photo_size,
+        convert_jpg):
     """factory for downloader"""
     def state_(icloud):
         def download_photo_(counter, photo):
@@ -482,6 +503,16 @@ def download_builder(
                                 created_date.strftime("%Y:%m:%d %H:%M:%S"),
                             )
                         download.set_utime(download_path, created_date)
+
+                        if photo.filename.lower().endswith('.heic') and convert_jpg:
+                            logger.set_tqdm_description(f"Converting {photo.filename} to JPG")
+                            try:
+                                # pylint: disable-msg=import-outside-toplevel
+                                from icloudpd.convert import heif_to_jpg
+                                from pathlib import PurePath
+                                heif_to_jpg(PurePath(download_path), delete_og=True)
+                            except ValueError:
+                                logger.debug("Error converting heif image %s", photo.filename)
 
             # Also download the live photo if present
             if not skip_live_photos:

@@ -8,11 +8,11 @@ ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 
 RUN set -xe \
   && apk update \
-  && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
+  && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev libheif-dev libde265-dev build-base jpeg-dev
 
 COPY . .
 
-RUN pip3 install -r requirements-pip.txt -r requirements.txt -r requirements-dev.txt
+RUN pip3 install -r requirements-pip.txt -r requirements.txt -r requirements-dev.txt -r requirements-convert.txt
 
 RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata icloudpd.py icloud.py
 RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata icloud.py
