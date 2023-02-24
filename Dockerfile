@@ -14,9 +14,7 @@ COPY . .
 
 RUN pip3 install -r requirements-pip.txt -r requirements.txt -r requirements-dev.txt
 
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata icloudpd.py icloud.py
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata icloud.py
-RUN cp dist/icloud/icloud dist/icloudpd/
+RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata exec.py
 
 FROM alpine:3.17 as runtime
 
@@ -24,8 +22,10 @@ WORKDIR /app
 
 ENV TZ="America/Los_Angeles"
 
-COPY --from=build /app/dist/icloudpd .
+COPY --from=build /app/dist/exec .
 
-RUN set -xe \
-  && ln -s /app/icloudpd /usr/local/bin/icloudpd \
-  && ln -s /app/icloud /usr/local/bin/icloud 
+ENTRYPOINT ["/app/exec"]
+
+# RUN set -xe \
+#   && ln -s /app/icloudpd /usr/local/bin/icloudpd \
+#   && ln -s /app/icloud /usr/local/bin/icloud 

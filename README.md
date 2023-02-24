@@ -32,6 +32,10 @@ pip install icloudpd
 
 > If you need to install Python, see the [Appendix](#appendix) section for instructions.
 
+## Experimental Mode
+
+Some changes added to the experimental mode first before then graduating into main package. [Details](EXPERIMENTAL.md)
+
 ## Usage
 
 [//]: # (This is now only a copy&paste from --help output)
