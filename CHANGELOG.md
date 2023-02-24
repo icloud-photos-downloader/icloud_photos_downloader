@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.11.0 (2023-02-24)
+
+- feature: add experimental mode for new cli
+
 ## 1.10.0 (2023-02-17)
 
 - feature: add `--watch-with-interval` parameter [#568](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/568)
