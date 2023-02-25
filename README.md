@@ -19,7 +19,7 @@ There are three ways to run `icloudpd`:
 Docker automatically pulls images from the remote repository if necessary. To download explicitely, e.g. to force version update, use:
 
 ```sh
-docker pull icloudpd/icloudpd:1.10.0
+docker pull icloudpd/icloudpd:1.11.0
 ```
 
 ### Running from the source
@@ -219,7 +219,7 @@ Now the script will run every 6 hours to download any new photos and videos.
 
 ## Docker
 
-This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.10.0`
+This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.11.0`
 
 Usage (Downloads all photos to ./Photos):
 
