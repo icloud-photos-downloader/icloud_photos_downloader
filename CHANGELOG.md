@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: add `icloud` script to the source distribution [#594](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/594)
+
 ## 1.11.0 (2023-02-24)
 
 - feature: add experimental mode for new cli
