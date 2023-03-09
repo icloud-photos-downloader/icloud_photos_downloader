@@ -108,7 +108,6 @@ jobs:
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.os != 'macos-latest' }}
       with:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
         if-no-files-found: error
