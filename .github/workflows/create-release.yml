@@ -77,7 +77,7 @@ jobs:
 
     - name: Build Release Executables (MacOS)
       run: |
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64 --target-arch universal2
+        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
       if: ${{ matrix.os == 'macos-latest' }}
 
     - name: Upload artifacts
