@@ -34,7 +34,7 @@ pip install icloudpd
 
 ## Experimental Mode
 
-Some changes added to the experimental mode first before then graduating into main package. [Details](EXPERIMENTAL.md)
+Some changes are added to the experimental mode before they graduate into the main package. [Details](https://github.com/icloud-photos-downloader/icloud_photos_downloader/blob/master/EXPERIMENTAL.md)
 
 ## Usage
 

@@ -1,6 +1,10 @@
 # Experimental Mode
 
-Substential, uncertain, big, uncomplete, or otherwise not immidiately considered safe and available to everybody, are tagged as experiemental.
+Goal is to try new things and get feedback from users without breaking existing behavior.
+
+Anything in this section can change without backward compatibity or even completely removed.
+
+DANGER ZONE: Code may not work as expected.
 
 ## CLI format
 
