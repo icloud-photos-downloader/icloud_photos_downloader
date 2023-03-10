@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.12.0 (2023-03-10)
+
 - experimental: add macos binary [#551](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/551)
 - fix: add `icloud` script to the source distribution [#594](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/594)
 
