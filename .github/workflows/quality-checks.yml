@@ -101,9 +101,13 @@ jobs:
         pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
       if: ${{ matrix.os == 'ubuntu-latest' }}
 
+    - name: Build Release Executables (MacOS)
+      run: |
+        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
+      if: ${{ matrix.os == 'macos-latest' }}
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
-      if: ${{ matrix.os != 'macos-latest' }}
       with:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
         if-no-files-found: error
