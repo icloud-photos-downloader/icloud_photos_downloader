@@ -1,4 +1,4 @@
 setuptools>=67.0.0,<68
 twine>=4.0.0,<5
-wheel>=0.38.4,<0.39
+wheel>=0.38.4,<0.41
 pyinstaller>=5.7.0,<6
