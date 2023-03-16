@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: filter assets dates with `--select-added-after` and `--select-created-after` parameters [#466](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/466) [#285](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/285) [#234](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/234) [#231](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/231)
+
 ## 1.12.0 (2023-03-10)
 
 - experimental: add macos binary [#551](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/551)

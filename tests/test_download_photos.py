@@ -21,13 +21,15 @@ import glob
 
 vcr = VCR(decode_compressed_response=True)
 
+
 class DownloadPhotoTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
 
     def test_download_and_skip_existing_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -72,7 +74,8 @@ class DownloadPhotoTestCase(TestCase):
             )
             print_result_exception(result)
 
-            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 5 original photos to {base_dir} ...",
                 self._caplog.text,
@@ -107,24 +110,28 @@ class DownloadPhotoTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
-        photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+        photo_mtime = os.path.getmtime(os.path.join(
+            base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
         photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
         self.assertEqual(
             "2018-07-31 07:22:24",
             photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
-
     def test_download_photos_and_set_exif(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -201,7 +208,8 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     # 2018:07:31 07:22:24 utc
-                    expectedDatetime = datetime.datetime(2018,7,31,7,22,24,tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
+                    expectedDatetime = datetime.datetime(
+                        2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
                     self.assertIn(
                         f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
                         self._caplog.text,
@@ -211,15 +219,19 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_photos_and_get_exif_exceptions(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -257,7 +269,8 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {base_dir} ...",
                     self._caplog.text,
@@ -279,15 +292,18 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_skip_existing_downloads(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -350,15 +366,19 @@ class DownloadPhotoTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_download) + len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_download) + len(files_to_create)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_until_found(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -372,16 +392,19 @@ class DownloadPhotoTestCase(TestCase):
         files_to_download.append(("2018/07/31/IMG_7409.JPG", "photo"))
         files_to_download.append(("2018/07/31/IMG_7409-medium.MOV", "photo"))
         files_to_skip.append(("2018/07/30/IMG_7408.JPG", "photo", 1151066))
-        files_to_skip.append(("2018/07/30/IMG_7408-medium.MOV", "photo", 894467))
+        files_to_skip.append(
+            ("2018/07/30/IMG_7408-medium.MOV", "photo", 894467))
         files_to_download.append(("2018/07/30/IMG_7407.JPG", "photo"))
         files_to_download.append(("2018/07/30/IMG_7407-medium.MOV", "photo"))
         files_to_skip.append(("2018/07/30/IMG_7405.MOV", "video", 36491351))
         files_to_skip.append(("2018/07/30/IMG_7404.MOV", "video", 225935003))
         files_to_download.append(("2018/07/30/IMG_7403.MOV", "video"))
         files_to_download.append(("2018/07/30/IMG_7402.MOV", "video"))
-        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo", 565699696))   # TODO large files on Windows times out
+        # TODO large files on Windows times out
+        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo", 565699696))
         files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo", 2308885))
-        files_to_skip.append(("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
+        files_to_skip.append(
+            ("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
         files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo", 2251047))
         files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))
 
@@ -423,7 +446,8 @@ class DownloadPhotoTestCase(TestCase):
                     expected_calls = list(
                         map(
                             lambda f: call(
-                                ANY, ANY, os.path.join(base_dir, os.path.normpath(f[0])),
+                                ANY, ANY, os.path.join(
+                                    base_dir, os.path.normpath(f[0])),
                                 "mediumVideo" if (
                                     f[1] == 'photo' and f[0].endswith('.MOV')
                                 ) else "original"),
@@ -441,7 +465,7 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     for f in files_to_skip:
-                        expected_message = f"INFO     {os.path.join(base_dir, os.path.normpath(f[0]))} already exists." 
+                        expected_message = f"INFO     {os.path.join(base_dir, os.path.normpath(f[0]))} already exists."
                         self.assertIn(expected_message, self._caplog.text)
 
                     self.assertIn(
@@ -449,21 +473,25 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertNotIn(
-                        f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7399-medium.MOV'))} already exists.", 
+                        f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7399-medium.MOV'))} already exists.",
                         self._caplog.text
                     )
 
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_skip) # we faked downloading
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_skip)  # we faked downloading
 
         for file_name in ([file_name for (file_name, _, _) in files_to_skip]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_handle_io_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -496,7 +524,8 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {base_dir} ...",
                     self._caplog.text,
@@ -510,12 +539,14 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_session_error_during_download(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -582,12 +613,14 @@ class DownloadPhotoTestCase(TestCase):
                         self.assertEqual(sleep_mock.call_count, 4)
                         assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_session_error_during_photo_iteration(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -654,12 +687,14 @@ class DownloadPhotoTestCase(TestCase):
 
                         assert result.exit_code == 1
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_connection_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -723,12 +758,14 @@ class DownloadPhotoTestCase(TestCase):
                         )
                         assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_albums_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -780,12 +817,14 @@ class DownloadPhotoTestCase(TestCase):
 
                         assert result.exit_code == 1
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_size(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -849,12 +888,14 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_size_fallback_to_original(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -916,12 +957,14 @@ class DownloadPhotoTestCase(TestCase):
 
                         assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_force_size(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -977,12 +1020,14 @@ class DownloadPhotoTestCase(TestCase):
 
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_invalid_creation_date(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -997,7 +1042,7 @@ class DownloadPhotoTestCase(TestCase):
             class NewDateTime(datetime.datetime):
                 def astimezone(self, tz=None):
                     raise ValueError('Invalid date')
-            dt_mock.return_value = NewDateTime(2018,1,1,0,0,0)
+            dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
@@ -1044,19 +1089,22 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     @pytest.mark.skipif(sys.platform == 'win32',
-                    reason="does not run on windows")
+                        reason="does not run on windows")
     @pytest.mark.skipif(sys.platform == 'darwin',
-                    reason="does not run on mac")
+                        reason="does not run on mac")
     def test_invalid_creation_year(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1071,7 +1119,7 @@ class DownloadPhotoTestCase(TestCase):
             class NewDateTime(datetime.datetime):
                 def astimezone(self, tz=None):
                     raise ValueError('Invalid date')
-            dt_mock.return_value = NewDateTime(5,1,1,0,0,0)
+            dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
             with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
                 # Pass fixed client ID via environment variable
@@ -1110,23 +1158,26 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
-                        self._caplog.text,
+                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
+                    self._caplog.text,
                 )
                 self.assertIn(
                     "INFO     All photos have been downloaded!", self._caplog.text
                 )
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_unknown_item_type(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1179,12 +1230,14 @@ class DownloadPhotoTestCase(TestCase):
 
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_download_and_dedupe_existing_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1236,7 +1289,8 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading 5 original photos to {base_dir} ...",
                     self._caplog.text,
@@ -1279,30 +1333,34 @@ class DownloadPhotoTestCase(TestCase):
                 self.assertTrue(
                     os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG"))))
                 # Check that mtime was updated to the photo creation date
-                photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
-                photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+                photo_mtime = os.path.getmtime(os.path.join(
+                    base_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
+                photo_modified_time = datetime.datetime.utcfromtimestamp(
+                    photo_mtime)
                 self.assertEqual(
                     "2018-07-31 07:22:24",
                     photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
                 self.assertTrue(
                     os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))))
-                photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
-                photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+                photo_mtime = os.path.getmtime(os.path.join(
+                    base_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
+                photo_modified_time = datetime.datetime.utcfromtimestamp(
+                    photo_mtime)
                 self.assertEqual(
                     "2018-07-31 07:22:24",
                     photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
                 assert result.exit_code == 0
 
-
     def test_download_photos_and_set_exif_exceptions(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         files_to_download = [
-            '2018/07/31/IMG_7409.JPG'   
+            '2018/07/31/IMG_7409.JPG'
         ]
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
@@ -1337,7 +1395,8 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     print_result_exception(result)
 
-                    self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                     self.assertIn(
                         f"INFO     Downloading the first original photo to {base_dir} ...",
                         self._caplog.text,
@@ -1347,7 +1406,8 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     # 2018:07:31 07:22:24 utc
-                    expectedDatetime = datetime.datetime(2018,7,31,7,22,24,tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
+                    expectedDatetime = datetime.datetime(
+                        2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
                     self.assertIn(
                         f"DEBUG    Setting EXIF timestamp for {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
                         self._caplog.text,
@@ -1361,15 +1421,18 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_chinese(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}/中文")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}/中文")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1404,7 +1467,8 @@ class DownloadPhotoTestCase(TestCase):
             )
             print_result_exception(result)
 
-            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
                 f'INFO     Downloading the first original photo to {base_dir} ...',
                 self._caplog.text,
@@ -1425,23 +1489,28 @@ class DownloadPhotoTestCase(TestCase):
             self.assertTrue(
                 os.path.exists(os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))))
             # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG')))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+            photo_mtime = os.path.getmtime(os.path.join(
+                base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG')))
+            photo_modified_time = datetime.datetime.utcfromtimestamp(
+                photo_mtime)
             self.assertEqual(
                 "2018-07-31 07:22:24",
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_after_delete(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1482,7 +1551,8 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     print_result_exception(result)
 
-                    self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
                     self.assertIn(
                         f"INFO     Downloading the first original photo to {base_dir} ...",
                         self._caplog.text,
@@ -1499,22 +1569,25 @@ class DownloadPhotoTestCase(TestCase):
                     )
                     assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_over_old_original_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
         files_to_create = [
-            ("2018/07/30/IMG_7408-original.JPG",1151066),
-            ("2018/07/30/IMG_7407.JPG",656257)
+            ("2018/07/30/IMG_7408-original.JPG", 1151066),
+            ("2018/07/30/IMG_7407.JPG", 656257)
         ]
 
         files_to_download = [
@@ -1552,7 +1625,8 @@ class DownloadPhotoTestCase(TestCase):
             )
             print_result_exception(result)
 
-            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 5 original photos to {base_dir} ...",
                 self._caplog.text,
@@ -1589,23 +1663,29 @@ class DownloadPhotoTestCase(TestCase):
             self.assertTrue(
                 os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))))
             # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+            photo_mtime = os.path.getmtime(os.path.join(
+                base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+            photo_modified_time = datetime.datetime.utcfromtimestamp(
+                photo_mtime)
             self.assertEqual(
                 "2018-07-31 07:22:24",
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_download) + len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_download) + len(files_to_create)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_normalized_names(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1618,7 +1698,8 @@ class DownloadPhotoTestCase(TestCase):
         files_to_download = [
             # <>:"/\|?*  -- windows
             # / & \0x00 -- linux
-            '2018/07/31/i_n v_a_l_i_d_p_a_t_h_.JPG' #SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
+            # SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
+            '2018/07/31/i_n v_a_l_i_d_p_a_t_h_.JPG'
         ]
 
         os.makedirs(os.path.join(base_dir, "2018/07/30/"))
@@ -1654,16 +1735,20 @@ class DownloadPhotoTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
     @pytest.mark.skip("not ready yet. may be not needed")
     def test_download_watch(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1684,6 +1769,7 @@ class DownloadPhotoTestCase(TestCase):
 
         def my_sleep(target_duration):
             counter = 0
+
             def sleep_(duration):
                 if counter > duration:
                     raise ValueError("SLEEP MOCK")
@@ -1724,10 +1810,253 @@ class DownloadPhotoTestCase(TestCase):
 
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
 
+    def test_download_added_after_exclude(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files_to_create = [
+            # ("2018/07/30/IMG_7408.JPG", 1151066),
+            # ("2018/07/30/IMG_7407.JPG", 656257),
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG'
+        ]
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "5",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                    "--select-added-after",
+                    "2018-07-30T11:44:11",
+
+                ],
+            )
+            print_result_exception(result)
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    def test_download_added_after_include(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files_to_create = [
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG',
+        ]
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                    "--select-added-after",
+                    "2018-07-31T07:22:26",
+
+                ],
+            )
+            print_result_exception(result)
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    def test_download_created_after_exclude(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files_to_create = [
+            # ("2018/07/30/IMG_7408.JPG", 1151066),
+            # ("2018/07/30/IMG_7407.JPG", 656257),
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG'
+        ]
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "5",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                    "--select-created-after",
+                    "2018-07-30T11:44:11",
+
+                ],
+            )
+            print_result_exception(result)
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    @pytest.mark.skip("not ready yet")
+    def test_download_created_after_include(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files_to_create = [
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG',
+        ]
+
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        for (file_name, file_size) in files_to_create:
+            with open(os.path.join(base_dir, file_name), "a") as f:
+                f.truncate(file_size)
+
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                    "--select-created-after",
+                    "2018-07-31T07:22:24",
+
+                ],
+            )
+            print_result_exception(result)
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(base_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"

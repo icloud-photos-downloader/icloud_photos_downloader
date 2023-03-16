@@ -218,6 +218,16 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     help="Run downloading in a infinite cycle, waiting specified seconds between runs",
     type=click.IntRange(1),
 )
+@click.option(
+    "--select-added-after",
+    help="Limit assets by Added Date field",
+    type=click.DateTime(),
+)
+@click.option(
+    "--select-created-after",
+    help="Limit assets by Created Date field",
+    type=click.DateTime(),
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -252,7 +262,9 @@ def main(
         threads_num,    # pylint: disable=W0613
         delete_after_download,
         domain,
-        watch_with_interval
+        watch_with_interval,
+        select_added_after,
+        select_created_after
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -279,10 +291,19 @@ def main(
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
-
     if watch_with_interval and (list_albums or only_print_filenames):
         print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
         sys.exit(2)
+
+    if select_added_after and (list_albums):
+        print('--select_added_after is not compatible with --list_albums')
+        sys.exit(2)
+
+    if select_added_after and select_added_after.tzinfo is None:
+        select_added_after = select_added_after.astimezone(get_localzone())
+
+    if select_created_after and select_created_after.tzinfo is None:
+        select_created_after = select_created_after.astimezone(get_localzone())
 
     sys.exit(
         core(
@@ -322,7 +343,9 @@ def main(
             delete_after_download,
             domain,
             logger,
-            watch_with_interval
+            watch_with_interval,
+            select_added_after,
+            select_created_after,
         )
     )
 
@@ -531,6 +554,8 @@ def download_builder(
 
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
+
+
 def core(
         downloader,
         directory,
@@ -558,7 +583,9 @@ def core(
         delete_after_download,
         domain,
         logger,
-        watch_interval
+        watch_interval,
+        select_added_after,
+        select_created_after
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -672,11 +699,25 @@ def core(
         # Use only ASCII characters in progress bar
         tqdm_kwargs["ascii"] = True
 
+        if select_added_after:
+            photos = itertools.takewhile(
+                lambda p: p.added_date > select_added_after, photos)
+            logger.debug(
+                f"Selecting photos ADDED after {select_added_after}..."
+            )
+
+        if select_created_after:
+            photos = itertools.filterfalse(
+                lambda p: p.created <= select_created_after, photos)
+            logger.debug(
+                f"Selecting photos CREATED after {select_created_after}..."
+            )
+
         # Skip the one-line progress bar if we're only printing the filenames,
         # or if the progress bar is explicitly disabled,
         # or if this is not a terminal (e.g. cron or piping output to file)
         skip_bar = not os.environ.get("FORCE_TQDM") and (
-                only_print_filenames or no_progress_bar or not sys.stdout.isatty())
+            only_print_filenames or no_progress_bar or not sys.stdout.isatty())
         if skip_bar:
             photos_enumerator = photos
             logger.set_tqdm(None)
