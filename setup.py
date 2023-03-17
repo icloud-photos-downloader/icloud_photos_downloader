@@ -28,7 +28,7 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
     ],
-    entry_points={"console_scripts": ["icloudpd = icloudpd.base:main", "icloud = pyicloud_ipd.cmdline:main"]},
+    entry_points={"console_scripts": ["icloudpd = icloudpd.base:main", "icloud = pyicloud.cmdline:main"]},
     long_description=long_description,
     long_description_content_type='text/markdown'
 )

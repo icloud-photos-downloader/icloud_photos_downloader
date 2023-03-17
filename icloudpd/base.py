@@ -15,7 +15,7 @@ import click
 from tqdm import tqdm
 from tzlocal import get_localzone
 
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud.exceptions import PyiCloudAPIResponseException
 
 from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
@@ -351,12 +351,13 @@ def download_builder(
                     f"Skipping {filename}, only downloading photos."
                 )
                 return
-            if photo.item_type not in ("image", "movie"):
-                logger.set_tqdm_description(
-                    f"Skipping {filename}, only downloading photos and videos. "
-                    f"(Item type was: {photo.item_type})"
-                )
-                return
+            # TODO: The item_type is not exist now, just ignore it for thsi fix.
+            # if photo.item_type not in ("image", "movie"):
+            #     logger.set_tqdm_description(
+            #         f"Skipping {filename}, only downloading photos and videos. "
+            #         f"(Item type was: {photo.item_type})"
+            #     )
+            #     return
             try:
                 created_date = photo.created.astimezone(get_localzone())
             except (ValueError, OSError):
@@ -600,7 +601,7 @@ def core(
         # case exit.
         try:
             photos = icloud.photos.albums[album]
-        except PyiCloudAPIResponseError as err:
+        except PyiCloudAPIResponseException as err:
             # For later: come up with a nicer message to the user. For now take the
             # exception text
             print(err)

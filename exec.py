@@ -1,7 +1,7 @@
 """ Experimental code """
 import sys
 from icloudpd.base import main as icloudpd_main
-from pyicloud_ipd.cmdline import main as icloud_main
+from pyicloud.cmdline import main as icloud_main
 
 import click
 
