@@ -122,6 +122,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     is_flag=True,
 )
 @click.option(
+    "--ignore-local-filesize",
+    help="Not comparing local and iCloud filesizes (in bytes), name matching only. Skipped if filename exists.",
+    is_flag=True,
+)
+@click.option(
     "--folder-structure",
     help="Folder structure (default: {:%Y/%m/%d}). "
     "If set to 'none' all photos will just be placed into the download directory",
@@ -237,6 +242,7 @@ def main(
         force_size,
         auto_delete,
         only_print_filenames,
+        ignore_local_filesize,
         folder_structure,
         set_exif_datetime,
         smtp_username,
@@ -294,6 +300,7 @@ def main(
                 size,
                 force_size,
                 only_print_filenames,
+                ignore_local_filesize,
                 set_exif_datetime,
                 skip_live_photos,
                 live_photo_size),
@@ -338,6 +345,7 @@ def download_builder(
         size,
         force_size,
         only_print_filenames,
+        ignore_local_filesize,
         set_exif_datetime,
         skip_live_photos,
         live_photo_size):
@@ -436,13 +444,18 @@ def download_builder(
                 version = photo.versions[download_size]
                 photo_size = version["size"]
                 if file_size != photo_size:
-                    download_path = (f"-{photo_size}.").join(
-                        download_path.rsplit(".", 1)
-                    )
-                    logger.set_tqdm_description(
-                        f"{truncate_middle(download_path, 96)} deduplicated."
-                    )
-                    file_exists = os.path.isfile(download_path)
+                    if ignore_local_filesize == True:
+                        logger.set_tqdm_description(
+                            f"Skipping {filename}, local file exists. Size differs, though."
+                        )
+                    else:
+                        download_path = (f"-{photo_size}.").join(
+                            download_path.rsplit(".", 1)
+                        )
+                        logger.set_tqdm_description(
+                            f"{truncate_middle(download_path, 96)} deduplicated."
+                        )
+                        file_exists = os.path.isfile(download_path)
                 if file_exists:
                     counter.increment()
                     logger.set_tqdm_description(
@@ -505,14 +518,19 @@ def download_builder(
                             lp_file_size = os.stat(lp_download_path).st_size
                             lp_photo_size = version["size"]
                             if lp_file_size != lp_photo_size:
-                                lp_download_path = (f"-{lp_photo_size}.").join(
-                                    lp_download_path.rsplit(".", 1)
-                                )
-                                logger.set_tqdm_description(
-                                    f"{truncate_middle(lp_download_path, 96)} deduplicated."
-                                )
-                                lp_file_exists = os.path.isfile(
-                                    lp_download_path)
+                                if ignore_local_filesize == True:
+                                    logger.set_tqdm_description(
+                                        f"Skipping live photo {filename}, local file exists. Size differs, though."
+                                    )
+                                else:
+                                    lp_download_path = (f"-{lp_photo_size}.").join(
+                                        lp_download_path.rsplit(".", 1)
+                                    )
+                                    logger.set_tqdm_description(
+                                        f"{truncate_middle(lp_download_path, 96)} deduplicated."
+                                    )
+                                    lp_file_exists = os.path.isfile(
+                                        lp_download_path)
                             if lp_file_exists:
                                 logger.set_tqdm_description(
                                     f"{truncate_middle(lp_download_path, 96)} already exists."
