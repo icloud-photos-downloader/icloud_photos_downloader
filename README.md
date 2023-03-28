@@ -80,6 +80,9 @@ Options:
                                   will be downloaded (not including files that
                                   are already downloaded.)(Does not download
                                   or delete any files.)
+  --ignore-local-filesize         Skipping download if file(name) exists
+                                  locally regardless of the difference in size.
+                                  (Dropbox online-only files report 0 size)
   --folder-structure <folder_structure>
                                   Folder structure (default: {:%Y/%m/%d}). If
                                   set to 'none' all photos will just be placed
