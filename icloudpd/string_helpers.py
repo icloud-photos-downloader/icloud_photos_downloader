@@ -11,6 +11,5 @@ def truncate_middle(string, length):
         return "..."[0:length]
     end_length = int(length) // 2 - 2
     start_length = length - end_length - 4
-    if end_length < 1:
-        end_length = 1
-    return "{0}...{1}".format(string[:start_length], string[-end_length:])
+    end_length = max(end_length, 1)
+    return f"{string[:start_length]}...{string[-end_length:]}"

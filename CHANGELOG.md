@@ -2,6 +2,44 @@
 
 ## Unreleased
 
+## 1.12.0 (2023-03-10)
+
+- experimental: add macos binary [#551](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/551)
+- fix: add `icloud` script to the source distribution [#594](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/594)
+
+## 1.11.0 (2023-02-24)
+
+- feature: add experimental mode for new cli
+
+## 1.10.0 (2023-02-17)
+
+- feature: add `--watch-with-interval` parameter [#568](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/568)
+- fix: allow spaces in filenames [#378](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/378)
+- feature: add `--notification-email-from` parameter [#496](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/496)
+
+## 1.9.0 (2023-02-10)
+
+- fix: replace invalid chars in filenames with '_' [#378](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/378)
+- feature: add `--domain` parameter to support mainland China [#572](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/572), [#545](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/545)
+- feature: add `linux/arm/v7` and `linux/arm/v6` docker image [#434](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/434)
+
+## 1.8.1 (2023-02-03)
+
+- fix: avoid crash when downloading over legacy `-original` name [#338](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/338)
+- fix: remove mac binary unitl Apple signing is supported [#551](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/551)
+- fix: PyPI distribution [#549](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/549)
+- fix: keyring error [#539](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/539)
+
+## 1.8.0 (2023-01-27)
+
+- update dependencies to solve [#539](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/539)
+- feature: a new command line option `--delete-after-download` to allow user to delete photos in the iCloud right after download is complete. [#431](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/431), [#368](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/368) [#314](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/314) [#124](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/124) [#332](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/332)
+
+## 1.7.3 (2023-01-20)
+
+- deprecating python 3.6
+- experimental: package `icloudpd` & `icloud` as executables [#146](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/146)
+
 ## 1.7.2 (2021-01-16)
 
 - fix: smtp server_hostname cannot be an empty [#227](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/227)
@@ -10,7 +48,7 @@
 
 ## 1.7.1 (2020-11-15)
 
-- fix: dev docker build on windows correctly manages crlf for scripts
+- fix: dev Docker build on Windows correctly manages crlf for scripts
 
 ## 1.7.1rc1 (2020-11-10)
 
@@ -24,7 +62,7 @@
 so all photos will be placed directly into the download directory.
 - fix: Empty directory structure being created #185
 - feature: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
-- fix: documentation issues, first adressed in #141 and seperated contribution
+- fix: documentation issues, first addressed in #141 and separated contribution
 info from README.md into CONTRIBUTING.md
 
 ## 1.6.2 (2020-10-23)

@@ -6,6 +6,7 @@ import pytest
 from click.testing import CliRunner
 from icloudpd.base import main
 import inspect
+import glob
 
 vcr = VCR(decode_compressed_response=True, record_mode="new_episodes")
 
@@ -21,18 +22,24 @@ class AutodeletePhotosTestCase(TestCase):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
-        # create some empty files that should be deleted
-        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
-        open(os.path.join(base_dir, "2018/07/30/IMG_7406.MOV"), "a").close()
-        os.makedirs(os.path.join(base_dir, "2018/07/26/"))
-        open(os.path.join(base_dir, "2018/07/26/IMG_7383.PNG"), "a").close()
-        os.makedirs(os.path.join(base_dir, "2018/07/12/"))
-        open(os.path.join(base_dir, "2018/07/12/IMG_7190.JPG"), "a").close()
-        open(os.path.join(base_dir, "2018/07/12/IMG_7190-medium.JPG"), "a").close()
+        files_to_create = [
+            "2018/07/30/IMG_7407.JPG",
+            "2018/07/30/IMG_7407-original.JPG"
+        ]
+        files_to_delete = [
+            "2018/07/30/IMG_7406.MOV",
+            "2018/07/26/IMG_7383.PNG",
+            "2018/07/12/IMG_7190.JPG",
+            "2018/07/12/IMG_7190-medium.JPG"
+        ]
 
-        # Should not be deleted
-        open(os.path.join(base_dir, "2018/07/30/IMG_7407.JPG"), "a").close()
-        open(os.path.join(base_dir, "2018/07/30/IMG_7407-original.JPG"), "a").close()
+        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
+        os.makedirs(os.path.join(base_dir, "2018/07/26/"))
+        os.makedirs(os.path.join(base_dir, "2018/07/12/"))
+    
+        # create some empty files 
+        for file_name in files_to_create + files_to_delete:
+            open(os.path.join(base_dir, file_name), "a").close()
 
         with vcr.use_cassette("tests/vcr_cassettes/autodelete_photos.yml"):
             # Pass fixed client ID via environment variable
@@ -93,3 +100,14 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertNotIn("IMG_7407-original.JPG", self._caplog.text)
 
             assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_create)
+
+        #check files
+        for file_name in files_to_create:
+            assert os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} expected, but missing"
+
+        for file_name in files_to_delete:
+            assert not os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} not expected, but present"            

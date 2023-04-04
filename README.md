@@ -1,12 +1,28 @@
-# iCloud Photos Downloader ![Quality Checks](https://github.com/icloud-photos-downloader/icloud_photos_downloader/workflows/Quality%20Checks/badge.svg) [![Build Status](https://travis-ci.org/ndbroadbent/icloud_photos_downloader.svg?branch=master)](https://travis-ci.org/ndbroadbent/icloud_photos_downloader) [![Coverage Status](https://coveralls.io/repos/github/ndbroadbent/icloud_photos_downloader/badge.svg?branch=master)](https://coveralls.io/github/ndbroadbent/icloud_photos_downloader?branch=master) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+# iCloud Photos Downloader [![Quality Checks](https://github.com/icloud-photos-downloader/icloud_photos_downloader/workflows/Quality%20Checks/badge.svg)](https://github.com/icloud-photos-downloader/icloud_photos_downloader/actions/workflows/quality-checks.yml) [![Multi Platform Docker Build](https://github.com/icloud-photos-downloader/icloud_photos_downloader/workflows/Docker%20Build/badge.svg)](https://github.com/icloud-photos-downloader/icloud_photos_downloader/actions/workflows/docker-build.yml) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 - A command-line tool to download all your iCloud photos.
 - Works on Linux, Windows, and MacOS.
-- Run as a [scheduled cron task](#cron-task) to keep a local backup of your photos and videos.
+- Run as executable, docker container, or from the source
+- Run one time or continuously [watch for changes](#watching-icloud-for-changes) to keep a local backup of your photos and videos.
 
 This tool is developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)...). We aim to release new versions once a week (Friday), if there is something worth delivering.
 
 ## Install
+
+There are three ways to run `icloudpd`:
+1. Download executable for your platform from the Github Release and run it
+1. Use Docker to download and run the tool (requires Docker installed, e.g. [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+1. Run from the source (requires Python and `pip` installed)
+
+### Download with Docker
+
+Docker automatically pulls images from the remote repository if necessary. To download explicitely, e.g. to force version update, use:
+
+```sh
+docker pull icloudpd/icloudpd:1.12.0
+```
+
+### Running from the source
 
 `icloudpd` is a Python package that can be installed using `pip`:
 
@@ -14,14 +30,18 @@ This tool is developed and maintained by volunteers (we are always looking for [
 pip install icloudpd
 ```
 
-> If you need to install Python, see the [Requirements](#requirements) section for instructions.
+> If you need to install Python, see the [Appendix](#appendix) section for instructions.
+
+## Experimental Mode
+
+Some changes are added to the experimental mode before they graduate into the main package. [Details](https://github.com/icloud-photos-downloader/icloud_photos_downloader/blob/master/EXPERIMENTAL.md)
 
 ## Usage
 
 [//]: # (This is now only a copy&paste from --help output)
 
 ``` plain
-Usage: icloudpd.py <options>
+Usage: icloudpd <options>
 
   Download all iCloud photos to a local directory
 
@@ -38,14 +58,14 @@ Options:
   --live-photo-size [original|medium|thumb]
                                   Live Photo video size to download (default:
                                   original)
-  --recent INTEGER RANGE          Number of recent photos to download
+  --recent INTEGER_RANGE          Number of recent photos to download
                                   (default: download all photos)
-  --until-found INTEGER RANGE     Download most recently added photos until we
+  --until-found INTEGER_RANGE     Download most recently added photos until we
                                   find x number of previously downloaded
                                   consecutive photos (default: download all
                                   photos)
   -a, --album <album>             Album to download (default: All Photos)
-  -l, --list-albums               Lists the avaliable albums
+  -l, --list-albums               Lists the available albums
   --skip-videos                   Don't download any videos (default: Download
                                   all photos and videos)
   --skip-live-photos              Don't download any live photos (default:
@@ -61,7 +81,9 @@ Options:
                                   are already downloaded.)(Does not download
                                   or delete any files.)
   --folder-structure <folder_structure>
-                                  Folder structure (default: {:%Y/%m/%d})
+                                  Folder structure (default: {:%Y/%m/%d}). If
+                                  set to 'none' all photos will just be placed
+                                  into the download directory
   --set-exif-datetime             Write the DateTimeOriginal exif tag from
                                   file creation date, if it doesn't exist.
   --smtp-username <smtp_username>
@@ -81,6 +103,10 @@ Options:
                                   Email address where you would like to
                                   receive email notifications. Default: SMTP
                                   username
+  --notification-email-from <notification_email_from>
+                                  Email address from which you would like to
+                                  receive email notifications. Default: SMTP
+                                  username or notification-email
   --notification-script PATH      Runs an external script when two factor
                                   authentication expires. (path required:
                                   /path/to/my/script.sh)
@@ -89,7 +115,17 @@ Options:
                                   prints log messages on separate lines
                                   (Progress bar is disabled by default if
                                   there is no tty attached)
-  --threads-num INTEGER RANGE     Number of cpu threads (default: 1)
+  --threads-num INTEGER_RANGE     Number of cpu threads -- deprecated. To be
+                                  removed in future version
+  --delete-after-download         Delete the photo/video after download it.
+                                  The deleted items will be appear in the
+                                  "Recently Deleted". Therefore, should not
+                                  combine with --auto-delete option.
+  --domain [com|cn]               What iCloud root domain to use. Use 'cn' for
+                                  mainland China (default: 'com')
+  --watch-with-interval INTEGER RANGE
+                                  Run downloading in a infinite cycle, waiting
+                                  specified seconds between runs  [x>=1]                                  
   --version                       Show the version and exit.
   -h, --help                      Show this message and exit.
 ```
@@ -104,40 +140,6 @@ icloudpd --directory ./Photos \
 --auto-delete
 ```
 
-## Requirements
-
-- Python 3.6+
-- pip
-
-### Install Python & pip
-
-#### Windows
-
-- [Download Python 3.x](https://www.python.org/downloads/windows/)
-
-#### Mac
-
-- Install [Homebrew](https://brew.sh/) (if not already installed):
-
-``` sh
-which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-- Install Python (includes `pip`):
-
-``` sh
-brew install python
-```
-
-> Alternatively, you can [download the latest Python 3.x installer for Mac](https://www.python.org/downloads/mac-osx/).
-
-#### Linux (Ubuntu)
-
-``` sh
-sudo apt-get update
-sudo apt-get install -y python
-```
-
 ## Authentication
 
 If your Apple account has two-factor authentication enabled,
@@ -146,7 +148,7 @@ you will be prompted for a code when you run the script.
 Two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months.
 
-Authentication cookies will be stored in a temp directory (`/tmp/pyicloud` on Linux, or `/var/tmp/...` on MacOS.) This directory can be configured with the `--cookie-directory` option.
+Authentication cookies will be stored in a temp directory (`/tmp/pyicloud` on Linux, or `/var/tmp/...` on macOS.) This directory can be configured with the `--cookie-directory` option.
 
 You can receive an email notification when two-factor authentication expires by passing the
 `--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
@@ -156,8 +158,7 @@ If you want to send notification emails using your Gmail account, and you have e
 
 ### System Keyring
 
-You can store your password in the system keyring using the `icloud` command-line tool
-(installed with the `pyicloud` dependency):
+You can store your password in the system keyring using the `icloud` command-line tool:
 
 ``` plain
 $ icloud --username jappleseed@apple.com
@@ -187,43 +188,43 @@ This error often happens because your account hasn't used the iCloud API before,
 
 If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new) and post the script output.
 
-## Cron Task
+## Watching iCloud for changes
 
-Follow these instructions to run `icloudpd` as a scheduled cron task.
+Most used scenario is to run `icloudpd` to periodically download new photots from iCloud. This can be achieved with parameter or external `cron` task.
 
-``` sh
-# Clone the git repo somewhere
-git clone https://github.com/icloud-photos-downloader/icloud_photos_downloader.git
-cd icloud_photos_downloader
+> If you provide SMTP credentials, the script will send an email notification
+> whenever two-step authentication expires.
 
-# Copy the example cron script
-cp cron_script.sh.example cron_script.sh
-```
+### With `--watch-with-interval` parameter
+
+You can use `--watch-with-interval` parameter to keep `icloudpd` watching for iCloud changes. `icloudpd` will indefinately repeat downloading instructions with specified pause between them, except for authentication, which is performed only once.
+
+### With Cron task
+
+Alternatively, you can run `icloudpd` using `cron` on platforms that support it:
+
+- copy the example cron script from source tree, e.g. `cp cron_script.sh.example cron_script.sh`
 
 - Update `cron_script.sh` with your username, password, and other options
 
 - Edit your "crontab" with `crontab -e`, then add the following line:
 
 ``` plain
-0 */6 * * * /path/to/icloud_photos_downloader/cron_script.sh
+0 */6 * * * /path/to/cron_script.sh
 ```
 
 Now the script will run every 6 hours to download any new photos and videos.
 
-> If you provide SMTP credentials, the script will send an email notification
-> whenever two-step authentication expires.
+> `cron` tries to authenticate on each run 
 
 ## Docker
 
-This script is available in a Docker image: `docker pull icloudpd/icloudpd`
+This script is available in a Docker image: `docker pull icloudpd/icloudpd:1.12.0`
 
-Usage:
+Usage (Downloads all photos to ./Photos):
 
 ```bash
-# Downloads all photos to ./Photos
-
-docker pull icloudpd/icloudpd
-docker run -it --rm --name icloud \
+docker run -it --rm --name icloudpd \
     -v $(pwd)/Photos:/data \
     -v $(pwd)/cookies:/cookies \
     -e TZ=America/Los_Angeles \
@@ -243,12 +244,49 @@ On Windows:
 - use `%cd%` instead of `$(pwd)`
 - or full path, e.g. `-v c:/photos/icloud:/data`
 
-Building image locally:
+Building image locally from the source tree:
 
 ```bash
-docker build . -t icloudpd
-docker run -it --rm icloudpd:latest icloudpd --version
+docker build . -t icloudpd:dev
+docker run -it --rm icloudpd:dev icloudpd --version
 ```
+
+## Appendix
+
+### Install Python & pip
+
+Note that `icloudpd` works with python 3.7+.
+
+#### Windows
+
+- [Download Python](https://www.python.org/downloads/windows/)
+
+#### Mac
+
+- Install [Homebrew](https://brew.sh/) (if not already installed):
+
+``` sh
+which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
+```
+
+- Install Python (includes `pip`):
+
+``` sh
+brew install python
+```
+
+> Alternatively, you can [download the latest Python 3.x installer for Mac](https://www.python.org/downloads/mac-osx/).
+
+#### Linux (Ubuntu)
+
+``` sh
+sudo apt-get update
+sudo apt-get install -y python
+```
+
+### Install Docker Desktop
+
+To install Docker with user interface on Windows or Mac, download and install [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 
 ## Contributing
 

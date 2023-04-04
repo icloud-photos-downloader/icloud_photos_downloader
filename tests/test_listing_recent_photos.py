@@ -8,6 +8,7 @@ from click.testing import CliRunner
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 import inspect
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -73,6 +74,10 @@ class ListingRecentPhotosTestCase(TestCase):
 
             assert result.exit_code == 0
 
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
+
     def test_listing_photos_does_not_create_folders(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
@@ -113,6 +118,10 @@ class ListingRecentPhotosTestCase(TestCase):
                 os.path.exists(os.path.join(base_dir, os.path.normpath("2018/07/31"))))
 
             assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
 
     def test_listing_recent_photos_with_missing_filenameEnc(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
@@ -174,6 +183,9 @@ class ListingRecentPhotosTestCase(TestCase):
                     )
                     assert result.exit_code == 0
 
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
 
     # This was used to solve the missing filenameEnc error. I found
     # another case where it might crash. (Maybe Apple changes the downloadURL key)
@@ -219,7 +231,7 @@ Then create an issue on GitHub: https://github.com/icloud-photos-downloader/iclo
 Include a link to the Gist in your issue, so that we can see what went wrong.
 
 """ , result.output)
-                    mock_open.assert_called_once_with('icloudpd-photo-error.json', 'w')
+                    mock_open.assert_called_once_with(file='icloudpd-photo-error.json', mode='w', encoding='utf8')
                     mock_json.assert_called_once()
                     # Check a few keys in the dict
                     first_arg = mock_json.call_args_list[0][0][0]
@@ -236,3 +248,7 @@ Include a link to the Gist in your issue, so that we can see what went wrong.
                         first_arg['asset_record']['fields']['assetDate']['value'],
                         1533021744816)
                     assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0

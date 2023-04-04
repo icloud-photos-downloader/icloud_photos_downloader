@@ -5,8 +5,10 @@ import pytest
 from click.testing import CliRunner
 import pyicloud
 from icloudpd.base import main
-from icloudpd.authentication import authenticate, TwoStepAuthRequiredError
+from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 import inspect
+import shutil
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -21,13 +23,14 @@ class AuthenticationTestCase(TestCase):
             with self.assertRaises(
                 pyicloud.exceptions.PyiCloudFailedLoginException
             ) as context:
-                authenticate(
+                authenticator("com")(
                     "bad_username",
                     "bad_password",
                     client_id="EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
-        self.assertTrue("Invalid email/password combination." in str(context.exception))
+        self.assertTrue(
+            "Invalid email/password combination." in str(context.exception))
 
     def test_2sa_required(self):
         with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
@@ -36,7 +39,7 @@ class AuthenticationTestCase(TestCase):
                 # delete ./tests/vcr_cassettes/auth_requires_2sa.yml,
                 # put your actual credentials in here, run the test,
                 # and then replace with dummy credentials.
-                authenticate(
+                authenticator("com")(
                     "jdoe@gmail.com",
                     "password1",
                     raise_error_on_2sa=True,
@@ -50,16 +53,19 @@ class AuthenticationTestCase(TestCase):
 
     def test_successful_auth(self):
         with vcr.use_cassette("tests/vcr_cassettes/successful_auth.yml"):
-            authenticate(
+            authenticator("com")(
                 "jdoe@gmail.com",
                 "password1",
                 client_id="EC5646DE-9423-11E8-BF21-14109FE0B321",
             )
 
     def test_password_prompt(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
         with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -86,3 +92,8 @@ class AuthenticationTestCase(TestCase):
                 "INFO     All photos have been downloaded!", self._caplog.text
             )
             assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0

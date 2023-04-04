@@ -2,5 +2,5 @@
 set -euo pipefail
 
 mkdir -p dist
-rm -f dist/*
+rm -fr dist/*
 python3 setup.py bdist_wheel --universal

@@ -769,7 +769,7 @@ interactions:
         : {\n        \"value\" : \"public.jpeg\",\n        \"type\" : \"STRING\"\n
         \     },\n      \"resJPEGThumbFingerprint\" : {\n        \"value\" : \"AfUG5knGXZGAUdjilPQHcFw5MQAz\",\n
         \       \"type\" : \"STRING\"\n      },\n      \"filenameEnc\" : {\n        \"value\"
-        : \"SU1HXzc0MDkuSlBH\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n
+        : \"aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n
         \     \"originalOrientation\" : {\n        \"value\" : 6,\n        \"type\"
         : \"INT64\"\n      },\n      \"resOriginalVidComplFileType\" : {\n        \"value\"
         : \"com.apple.quicktime-movie\",\n        \"type\" : \"STRING\"\n      },\n

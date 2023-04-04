@@ -1,0 +1,65 @@
+# This workflow will run docker multi platform build
+# It runs on merges to master and pull requests because it is very long
+
+name: Docker Build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    # branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+
+  get_version:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Retrieve version and Changelog
+      id: get_version
+      run: |
+        echo icloudpd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+        echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
+        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
+        echo 'EOF' >> $GITHUB_OUTPUT
+
+    - name: Log version and Changelog
+      run: |
+        echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
+        echo "icloudpd_changelog=${{steps.get_version.outputs.icloudpd_changelog}}"
+
+    outputs:
+      icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
+      icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
+
+  build_docker:
+    runs-on: ubuntu-latest
+    needs: [get_version]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v2
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Builder instance name
+      run: echo ${{ steps.buildx.outputs.name }}
+
+    - name: Available platforms
+      run: echo ${{ steps.buildx.outputs.platforms }}
+
+    - name: Build Release Docker
+      uses: docker/build-push-action@v3
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6
+        push: false
+        tags: |
+          icloudpd/icloudpd:latest
+          icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}

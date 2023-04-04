@@ -9,6 +9,7 @@ from icloudpd.base import main
 from pyicloud import PyiCloudService
 import inspect
 import shutil
+import glob
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -47,7 +48,12 @@ class TwoStepAuthTestCase(TestCase):
                 "ERROR    Failed to verify two-factor authentication code",
                 self._caplog.text,
             )
+
             assert result.exit_code == 1
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_device_2fa(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
@@ -98,6 +104,10 @@ class TwoStepAuthTestCase(TestCase):
             )
             assert result.exit_code == 0
 
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
+
     def test_2sa_flow_sms(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
@@ -147,6 +157,10 @@ class TwoStepAuthTestCase(TestCase):
             )
             assert result.exit_code == 0
 
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
+
     def test_2sa_flow_sms_failed(self):
         base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
@@ -191,3 +205,7 @@ class TwoStepAuthTestCase(TestCase):
                     self._caplog.text,
                 )
                 assert result.exit_code == 1
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
