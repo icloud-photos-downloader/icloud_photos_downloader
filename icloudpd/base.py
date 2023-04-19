@@ -121,13 +121,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option(
-    "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d}). "
-    "If set to 'none' all photos will just be placed into the download directory",
-    metavar="<folder_structure>",
-    default="{:%Y/%m/%d}",
-)
+@click.option("--folder-structure",
+              help="Folder structure (default: {:%Y/%m/%d}). "
+              "If set to 'none' all photos will just be placed into the download directory",
+              metavar="<folder_structure>",
+              default="{:%Y/%m/%d}",
+              )
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -171,12 +170,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     "Default: SMTP username",
     metavar="<notification_email>",
 )
-@click.option(
-    "--notification-email-from",
-    help="Email address from which you would like to receive email notifications. "
-    "Default: SMTP username or notification-email",
-    metavar="<notification_email_from>",
-)
+@click.option("--notification-email-from",
+              help="Email address from which you would like to receive email notifications. "
+              "Default: SMTP username or notification-email",
+              metavar="<notification_email_from>",
+              )
 @click.option(
     "--notification-script",
     type=click.Path(),
@@ -194,12 +192,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               "(Progress bar is disabled by default if there is no tty attached)",
               is_flag=True,
               )
-@click.option(
-    "--threads-num",
-    help="Number of cpu threads -- deprecated. To be removed in future version",
-    type=click.IntRange(1),
-    default=1,
-)
+@click.option("--threads-num",
+              help="Number of cpu threads -- deprecated. To be removed in future version",
+              type=click.IntRange(1),
+              default=1,
+              )
 @click.option(
     "--delete-after-download",
     help='Delete the photo/video after download it.'
@@ -213,11 +210,10 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["com", "cn"]),
     default="com",
 )
-@click.option(
-    "--watch-with-interval",
-    help="Run downloading in a infinite cycle, waiting specified seconds between runs",
-    type=click.IntRange(1),
-)
+@click.option("--watch-with-interval",
+              help="Run downloading in a infinite cycle, waiting specified seconds between runs",
+              type=click.IntRange(1),
+              )
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -278,7 +274,6 @@ def main(
     if auto_delete and delete_after_download:
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
-
 
     if watch_with_interval and (list_albums or only_print_filenames):
         print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
@@ -350,13 +345,12 @@ def download_builder(
                 logger.set_tqdm_description(
                     f"Skipping {filename}, only downloading photos."
                 )
-                return
+                return False
             if photo.item_type not in ("image", "movie"):
                 logger.set_tqdm_description(
                     f"Skipping {filename}, only downloading photos and videos. "
-                    f"(Item type was: {photo.item_type})"
-                )
-                return
+                    f"(Item type was: {photo.item_type})")
+                return False
             try:
                 created_date = photo.created.astimezone(get_localzone())
             except (ValueError, OSError):
@@ -382,6 +376,7 @@ def download_builder(
 
             download_dir = os.path.normpath(os.path.join(directory, date_path))
             download_size = size
+            success = False
 
             try:
                 versions = photo.versions
@@ -462,6 +457,7 @@ def download_builder(
                     download_result = download.download_media(
                         icloud, photo, download_path, download_size
                     )
+                    success = download_result
 
                     if download_result:
                         if set_exif_datetime and \
@@ -526,11 +522,14 @@ def download_builder(
                             download.download_media(
                                 icloud, photo, lp_download_path, lp_size
                             )
+            return success
         return download_photo_
     return state_
 
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
+
+
 def core(
         downloader,
         directory,
@@ -676,7 +675,7 @@ def core(
         # or if the progress bar is explicitly disabled,
         # or if this is not a terminal (e.g. cron or piping output to file)
         skip_bar = not os.environ.get("FORCE_TQDM") and (
-                only_print_filenames or no_progress_bar or not sys.stdout.isatty())
+            only_print_filenames or no_progress_bar or not sys.stdout.isatty())
         if skip_bar:
             photos_enumerator = photos
             logger.set_tqdm(None)
@@ -725,8 +724,9 @@ def core(
                     )
                     break
                 item = next(photos_iterator)
-                download_photo(consecutive_files_found, item)
-                if delete_after_download:
+                if download_photo(
+                        consecutive_files_found,
+                        item) and delete_after_download:
                     delete_photo(item)
             except StopIteration:
                 break
@@ -742,7 +742,8 @@ def core(
         if watch_interval:
             logger.info(f"Waiting for {watch_interval} sec...")
             interval = range(1, watch_interval)
-            for _ in interval if skip_bar else tqdm(interval, desc="Waiting...", ascii=True):
+            for _ in interval if skip_bar else tqdm(
+                    interval, desc="Waiting...", ascii=True):
                 time.sleep(1)
         else:
             break
