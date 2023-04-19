@@ -519,9 +519,9 @@ def download_builder(
                                 lp_download_path, 96)
                             logger.set_tqdm_description(
                                 f"Downloading {truncated_path}")
-                            download.download_media(
+                            success = download.download_media(
                                 icloud, photo, lp_download_path, lp_size
-                            )
+                            ) and success
             return success
         return download_photo_
     return state_
