@@ -401,13 +401,13 @@ def download_builder(
                 print(
                     "Include a link to the Gist in your issue, so that we can "
                     "see what went wrong.\n")
-                return
+                return False
 
             if size not in versions and size != "original":
                 if force_size:
                     logger.set_tqdm_description(
                         f"{size} size does not exist for {filename}. Skipping...", logging.ERROR, )
-                    return
+                    return False
                 download_size = "original"
 
             download_path = local_download_path(
