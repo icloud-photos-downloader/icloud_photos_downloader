@@ -1456,7 +1456,7 @@ class DownloadPhotoTestCase(TestCase):
                 "icloudpd.exif_datetime.get_photo_exif"
             ) as get_exif_patched:
                 get_exif_patched.return_value = False
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml") as cass:
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1497,6 +1497,7 @@ class DownloadPhotoTestCase(TestCase):
                     self.assertIn(
                         "INFO     All photos have been downloaded!", self._caplog.text
                     )
+                    assert cass.all_played
                     assert result.exit_code == 0
 
         files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
@@ -1512,50 +1513,49 @@ class DownloadPhotoTestCase(TestCase):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = False
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        1,
-                        "--delete-after-download",
-                        "-d",
-                        base_dir,
-                    ],
-                )
-                print_result_exception(result)
+        with vcr.use_cassette("tests/vcr_cassettes/listing_photos_no_delete.yml") as cass:
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "--delete-after-download",
+                    "-d",
+                    base_dir,
+                ],
+            )
+            print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-                self.assertIn(
-                    f"INFO     Downloading the first original photo to {base_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                    self._caplog.text,
-                )
-                self.assertNotIn(
-                    "INFO     Deleting IMG_7409.JPG", self._caplog.text
-                )
-                self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
-                )
-                assert result.exit_code == 0
+            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading the first original photo to {base_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "INFO     Deleting IMG_7409.JPG", self._caplog.text
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded!", self._caplog.text
+            )
+            assert cass.all_played
+            assert result.exit_code == 0
 
         files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
 
