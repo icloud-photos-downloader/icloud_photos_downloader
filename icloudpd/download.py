@@ -27,16 +27,19 @@ def update_mtime(photo, download_path):
             return
         set_utime(download_path, created_date)
 
+
 def set_utime(download_path, created_date):
     """Set date & time of the file"""
     ctime = time.mktime(created_date.timetuple())
     os.utime(download_path, (ctime, ctime))
 
+
 def download_media(icloud, photo, download_path, size):
     """Download the photo to path, with retries and error handling"""
     logger = setup_logger()
 
-    # get back the directory for the file to be downloaded and create it if not there already
+    # get back the directory for the file to be downloaded and create it if
+    # not there already
     download_dir = os.path.dirname(download_path)
 
     if not os.path.exists(download_dir):

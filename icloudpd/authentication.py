@@ -12,6 +12,7 @@ class TwoStepAuthRequiredError(Exception):
     and sends an email notification.
     """
 
+
 def authenticator(domain):
     """Wraping authentication with domain context"""
     def authenticate_(
@@ -33,7 +34,7 @@ def authenticator(domain):
                     username, password,
                     cookie_directory=cookie_directory,
                     client_id=client_id,
-                    )
+                )
                 break
             except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
                 # Prompt for password if not stored in PyiCloud's keyring
