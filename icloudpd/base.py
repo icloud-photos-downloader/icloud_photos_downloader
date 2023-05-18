@@ -121,12 +121,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option("--folder-structure",
-              help="Folder structure (default: {:%Y/%m/%d}). "
-              "If set to 'none' all photos will just be placed into the download directory",
-              metavar="<folder_structure>",
-              default="{:%Y/%m/%d}",
-              )
+@click.option(
+    "--folder-structure",
+    help="Folder structure (default: {:%Y/%m/%d}). "
+    "If set to 'none' all photos will just be placed into the download directory",
+    metavar="<folder_structure>",
+    default="{:%Y/%m/%d}",
+)
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -170,11 +171,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     "Default: SMTP username",
     metavar="<notification_email>",
 )
-@click.option("--notification-email-from",
-              help="Email address from which you would like to receive email notifications. "
-              "Default: SMTP username or notification-email",
-              metavar="<notification_email_from>",
-              )
+@click.option(
+    "--notification-email-from",
+    help="Email address from which you would like to receive email notifications. "
+    "Default: SMTP username or notification-email",
+    metavar="<notification_email_from>",
+)
 @click.option(
     "--notification-script",
     type=click.Path(),
@@ -187,16 +189,18 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["debug", "info", "error"]),
     default="debug",
 )
-@click.option("--no-progress-bar",
-              help="Disables the one-line progress bar and prints log messages on separate lines "
-              "(Progress bar is disabled by default if there is no tty attached)",
-              is_flag=True,
-              )
-@click.option("--threads-num",
-              help="Number of cpu threads -- deprecated. To be removed in future version",
-              type=click.IntRange(1),
-              default=1,
-              )
+@click.option(
+    "--no-progress-bar",
+    help="Disables the one-line progress bar and prints log messages on separate lines "
+    "(Progress bar is disabled by default if there is no tty attached)",
+    is_flag=True,
+)
+@click.option(
+    "--threads-num",
+    help="Number of cpu threads -- deprecated. To be removed in future version",
+    type=click.IntRange(1),
+    default=1,
+)
 @click.option(
     "--delete-after-download",
     help='Delete the photo/video after download it.'
@@ -210,10 +214,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["com", "cn"]),
     default="com",
 )
-@click.option("--watch-with-interval",
-              help="Run downloading in a infinite cycle, waiting specified seconds between runs",
-              type=click.IntRange(1),
-              )
+@click.option(
+    "--watch-with-interval",
+    help="Run downloading in a infinite cycle, waiting specified seconds between runs",
+    type=click.IntRange(1),
+)
 @click.version_option()
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
