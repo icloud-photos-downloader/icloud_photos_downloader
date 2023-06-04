@@ -30,7 +30,7 @@ Synchronization logic can be adjusted with command-line parameters. Run `icloudp
 
 ## FAQ
 
-Nuances of working with the iCloud or a specific operating system are collected in the [FAQ](https://github.com/icloud-photos-downloader/icloud_photos_downloader/FAQ.md). Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues).
+Nuances of working with the iCloud or a specific operating system are collected in the [FAQ](FAQ.md). Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues).
 
 ## Contributing
 
