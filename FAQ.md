@@ -44,3 +44,11 @@ This error often happens because your account hasn't used the iCloud API before,
 
 If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new) and post the script output.
 
+
+## Access from Mainland China
+
+Access to iCloud.com is blocked from mainland China. `icloudpd` does not currently support icloud.com.cn version yet.
+
+## iOS 16 Shared Library
+
+iOS 16 feature to share libraries between accounts is [not supported](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/455) yet.
