@@ -10,7 +10,7 @@ We aim to release new versions once a week (Friday), if there is something worth
 ## Install and Run
 
 There are three ways to run `icloudpd`:
-1. Download executable for your platform from the Github [Release](releases) and run it
+1. Download executable for your platform from the Github [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) and run it
 1. Use package manager to install, update, and, in some cases, run ([Docker](README_DOCKER.md), [PyPI](READMY_PYPI.md))
 1. Build and run from the source
 
