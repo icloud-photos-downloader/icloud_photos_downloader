@@ -20,7 +20,13 @@ Please review the following guidelines before contributing.  Also, feel free to 
 
 [Setting up the development environment](#setting_up_the_development_environment)
 
+[How to write a unit test](#how-to-write-a-unit-test)
+
 Please note we have a [Code of Conduct](CODE_OF_CONDUCT.md), please follow it in all your interactions with the project.
+
+Chore:
+- [How to release](#how-to-release)
+
 
 ## How can I contribute?
 
@@ -123,3 +129,12 @@ The process is mostly like this (assuming we're talking about a bug fix here...)
 Refer to the existing tests for inspiration. A very simple test to understand the basic idea might be the test for the listing of albums option in `tests/test_listing_albums.py`.
 
 When testing a bugfix it is important to test the faulty behavior and also the expected behavior.
+
+## How to release
+
+We have github actions taking care for building, testing, and releasing software. Building and testing are happenning automatically on git pushed, pull requests, and merges. For releases the following steps are manual:
+- Bump version in setup.py and any .md files
+- Update CHANGELOG.md with date of the release
+- Update CHANGELOG.md with release changes if they were not added with commits
+- Commit & push/merge changes
+- Add version tag to head and push to master -- there seems to be no way to do that in UI and seems to be better not to mix with prev steps as they require merge

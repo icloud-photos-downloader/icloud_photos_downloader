@@ -130,6 +130,7 @@ jobs:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_PASSWORD }}
         repository: icloudpd/icloudpd
+        readme-filepath: ./README_DOCKER.md
         short-description: ${{ github.event.repository.description }}
 
   publish_pypi:
