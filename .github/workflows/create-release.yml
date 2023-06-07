@@ -77,6 +77,7 @@ jobs:
 
     - name: Build Release Executables (MacOS)
       run: |
+        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
         pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
       if: ${{ matrix.os == 'macos-latest' }}
 
@@ -187,16 +188,19 @@ jobs:
 
       - name: Make Package
         run: |
-          mv npm dist/npm
+          cp -r npm dist/npm
           mkdir dist/npm/@icloudpd/win32-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64.exe dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
           mkdir dist/npm/@icloudpd/linux-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
+          mkdir dist/npm/@icloudpd/darwin-x64/bin
+          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-darwin-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
 
       - name: Publish NPM
         run: |
           npm publish dist/npm/@icloudpd/linux-x64
           npm publish dist/npm/@icloudpd/windows-x64
+          npm publish dist/npm/@icloudpd/darwin-x64
           npm publish dist/npm/icloudpd
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
