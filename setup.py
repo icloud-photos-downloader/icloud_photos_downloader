@@ -15,7 +15,7 @@ setup(
     description=(
         "icloudpd is a command-line tool to download photos and videos from iCloud."
     ),
-    maintainer="The iCloud Authors",
+    maintainer="The iCloud Photo Downloader Authors",
     maintainer_email=" ",
     license="MIT",
     packages=find_packages(),

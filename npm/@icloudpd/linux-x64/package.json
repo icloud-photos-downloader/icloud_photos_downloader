@@ -1,0 +1,17 @@
+{
+    "name": "@icloudpd/linux-x64",
+    "version": "1.13.0",
+    "description": "The Linux 64-bit binary for icloudpd, a iCloud Photo Downloader.",
+    "repository": "https://github.com/icloud_photo_downloader/icloud_photo_downloader",
+    "license": "MIT",
+    "preferUnplugged": true,
+    "bin": {
+      "icloudpd": "bin/icloudpd"
+    },
+    "os": [
+      "linux"
+    ],
+    "cpu": [
+      "x64"
+    ]
+  }

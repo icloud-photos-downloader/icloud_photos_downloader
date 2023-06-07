@@ -18,3 +18,7 @@ icloudpd-latest-py2.py3-none-any.whl
 .venv
 venv
 *.spec
+# exclude since there is no js development, just for local testing npm packaging
+node_modules/
+/package.json
+/package-lock.json
