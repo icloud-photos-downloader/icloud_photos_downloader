@@ -194,7 +194,7 @@ jobs:
           mkdir dist/npm/@icloudpd/linux-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
           mkdir dist/npm/@icloudpd/darwin-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-darwin-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
+          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
 
       - name: Publish NPM
         run: |
