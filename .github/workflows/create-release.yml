@@ -203,7 +203,7 @@ jobs:
           npm publish dist/npm/@icloudpd/darwin-x64
           npm publish dist/npm/icloudpd
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   release:
     needs: [get_version, build]
