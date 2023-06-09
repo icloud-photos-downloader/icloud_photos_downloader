@@ -2,8 +2,11 @@
   "name": "icloudpd",
   "version": "1.13.0",
   "description": "iCloud Photo Downloader",
-  "directories": {
-    "test": "tests"
+  "engines": {
+    "node": ">=12"
+  },
+  "bin": {
+    "icloudpd": "bin/icloudpd.js"
   },
   "repository": {
     "type": "git",

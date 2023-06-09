@@ -5,8 +5,8 @@
     "repository": "https://github.com/icloud_photo_downloader/icloud_photo_downloader",
     "license": "MIT",
     "preferUnplugged": true,
-    "bin": {
-      "icloudpd": "bin/icloudpd"
+    "engines": {
+      "node": ">=12"
     },
     "os": [
       "win32"
