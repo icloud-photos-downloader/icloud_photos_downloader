@@ -3,7 +3,6 @@ on:
     # Sequence of patterns matched against refs/tags
     tags:
       - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
-  workflow_dispatch:
 
 name: Create Release
 
@@ -169,16 +168,13 @@ jobs:
     runs-on: ubuntu-latest
     needs: [get_version,build]
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          registry-url: 'https://npm.pkg.github.com'
-          # Defaults to the user or organization that owns the workflow file
-          # scope: '@icloudpd'
+
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -204,7 +200,7 @@ jobs:
           npm publish dist/npm/@icloudpd/darwin-x64
           npm publish dist/npm/icloudpd
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   release:
     needs: [get_version, build]
