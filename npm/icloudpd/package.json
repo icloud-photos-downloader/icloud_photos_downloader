@@ -1,0 +1,30 @@
+{
+  "name": "icloudpd",
+  "version": "1.13.0",
+  "description": "iCloud Photo Downloader",
+  "engines": {
+    "node": ">=12"
+  },
+  "bin": {
+    "icloudpd": "bin/icloudpd.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/icloud_photos_downloader/icloud_photos_downloader.git"
+  },
+  "keywords": [
+    "icloud",
+    "photo"
+  ],
+  "author": "The iCloud Photo Downloader Authors",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/icloud_photos_downloader/icloud_photos_downloader/issues"
+  },
+  "homepage": "https://github.com/icloud_photos_downloader/icloud_photos_downloader#readme",
+  "optionalDependencies": {
+    "@icloudpd/linux-x64": "1.13.0",
+    "@icloudpd/win32-x64": "1.13.0",
+    "@icloudpd/darwin-x64": "1.13.0"
+  }
+}

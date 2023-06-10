@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- experimental: add support for distributing `icloudpd` with [npm](README_NPM.md) package manager
+
 ## 1.13.0 (2023-04-21)
 
 - fix: only delete files successfully downloaded [#614](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/614)

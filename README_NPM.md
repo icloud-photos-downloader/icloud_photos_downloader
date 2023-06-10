@@ -2,48 +2,21 @@
 
 A command-line tool to download all your iCloud photos.
 
-## Install
+## [EXPERIMENTAL] Install, Run, and Use
 
 ``` sh
-pip install icloudpd
-```
-
-## Usage
-
-``` sh
-icloudpd --directory /data --username my@email.address --watch-with-interval 3600
+npx icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
 Synchronization logic can be adjusted with command-line parameters. Run the following to get full list:
 
 ``` sh 
-icloudpd --help
+npx icloudpd --help
 ``` 
 
-## Getting Python & Pip
+## Getting Node and Npm
 
-You can get Python with accompanying Pip from [Official site](https://www.python.org/downloads/).
-
-### Alternative for Mac
-
-Install [Homebrew](https://brew.sh/) (if not already installed):
-
-``` sh
-which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
-```
-
-Install Python (includes `pip`):
-
-``` sh
-brew install python
-```
-
-### Alternative for Linux (Ubuntu)
-
-``` sh
-sudo apt-get update
-sudo apt-get install -y python
-```
+You can get NodeJS with accompanying Npm from [Official site](https://nodejs.org/en/download).
 
 ## More
 
