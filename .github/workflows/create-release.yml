@@ -186,12 +186,16 @@ jobs:
       - name: Make Package
         run: |
           cp -r npm dist/npm
+          cp LICENSE.md dist/npm/icloudpd
           mkdir dist/npm/@icloudpd/win32-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64.exe dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
+          cp LICENSE.md dist/npm/@icloudpd/win32-x64/
           mkdir dist/npm/@icloudpd/linux-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
+          cp LICENSE.md dist/npm/@icloudpd/linux-x64/
           mkdir dist/npm/@icloudpd/darwin-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
+          cp LICENSE.md dist/npm/@icloudpd/darwin-x64/
 
       - name: Publish NPM
         run: |
