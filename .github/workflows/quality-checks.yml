@@ -156,9 +156,6 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          registry-url: 'https://npm.pkg.github.com'
-          # Defaults to the user or organization that owns the workflow file
-          # scope: '@icloudpd'
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -177,3 +174,9 @@ jobs:
           mkdir dist/npm/@icloudpd/darwin-x64/bin
           mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
 
+      - name: Publish NPM (Dry-run)
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --dry-run=true
+          npm publish dist/npm/@icloudpd/windows-x64 --dry-run=true
+          npm publish dist/npm/@icloudpd/darwin-x64 --dry-run=true
+          npm publish dist/npm/icloudpd --dry-run=true
