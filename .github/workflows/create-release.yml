@@ -200,7 +200,7 @@ jobs:
       - name: Publish NPM
         run: |
           npm publish dist/npm/@icloudpd/linux-x64
-          npm publish dist/npm/@icloudpd/windows-x64
+          npm publish dist/npm/@icloudpd/win32-x64
           npm publish dist/npm/@icloudpd/darwin-x64
           npm publish dist/npm/icloudpd
         env:
