@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.13.2 (2023-06-10)
+
+- experimental: fix npm regestery publishing
+
 ## 1.13.1 (2023-06-10)
 
 - experimental: add support for distributing `icloudpd` with [npm](README_NPM.md) package manager
