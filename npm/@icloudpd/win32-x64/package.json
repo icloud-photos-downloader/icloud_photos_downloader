@@ -1,6 +1,6 @@
 {
     "name": "@icloudpd/win32-x64",
-    "version": "1.13.0",
+    "version": "1.13.1",
     "description": "The Windows 64-bit binary for icloudpd, a iCloud Photo Downloader.",
     "repository": "https://github.com/icloud_photo_downloader/icloud_photo_downloader",
     "license": "MIT",
