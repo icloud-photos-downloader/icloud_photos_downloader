@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.13.1 (2023-06-10)
+
 - experimental: add support for distributing `icloudpd` with [npm](README_NPM.md) package manager
 
 ## 1.13.0 (2023-04-21)
