@@ -10,7 +10,7 @@ long_description = (this_directory / "README_PYPI.md").read_text()
 
 setup(
     name="icloudpd",
-    version="1.13.2",
+    version="1.13.3",
     url="https://github.com/icloud-photos-downloader/icloud_photos_downloader",
     description=(
         "icloudpd is a command-line tool to download photos and videos from iCloud."
