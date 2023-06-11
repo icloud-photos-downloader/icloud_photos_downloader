@@ -2,9 +2,13 @@
 
 ## Unreleased
 
+## 1.13.3 (2023-06-11)
+
+- experimental: fix npm registry publishing
+
 ## 1.13.2 (2023-06-10)
 
-- experimental: fix npm regestery publishing
+- experimental: fix npm registry publishing
 
 ## 1.13.1 (2023-06-10)
 
