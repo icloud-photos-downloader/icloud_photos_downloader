@@ -165,25 +165,16 @@ jobs:
           path: |
             dist
 
-      - name: Make Package
+      - name: Build Package
         run: |
-          cp -r npm dist/npm
-          cp LICENSE.md dist/npm/icloudpd
-          mkdir dist/npm/@icloudpd/win32-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64.exe dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
-          cp LICENSE.md dist/npm/@icloudpd/win32-x64/
-          mkdir dist/npm/@icloudpd/linux-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
-          cp LICENSE.md dist/npm/@icloudpd/linux-x64/
-          mkdir dist/npm/@icloudpd/darwin-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
-          cp LICENSE.md dist/npm/@icloudpd/darwin-x64/
+          scripts/build_npm ${{needs.get_version.outputs.icloudpd_version}}
 
       - name: Publish NPM (Dry-run)
         run: |
           npm publish dist/npm/@icloudpd/linux-x64 --access public --dry-run=true
           npm publish dist/npm/@icloudpd/win32-x64 --access public --dry-run=true
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --dry-run=true
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --dry-run=true
           npm publish dist/npm/icloudpd --access public --dry-run=true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

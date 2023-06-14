@@ -25,6 +25,7 @@
   "optionalDependencies": {
     "@icloudpd/linux-x64": "1.13.3",
     "@icloudpd/win32-x64": "1.13.3",
-    "@icloudpd/darwin-x64": "1.13.3"
+    "@icloudpd/darwin-x64": "1.13.3",
+    "@icloudpd/darwin-arm64": "1.13.3"
   }
 }

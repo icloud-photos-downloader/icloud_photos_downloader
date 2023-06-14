@@ -11,6 +11,10 @@ var knownPlatforms = {
         "pkgName": "@icloudpd/darwin-x64",
         "subPath": "bin/icloudpd" 
     },
+    "darwin arm64 LE": {
+        "pkgName": "@icloudpd/darwin-arm64",
+        "subPath": "bin/icloudpd" 
+    },
     "win32 x64 LE": {
         "pkgName": "@icloudpd/win32-x64",
         "subPath": "bin/icloudpd.exe" 
@@ -21,5 +25,5 @@ if (platformKey in knownPlatforms) {
     var binPath = require.resolve(`${pkgName}/${subPath}`);
     require("child_process").execFileSync(binPath, process.argv.slice(2), { stdio: "inherit" });
 } else {
-    throw new Error(`Unsupported platform: ${platformKey}`);
+    throw new Error(`Unsupported platform: '${platformKey}'`);
 }

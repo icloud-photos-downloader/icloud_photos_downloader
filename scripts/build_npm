@@ -1,0 +1,32 @@
+#!/bin/bash
+set -euo pipefail
+
+# prepare npm packages in dist
+# expects dist to have comipled binary versions
+# param: version
+
+rm -rf dist/npm
+cp -r npm dist/npm
+cp LICENSE.md dist/npm/icloudpd
+cp README_NPM.md dist/npm/icloudpd/README.md
+
+mkdir dist/npm/@icloudpd/win32-x64/bin
+cp dist/icloudpd-$1-windows-amd64.exe dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
+chmod +x dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
+cp LICENSE.md dist/npm/@icloudpd/win32-x64/
+
+mkdir dist/npm/@icloudpd/linux-x64/bin
+cp dist/icloudpd-$1-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
+chmod +x dist/npm/@icloudpd/linux-x64/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/linux-x64/
+
+mkdir dist/npm/@icloudpd/darwin-x64/bin
+cp dist/icloudpd-$1-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
+chmod +x dist/npm/@icloudpd/darwin-x64/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/darwin-x64/
+
+mkdir dist/npm/@icloudpd/darwin-arm64/bin
+# using Intel binary for now
+cp dist/icloudpd-$1-macos-amd64 dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
+chmod +x dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/darwin-arm64/
