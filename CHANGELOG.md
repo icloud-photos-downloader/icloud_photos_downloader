@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: `--version` parameter
+
 ## 1.13.4 (2023-06-14)
 
 - experimental: fix npm packaging

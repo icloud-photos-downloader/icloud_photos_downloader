@@ -214,7 +214,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               help="Run downloading in a infinite cycle, waiting specified seconds between runs",
               type=click.IntRange(1),
               )
-@click.version_option()
+@click.version_option(version="1.13.4") #hacky way to get proper version because automatic detection does not work for some reason
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
 def main(
