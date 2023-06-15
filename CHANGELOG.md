@@ -2,7 +2,11 @@
 
 ## Unreleased
 
-## 1.13.3 (2023-06-11)
+## 1.13.4 (2023-06-14)
+
+- experimental: fix npm packaging
+
+## 1.13.4 (2023-06-11)
 
 - experimental: fix npm registry publishing
 
