@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+# dev script
+# required param: registry_url
+#
+# note that verdaccio v5 is flaky around unpublishing and restart may be required to clean things
+#
+npm --registry $1 unpublish -f icloudpd
+npm --registry $1 unpublish -f @icloudpd/linux-x64
+npm --registry $1 unpublish -f @icloudpd/win32-x64
+npm --registry $1 unpublish -f @icloudpd/darwin-x64
+npm --registry $1 unpublish -f @icloudpd/darwin-arm64

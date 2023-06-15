@@ -1,0 +1,46 @@
+#!/bin/bash
+set -euo pipefail
+
+# prepare npm packages in dist
+# expects dist to have comipled binary versions
+# required param: version
+
+# clean start
+rm -rf dist/npm
+
+# basic
+cp -r npm dist/npm
+
+# main package
+cp LICENSE.md dist/npm/icloudpd
+cp README_NPM.md dist/npm/icloudpd/README.md
+jq --arg version $1 --from-file jq/version.jq < npm/icloudpd/package.json > dist/npm/icloudpd/package.json
+
+# win32-x64
+mkdir -p dist/npm/@icloudpd/win32-x64/bin
+cp dist/icloudpd-$1-windows-amd64.exe dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
+chmod +x dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
+cp LICENSE.md dist/npm/@icloudpd/win32-x64/
+jq --arg version $1 --from-file jq/version.jq < "npm/@icloudpd/win32-x64/package.json" > "dist/npm/@icloudpd/win32-x64/package.json"
+
+# linux-x64
+mkdir -p dist/npm/@icloudpd/linux-x64/bin
+cp dist/icloudpd-$1-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
+chmod +x dist/npm/@icloudpd/linux-x64/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/linux-x64/
+jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/linux-x64/package.json > dist/npm/@icloudpd/linux-x64/package.json
+
+# macos x64
+mkdir -p dist/npm/@icloudpd/darwin-x64/bin
+cp dist/icloudpd-$1-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
+chmod +x dist/npm/@icloudpd/darwin-x64/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/darwin-x64/
+jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/darwin-x64/package.json > dist/npm/@icloudpd/darwin-x64/package.json
+
+# macos arm64
+mkdir -p dist/npm/@icloudpd/darwin-arm64/bin
+# using Intel binary for now
+cp dist/icloudpd-$1-macos-amd64 dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
+chmod +x dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/darwin-arm64/
+jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/darwin-arm64/package.json > dist/npm/@icloudpd/darwin-arm64/package.json

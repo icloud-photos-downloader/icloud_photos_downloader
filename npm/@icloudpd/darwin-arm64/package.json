@@ -1,17 +1,17 @@
 {
-    "name": "@icloudpd/win32-x64",
+    "name": "@icloudpd/darwin-arm64",
     "version": "0.0.1",
-    "description": "The Windows 64-bit binary for icloudpd, a iCloud Photo Downloader.",
+    "description": "The macOS ARM 64-bit binary for icloudpd, a iCloud Photo Downloader.",
     "repository": "https://github.com/icloud_photo_downloader/icloud_photo_downloader",
     "license": "MIT",
-    "preferUnplugged": true,
     "engines": {
       "node": ">=12"
     },
+    "preferUnplugged": true,
     "os": [
-      "win32"
+      "darwin"
     ],
     "cpu": [
-      "x64"
+      "arm64"
     ]
   }

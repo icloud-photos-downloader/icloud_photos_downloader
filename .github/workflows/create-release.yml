@@ -63,22 +63,17 @@ jobs:
 
     - name: Build Release Executables (Windows)
       run: |
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64
+        scripts/build_bin_windows ${{needs.get_version.outputs.icloudpd_version}} amd64
       if: ${{ matrix.os == 'windows-latest' }}
 
     - name: Build Release Executables (Linux)
       run: |
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloud.py --name icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64
+        scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}} amd64
       if: ${{ matrix.os == 'ubuntu-latest' }}
 
     - name: Build Release Executables (MacOS)
       run: |
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
-        pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64
+        scripts/build_bin_macos ${{needs.get_version.outputs.icloudpd_version}} amd64
       if: ${{ matrix.os == 'macos-latest' }}
 
     - name: Upload artifacts
@@ -184,25 +179,16 @@ jobs:
           path: |
             dist
 
-      - name: Make Package
+      - name: Build Package
         run: |
-          cp -r npm dist/npm
-          cp LICENSE.md dist/npm/icloudpd
-          mkdir dist/npm/@icloudpd/win32-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-windows-amd64.exe dist/npm/@icloudpd/win32-x64/bin/icloudpd.exe
-          cp LICENSE.md dist/npm/@icloudpd/win32-x64/
-          mkdir dist/npm/@icloudpd/linux-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-amd64 dist/npm/@icloudpd/linux-x64/bin/icloudpd
-          cp LICENSE.md dist/npm/@icloudpd/linux-x64/
-          mkdir dist/npm/@icloudpd/darwin-x64/bin
-          mv dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
-          cp LICENSE.md dist/npm/@icloudpd/darwin-x64/
+          scripts/build_npm ${{needs.get_version.outputs.icloudpd_version}}
 
       - name: Publish NPM
         run: |
           npm publish dist/npm/@icloudpd/linux-x64 --access public
           npm publish dist/npm/@icloudpd/win32-x64 --access public
           npm publish dist/npm/@icloudpd/darwin-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public
           npm publish dist/npm/icloudpd --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
