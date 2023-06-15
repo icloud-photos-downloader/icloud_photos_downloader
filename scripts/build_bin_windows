@@ -1,0 +1,10 @@
+#!/bin/bash
+set -euo pipefail
+
+# prepare bin packages in dist
+# expects python with installed dependencies
+# required param: version
+
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-$1-windows-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloud.py --name icloud-$1-windows-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-$1-windows-$2
