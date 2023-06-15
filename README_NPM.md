@@ -5,13 +5,13 @@ A command-line tool to download all your iCloud photos.
 ## [EXPERIMENTAL] Install, Run, and Use
 
 ``` sh
-npx icloudpd --directory /data --username my@email.address --watch-with-interval 3600
+npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
 Synchronization logic can be adjusted with command-line parameters. Run the following to get full list:
 
 ``` sh 
-npx icloudpd --help
+npx --yes icloudpd --help
 ``` 
 
 ## Getting Node and Npm

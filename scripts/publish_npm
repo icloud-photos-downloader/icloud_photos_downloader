@@ -1,0 +1,30 @@
+#!/bin/bash
+set -euo pipefail
+
+# dev script
+# expecting dist/npm to be set
+# required param registry_url
+#
+# prereq
+# npm --registry registry_url adduser
+#
+
+# note verdaccio did not work properly when supplying npm folder with @, so we are changing dir...
+
+cd dist/npm/@icloudpd/linux-x64
+npm --registry $1 publish .
+cd ../../../..
+
+cd dist/npm/@icloudpd/win32-x64
+npm --registry $1 publish .
+cd ../../../..
+
+cd dist/npm/@icloudpd/darwin-x64
+npm --registry $1 publish .
+cd ../../../..
+
+cd dist/npm/@icloudpd/darwin-arm64
+npm --registry $1 publish .
+cd ../../../..
+
+npm --registry $1 publish dist/npm/icloudpd
