@@ -52,3 +52,17 @@ Access to iCloud.com is blocked from mainland China. `icloudpd` does not current
 ## iOS 16 Shared Library
 
 iOS 16 feature to share libraries between accounts is [not supported](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/455) yet.
+
+## MacOS binary
+
+`icloudpd` is available as Intel 64bit binary for MacOS, but works on ARM macs too (M1, M2).
+
+Here are the steps to make it working:
+- download binary from Github [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into desired local folder
+- add executable flag by running `chmod +x icloudpd-1.13.4-macos-amd64`
+- start it from the terminal: `icloudpd-1.13.4-macos-amd64`
+- Apple will tell you that it cannot check for malicous software and refuse to run the app; click "Ok"
+- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.13.4-macos-amd64` as blocked app; Click "Allow"
+- Start `icloudpd-1.13.4-macos-amd64` from the terminal again
+- Apple will show another warning; click "Open"
+- After that you can run `icloudpd-1.13.4-macos-amd64 icloudpd --help` or any other supported command/option

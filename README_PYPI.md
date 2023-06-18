@@ -24,9 +24,25 @@ icloudpd --help
 
 You can get Python with accompanying Pip from [Official site](https://www.python.org/downloads/).
 
-### Alternative for Mac
+### Alternatives for Mac
 
-Install [Homebrew](https://brew.sh/) (if not already installed):
+#### Command Line Tools from Apple
+
+Apple provices Python & Pip as part of the Command Line Tools for XCode. They can be downloaded from Apple Developer portal or installed with 
+
+``` sh
+xcode-select --install
+```
+
+Use `pip3` to install `icloudpd`:
+
+``` sh
+pip3 install icloudpd
+```
+
+#### Homebrew package manager
+
+Homebrew is open source package manager for MacOS. Install [Homebrew](https://brew.sh/) (if not already installed):
 
 ``` sh
 which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
