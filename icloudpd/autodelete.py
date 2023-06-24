@@ -24,7 +24,7 @@ def autodelete_photos(icloud, folder_structure, directory):
             created_date = media.created.astimezone(get_localzone())
         except (ValueError, OSError):
             logger.set_tqdm_description(
-                f"Could not convert media created date to local timezone {created_date}",
+                f"Could not convert media created date to local timezone {media.created}",
                 logging.ERROR)
             created_date = media.created
 
