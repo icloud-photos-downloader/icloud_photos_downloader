@@ -5,6 +5,8 @@ import shutil
 import pytest
 import mock
 import datetime
+import pytz
+from tzlocal import get_localzone
 from click.testing import CliRunner
 from pyicloud_ipd.services.photos import PhotoAsset
 from icloudpd.base import main
@@ -128,7 +130,7 @@ class AutodeletePhotosTestCase(TestCase):
         os.makedirs(base_dir)
 
         files = [
-            "2023/06/06/IMG_3589.JPG"
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
         
         with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
@@ -157,7 +159,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2023/06/06/IMG_3589.JPG'))}",
+                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -201,7 +203,7 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2023/06/06/IMG_3589.JPG'))}",
+                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
 
@@ -218,16 +220,17 @@ class AutodeletePhotosTestCase(TestCase):
             "2018/07/30/IMG_7407.JPG",
             "2018/07/30/IMG_7407-original.JPG"
         ]
+
         files_to_delete = [
-            "2018/07/30/IMG_7406.MOV",
-            "2018/07/26/IMG_7383.PNG",
-            "2018/07/11/IMG_7190.JPG",
-            "2018/07/11/IMG_7190-medium.JPG"
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7406.MOV",
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7383.PNG",
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190.JPG",
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190-medium.JPG"
         ]
 
-        os.makedirs(os.path.join(base_dir, "2018/07/30/"))
-        os.makedirs(os.path.join(base_dir, "2018/07/26/"))
-        os.makedirs(os.path.join(base_dir, "2018/07/11/"))
+        os.makedirs(os.path.join(base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+        os.makedirs(os.path.join(base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+        os.makedirs(os.path.join(base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
     
         # create some empty files 
         for file_name in files_to_create + files_to_delete:
@@ -272,19 +275,19 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7406.MOV'))}",
+                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2018/07/26/IMG_7383.PNG'))}",
+                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2018/07/11/IMG_7190.JPG'))}",
+                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2018/07/11/IMG_7190-medium.JPG'))}",
+                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
                 self._caplog.text,
             )
 
