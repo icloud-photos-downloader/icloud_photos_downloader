@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.14.0 (2023-07-01)
+
+- fix: auto-delete date mismatch [#345](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/345)
 - fix: `--version` parameter
 
 ## 1.13.4 (2023-06-14)

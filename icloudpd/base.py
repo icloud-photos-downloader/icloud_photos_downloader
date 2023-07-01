@@ -215,7 +215,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               type=click.IntRange(1),
               )
 # a hacky way to get proper version because automatic detection does not work for some reason
-@click.version_option(version="1.13.4")
+@click.version_option(version="1.14.0")
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
 def main(
