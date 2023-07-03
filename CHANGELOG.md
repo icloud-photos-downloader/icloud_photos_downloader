@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- fix: finite retry on unhandled errors during photo iteration [#642](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/642)
+- fix: retry on internal error during deletion [#615](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/615)
+
 ## 1.14.1 (2023-07-02)
 
 - fix: retry authN on session error during deletion [#647](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/647)

@@ -557,21 +557,24 @@ def delete_photo(logger, icloud, photo):
 
 def retrier(func, error_handler):
     """Run main func and retry helper if receive session error"""
-    retries = 0
+    attempts = 0
     while True:
         try:
             return func()
         # pylint: disable-msg=broad-except
-        except (Exception) as ex:
-            retries += 1
-            error_handler(ex, retries)
+        except Exception as ex:
+            attempts += 1
+            error_handler(ex, attempts)
+            if attempts > constants.MAX_RETRIES:
+                raise
+
 
 def session_error_handle_builder(logger, icloud):
     """Build handler for session error"""
-    def session_error_handler(ex, retries):
+    def session_error_handler(ex, attempt):
         """Handles session errors in the PhotoAlbum photos iterator"""
         if "Invalid global session" in str(ex):
-            if retries > constants.MAX_RETRIES:
+            if attempt > constants.MAX_RETRIES:
                 logger.tqdm_write(
                     "iCloud re-authentication failed! Please try again later."
                 )
@@ -579,16 +582,44 @@ def session_error_handle_builder(logger, icloud):
             logger.tqdm_write(
                 "Session error, re-authenticating...",
                 logging.ERROR)
-            if retries > 1:
+            if attempt > 1:
                 # If the first re-authentication attempt failed,
                 # start waiting a few seconds before retrying in case
                 # there are some issues with the Apple servers
-                time.sleep(constants.WAIT_SECONDS * retries)
+                time.sleep(constants.WAIT_SECONDS * attempt)
             icloud.authenticate()
     return session_error_handler
 
+
+def internal_error_handle_builder(logger):
+    """Build handler for internal error"""
+    def internal_error_handler(ex, attempt):
+        """Handles session errors in the PhotoAlbum photos iterator"""
+        if "INTERNAL_ERROR" in str(ex):
+            if attempt > constants.MAX_RETRIES:
+                logger.tqdm_write(
+                    "Internal Error at Apple."
+                )
+                raise ex
+            logger.tqdm_write(
+                "Internal Error at Apple, retrying...",
+                logging.ERROR)
+            # start waiting a few seconds before retrying in case
+            # there are some issues with the Apple servers
+            time.sleep(constants.WAIT_SECONDS * attempt)
+    return internal_error_handler
+
+
+def compose_handlers(handlers):
+    """Compose multiple error handlers"""
+    def composed(ex, retries):
+        for handler in handlers:
+            handler(ex, retries)
+    return composed
+
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
+
 
 def core(
         downloader,
@@ -679,9 +710,14 @@ def core(
             "" if skip_videos else " and videos",
             album)
 
-        session_exception_handler = session_error_handle_builder(logger, icloud)
+        session_exception_handler = session_error_handle_builder(
+            logger, icloud)
+        internal_error_handler = internal_error_handle_builder(logger)
 
-        photos.exception_handler = session_exception_handler
+        error_handler = compose_handlers([session_exception_handler, internal_error_handler
+                                          ])
+
+        photos.exception_handler = error_handler
 
         photos_count = len(photos)
 
@@ -750,7 +786,7 @@ def core(
                     def delete_cmd():
                         delete_photo(logger, icloud, item)
 
-                    retrier(delete_cmd, session_exception_handler)
+                    retrier(delete_cmd, error_handler)
 
             except StopIteration:
                 break

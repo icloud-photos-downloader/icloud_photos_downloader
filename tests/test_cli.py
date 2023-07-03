@@ -23,7 +23,7 @@ class CliTestCase(TestCase):
         assert result.exit_code == 0
 
     def test_log_levels(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if not os.path.exists(base_dir):
             os.makedirs(base_dir)
 
@@ -65,7 +65,7 @@ class CliTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_tqdm(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -96,7 +96,7 @@ class CliTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_unicode_directory(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}/相片")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}/相片")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -128,7 +128,7 @@ class CliTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_directory(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
 

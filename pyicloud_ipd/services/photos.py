@@ -297,6 +297,8 @@ class PhotoAlbum(object):
                 if self.exception_handler:
                     exception_retries += 1
                     self.exception_handler(ex, exception_retries)
+                    if exception_retries > 5:
+                        raise
                     continue
                 else:
                     raise

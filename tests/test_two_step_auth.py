@@ -20,7 +20,7 @@ class TwoStepAuthTestCase(TestCase):
         self._caplog = caplog
 
     def test_2sa_flow_invalid_device_2fa(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -56,7 +56,7 @@ class TwoStepAuthTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_device_2fa(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -109,7 +109,7 @@ class TwoStepAuthTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_sms(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -162,7 +162,7 @@ class TwoStepAuthTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_sms_failed(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
