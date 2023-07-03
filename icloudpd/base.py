@@ -527,9 +527,68 @@ def download_builder(
         return download_photo_
     return state_
 
+
+def delete_photo(logger, icloud, photo):
+    """Delete a photo from the iCloud account."""
+    logger.info("Deleting %s", clean_filename(photo.filename))
+    # pylint: disable=W0212
+    url = f"{icloud.photos._service_endpoint}/records/modify?"\
+        f"{urllib.parse.urlencode(icloud.photos.params)}"
+    post_data = json.dumps(
+        {
+            "atomic": True,
+            "desiredKeys": ["isDeleted"],
+            "operations": [{
+                "operationType": "update",
+                "record": {
+                    "fields": {'isDeleted': {'value': 1}},
+                    "recordChangeTag": photo._asset_record["recordChangeTag"],
+                    "recordName": photo._asset_record["recordName"],
+                    "recordType": "CPLAsset",
+                }
+            }],
+            "zoneID": {"zoneName": "PrimarySync"}
+        }
+    )
+    icloud.photos.session.post(
+        url, data=post_data, headers={
+            "Content-type": "application/json"})
+
+
+def retrier(func, error_handler):
+    """Run main func and retry helper if receive session error"""
+    retries = 0
+    while True:
+        try:
+            return func()
+        # pylint: disable-msg=broad-except
+        except (Exception) as ex:
+            retries += 1
+            error_handler(ex, retries)
+
+def session_error_handle_builder(logger, icloud):
+    """Build handler for session error"""
+    def session_error_handler(ex, retries):
+        """Handles session errors in the PhotoAlbum photos iterator"""
+        if "Invalid global session" in str(ex):
+            if retries > constants.MAX_RETRIES:
+                logger.tqdm_write(
+                    "iCloud re-authentication failed! Please try again later."
+                )
+                raise ex
+            logger.tqdm_write(
+                "Session error, re-authenticating...",
+                logging.ERROR)
+            if retries > 1:
+                # If the first re-authentication attempt failed,
+                # start waiting a few seconds before retrying in case
+                # there are some issues with the Apple servers
+                time.sleep(constants.WAIT_SECONDS * retries)
+            icloud.authenticate()
+    return session_error_handler
+
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
-
 
 def core(
         downloader,
@@ -620,25 +679,9 @@ def core(
             "" if skip_videos else " and videos",
             album)
 
-        def photos_exception_handler(ex, retries):
-            """Handles session errors in the PhotoAlbum photos iterator"""
-            if "Invalid global session" in str(ex):
-                if retries > constants.MAX_RETRIES:
-                    logger.tqdm_write(
-                        "iCloud re-authentication failed! Please try again later."
-                    )
-                    raise ex
-                logger.tqdm_write(
-                    "Session error, re-authenticating...",
-                    logging.ERROR)
-                if retries > 1:
-                    # If the first re-authentication attempt failed,
-                    # start waiting a few seconds before retrying in case
-                    # there are some issues with the Apple servers
-                    time.sleep(constants.WAIT_SECONDS * retries)
-                icloud.authenticate()
+        session_exception_handler = session_error_handle_builder(logger, icloud)
 
-        photos.exception_handler = photos_exception_handler
+        photos.exception_handler = session_exception_handler
 
         photos_count = len(photos)
 
@@ -684,32 +727,6 @@ def core(
             photos_enumerator = tqdm(photos, **tqdm_kwargs)
             logger.set_tqdm(photos_enumerator)
 
-        def delete_photo(photo):
-            """Delete a photo from the iCloud account."""
-            logger.info("Deleting %s", clean_filename(photo.filename))
-            # pylint: disable=W0212
-            url = f"{icloud.photos._service_endpoint}/records/modify?"\
-                f"{urllib.parse.urlencode(icloud.photos.params)}"
-            post_data = json.dumps(
-                {
-                    "atomic": True,
-                    "desiredKeys": ["isDeleted"],
-                    "operations": [{
-                        "operationType": "update",
-                        "record": {
-                            "fields": {'isDeleted': {'value': 1}},
-                            "recordChangeTag": photo._asset_record["recordChangeTag"],
-                            "recordName": photo._asset_record["recordName"],
-                            "recordType": "CPLAsset",
-                        }
-                    }],
-                    "zoneID": {"zoneName": "PrimarySync"}
-                }
-            )
-            icloud.photos.session.post(
-                url, data=post_data, headers={
-                    "Content-type": "application/json"})
-
         consecutive_files_found = Counter(0)
 
         def should_break(counter):
@@ -728,7 +745,13 @@ def core(
                 if download_photo(
                         consecutive_files_found,
                         item) and delete_after_download:
-                    delete_photo(item)
+                    # delete_photo(logger, icloud, item)
+
+                    def delete_cmd():
+                        delete_photo(logger, icloud, item)
+
+                    retrier(delete_cmd, session_exception_handler)
+
             except StopIteration:
                 break
 
