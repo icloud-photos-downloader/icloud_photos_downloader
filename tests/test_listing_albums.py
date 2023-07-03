@@ -16,7 +16,7 @@ vcr = VCR(decode_compressed_response=True)
 class ListingAlbumsTestCase(TestCase):
 
     def test_listing_albums(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)

@@ -27,7 +27,7 @@ class DownloadLivePhotoTestCase(TestCase):
         self._caplog = caplog
 
     def test_skip_existing_downloads_for_live_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -88,7 +88,7 @@ class DownloadLivePhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"
 
     def test_skip_existing_live_photodownloads(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -172,7 +172,7 @@ class DownloadLivePhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"
 
     def test_skip_existing_live_photo_print_filenames(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)

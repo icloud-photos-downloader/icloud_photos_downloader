@@ -27,7 +27,7 @@ class DownloadPhotoTestCase(TestCase):
         self._caplog = caplog
 
     def test_download_and_skip_existing_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -124,7 +124,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_download_photos_and_set_exif(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -219,7 +219,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_photos_and_get_exif_exceptions(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -287,7 +287,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_skip_existing_downloads(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -358,7 +358,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_until_found(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -463,7 +463,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_handle_io_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -515,7 +515,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_session_error_during_download(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -587,7 +587,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_session_error_during_photo_iteration(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -659,7 +659,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_connection_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -728,7 +728,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_albums_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -785,7 +785,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_size(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -854,7 +854,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_size_fallback_to_original(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -921,7 +921,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_force_size(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -982,7 +982,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_invalid_creation_date(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1056,7 +1056,7 @@ class DownloadPhotoTestCase(TestCase):
     @pytest.mark.skipif(sys.platform == 'darwin',
                     reason="does not run on mac")
     def test_invalid_creation_year(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1126,7 +1126,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_unknown_item_type(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1184,7 +1184,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_download_and_dedupe_existing_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1296,7 +1296,7 @@ class DownloadPhotoTestCase(TestCase):
 
 
     def test_download_photos_and_set_exif_exceptions(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1369,7 +1369,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_chinese(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}/中文")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}/中文")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1441,7 +1441,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_after_delete(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1508,7 +1508,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_after_delete_fail(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1562,7 +1562,7 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_download_over_old_original_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1660,7 +1660,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(base_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_normalized_names(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -1718,7 +1718,7 @@ class DownloadPhotoTestCase(TestCase):
 
     @pytest.mark.skip("not ready yet. may be not needed")
     def test_download_watch(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)

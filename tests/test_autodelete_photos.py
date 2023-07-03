@@ -27,7 +27,7 @@ class AutodeletePhotosTestCase(TestCase):
 
     def test_autodelete_invalid_creation_date(self):
         base_dir = os.path.normpath(
-            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+            f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -132,7 +132,7 @@ class AutodeletePhotosTestCase(TestCase):
 
     def test_download_autodelete_photos(self):
         base_dir = os.path.normpath(
-            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+            f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -224,7 +224,7 @@ class AutodeletePhotosTestCase(TestCase):
 
     def test_autodelete_photos(self):
         base_dir = os.path.normpath(
-            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+            f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -327,9 +327,9 @@ class AutodeletePhotosTestCase(TestCase):
             assert not os.path.exists(os.path.join(
                 base_dir, file_name)), f"{file_name} not expected, but present"
 
-    def test_retry_delete_after_download(self):
+    def test_retry_delete_after_download_session_error(self):
         base_dir = os.path.normpath(
-            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+            f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -417,9 +417,9 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
-    def test_retry_fail_delete_after_download(self):
+    def test_retry_fail_delete_after_download_session_error(self):
         base_dir = os.path.normpath(
-            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+            f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -493,6 +493,159 @@ class AutodeletePhotosTestCase(TestCase):
                         self.assertEqual(sleep_mock.call_count,
                                          constants.MAX_RETRIES - 1, "Sleep call count")
                         self.assertEqual(result.exit_code, 1, "Exit code")
+
+        # check files
+        for file_name in files:
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected, but missing"
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 1
+
+    def test_retry_delete_after_download_internal_error(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files = [
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+        ]
+
+        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+
+            def mock_raise_response_error(a0_, a1_, a2_):
+                if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
+                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
+                    raise PyiCloudAPIResponseError(
+                        "INTERNAL_ERROR", "INTERNAL_ERROR")
+
+            with mock.patch("time.sleep") as sleep_mock:
+                with mock.patch("icloudpd.base.delete_photo") as pa_delete:
+                    pa_delete.side_effect = mock_raise_response_error
+
+                    # Pass fixed client ID via environment variable
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--delete-after-download",
+                            "-d",
+                            base_dir,
+                        ],
+                    )
+                    print_result_exception(result)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        self._caplog.text,
+                    )
+
+                    # Error msg should be repeated 5 times
+                    self.assertEqual(
+                        self._caplog.text.count(
+                            "Internal Error at Apple, retrying..."
+                        ), 1, "Retry message count"
+                    )
+
+                    self.assertEqual(pa_delete.call_count,
+                                        2, "delete call count")
+                    # Make sure we only call sleep 4 times (skip the first retry)
+                    self.assertEqual(sleep_mock.call_count,
+                                        1, "Sleep call count")
+                    self.assertEqual(result.exit_code, 0, "Exit code")
+
+        # check files
+        for file_name in files:
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected, but missing"
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 1
+
+    def test_retry_fail_delete_after_download_internal_error(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files = [
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+        ]
+
+        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+
+            def mock_raise_response_error(a0_, a1_, a2_):
+                raise PyiCloudAPIResponseError("INTERNAL_ERROR", "INTERNAL_ERROR")
+
+            with mock.patch("time.sleep") as sleep_mock:
+                with mock.patch("icloudpd.base.delete_photo") as pa_delete:
+                    pa_delete.side_effect = mock_raise_response_error
+
+                    # Pass fixed client ID via environment variable
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--delete-after-download",
+                            "-d",
+                            base_dir,
+                        ],
+                    )
+                    print_result_exception(result)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        self._caplog.text,
+                    )
+
+                    # Error msg should be repeated 5 times
+                    self.assertEqual(
+                        self._caplog.text.count(
+                            "Internal Error at Apple, retrying..."
+                        ), constants.MAX_RETRIES, "Retry message count"
+                    )
+
+                    self.assertEqual(pa_delete.call_count,
+                                        constants.MAX_RETRIES + 1, "delete call count")
+                    # Make sure we only call sleep N times (skip the first retry)
+                    self.assertEqual(sleep_mock.call_count,
+                                        constants.MAX_RETRIES, "Sleep call count")
+                    self.assertEqual(result.exit_code, 1, "Exit code")
 
         # check files
         for file_name in files:

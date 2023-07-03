@@ -61,7 +61,7 @@ class AuthenticationTestCase(TestCase):
 
     def test_password_prompt(self):
         base_dir = os.path.normpath(
-            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+            f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)

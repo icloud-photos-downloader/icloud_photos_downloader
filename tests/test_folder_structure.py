@@ -15,7 +15,7 @@ class FolderStructureTestCase(TestCase):
 
     # This is basically a copy of the listing_recent_photos test #
     def test_default_folder_structure(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         ### Tests if the default directory structure is constructed correctly ###
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
@@ -85,7 +85,7 @@ class FolderStructureTestCase(TestCase):
 
 
     def test_folder_structure_none(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
