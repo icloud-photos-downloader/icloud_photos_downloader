@@ -1,4 +1,5 @@
 from unittest import TestCase
+from icloudpd import constants
 from vcr import VCR
 import os
 import shutil
@@ -9,6 +10,8 @@ import pytz
 from tzlocal import get_localzone
 from click.testing import CliRunner
 from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from icloudpd.base import main
 from tests.helpers.print_result_exception import print_result_exception
 import inspect
@@ -23,7 +26,8 @@ class AutodeletePhotosTestCase(TestCase):
         self._caplog = caplog
 
     def test_autodelete_invalid_creation_date(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -31,14 +35,14 @@ class AutodeletePhotosTestCase(TestCase):
         files = [
             "2018/01/01/IMG_3589.JPG"
         ]
-        
+
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
                 def astimezone(self, tz=None):
                     raise ValueError('Invalid date')
-            dt_mock.return_value = NewDateTime(2018,1,1,0,0,0)
+            dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
             with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
                 # Pass fixed client ID via environment variable
@@ -60,7 +64,8 @@ class AutodeletePhotosTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn("DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo or video to {base_dir} ...",
                     self._caplog.text,
@@ -83,7 +88,8 @@ class AutodeletePhotosTestCase(TestCase):
 
                 # check files
                 for file_name in files:
-                    assert os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} expected, but missing"
+                    assert os.path.exists(os.path.join(
+                        base_dir, file_name)), f"{file_name} expected, but missing"
 
                 result = runner.invoke(
                     main,
@@ -101,7 +107,8 @@ class AutodeletePhotosTestCase(TestCase):
                 )
                 print_result_exception(result)
 
-                self.assertIn("DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading 0 original photos and videos to {base_dir} ...",
                     self._caplog.text,
@@ -124,7 +131,8 @@ class AutodeletePhotosTestCase(TestCase):
                         os.path.join(base_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_download_autodelete_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -132,7 +140,7 @@ class AutodeletePhotosTestCase(TestCase):
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
-        
+
         with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
@@ -153,7 +161,8 @@ class AutodeletePhotosTestCase(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo or video to {base_dir} ...",
                 self._caplog.text,
@@ -169,10 +178,11 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
             )
-            
-            #check files
+
+            # check files
             for file_name in files:
-                assert os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} expected, but missing"
+                assert os.path.exists(os.path.join(
+                    base_dir, file_name)), f"{file_name} expected, but missing"
 
             result = runner.invoke(
                 main,
@@ -189,7 +199,8 @@ class AutodeletePhotosTestCase(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos and videos to {base_dir} ...",
                 self._caplog.text,
@@ -208,10 +219,12 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             for file_name in files:
-                assert not os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} not expected, but present"
+                assert not os.path.exists(os.path.join(
+                    base_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_autodelete_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
         os.makedirs(base_dir)
@@ -228,11 +241,14 @@ class AutodeletePhotosTestCase(TestCase):
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190-medium.JPG"
         ]
 
-        os.makedirs(os.path.join(base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
-        os.makedirs(os.path.join(base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
-        os.makedirs(os.path.join(base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
-    
-        # create some empty files 
+        os.makedirs(os.path.join(
+            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+        os.makedirs(os.path.join(
+            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+        os.makedirs(os.path.join(
+            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+
+        # create some empty files
         for file_name in files_to_create + files_to_delete:
             open(os.path.join(base_dir, file_name), "a").close()
 
@@ -256,7 +272,8 @@ class AutodeletePhotosTestCase(TestCase):
                     base_dir,
                 ],
             )
-            self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos to {base_dir} ...",
                 self._caplog.text,
@@ -296,13 +313,193 @@ class AutodeletePhotosTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_create)
 
-        #check files
+        # check files
         for file_name in files_to_create:
-            assert os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected, but missing"
 
         for file_name in files_to_delete:
-            assert not os.path.exists(os.path.join(base_dir, file_name)), f"{file_name} not expected, but present"            
+            assert not os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} not expected, but present"
+
+    def test_retry_delete_after_download(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files = [
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+        ]
+
+        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+
+            def mock_raise_response_error(a0_, a1_, a2_):
+                if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
+                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
+                    raise PyiCloudAPIResponseError(
+                        "Invalid global session", 100)
+
+            with mock.patch("time.sleep") as sleep_mock:
+                with mock.patch("icloudpd.base.delete_photo") as pa_delete:
+                    pa_delete.side_effect = mock_raise_response_error
+
+                    # Let the initial authenticate() call succeed,
+                    # but do nothing on the second try.
+                    orig_authenticate = PyiCloudService.authenticate
+
+                    def mocked_authenticate(self):
+                        if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
+                            orig_authenticate(self)
+                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)
+
+                    with mock.patch.object(
+                        PyiCloudService, "authenticate", new=mocked_authenticate
+                    ):
+                        # Pass fixed client ID via environment variable
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--delete-after-download",
+                                "-d",
+                                base_dir,
+                            ],
+                        )
+                        print_result_exception(result)
+
+                        self.assertIn(
+                            "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+                        self.assertIn(
+                            f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            self._caplog.text,
+                        )
+
+                        # Error msg should be repeated 5 times
+                        self.assertEqual(
+                            self._caplog.text.count(
+                                "Session error, re-authenticating..."
+                            ), 1, "Re-auth message count"
+                        )
+
+                        self.assertEqual(pa_delete.call_count,
+                                         2, "delete call count")
+                        # Make sure we only call sleep 4 times (skip the first retry)
+                        self.assertEqual(sleep_mock.call_count,
+                                         0, "Sleep call count")
+                        self.assertEqual(result.exit_code, 0, "Exit code")
+
+        # check files
+        for file_name in files:
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected, but missing"
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 1
+
+    def test_retry_fail_delete_after_download(self):
+        base_dir = os.path.normpath(
+            f"tests/fixtures/Photos/{inspect.stack()[0][3]}")
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+        os.makedirs(base_dir)
+
+        files = [
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+        ]
+
+        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+
+            def mock_raise_response_error(a0_, a1_, a2_):
+                raise PyiCloudAPIResponseError("Invalid global session", 100)
+
+            with mock.patch("time.sleep") as sleep_mock:
+                with mock.patch("icloudpd.base.delete_photo") as pa_delete:
+                    pa_delete.side_effect = mock_raise_response_error
+
+                    # Let the initial authenticate() call succeed,
+                    # but do nothing on the second try.
+                    orig_authenticate = PyiCloudService.authenticate
+
+                    def mocked_authenticate(self):
+                        if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
+                            orig_authenticate(self)
+                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)
+
+                    with mock.patch.object(
+                        PyiCloudService, "authenticate", new=mocked_authenticate
+                    ):
+                        # Pass fixed client ID via environment variable
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--delete-after-download",
+                                "-d",
+                                base_dir,
+                            ],
+                        )
+                        print_result_exception(result)
+
+                        self.assertIn(
+                            "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
+                        self.assertIn(
+                            f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            self._caplog.text,
+                        )
+
+                        # Error msg should be repeated 5 times
+                        self.assertEqual(
+                            self._caplog.text.count(
+                                "Session error, re-authenticating..."
+                            ), constants.MAX_RETRIES, "Re-auth message count"
+                        )
+
+                        self.assertEqual(pa_delete.call_count,
+                                         constants.MAX_RETRIES + 1, "delete call count")
+                        # Make sure we only call sleep 4 times (skip the first retry)
+                        self.assertEqual(sleep_mock.call_count,
+                                         constants.MAX_RETRIES - 1, "Sleep call count")
+                        self.assertEqual(result.exit_code, 1, "Exit code")
+
+        # check files
+        for file_name in files:
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected, but missing"
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 1
