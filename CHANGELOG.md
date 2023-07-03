@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.14.1 (2023-07-02)
+
 - fix: retry authN on session error during deletion [#647](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/647)
 
 ## 1.14.0 (2023-07-01)
