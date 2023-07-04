@@ -9,6 +9,8 @@ from icloudpd.base import main
 import inspect
 import glob
 
+from tests.helpers import path_from_project_root, recreate_path
+
 vcr = VCR(decode_compressed_response=True)
 
 
@@ -16,6 +18,9 @@ class CliTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_cli(self):
         runner = CliRunner()
@@ -23,9 +28,8 @@ class CliTestCase(TestCase):
         assert result.exit_code == 0
 
     def test_log_levels(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         parameters = [
             ("debug", ["DEBUG", "INFO"], []),
@@ -34,7 +38,7 @@ class CliTestCase(TestCase):
         ]
         for log_level, expected, not_expected in parameters:
             self._caplog.clear()
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -65,12 +69,10 @@ class CliTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_tqdm(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Force tqdm progress bar via ENV var
             runner = CliRunner(env={
                 "FORCE_TQDM": "yes",
@@ -96,12 +98,10 @@ class CliTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_unicode_directory(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}/相片")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -128,7 +128,8 @@ class CliTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_directory(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        # need path removed
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
 

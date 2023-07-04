@@ -3,9 +3,10 @@ import os
 from os.path import normpath
 import shutil
 from click.testing import CliRunner
+import pytest
 from vcr import VCR
 from icloudpd.base import main
-from tests.helpers.print_result_exception import print_result_exception
+from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 import inspect
 import glob
 
@@ -13,19 +14,24 @@ vcr = VCR(decode_compressed_response=True)
 
 class FolderStructureTestCase(TestCase):
 
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
+
     # This is basically a copy of the listing_recent_photos test #
     def test_default_folder_structure(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
         ### Tests if the default directory structure is constructed correctly ###
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = [
         ]
 
         # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -85,15 +91,13 @@ class FolderStructureTestCase(TestCase):
 
 
     def test_folder_structure_none(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = []
 
         # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"

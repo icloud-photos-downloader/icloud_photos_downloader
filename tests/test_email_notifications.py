@@ -1,4 +1,5 @@
 from unittest import TestCase
+import pytest
 from vcr import VCR
 from mock import patch
 from freezegun import freeze_time
@@ -8,18 +9,25 @@ from icloudpd.base import main
 import inspect
 import shutil
 
+from tests.helpers import path_from_project_root, recreate_path
+
 vcr = VCR(decode_compressed_response=True)
 
 
 class EmailNotificationsTestCase(TestCase):
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
+
     @freeze_time("2018-01-01")
     def test_2sa_required_email_notification(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -64,12 +72,10 @@ class EmailNotificationsTestCase(TestCase):
 
     @freeze_time("2018-01-01")
     def test_2sa_notification_without_smtp_login_and_tls(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -109,12 +115,10 @@ class EmailNotificationsTestCase(TestCase):
 
     @freeze_time("2018-01-01")
     def test_2sa_required_notification_script(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
             with patch("subprocess.call") as subprocess_patched:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -139,12 +143,10 @@ class EmailNotificationsTestCase(TestCase):
 
     @freeze_time("2018-01-01")
     def test_2sa_required_email_notification_from(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
