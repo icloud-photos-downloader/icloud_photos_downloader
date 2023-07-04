@@ -9,6 +9,7 @@ import logging
 import itertools
 import subprocess
 import json
+from typing import Callable, TypeVar
 import urllib
 import click
 
@@ -554,8 +555,11 @@ def delete_photo(logger, icloud, photo):
         url, data=post_data, headers={
             "Content-type": "application/json"})
 
+RetrierT = TypeVar('RetrierT')
 
-def retrier(func, error_handler):
+def retrier(
+        func: Callable[[], RetrierT],
+        error_handler: Callable[[Exception, int], None]) -> RetrierT:
     """Run main func and retry helper if receive session error"""
     attempts = 0
     while True:
