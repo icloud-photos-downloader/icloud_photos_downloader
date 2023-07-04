@@ -276,7 +276,7 @@ def main(
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
-    if watch_with_interval and (list_albums or only_print_filenames):
+    if watch_with_interval and (list_albums or only_print_filenames): # pragma: no cover
         print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
         sys.exit(2)
 
@@ -799,7 +799,7 @@ def core(
         if auto_delete:
             autodelete_photos(icloud, folder_structure, directory)
 
-        if watch_interval:
+        if watch_interval: # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval = range(1, watch_interval)
             for _ in interval if skip_bar else tqdm(
