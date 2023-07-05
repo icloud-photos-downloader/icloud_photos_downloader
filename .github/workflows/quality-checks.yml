@@ -45,7 +45,7 @@ jobs:
     - name: Retrieve version and Changelog
       id: get_version
       run: |
-        echo icloudpd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+        echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
         echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
         scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT

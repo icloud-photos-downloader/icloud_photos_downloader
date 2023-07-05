@@ -133,7 +133,7 @@ When testing a bugfix it is important to test the faulty behavior and also the e
 ## How to release
 
 We have github actions taking care for building, testing, and releasing software. Building and testing are happenning automatically on git pushed, pull requests, and merges. For releases the following steps are manual:
-- Bump version in setup.py, all .md files, and all source files
+- Bump version in all files, including all source files
 - Update CHANGELOG.md with date of the release
 - Update CHANGELOG.md with release changes if they were not added with commits
 - Commit & push/merge changes
