@@ -27,7 +27,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Test dependencies
       run: |
-        pip install .[test]
+        pip install -e .[test]
 
     - name: Lint
       run: |
@@ -80,7 +80,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: |
-        pip install .[dev]
+        pip install -e .[dev]
 
     - name: Build Python (Linux)
       run: |

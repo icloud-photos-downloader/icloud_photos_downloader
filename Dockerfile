@@ -12,7 +12,7 @@ RUN set -xe \
 
 COPY . .
 
-RUN pip3 install .[dev]
+RUN pip3 install -e .[dev]
 
 RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/exec.py
 
