@@ -201,6 +201,14 @@ jobs:
         run: |
           scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}}
 
+      - name: Build Binary Dist MacOS Package
+        run: |
+          scripts/build_binary_dist_macos ${{needs.get_version.outputs.icloudpd_version}}
+
+      - name: Build Binary Dist Windows Package
+        run: |
+          scripts/build_binary_dist_windows ${{needs.get_version.outputs.icloudpd_version}}
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
@@ -208,3 +216,5 @@ jobs:
           if-no-files-found: error
           path: |
             dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux*.whl
+            dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-macos*.whl
+            dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-win*.whl
