@@ -25,9 +25,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install Test dependencies
       run: |
-        scripts/install_deps
+        pip install .[test]
 
     - name: Lint
       run: |
@@ -78,9 +78,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install dependencies
+    - name: Install Dev dependencies
       run: |
-        scripts/install_deps
+        pip install .[dev]
 
     - name: Build Python (Linux)
       run: |

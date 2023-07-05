@@ -5,6 +5,6 @@ set -euo pipefail
 # expects dist to have comipled binary versions
 # required param: version
 
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloudpd.py icloud.py --name icloudpd-$1-linux-$2
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile icloud.py --name icloud-$1-linux-$2
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile exec.py --name icloudpd-ex-$1-linux-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/icloudpd.py src/icloud.py --name icloudpd-$1-linux-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/icloud.py --name icloud-$1-linux-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/exec.py --name icloudpd-ex-$1-linux-$2

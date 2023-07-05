@@ -52,9 +52,9 @@ jobs:
       run: python.exe -m pip install -r requirements-pip.txt
       if: ${{ matrix.os == 'windows-latest' }}
 
-    - name: Install dependencies
+    - name: Install Dev dependencies
       run: |
-        scripts/install_deps
+        pip install .[dev]
 
     - name: Build Python (Linux)
       run: |
@@ -141,9 +141,9 @@ jobs:
         with:
           python-version: 3.11
       
-      - name: Install dependencies
+      - name: Install Dev dependencies
         run: |
-          scripts/install_deps
+          pip install .[dev]
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
