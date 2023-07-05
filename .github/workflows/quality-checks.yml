@@ -25,9 +25,9 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Install dependencies
+    - name: Install Test dependencies
       run: |
-        scripts/install_deps
+        pip install -e .[test]
 
     - name: Lint
       run: |
@@ -45,7 +45,7 @@ jobs:
     - name: Retrieve version and Changelog
       id: get_version
       run: |
-        echo icloudpd_version=$(cat setup.py | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+        echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
         echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
         scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT
@@ -78,9 +78,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     
-    - name: Install dependencies
+    - name: Install Dev dependencies
       run: |
-        scripts/install_deps
+        pip install -e .[dev]
 
     - name: Build Python (Linux)
       run: |

@@ -16,7 +16,7 @@ from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
-from tests.helpers.print_result_exception import print_result_exception
+from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 import inspect
 import glob
 
@@ -27,12 +27,13 @@ class DownloadPhotoTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_download_and_skip_existing_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             ("2018/07/30/IMG_7408.JPG", 1151066),
@@ -48,7 +49,7 @@ class DownloadPhotoTestCase(TestCase):
             with open(os.path.join(base_dir, file_name), "a") as f:
                 f.truncate(file_size)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -130,10 +131,8 @@ class DownloadPhotoTestCase(TestCase):
             photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
     def test_download_photos_and_set_exif(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             ("2018/07/30/IMG_7408.JPG", 1151066),
@@ -168,7 +167,7 @@ class DownloadPhotoTestCase(TestCase):
                 "icloudpd.exif_datetime.get_photo_exif"
             ) as get_exif_patched:
                 get_exif_patched.return_value = False
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -229,10 +228,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_photos_and_get_exif_exceptions(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = [
             '2018/07/31/IMG_7409.JPG'
@@ -241,7 +238,7 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch.object(piexif, "load") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
 
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -300,10 +297,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_skip_existing_downloads(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             ("2018/07/31/IMG_7409.JPG", 1884695),
@@ -318,7 +313,7 @@ class DownloadPhotoTestCase(TestCase):
             with open(os.path.join(base_dir, file_name), "a") as f:
                 f.truncate(file_size)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -374,10 +369,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_until_found(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         os.makedirs(os.path.join(base_dir, "2018/07/30/"))
         os.makedirs(os.path.join(base_dir, "2018/07/31/"))
@@ -412,7 +405,7 @@ class DownloadPhotoTestCase(TestCase):
             dp_patched.return_value = True
             with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -486,12 +479,10 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_handle_io_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             with mock.patch("icloudpd.download.open", create=True) as m:
                 # Raise IOError when we try to write to the destination file
                 m.side_effect = IOError
@@ -540,12 +531,10 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_session_error_during_download(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
             def mock_raise_response_error(arg):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -613,12 +602,10 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_session_error_during_photo_iteration(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
             def mock_raise_response_error(offset):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -686,12 +673,10 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_connection_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
 
             def mock_raise_response_error(arg):
@@ -756,12 +741,10 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_albums_error(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
 
             def mock_raise_response_error():
@@ -814,15 +797,13 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_missing_size(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         with mock.patch.object(PhotoAsset, "download") as pa_download:
             pa_download.return_value = False
 
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -884,10 +865,8 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_size_fallback_to_original(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -898,7 +877,7 @@ class DownloadPhotoTestCase(TestCase):
                 with mock.patch.object(PhotoAsset, "versions") as pa:
                     pa.return_value = ["original", "medium"]
 
-                    with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                    with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                         # Pass fixed client ID via environment variable
                         runner = CliRunner(env={
                             "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -952,10 +931,8 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_force_size(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -963,7 +940,7 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch.object(PhotoAsset, "versions") as pa:
                 pa.return_value = ["original", "medium"]
 
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1014,10 +991,8 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_invalid_creation_date(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = [
             '2018/01/01/IMG_7409.JPG'
@@ -1031,7 +1006,7 @@ class DownloadPhotoTestCase(TestCase):
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1090,10 +1065,8 @@ class DownloadPhotoTestCase(TestCase):
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason="does not run on mac")
     def test_invalid_creation_year(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = [
             '5/01/01/IMG_7409.JPG'
@@ -1107,7 +1080,7 @@ class DownloadPhotoTestCase(TestCase):
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1162,10 +1135,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_unknown_item_type(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -1173,7 +1144,7 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch.object(PhotoAsset, "item_type", new_callable=mock.PropertyMock) as it_mock:
                 it_mock.return_value = 'unknown'
 
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1221,10 +1192,8 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_download_and_dedupe_existing_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         os.makedirs(os.path.join(base_dir, os.path.normpath("2018/07/31/")))
         with open(os.path.join(base_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")), "a") as f:
@@ -1248,7 +1217,7 @@ class DownloadPhotoTestCase(TestCase):
             return mock.MagicMock()
 
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1337,10 +1306,8 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
     def test_download_photos_and_set_exif_exceptions(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = [
             '2018/07/31/IMG_7409.JPG'
@@ -1352,7 +1319,7 @@ class DownloadPhotoTestCase(TestCase):
                 "icloudpd.exif_datetime.get_photo_exif"
             ) as get_exif_patched:
                 get_exif_patched.return_value = False
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1414,17 +1381,14 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_chinese(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}/中文")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3], "中文")
+        recreate_path(base_dir)
 
         files_to_download = [
             '2018/07/31/IMG_7409.JPG'
         ]
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1492,10 +1456,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_after_delete(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_download = [
             '2018/07/31/IMG_7409.JPG'
@@ -1507,7 +1469,7 @@ class DownloadPhotoTestCase(TestCase):
                 "icloudpd.exif_datetime.get_photo_exif"
             ) as get_exif_patched:
                 get_exif_patched.return_value = False
-                with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml") as cass:
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")) as cass:
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={
                         "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1562,12 +1524,10 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_after_delete_fail(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos_no_delete.yml") as cass:
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_no_delete.yml")) as cass:
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1618,10 +1578,8 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_download_over_old_original_photos(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             ("2018/07/30/IMG_7408-original.JPG", 1151066),
@@ -1637,7 +1595,7 @@ class DownloadPhotoTestCase(TestCase):
             with open(os.path.join(base_dir, file_name), "a") as f:
                 f.truncate(file_size)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1722,10 +1680,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_normalized_names(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             ("2018/07/30/IMG_7408.JPG", 1151066),
@@ -1744,7 +1700,7 @@ class DownloadPhotoTestCase(TestCase):
             with open(os.path.join(base_dir, file_name), "a") as f:
                 f.truncate(file_size)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos_bad_filename.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_bad_filename.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1784,10 +1740,8 @@ class DownloadPhotoTestCase(TestCase):
 
     @pytest.mark.skip("not ready yet. may be not needed")
     def test_download_watch(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             ("2018/07/30/IMG_7408.JPG", 1151066),
@@ -1816,7 +1770,7 @@ class DownloadPhotoTestCase(TestCase):
             # import random
             target_duration = 1
             sleep_patched.side_effect = my_sleep(target_duration)
-            with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -1857,12 +1811,10 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_handle_internal_error_during_download(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
             def mock_raise_response_error(arg):
                 raise PyiCloudAPIResponseError(
@@ -1918,12 +1870,10 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_handle_internal_error_during_photo_iteration(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
             def mock_raise_response_error(offset):
                 raise PyiCloudAPIResponseError(

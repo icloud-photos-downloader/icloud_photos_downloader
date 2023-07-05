@@ -1,4 +1,5 @@
 from unittest import TestCase
+import pytest
 from vcr import VCR
 import os
 import shutil
@@ -7,7 +8,7 @@ from click.testing import CliRunner
 import json
 import mock
 from icloudpd.base import main
-from tests.helpers.print_result_exception import print_result_exception
+from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 import inspect
 import glob
 
@@ -15,13 +16,18 @@ vcr = VCR(decode_compressed_response=True)
 
 class ListingAlbumsTestCase(TestCase):
 
-    def test_listing_albums(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog):
+        self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_albums.yml"):
+    def test_listing_albums(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"

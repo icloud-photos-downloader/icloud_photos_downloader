@@ -13,7 +13,7 @@ from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from icloudpd.base import main
-from tests.helpers.print_result_exception import print_result_exception
+from tests.helpers import path_from_project_root, recreate_path, print_result_exception
 import inspect
 import glob
 
@@ -21,16 +21,17 @@ vcr = VCR(decode_compressed_response=True, record_mode="new_episodes")
 
 
 class AutodeletePhotosTestCase(TestCase):
+
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_autodelete_invalid_creation_date(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files = [
             "2018/01/01/IMG_3589.JPG"
@@ -44,7 +45,7 @@ class AutodeletePhotosTestCase(TestCase):
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
-            with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+            with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -131,17 +132,14 @@ class AutodeletePhotosTestCase(TestCase):
                         os.path.join(base_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_download_autodelete_photos(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
 
-        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -223,11 +221,8 @@ class AutodeletePhotosTestCase(TestCase):
                     base_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_autodelete_photos(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files_to_create = [
             "2018/07/30/IMG_7407.JPG",
@@ -252,7 +247,7 @@ class AutodeletePhotosTestCase(TestCase):
         for file_name in files_to_create + files_to_delete:
             open(os.path.join(base_dir, file_name), "a").close()
 
-        with vcr.use_cassette("tests/vcr_cassettes/autodelete_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "autodelete_photos.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -328,17 +323,14 @@ class AutodeletePhotosTestCase(TestCase):
                 base_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_retry_delete_after_download_session_error(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
 
-        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
@@ -418,17 +410,14 @@ class AutodeletePhotosTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 1
 
     def test_retry_fail_delete_after_download_session_error(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
 
-        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
                 raise PyiCloudAPIResponseError("Invalid global session", 100)
@@ -505,17 +494,14 @@ class AutodeletePhotosTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 1
 
     def test_retry_delete_after_download_internal_error(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
 
-        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
@@ -583,17 +569,14 @@ class AutodeletePhotosTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 1
 
     def test_retry_fail_delete_after_download_internal_error(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
         ]
 
-        with vcr.use_cassette("tests/vcr_cassettes/download_autodelete_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
                 raise PyiCloudAPIResponseError("INTERNAL_ERROR", "INTERNAL_ERROR")

@@ -9,6 +9,7 @@ import logging
 import itertools
 import subprocess
 import json
+from typing import Callable, TypeVar
 import urllib
 import click
 
@@ -276,7 +277,7 @@ def main(
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
-    if watch_with_interval and (list_albums or only_print_filenames):
+    if watch_with_interval and (list_albums or only_print_filenames): # pragma: no cover
         print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
         sys.exit(2)
 
@@ -554,8 +555,11 @@ def delete_photo(logger, icloud, photo):
         url, data=post_data, headers={
             "Content-type": "application/json"})
 
+RetrierT = TypeVar('RetrierT')
 
-def retrier(func, error_handler):
+def retrier(
+        func: Callable[[], RetrierT],
+        error_handler: Callable[[Exception, int], None]) -> RetrierT:
     """Run main func and retry helper if receive session error"""
     attempts = 0
     while True:
@@ -799,7 +803,7 @@ def core(
         if auto_delete:
             autodelete_photos(icloud, folder_structure, directory)
 
-        if watch_interval:
+        if watch_interval: # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval = range(1, watch_interval)
             for _ in interval if skip_bar else tqdm(

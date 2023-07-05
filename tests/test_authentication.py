@@ -10,6 +10,8 @@ import inspect
 import shutil
 import glob
 
+from tests.helpers import path_from_project_root, recreate_path
+
 vcr = VCR(decode_compressed_response=True)
 
 
@@ -17,9 +19,12 @@ class AuthenticationTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_failed_auth(self):
-        with vcr.use_cassette("tests/vcr_cassettes/failed_auth.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth.yml")):
             with self.assertRaises(
                 pyicloud_ipd.exceptions.PyiCloudFailedLoginException
             ) as context:
@@ -33,7 +38,7 @@ class AuthenticationTestCase(TestCase):
             "Invalid email/password combination." in str(context.exception))
 
     def test_2sa_required(self):
-        with vcr.use_cassette("tests/vcr_cassettes/auth_requires_2sa.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
             with self.assertRaises(TwoStepAuthRequiredError) as context:
                 # To re-record this HTTP request,
                 # delete ./tests/vcr_cassettes/auth_requires_2sa.yml,
@@ -52,7 +57,7 @@ class AuthenticationTestCase(TestCase):
             )
 
     def test_successful_auth(self):
-        with vcr.use_cassette("tests/vcr_cassettes/successful_auth.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "successful_auth.yml")):
             authenticator("com")(
                 "jdoe@gmail.com",
                 "password1",
@@ -60,13 +65,10 @@ class AuthenticationTestCase(TestCase):
             )
 
     def test_password_prompt(self):
-        base_dir = os.path.normpath(
-            f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/listing_photos.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
             })

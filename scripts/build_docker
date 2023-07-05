@@ -9,7 +9,7 @@ realpath() {
 CURRENT_DIR=$(dirname "$0")
 ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
-ICLOUDPD_VERSION="$(cat "$ROOT_DIR/setup.py" | grep version= | cut -d'"' -f 2)"
+ICLOUDPD_VERSION="$(cat "$ROOT_DIR/pyproject.toml" | grep version= | cut -d'"' -f 2)"
 echo "Current icloudpd version: ${ICLOUDPD_VERSION}"
 
 docker build \

@@ -11,6 +11,8 @@ import inspect
 import shutil
 import glob
 
+from tests.helpers import path_from_project_root, recreate_path
+
 vcr = VCR(decode_compressed_response=True)
 
 
@@ -18,14 +20,15 @@ class TwoStepAuthTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog):
         self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_2sa_flow_invalid_device_2fa(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_invalid_device.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_invalid_device.yml")):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
             })
@@ -56,12 +59,10 @@ class TwoStepAuthTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_device_2fa(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_device.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_device.yml")):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
             })
@@ -109,12 +110,10 @@ class TwoStepAuthTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_sms(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_sms.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_sms.yml")):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
             })
@@ -162,12 +161,10 @@ class TwoStepAuthTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == 0
 
     def test_2sa_flow_sms_failed(self):
-        base_dir = os.path.normpath(f"tests/fixtures/{inspect.stack()[0][3]}")
-        if os.path.exists(base_dir):
-            shutil.rmtree(base_dir)
-        os.makedirs(base_dir)
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
 
-        with vcr.use_cassette("tests/vcr_cassettes/2sa_flow_valid_sms.yml"):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_sms.yml")):
             with mock.patch.object(
                 PyiCloudService, "send_verification_code"
             ) as svc_mocked:

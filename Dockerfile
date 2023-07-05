@@ -10,11 +10,12 @@ RUN set -xe \
   && apk update \
   && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
 
-COPY . .
+COPY pyproject.toml .
+COPY src src
 
-RUN pip3 install -r requirements-pip.txt -r requirements.txt -r requirements-dev.txt
+RUN pip3 install -e .[dev]
 
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata exec.py
+RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/starters/exec.py
 
 FROM alpine:3.17 as runtime
 

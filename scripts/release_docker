@@ -5,7 +5,7 @@ ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
 $CURRENT_DIR/build_docker
 
-ICLOUDPD_VERSION="$(cat "$ROOT_DIR/setup.py" | grep version= | cut -d'"' -f 2)"
+ICLOUDPD_VERSION="$(cat "$ROOT_DIR/pyproject.toml" | grep version= | cut -d'"' -f 2)"
 echo "Pushing Docker images for icloudpd version: ${ICLOUDPD_VERSION}"
 
 set +x
