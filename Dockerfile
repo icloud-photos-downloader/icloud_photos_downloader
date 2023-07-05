@@ -14,7 +14,7 @@ COPY . .
 
 RUN pip3 install -e .[dev]
 
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/exec.py
+RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/starters/exec.py
 
 FROM alpine:3.17 as runtime
 
