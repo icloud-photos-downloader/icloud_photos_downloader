@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools>=67.0.0,<68",
-    "wheel>=0.38.4,<0.39",
+    "setuptools>=68.0.0,<69",
+    "wheel>=0.40.0,<0.41",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -44,7 +44,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "twine>=4.0.0,<5",
-    "pyinstaller>=5.7.0,<6"
+    "pyinstaller>=5.7.0,<6",
+    "wheel>=0.40.0,<0.41"
 ]
 test = [
     "pytest>=7.2.1,<8",
