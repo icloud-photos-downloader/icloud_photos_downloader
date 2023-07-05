@@ -10,7 +10,8 @@ RUN set -xe \
   && apk update \
   && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
 
-COPY . .
+COPY pyproject.toml .
+COPY src src
 
 RUN pip3 install -e .[dev]
 
