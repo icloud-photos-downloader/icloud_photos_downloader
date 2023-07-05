@@ -173,3 +173,34 @@ jobs:
           npm publish dist/npm/icloudpd --access public --dry-run=true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  build_binary_pypi:
+    runs-on: ubuntu-latest
+    needs: [get_version,build]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Build Binary Dist Linux Package
+        run: |
+          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}}
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          if-no-files-found: error
+          path: |
+            dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-linux*.whl
