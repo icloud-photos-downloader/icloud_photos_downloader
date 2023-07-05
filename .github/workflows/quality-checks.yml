@@ -207,4 +207,4 @@ jobs:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
           if-no-files-found: error
           path: |
-            dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-linux*.whl
+            dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux*.whl
