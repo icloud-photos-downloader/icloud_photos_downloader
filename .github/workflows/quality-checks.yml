@@ -186,6 +186,10 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install Dev dependencies
+        run: |
+          pip install -e .[dev]
+
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:

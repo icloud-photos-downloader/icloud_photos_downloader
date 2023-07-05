@@ -18,16 +18,18 @@ authors=[
 ]
 classifiers = [
     "Intended Audience :: End Users/Desktop",
-    "Operating System :: POSIX :: Linux",
+    "Operating System :: OS Independent",
     "License :: OSI Approved :: MIT License",
 ]
 # https://pypi.org/pypi?%3Aaction=list_classifiers
 
+[project.optional-dependencies]
+dev = [
+    "wheel>=0.40.0,<0.41"
+]
+
 [project.urls]
 Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
-
-[tool.setuptools]
-platforms=["linux_x86_64"]
 
 [tool.setuptools.package-data]
 "*" = ["icloud*"]

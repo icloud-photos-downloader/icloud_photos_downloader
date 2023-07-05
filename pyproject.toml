@@ -17,11 +17,10 @@ authors=[
     {name = "The iCloud Photo Downloader Authors"}
 ]
 classifiers = [
-        "Intended Audience :: Developers",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
     "requests>=2.28.2,<3",
