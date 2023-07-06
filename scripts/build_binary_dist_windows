@@ -11,6 +11,8 @@ rm -rf dist/binary_dist
 
 # basic
 cp -r binary_dist dist/binary_dist
+cp LICENSE.md dist/binary_dist/
+cp README_PYPI.md dist/binary_dist/
 
 cp dist/icloudpd-$1-windows-amd64.exe dist/binary_dist/src/icloudpd/icloudpd
 cp dist/icloud-$1-windows-amd64.exe dist/binary_dist/src/icloud/icloud

@@ -1,6 +1,7 @@
 .DS_Store
 build/
 dist/
+wheelhouse/
 icloudpd.egg-info
 cron_script.sh
 Photos/
