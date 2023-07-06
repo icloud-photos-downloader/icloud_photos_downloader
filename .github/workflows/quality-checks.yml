@@ -14,7 +14,7 @@ on:
 jobs:
 
   check_quality:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [3.7, 3.8, 3.9, '3.10', 3.11]
@@ -37,7 +37,7 @@ jobs:
         scripts/test
 
   get_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
 
@@ -59,7 +59,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
@@ -90,7 +90,7 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
@@ -125,7 +125,7 @@ jobs:
           dist/icloud*
 
   build_macos:
-    runs-on: macos-latest
+    runs-on: macos-11
     needs: [get_version]
     defaults:
       run:
@@ -160,7 +160,7 @@ jobs:
           dist/icloud*
 
   build_windows:
-    runs-on: windows-latest
+    runs-on: windows-2019
     needs: [get_version]
     defaults:
       run:
@@ -195,7 +195,7 @@ jobs:
           dist/icloud*
 
   build_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [get_version]
 
     steps:
@@ -225,7 +225,7 @@ jobs:
           icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}
 
   build_npm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [get_version,build_src]
     steps:
       - name: Checkout code
