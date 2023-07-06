@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.14.3 (2023-07-06)
+
 - add binary wheel without dependencies to pypi
 - fix: remove tests from pypi distributions
 
