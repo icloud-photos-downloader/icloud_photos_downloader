@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: pypi.org license and description
+
 ## 1.14.5 (2023-07-06)
 
 - fix: pypi publishing for macos
