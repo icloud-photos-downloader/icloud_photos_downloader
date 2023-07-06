@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.14.5 (2023-07-06)
+
+- fix: pypi publishing for macos
+
 ## 1.14.4 (2023-07-06)
 
 - fix: docker auth during publishing

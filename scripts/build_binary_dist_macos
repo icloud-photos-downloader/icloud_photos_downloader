@@ -15,4 +15,4 @@ cp dist/icloudpd-$1-macos-amd64 dist/binary_dist/src/icloudpd/icloudpd
 cp dist/icloud-$1-macos-amd64 dist/binary_dist/src/icloud/icloud
 python3 -m pip wheel dist/binary_dist/ -w dist/binary_dist --no-deps --no-build-isolation
 
-mv -f dist/binary_dist/icloudpd-$1-py2.py3-none-any.whl dist/icloudpd-$1-py2.py3-none-macos_11_0_x86_64.macos_11_0_arm64.whl
+mv -f dist/binary_dist/icloudpd-$1-py2.py3-none-any.whl dist/icloudpd-$1-py2.py3-none-macosx_11_0_x86_64.macosx_11_0_arm64.whl

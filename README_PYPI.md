@@ -14,8 +14,11 @@ pip install icloudpd
 pip install icloudpd --user
 ```
 
-Plus add `C:\Users\<YourUserAccountHere>\AppData\Roaming\Python\Python311\Scripts` to PATH
+Plus add `C:\Users\<YourUserAccountHere>\AppData\Roaming\Python\Python<YourPythonVersionHere>\Scripts` to PATH. The exact path will be given at the end of `icloudpd` installation.
 
+### MacOS
+
+Add `/Users/<YourUserAccountHere>/Library/Python/<YourPythonVersionHere>/bin` to PATH. The exact path will be given at the end of `icloudpd` installation.
 
 ## Usage
 
