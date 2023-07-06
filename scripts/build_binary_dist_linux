@@ -16,3 +16,6 @@ cp dist/icloud-$1-linux-amd64 dist/binary_dist/src/icloud/icloud
 python3 -m pip wheel dist/binary_dist/ -w dist/binary_dist --no-deps --no-build-isolation
 
 mv -f dist/binary_dist/icloudpd-$1-py2.py3-none-any.whl dist/icloudpd-$1-py2.py3-none-manylinux_2_17_x86_64.whl
+
+#audit manylinux
+python3 -m pip audit dist/icloudpd-$1-py2.py3-none-manylinux_2_17_x86_64.whl
