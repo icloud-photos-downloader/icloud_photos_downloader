@@ -184,6 +184,12 @@ jobs:
     - name: Available platforms
       run: echo ${{ steps.buildx.outputs.platforms }}
 
+    - name: Login to DockerHub 
+      uses: docker/login-action@v2 
+      with: 
+        username: ${{ secrets.DOCKERHUB_USERNAME }} 
+        password: ${{ secrets.DOCKERHUB_PASSWORD }} 
+
     - name: Build Release Docker and Publish
       uses: docker/build-push-action@v3
       with:
@@ -269,7 +275,7 @@ jobs:
           python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
 
   release:
-    needs: [get_version, build_src,build_linux,build_macos,build_windows]
+    needs: [get_version,build_src,build_linux,build_macos,build_windows]
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout code

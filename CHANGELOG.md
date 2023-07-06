@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.14.4 (2023-07-06)
+
+- fix: docker auth during publishing
+
 ## 1.14.3 (2023-07-06)
 
 - add binary wheel without dependencies to pypi
