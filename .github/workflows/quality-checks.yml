@@ -14,10 +14,9 @@ on:
 jobs:
 
   check_quality:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
-        os: [ubuntu-latest]
         python-version: [3.7, 3.8, 3.9, '3.10', 3.11]
     steps:
     - uses: actions/checkout@v3
@@ -38,7 +37,7 @@ jobs:
         scripts/test
 
   get_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     steps:
     - uses: actions/checkout@v3
 
@@ -59,48 +58,133 @@ jobs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
-  build:
-    runs-on: ${{ matrix.os }}
+  build_src:
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
         shell: bash
-    strategy:
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.11]
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.11'
     
     - name: Install Dev dependencies
       run: |
         pip install -e .[dev]
 
-    - name: Build Python (Linux)
+    - name: Build Python Wheel
       run: |
         scripts/build
-      if: ${{ matrix.os == 'ubuntu-latest' }}
 
-    - name: Build Release Executables (Windows)
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        if-no-files-found: error
+        path: |
+          dist/icloud*.whl
+
+  build_linux:
+    runs-on: ubuntu-20.04
+    needs: [get_version]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Dev dependencies
       run: |
-        scripts/build_bin_windows ${{needs.get_version.outputs.icloudpd_version}} amd64
-      if: ${{ matrix.os == 'windows-latest' }}
+        pip install -e .[dev]
 
-    - name: Build Release Executables (Linux)
+    - name: Build Release Executables
       run: |
         scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}} amd64
-      if: ${{ matrix.os == 'ubuntu-latest' }}
 
-    - name: Build Release Executables (MacOS)
+    - name: Build Python Binary Wheel
+      run: |
+        scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        if-no-files-found: error
+        path: |
+          dist/icloud*
+
+  build_macos:
+    runs-on: macos-11
+    needs: [get_version]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip install -e .[dev]
+
+    - name: Build Release Executables
       run: |
         scripts/build_bin_macos ${{needs.get_version.outputs.icloudpd_version}} amd64
-      if: ${{ matrix.os == 'macos-latest' }}
+
+    - name: Build Python Binary Wheel
+      run: |
+        scripts/build_binary_dist_macos ${{needs.get_version.outputs.icloudpd_version}}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        if-no-files-found: error
+        path: |
+          dist/icloud*
+
+  build_windows:
+    runs-on: windows-2019
+    needs: [get_version]
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip install -e .[dev]
+
+    - name: Build Release Executables
+      run: |
+        scripts/build_bin_windows ${{needs.get_version.outputs.icloudpd_version}} amd64
+
+    - name: Build Python Binary Wheel
+      run: |
+        scripts/build_binary_dist_windows ${{needs.get_version.outputs.icloudpd_version}}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
@@ -111,7 +195,7 @@ jobs:
           dist/icloud*
 
   build_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
     needs: [get_version]
 
     steps:
@@ -141,8 +225,8 @@ jobs:
           icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}
 
   build_npm:
-    runs-on: ubuntu-latest
-    needs: [get_version,build]
+    runs-on: ubuntu-20.04
+    needs: [get_version,build_src,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

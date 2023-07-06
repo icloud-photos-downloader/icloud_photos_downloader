@@ -1,0 +1,42 @@
+[build-system]
+requires = [
+    "setuptools>=68.0.0,<69",
+    "wheel>=0.40.0,<0.41",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+version="1.14.2"
+name = "icloudpd"
+description = "icloudpd is a command-line tool to download photos and videos from iCloud."
+readme = "README_PYPI.md"
+requires-python = ">=2"
+keywords = ["icloud", "photo"]
+license = {file="LICENSE.md"}
+authors=[
+    {name = "The iCloud Photo Downloader Authors"}
+]
+classifiers = [
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+]
+# https://pypi.org/pypi?%3Aaction=list_classifiers
+
+[project.optional-dependencies]
+dev = [
+    "wheel>=0.40.0,<0.41"
+]
+
+[project.urls]
+Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
+
+[tool.setuptools.package-data]
+"*" = ["icloud*"]
+
+[tool.distutils.bdist_wheel]
+universal = true
+
+[project.scripts]
+icloudpd = "icloudpd:__main__"
+icloud = "icloud:__main__"

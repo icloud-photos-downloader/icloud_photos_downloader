@@ -17,11 +17,10 @@ authors=[
     {name = "The iCloud Photo Downloader Authors"}
 ]
 classifiers = [
-        "Intended Audience :: Developers",
-        "Operating System :: OS Independent",
-        "Programming Language :: Python",
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
+    "Intended Audience :: End Users/Desktop",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
     "requests>=2.28.2,<3",
@@ -45,7 +44,8 @@ dependencies = [
 dev = [
     "twine>=4.0.0,<5",
     "pyinstaller>=5.7.0,<6",
-    "wheel>=0.40.0,<0.41"
+    "wheel>=0.40.0,<0.41",
+    "auditwheel>=5.4.0,<5.5"
 ]
 test = [
     "pytest>=7.2.1,<8",

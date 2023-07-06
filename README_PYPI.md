@@ -8,6 +8,15 @@ A command-line tool to download all your iCloud photos.
 pip install icloudpd
 ```
 
+### Windows
+
+``` sh
+pip install icloudpd --user
+```
+
+Plus add `C:\Users\<YourUserAccountHere>\AppData\Roaming\Python\Python311\Scripts` to PATH
+
+
 ## Usage
 
 ``` sh
