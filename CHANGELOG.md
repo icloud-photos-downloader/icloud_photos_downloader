@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- add binary wheel without dependencies to pypi
+- fix: remove tests from pypi distributions
+
 ## 1.14.2 (2023-07-03)
 
 - fix: finite retry on unhandled errors during photo iteration [#642](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/642)
