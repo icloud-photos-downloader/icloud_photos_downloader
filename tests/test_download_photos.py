@@ -1928,3 +1928,52 @@ class DownloadPhotoTestCase(TestCase):
             base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
+
+    def test_handle_io_error_mkdir(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            with mock.patch("os.makedirs", create=True) as m:
+                # Raise IOError when we try to write to the destination file
+                m.side_effect = IOError
+
+                runner = CliRunner(env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                })
+                result = runner.invoke(
+                    main,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        1,
+                        "-d",
+                        base_dir,
+                    ],
+                )
+                print_result_exception(result)
+
+                self.assertIn(
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                self.assertIn(
+                    f"INFO     Downloading the first original photo to {base_dir} ...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    f"ERROR    Could not create folder {base_dir}",
+                    self._caplog.text,
+                )
+                self.assertEqual(result.exit_code, 0, "Exit code")
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files at the end")

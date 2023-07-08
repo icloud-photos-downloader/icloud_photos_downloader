@@ -45,8 +45,12 @@ def download_media(icloud, photo, download_path, size):
     if not os.path.exists(download_dir):
         try:
             os.makedirs(download_dir)
-        except OSError:  # pragma: no cover
-            pass         # pragma: no cover
+        except OSError:
+            logger.tqdm_write(
+                f"Could not create folder {download_dir}",
+                logging.ERROR,
+            )
+            return False
 
     for retries in range(constants.MAX_RETRIES):
         try:
