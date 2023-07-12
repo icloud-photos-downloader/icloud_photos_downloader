@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: pypi.org license and description
+- feature: offer to save user password if it is entered interactively
 
 ## 1.14.5 (2023-07-06)
 
