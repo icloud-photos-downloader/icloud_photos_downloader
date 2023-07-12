@@ -83,13 +83,49 @@ class AuthenticationTestCase(TestCase):
                     "-d",
                     base_dir,
                 ],
-                input="password1\n",
+                input="password1\n\n",
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...",
-                self._caplog.text
+                self._caplog.text)
+            self.assertIn(
+                "INFO     All photos have been downloaded!", self._caplog.text
             )
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
+
+    def test_password_prompt_save(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--recent",
+                    "0",
+                    "--no-progress-bar",
+                    "-d",
+                    base_dir,
+                ],
+                input="password1\ny\n",
+            )
+            pyicloud_ipd.utils.delete_password_in_keyring(
+                "jdoe@gmail.com")
+            self.assertIn("DEBUG    Authenticating...", self._caplog.text)
+            self.assertIn(
+                "DEBUG    Looking up all photos and videos from album All Photos...",
+                self._caplog.text)
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
             )
