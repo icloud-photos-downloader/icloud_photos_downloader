@@ -36,8 +36,10 @@ def authenticator(domain):
                     cookie_directory=cookie_directory,
                     client_id=client_id,
                 )
-                if password_was_entered and click.confirm("Save password in keyring? "):
-                    pyicloud_ipd.utils.store_password_in_keyring(username, password)
+                if password_was_entered and click.confirm(
+                        "Save password in keyring? "):
+                    pyicloud_ipd.utils.store_password_in_keyring(
+                        username, password)
                 break
             except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
                 # Prompt for password if not stored in PyiCloud's keyring
