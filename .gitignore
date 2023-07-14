@@ -3,8 +3,6 @@ build/
 dist/
 wheelhouse/
 icloudpd.egg-info
-cron_script.sh
-Photos/
 tests/fixtures/**
 .vscode
 __pycache__
@@ -15,7 +13,7 @@ __pycache__
 .coverage
 .coverage.*
 htmlcov
-icloudpd-latest-py2.py3-none-any.whl
+*.whl
 .venv
 venv
 *.spec
