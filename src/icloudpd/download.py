@@ -53,7 +53,7 @@ def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
     if not os.path.exists(download_dir):
         logger.tqdm_write(
             f"DRY RUN: Would create folder hierarchy {download_dir}",
-            logging.INFO,
+            logging.DEBUG,
         )
     return True
 
@@ -82,9 +82,10 @@ def download_response_to_path_dry_run(
         f"DRY RUN: Would download {download_path}",
         logging.INFO,
     )
+    return True
 
 # pylint: disable-msg=too-many-arguments
-def download_media(logger, dry_run, icloud, photo, download_path, size):
+def download_media(logger, dry_run, icloud, photo, download_path, size) -> bool:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
@@ -127,16 +128,18 @@ def download_media(logger, dry_run, icloud, photo, download_path, size):
                 time.sleep(wait_time)
 
         except IOError:
-            logger.error(
-                "IOError while writing file to %s! "
-                "You might have run out of disk space, or the file "
-                "might be too large for your OS. "
-                "Skipping this file...", download_path
+            logger.tqdm_write(
+                f"IOError while writing file to {download_path}! " +
+                "You might have run out of disk space, or the file " +
+                "might be too large for your OS. " +
+                "Skipping this file...", 
+                logging.ERROR
             )
             break
     else:
         logger.tqdm_write(
-            f"Could not download {photo.filename}! Please try again later."
+            f"Could not download {photo.filename}! Please try again later.", 
+            logging.ERROR,
         )
 
     return False

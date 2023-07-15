@@ -4,18 +4,16 @@ Delete any files found in "Recently Deleted"
 import os
 import logging
 from tzlocal import get_localzone
-from icloudpd.logger import setup_logger
 from icloudpd.paths import local_download_path
 
 
-def autodelete_photos(icloud, folder_structure, directory):
+def autodelete_photos(logger, icloud, folder_structure, directory):
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
     (I.e. If you delete a photo on your phone, it's also deleted on your computer.)
     """
-    logger = setup_logger()
-    logger.info("Deleting any files found in 'Recently Deleted'...")
+    logger.tqdm_write("Deleting any files found in 'Recently Deleted'...", logging.INFO)
 
     recently_deleted = icloud.photos.albums["Recently Deleted"]
 
@@ -36,5 +34,6 @@ def autodelete_photos(icloud, folder_structure, directory):
                 local_download_path(
                     media, size, download_dir))
             if os.path.exists(path):
-                logger.info("Deleting %s!", path)
+                logger.tqdm_write(f"Deleting {path}...", logging.DEBUG)
                 os.remove(path)
+                logger.tqdm_write(f"Deleted {path}", logging.INFO)

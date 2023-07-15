@@ -76,11 +76,11 @@ class AutodeletePhotosTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
+                    f"INFO     Downloaded {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Deleting IMG_3589.JPG",
+                    f"INFO     Deleted IMG_3589.JPG",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -123,7 +123,7 @@ class AutodeletePhotosTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
+                    f"INFO     Deleted {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                     self._caplog.text,
                 )
 
@@ -166,11 +166,11 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting IMG_3589.JPG",
+                f"INFO     Deleted IMG_3589.JPG",
                 self._caplog.text,
             )
             self.assertIn(
@@ -212,7 +212,7 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
 
@@ -282,24 +282,19 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                "INFO     Deleting any files found in 'Recently Deleted'...",
-                self._caplog.text,
-            )
-
-            self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
                 self._caplog.text,
             )
 
@@ -381,7 +376,7 @@ class AutodeletePhotosTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                             self._caplog.text,
                         )
 
@@ -465,7 +460,7 @@ class AutodeletePhotosTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                             self._caplog.text,
                         )
 
@@ -540,7 +535,7 @@ class AutodeletePhotosTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                         self._caplog.text,
                     )
 
@@ -612,7 +607,7 @@ class AutodeletePhotosTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                         self._caplog.text,
                     )
 

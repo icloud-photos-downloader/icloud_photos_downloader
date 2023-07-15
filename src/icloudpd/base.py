@@ -275,8 +275,9 @@ def main(
             logger.setLevel(logging.ERROR)
 
     # check dry run called with incompatible params
-    if dry_run and (auto_delete or delete_after_download):
-        print('--dry-run is incompatible with --auto-delete and --delete-after-download flags')
+    if dry_run and auto_delete:
+        print(
+            '--dry-run is incompatible with --auto-delete flag')
         sys.exit(2)
 
     # check required directory param only if not list albums
@@ -288,7 +289,7 @@ def main(
         print('--auto-delete and --delete-after-download are mutually exclusive')
         sys.exit(2)
 
-    if watch_with_interval and (list_albums or only_print_filenames): # pragma: no cover
+    if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
         print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
         sys.exit(2)
 
@@ -331,7 +332,8 @@ def main(
             delete_after_download,
             domain,
             logger,
-            watch_with_interval
+            watch_with_interval,
+            dry_run
         )
     )
 
@@ -353,23 +355,27 @@ def download_builder(
         dry_run):
     """factory for downloader"""
     def state_(icloud):
-        def download_photo_(counter, photo):
+        def download_photo_(counter, photo) -> bool:
             """internal function for actually downloading the photos"""
             filename = clean_filename(photo.filename)
             if skip_videos and photo.item_type != "image":
-                logger.set_tqdm_description(
-                    f"Skipping {filename}, only downloading photos."
+                logger.tqdm_write(
+                    (f"Skipping {filename}, only downloading photos."
+                     f"(Item type was: {photo.item_type})"),
+                    logging.DEBUG
                 )
                 return False
             if photo.item_type not in ("image", "movie"):
-                logger.set_tqdm_description(
-                    f"Skipping {filename}, only downloading photos and videos. "
-                    f"(Item type was: {photo.item_type})")
+                logger.tqdm_write(
+                    (f"Skipping {filename}, only downloading photos and videos. "
+                     f"(Item type was: {photo.item_type})"),
+                    logging.DEBUG
+                )
                 return False
             try:
                 created_date = photo.created.astimezone(get_localzone())
             except (ValueError, OSError):
-                logger.set_tqdm_description(
+                logger.tqdm_write(
                     f"Could not convert photo created date to local timezone ({photo.created})",
                     logging.ERROR)
                 created_date = photo.created
@@ -381,7 +387,7 @@ def download_builder(
                     date_path = folder_structure.format(created_date)
             except ValueError:  # pragma: no cover
                 # This error only seems to happen in Python 2
-                logger.set_tqdm_description(
+                logger.tqdm_write(
                     f"Photo created date was not valid ({photo.created})", logging.ERROR)
                 # e.g. ValueError: year=5 is before 1900
                 # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
@@ -420,8 +426,10 @@ def download_builder(
 
             if size not in versions and size != "original":
                 if force_size:
-                    logger.set_tqdm_description(
-                        f"{size} size does not exist for {filename}. Skipping...", logging.ERROR, )
+                    logger.tqdm_write(
+                        f"{size} size does not exist for {filename}. Skipping...",
+                        logging.ERROR
+                    )
                     return False
                 download_size = "original"
 
@@ -449,14 +457,16 @@ def download_builder(
                     download_path = (f"-{photo_size}.").join(
                         download_path.rsplit(".", 1)
                     )
-                    logger.set_tqdm_description(
-                        f"{truncate_middle(download_path, 96)} deduplicated."
+                    logger.tqdm_write(
+                        f"{truncate_middle(download_path, 96)} deduplicated.",
+                        logging.INFO
                     )
                     file_exists = os.path.isfile(download_path)
                 if file_exists:
                     counter.increment()
-                    logger.set_tqdm_description(
-                        f"{truncate_middle(download_path, 96)} already exists."
+                    logger.tqdm_write(
+                        f"{truncate_middle(download_path, 96)} already exists.",
+                        logging.INFO
                     )
 
             if not file_exists:
@@ -465,8 +475,9 @@ def download_builder(
                     print(download_path)
                 else:
                     truncated_path = truncate_middle(download_path, 96)
-                    logger.set_tqdm_description(
-                        f"Downloading {truncated_path}"
+                    logger.tqdm_write(
+                        f"Downloading {truncated_path}...",
+                        logging.DEBUG
                     )
 
                     download_result = download.download_media(
@@ -475,7 +486,8 @@ def download_builder(
                     success = download_result
 
                     if download_result:
-                        if set_exif_datetime and \
+                        if not dry_run and \
+                            set_exif_datetime and \
                             clean_filename(photo.filename) \
                                 .lower() \
                                 .endswith((".jpg", ".jpeg")) and \
@@ -483,16 +495,20 @@ def download_builder(
                             # %Y:%m:%d looks wrong, but it's the correct format
                             date_str = created_date.strftime(
                                 "%Y-%m-%d %H:%M:%S%z")
-                            logger.debug(
-                                "Setting EXIF timestamp for %s: %s",
-                                download_path,
-                                date_str,
+                            logger.tqdm_write(
+                                f"Setting EXIF timestamp for {download_path}: {date_str}",
+                                logging.DEBUG
                             )
                             exif_datetime.set_photo_exif(
                                 download_path,
                                 created_date.strftime("%Y:%m:%d %H:%M:%S"),
                             )
-                        download.set_utime(download_path, created_date)
+                        if not dry_run:
+                            download.set_utime(download_path, created_date)
+                        logger.tqdm_write(
+                            f"Downloaded {truncated_path}",
+                            logging.INFO
+                        )
 
             # Also download the live photo if present
             if not skip_live_photos:
@@ -519,24 +535,33 @@ def download_builder(
                                 lp_download_path = (f"-{lp_photo_size}.").join(
                                     lp_download_path.rsplit(".", 1)
                                 )
-                                logger.set_tqdm_description(
-                                    f"{truncate_middle(lp_download_path, 96)} deduplicated."
+                                logger.tqdm_write(
+                                    f"{truncate_middle(lp_download_path, 96)} deduplicated.",
+                                    logging.DEBUG
                                 )
                                 lp_file_exists = os.path.isfile(
                                     lp_download_path)
                             if lp_file_exists:
-                                logger.set_tqdm_description(
-                                    f"{truncate_middle(lp_download_path, 96)} already exists."
-
+                                logger.tqdm_write(
+                                    f"{truncate_middle(lp_download_path, 96)} already exists.",
+                                    logging.INFO
                                 )
                         if not lp_file_exists:
                             truncated_path = truncate_middle(
                                 lp_download_path, 96)
-                            logger.set_tqdm_description(
-                                f"Downloading {truncated_path}")
-                            success = download.download_media(
+                            logger.tqdm_write(
+                                f"Downloading {truncated_path}...",
+                                logging.DEBUG
+                            )
+                            download_result = download.download_media(
                                 logger, dry_run, icloud, photo, lp_download_path, lp_size
-                            ) and success
+                            )
+                            success = download_result and success
+                            if download_result:
+                                logger.tqdm_write(
+                                    f"Downloaded {truncated_path}",
+                                    logging.INFO
+                                )
             return success
         return download_photo_
     return state_
@@ -544,7 +569,9 @@ def download_builder(
 
 def delete_photo(logger, icloud, photo):
     """Delete a photo from the iCloud account."""
-    logger.info("Deleting %s", clean_filename(photo.filename))
+    clean_filename_local = clean_filename(photo.filename)
+    logger.tqdm_write(
+        f"Deleting {clean_filename_local} in iCloud...", logging.DEBUG)
     # pylint: disable=W0212
     url = f"{icloud.photos._service_endpoint}/records/modify?"\
         f"{urllib.parse.urlencode(icloud.photos.params)}"
@@ -567,8 +594,19 @@ def delete_photo(logger, icloud, photo):
     icloud.photos.session.post(
         url, data=post_data, headers={
             "Content-type": "application/json"})
+    logger.tqdm_write(
+        f"Deleted {clean_filename_local} in iCloud", logging.INFO)
+
+
+def delete_photo_dry_run(logger, _icloud, photo):
+    """Dry run for deleting a photo from the iCloud"""
+    logger.tqdm_write(
+        f"DRY RUN Would delete {clean_filename(photo.filename)} in iCloud",
+        logging.INFO)
+
 
 RetrierT = TypeVar('RetrierT')
+
 
 def retrier(
         func: Callable[[], RetrierT],
@@ -665,7 +703,8 @@ def core(
         delete_after_download,
         domain,
         logger,
-        watch_interval
+        watch_interval,
+        dry_run
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -751,20 +790,6 @@ def core(
             # ensure photos iterator doesn't have a known length
             photos = (p for p in photos)
 
-        plural_suffix = "" if photos_count == 1 else "s"
-        video_suffix = ""
-        photos_count_str = "the first" if photos_count == 1 else photos_count
-        if not skip_videos:
-            video_suffix = " or video" if photos_count == 1 else " and videos"
-        logger.info(
-            "Downloading %s %s photo%s%s to %s ...",
-            photos_count_str,
-            size,
-            plural_suffix,
-            video_suffix,
-            directory,
-        )
-
         # Use only ASCII characters in progress bar
         tqdm_kwargs["ascii"] = True
 
@@ -780,6 +805,17 @@ def core(
             photos_enumerator = tqdm(photos, **tqdm_kwargs)
             logger.set_tqdm(photos_enumerator)
 
+        plural_suffix = "" if photos_count == 1 else "s"
+        video_suffix = ""
+        photos_count_str = "the first" if photos_count == 1 else photos_count
+        if not skip_videos:
+            video_suffix = " or video" if photos_count == 1 else " and videos"
+        logger.tqdm_write(
+            (f"Downloading {photos_count_str} {size}"
+             f" photo{plural_suffix}{video_suffix} to {directory} ..."),
+            logging.INFO
+        )
+
         consecutive_files_found = Counter(0)
 
         def should_break(counter):
@@ -791,17 +827,18 @@ def core(
             try:
                 if should_break(consecutive_files_found):
                     logger.tqdm_write(
-                        f"Found {until_found} consecutive previously downloaded photos. Exiting"
+                        f"Found {until_found} consecutive previously downloaded photos. Exiting",
+                        logging.INFO
                     )
                     break
                 item = next(photos_iterator)
                 if download_photo(
                         consecutive_files_found,
                         item) and delete_after_download:
-                    # delete_photo(logger, icloud, item)
 
                     def delete_cmd():
-                        delete_photo(logger, icloud, item)
+                        delete_local = delete_photo_dry_run if dry_run else delete_photo
+                        delete_local(logger, icloud, item)
 
                     retrier(delete_cmd, error_handler)
 
@@ -814,9 +851,9 @@ def core(
         logger.info("All photos have been downloaded!")
 
         if auto_delete:
-            autodelete_photos(icloud, folder_structure, directory)
+            autodelete_photos(logger, icloud, folder_structure, directory)
 
-        if watch_interval: # pragma: no cover
+        if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval = range(1, watch_interval)
             for _ in interval if skip_bar else tqdm(

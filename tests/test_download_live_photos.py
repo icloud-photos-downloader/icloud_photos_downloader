@@ -65,15 +65,15 @@ class DownloadLivePhotoTestCase(TestCase):
             print_result_exception(result)
 
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV'))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0516.HEIC'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0516.HEIC'))}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -142,7 +142,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -150,7 +150,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514.HEIC'))}",
                 self._caplog.text,
             )
             self.assertIn(

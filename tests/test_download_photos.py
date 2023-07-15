@@ -82,7 +82,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
             self.assertNotIn(
@@ -98,11 +98,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Skipping IMG_7405.MOV, only downloading photos.",
+                "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Skipping IMG_7404.MOV, only downloading photos.",
+                "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -202,7 +202,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
                     # 2018:07:31 07:22:24 utc
@@ -271,7 +271,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                    f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -588,7 +588,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                         self.assertIn(
-                            "INFO     Could not download IMG_7409.JPG! Please try again later.",
+                            "ERROR    Could not download IMG_7409.JPG! Please try again later.",
                             self._caplog.text,
                         )
 
@@ -730,7 +730,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                         self.assertIn(
-                            "INFO     Could not download IMG_7409.JPG! Please try again later.",
+                            "ERROR    Could not download IMG_7409.JPG! Please try again later.",
                             self._caplog.text,
                         )
                         assert result.exit_code == 0
@@ -910,7 +910,7 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                             self._caplog.text,
                         )
                         self.assertIn(
@@ -1045,7 +1045,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
+                    f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1119,7 +1119,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
+                    f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1178,7 +1178,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
+                        "DEBUG    Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -1255,15 +1255,15 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))}",
+                    f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated.",
+                    f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated.",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))}",
+                    f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1275,10 +1275,10 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
+                    "DEBUG    Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
                 )
                 self.assertIn(
-                    "INFO     Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
+                    "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
                 )
                 self.assertIn(
                     "INFO     All photos have been downloaded!", self._caplog.text
@@ -1354,7 +1354,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
                     # 2018:07:31 07:22:24 utc
@@ -1423,7 +1423,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
             self.assertNotIn(
@@ -1504,11 +1504,11 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     Deleting IMG_7409.JPG", self._caplog.text
+                        "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
                     )
                     self.assertIn(
                         "INFO     All photos have been downloaded!", self._caplog.text
@@ -1562,11 +1562,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
             self.assertNotIn(
-                "INFO     Deleting IMG_7409.JPG", self._caplog.text
+                "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
             )
             self.assertIn(
                 "INFO     All photos have been downloaded!", self._caplog.text
@@ -1630,7 +1630,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
             self.assertNotIn(
@@ -1646,11 +1646,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Skipping IMG_7405.MOV, only downloading photos.",
+                "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     Skipping IMG_7404.MOV, only downloading photos.",
+                "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
                 self._caplog.text,
             )
             self.assertIn(
@@ -1858,7 +1858,7 @@ class DownloadPhotoTestCase(TestCase):
                     # )
 
                     self.assertIn(
-                        "INFO     Could not download IMG_7409.JPG! Please try again later.",
+                        "ERROR    Could not download IMG_7409.JPG! Please try again later.",
                         self._caplog.text,
                     )
 
@@ -2025,7 +2025,7 @@ class DownloadPhotoTestCase(TestCase):
             # )
             for f in files_to_download:
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(f))}",
+                    f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(f))}",
                     self._caplog.text,
                 )
             self.assertNotIn(
@@ -2037,11 +2037,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             # self.assertIn(
-            #     "INFO     Skipping IMG_7405.MOV, only downloading photos.",
+            #     "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
             #     self._caplog.text,
             # )
             # self.assertIn(
-            #     "INFO     Skipping IMG_7404.MOV, only downloading photos.",
+            #     "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
             #     self._caplog.text,
             # )
             self.assertIn(
@@ -2054,3 +2054,68 @@ class DownloadPhotoTestCase(TestCase):
             base_dir, "**/*.*"), recursive=True)
 
         self.assertEqual(sum(1 for _ in files_in_result), 0, "Files in the result")
+
+    def test_download_after_delete_dry_run(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG'
+        ]
+
+        with mock.patch.object(piexif, "insert") as piexif_patched:
+            piexif_patched.side_effect = InvalidImageDataError
+            with mock.patch(
+                "icloudpd.exif_datetime.get_photo_exif"
+            ) as get_exif_patched:
+                get_exif_patched.return_value = False
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")) as cass:
+                    # Pass fixed client ID via environment variable
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--dry-run",
+                            "--threads-num",
+                            1,
+                            "--delete-after-download",
+                            "-d",
+                            base_dir,
+                        ],
+                    )
+                    print_result_exception(result)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo to {base_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     DRY RUN Would delete IMG_7409.JPG in iCloud", self._caplog.text
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded!", self._caplog.text
+                    )
+                    self.assertEqual(cass.all_played, False, "All mocks played")
+                    self.assertEqual(result.exit_code, 0, "Exit code")
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        self.assertEqual( sum(1 for _ in files_in_result), 0, "Files in the result")
