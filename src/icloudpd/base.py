@@ -194,7 +194,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               is_flag=True,
               )
 @click.option("--threads-num",
-              help="Number of cpu threads -- deprecated. To be removed in future version",
+              help="Number of cpu threads - deprecated & always 1. To be removed in future version",
               type=click.IntRange(1),
               default=1,
               )
@@ -214,6 +214,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option("--watch-with-interval",
               help="Run downloading in a infinite cycle, waiting specified seconds between runs",
               type=click.IntRange(1),
+              )
+@click.option("--dry-run",
+              help="Do not modify local system or iCloud",
+              is_flag=True,
+              default=False,
               )
 # a hacky way to get proper version because automatic detection does not work for some reason
 @click.version_option(version="1.14.5")
@@ -250,7 +255,8 @@ def main(
         threads_num,    # pylint: disable=W0613
         delete_after_download,
         domain,
-        watch_with_interval
+        watch_with_interval,
+        dry_run
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -267,6 +273,11 @@ def main(
             logger.setLevel(logging.INFO)
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
+
+    # check dry run called with incompatible params
+    if dry_run and (auto_delete or delete_after_download):
+        print('--dry-run is incompatible with --auto-delete and --delete-after-download flags')
+        sys.exit(2)
 
     # check required directory param only if not list albums
     if not list_albums and not directory:
@@ -293,7 +304,8 @@ def main(
                 only_print_filenames,
                 set_exif_datetime,
                 skip_live_photos,
-                live_photo_size),
+                live_photo_size,
+                dry_run),
             directory,
             username,
             password,
@@ -337,7 +349,8 @@ def download_builder(
         only_print_filenames,
         set_exif_datetime,
         skip_live_photos,
-        live_photo_size):
+        live_photo_size,
+        dry_run):
     """factory for downloader"""
     def state_(icloud):
         def download_photo_(counter, photo):
@@ -457,7 +470,7 @@ def download_builder(
                     )
 
                     download_result = download.download_media(
-                        icloud, photo, download_path, download_size
+                        logger, dry_run, icloud, photo, download_path, download_size
                     )
                     success = download_result
 
@@ -522,7 +535,7 @@ def download_builder(
                             logger.set_tqdm_description(
                                 f"Downloading {truncated_path}")
                             success = download.download_media(
-                                icloud, photo, lp_download_path, lp_size
+                                logger, dry_run, icloud, photo, lp_download_path, lp_size
                             ) and success
             return success
         return download_photo_

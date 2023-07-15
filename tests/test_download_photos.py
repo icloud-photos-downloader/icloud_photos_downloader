@@ -435,7 +435,7 @@ class DownloadPhotoTestCase(TestCase):
                     expected_calls = list(
                         map(
                             lambda f: call(
-                                ANY, ANY, os.path.join(
+                                ANY, False, ANY, ANY, os.path.join(
                                     base_dir, os.path.normpath(f[0])),
                                 "mediumVideo" if (
                                     f[1] == 'photo' and f[0].endswith('.MOV')
@@ -917,6 +917,8 @@ class DownloadPhotoTestCase(TestCase):
                             "INFO     All photos have been downloaded!", self._caplog.text
                         )
                         dp_patched.assert_called_once_with(
+                            ANY,
+                            False,
                             ANY,
                             ANY,
                             f"{os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
@@ -1977,3 +1979,78 @@ class DownloadPhotoTestCase(TestCase):
             base_dir, "**/*.*"), recursive=True)
 
         self.assertEqual(sum(1 for _ in files_in_result), 0, "Files at the end")
+
+    def test_dry_run(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG',
+            # "2018/07/30/IMG_7408.JPG",
+            # "2018/07/30/IMG_7407.JPG",
+        ]
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--dry-run",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    base_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            # self.assertIn(
+            #     f"INFO     Downloading 2 original photos to {base_dir} ...",
+            #     self._caplog.text,
+            # )
+            for f in files_to_download:
+                self.assertIn(
+                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(f))}",
+                    self._caplog.text,
+                )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "ERROR",
+                self._caplog.text,
+            )
+            # self.assertIn(
+            #     "INFO     Skipping IMG_7405.MOV, only downloading photos.",
+            #     self._caplog.text,
+            # )
+            # self.assertIn(
+            #     "INFO     Skipping IMG_7404.MOV, only downloading photos.",
+            #     self._caplog.text,
+            # )
+            self.assertIn(
+                "INFO     All photos have been downloaded!", self._caplog.text
+            )
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files in the result")
