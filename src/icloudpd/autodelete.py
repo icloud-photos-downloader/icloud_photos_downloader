@@ -7,7 +7,16 @@ from tzlocal import get_localzone
 from icloudpd.paths import local_download_path
 
 
-def autodelete_photos(logger, icloud, folder_structure, directory):
+def delete_file(logger, path) -> bool:
+    os.remove(path)
+    logger.tqdm_write(f"Deleted {path}", logging.INFO)
+    return True
+
+def delete_file_dry_run(logger, path) -> bool:
+    logger.tqdm_write(f"DRY RUN Would delete {path}", logging.INFO)
+    return True
+
+def autodelete_photos(logger, dry_run, icloud, folder_structure, directory):
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -35,5 +44,5 @@ def autodelete_photos(logger, icloud, folder_structure, directory):
                     media, size, download_dir))
             if os.path.exists(path):
                 logger.tqdm_write(f"Deleting {path}...", logging.DEBUG)
-                os.remove(path)
-                logger.tqdm_write(f"Deleted {path}", logging.INFO)
+                delete_local = delete_file_dry_run if dry_run else delete_file
+                delete_local(logger, path)

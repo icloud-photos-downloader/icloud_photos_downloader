@@ -274,12 +274,6 @@ def main(
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
 
-    # check dry run called with incompatible params
-    if dry_run and auto_delete:
-        print(
-            '--dry-run is incompatible with --auto-delete flag')
-        sys.exit(2)
-
     # check required directory param only if not list albums
     if not list_albums and not directory:
         print('--directory or --list-albums are required')
@@ -851,7 +845,7 @@ def core(
         logger.info("All photos have been downloaded!")
 
         if auto_delete:
-            autodelete_photos(logger, icloud, folder_structure, directory)
+            autodelete_photos(logger, dry_run, icloud, folder_structure, directory)
 
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
