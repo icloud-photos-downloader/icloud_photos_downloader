@@ -83,7 +83,7 @@ class TwoStepAuthTestCase(TestCase):
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
-                "INFO     Two-step/two-factor authentication is required!",
+                "INFO     Two-step/two-factor authentication is required",
                 self._caplog.text,
             )
             self.assertIn("  0: SMS to *******03", result.output)
@@ -101,7 +101,7 @@ class TwoStepAuthTestCase(TestCase):
                 "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert result.exit_code == 0
 
@@ -134,7 +134,7 @@ class TwoStepAuthTestCase(TestCase):
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
-                "INFO     Two-step/two-factor authentication is required!",
+                "INFO     Two-step/two-factor authentication is required",
                 self._caplog.text,
             )
             self.assertIn("  0: SMS to *******03", result.output)
@@ -152,7 +152,7 @@ class TwoStepAuthTestCase(TestCase):
                 "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert result.exit_code == 0
 
@@ -189,7 +189,7 @@ class TwoStepAuthTestCase(TestCase):
                 )
                 self.assertIn("DEBUG    Authenticating...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Two-step/two-factor authentication is required!",
+                    "INFO     Two-step/two-factor authentication is required",
                     self._caplog.text,
                 )
                 self.assertIn("  0: SMS to *******03", result.output)

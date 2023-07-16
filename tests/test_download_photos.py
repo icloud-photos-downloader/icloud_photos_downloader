@@ -106,7 +106,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
 
             assert result.exit_code == 0
@@ -213,7 +213,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
+                        "INFO     All photos have been downloaded", self._caplog.text
                     )
                     assert result.exit_code == 0
 
@@ -283,7 +283,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
+                    "INFO     All photos have been downloaded", self._caplog.text
                 )
                 assert result.exit_code == 0
 
@@ -354,7 +354,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert result.exit_code == 0
 
@@ -518,7 +518,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 self.assertIn(
                     "ERROR    IOError while writing file to "
-                    f"{os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}! "
+                    f"{os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}. "
                     "You might have run out of disk space, or the file might "
                     "be too large for your OS. Skipping this file...",
                     self._caplog.text,
@@ -588,7 +588,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                         self.assertIn(
-                            "ERROR    Could not download IMG_7409.JPG! Please try again later.",
+                            "ERROR    Could not download IMG_7409.JPG. Please try again later.",
                             self._caplog.text,
                         )
 
@@ -659,7 +659,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                         self.assertIn(
-                            "INFO     iCloud re-authentication failed! Please try again later.",
+                            "ERROR    iCloud re-authentication failed. Please try again later.",
                             self._caplog.text,
                         )
                         # Make sure we only call sleep 4 times (skip the first retry)
@@ -730,7 +730,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                         self.assertIn(
-                            "ERROR    Could not download IMG_7409.JPG! Please try again later.",
+                            "ERROR    Could not download IMG_7409.JPG. Please try again later.",
                             self._caplog.text,
                         )
                         assert result.exit_code == 0
@@ -834,35 +834,26 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
 
-                # These error messages should not be repeated more than once
-                assert (
-                    self._caplog.text.count(
-                        "ERROR    Could not find URL to download IMG_7409.JPG for size original!"
-                    )
-                    == 1
-                )
-                assert (
-                    self._caplog.text.count(
-                        "ERROR    Could not find URL to download IMG_7408.JPG for size original!"
-                    )
-                    == 1
-                )
-                assert (
-                    self._caplog.text.count(
-                        "ERROR    Could not find URL to download IMG_7407.JPG for size original!"
-                    )
-                    == 1
-                )
+                # These error messages should not be repeated more than once for each size
+                for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
+                    for size in ["original", "originalVideo"]:
+                        self.assertEqual(
+                            sum(1 for line in self._caplog.text.splitlines() if line ==
+                                f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}"
+                        )
 
                 self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
+                    "INFO     All photos have been downloaded", self._caplog.text
                 )
-                assert result.exit_code == 0
+                self.assertEqual(result.exit_code, 0, "Exit code")
 
         files_in_result = glob.glob(os.path.join(
             base_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == 0
+        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files in result")
 
     def test_size_fallback_to_original(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -914,7 +905,7 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            "INFO     All photos have been downloaded!", self._caplog.text
+                            "INFO     All photos have been downloaded", self._caplog.text
                         )
                         dp_patched.assert_called_once_with(
                             ANY,
@@ -981,7 +972,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
+                        "INFO     All photos have been downloaded", self._caplog.text
                     )
                     dp_patched.assert_not_called
 
@@ -1049,7 +1040,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
+                    "INFO     All photos have been downloaded", self._caplog.text
                 )
                 assert result.exit_code == 0
 
@@ -1123,7 +1114,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
+                    "INFO     All photos have been downloaded", self._caplog.text
                 )
                 assert result.exit_code == 0
 
@@ -1182,7 +1173,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
+                        "INFO     All photos have been downloaded", self._caplog.text
                     )
                     dp_patched.assert_not_called
 
@@ -1281,7 +1272,7 @@ class DownloadPhotoTestCase(TestCase):
                     "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
                 )
                 self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
+                    "INFO     All photos have been downloaded", self._caplog.text
                 )
 
                 # Check that file was downloaded
@@ -1369,7 +1360,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
+                        "INFO     All photos have been downloaded", self._caplog.text
                     )
                     assert result.exit_code == 0
 
@@ -1383,7 +1374,8 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     def test_download_chinese(self):
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3], "中文")
+        base_dir = os.path.join(
+            self.fixtures_path, inspect.stack()[0][3], "中文")
         recreate_path(base_dir)
 
         files_to_download = [
@@ -1431,7 +1423,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
 
             # Check that file was downloaded
@@ -1511,7 +1503,7 @@ class DownloadPhotoTestCase(TestCase):
                         "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
                     )
                     self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
+                        "INFO     All photos have been downloaded", self._caplog.text
                     )
                     assert cass.all_played
                     assert result.exit_code == 0
@@ -1569,7 +1561,7 @@ class DownloadPhotoTestCase(TestCase):
                 "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert cass.all_played
             assert result.exit_code == 0
@@ -1654,7 +1646,7 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
 
             # Check that file was downloaded
@@ -1858,7 +1850,7 @@ class DownloadPhotoTestCase(TestCase):
                     # )
 
                     self.assertIn(
-                        "ERROR    Could not download IMG_7409.JPG! Please try again later.",
+                        "ERROR    Could not download IMG_7409.JPG. Please try again later.",
                         self._caplog.text,
                     )
 
@@ -1917,7 +1909,7 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     self.assertIn(
-                        "INFO     Internal Error at Apple.",
+                        "ERROR    Internal Error at Apple.",
                         self._caplog.text,
                     )
 
@@ -1978,7 +1970,8 @@ class DownloadPhotoTestCase(TestCase):
         files_in_result = glob.glob(os.path.join(
             base_dir, "**/*.*"), recursive=True)
 
-        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files at the end")
+        self.assertEqual(sum(1 for _ in files_in_result),
+                         0, "Files at the end")
 
     def test_dry_run(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -2045,7 +2038,7 @@ class DownloadPhotoTestCase(TestCase):
             #     self._caplog.text,
             # )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
 
             assert result.exit_code == 0
@@ -2053,7 +2046,8 @@ class DownloadPhotoTestCase(TestCase):
         files_in_result = glob.glob(os.path.join(
             base_dir, "**/*.*"), recursive=True)
 
-        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files in the result")
+        self.assertEqual(sum(1 for _ in files_in_result),
+                         0, "Files in the result")
 
     def test_download_after_delete_dry_run(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -2114,12 +2108,14 @@ class DownloadPhotoTestCase(TestCase):
                             "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
                         )
                         self.assertIn(
-                            "INFO     All photos have been downloaded!", self._caplog.text
+                            "INFO     All photos have been downloaded", self._caplog.text
                         )
-                        self.assertEqual(cass.all_played, False, "All mocks played")
+                        self.assertEqual(
+                            cass.all_played, False, "All mocks played")
                         self.assertEqual(result.exit_code, 0, "Exit code")
 
         files_in_result = glob.glob(os.path.join(
             base_dir, "**/*.*"), recursive=True)
 
-        self.assertEqual( sum(1 for _ in files_in_result), 0, "Files in the result")
+        self.assertEqual(sum(1 for _ in files_in_result),
+                         0, "Files in the result")

@@ -1,6 +1,5 @@
 """Handles username/password authentication and two-step authentication"""
 
-import logging
 import sys
 import click
 import pyicloud_ipd
@@ -23,7 +22,7 @@ def authenticator(logger, domain):
             client_id=None,
     ):
         """Authenticate with iCloud username and password"""
-        logger.tqdm_write("Authenticating...", logging.DEBUG)
+        logger.debug("Authenticating...")
         while True:
             try:
                 # If password not provided on command line variable will be set to None
@@ -42,9 +41,9 @@ def authenticator(logger, domain):
         if icloud.requires_2sa:
             if raise_error_on_2sa:
                 raise TwoStepAuthRequiredError(
-                    "Two-step/two-factor authentication is required!"
+                    "Two-step/two-factor authentication is required"
                 )
-            logger.info("Two-step/two-factor authentication is required!")
+            logger.info("Two-step/two-factor authentication is required")
             request_2sa(icloud, logger)
         return icloud
     return authenticate_
