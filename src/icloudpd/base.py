@@ -221,7 +221,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default=False,
               )
 # a hacky way to get proper version because automatic detection does not work for some reason
-@click.version_option(version="1.15.0")
+@click.version_option(version="1.15.1")
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
 def main(
@@ -462,15 +462,15 @@ def download_builder(
                     download_path = (f"-{photo_size}.").join(
                         download_path.rsplit(".", 1)
                     )
-                    logger.info(
-                        "%s deduplicated.",
+                    logger.debug(
+                        "%s deduplicated",
                         truncate_middle(download_path, 96)
                     )
                     file_exists = os.path.isfile(download_path)
                 if file_exists:
                     counter.increment()
-                    logger.info(
-                        "%s already exists.",
+                    logger.debug(
+                        "%s already exists",
                         truncate_middle(download_path, 96)
                     )
 
@@ -543,14 +543,14 @@ def download_builder(
                                     lp_download_path.rsplit(".", 1)
                                 )
                                 logger.debug(
-                                    "%s deduplicated.",
+                                    "%s deduplicated",
                                     truncate_middle(lp_download_path, 96)
                                 )
                                 lp_file_exists = os.path.isfile(
                                     lp_download_path)
                             if lp_file_exists:
-                                logger.info(
-                                    "%s already exists.",
+                                logger.debug(
+                                    "%s already exists",
                                     truncate_middle(lp_download_path, 96)
                                 )
                         if not lp_file_exists:

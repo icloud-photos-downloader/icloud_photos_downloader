@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+## 1.15.1 (2023-07-16)
+
+- fix: excessive logging for existing and deduplicated files
+- fix: add missing docker platforms back
+
 ## 1.15.0 (2023-07-16)
 
 - fix: logs when progress bar enabled
