@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- feature: `--dry-run` parameter to run icloudpd without changes to local files or iCloud
+- feature: `--dry-run` parameter to run icloudpd without changes to local files and iCloud
 - fix: pypi.org license and description
 
 ## 1.14.5 (2023-07-06)

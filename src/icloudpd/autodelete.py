@@ -8,12 +8,14 @@ from icloudpd.paths import local_download_path
 
 
 def delete_file(logger, path) -> bool:
+    """ Actual deletion of files """
     os.remove(path)
     logger.tqdm_write(f"Deleted {path}", logging.INFO)
     return True
 
 def delete_file_dry_run(logger, path) -> bool:
-    logger.tqdm_write(f"DRY RUN Would delete {path}", logging.INFO)
+    """ Dry run deletion of files """
+    logger.tqdm_write(f"[DRY RUN] Would delete {path}", logging.INFO)
     return True
 
 def autodelete_photos(logger, dry_run, icloud, folder_structure, directory):
@@ -30,7 +32,7 @@ def autodelete_photos(logger, dry_run, icloud, folder_structure, directory):
         try:
             created_date = media.created.astimezone(get_localzone())
         except (ValueError, OSError):
-            logger.set_tqdm_description(
+            logger.tqdm_write(
                 f"Could not convert media created date to local timezone {media.created}",
                 logging.ERROR)
             created_date = media.created

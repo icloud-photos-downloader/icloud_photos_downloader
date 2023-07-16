@@ -52,7 +52,7 @@ def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
     download_dir = os.path.dirname(download_path)
     if not os.path.exists(download_dir):
         logger.tqdm_write(
-            f"DRY RUN: Would create folder hierarchy {download_dir}",
+            f"[DRY RUN] Would create folder hierarchy {download_dir}",
             logging.DEBUG,
         )
     return True
@@ -79,7 +79,7 @@ def download_response_to_path_dry_run(
         _created_date: datetime.datetime) -> bool:
     """ Pretends to save response content into a file with desired created date """
     logger.tqdm_write(
-        f"DRY RUN: Would download {download_path}",
+        f"[DRY RUN] Would download {download_path}",
         logging.INFO,
     )
     return True

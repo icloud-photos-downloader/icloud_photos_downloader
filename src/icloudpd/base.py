@@ -485,7 +485,7 @@ def download_builder(
                             clean_filename(photo.filename) \
                                 .lower() \
                                 .endswith((".jpg", ".jpeg")) and \
-                                not exif_datetime.get_photo_exif(download_path):
+                                not exif_datetime.get_photo_exif(logger, download_path):
                             # %Y:%m:%d looks wrong, but it's the correct format
                             date_str = created_date.strftime(
                                 "%Y-%m-%d %H:%M:%S%z")
@@ -494,6 +494,7 @@ def download_builder(
                                 logging.DEBUG
                             )
                             exif_datetime.set_photo_exif(
+                                logger,
                                 download_path,
                                 created_date.strftime("%Y:%m:%d %H:%M:%S"),
                             )
@@ -595,7 +596,7 @@ def delete_photo(logger, icloud, photo):
 def delete_photo_dry_run(logger, _icloud, photo):
     """Dry run for deleting a photo from the iCloud"""
     logger.tqdm_write(
-        f"DRY RUN Would delete {clean_filename(photo.filename)} in iCloud",
+        f"[DRY RUN] Would delete {clean_filename(photo.filename)} in iCloud",
         logging.INFO)
 
 
@@ -708,7 +709,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(domain)(
+        icloud = authenticator(logger, domain)(
             username,
             password,
             cookie_directory,
@@ -755,10 +756,11 @@ def core(
 
         directory = os.path.normpath(directory)
 
-        logger.debug(
-            "Looking up all photos%s from album %s...",
-            "" if skip_videos else " and videos",
-            album)
+        videos_phrase = "" if skip_videos else " and videos"
+        logger.tqdm_write(
+            f"Looking up all photos{videos_phrase} from album {album}...",
+            logging.DEBUG
+        )
 
         session_exception_handler = session_error_handle_builder(
             logger, icloud)
@@ -845,7 +847,8 @@ def core(
         logger.info("All photos have been downloaded!")
 
         if auto_delete:
-            autodelete_photos(logger, dry_run, icloud, folder_structure, directory)
+            autodelete_photos(logger, dry_run, icloud,
+                              folder_structure, directory)
 
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")

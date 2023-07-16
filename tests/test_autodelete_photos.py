@@ -700,19 +700,19 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     DRY RUN Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     DRY RUN Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     DRY RUN Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     DRY RUN Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
                 self._caplog.text,
             )
 

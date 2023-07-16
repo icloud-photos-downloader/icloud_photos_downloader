@@ -2111,7 +2111,7 @@ class DownloadPhotoTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            "INFO     DRY RUN Would delete IMG_7409.JPG in iCloud", self._caplog.text
+                            "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
                         )
                         self.assertIn(
                             "INFO     All photos have been downloaded!", self._caplog.text
