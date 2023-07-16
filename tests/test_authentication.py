@@ -3,6 +3,7 @@ import os
 from vcr import VCR
 import pytest
 from click.testing import CliRunner
+from icloudpd.logger import setup_logger
 import pyicloud_ipd
 from icloudpd.base import main
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
@@ -28,7 +29,7 @@ class AuthenticationTestCase(TestCase):
             with self.assertRaises(
                 pyicloud_ipd.exceptions.PyiCloudFailedLoginException
             ) as context:
-                authenticator("com")(
+                authenticator(setup_logger(), "com")(
                     "bad_username",
                     "bad_password",
                     client_id="EC5646DE-9423-11E8-BF21-14109FE0B321",
@@ -44,7 +45,7 @@ class AuthenticationTestCase(TestCase):
                 # delete ./tests/vcr_cassettes/auth_requires_2sa.yml,
                 # put your actual credentials in here, run the test,
                 # and then replace with dummy credentials.
-                authenticator("com")(
+                authenticator(setup_logger(), "com")(
                     "jdoe@gmail.com",
                     "password1",
                     raise_error_on_2sa=True,
@@ -58,7 +59,7 @@ class AuthenticationTestCase(TestCase):
 
     def test_successful_auth(self):
         with vcr.use_cassette(os.path.join(self.vcr_path, "successful_auth.yml")):
-            authenticator("com")(
+            authenticator(setup_logger(), "com")(
                 "jdoe@gmail.com",
                 "password1",
                 client_id="EC5646DE-9423-11E8-BF21-14109FE0B321",

@@ -4,18 +4,27 @@ Delete any files found in "Recently Deleted"
 import os
 import logging
 from tzlocal import get_localzone
-from icloudpd.logger import setup_logger
 from icloudpd.paths import local_download_path
 
 
-def autodelete_photos(icloud, folder_structure, directory):
+def delete_file(logger, path) -> bool:
+    """ Actual deletion of files """
+    os.remove(path)
+    logger.tqdm_write(f"Deleted {path}", logging.INFO)
+    return True
+
+def delete_file_dry_run(logger, path) -> bool:
+    """ Dry run deletion of files """
+    logger.tqdm_write(f"[DRY RUN] Would delete {path}", logging.INFO)
+    return True
+
+def autodelete_photos(logger, dry_run, icloud, folder_structure, directory):
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
     (I.e. If you delete a photo on your phone, it's also deleted on your computer.)
     """
-    logger = setup_logger()
-    logger.info("Deleting any files found in 'Recently Deleted'...")
+    logger.tqdm_write("Deleting any files found in 'Recently Deleted'...", logging.INFO)
 
     recently_deleted = icloud.photos.albums["Recently Deleted"]
 
@@ -23,7 +32,7 @@ def autodelete_photos(icloud, folder_structure, directory):
         try:
             created_date = media.created.astimezone(get_localzone())
         except (ValueError, OSError):
-            logger.set_tqdm_description(
+            logger.tqdm_write(
                 f"Could not convert media created date to local timezone {media.created}",
                 logging.ERROR)
             created_date = media.created
@@ -36,5 +45,6 @@ def autodelete_photos(icloud, folder_structure, directory):
                 local_download_path(
                     media, size, download_dir))
             if os.path.exists(path):
-                logger.info("Deleting %s!", path)
-                os.remove(path)
+                logger.tqdm_write(f"Deleting {path}...", logging.DEBUG)
+                delete_local = delete_file_dry_run if dry_run else delete_file
+                delete_local(logger, path)

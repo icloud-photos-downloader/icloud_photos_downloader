@@ -76,11 +76,11 @@ class AutodeletePhotosTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloading {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
+                    f"INFO     Downloaded {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Deleting IMG_3589.JPG",
+                    f"INFO     Deleted IMG_3589.JPG",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -123,7 +123,7 @@ class AutodeletePhotosTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    f"INFO     Deleting {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
+                    f"INFO     Deleted {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                     self._caplog.text,
                 )
 
@@ -166,11 +166,11 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting IMG_3589.JPG",
+                f"INFO     Deleted IMG_3589.JPG",
                 self._caplog.text,
             )
             self.assertIn(
@@ -212,7 +212,7 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
 
@@ -282,24 +282,19 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                "INFO     Deleting any files found in 'Recently Deleted'...",
-                self._caplog.text,
-            )
-
-            self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleting {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
+                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
                 self._caplog.text,
             )
 
@@ -381,7 +376,7 @@ class AutodeletePhotosTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                             self._caplog.text,
                         )
 
@@ -465,7 +460,7 @@ class AutodeletePhotosTestCase(TestCase):
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                             self._caplog.text,
                         )
 
@@ -540,7 +535,7 @@ class AutodeletePhotosTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                         self._caplog.text,
                     )
 
@@ -612,7 +607,7 @@ class AutodeletePhotosTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"INFO     Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
                         self._caplog.text,
                     )
 
@@ -639,3 +634,103 @@ class AutodeletePhotosTestCase(TestCase):
             base_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 1
+
+    def test_autodelete_photos_dry_run(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        recreate_path(base_dir)
+
+        files_to_create = [
+            "2018/07/30/IMG_7407.JPG",
+            "2018/07/30/IMG_7407-original.JPG"
+        ]
+
+        files_to_delete = [
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7406.MOV",
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7383.PNG",
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190.JPG",
+            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190-medium.JPG"
+        ]
+
+        os.makedirs(os.path.join(
+            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+        os.makedirs(os.path.join(
+            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+        os.makedirs(os.path.join(
+            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+
+        # create some empty files
+        for file_name in files_to_create + files_to_delete:
+            open(os.path.join(base_dir, file_name), "a").close()
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "autodelete_photos.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--dry-run",
+                    "--recent",
+                    "0",
+                    "--skip-videos",
+                    "--auto-delete",
+                    "-d",
+                    base_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading 0 original photos to {base_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded!", self._caplog.text
+            )
+            self.assertIn(
+                "INFO     Deleting any files found in 'Recently Deleted'...",
+                self._caplog.text,
+            )
+
+            self.assertIn(
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
+                self._caplog.text,
+            )
+
+            self.assertNotIn("IMG_7407.JPG", self._caplog.text)
+            self.assertNotIn("IMG_7407-original.JPG", self._caplog.text)
+
+            self.assertEqual(result.exit_code, 0, "Exit code")
+
+        files_in_result = glob.glob(os.path.join(
+            base_dir, "**/*.*"), recursive=True)
+
+        self.assertEqual(sum(1 for _ in files_in_result), len(files_to_create) + len(files_to_delete), "Files in the result")
+
+        # check files
+        for file_name in files_to_create:
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected, but missing"
+
+        for file_name in files_to_delete:
+            assert os.path.exists(os.path.join(
+                base_dir, file_name)), f"{file_name} expected to stay, but missing"
