@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+## 1.15.0 (2023-07-16)
+
+- fix: logs when progress bar enabled
 - feature: `--dry-run` parameter to run icloudpd without changes to local files and iCloud
 - fix: pypi.org license and description
 
