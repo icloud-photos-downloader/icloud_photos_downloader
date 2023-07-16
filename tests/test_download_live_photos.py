@@ -146,7 +146,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0514_HEVC.MOV'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
@@ -154,7 +154,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0516.HEIC'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2020/11/04/IMG_0516.HEIC'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(

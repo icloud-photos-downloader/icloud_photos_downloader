@@ -90,11 +90,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
@@ -346,11 +346,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
@@ -454,7 +454,7 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     for f in files_to_skip:
-                        expected_message = f"INFO     {os.path.join(base_dir, os.path.normpath(f[0]))} already exists."
+                        expected_message = f"DEBUG    {os.path.join(base_dir, os.path.normpath(f[0]))} already exists"
                         self.assertIn(expected_message, self._caplog.text)
 
                     self.assertIn(
@@ -462,7 +462,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertNotIn(
-                        f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7399-medium.MOV'))} already exists.",
+                        f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7399-medium.MOV'))} already exists",
                         self._caplog.text
                     )
 
@@ -1242,7 +1242,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated.",
+                    f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1250,7 +1250,7 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated.",
+                    f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1258,11 +1258,11 @@ class DownloadPhotoTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists.",
+                    f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.MOV'))} already exists.",
+                    f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.MOV'))} already exists",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1630,11 +1630,11 @@ class DownloadPhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists.",
+                f"DEBUG    {os.path.join(base_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists",
                 self._caplog.text,
             )
             self.assertIn(
