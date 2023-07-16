@@ -77,7 +77,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert result.exit_code == 0
 
@@ -158,7 +158,7 @@ class DownloadLivePhotoTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert result.exit_code == 0
 

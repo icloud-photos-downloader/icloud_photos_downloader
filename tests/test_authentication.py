@@ -53,7 +53,7 @@ class AuthenticationTestCase(TestCase):
                 )
 
             self.assertTrue(
-                "Two-step/two-factor authentication is required!"
+                "Two-step/two-factor authentication is required"
                 in str(context.exception)
             )
 
@@ -92,7 +92,7 @@ class AuthenticationTestCase(TestCase):
                 self._caplog.text
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             assert result.exit_code == 0
 

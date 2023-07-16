@@ -3,7 +3,6 @@
 import os
 import socket
 import time
-import logging
 import datetime
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
@@ -41,9 +40,9 @@ def mkdirs_for_path(logger, download_path: str) -> bool:
         os.makedirs(name = download_dir, exist_ok=True)
         return True
     except OSError:
-        logger.tqdm_write(
-            f"Could not create folder {download_dir}",
-            logging.ERROR,
+        logger.error(
+            "Could not create folder %s",
+            download_dir,
         )
         return False
 
@@ -51,9 +50,9 @@ def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
     """ DRY Run for Creating hierarchy of folders for file path """
     download_dir = os.path.dirname(download_path)
     if not os.path.exists(download_dir):
-        logger.tqdm_write(
-            f"[DRY RUN] Would create folder hierarchy {download_dir}",
-            logging.DEBUG,
+        logger.debug(
+            "[DRY RUN] Would create folder hierarchy %s",
+            download_dir,
         )
     return True
 
@@ -78,9 +77,9 @@ def download_response_to_path_dry_run(
         download_path: str,
         _created_date: datetime.datetime) -> bool:
     """ Pretends to save response content into a file with desired created date """
-    logger.tqdm_write(
-        f"[DRY RUN] Would download {download_path}",
-        logging.INFO,
+    logger.info(
+        "[DRY RUN] Would download %s",
+        download_path,
     )
     return True
 
@@ -100,17 +99,17 @@ def download_media(logger, dry_run, icloud, photo, download_path, size) -> bool:
             if photo_response:
                 return download_local(logger, photo_response, download_path, photo.created)
 
-            logger.tqdm_write(
-                f"Could not find URL to download {photo.filename} for size {size}!",
-                logging.ERROR,
+            logger.error(
+                "Could not find URL to download %s for size %s",
+                photo.filename,
+                size
             )
             break
 
         except (ConnectionError, socket.timeout, PyiCloudAPIResponseError) as ex:
             if "Invalid global session" in str(ex):
-                logger.tqdm_write(
-                    "Session error, re-authenticating...",
-                    logging.ERROR)
+                logger.error(
+                    "Session error, re-authenticating...")
                 if retries > 0:
                     # If the first re-authentication attempt failed,
                     # start waiting a few seconds before retrying in case
@@ -121,25 +120,26 @@ def download_media(logger, dry_run, icloud, photo, download_path, size) -> bool:
             else:
                 # you end up here when p.e. throttling by Apple happens
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
-                logger.tqdm_write(
-                    f"Error downloading {photo.filename}, retrying after {wait_time} seconds...",
-                    logging.ERROR,
+                logger.error(
+                    "Error downloading %s, retrying after %s seconds...",
+                    photo.filename,
+                    wait_time
                 )
                 time.sleep(wait_time)
 
         except IOError:
-            logger.tqdm_write(
-                f"IOError while writing file to {download_path}! " +
+            logger.error(
+                "IOError while writing file to %s. " +
                 "You might have run out of disk space, or the file " +
                 "might be too large for your OS. " +
                 "Skipping this file...", 
-                logging.ERROR
+                download_path
             )
             break
     else:
-        logger.tqdm_write(
-            f"Could not download {photo.filename}! Please try again later.", 
-            logging.ERROR,
+        logger.error(
+            "Could not download %s. Please try again later.", 
+            photo.filename,
         )
 
     return False

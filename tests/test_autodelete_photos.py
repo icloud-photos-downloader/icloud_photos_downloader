@@ -84,7 +84,7 @@ class AutodeletePhotosTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     All photos have been downloaded!", self._caplog.text
+                    "INFO     All photos have been downloaded", self._caplog.text
                 )
 
                 # check files
@@ -115,7 +115,7 @@ class AutodeletePhotosTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     All photos have been downloaded!", self._caplog.text
+                    f"INFO     All photos have been downloaded", self._caplog.text
                 )
                 self.assertIn(
                     f"INFO     Deleting any files found in 'Recently Deleted'...",
@@ -174,7 +174,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
 
             # check files
@@ -204,7 +204,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     All photos have been downloaded!", self._caplog.text
+                f"INFO     All photos have been downloaded", self._caplog.text
             )
             self.assertIn(
                 f"INFO     Deleting any files found in 'Recently Deleted'...",
@@ -274,7 +274,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             self.assertIn(
                 "INFO     Deleting any files found in 'Recently Deleted'...",
@@ -692,7 +692,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "INFO     All photos have been downloaded!", self._caplog.text
+                "INFO     All photos have been downloaded", self._caplog.text
             )
             self.assertIn(
                 "INFO     Deleting any files found in 'Recently Deleted'...",

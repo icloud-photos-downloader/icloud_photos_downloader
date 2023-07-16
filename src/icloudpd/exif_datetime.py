@@ -1,6 +1,5 @@
 """Get/set EXIF dates from photos"""
 
-import logging
 import piexif
 from piexif._exceptions import InvalidImageDataError
 
@@ -11,7 +10,7 @@ def get_photo_exif(logger, path):
         exif_dict = piexif.load(path)
         return exif_dict.get("Exif").get(36867)
     except (ValueError, InvalidImageDataError):
-        logger.tqdm_write(f"Error fetching EXIF data for {path}", logging.DEBUG)
+        logger.debug("Error fetching EXIF data for %s", path)
         return None
 
 
@@ -25,5 +24,5 @@ def set_photo_exif(logger, path, date):
         exif_bytes = piexif.dump(exif_dict)
         piexif.insert(exif_bytes, path)
     except (ValueError, InvalidImageDataError):
-        logger.tqdm_write(f"Error setting EXIF data for {path}", logging.DEBUG)
+        logger.debug("Error setting EXIF data for %s", path)
         return

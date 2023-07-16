@@ -224,7 +224,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
                     self.assertEqual.__self__.maxDiff = None
                     self.assertEqual("""\
-KeyError: 'downloadURL' attribute was not found in the photo fields!
+KeyError: 'downloadURL' attribute was not found in the photo fields.
 icloudpd has saved the photo record to: ./icloudpd-photo-error.json
 Please create a Gist with the contents of this file: https://gist.github.com
 Then create an issue on GitHub: https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues
