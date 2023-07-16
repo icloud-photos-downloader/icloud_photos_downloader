@@ -2059,9 +2059,8 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         recreate_path(base_dir)
 
-        files_to_download = [
-            '2018/07/31/IMG_7409.JPG'
-        ]
+        def raise_response_error(a0_, a1_, a2_):
+            raise Exception("Unexpected call to delete_photo")
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
@@ -2069,51 +2068,56 @@ class DownloadPhotoTestCase(TestCase):
                 "icloudpd.exif_datetime.get_photo_exif"
             ) as get_exif_patched:
                 get_exif_patched.return_value = False
-                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")) as cass:
-                    # Pass fixed client ID via environment variable
-                    runner = CliRunner(env={
-                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    })
-                    result = runner.invoke(
-                        main,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--dry-run",
-                            "--threads-num",
-                            1,
-                            "--delete-after-download",
-                            "-d",
-                            base_dir,
-                        ],
-                    )
-                    print_result_exception(result)
+                with mock.patch(
+                    "icloudpd.base.delete_photo"
+                ) as df_patched:
+                    df_patched.side_effect = raise_response_error
 
-                    self.assertIn(
-                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-                    self.assertIn(
-                        f"INFO     Downloading the first original photo to {base_dir} ...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     DRY RUN Would delete IMG_7409.JPG in iCloud", self._caplog.text
-                    )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded!", self._caplog.text
-                    )
-                    self.assertEqual(cass.all_played, False, "All mocks played")
-                    self.assertEqual(result.exit_code, 0, "Exit code")
+                    with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")) as cass:
+                        # Pass fixed client ID via environment variable
+                        runner = CliRunner(env={
+                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                        })
+                        result = runner.invoke(
+                            main,
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--skip-videos",
+                                "--skip-live-photos",
+                                "--no-progress-bar",
+                                "--dry-run",
+                                "--threads-num",
+                                1,
+                                "--delete-after-download",
+                                "-d",
+                                base_dir,
+                            ],
+                        )
+                        print_result_exception(result)
+
+                        self.assertIn(
+                            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                        self.assertIn(
+                            f"INFO     Downloading the first original photo to {base_dir} ...",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                            self._caplog.text,
+                        )
+                        self.assertIn(
+                            "INFO     DRY RUN Would delete IMG_7409.JPG in iCloud", self._caplog.text
+                        )
+                        self.assertIn(
+                            "INFO     All photos have been downloaded!", self._caplog.text
+                        )
+                        self.assertEqual(cass.all_played, False, "All mocks played")
+                        self.assertEqual(result.exit_code, 0, "Exit code")
 
         files_in_result = glob.glob(os.path.join(
             base_dir, "**/*.*"), recursive=True)
