@@ -1,6 +1,5 @@
 """Get/set EXIF dates from photos"""
 
-import logging
 import piexif
 from piexif._exceptions import InvalidImageDataError
 

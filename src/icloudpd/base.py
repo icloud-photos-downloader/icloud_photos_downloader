@@ -14,11 +14,11 @@ import urllib
 import click
 
 from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 
-from icloudpd.logger import setup_logger
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 from icloudpd import download
 from icloudpd.email_notifications import send_2sa_notification
@@ -260,7 +260,11 @@ def main(
 ):
     """Download all iCloud photos to a local directory"""
 
-    logger = setup_logger()
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S"
+    )
+    logger = logging.getLogger("icloudpd")
     if only_print_filenames:
         logger.disabled = True
     else:
@@ -274,62 +278,66 @@ def main(
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
 
-    # check required directory param only if not list albums
-    if not list_albums and not directory:
-        print('--directory or --list-albums are required')
-        sys.exit(2)
+    with logging_redirect_tqdm():
 
-    if auto_delete and delete_after_download:
-        print('--auto-delete and --delete-after-download are mutually exclusive')
-        sys.exit(2)
+        # check required directory param only if not list albums
+        if not list_albums and not directory:
+            print('--directory or --list-albums are required')
+            sys.exit(2)
 
-    if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
-        print('--watch_with_interval is not compatible with --list_albums, --only_print_filenames')
-        sys.exit(2)
+        if auto_delete and delete_after_download:
+            print('--auto-delete and --delete-after-download are mutually exclusive')
+            sys.exit(2)
 
-    sys.exit(
-        core(
-            download_builder(
-                logger,
-                skip_videos,
-                folder_structure,
+        if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
+            print(
+                '--watch_with_interval is not compatible with --list_albums, --only_print_filenames'
+            )
+            sys.exit(2)
+
+        sys.exit(
+            core(
+                download_builder(
+                    logger,
+                    skip_videos,
+                    folder_structure,
+                    directory,
+                    size,
+                    force_size,
+                    only_print_filenames,
+                    set_exif_datetime,
+                    skip_live_photos,
+                    live_photo_size,
+                    dry_run),
                 directory,
+                username,
+                password,
+                cookie_directory,
                 size,
-                force_size,
+                recent,
+                until_found,
+                album,
+                list_albums,
+                skip_videos,
+                auto_delete,
                 only_print_filenames,
-                set_exif_datetime,
-                skip_live_photos,
-                live_photo_size,
-                dry_run),
-            directory,
-            username,
-            password,
-            cookie_directory,
-            size,
-            recent,
-            until_found,
-            album,
-            list_albums,
-            skip_videos,
-            auto_delete,
-            only_print_filenames,
-            folder_structure,
-            smtp_username,
-            smtp_password,
-            smtp_host,
-            smtp_port,
-            smtp_no_tls,
-            notification_email,
-            notification_email_from,
-            no_progress_bar,
-            notification_script,
-            delete_after_download,
-            domain,
-            logger,
-            watch_with_interval,
-            dry_run
+                folder_structure,
+                smtp_username,
+                smtp_password,
+                smtp_host,
+                smtp_port,
+                smtp_no_tls,
+                notification_email,
+                notification_email_from,
+                no_progress_bar,
+                notification_script,
+                delete_after_download,
+                domain,
+                logger,
+                watch_with_interval,
+                dry_run
+            )
         )
-    )
 
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -604,7 +612,9 @@ def delete_photo_dry_run(logger, _icloud, photo):
         clean_filename(photo.filename)
     )
 
+
 RetrierT = TypeVar('RetrierT')
+
 
 def retrier(
         func: Callable[[], RetrierT],
@@ -789,6 +799,9 @@ def core(
         # Use only ASCII characters in progress bar
         tqdm_kwargs["ascii"] = True
 
+        tqdm_kwargs["leave"] = False
+        tqdm_kwargs["dynamic_ncols"] = True
+
         # Skip the one-line progress bar if we're only printing the filenames,
         # or if the progress bar is explicitly disabled,
         # or if this is not a terminal (e.g. cron or piping output to file)
@@ -796,10 +809,10 @@ def core(
             only_print_filenames or no_progress_bar or not sys.stdout.isatty())
         if skip_bar:
             photos_enumerator = photos
-            logger.set_tqdm(None)
+            # logger.set_tqdm(None)
         else:
             photos_enumerator = tqdm(photos, **tqdm_kwargs)
-            logger.set_tqdm(photos_enumerator)
+            # logger.set_tqdm(photos_enumerator)
 
         plural_suffix = "" if photos_count == 1 else "s"
         video_suffix = ""
@@ -807,8 +820,8 @@ def core(
         if not skip_videos:
             video_suffix = " or video" if photos_count == 1 else " and videos"
         logger.info(
-            ("Downloading %s %s" + \
-            " photo%s%s to %s ..."),
+            ("Downloading %s %s" +
+             " photo%s%s to %s ..."),
             photos_count_str,
             size,
             plural_suffix,
@@ -858,7 +871,12 @@ def core(
             logger.info(f"Waiting for {watch_interval} sec...")
             interval = range(1, watch_interval)
             for _ in interval if skip_bar else tqdm(
-                    interval, desc="Waiting...", ascii=True):
+                interval,
+                desc="Waiting...",
+                ascii=True,
+                leave=False,
+                dynamic_ncols=True
+            ):
                 time.sleep(1)
         else:
             break

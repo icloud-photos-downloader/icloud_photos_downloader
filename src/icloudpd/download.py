@@ -3,7 +3,6 @@
 import os
 import socket
 import time
-import logging
 import datetime
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
