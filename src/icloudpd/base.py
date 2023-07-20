@@ -77,6 +77,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.IntRange(0),
 )
 @click.option(
+    "--oldest",
+    help="Number of oldest photos to download (default: download all photos)",
+    type=click.IntRange(-50),
+)
+@click.option(
     "--until-found",
     help="Download most recently added photos until we find x number of "
     "previously downloaded consecutive photos (default: download all photos)",
@@ -232,6 +237,7 @@ def main(
         size,
         live_photo_size,
         recent,
+        oldest,
         until_found,
         album,
         list_albums,
@@ -315,6 +321,7 @@ def main(
                 cookie_directory,
                 size,
                 recent,
+                oldest,
                 until_found,
                 album,
                 list_albums,
@@ -688,6 +695,7 @@ def core(
         cookie_directory,
         size,
         recent,
+        oldest,
         until_found,
         album,
         list_albums,
@@ -787,6 +795,13 @@ def core(
         if recent is not None:
             photos_count = recent
             photos = itertools.islice(photos, recent)
+
+        # Optional: Only download the x oldest photos.
+        if oldest is not None:
+            photos_count = oldest
+            total_photos = len(photos)
+            start = total_photos - oldest
+            photos = itertools.islice(photos, start, total_photos)
 
         tqdm_kwargs = {"total": photos_count}
 
