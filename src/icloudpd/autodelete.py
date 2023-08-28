@@ -17,7 +17,7 @@ def delete_file_dry_run(logger, path) -> bool:
     logger.info("[DRY RUN] Would delete %s", path)
     return True
 
-def autodelete_photos(logger, dry_run, icloud, folder_structure, directory):
+def autodelete_photos(logger, dry_run, library_object, folder_structure, directory):
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -25,7 +25,7 @@ def autodelete_photos(logger, dry_run, icloud, folder_structure, directory):
     """
     logger.info("Deleting any files found in 'Recently Deleted'...")
 
-    recently_deleted = icloud.photos.albums["Recently Deleted"]
+    recently_deleted = library_object.photos.albums["Recently Deleted"]
 
     for media in recently_deleted:
         try:

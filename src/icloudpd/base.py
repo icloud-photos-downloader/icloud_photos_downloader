@@ -94,6 +94,17 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     is_flag=True,
 )
 @click.option(
+    "--library",
+    help="Library to download (default: Personal Library)",
+    metavar="<library>",
+    default="PrimarySync",
+)
+@click.option(
+    "--list-libraries",
+    help="Lists the available libraries",
+    is_flag=True,
+)
+@click.option(
     "--skip-videos",
     help="Don't download any videos (default: Download all photos and videos)",
     is_flag=True,
@@ -122,12 +133,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option("--folder-structure",
-              help="Folder structure (default: {:%Y/%m/%d}). "
-              "If set to 'none' all photos will just be placed into the download directory",
-              metavar="<folder_structure>",
-              default="{:%Y/%m/%d}",
-              )
+@click.option(
+    "--folder-structure",
+    help="Folder structure (default: {:%Y/%m/%d}). "
+    "If set to 'none' all photos will just be placed into the download directory",
+    metavar="<folder_structure>",
+    default="{:%Y/%m/%d}",
+)
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -235,6 +247,8 @@ def main(
         until_found,
         album,
         list_albums,
+        library,
+        list_libraries,
         skip_videos,
         skip_live_photos,
         force_size,
@@ -318,6 +332,8 @@ def main(
                 until_found,
                 album,
                 list_albums,
+                library,
+                list_libraries,
                 skip_videos,
                 auto_delete,
                 only_print_filenames,
@@ -691,6 +707,8 @@ def core(
         until_found,
         album,
         list_albums,
+        library,
+        list_libraries,
         skip_videos,
         auto_delete,
         only_print_filenames,
@@ -741,28 +759,45 @@ def core(
         return 1
 
     download_photo = downloader(icloud)
+    if list_libraries:
+        libraries_dict = icloud.photos.libraries
+        library_names = libraries_dict.keys()
+        print(*library_names, sep="\n")
+        sys.exit(0)
+
+    # Access to the selected library. Defaults to the primary photos object.
+    library_object = icloud.photos
+    print(
+        "Selected library: %s" , library_object._service_endpoint
+    )
 
     while True:
-
         # Default album is "All Photos", so this is the same as
         # calling `icloud.photos.all`.
         # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
         # case exit.
         try:
-            photos = icloud.photos.albums[album]
+            if library:
+                try:
+                    library_object = icloud.photos.libraries[library]
+                except KeyError:
+                    print("Unknown library: %s" % library)
+                    return 1
+
+            photos = library_object.albums[album]
         except PyiCloudAPIResponseError as err:
             # For later: come up with a nicer message to the user. For now take the
             # exception text
-            print(err)
+            print("error?? %s", err)
             return 1
-
+        
         if list_albums:
-            albums_dict = icloud.photos.albums
+            print("Albums:")
+            albums_dict = library_object.albums
             albums = albums_dict.values()  # pragma: no cover
             album_titles = [str(a) for a in albums]
             print(*album_titles, sep="\n")
             return 0
-
         directory = os.path.normpath(directory)
 
         videos_phrase = "" if skip_videos else " and videos"
@@ -864,7 +899,7 @@ def core(
         logger.info("All photos have been downloaded")
 
         if auto_delete:
-            autodelete_photos(logger, dry_run, icloud,
+            autodelete_photos(logger, dry_run, library_object,
                               folder_structure, directory)
 
         if watch_interval:  # pragma: no cover
