@@ -767,10 +767,6 @@ def core(
 
     # Access to the selected library. Defaults to the primary photos object.
     library_object = icloud.photos
-    print(
-        "Selected library: %s" , library_object._service_endpoint
-    )
-
     while True:
         # Default album is "All Photos", so this is the same as
         # calling `icloud.photos.all`.
@@ -781,7 +777,7 @@ def core(
                 try:
                     library_object = icloud.photos.libraries[library]
                 except KeyError:
-                    print("Unknown library: %s" % library)
+                    print(f"Unknown library: {library}")
                     return 1
 
             photos = library_object.albums[album]
@@ -790,7 +786,6 @@ def core(
             # exception text
             print("error?? %s", err)
             return 1
-        
         if list_albums:
             print("Albums:")
             albums_dict = library_object.albums
