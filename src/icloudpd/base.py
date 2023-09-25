@@ -767,10 +767,7 @@ def core(
 
     # Access to the selected library. Defaults to the primary photos object.
     library_object = icloud.photos
-<<<<<<< HEAD
 
-=======
->>>>>>> 36ab67111f5c2d35485c08ff9c845aff546e00da
     while True:
         # Default album is "All Photos", so this is the same as
         # calling `icloud.photos.all`.
@@ -781,23 +778,15 @@ def core(
                 try:
                     library_object = icloud.photos.libraries[library]
                 except KeyError:
-<<<<<<< HEAD
                     logger.error("Unknown library: %s", library)
-=======
-                    print(f"Unknown library: {library}")
->>>>>>> 36ab67111f5c2d35485c08ff9c845aff546e00da
                     return 1
-
             photos = library_object.albums[album]
         except PyiCloudAPIResponseError as err:
             # For later: come up with a nicer message to the user. For now take the
             # exception text
             logger.error("error?? %s", err)
             return 1
-<<<<<<< HEAD
 
-=======
->>>>>>> 36ab67111f5c2d35485c08ff9c845aff546e00da
         if list_albums:
             print("Albums:")
             albums_dict = library_object.albums
