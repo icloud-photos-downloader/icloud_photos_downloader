@@ -884,7 +884,7 @@ interactions:
     status: {code: 200, message: OK}
 - request:
     body: '{"batch": [{"resultsLimit": 1, "query": {"filterBy": {"fieldName": "indexCountID",
-      "fieldValue": {"type": "STRING_LIST", "value": ["CPLAssetByAssetDateWithout"]}, "comparator":
+      "fieldValue": {"type": "STRING_LIST", "value": ["CPLAssetByAssetDateWithoutHiddenOrDeleted"]}, "comparator":
       "IN"}, "recordType": "HyperionIndexCountLookup"}, "zoneWide": true, "zoneID":
       {"zoneName": "PrimarySync", "ownerRecordName": "_bfc6dbbcc77b03e6cebefd28a28f7e2f",
       "zoneType": "REGULAR_CUSTOM_ZONE"}}]}'
@@ -901,7 +901,7 @@ interactions:
     uri: https://p10-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/internal/records/query/batch?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=185776146&remapEnums=True&getCurrentSyncToken=True
   response:
     body: {string: "{\n  \"batch\" : [ {\n    \"records\" : [ {\n      \"recordName\"
-        : \"CPLAssetByAssetDateWithout\",\n      \"recordType\" : \"IndexCountResult\",\n
+        : \"CPLAssetByAssetDateWithoutHiddenOrDeleted\",\n      \"recordType\" : \"IndexCountResult\",\n
         \     \"fields\" : {\n        \"itemCount\" : {\n          \"value\" : 33161,\n
         \         \"type\" : \"INT64\"\n        }\n      },\n      \"pluginFields\"
         : { },\n      \"recordChangeTag\" : \"0\",\n      \"created\" : {\n        \"timestamp\"
