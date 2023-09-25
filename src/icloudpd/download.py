@@ -11,6 +11,7 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
 
+
 def update_mtime(created: datetime.datetime, download_path):
     """Set the modification time of the downloaded file to the photo creation date"""
     if created:
@@ -31,13 +32,14 @@ def set_utime(download_path, created_date):
     ctime = time.mktime(created_date.timetuple())
     os.utime(download_path, (ctime, ctime))
 
+
 def mkdirs_for_path(logger, download_path: str) -> bool:
     """ Creates hierarchy of folders for file path if it needed """
     try:
         # get back the directory for the file to be downloaded and create it if
         # not there already
         download_dir = os.path.dirname(download_path)
-        os.makedirs(name = download_dir, exist_ok=True)
+        os.makedirs(name=download_dir, exist_ok=True)
         return True
     except OSError:
         logger.error(
@@ -45,6 +47,7 @@ def mkdirs_for_path(logger, download_path: str) -> bool:
             download_dir,
         )
         return False
+
 
 def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
     """ DRY Run for Creating hierarchy of folders for file path """
@@ -55,6 +58,7 @@ def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
             download_dir,
         )
     return True
+
 
 def download_response_to_path(
         _logger,
@@ -71,6 +75,7 @@ def download_response_to_path(
     update_mtime(created_date, download_path)
     return True
 
+
 def download_response_to_path_dry_run(
         logger,
         _response,
@@ -84,7 +89,15 @@ def download_response_to_path_dry_run(
     return True
 
 # pylint: disable-msg=too-many-arguments
-def download_media(logger, dry_run, icloud, photo, download_path, size) -> bool:
+
+
+def download_media(
+        logger,
+        dry_run,
+        icloud,
+        photo,
+        download_path,
+        size) -> bool:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
@@ -97,7 +110,8 @@ def download_media(logger, dry_run, icloud, photo, download_path, size) -> bool:
         try:
             photo_response = photo.download(size)
             if photo_response:
-                return download_local(logger, photo_response, download_path, photo.created)
+                return download_local(
+                    logger, photo_response, download_path, photo.created)
 
             logger.error(
                 "Could not find URL to download %s for size %s",
@@ -132,13 +146,13 @@ def download_media(logger, dry_run, icloud, photo, download_path, size) -> bool:
                 "IOError while writing file to %s. " +
                 "You might have run out of disk space, or the file " +
                 "might be too large for your OS. " +
-                "Skipping this file...", 
+                "Skipping this file...",
                 download_path
             )
             break
     else:
         logger.error(
-            "Could not download %s. Please try again later.", 
+            "Could not download %s. Please try again later.",
             photo.filename,
         )
 

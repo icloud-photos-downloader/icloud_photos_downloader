@@ -295,7 +295,7 @@ def main(
     with logging_redirect_tqdm():
 
         # check required directory param only if not list albums
-        if not list_albums and not directory:
+        if not list_albums and not list_libraries and not directory:
             print('--directory or --list-albums are required')
             sys.exit(2)
 
@@ -767,9 +767,6 @@ def core(
 
     # Access to the selected library. Defaults to the primary photos object.
     library_object = icloud.photos
-    print(
-        "Selected library: %s" , library_object._service_endpoint
-    )
 
     while True:
         # Default album is "All Photos", so this is the same as
@@ -781,16 +778,16 @@ def core(
                 try:
                     library_object = icloud.photos.libraries[library]
                 except KeyError:
-                    print("Unknown library: %s" % library)
+                    logger.error("Unknown library: %s", library)
                     return 1
 
             photos = library_object.albums[album]
         except PyiCloudAPIResponseError as err:
             # For later: come up with a nicer message to the user. For now take the
             # exception text
-            print("error?? %s", err)
+            logger.error("error?? %s", err)
             return 1
-        
+
         if list_albums:
             print("Albums:")
             albums_dict = library_object.albums
@@ -914,6 +911,6 @@ def core(
             ):
                 time.sleep(1)
         else:
-            break
+            break  # pragma: no cover
 
     return 0

@@ -12,12 +12,19 @@ def delete_file(logger, path) -> bool:
     logger.info("Deleted %s", path)
     return True
 
+
 def delete_file_dry_run(logger, path) -> bool:
     """ Dry run deletion of files """
     logger.info("[DRY RUN] Would delete %s", path)
     return True
 
-def autodelete_photos(logger, dry_run, library_object, folder_structure, directory):
+
+def autodelete_photos(
+        logger,
+        dry_run,
+        library_object,
+        folder_structure,
+        directory):
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -25,7 +32,7 @@ def autodelete_photos(logger, dry_run, library_object, folder_structure, directo
     """
     logger.info("Deleting any files found in 'Recently Deleted'...")
 
-    recently_deleted = library_object.photos.albums["Recently Deleted"]
+    recently_deleted = library_object.albums["Recently Deleted"]
 
     for media in recently_deleted:
         try:

@@ -257,16 +257,18 @@ class PhotosService(PhotoLibrary):
     @property
     def libraries(self):
         if not self._libraries:
-            url = ('%s/changes/database' %
-                (self._service_endpoint, ))
-
-            request = self.session.post(
-                url,
-                data='{}',
-                headers={'Content-type': 'text/plain'}
-            )
-            response = request.json()
-            zones = response['zones']
+            try:
+                url = ('%s/changes/database' %
+                    (self._service_endpoint, ))
+                request = self.session.post(
+                    url,
+                    data='{}',
+                    headers={'Content-type': 'text/plain'}
+                )
+                response = request.json()
+                zones = response['zones'] 
+            except Exception as e:
+                    logger.error("library exception: %s" % str(e))
 
             libraries = {}
             for zone in zones:
@@ -364,15 +366,17 @@ class PhotoAlbum(object):
                     raise
 
             exception_retries = 0
-            url = ('%s/records/query?' % self.service._service_endpoint) + \
-                urlencode(self.service.params)
-            request = self.service.session.post(
-                url,
-                data=json.dumps(self._list_query_gen(
-                    offset, self.list_type, self.direction,
-                    self.query_filter)),
-                headers={'Content-type': 'text/plain'}
-            )
+
+#            url = ('%s/records/query?' % self.service._service_endpoint) + \
+#                urlencode(self.service.params)
+#            request = self.service.session.post(
+#                url,
+#                data=json.dumps(self._list_query_gen(
+#                    offset, self.list_type, self.direction,
+#                    self.query_filter)),
+#                headers={'Content-type': 'text/plain'}
+#            )
+
             response = request.json()
 
             asset_records = {}
