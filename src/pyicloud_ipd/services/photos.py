@@ -15,12 +15,15 @@ from future.moves.urllib.parse import urlencode
 logger = logging.getLogger(__name__)
 
 
-class PhotosService(object):
-    """ The 'Photos' iCloud service."""
+class PhotoLibrary(object):
+    """Represents a library in the user's photos.
+
+    This provides access to all the albums as well as the photos.
+    """
     SMART_FOLDERS = {
         "All Photos": {
-            "obj_type": "CPLAssetByAddedDate",
-            "list_type": "CPLAssetAndMasterByAddedDate",
+            "obj_type": "CPLAssetByAssetDateWithoutHiddenOrDeleted",
+            "list_type": "CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
             "direction": "ASCENDING",
             "query_filter": None
         },
@@ -135,26 +138,20 @@ class PhotosService(object):
         },
     }
 
-    def __init__(self, service_root, session, params):
-        self.session = session
-        self.params = dict(params)
-        self._service_root = service_root
-        self._service_endpoint = \
-            ('%s/database/1/com.apple.photos.cloud/production/private'
-             % self._service_root)
+    def __init__(self, service, zone_id):
+        self.service = service
+        self.zone_id = zone_id
 
         self._albums = None
 
-        self.params.update({
-            'remapEnums': True,
-            'getCurrentSyncToken': True
+        url = ('%s/records/query?%s' %
+               (self.service._service_endpoint, urlencode(self.service.params)))
+        json_data = json.dumps({
+            "query": {"recordType":"CheckIndexingState"},
+            "zoneID": self.zone_id,
         })
 
-        url = ('%s/records/query?%s' %
-               (self._service_endpoint, urlencode(self.params)))
-        json_data = ('{"query":{"recordType":"CheckIndexingState"},'
-                     '"zoneID":{"zoneName":"PrimarySync"}}')
-        request = self.session.post(
+        request = self.service.session.post(
             url,
             data=json_data,
             headers={'Content-type': 'text/plain'}
@@ -166,19 +163,13 @@ class PhotosService(object):
                 ('iCloud Photo Library not finished indexing.  Please try '
                  'again in a few minutes'), None)
 
-        # TODO: Does syncToken ever change?
-        # self.params.update({
-        #     'syncToken': response['syncToken'],
-        #     'clientInstanceId': self.params.pop('clientId')
-        # })
-
-        self._photo_assets = {}
-
     @property
     def albums(self):
         if not self._albums:
-            self._albums = {name: PhotoAlbum(self, name, **props)
-                            for (name, props) in self.SMART_FOLDERS.items()}
+            self._albums = {
+                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props)
+                for (name, props) in self.SMART_FOLDERS.items()
+            }
 
             for folder in self._fetch_folders():
                 # FIXME: Handle subfolders
@@ -202,20 +193,23 @@ class PhotosService(object):
                     }
                 }]
 
-                album = PhotoAlbum(self, folder_name,
+                album = PhotoAlbum(self.service, folder_name,
                                    'CPLContainerRelationLiveByAssetDate',
-                                   folder_obj_type, 'ASCENDING', query_filter)
+                                   folder_obj_type, 'ASCENDING', query_filter,
+                                   zone_id=self.zone_id)
                 self._albums[folder_name] = album
 
         return self._albums
 
     def _fetch_folders(self):
         url = ('%s/records/query?%s' %
-               (self._service_endpoint, urlencode(self.params)))
-        json_data = ('{"query":{"recordType":"CPLAlbumByPositionLive"},'
-                     '"zoneID":{"zoneName":"PrimarySync"}}')
+               (self.service._service_endpoint, urlencode(self.service.params)))
+        json_data = json.dumps({
+            "query": {"recordType":"CPLAlbumByPositionLive"},
+            "zoneID": self.zone_id,
+        })
 
-        request = self.session.post(
+        request = self.service.session.post(
             url,
             data=json_data,
             headers={'Content-type': 'text/plain'}
@@ -229,10 +223,73 @@ class PhotosService(object):
         return self.albums['All Photos']
 
 
+class PhotosService(PhotoLibrary):
+    """The 'Photos' iCloud service.
+
+    This also acts as a way to access the user's primary library.
+    """
+    def __init__(self, service_root, session, params):
+        self.session = session
+        self.params = dict(params)
+        self._service_root = service_root
+        self._service_endpoint = \
+            ('%s/database/1/com.apple.photos.cloud/production/private'
+             % self._service_root)
+
+        self._libraries = None
+
+        self.params.update({
+            'remapEnums': True,
+            'getCurrentSyncToken': True
+        })
+
+        # TODO: Does syncToken ever change?
+        # self.params.update({
+        #     'syncToken': response['syncToken'],
+        #     'clientInstanceId': self.params.pop('clientId')
+        # })
+
+        self._photo_assets = {}
+
+        super(PhotosService, self).__init__(
+            service=self, zone_id={u'zoneName': u'PrimarySync'})
+
+    @property
+    def libraries(self):
+        if not self._libraries:
+            try:
+                url = ('%s/changes/database' %
+                    (self._service_endpoint, ))
+                request = self.session.post(
+                    url,
+                    data='{}',
+                    headers={'Content-type': 'text/plain'}
+                )
+                response = request.json()
+                zones = response['zones'] 
+            except Exception as e:
+                    logger.error("library exception: %s" % str(e))
+
+            libraries = {}
+            for zone in zones:
+                if not zone.get('deleted'):
+                    zone_name = zone['zoneID']['zoneName']
+                    libraries[zone_name] = PhotoLibrary(
+                        self, zone_id=zone['zoneID'])
+                        # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
+                        # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
+                        # direction="ASCENDING", query_filter=None,
+                        # zone_id=zone['zoneID'])
+
+            self._libraries = libraries
+
+        return self._libraries
+
+
 class PhotoAlbum(object):
 
     def __init__(self, service, name, list_type, obj_type, direction,
-                 query_filter=None, page_size=100):
+                 query_filter=None, page_size=100, zone_id=None):
         self.name = name
         self.service = service
         self.list_type = list_type
@@ -240,9 +297,13 @@ class PhotoAlbum(object):
         self.direction = direction
         self.query_filter = query_filter
         self.page_size = page_size
-        self.exception_handler = None
 
         self._len = None
+
+        if zone_id:
+            self._zone_id = zone_id
+        else:
+            self._zone_id = {u'zoneName': u'PrimarySync'}
 
     @property
     def title(self):
@@ -281,6 +342,7 @@ class PhotoAlbum(object):
             headers={'Content-type': 'text/plain'}
         )
 
+
     @property
     def photos(self):
         if self.direction == "DESCENDING":
@@ -304,6 +366,17 @@ class PhotoAlbum(object):
                     raise
 
             exception_retries = 0
+
+#            url = ('%s/records/query?' % self.service._service_endpoint) + \
+#                urlencode(self.service.params)
+#            request = self.service.session.post(
+#                url,
+#                data=json.dumps(self._list_query_gen(
+#                    offset, self.list_type, self.direction,
+#                    self.query_filter)),
+#                headers={'Content-type': 'text/plain'}
+#            )
+
             response = request.json()
 
             asset_records = {}
@@ -348,9 +421,7 @@ class PhotoAlbum(object):
                     u'recordType': u'HyperionIndexCountLookup'
                 },
                 u'zoneWide': True,
-                u'zoneID': {
-                    u'zoneName': u'PrimarySync'
-                }
+                u'zoneID': self._zone_id
             }]
         }
 
@@ -411,7 +482,7 @@ class PhotoAlbum(object):
                 u'vidComplVisibilityState', u'customRenderedValue',
                 u'containerId', u'itemId', u'position', u'isKeyAsset'
             ],
-            u'zoneID': {u'zoneName': u'PrimarySync'}
+            u'zoneID': self._zone_id
         }
 
         if query_filter:
@@ -427,7 +498,7 @@ class PhotoAlbum(object):
         if sys.version_info[0] >= 3:
             return as_unicode
         else:
-            return as_unicode.encode('utf-8', 'ignore')
+            return as_unicode.encode('ascii', 'ignore')
 
     def __repr__(self):
         return "<%s: '%s'>" % (

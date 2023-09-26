@@ -11,7 +11,7 @@ from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
 from icloudpd import constants
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotosService
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotoLibrary
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 from requests.exceptions import ConnectionError
@@ -750,7 +750,7 @@ class DownloadPhotoTestCase(TestCase):
             def mock_raise_response_error():
                 raise PyiCloudAPIResponseError("Api Error", 100)
 
-            with mock.patch.object(PhotosService, "_fetch_folders") as pa_photos_request:
+            with mock.patch.object(PhotoLibrary, "_fetch_folders") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
                 # Let the initial authenticate() call succeed,

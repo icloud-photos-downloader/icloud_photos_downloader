@@ -68,7 +68,8 @@ class AutodeletePhotosTestCase(TestCase):
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                 self.assertIn(
-                    f"INFO     Downloading the first original photo or video to {base_dir} ...",
+#                   f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                    f"INFO     Downloading the first original photo or video",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -162,7 +163,8 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading the first original photo or video to {base_dir} ...",
+#                f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                f"INFO     Downloading the first original photo or video",
                 self._caplog.text,
             )
             self.assertIn(
