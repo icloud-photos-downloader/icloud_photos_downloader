@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.16.0 (2023-09-25)
+
+- feature: shared library support with `--list-libraries` and `--library` parameters [#455](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/455), [#489](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/489), [#678](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/678)
+
 ## 1.15.1 (2023-07-16)
 
 - fix: excessive logging for existing and deduplicated files
