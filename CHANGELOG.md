@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.16.1 (2023-09-27)
+
+- fix: shared libraries throw INTERNAL_ERROR for some users [#690](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/690)
+
 ## 1.16.0 (2023-09-25)
 
 - feature: shared library support with `--list-libraries` and `--library` parameters [#455](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/455), [#489](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/489), [#678](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/678)
