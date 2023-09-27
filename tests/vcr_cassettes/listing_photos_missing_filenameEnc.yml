@@ -99,7 +99,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p10-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/changes/database
+    uri: https://p10-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
   response:
     body:
       string: "{\n  \"moreComing\" : false,\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\",\n

@@ -258,7 +258,7 @@ class PhotosService(PhotoLibrary):
     def libraries(self):
         if not self._libraries:
             try:
-                url = ('%s/changes/database' %
+                url = ('%s/zones/list' %
                     (self._service_endpoint, ))
                 request = self.session.post(
                     url,

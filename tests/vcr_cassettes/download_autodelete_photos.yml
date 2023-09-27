@@ -269,7 +269,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/changes/database
+    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
   response:
     body:
       string: "{\n  \"moreComing\" : false,\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\",\n
@@ -10488,7 +10488,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/changes/database
+    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
   response:
     body:
       string: "{\n  \"moreComing\" : false,\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\",\n
@@ -10529,7 +10529,6 @@ interactions:
     status:
       code: 200
       message: OK
-
 - request:
     body: '{"query":{"recordType":"CheckIndexingState"},"zoneID":{"zoneName":"PrimarySync"}}'
     headers:
@@ -18363,7 +18362,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/changes/database
+    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
   response:
     body:
       string: '{"reason":"Invalid global session","error":2}'
@@ -18394,6 +18393,76 @@ interactions:
       - '45'
       via:
       - xrail:mr42p00ic-qujn08141701.me.com:8301:23R321:grp22,631194250daa17e24277dea86cf30319:cfff28dc77a3011ced43e64244278f05:nlhfd1
+      x-apple-user-partition:
+      - '54'
+    status:
+      code: 421
+      message: Misdirected Request
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2'
+      Content-type:
+      - text/plain
+      Cookie:
+      - X-APPLE-UNIQUE-CLIENT-ID="Bw=="; X-APPLE-WEBAUTH-LOGIN="v=1:t=Bw==BST_IAAAAAAABLwIAAAAAGR_8VQRDmdzLmljbG91ZC5hdXRovQB_ABV6RApEPq82ByPdBFIT2DmZ3sFC8ggKtIdGh2jMImZb46kfIUX2uc_ROD-Q9zRcTu3CaDypDuWgeUg3MY3ItAW2jBNKGu0WZxzaDoJI06xlLUlX_8EV9uFj-QpAllL8ZGepYrHIv2dweiAfDRXAK0kqEA~~";
+        X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AcgqWeCCvyKbw2ybb7b+dbC1/C2nJuDBOwP7fM4KWHjfJ4bfHagW3qoIAsRwiTZbT5rBUWxlD6Eu1D/J7xmPB8WEFuJMMRK7ufKl629LT4BEgKPEb12aLIy7OkA23qmfHVkBBB7YTB2pc7VnUPy1dX8fqj5DHs99GibT3KThPXrwlHxi5TXd7w==";
+        X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6AdpUrFzoejI3weIjZZUiZ0mT18JP4PEeh8IC97qnhGXHDd33BpAm+MJs3/p7DL4V+CJIewdG4TFXlvyDHftJBNXdMBvonFzeKDHC00TUdbh1cLVKs+0Bk/yd7DmUrZj8jgmwdYGyEsQ5Hjxf887sSwDf9tpk9P4vRAx4kpGr8UdB+4vAKGUr3A==";
+        X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6AQrEh7KjB9pP6DG/B2hXg6Y80WX7Qwgie0zpmPiHZwlwnTAdH7nMrLCc1lfhLdNLY9R84b4eYl3WYoSL+3rZsiTFgv5/GzrN/flky0pXy6MTdIXegc2YIMZhpcBaYbbblAkCndJ5pixls3pcd0o6+tt3MoWWUeFfNWcrC8/65LhVjEGaW2ZFTg==";
+        X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6AbyA6oj6xKvIPIuX9rM8sUg/hq9m9X3+iAW3BEAIbvf5s381AZP1lYIPWUfoPUG2ueWFUMsHHb3Ha9Vgq8D3EBWebPIQZN2H55bXptc4n40YUcM1Efw9GPHSl8igQZuJZHP5TgVInYGeQsAHAxmpZ+fMZlB9lEQjjzzy9x81QWLDgzLyUvLYJA==";
+        X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6Ac0hNHFRFyATLycSQHsNHyy1VTgZ1CTJ/SoEBRjM5KQZDOZs8eP8GFcv1sJco4Q3FG/w37VpA22FXvPPC4PF72q/R0/fr0Ywl9bHLGEC7J6phe+HAkXgLj2CXYeJkMp9+GvHEYPaXdI7gXFC7fS3IbR95VMG2udm5BW7vn4LBIT7YYdfXm8TPQ==";
+        X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6AaRjCCJYMaphUtBBZ5TcDojlaH6T/vWjmR9f7rPtp0Bg9s7jEbeqS1A84GzwpnV3lFmF8BOg/tB3GaL/EFAQHxTikm80+veZjusviCGxnL9mbMUTkwo9FOoIeluscdDUMlt8wP+lD0oVwPTIJTbkfJw6cAXYYk5VIErUrCv17zqFWSdbvGj75w==";
+        X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AYycf2dtGqg2HPtZcGDzGtYM9FqsihFV6nllf55BSu6GrLY9WnmxKgH8+lq+G+LZJ36g5iLuvhEZ7djqSYARdCcaz81YDeR9W6RGq0FjqtaErgQ0v8pWvNZbem174GzmAE+1sdiPsPlyOa4Yo2nsfhKPSDk8vY+leJcBi9AEgPB6qesGnFolAA==";
+        X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AePC0QBcgT268muedsIe8VX8gKrN8HH0dml1PmbKGGh0jF9foFWnZH8pEbqVBlb7WMDIVHIX4+telZ21dkDteyMQ/KdYaYP/dM36DrucVi18c8p08LGSWdyghzE7fj9QuaJgq4/F+C3fhEwrkIO3o0U99rERbNZGmXFySDT9W5ZowRlDNKnplA==";
+        X-APPLE-WEBAUTH-TOKEN="v=2:t=Bw==BST_IAAAAAAABLwIAAAAAGR_8VYRDmdzLmljbG91ZC5hdXRovQDJyoT-b1YRarSOq9akhwi1jLCBzsdKxalcy0jn0LFE-Yh9Ds6uCupgCwoJVqjila6No3Ot2H4pHCa7gtRvDvDJSGBSEkHSUuLayc0iPphadFHi5h-UIXCNDY8-84M7nKsc5iO-PMkKOWmYD-Hr-zcNQHAiRg~~";
+        X-APPLE-WEBAUTH-USER="v=1:s=0:d=1389775224"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=Bw==BST_IAAAAAAABLwIAAAAAGR_8VQRDmdzLmljbG91ZC5hdXRovQB_ABV6RApEPq82ByPdBFIT2DmZ3sFC8ggKtIdGh2jMImZb46kfIUX2uc_ROD-Q9zRcTu3CaDypDuWgeUg3MY3ItAW2jBNKGu0WZxzaDoJI08OqNC8TRuhzLlNWoo_Zlz7N2GqkHUqbWatD93Zn9IP3jmZdcw~~"
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p54-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
+  response:
+    body:
+      string: '{"reason":"Invalid global session","error":2}'
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - https://www.icloud.com
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Wed, 27 Sep 2023 06:16:12 GMT
+      Server:
+      - AppleHttpServer/3faf4ee9434b
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains;
+      Timing-Allow-Origin:
+      - https://www.icloud.com
+      X-Apple-Edge-Response-Time:
+      - '144'
+      X-Apple-Request-UUID:
+      - 8a380c5a-b6d0-43fe-87b3-afbb7ef3976e
+      X-Responding-Instance:
+      - ckdatabasews:35406301:mr90p54ic-zteg03161601:8807:2325B321:12cc5c1f6299d43fa5927b7fc646265a2abab788
+      access-control-expose-headers:
+      - X-Apple-Request-UUID,X-Responding-Instance,Via
+      content-length:
+      - '45'
+      via:
+      - xrail:mr47p00ic-qujn01121901.me.com:8301:23R353:grp22,631194250daa17e24277dea86cf30319:5e1914b6f2591bd9101af83211e0c7fa:nlhfd1
       x-apple-user-partition:
       - '54'
     status:
