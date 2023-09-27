@@ -1,8 +1,10 @@
 import os
 import shutil
 import traceback
+from click.testing import Result
 
-def print_result_exception(result):
+
+def print_result_exception(result: Result):
     ex = result.exception
     if ex:
         # This only works on Python 3

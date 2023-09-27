@@ -17,6 +17,6 @@ class Counter(object):
         with self.lock:
             self.val = RawValue('i', self.initial_value)
 
-    def value(self):
+    def value(self) -> int:
         with self.lock:
             return self.val.value

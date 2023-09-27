@@ -1,5 +1,6 @@
 """Handles username/password authentication and two-step authentication"""
 
+import logging
 import sys
 import click
 import pyicloud_ipd
@@ -12,7 +13,7 @@ class TwoStepAuthRequiredError(Exception):
     """
 
 
-def authenticator(logger, domain):
+def authenticator(logger: logging.Logger, domain: str):
     """Wraping authentication with domain context"""
     def authenticate_(
             username,
@@ -20,7 +21,7 @@ def authenticator(logger, domain):
             cookie_directory=None,
             raise_error_on_2sa=False,
             client_id=None,
-    ):
+    ) -> pyicloud_ipd.PyiCloudService:
         """Authenticate with iCloud username and password"""
         logger.debug("Authenticating...")
         while True:
@@ -49,7 +50,7 @@ def authenticator(logger, domain):
     return authenticate_
 
 
-def request_2sa(icloud, logger):
+def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
     """Request two-step authentication. Prompts for SMS or device"""
     devices = icloud.trusted_devices
     devices_count = len(devices)

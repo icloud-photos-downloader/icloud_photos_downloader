@@ -1,4 +1,4 @@
 #!/bin/bash
 set -euo pipefail
 echo "Running pylint..."
-python3 -m pylint src/icloudpd
+python3 -m pylint src --ignore-paths src/icloud,src/pyicloud_ipd,src/starters

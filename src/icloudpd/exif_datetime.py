@@ -1,10 +1,12 @@
 """Get/set EXIF dates from photos"""
 
+import datetime
+import logging
 import piexif
 from piexif._exceptions import InvalidImageDataError
 
 
-def get_photo_exif(logger, path):
+def get_photo_exif(logger: logging.Logger, path:str):
     """Get EXIF date for a photo, return nothing if there is an error"""
     try:
         exif_dict = piexif.load(path)
@@ -14,7 +16,7 @@ def get_photo_exif(logger, path):
         return None
 
 
-def set_photo_exif(logger, path, date):
+def set_photo_exif(logger: logging.Logger, path: str, date: datetime.datetime):
     """Set EXIF date on a photo, do nothing if there is an error"""
     try:
         exif_dict = piexif.load(path)

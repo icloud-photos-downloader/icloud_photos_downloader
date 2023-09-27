@@ -1,0 +1,5 @@
+#!/bin/bash
+set -euo pipefail
+echo "Running mypy..."
+python3 -m mypy src tests 
+# too strict now: --disallow-any-generics --disallow-untyped-defs --strict-equality --disallow-untyped-calls --warn-return-any

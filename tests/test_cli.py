@@ -9,7 +9,7 @@ from icloudpd.base import main
 import inspect
 import glob
 
-from tests.helpers import path_from_project_root, recreate_path
+from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -91,6 +91,8 @@ class CliTestCase(TestCase):
                     base_dir,
                 ],
             )
+            print_result_exception(result)
+            
             assert result.exit_code == 0
 
         files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
