@@ -72,11 +72,13 @@ log_format = "%(levelname)-8s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 timeout = 300
 testpaths = [
-    "tests"
+    "tests",
+    "src" # needed for doctests    
 ]
 pythonpath = [
     "src"
 ]
+addopts = "--doctest-modules"
 
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
