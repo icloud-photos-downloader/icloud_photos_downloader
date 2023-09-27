@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+echo "Running mypy..."
+python3 -m mypy src tests

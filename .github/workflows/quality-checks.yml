@@ -13,7 +13,7 @@ on:
 
 jobs:
 
-  check_quality:
+  lint:
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -31,7 +31,42 @@ jobs:
     - name: Lint
       run: |
         scripts/lint
-        
+
+  type_check: 
+    runs-on: ubuntu-20.04 
+    strategy: 
+      matrix: 
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11]
+    steps: 
+    - uses: actions/checkout@v3 
+    - name: Set up Python ${{ matrix.python-version }} 
+      uses: actions/setup-python@v4 
+      with: 
+        python-version: ${{ matrix.python-version }} 
+        cache: 'pip' 
+    - name: Install Test dependencies 
+      run: | 
+        pip install -e .[test] 
+    - name: Type Check 
+      run: | 
+        scripts/type_check 
+
+  test: 
+    runs-on: ubuntu-20.04 
+    strategy: 
+      matrix: 
+        python-version: [3.7, 3.8, 3.9, '3.10', 3.11]
+    steps: 
+    - uses: actions/checkout@v3 
+    - name: Set up Python ${{ matrix.python-version }} 
+      uses: actions/setup-python@v4 
+      with: 
+        python-version: ${{ matrix.python-version }} 
+        cache: 'pip' 
+    - name: Install Test dependencies 
+      run: | 
+        pip install -e .[test] 
+ 
     - name: Test
       run: |
         scripts/test

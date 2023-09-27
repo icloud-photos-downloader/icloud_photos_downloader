@@ -58,6 +58,14 @@ test = [
     "autopep8==2.0.2",
     "pytest-timeout==2.1.0",
     "pytest-xdist==3.3.1",
+    "mypy==1.5.0",
+    "types-pytz==2022.7.1.2",
+    "types-tzlocal==4.3.0.0",
+    "types-requests==2.31.0.2",
+    "types-six==1.16.0",
+    "types-urllib3==1.26.16",
+    "types-tqdm==4.66.0.1",
+    "types-mock==5.1.0.1"
 ]
 
 [project.urls]
@@ -83,3 +91,7 @@ addopts = "--doctest-modules"
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
 exclude = ["starters"]
+
+[[tool.mypy.overrides]]
+module = ['piexif.*', 'future.*', 'vcr.*']
+ignore_missing_imports = true

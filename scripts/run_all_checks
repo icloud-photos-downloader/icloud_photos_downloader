@@ -11,4 +11,5 @@ ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
 $CURRENT_DIR/format
 $CURRENT_DIR/lint
+$CURRENT_DIR/type_check
 $CURRENT_DIR/test
