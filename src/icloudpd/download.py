@@ -1,18 +1,21 @@
 """Handles file downloads with retries and error handling"""
 
+import logging
 import os
 import socket
 import time
 import datetime
 from tzlocal import get_localzone
-from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+from requests.exceptions import ConnectionError # pylint: disable=redefined-builtin
+import pyicloud_ipd  # pylint: disable=redefined-builtin
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.services.photos import PhotoAsset
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
 
 
-def update_mtime(created: datetime.datetime, download_path):
+def update_mtime(created: datetime.datetime, download_path: str) -> None:
     """Set the modification time of the downloaded file to the photo creation date"""
     if created:
         created_date = None
@@ -27,13 +30,13 @@ def update_mtime(created: datetime.datetime, download_path):
         set_utime(download_path, created_date)
 
 
-def set_utime(download_path, created_date):
+def set_utime(download_path: str, created_date: datetime.datetime) -> None:
     """Set date & time of the file"""
     ctime = time.mktime(created_date.timetuple())
     os.utime(download_path, (ctime, ctime))
 
 
-def mkdirs_for_path(logger, download_path: str) -> bool:
+def mkdirs_for_path(logger: logging.Logger, download_path: str) -> bool:
     """ Creates hierarchy of folders for file path if it needed """
     try:
         # get back the directory for the file to be downloaded and create it if
@@ -49,7 +52,7 @@ def mkdirs_for_path(logger, download_path: str) -> bool:
         return False
 
 
-def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
+def mkdirs_for_path_dry_run(logger: logging.Logger, download_path: str) -> bool:
     """ DRY Run for Creating hierarchy of folders for file path """
     download_dir = os.path.dirname(download_path)
     if not os.path.exists(download_dir):
@@ -61,7 +64,7 @@ def mkdirs_for_path_dry_run(logger, download_path: str) -> bool:
 
 
 def download_response_to_path(
-        _logger,
+        _logger: logging.Logger,
         response,
         download_path: str,
         created_date: datetime.datetime) -> bool:
@@ -77,7 +80,7 @@ def download_response_to_path(
 
 
 def download_response_to_path_dry_run(
-        logger,
+        logger: logging.Logger,
         _response,
         download_path: str,
         _created_date: datetime.datetime) -> bool:
@@ -92,12 +95,12 @@ def download_response_to_path_dry_run(
 
 
 def download_media(
-        logger,
-        dry_run,
-        icloud,
-        photo,
-        download_path,
-        size) -> bool:
+        logger: logging.Logger,
+        dry_run: bool,
+        icloud: pyicloud_ipd.PyiCloudService,
+        photo: PhotoAsset,
+        download_path: str,
+        size: str) -> bool:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path

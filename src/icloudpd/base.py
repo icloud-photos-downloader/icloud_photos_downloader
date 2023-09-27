@@ -6,18 +6,21 @@ import sys
 import time
 import datetime
 import logging
+from logging import Logger
 import itertools
 import subprocess
 import json
-from typing import Callable, TypeVar
+from typing import Callable, Optional, TypeVar, cast
 import urllib
 import click
 
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
+from pyicloud_ipd import PyiCloudService
 
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.services.photos import PhotoAsset
 
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 from icloudpd import download
@@ -237,40 +240,40 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
 def main(
-        directory,
-        username,
-        password,
-        cookie_directory,
-        size,
-        live_photo_size,
-        recent,
-        until_found,
-        album,
-        list_albums,
+        directory: Optional[str],
+        username: Optional[str],
+        password: Optional[str],
+        cookie_directory: str,
+        size: str,
+        live_photo_size: str,
+        recent: Optional[int],
+        until_found: Optional[int],
+        album: str,
+        list_albums: bool,
         library,
         list_libraries,
-        skip_videos,
-        skip_live_photos,
-        force_size,
-        auto_delete,
-        only_print_filenames,
-        folder_structure,
-        set_exif_datetime,
-        smtp_username,
-        smtp_password,
-        smtp_host,
-        smtp_port,
-        smtp_no_tls,
-        notification_email,
-        notification_email_from,
-        log_level,
-        no_progress_bar,
-        notification_script,
-        threads_num,    # pylint: disable=W0613
-        delete_after_download,
-        domain,
-        watch_with_interval,
-        dry_run
+        skip_videos: bool,
+        skip_live_photos: bool,
+        force_size: bool,
+        auto_delete: bool,
+        only_print_filenames: bool,
+        folder_structure: str,
+        set_exif_datetime: bool,
+        smtp_username: Optional[str],
+        smtp_password: Optional[str],
+        smtp_host: str,
+        smtp_port: int,
+        smtp_no_tls: bool,
+        notification_email: Optional[str],
+        notification_email_from: Optional[str],
+        log_level: str,
+        no_progress_bar: bool,
+        notification_script: Optional[str],
+        threads_num: int,    # pylint: disable=W0613
+        delete_after_download: bool,
+        domain: str,
+        watch_with_interval: Optional[int],
+        dry_run: bool
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -322,7 +325,7 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
-                    dry_run),
+                    dry_run) if directory is not None else (lambda _s: lambda _c, _p: False),
                 directory,
                 username,
                 password,
@@ -355,25 +358,26 @@ def main(
             )
         )
 
+
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
 
 
 def download_builder(
-        logger,
-        skip_videos,
-        folder_structure,
-        directory,
-        size,
-        force_size,
-        only_print_filenames,
-        set_exif_datetime,
-        skip_live_photos,
-        live_photo_size,
-        dry_run):
+        logger: logging.Logger,
+        skip_videos: bool,
+        folder_structure: str,
+        directory: str,
+        size: str,
+        force_size: bool,
+        only_print_filenames: bool,
+        set_exif_datetime: bool,
+        skip_live_photos: bool,
+        live_photo_size: str,
+        dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
-    def state_(icloud):
-        def download_photo_(counter, photo) -> bool:
+    def state_(icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
+        def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
             filename = clean_filename(photo.filename)
             if skip_videos and photo.item_type != "image":
@@ -590,7 +594,7 @@ def download_builder(
     return state_
 
 
-def delete_photo(logger, icloud, photo):
+def delete_photo(logger: logging.Logger, icloud: PyiCloudService, photo: PhotoAsset):
     """Delete a photo from the iCloud account."""
     clean_filename_local = clean_filename(photo.filename)
     logger.debug(
@@ -621,7 +625,7 @@ def delete_photo(logger, icloud, photo):
         "Deleted %s in iCloud", clean_filename_local)
 
 
-def delete_photo_dry_run(logger, _icloud, photo):
+def delete_photo_dry_run(logger: logging.Logger, _icloud: PyiCloudService, photo: PhotoAsset):
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
         "[DRY RUN] Would delete %s in iCloud",
@@ -648,7 +652,7 @@ def retrier(
                 raise
 
 
-def session_error_handle_builder(logger, icloud):
+def session_error_handle_builder(logger: Logger, icloud: PyiCloudService):
     """Build handler for session error"""
     def session_error_handler(ex, attempt):
         """Handles session errors in the PhotoAlbum photos iterator"""
@@ -668,9 +672,9 @@ def session_error_handle_builder(logger, icloud):
     return session_error_handler
 
 
-def internal_error_handle_builder(logger):
+def internal_error_handle_builder(logger: logging.Logger):
     """Build handler for internal error"""
-    def internal_error_handler(ex, attempt):
+    def internal_error_handler(ex: Exception, attempt: int) -> None:
         """Handles session errors in the PhotoAlbum photos iterator"""
         if "INTERNAL_ERROR" in str(ex):
             if attempt > constants.MAX_RETRIES:
@@ -697,36 +701,36 @@ def compose_handlers(handlers):
 
 
 def core(
-        downloader,
-        directory,
-        username,
-        password,
-        cookie_directory,
-        size,
-        recent,
-        until_found,
-        album,
-        list_albums,
+        downloader: Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]],
+        directory: Optional[str],
+        username: Optional[str],
+        password: Optional[str],
+        cookie_directory: str,
+        size: str,
+        recent: Optional[int],
+        until_found: Optional[int],
+        album: str,
+        list_albums: bool,
         library,
         list_libraries,
-        skip_videos,
-        auto_delete,
-        only_print_filenames,
-        folder_structure,
-        smtp_username,
-        smtp_password,
-        smtp_host,
-        smtp_port,
-        smtp_no_tls,
-        notification_email,
-        notification_email_from,
-        no_progress_bar,
-        notification_script,
-        delete_after_download,
-        domain,
-        logger,
-        watch_interval,
-        dry_run
+        skip_videos: bool,
+        auto_delete: bool,
+        only_print_filenames: bool,
+        folder_structure: str,
+        smtp_username: Optional[str],
+        smtp_password: Optional[str],
+        smtp_host: str,
+        smtp_port: int,
+        smtp_no_tls: bool,
+        notification_email: Optional[str],
+        notification_email_from: Optional[str],
+        no_progress_bar: bool,
+        notification_script: Optional[str],
+        delete_after_download: bool,
+        domain: str,
+        logger: logging.Logger,
+        watch_interval: Optional[int],
+        dry_run: bool
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -748,6 +752,7 @@ def core(
             subprocess.call([notification_script])
         if smtp_username is not None or notification_email is not None:
             send_2sa_notification(
+                logger,
                 smtp_username,
                 smtp_password,
                 smtp_host,
@@ -795,7 +800,9 @@ def core(
                 album_titles = [str(a) for a in albums]
                 print(*album_titles, sep="\n")
                 return 0
-            directory = os.path.normpath(directory)
+            # casting is okay since we checked for list_albums and directory compatibily upstream
+            # would be better to have that in types though
+            directory = os.path.normpath(cast(str, directory))
 
             videos_phrase = "" if skip_videos else " and videos"
             logger.debug(
@@ -813,26 +820,17 @@ def core(
 
             photos.exception_handler = error_handler
 
-            photos_count = len(photos)
+            photos_count: Optional[int] = len(photos)
 
             # Optional: Only download the x most recent photos.
             if recent is not None:
                 photos_count = recent
                 photos = itertools.islice(photos, recent)
 
-            tqdm_kwargs = {"total": photos_count}
-
             if until_found is not None:
-                del tqdm_kwargs["total"]
-                photos_count = "???"
+                photos_count = None
                 # ensure photos iterator doesn't have a known length
                 photos = (p for p in photos)
-
-            # Use only ASCII characters in progress bar
-            tqdm_kwargs["ascii"] = True
-
-            tqdm_kwargs["leave"] = False
-            tqdm_kwargs["dynamic_ncols"] = True
 
             # Skip the one-line progress bar if we're only printing the filenames,
             # or if the progress bar is explicitly disabled,
@@ -843,14 +841,25 @@ def core(
                 photos_enumerator = photos
                 # logger.set_tqdm(None)
             else:
-                photos_enumerator = tqdm(photos, **tqdm_kwargs)
+                photos_enumerator = tqdm(
+                    iterable=photos,
+                    total=photos_count,
+                    leave=False,
+                    dynamic_ncols=True,
+                    ascii=True)
                 # logger.set_tqdm(photos_enumerator)
 
-            plural_suffix = "" if photos_count == 1 else "s"
-            video_suffix = ""
-            photos_count_str = "the first" if photos_count == 1 else photos_count
-            if not skip_videos:
-                video_suffix = " or video" if photos_count == 1 else " and videos"
+            if photos_count is not None:
+                plural_suffix = "" if photos_count == 1 else "s"
+                video_suffix = ""
+                photos_count_str = "the first" if photos_count == 1 else photos_count
+
+                if not skip_videos:
+                    video_suffix = " or video" if photos_count == 1 else " and videos"
+            else:
+                photos_count_str = "???"
+                plural_suffix = "s"
+                video_suffix = " and videos" if not skip_videos else ""
             logger.info(
                 ("Downloading %s %s" +
                 " photo%s%s to %s ..."),
@@ -863,7 +872,7 @@ def core(
 
             consecutive_files_found = Counter(0)
 
-            def should_break(counter):
+            def should_break(counter: Counter) -> bool:
                 """Exit if until_found condition is reached"""
                 return until_found is not None and counter.value() >= until_found
 
