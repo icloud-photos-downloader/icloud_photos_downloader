@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.16.2 (2023-09-30)
+
 - fix: send logs to stdout [#697](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/697)
 
 ## 1.16.1 (2023-09-27)
