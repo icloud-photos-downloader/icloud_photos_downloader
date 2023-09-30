@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: send logs to stdout [#697](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/697)
+
 ## 1.16.1 (2023-09-27)
 
 - fix: shared libraries throw INTERNAL_ERROR for some users [#690](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/690)
