@@ -1,4 +1,4 @@
-FROM python:3.11-alpine3.17 as build
+FROM python:3.12-alpine3.18 as build
 
 WORKDIR /app
 
@@ -17,7 +17,7 @@ RUN pip3 install -e .[dev]
 
 RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/starters/exec.py
 
-FROM alpine:3.17 as runtime
+FROM alpine:3.18 as runtime
 
 WORKDIR /app
 
