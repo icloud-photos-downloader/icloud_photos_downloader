@@ -10,7 +10,12 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
 
 import pytz
 
-from future.moves.urllib.parse import urlencode
+try:
+    # Python 3
+    from urllib.parse import urlencode
+except ImportError:
+    # Python 2
+    from urllib import urlencode
 
 logger = logging.getLogger(__name__)
 

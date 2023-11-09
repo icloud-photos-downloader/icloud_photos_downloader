@@ -35,7 +35,6 @@ dependencies = [
     "tzlocal==4.3.1",
     "pytz==2022.7.1",
     "certifi==2022.12.7",
-    "future==0.18.3",
     "keyring==23.13.1",
     "keyrings-alt==4.2.0"
 ]
@@ -93,5 +92,5 @@ where = ["src"]  # list of folders that contain the packages (["."] by default)
 exclude = ["starters"]
 
 [[tool.mypy.overrides]]
-module = ['piexif.*', 'future.*', 'vcr.*']
+module = ['piexif.*', 'vcr.*']
 ignore_missing_imports = true
