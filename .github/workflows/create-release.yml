@@ -8,7 +8,7 @@ name: Create Release
 
 jobs:
   get_version:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
 
@@ -30,7 +30,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -61,7 +61,7 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -166,7 +166,7 @@ jobs:
           dist/icloud*
 
   build_publish_docker:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [get_version]
 
     steps:
@@ -211,7 +211,7 @@ jobs:
         short-description: ${{ github.event.repository.description }}
 
   build_publish_npm:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
@@ -245,7 +245,7 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish_pypi:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
@@ -276,7 +276,7 @@ jobs:
 
   release:
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
