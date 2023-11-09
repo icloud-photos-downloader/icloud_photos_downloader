@@ -8,7 +8,6 @@ import pyicloud_ipd
 from icloudpd.base import main
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 import inspect
-import shutil
 import glob
 
 from tests.helpers import path_from_project_root, recreate_path
