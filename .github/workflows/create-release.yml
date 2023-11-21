@@ -8,7 +8,7 @@ name: Create Release
 
 jobs:
   get_version:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
 
@@ -30,7 +30,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -39,10 +39,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -61,7 +61,7 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -70,10 +70,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -105,10 +105,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -140,10 +140,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -166,7 +166,7 @@ jobs:
           dist/icloud*
 
   build_publish_docker:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
 
     steps:
@@ -211,7 +211,7 @@ jobs:
         short-description: ${{ github.event.repository.description }}
 
   build_publish_npm:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
@@ -245,16 +245,16 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   publish_pypi:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python 3.11
+      - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       
       - name: Install Dev dependencies
         run: |
@@ -276,7 +276,7 @@ jobs:
 
   release:
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v3

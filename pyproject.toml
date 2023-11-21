@@ -10,7 +10,7 @@ version="1.16.2"
 name = "icloudpd"
 description = "icloudpd is a command-line tool to download photos and videos from iCloud."
 readme = "README_PYPI.md"
-requires-python = ">=3.8,<3.12"
+requires-python = ">=3.8,<=3.12"
 keywords = ["icloud", "photo"]
 license = {file="LICENSE.md"}
 authors=[
@@ -35,7 +35,6 @@ dependencies = [
     "tzlocal==4.3.1",
     "pytz==2022.7.1",
     "certifi==2022.12.7",
-    "future==0.18.3",
     "keyring==23.13.1",
     "keyrings-alt==4.2.0"
 ]
@@ -93,5 +92,5 @@ where = ["src"]  # list of folders that contain the packages (["."] by default)
 exclude = ["starters"]
 
 [[tool.mypy.overrides]]
-module = ['piexif.*', 'future.*', 'vcr.*']
+module = ['piexif.*', 'vcr.*']
 ignore_missing_imports = true

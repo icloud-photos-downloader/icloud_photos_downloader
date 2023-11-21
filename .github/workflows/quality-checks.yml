@@ -14,10 +14,10 @@ on:
 jobs:
 
   lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
-        python-version: [3.8, 3.9, '3.10', 3.11]
+        python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python ${{ matrix.python-version }}
@@ -33,10 +33,10 @@ jobs:
         scripts/lint
 
   type_check: 
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-22.04 
     strategy: 
       matrix: 
-        python-version: [3.8, 3.9, '3.10', 3.11]
+        python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
     steps: 
     - uses: actions/checkout@v3 
     - name: Set up Python ${{ matrix.python-version }} 
@@ -52,10 +52,10 @@ jobs:
         scripts/type_check 
 
   test: 
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-22.04 
     strategy: 
       matrix: 
-        python-version: [3.8, 3.9, '3.10', 3.11]
+        python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
     steps: 
     - uses: actions/checkout@v3 
     - name: Set up Python ${{ matrix.python-version }} 
@@ -72,7 +72,7 @@ jobs:
         scripts/test
 
   get_version:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
 
@@ -94,7 +94,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -103,10 +103,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -125,7 +125,7 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -134,10 +134,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -169,10 +169,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -204,10 +204,10 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.11
+    - name: Set up Python 3.12
       uses: actions/setup-python@v4
       with:
-        python-version: '3.11'
+        python-version: '3.12'
     
     - name: Install Dev dependencies
       run: |
@@ -230,7 +230,7 @@ jobs:
           dist/icloud*
 
   build_docker:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
 
     steps:
@@ -260,7 +260,7 @@ jobs:
           icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}}
 
   build_npm:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version,build_src,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
