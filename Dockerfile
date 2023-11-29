@@ -15,7 +15,7 @@ COPY src src
 
 RUN pip3 install -e .[dev]
 
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/starters/exec.py
+RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py
 
 FROM alpine:3.18 as runtime
 
@@ -23,9 +23,9 @@ WORKDIR /app
 
 ENV TZ="America/Los_Angeles"
 
-COPY --from=build /app/dist/exec .
+COPY --from=build /app/dist/icloudpd_ex .
 
-ENTRYPOINT ["/app/exec"]
+ENTRYPOINT ["/app/icloudpd_ex"]
 
 # RUN set -xe \
 #   && ln -s /app/icloudpd /usr/local/bin/icloudpd \

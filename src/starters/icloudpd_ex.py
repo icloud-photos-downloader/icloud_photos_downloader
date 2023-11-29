@@ -24,8 +24,35 @@ def commands():
     pass
 
 @commands.command()
-def icloud():
+@click.option("--username",
+        default="",
+        help="Apple ID to Use")
+@click.option(
+            "--password",
+        default="",
+        help=(
+            "Apple ID Password to Use; if unspecified, password will be "
+            "fetched from the system keyring."
+        )
+)
+@click.option(
+        "-n", "--non-interactive",
+        default=True,
+        help="Disable interactive prompts."
+)
+@click.option(
+            "--delete-from-keyring",
+        default=False,
+        help="Delete stored password in system keyring for this username.",
+)
+@click.option(
+        "--domain",
+        default="com",
+        help="Root Domain for requests to iCloud. com or cn",
+)
+def icloud(username, password, non_interactive, delete_from_keyring, domain):
     """Legacy iCloud utils (keyring)"""
+    # raise Exception("blah")
     icloud_main(sys.argv[2:])
 
 @commands.command()
@@ -56,8 +83,11 @@ def delete(appleid):
 def watch():
     """Watch for iCloud changes"""
 
-if __name__ == "__main__":
+def main():
     commands.add_command(icloudpd_main, name="icloudpd")
     watch.add_command(copy)
     watch.add_command(move)
     commands()
+
+if __name__ == "__main__":
+    main()
