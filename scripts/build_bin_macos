@@ -7,4 +7,4 @@ set -euo pipefail
 
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-macos-$2
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-macos-$2
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/exec.py --name icloudpd-ex-$1-macos-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py --name icloudpd-ex-$1-macos-$2

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: `icloud --username` parameter reported as not an option [#719](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/719)
+
 ## 1.16.2 (2023-09-30)
 
 - fix: send logs to stdout [#697](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/697)
