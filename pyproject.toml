@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools==68.0.0",
-    "wheel==0.41.1",
+    "setuptools==69.0.2",
+    "wheel==0.42.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -42,12 +42,12 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "twine==4.0.2",
-    "pyinstaller==5.13.0",
-    "wheel==0.41.1",
+    "pyinstaller==6.2.0",
+    "wheel==0.42.0",
     "auditwheel==5.4.0"
 ]
 test = [
-    "pytest==7.4.0",
+    "pytest==7.4.3",
     "mock==5.1.0",
     "freezegun==1.2.2",
     "vcrpy==4.4.0",
@@ -57,7 +57,7 @@ test = [
     "autopep8==2.0.2",
     "pytest-timeout==2.1.0",
     "pytest-xdist==3.3.1",
-    "mypy==1.5.0",
+    "mypy==1.7.0",
     "types-pytz==2022.7.1.2",
     "types-tzlocal==4.3.0.0",
     "types-requests==2.31.0.2",
