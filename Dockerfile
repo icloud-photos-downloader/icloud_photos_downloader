@@ -19,6 +19,8 @@ FROM alpine:3.18 as runtime
 
 RUN apk add --no-cache tzdata
 
+ENV TZ=UTC
+
 WORKDIR /app
 
 COPY --from=build /app/dist/icloudpd_ex .
