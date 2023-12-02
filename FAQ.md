@@ -70,4 +70,4 @@ Here are the steps to make it working:
 - Open "System Settings"/"Privacy & Security" and find `icloudpd-1.16.2-macos-amd64` as blocked app; Click "Allow"
 - Start `icloudpd-1.16.2-macos-amd64` from the terminal again
 - Apple will show another warning; click "Open"
-- After that you can run `icloudpd-1.16.2-macos-amd64 icloudpd --help` or any other supported command/option
+- After that you can run `icloudpd-1.16.2-macos-amd64 --help` or any other supported command/option
