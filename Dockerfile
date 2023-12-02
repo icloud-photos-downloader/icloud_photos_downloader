@@ -2,8 +2,6 @@ FROM python:3.12-alpine3.18 as build
 
 WORKDIR /app
 
-ENV TZ="America/Los_Angeles"
-
 ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
 
 RUN set -xe \
@@ -19,9 +17,9 @@ RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-
 
 FROM alpine:3.18 as runtime
 
-WORKDIR /app
+RUN apk add --no-cache tzdata
 
-ENV TZ="America/Los_Angeles"
+WORKDIR /app
 
 COPY --from=build /app/dist/icloudpd_ex .
 
