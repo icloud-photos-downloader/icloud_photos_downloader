@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.16.3 (2023-12-04)
+
 - fix: file date attribute [#714](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/714)
 - fix: `icloud --username` parameter reported as not an option [#719](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/719)
 
