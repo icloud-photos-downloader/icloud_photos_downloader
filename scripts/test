@@ -1,19 +1,35 @@
 #!/bin/bash
+#
+# Usage: ./scripts/test [-n numprocesses] [--log INFO|DEBUG|WARNING|ERROR|CRITICAL] [pytest args]
 set -euo pipefail
 
 # realpath not available on Mac by default...
 realpath() {
-    [[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
+	[[ $1 = /* ]] && echo "$1" || echo "$PWD/${1#./}"
 }
 
-if [ $# -gt 0 ] ; then
-	numprocesses=$1
-else
-	numprocesses='auto'
-fi
+log_level='ERROR' # INFO, DEBUG, WARNING, ERROR, CRITICAL
+numprocesses='auto'
+while [[ $# -gt 0 ]]; do
+	case "$1" in
+	--log)
+		log_level=$2
+		shift 2
+		;;
+	-n)
+		numprocesses=$2
+		shift 2
+		;;
+	*)
+		break
+		;;
+	esac
+done
+
 CURRENT_DIR=$(dirname "$0")
 ROOT_DIR="$(realpath $(dirname "$0")/..)"
 
 echo "Running tests with Python 3... (HTML coverage report)"
 cd $ROOT_DIR
-python3 -m pytest --cov=icloudpd --cov-report html --cov-report term-missing --numprocesses $numprocesses
+
+python3 -m pytest --log-cli-level=$log_level --cov=icloudpd --cov-report html --cov-report term-missing --numprocesses $numprocesses $@
