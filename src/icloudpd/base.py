@@ -102,6 +102,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     metavar="<library>",
     default="PrimarySync",
 )
+# TODO: this has been removed. Can it be patched back in, or is it no longer supported?
 @click.option(
     "--list-libraries",
     help="Lists the available libraries",
@@ -220,6 +221,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + ' Therefore, should not combine with --auto-delete option.',
     is_flag=True,
 )
+# TODO: currently not supported, and will need to be patched back in
 @click.option(
     "--domain",
     help="What iCloud root domain to use. Use 'cn' for mainland China (default: 'com')",
