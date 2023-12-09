@@ -38,6 +38,14 @@ def authenticator(logger: logging.Logger, domain: str):
                 # Prompt for password if not stored in PyiCloud's keyring
                 password = click.prompt("iCloud Password", hide_input=True)
 
+        if icloud.requires_2fa:
+            # TODO: should this be a separate check? Can we treat 2sa/2fa as the same?
+            if raise_error_on_2sa:
+                raise TwoStepAuthRequiredError(
+                    "Two-factor authentication is required"
+                )
+            logger.info("Two-factor authentication is required")
+            request_2fa(icloud, logger)
         if icloud.requires_2sa:
             if raise_error_on_2sa:
                 raise TwoStepAuthRequiredError(
@@ -47,6 +55,22 @@ def authenticator(logger: logging.Logger, domain: str):
             request_2sa(icloud, logger)
         return icloud
     return authenticate_
+
+
+def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
+    code = click.prompt("Please enter two-factor authentication code")
+    result = icloud.validate_2fa_code(code)
+
+    if not result:
+        logger.error("Failed to verify two-factor authentication code")
+        sys.exit(1)
+    logger.info(
+        "Great, you're all set up. The script can now be run without "
+        "user interaction until 2SA expires.\n"
+        "You can set up email notifications for when "
+        "the two-step authentication expires.\n"
+        "(Use --help to view information about SMTP options.)"
+    )
 
 
 def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
@@ -86,7 +110,7 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
 
     code = click.prompt("Please enter two-factor authentication code")
     if not icloud.validate_verification_code(device, code):
-        logger.error("Failed to verify two-factor authentication code")
+        logger.error(f"Failed to verify two-factor authentication code for device \"{device.get('deviceName')}\"")
         sys.exit(1)
     logger.info(
         "Great, you're all set up. The script can now be run without "
