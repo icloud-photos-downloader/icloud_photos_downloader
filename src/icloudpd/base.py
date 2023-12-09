@@ -19,7 +19,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 from pyicloud_ipd import PyiCloudService
 
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
@@ -788,7 +788,7 @@ def core(
                         logger.error("Unknown library: %s", library)
                         return 1
                 photos = library_object.albums[album]
-            except PyiCloudAPIResponseError as err:
+            except PyiCloudAPIResponseException as err:
                 # For later: come up with a nicer message to the user. For now take the
                 # exception text
                 logger.error("error?? %s", err)

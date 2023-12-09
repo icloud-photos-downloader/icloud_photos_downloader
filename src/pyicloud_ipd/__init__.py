@@ -1,3 +1,4 @@
+"""The pyiCloud library."""
 import logging
 from pyicloud_ipd.base import PyiCloudService
 

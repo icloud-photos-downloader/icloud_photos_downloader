@@ -1,3 +1,4 @@
+"""Library base file."""
 from uuid import uuid1
 import inspect
 import json
@@ -10,11 +11,10 @@ import http.cookiejar as cookielib
 import getpass
 
 from pyicloud_ipd.exceptions import (
-    PyiCloudConnectionException,
     PyiCloudFailedLoginException,
-    PyiCloudAPIResponseError,
-    PyiCloud2SARequiredError,
-    PyiCloudServiceNotActivatedErrror
+    PyiCloudAPIResponseException,
+    PyiCloud2SARequiredException,
+    PyiCloudServiceNotActivatedException,
 )
 from pyicloud_ipd.services import (
     FindMyiPhoneServiceManager,
@@ -23,9 +23,11 @@ from pyicloud_ipd.services import (
     ContactsService,
     RemindersService,
     PhotosService,
-    AccountService
+    AccountService,
+    DriveService,
 )
 from pyicloud_ipd.utils import get_password_from_keyring
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,13 +41,15 @@ HEADER_DATA = {
 
 
 class PyiCloudPasswordFilter(logging.Filter):
+    """Password log hider."""
+
     def __init__(self, password):
-        self.password = password
+        super().__init__(password)
 
     def filter(self, record):
         message = record.getMessage()
-        if self.password in message:
-            record.msg = message.replace(self.password, "*" * 8)
+        if self.name in message:
+            record.msg = message.replace(self.name, "*" * 8)
             record.args = []
 
         return True

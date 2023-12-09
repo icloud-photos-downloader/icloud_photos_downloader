@@ -34,7 +34,7 @@ def authenticator(logger: logging.Logger, domain: str):
                     client_id=client_id,
                 )
                 break
-            except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
+            except pyicloud_ipd.exceptions.PyiCloudNoStoredPasswordAvailableException:
                 # Prompt for password if not stored in PyiCloud's keyring
                 password = click.prompt("iCloud Password", hide_input=True)
 
