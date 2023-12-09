@@ -3,6 +3,10 @@
 ## Unreleased
 
 - fix: macos binary failing [#668](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/668) [#700](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/700)
+- fix: update pyicloud from upstream to attempt fixing authentication issues #729
+- fix: add ability to authenticate with 2FA vs 2SA #729
+- regression: removed ability to select domain (.com vs .cn, defaults to .com)
+- regression: removed ability to select photo library (defaults to all photos)
 
 ## 1.16.3 (2023-12-04)
 
