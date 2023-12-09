@@ -12,7 +12,7 @@ import piexif
 from piexif._exceptions import InvalidImageDataError
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotosService
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path

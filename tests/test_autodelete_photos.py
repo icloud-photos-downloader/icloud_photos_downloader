@@ -11,7 +11,7 @@ from tzlocal import get_localzone
 from click.testing import CliRunner
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from icloudpd.base import main
 from tests.helpers import path_from_project_root, recreate_path, print_result_exception
 import inspect
@@ -332,7 +332,7 @@ class AutodeletePhotosTestCase(TestCase):
             def mock_raise_response_error(a0_, a1_, a2_):
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
-                    raise PyiCloudAPIResponseError(
+                    raise PyiCloudAPIResponseException(
                         "Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -417,7 +417,7 @@ class AutodeletePhotosTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
-                raise PyiCloudAPIResponseError("Invalid global session", 100)
+                raise PyiCloudAPIResponseException("Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
@@ -503,7 +503,7 @@ class AutodeletePhotosTestCase(TestCase):
             def mock_raise_response_error(a0_, a1_, a2_):
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
-                    raise PyiCloudAPIResponseError(
+                    raise PyiCloudAPIResponseException(
                         "INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -576,7 +576,7 @@ class AutodeletePhotosTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
-                raise PyiCloudAPIResponseError("INTERNAL_ERROR", "INTERNAL_ERROR")
+                raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
