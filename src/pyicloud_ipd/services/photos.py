@@ -499,6 +499,13 @@ class PhotoAsset:
         "thumb": "resVidSmall",
     }
 
+    ITEM_TYPES = {
+        u"public.heic": u"image",
+        u"public.jpeg": u"image",
+        u"public.png": u"image",
+        u"com.apple.quicktime-movie": u"movie"
+    }
+
     @property
     def id(self):
         """Gets the photo id."""
@@ -510,6 +517,18 @@ class PhotoAsset:
         return base64.b64decode(
             self._master_record["fields"]["filenameEnc"]["value"]
         ).decode("utf-8")
+
+    @property
+    def item_type(self):
+        fields = self._master_record['fields']
+        if 'itemType' not in fields or 'value' not in fields['itemType']:
+            return 'unknown'
+        item_type = self._master_record['fields']['itemType']['value']
+        if item_type in self.ITEM_TYPES:
+            return self.ITEM_TYPES[item_type]
+        if self.filename.lower().endswith(('.heic', '.png', '.jpg', '.jpeg')):
+            return 'image'
+        return 'movie'
 
     @property
     def size(self):
