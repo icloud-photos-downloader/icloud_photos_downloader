@@ -28,6 +28,7 @@ def authenticator(logger: logging.Logger, domain: str):
             try:
                 # If password not provided on command line variable will be set to None
                 # and PyiCloud will attempt to retrieve from its keyring
+                # TODO: removed 'domain' option here. That will need to be added back, or addressed to allow users to select icloud.com or icloud.cn
                 icloud = pyicloud_ipd.PyiCloudService(
                     username, password=password,
                     cookie_directory=cookie_directory,
