@@ -74,11 +74,7 @@ There are some requirements for pull requests:
 * We aim to push out a Release once a week (Fridays),  if there is at least one new change in CHANGELOG.
 
 If you need to make any changes to the `pyicloud` library,
-`icloudpd` uses a fork of this library that has been renamed to `pyicloud-ipd`.
-Please clone my [pyicloud fork](https://github.com/icloud-photos-downloader/pyicloud)
-and check out the [pyicloud-ipd](https://github.com/icloud-photos-downloader/pyicloud/tree/pyicloud-ipd)
-branch. PRs should be based on the `pyicloud-ipd` branch and submitted to
-[icloud-photos-downloader/pyicloud](https://github.com/icloud-photos-downloader/pyicloud).
+`icloudpd` uses a fork of this library that has been added as a subfolder `pyicloud_ipd`.
 
 ## Setting up the development environment
 
