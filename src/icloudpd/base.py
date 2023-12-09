@@ -102,7 +102,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     metavar="<library>",
     default="PrimarySync",
 )
-# TODO: this has been removed. Can it be patched back in, or is it no longer supported?
+# TODO: this has been removed. Can it be patched back in, or is it no
+# longer supported?
 @click.option(
     "--list-libraries",
     help="Lists the available libraries",
@@ -137,13 +138,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option(
-    "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d}). "
-    "If set to 'none' all photos will just be placed into the download directory",
-    metavar="<folder_structure>",
-    default="{:%Y/%m/%d}",
-)
+@click.option("--folder-structure",
+              help="Folder structure (default: {:%Y/%m/%d}). "
+              "If set to 'none' all photos will just be placed into the download directory",
+              metavar="<folder_structure>",
+              default="{:%Y/%m/%d}",
+              )
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -237,7 +237,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               is_flag=True,
               default=False,
               )
-# a hacky way to get proper version because automatic detection does not work for some reason
+# a hacky way to get proper version because automatic detection does not
+# work for some reason
 @click.version_option(version="1.16.3")
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -309,7 +310,8 @@ def main(
             print('--auto-delete and --delete-after-download are mutually exclusive')
             sys.exit(2)
 
-        if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
+        if watch_with_interval and (
+                list_albums or only_print_filenames):  # pragma: no cover
             print(
                 '--watch_with_interval is not compatible with --list_albums, --only_print_filenames'
             )
@@ -328,7 +330,9 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
-                    dry_run) if directory is not None else (lambda _s: lambda _c, _p: False),
+                    dry_run) if directory is not None else (
+                    lambda _s: lambda _c,
+                    _p: False),
                 directory,
                 username,
                 password,
@@ -357,9 +361,7 @@ def main(
                 domain,
                 logger,
                 watch_with_interval,
-                dry_run
-            )
-        )
+                dry_run))
 
 
 # pylint: disable-msg=too-many-arguments,too-many-statements
@@ -379,7 +381,8 @@ def download_builder(
         live_photo_size: str,
         dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
-    def state_(icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
+    def state_(
+            icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
             filename = clean_filename(photo.filename)
@@ -430,8 +433,7 @@ def download_builder(
                 versions = photo.versions
             except KeyError as ex:
                 print(
-                    f"KeyError: {ex} attribute was not found in the photo fields."
-                )
+                    f"KeyError: {ex} attribute was not found in the photo fields.")
                 with open(file='icloudpd-photo-error.json', mode='w', encoding='utf8') as outfile:
                     # pylint: disable=protected-access
                     json.dump({
@@ -509,17 +511,14 @@ def download_builder(
                     )
 
                     download_result = download.download_media(
-                        logger, dry_run, icloud, photo, download_path, download_size
-                    )
+                        logger, dry_run, icloud, photo, download_path, download_size)
                     success = download_result
 
                     if download_result:
-                        if not dry_run and \
-                            set_exif_datetime and \
-                            clean_filename(photo.filename) \
-                                .lower() \
-                                .endswith((".jpg", ".jpeg")) and \
-                                not exif_datetime.get_photo_exif(logger, download_path):
+                        if not dry_run and set_exif_datetime and clean_filename(
+                                photo.filename) .lower() .endswith(
+                                (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(
+                                logger, download_path):
                             # %Y:%m:%d looks wrong, but it's the correct format
                             date_str = created_date.strftime(
                                 "%Y-%m-%d %H:%M:%S%z")
@@ -584,8 +583,7 @@ def download_builder(
                                 truncated_path
                             )
                             download_result = download.download_media(
-                                logger, dry_run, icloud, photo, lp_download_path, lp_size
-                            )
+                                logger, dry_run, icloud, photo, lp_download_path, lp_size)
                             success = download_result and success
                             if download_result:
                                 logger.info(
@@ -597,7 +595,10 @@ def download_builder(
     return state_
 
 
-def delete_photo(logger: logging.Logger, icloud: PyiCloudService, photo: PhotoAsset):
+def delete_photo(
+        logger: logging.Logger,
+        icloud: PyiCloudService,
+        photo: PhotoAsset):
     """Delete a photo from the iCloud account."""
     clean_filename_local = clean_filename(photo.filename)
     logger.debug(
@@ -628,7 +629,10 @@ def delete_photo(logger: logging.Logger, icloud: PyiCloudService, photo: PhotoAs
         "Deleted %s in iCloud", clean_filename_local)
 
 
-def delete_photo_dry_run(logger: logging.Logger, _icloud: PyiCloudService, photo: PhotoAsset):
+def delete_photo_dry_run(
+        logger: logging.Logger,
+        _icloud: PyiCloudService,
+        photo: PhotoAsset):
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
         "[DRY RUN] Would delete %s in iCloud",
@@ -771,7 +775,8 @@ def core(
     # Access to the selected library. Defaults to the primary photos object.
     library_object = icloud.photos
 
-    # TODO: selecting library not supported anymore! Need to adjust USAGE, docs, etc
+    # TODO: selecting library not supported anymore! Need to adjust USAGE,
+    # docs, etc
 
     while True:
         # Default album is "All Photos", so this is the same as
@@ -808,8 +813,8 @@ def core(
             logger, icloud)
         internal_error_handler = internal_error_handle_builder(logger)
 
-        error_handler = compose_handlers([session_exception_handler, internal_error_handler
-                                        ])
+        error_handler = compose_handlers(
+            [session_exception_handler, internal_error_handler])
 
         photos.exception_handler = error_handler
 
@@ -855,7 +860,7 @@ def core(
             video_suffix = " and videos" if not skip_videos else ""
         logger.info(
             ("Downloading %s %s" +
-            " photo%s%s to %s ..."),
+             " photo%s%s to %s ..."),
             photos_count_str,
             size,
             plural_suffix,
@@ -875,8 +880,7 @@ def core(
                 if should_break(consecutive_files_found):
                     logger.info(
                         "Found %s consecutive previously downloaded photos. Exiting",
-                        until_found
-                    )
+                        until_found)
                     break
                 item = next(photos_iterator)
                 if download_photo(
@@ -899,7 +903,7 @@ def core(
 
         if auto_delete:
             autodelete_photos(logger, dry_run, library_object,
-                            folder_structure, directory)
+                              folder_structure, directory)
 
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")

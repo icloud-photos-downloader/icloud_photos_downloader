@@ -1,13 +1,12 @@
 """ Experimental code """
 
-from multiprocessing import freeze_support
-freeze_support() # fixing tqdm on macos
-
-import sys
-from icloudpd.base import main as icloudpd_main
-from pyicloud_ipd.cmdline import main as icloud_main
-
 import click
+from pyicloud_ipd.cmdline import main as icloud_main
+from icloudpd.base import main as icloudpd_main
+import sys
+from multiprocessing import freeze_support
+freeze_support()  # fixing tqdm on macos
+
 
 # goal0 -- allow experimental flow from cli
 # goal1 -- compose auth flow for icloud auth apis that supports 2fa, fido,

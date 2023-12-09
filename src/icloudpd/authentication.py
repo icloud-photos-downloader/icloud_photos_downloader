@@ -28,7 +28,9 @@ def authenticator(logger: logging.Logger, domain: str):
             try:
                 # If password not provided on command line variable will be set to None
                 # and PyiCloud will attempt to retrieve from its keyring
-                # TODO: removed 'domain' option here. That will need to be added back, or addressed to allow users to select icloud.com or icloud.cn
+                # TODO: removed 'domain' option here. That will need to be
+                # added back, or addressed to allow users to select icloud.com
+                # or icloud.cn
                 icloud = pyicloud_ipd.PyiCloudService(
                     username, password=password,
                     cookie_directory=cookie_directory,
@@ -40,7 +42,8 @@ def authenticator(logger: logging.Logger, domain: str):
                 password = click.prompt("iCloud Password", hide_input=True)
 
         if icloud.requires_2fa:
-            # TODO: should this be a separate check? Can we treat 2sa/2fa as the same?
+            # TODO: should this be a separate check? Can we treat 2sa/2fa as
+            # the same?
             if raise_error_on_2sa:
                 raise TwoStepAuthRequiredError(
                     "Two-factor authentication is required"
@@ -111,7 +114,8 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
 
     code = click.prompt("Please enter two-factor authentication code")
     if not icloud.validate_verification_code(device, code):
-        logger.error(f"Failed to verify two-factor authentication code for device \"{device.get('deviceName')}\"")
+        logger.error(
+            f"Failed to verify two-factor authentication code for device \"{device.get('deviceName')}\"")
         sys.exit(1)
     logger.info(
         "Great, you're all set up. The script can now be run without "

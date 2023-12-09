@@ -6,7 +6,7 @@ import socket
 import time
 import datetime
 from tzlocal import get_localzone
-from requests.exceptions import ConnectionError # pylint: disable=redefined-builtin
+from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 import pyicloud_ipd  # pylint: disable=redefined-builtin
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
@@ -52,7 +52,9 @@ def mkdirs_for_path(logger: logging.Logger, download_path: str) -> bool:
         return False
 
 
-def mkdirs_for_path_dry_run(logger: logging.Logger, download_path: str) -> bool:
+def mkdirs_for_path_dry_run(
+        logger: logging.Logger,
+        download_path: str) -> bool:
     """ DRY Run for Creating hierarchy of folders for file path """
     download_dir = os.path.dirname(download_path)
     if not os.path.exists(download_dir):
