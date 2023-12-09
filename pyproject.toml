@@ -10,7 +10,7 @@ version="1.16.3"
 name = "icloudpd"
 description = "icloudpd is a command-line tool to download photos and videos from iCloud."
 readme = "README_PYPI.md"
-requires-python = ">=3.8,<=3.12"
+requires-python = ">=3.8,<3.13"
 keywords = ["icloud", "photo"]
 license = {file="LICENSE.md"}
 authors=[
