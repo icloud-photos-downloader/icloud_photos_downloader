@@ -1,8 +1,0 @@
-#!/bin/sh
-set -euo pipefail
-CURRENT_DIR=$(dirname "$0")
-ROOT_DIR="$(realpath $(dirname "$0")/..)"
-
-rm -rf $ROOT_DIR/build $ROOT_DIR/dist
-$CURRENT_DIR/build
-twine upload --repository-url "https://upload.pypi.org/legacy/" $ROOT_DIR/dist/*
