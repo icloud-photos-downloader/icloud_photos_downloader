@@ -39,13 +39,22 @@ def authenticator(logger: logging.Logger, domain: str):
                 # Prompt for password if not stored in PyiCloud's keyring
                 password = click.prompt("iCloud Password", hide_input=True)
 
-        if icloud.requires_2sa:
+        if icloud.requires_2fa:
+            if raise_error_on_2sa:
+                raise TwoStepAuthRequiredError(
+                    "Two-step/two-factor authentication is required"
+                )
+            logger.info("Two-step/two-factor authentication is required")
+            request_2fa(icloud, logger)
+
+        elif icloud.requires_2sa:
             if raise_error_on_2sa:
                 raise TwoStepAuthRequiredError(
                     "Two-step/two-factor authentication is required"
                 )
             logger.info("Two-step/two-factor authentication is required")
             request_2sa(icloud, logger)
+
         return icloud
     return authenticate_
 
@@ -96,3 +105,18 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
         "the two-step authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
     )
+
+def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
+    """Request two-factor authentication."""
+    code = click.prompt("Please enter two-factor authentication code")
+    if not icloud.validate_2fa_code(code):
+        logger.error("Failed to verify two-factor authentication code")
+        sys.exit(1)
+    logger.info(
+        "Great, you're all set up. The script can now be run without "
+        "user interaction until 2SA expires.\n"
+        "You can set up email notifications for when "
+        "the two-step authentication expires.\n"
+        "(Use --help to view information about SMTP options.)"
+    )
+
