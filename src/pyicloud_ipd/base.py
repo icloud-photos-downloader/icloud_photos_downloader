@@ -390,7 +390,7 @@ class PyiCloudService:
             raise PyiCloudFailedLoginException(msg, error) from error
 
         # {'domainToUse': 'iCloud.com'}
-        domain_to_use = req.get('domainToUse')
+        domain_to_use = self.data.get('domainToUse')
         if domain_to_use != None:
             msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
             raise PyiCloudConnectionException(msg)
