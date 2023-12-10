@@ -2,8 +2,8 @@ import getpass
 import keyring
 import sys
 
-from .exceptions import NoStoredPasswordAvailable
-
+#from .exceptions import NoStoredPasswordAvailable
+from .exceptions import PyiCloudNoStoredPasswordAvailableException
 
 KEYRING_SYSTEM = 'pyicloud://icloud-password'
 
@@ -11,7 +11,7 @@ KEYRING_SYSTEM = 'pyicloud://icloud-password'
 def get_password(username, interactive=sys.stdout.isatty()):
     try:
         return get_password_from_keyring(username)
-    except NoStoredPasswordAvailable:
+    except PyiCloudNoStoredPasswordAvailableException:
         if not interactive:
             raise
 
@@ -25,7 +25,7 @@ def get_password(username, interactive=sys.stdout.isatty()):
 def password_exists_in_keyring(username):
     try:
         get_password_from_keyring(username)
-    except NoStoredPasswordAvailable:
+    except PyiCloudNoStoredPasswordAvailableException:
         return False
 
     return True
@@ -37,7 +37,7 @@ def get_password_from_keyring(username):
         username
     )
     if result is None:
-        raise NoStoredPasswordAvailable(
+        raise PyiCloudNoStoredPasswordAvailableException(
             "No pyicloud password for {username} could be found "
             "in the system keychain.  Use the `--store-in-keyring` "
             "command-line option for storing a password for this "
