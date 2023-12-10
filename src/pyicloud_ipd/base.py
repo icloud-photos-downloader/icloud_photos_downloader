@@ -1,30 +1,18 @@
-#import six
-#import uuid
 from uuid import uuid1
-#import hashlib
 import inspect
 import json
 import logging
-#import requests
 from requests import Session
-#import sys
-#import tempfile
 from tempfile import gettempdir
-#import os
 from os import path, mkdir
 from re import match
-#import urllib3
 import http.cookiejar as cookielib
 import getpass
 
 from pyicloud_ipd.exceptions import (
-    #PyiCloudConnectionException,
     PyiCloudFailedLoginException,
-    #PyiCloudAPIResponseError,
     PyiCloudAPIResponseException,
-    #PyiCloud2SARequiredError,
     PyiCloud2SARequiredException,
-    #PyiCloudServiceNotActivatedErrror,
     PyiCloudServiceNotActivatedException,
 )
 from pyicloud_ipd.services import (
@@ -37,12 +25,6 @@ from pyicloud_ipd.services import (
     AccountService,
 )
 from pyicloud_ipd.utils import get_password_from_keyring
-
-
-#if six.PY3:
-#    import http.cookiejar as cookielib
-#else:
-#    import cookielib
 
 
 LOGGER = logging.getLogger(__name__)
@@ -180,7 +162,7 @@ class PyiCloudSession(Session):
             self.service.requires_2sa
             and reason == "Missing X-APPLE-WEBAUTH-TOKEN cookie"
         ):
-            raise PyiCloud2SARequiredException(self.service.user["apple_id"])
+            raise PyiCloud2SARequiredException(self.service.user["accountName"])
         if code in ("ZONE_NOT_FOUND", "AUTHENTICATION_FAILED"):
             reason = (
                 "Please log into https://icloud.com/ to manually "
@@ -241,7 +223,6 @@ class PyiCloudService:
         else:
             raise NotImplementedError(f"Domain '{domain}' is not supported yet")
 
-        #self._base_login_url = '%s/login' % self._setup_endpoint
 
         if cookie_directory:
             self._cookie_directory = path.expanduser(
@@ -620,21 +601,21 @@ class PyiCloudService:
 
     @property
     def calendar(self):
-        service_root = self.webservices['calendar']['url']
+        service_root = self._get_webservice_url("calendar")
         return CalendarService(service_root, self.session, self.params)
 
     @property
     def contacts(self):
-        service_root = self.webservices['contacts']['url']
+        service_root = self._get_webservice_url("contacts")
         return ContactsService(service_root, self.session, self.params)
 
     @property
     def reminders(self):
-        service_root = self.webservices['reminders']['url']
+        service_root = self._get_webservice_url("reminders")
         return RemindersService(service_root, self.session, self.params)
 
     def __unicode__(self):
-        return 'iCloud API: %s' % self.user.get('apple_id')
+        return 'iCloud API: %s' % self.user.get('accountName')
 
     def __str__(self):
         as_unicode = self.__unicode__()
