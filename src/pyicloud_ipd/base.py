@@ -34,6 +34,9 @@ HEADER_DATA = {
     "X-Apple-ID-Session-Id": "session_id",
     "X-Apple-Session-Token": "session_token",
     "X-Apple-TwoSV-Trust-Token": "trust_token",
+    "X-Apple-TwoSV-Trust-Eligible": "trust_eligible",
+    "X-Apple-I-Rscd": "apple_rscd",
+    "X-Apple-I-Ercd": "apple_ercd",
     "scnt": "scnt",
 }
 
@@ -75,6 +78,8 @@ class PyiCloudSession(Session):
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
         json_mimetypes = ["application/json", "text/json"]
+
+        request_logger.debug(response.headers)
 
         for header, value in HEADER_DATA.items():
             if response.headers.get(header):
@@ -129,6 +134,11 @@ class PyiCloudSession(Session):
             self._raise_error(response.status_code, response.reason)
 
         if content_type not in json_mimetypes:
+            if self.service.session_data.get("apple_rscd") == "401":
+                code = "401"
+                reason = "Invalid username/password combination."
+                self._raise_error(code, reason)
+
             return response
 
         try:
@@ -140,20 +150,32 @@ class PyiCloudSession(Session):
         request_logger.debug(data)
 
         if isinstance(data, dict):
-            reason = data.get("errorMessage")
-            reason = reason or data.get("reason")
-            reason = reason or data.get("errorReason")
-            if not reason and isinstance(data.get("error"), str):
-                reason = data.get("error")
-            if not reason and data.get("error"):
-                reason = "Unknown reason"
-
-            code = data.get("errorCode")
-            if not code and data.get("serverErrorCode"):
-                code = data.get("serverErrorCode")
-
-            if reason:
+            if data.get("hasError"):
+                errors = data.get("service_errors")
+                # service_errors returns a list of dict
+                #    dict includes the keys: code, title, message, supressDismissal
+                # Assuming a single error for now
+                # May need to revisit to capture and handle multiple errors
+                code = errors[0].get("code")
+                reason = errors[0].get("message")
                 self._raise_error(code, reason)
+            elif not data.get("success"):
+                reason = data.get("errorMessage")
+                reason = reason or data.get("reason")
+                reason = reason or data.get("errorReason")
+                if not reason and isinstance(data.get("error"), str):
+                    reason = data.get("error")
+                if not reason and data.get("error"):
+                    reason = "Unknown reason"
+
+                code = data.get("errorCode")
+                if not code and data.get("serverErrorCode"):
+                    code = data.get("serverErrorCode")
+                if not code and data.get("error"):
+                    code = data.get("error")
+
+                if reason:
+                    self._raise_error(code, reason)
 
         return response
 
@@ -489,12 +511,15 @@ class PyiCloudService:
                 data=data,
             )
         except PyiCloudAPIResponseException as error:
-            if error.code == -21669:
+            if str(error.code) == "-21669":
                 # Wrong verification code
                 return False
             raise
 
-        self.trust_session()
+        # When validating a code through the 2SA endpoint
+        # the /2sv/trust URL returns 404 and won't return a trust token
+        # self.trust_session()
+        self._authenticate_with_token()
 
         return not self.requires_2sa
 
@@ -517,7 +542,7 @@ class PyiCloudService:
                 headers=headers,
             )
         except PyiCloudAPIResponseException as error:
-            if error.code == -21669:
+            if str(error.code) == "-21669":
                 # Wrong verification code
                 LOGGER.error("Code verification failed.")
                 return False

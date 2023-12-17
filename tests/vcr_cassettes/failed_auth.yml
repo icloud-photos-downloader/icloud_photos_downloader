@@ -1,36 +1,51 @@
 interactions:
 - request:
-    body: !!python/unicode '{"apple_id": "bad_username", "password": "bad_password",
-      "extended_login": false}'
+    body: !!python/unicode '{"accountName": "bad_username", "password": "bad_password", "rememberMe":
+      true, "trustTokens": []}'
     headers:
       Accept: ['*/*']
       Accept-Encoding: ['gzip, deflate']
-      Connection: [keep-alive]
-      Content-Length: ['81']
+      Connection: ['keep-alive']
+      Content-Length: ['98']
+      Content-Type: ['application/json']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
+      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
+      X-Apple-OAuth-Require-Grant-Code: ['true']
+      X-Apple-OAuth-Response-Mode: ['web_message']
+      X-Apple-OAuth-Response-Type: ['code']
+      X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
+      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
     method: POST
-    uri: https://setup.icloud.com/setup/ws/1/login?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&clientId=EC5646DE-9423-11E8-BF21-14109FE0B321&ckjsVersion=2.0.5&ckjsBuildVersion=17DProjectDev77
+    uri: https://idmsa.apple.com/appleauth/auth/signin?isRememberMeEnabled=true
   response:
-    body: {string: !!python/unicode '{"success":false,"error":1}'}
+    body:
+      string: !!python/unicode '{}'
     headers:
-      access-control-allow-credentials: ['true']
-      access-control-allow-origin: ['https://www.icloud.com']
-      access-control-expose-headers: [X-Apple-Request-UUID, Via]
-      apple-originating-system: [UnknownOriginatingSystem]
-      apple-seq: ['0']
-      apple-tk: ['false']
-      cache-control: ['no-cache, no-store, private']
-      connection: [keep-alive]
-      content-length: ['27']
-      content-type: [application/json; charset=UTF-8]
-      date: ['Mon, 30 Jul 2018 18:58:33 GMT']
-      server: [AppleHttpServer/2f080fc0]
-      strict-transport-security: [max-age=31536000; includeSubDomains]
-      via: ['icloudedge:si03p00ic-ztde010403:7401:18RC341:Singapore']
-      x-apple-jingle-correlation-key: [Q3QIQFAIYJGPRLGLP537QEIS3I]
-      x-apple-request-uuid: [86e08814-08c2-4cf8-accb-7f77f81112da]
-      x-responding-instance: ['setupservice:36400101:mr91p64ic-tyfb08043201:8001:1813B80:3b85e7d76']
-    status: {code: 421, message: Misdirected Request}
+      Cache-Control:
+      - 'no-cache'
+      - 'no-store'
+      Connection: ['keep-alive']
+      Content-Type: ['text/html;charset=UTF-8']
+      Date: ['Fri, 15 Dec 2023 17:28:03 GMT']
+      Pragma: ['no-cache']
+      Referrer-Policy: ['origin']
+      Server: ['Apple']
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains; preload']
+      Transfer-Encoding: ['chunked']
+      X-Apple-I-Request-ID: ['12345678-1234-1234-1234-123456789012']
+      X-Apple-I-Rscd: ['401']
+      X-BuildVersion: ['R4_1']
+      X-Content-Type-Options: ['nosniff']
+      X-FRAME-OPTIONS: ['DENY']
+      X-XSS-Protection: ['1; mode=block']
+      content-length: ['23705']
+      scnt: ['scnt-1234567890']
+      vary: ['accept-encoding']
+    status:
+      code: 200
+      message: ''
 version: 1

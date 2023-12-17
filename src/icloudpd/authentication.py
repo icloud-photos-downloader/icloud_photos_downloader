@@ -35,7 +35,7 @@ def authenticator(logger: logging.Logger, domain: str):
                     client_id=client_id,
                 )
                 break
-            except pyicloud_ipd.exceptions.NoStoredPasswordAvailable:
+            except pyicloud_ipd.exceptions.PyiCloudNoStoredPasswordAvailableException:
                 # Prompt for password if not stored in PyiCloud's keyring
                 password = click.prompt("iCloud Password", hide_input=True)
 
@@ -44,7 +44,7 @@ def authenticator(logger: logging.Logger, domain: str):
                 raise TwoStepAuthRequiredError(
                     "Two-step/two-factor authentication is required"
                 )
-            logger.info("Two-step/two-factor authentication is required")
+            logger.info("Two-step/two-factor authentication is required (2fa)")
             request_2fa(icloud, logger)
 
         elif icloud.requires_2sa:
@@ -52,7 +52,7 @@ def authenticator(logger: logging.Logger, domain: str):
                 raise TwoStepAuthRequiredError(
                     "Two-step/two-factor authentication is required"
                 )
-            logger.info("Two-step/two-factor authentication is required")
+            logger.info("Two-step/two-factor authentication is required (2sa)")
             request_2sa(icloud, logger)
 
         return icloud
@@ -74,25 +74,19 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
                     device.get("phoneNumber"))))
             # pylint: enable-msg=consider-using-f-string
 
-        # pylint: disable-msg=superfluous-parens
-        print(f"  {devices_count}: Enter two-factor authentication code")
-        # pylint: enable-msg=superfluous-parens
         device_index = click.prompt(
             "Please choose an option:",
             default=0,
             type=click.IntRange(
                 0,
-                devices_count))
+                devices_count-1))
 
-    if device_index == devices_count:
-        # We're using the 2FA code that was automatically sent to the user's device,
-        # so can just use an empty dict()
-        device = {}
-    else:
-        device = devices[device_index]
-        if not icloud.send_verification_code(device):
-            logger.error("Failed to send two-factor authentication code")
-            sys.exit(1)
+
+    device = devices[device_index]
+    if not icloud.send_verification_code(device):
+        logger.error("Failed to send two-factor authentication code")
+        sys.exit(1)
+
 
     code = click.prompt("Please enter two-factor authentication code")
     if not icloud.validate_verification_code(device, code):
@@ -105,6 +99,7 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
         "the two-step authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
     )
+
 
 def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
     """Request two-factor authentication."""
@@ -119,4 +114,3 @@ def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
         "the two-step authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
     )
-

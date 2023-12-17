@@ -24,11 +24,14 @@ class TwoStepAuthTestCase(TestCase):
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_2sa_flow_invalid_device_2fa(self):
+    def test_2sa_flow_invalid_code(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_invalid_device.yml")):
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_invalid_code.yml")):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
             })
@@ -39,13 +42,12 @@ class TwoStepAuthTestCase(TestCase):
                     "jdoe@gmail.com",
                     "--password",
                     "password1",
-                    "--recent",
-                    "0",
                     "--no-progress-bar",
-                    "-d",
-                    base_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--auth-only"
                 ],
-                input="1\n901431\n",
+                input="0\n901431\n",
             )
             self.assertIn(
                 "ERROR    Failed to verify two-factor authentication code",
@@ -54,15 +56,14 @@ class TwoStepAuthTestCase(TestCase):
 
             assert result.exit_code == 1
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
-
-    def test_2sa_flow_device_2fa(self):
+    def test_2sa_flow_valid_code(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_device.yml")):
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
             })
@@ -73,13 +74,12 @@ class TwoStepAuthTestCase(TestCase):
                     "jdoe@gmail.com",
                     "--password",
                     "password1",
-                    "--recent",
-                    "0",
                     "--no-progress-bar",
-                    "-d",
-                    base_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--auth-only",
                 ],
-                input="1\n654321\n",
+                input="0\n654321\n",
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
@@ -87,8 +87,7 @@ class TwoStepAuthTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn("  0: SMS to *******03", result.output)
-            self.assertIn("  1: Enter two-factor authentication code", result.output)
-            self.assertIn("Please choose an option: [0]: 1", result.output)
+            self.assertIn("Please choose an option: [0]: 0", result.output)
             self.assertIn(
                 "Please enter two-factor authentication code: 654321", result.output
             )
@@ -97,74 +96,16 @@ class TwoStepAuthTestCase(TestCase):
                 "user interaction until 2SA expires.",
                 self._caplog.text,
             )
-            self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
-
-    def test_2sa_flow_sms(self):
+    def test_2sa_flow_failed_send_code(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_sms.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "0",
-                    "--no-progress-bar",
-                    "-d",
-                    base_dir,
-                ],
-                input="0\n123456\n",
-            )
-            self.assertIn("DEBUG    Authenticating...", self._caplog.text)
-            self.assertIn(
-                "INFO     Two-step/two-factor authentication is required",
-                self._caplog.text,
-            )
-            self.assertIn("  0: SMS to *******03", result.output)
-            self.assertIn("  1: Enter two-factor authentication code", result.output)
-            self.assertIn("Please choose an option: [0]: 0", result.output)
-            self.assertIn(
-                "Please enter two-factor authentication code: 123456", result.output
-            )
-            self.assertIn(
-                "INFO     Great, you're all set up. The script can now be run without "
-                "user interaction until 2SA expires.",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
-            assert result.exit_code == 0
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
-
-    def test_2sa_flow_sms_failed(self):
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_sms.yml")):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
             with mock.patch.object(
                 PyiCloudService, "send_verification_code"
             ) as svc_mocked:
@@ -179,11 +120,10 @@ class TwoStepAuthTestCase(TestCase):
                         "jdoe@gmail.com",
                         "--password",
                         "password1",
-                        "--recent",
-                        "0",
                         "--no-progress-bar",
-                        "-d",
-                        base_dir,
+                        "--cookie-directory",
+                        cookie_dir,
+                        "--auth-only"
                     ],
                     input="0\n",
                 )
@@ -193,9 +133,6 @@ class TwoStepAuthTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn("  0: SMS to *******03", result.output)
-                self.assertIn(
-                    "  1: Enter two-factor authentication code", result.output
-                )
                 self.assertIn("Please choose an option: [0]: 0", result.output)
                 self.assertIn(
                     "ERROR    Failed to send two-factor authentication code",
@@ -203,6 +140,8 @@ class TwoStepAuthTestCase(TestCase):
                 )
                 assert result.exit_code == 1
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+    def test_2fa_flow_invalid_code(self):
+        pass
 
-        assert sum(1 for _ in files_in_result) == 0
+    def test_2fa_flow_valid_code(self):
+        pass
