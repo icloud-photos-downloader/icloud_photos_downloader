@@ -44,7 +44,7 @@ interactions:
       X-Apple-ID-Session-Id: ['sess-1234567890']
       X-Apple-Session-Token: ['token-1234567890']
       X-Apple-TwoSV-Trust-Eligible: ['true']
-      X-BuildVersion: ['R3_2']
+      X-BuildVersion: ['R4_1']
       content-length: ['23705']
       scnt: ['scnt-1234567890']
       vary: ['accept-encoding']
@@ -67,8 +67,8 @@ interactions:
   response:
     body:
       string: !!python/unicode '{"dsInfo": {"lastName":"Doe","iCDPEnabled":false,"tantorMigrated":false,"dsid":"12345678901","hsaEnabled":true,"ironcadeMigrated":true,"locale":"en-us_US","brZoneConsolidated":false,"ICDRSCapableDeviceList":"","isManagedAppleID":false,"isCustomDomainsFeatureAvailable":true,
-        "isHideMyEmailFeatureAvailable":true,"ContinueOnDeviceEligibleDeviceInfo":[],"gilligan-invited":true,"appleIdAliases":[],"hsaVersion":1,"ubiquityEOLEnabled":true,"isPaidDeveloper":false,"countryCode":"USA","notificationId":"12341234-1234-12341234-1234","primaryEmailVerified":true,
-        "aDsID":"123456-12-12345678-1234-1234-1234-123456789012","locked":false,"ICDRSCapableDeviceCount":0,"hasICloudQualifyingDevice":false,"primaryEmail":"jdoe@gmail.com","appleIdEntries": [{"isPrimary":true,"type":"EMAIL","value":"jdoe@gmail.com"}],"gilligan-enabled":true,"isWebAccessAllowed":true,
+        "isHideMyEmailFeatureAvailable":true,"ContinueOnDeviceEligibleDeviceInfo":[],"gilligan-invited":true,"appleIdAliases":[],"hsaVersion":2,"ubiquityEOLEnabled":true,"isPaidDeveloper":false,"countryCode":"USA","notificationId":"12341234-1234-12341234-1234","primaryEmailVerified":true,
+        "aDsID":"123456-12-12345678-1234-1234-1234-123456789012","locked":false,"ICDRSCapableDeviceCount":0,"hasICloudQualifyingDevice":true,"primaryEmail":"jdoe@gmail.com","appleIdEntries": [{"isPrimary":true,"type":"EMAIL","value":"jdoe@gmail.com"}],"gilligan-enabled":true,"isWebAccessAllowed":true,
         "fullName":"John Doe","mailFlags":{"isThreadingAvailable":false,"isSearchV2Provisioned":false,"rawBits":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"isCKMail":false,"isMppSupportedInCurrentCountry":true},
         "languageCode":"en-us","appleId":"jdoe@gmail.com","analyticsOptInStatus":false,"firstName":"john","iCloudAppleIdAlias":"","notesMigrated":true,"beneficiaryInfo":{"isBeneficiary":false},"hasPaymentInfo":true,"pcsDeleted":false,"appleIdAlias":"","brMigrated":true,"statusCode":2,"familyEligible":true},
         "hasMinimumDeviceForPhotosWeb":true,"iCDPEnabled":false,"webservices":{"reminders":{"url":"https://p61-remindersws.icloud.com:443","status":"active"},"ckdatabasews":{"pcsRequired":true,"url":"https://p61-ckdatabasews.icloud.com:443","status":"active"},"photosupload":{"pcsRequired":true,
@@ -116,122 +116,62 @@ interactions:
       code: 200
       message: OK
 - request:
-    body: null
+    body: !!python/unicode '{"securityCode": {"code": "901431"}}'
     headers:
-      Accept: ['*/*']
+      Accept: ['application/json']
       Accept-Encoding: ['gzip, deflate']
       Connection: ['keep-alive']
+      Content-Length: ['36']
+      Content-Type: ['application/json']
       Cookie:
-      - 'X-APPLE-UNIQUE-CLIENT-ID="Cw==";Path=/;Domain=.icloud.com;Secure'
-      - 'X-APPLE-WEBAUTH-LOGIN="v=1:t=Cw==BST_IAAAAAAABLw1234~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X-APPLE-WEBAUTH-VALIDATE="v=1:t=Cw==BST_IAAAAAAABLw5678~~";Path=/;Domain=.icloud.com;Secure'
-      - 'X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=Cw==BST_IAAAAAAABLw9012~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X-APPLE-WEBAUTH-USER="v=1:s=1:d=12345678901";Expires=Fri, 12-Jan-2024 05:06:31
-        GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X_APPLE_WEB_KB-ONHCNAXFAIPPFDMR5UZVNO6NIMY="v=1:t=Cw==BST_IAAAAAAABLw3456~~";Expires=Sun,
-        11-Feb-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X-APPLE-DS-WEB-SESSION-TOKEN="websessiontoken1234567890=";Expires=Fri,
-        12-Jan-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'dslang=US-EN; site=USA; acn01=acn01-1234567890=;
+        aasp=aasp-1234567890'
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
-    method: GET
-    uri: https://setup.icloud.com/setup/ws/1/listDevices?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
-  response:
-    body:
-      string: !!python/unicode '{"devices":[{"deviceType":"SMS","areaCode":"","phoneNumber":"*******03","deviceId":"1"}]}'
-    headers:
-      Access-Control-Allow-Credentials: ['true']
-      Access-Control-Allow-Origin: ['https://www.icloud.com']
-      Cache-Control: ['no-cache, no-store, private']
-      Connection: ['keep-alive']
-      Content-Type: ['application/json; charset=UTF-8']
-      Date: ['Fri, 15 Dec 2023 09:54:34 GMT']
-      Server: ['AppleHttpServer/2f080fc0']
-      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
-      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
-      X-Responding-Instance: ['setupservice:21800401:nk11p18ic-setupsvc004:8001:1813B80:3b85e7d76']
-      access-control-expose-headers: ['X-Apple-Request-UUID, Via']
-      content-length: ['89']
-      via: ['via-123456789012345678901234567890']
-    status:
-      code: 200
-      message: OK
-- request:
-    body: !!python/unicode '{"deviceType": "SMS", "areaCode": "", "phoneNumber": "*******03", "deviceId":"1"}'
-    headers:
-      Accept: ['*/*']
-      Accept-Encoding: ['gzip, deflate']
-      Connection: ['keep-alive']
-      Content-Length: ['82']
-      Cookie:
-      - 'X-APPLE-UNIQUE-CLIENT-ID="Cw==";Path=/;Domain=.icloud.com;Secure'
-      - 'X-APPLE-WEBAUTH-LOGIN="v=1:t=Cw==BST_IAAAAAAABLw1234~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X-APPLE-WEBAUTH-VALIDATE="v=1:t=Cw==BST_IAAAAAAABLw5678~~";Path=/;Domain=.icloud.com;Secure'
-      - 'X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=Cw==BST_IAAAAAAABLw9012~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X-APPLE-WEBAUTH-USER="v=1:s=1:d=12345678901";Expires=Fri, 12-Jan-2024 05:06:31
-        GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X_APPLE_WEB_KB-ONHCNAXFAIPPFDMR5UZVNO6NIMY="v=1:t=Cw==BST_IAAAAAAABLw3456~~";Expires=Sun,
-        11-Feb-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      - 'X-APPLE-DS-WEB-SESSION-TOKEN="websessiontoken1234567890=";Expires=Fri,
-        12-Jan-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
-      Origin: ['https://www.icloud.com']
-      Referer: ['https://www.icloud.com/']
-      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+      X-Apple-ID-Session-Id: ['session-1234567890']
+      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
+      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
+      X-Apple-OAuth-Require-Grant-Code: ['true']
+      X-Apple-OAuth-Response-Mode: ['web_message']
+      X-Apple-OAuth-Response-Type: ['code']
+      X-Apple-OAuth-State: ['DE309E26-942E-11E8-92F5-14109FE0B321']
+      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      scnt: ['scnt-1234567890']
     method: POST
-    uri: https://setup.icloud.com/setup/ws/1/sendVerificationCode?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
+    uri: https://idmsa.apple.com/appleauth/auth/verify/trusteddevice/securitycode
   response:
     body:
-      string: !!python/unicode '{"success":true}'
+      string: !!python/unicode '{"service_errors": [{"code": "-21669", "title": "Incorrect Verification Code",
+        "message": "Incorrect verification code.", "suppressDismissal": false} ], "hasError": true}'
     headers:
-      Access-Control-Allow-Credentials: ['true']
-      Access-Control-Allow-Origin: ['https://www.icloud.com']
-      Cache-Control: ['no-cache, no-store, private']
+      Cache-Control:
+      - 'no-cache'
+      - 'no-store'
+      - 'no-store'
       Connection: ['keep-alive']
-      Content-Type: ['application/json; charset=UTF-8']
-      Date: ['Fri, 15 Dec 2023 09:54:35 GMT']
-      Server: ['AppleHttpServer/2f080fc0']
-      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
-      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
-      X-Responding-Instance: ['setupservice:34400103:mr26p44ic-tydg07122301:8003:1813B80:3b85e7d76']
-      access-control-expose-headers: ['X-Apple-Request-UUID, Via']
-      content-length: ['16']
-      via: ['via-123456789012345678901234567890']
+      Content-Language: ['en-US-x-lvariant-USA']
+      Content-Type: ['application/json;charset=UTF-8']
+      Date: ['Sun, 17 Dec 2023 19:43:32 GMT']
+      Pragma: ['no-cache']
+      Referrer-Policy: ['origin']
+      Server: ['Apple']
+      Set-Cookie:
+      - 'dslang=US-EN; Domain=apple.com; Path=/; Secure; HttpOnly'
+      - 'site=USA; Domain=apple.com; Path=/; Secure; HttpOnly'
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains; preload']
+      Transfer-Encoding: ['chunked']
+      X-Apple-I-Ercd: ['-21669']
+      X-Apple-I-Request-ID: ['12345678-1234-1234-1234-123456789012']
+      X-BuildVersion: ['R4_1']
+      X-Content-Type-Options: ['nosniff']
+      X-FRAME-OPTIONS: ['DENY']
+      X-XSS-Protection: ['1; mode=block']
+      content-length: ['203']
+      scnt: ['scnt-1234567890']
+      vary: ['accept-encoding']
     status:
-      code: 200
-      message: OK
-- request:
-    body: !!python/unicode '{"deviceType": "SMS", "areaCode": "", "phoneNumber": "*******03", "deviceID": "1",
-      "verificationCode": "901431", "trustBrowser": true}'
-    headers:
-      Accept: ['*/*']
-      Accept-Encoding: ['gzip, deflate']
-      Connection: ['keep-alive']
-      Content-Length: ['52']
-      Origin: ['https://www.icloud.com']
-      Referer: ['https://www.icloud.com/']
-      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
-    method: POST
-    uri: https://setup.icloud.com/setup/ws/1/validateVerificationCode?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
-  response:
-    body:
-      string: !!python/unicode '{"success":false,"errorTitle":"Invalid Code","errorMessage":"The
-        code you entered is not valid.","errorCode":-21669}'
-    headers:
-      Access-Control-Allow-Credentials: ['true']
-      Access-Control-Allow-Origin: ['https://www.icloud.com']
-      Cache-Control: ['no-cache, no-store, private']
-      Connection: ['keep-alive']
-      Content-Type: ['application/json; charset=UTF-8']
-      Date: ['Fri, 15 Dec 2023 09:57:30 GMT']
-      Server: ['AppleHttpServer/2f080fc0']
-      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
-      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
-      X-Responding-Instance: ['setupservice:34600403:mr25p46ic-tydg01141201:8003:1813B80:3b85e7d76']
-      access-control-expose-headers: ['X-Apple-Request-UUID, Via']
-      content-length: ['116']
-      via: ['via-123456789012345678901234567890']
-    status:
-      code: 200
-      message: OK
+      code: 400
+      message: ''
 version: 1
