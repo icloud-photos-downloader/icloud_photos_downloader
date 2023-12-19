@@ -19,7 +19,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 from pyicloud_ipd import PyiCloudService
 
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
@@ -54,6 +54,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     help="Your iCloud password "
     "(default: use PyiCloud keyring or prompt for password)",
     metavar="<password>",
+)
+@click.option(
+    "--auth-only",
+    help="Create/Update cookie and session tokens only.",
+    is_flag=True,
 )
 @click.option(
     "--cookie-directory",
@@ -136,13 +141,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     + "(Does not download or delete any files.)",
     is_flag=True,
 )
-@click.option(
-    "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d}). "
-    "If set to 'none' all photos will just be placed into the download directory",
-    metavar="<folder_structure>",
-    default="{:%Y/%m/%d}",
-)
+@click.option("--folder-structure",
+              help="Folder structure (default: {:%Y/%m/%d}). "
+              "If set to 'none' all photos will just be placed into the download directory",
+              metavar="<folder_structure>",
+              default="{:%Y/%m/%d}",
+              )
 @click.option(
     "--set-exif-datetime",
     help="Write the DateTimeOriginal exif tag from file creation date, " +
@@ -235,7 +239,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               is_flag=True,
               default=False,
               )
-# a hacky way to get proper version because automatic detection does not work for some reason
+# a hacky way to get proper version because automatic detection does not
+# work for some reason
 @click.version_option(version="1.16.3")
 # pylint: disable-msg=too-many-arguments,too-many-statements
 # pylint: disable-msg=too-many-branches,too-many-locals
@@ -243,6 +248,7 @@ def main(
         directory: Optional[str],
         username: Optional[str],
         password: Optional[str],
+        auth_only: bool,
         cookie_directory: str,
         size: str,
         live_photo_size: str,
@@ -299,15 +305,17 @@ def main(
     with logging_redirect_tqdm():
 
         # check required directory param only if not list albums
-        if not list_albums and not list_libraries and not directory:
-            print('--directory, --list-libraries or --list-albums are required')
+        if not list_albums and not list_libraries and not directory and not auth_only:
+            print(
+                '--auth-only, --directory, --list-libraries or --list-albums are required')
             sys.exit(2)
 
         if auto_delete and delete_after_download:
             print('--auto-delete and --delete-after-download are mutually exclusive')
             sys.exit(2)
 
-        if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
+        if watch_with_interval and (
+                list_albums or only_print_filenames):  # pragma: no cover
             print(
                 '--watch_with_interval is not compatible with --list_albums, --only_print_filenames'
             )
@@ -326,10 +334,13 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
-                    dry_run) if directory is not None else (lambda _s: lambda _c, _p: False),
+                    dry_run) if directory is not None else (
+                    lambda _s: lambda _c,
+                    _p: False),
                 directory,
                 username,
                 password,
+                auth_only,
                 cookie_directory,
                 size,
                 recent,
@@ -355,9 +366,7 @@ def main(
                 domain,
                 logger,
                 watch_with_interval,
-                dry_run
-            )
-        )
+                dry_run))
 
 
 # pylint: disable-msg=too-many-arguments,too-many-statements
@@ -377,7 +386,8 @@ def download_builder(
         live_photo_size: str,
         dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
-    def state_(icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
+    def state_(
+            icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
             filename = clean_filename(photo.filename)
@@ -507,17 +517,14 @@ def download_builder(
                     )
 
                     download_result = download.download_media(
-                        logger, dry_run, icloud, photo, download_path, download_size
-                    )
+                        logger, dry_run, icloud, photo, download_path, download_size)
                     success = download_result
 
                     if download_result:
-                        if not dry_run and \
-                            set_exif_datetime and \
-                            clean_filename(photo.filename) \
-                                .lower() \
-                                .endswith((".jpg", ".jpeg")) and \
-                                not exif_datetime.get_photo_exif(logger, download_path):
+                        if not dry_run and set_exif_datetime and clean_filename(
+                                photo.filename) .lower() .endswith(
+                                (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(
+                                logger, download_path):
                             # %Y:%m:%d looks wrong, but it's the correct format
                             date_str = created_date.strftime(
                                 "%Y-%m-%d %H:%M:%S%z")
@@ -582,8 +589,7 @@ def download_builder(
                                 truncated_path
                             )
                             download_result = download.download_media(
-                                logger, dry_run, icloud, photo, lp_download_path, lp_size
-                            )
+                                logger, dry_run, icloud, photo, lp_download_path, lp_size)
                             success = download_result and success
                             if download_result:
                                 logger.info(
@@ -595,7 +601,10 @@ def download_builder(
     return state_
 
 
-def delete_photo(logger: logging.Logger, icloud: PyiCloudService, photo: PhotoAsset):
+def delete_photo(
+        logger: logging.Logger,
+        icloud: PyiCloudService,
+        photo: PhotoAsset):
     """Delete a photo from the iCloud account."""
     clean_filename_local = clean_filename(photo.filename)
     logger.debug(
@@ -626,7 +635,10 @@ def delete_photo(logger: logging.Logger, icloud: PyiCloudService, photo: PhotoAs
         "Deleted %s in iCloud", clean_filename_local)
 
 
-def delete_photo_dry_run(logger: logging.Logger, _icloud: PyiCloudService, photo: PhotoAsset):
+def delete_photo_dry_run(
+        logger: logging.Logger,
+        _icloud: PyiCloudService,
+        photo: PhotoAsset):
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
         "[DRY RUN] Would delete %s in iCloud",
@@ -706,6 +718,7 @@ def core(
         directory: Optional[str],
         username: Optional[str],
         password: Optional[str],
+        auth_only: bool,
         cookie_directory: str,
         size: str,
         recent: Optional[int],
@@ -764,6 +777,10 @@ def core(
             )
         return 1
 
+    if auth_only:
+        logger.info("Authentication completed successfully")
+        return 0
+
     download_photo = downloader(icloud)
 
     # Access to the selected library. Defaults to the primary photos object.
@@ -788,7 +805,7 @@ def core(
                         logger.error("Unknown library: %s", library)
                         return 1
                 photos = library_object.albums[album]
-            except PyiCloudAPIResponseError as err:
+            except PyiCloudAPIResponseException as err:
                 # For later: come up with a nicer message to the user. For now take the
                 # exception text
                 logger.error("error?? %s", err)
@@ -816,8 +833,8 @@ def core(
                 logger, icloud)
             internal_error_handler = internal_error_handle_builder(logger)
 
-            error_handler = compose_handlers([session_exception_handler, internal_error_handler
-                                            ])
+            error_handler = compose_handlers(
+                [session_exception_handler, internal_error_handler])
 
             photos.exception_handler = error_handler
 
@@ -863,7 +880,7 @@ def core(
                 video_suffix = " and videos" if not skip_videos else ""
             logger.info(
                 ("Downloading %s %s" +
-                " photo%s%s to %s ..."),
+                 " photo%s%s to %s ..."),
                 photos_count_str,
                 size,
                 plural_suffix,
@@ -883,8 +900,7 @@ def core(
                     if should_break(consecutive_files_found):
                         logger.info(
                             "Found %s consecutive previously downloaded photos. Exiting",
-                            until_found
-                        )
+                            until_found)
                         break
                     item = next(photos_iterator)
                     if download_photo(
@@ -907,7 +923,7 @@ def core(
 
             if auto_delete:
                 autodelete_photos(logger, dry_run, library_object,
-                                folder_structure, directory)
+                                  folder_structure, directory)
 
             if watch_interval:  # pragma: no cover
                 logger.info(f"Waiting for {watch_interval} sec...")

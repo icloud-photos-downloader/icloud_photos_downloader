@@ -25,9 +25,13 @@ class EmailNotificationsTestCase(TestCase):
     @freeze_time("2018-01-01")
     def test_2sa_required_email_notification(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -47,7 +51,9 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-email",
                         "jdoe+notifications@gmail.com",
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
                 print(result.output)
@@ -73,9 +79,13 @@ class EmailNotificationsTestCase(TestCase):
     @freeze_time("2018-01-01")
     def test_2sa_notification_without_smtp_login_and_tls(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -92,7 +102,9 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-email",
                         "jdoe+notifications@gmail.com",
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
                 print(result.output)
@@ -116,9 +128,13 @@ class EmailNotificationsTestCase(TestCase):
     @freeze_time("2018-01-01")
     def test_2sa_required_notification_script(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("subprocess.call") as subprocess_patched:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -134,7 +150,9 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-script",
                         "./test_script.sh",
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
                 print(result.output)
@@ -144,9 +162,13 @@ class EmailNotificationsTestCase(TestCase):
     @freeze_time("2018-01-01")
     def test_2sa_required_email_notification_from(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2sa.yml")):
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -168,7 +190,9 @@ class EmailNotificationsTestCase(TestCase):
                         "--notification-email-from",
                         "JD <jdoe+notifications+from@gmail.com>",
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
                 print(result.output)

@@ -11,7 +11,7 @@ from tzlocal import get_localzone
 from click.testing import CliRunner
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from icloudpd.base import main
 from tests.helpers import path_from_project_root, recreate_path, print_result_exception
 import inspect
@@ -31,7 +31,11 @@ class AutodeletePhotosTestCase(TestCase):
 
     def test_autodelete_invalid_creation_date(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files = [
             "2018/01/01/IMG_3589.JPG"
@@ -61,14 +65,16 @@ class AutodeletePhotosTestCase(TestCase):
                         "1",
                         "--delete-after-download",
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                 self.assertIn(
-#                   f"INFO     Downloading the first original photo or video to {base_dir} ...",
+#                   f"INFO     Downloading the first original photo or video to {data_dir} ...",
                     f"INFO     Downloading the first original photo or video",
                     self._caplog.text,
                 )
@@ -77,7 +83,7 @@ class AutodeletePhotosTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Downloaded {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
+                    f"INFO     Downloaded {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -91,7 +97,7 @@ class AutodeletePhotosTestCase(TestCase):
                 # check files
                 for file_name in files:
                     assert os.path.exists(os.path.join(
-                        base_dir, file_name)), f"{file_name} expected, but missing"
+                        data_dir, file_name)), f"{file_name} expected, but missing"
 
                 result = runner.invoke(
                     main,
@@ -104,7 +110,9 @@ class AutodeletePhotosTestCase(TestCase):
                         "0",
                         "--auto-delete",
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
                 print_result_exception(result)
@@ -112,7 +120,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                 self.assertIn(
-                    f"INFO     Downloading 0 original photos and videos to {base_dir} ...",
+                    f"INFO     Downloading 0 original photos and videos to {data_dir} ...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -124,17 +132,21 @@ class AutodeletePhotosTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    f"INFO     Deleted {os.path.join(base_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
+                    f"INFO     Deleted {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                     self._caplog.text,
                 )
 
                 for file_name in files:
                     assert not os.path.exists(
-                        os.path.join(base_dir, file_name)), f"{file_name} not expected, but present"
+                        os.path.join(data_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_download_autodelete_photos(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
@@ -156,19 +168,21 @@ class AutodeletePhotosTestCase(TestCase):
                     "1",
                     "--delete-after-download",
                     "-d",
-                    base_dir,
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
 
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
             self.assertIn(
-#                f"INFO     Downloading the first original photo or video to {base_dir} ...",
+#                f"INFO     Downloading the first original photo or video to {data_dir} ...",
                 f"INFO     Downloading the first original photo or video",
                 self._caplog.text,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -182,7 +196,7 @@ class AutodeletePhotosTestCase(TestCase):
             # check files
             for file_name in files:
                 assert os.path.exists(os.path.join(
-                    base_dir, file_name)), f"{file_name} expected, but missing"
+                    data_dir, file_name)), f"{file_name} expected, but missing"
 
             result = runner.invoke(
                 main,
@@ -195,14 +209,16 @@ class AutodeletePhotosTestCase(TestCase):
                     "0",
                     "--auto-delete",
                     "-d",
-                    base_dir,
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
 
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading 0 original photos and videos to {base_dir} ...",
+                f"INFO     Downloading 0 original photos and videos to {data_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -214,17 +230,21 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files[0]))}",
                 self._caplog.text,
             )
 
             for file_name in files:
                 assert not os.path.exists(os.path.join(
-                    base_dir, file_name)), f"{file_name} not expected, but present"
+                    data_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_autodelete_photos(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files_to_create = [
             "2018/07/30/IMG_7407.JPG",
@@ -239,15 +259,15 @@ class AutodeletePhotosTestCase(TestCase):
         ]
 
         os.makedirs(os.path.join(
-            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+            data_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
         os.makedirs(os.path.join(
-            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+            data_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
         os.makedirs(os.path.join(
-            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+            data_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
 
         # create some empty files
         for file_name in files_to_create + files_to_delete:
-            open(os.path.join(base_dir, file_name), "a").close()
+            open(os.path.join(data_dir, file_name), "a").close()
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "autodelete_photos.yml")):
             # Pass fixed client ID via environment variable
@@ -266,13 +286,15 @@ class AutodeletePhotosTestCase(TestCase):
                     "--skip-videos",
                     "--auto-delete",
                     "-d",
-                    base_dir,
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
             self.assertIn(
                 "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading 0 original photos to {base_dir} ...",
+                f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -284,19 +306,19 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleted {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
                 self._caplog.text,
             )
 
@@ -306,22 +328,26 @@ class AutodeletePhotosTestCase(TestCase):
             assert result.exit_code == 0
 
         files_in_result = glob.glob(os.path.join(
-            base_dir, "**/*.*"), recursive=True)
+            data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == len(files_to_create)
 
         # check files
         for file_name in files_to_create:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected, but missing"
+                data_dir, file_name)), f"{file_name} expected, but missing"
 
         for file_name in files_to_delete:
             assert not os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} not expected, but present"
+                data_dir, file_name)), f"{file_name} not expected, but present"
 
     def test_retry_delete_after_download_session_error(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
@@ -332,7 +358,7 @@ class AutodeletePhotosTestCase(TestCase):
             def mock_raise_response_error(a0_, a1_, a2_):
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
-                    raise PyiCloudAPIResponseError(
+                    raise PyiCloudAPIResponseException(
                         "Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -366,7 +392,9 @@ class AutodeletePhotosTestCase(TestCase):
                                 "1",
                                 "--delete-after-download",
                                 "-d",
-                                base_dir,
+                                data_dir,
+                                "--cookie-directory",
+                                cookie_dir,
                             ],
                         )
                         print_result_exception(result)
@@ -374,11 +402,11 @@ class AutodeletePhotosTestCase(TestCase):
                         self.assertIn(
                             "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                         self.assertIn(
-                            f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                            f"INFO     Downloading the first original photo or video to {data_dir} ...",
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
                             self._caplog.text,
                         )
 
@@ -399,16 +427,20 @@ class AutodeletePhotosTestCase(TestCase):
         # check files
         for file_name in files:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected, but missing"
+                data_dir, file_name)), f"{file_name} expected, but missing"
 
         files_in_result = glob.glob(os.path.join(
-            base_dir, "**/*.*"), recursive=True)
+            data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 1
 
     def test_retry_fail_delete_after_download_session_error(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
@@ -417,7 +449,7 @@ class AutodeletePhotosTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
-                raise PyiCloudAPIResponseError("Invalid global session", 100)
+                raise PyiCloudAPIResponseException("Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
@@ -450,7 +482,9 @@ class AutodeletePhotosTestCase(TestCase):
                                 "1",
                                 "--delete-after-download",
                                 "-d",
-                                base_dir,
+                                data_dir,
+                                "--cookie-directory",
+                                cookie_dir,
                             ],
                         )
                         print_result_exception(result)
@@ -458,11 +492,11 @@ class AutodeletePhotosTestCase(TestCase):
                         self.assertIn(
                             "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                         self.assertIn(
-                            f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                            f"INFO     Downloading the first original photo or video to {data_dir} ...",
                             self._caplog.text,
                         )
                         self.assertIn(
-                            f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
                             self._caplog.text,
                         )
 
@@ -483,16 +517,20 @@ class AutodeletePhotosTestCase(TestCase):
         # check files
         for file_name in files:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected, but missing"
+                data_dir, file_name)), f"{file_name} expected, but missing"
 
         files_in_result = glob.glob(os.path.join(
-            base_dir, "**/*.*"), recursive=True)
+            data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 1
 
     def test_retry_delete_after_download_internal_error(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
@@ -503,7 +541,7 @@ class AutodeletePhotosTestCase(TestCase):
             def mock_raise_response_error(a0_, a1_, a2_):
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
-                    raise PyiCloudAPIResponseError(
+                    raise PyiCloudAPIResponseException(
                         "INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -525,7 +563,9 @@ class AutodeletePhotosTestCase(TestCase):
                             "1",
                             "--delete-after-download",
                             "-d",
-                            base_dir,
+                            data_dir,
+                            "--cookie-directory",
+                            cookie_dir,
                         ],
                     )
                     print_result_exception(result)
@@ -533,11 +573,11 @@ class AutodeletePhotosTestCase(TestCase):
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                     self.assertIn(
-                        f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                        f"INFO     Downloading the first original photo or video to {data_dir} ...",
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
                         self._caplog.text,
                     )
 
@@ -558,16 +598,20 @@ class AutodeletePhotosTestCase(TestCase):
         # check files
         for file_name in files:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected, but missing"
+                data_dir, file_name)), f"{file_name} expected, but missing"
 
         files_in_result = glob.glob(os.path.join(
-            base_dir, "**/*.*"), recursive=True)
+            data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 1
 
     def test_retry_fail_delete_after_download_internal_error(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files = [
             f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
@@ -576,7 +620,7 @@ class AutodeletePhotosTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(a0_, a1_, a2_):
-                raise PyiCloudAPIResponseError("INTERNAL_ERROR", "INTERNAL_ERROR")
+                raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
@@ -597,7 +641,9 @@ class AutodeletePhotosTestCase(TestCase):
                             "1",
                             "--delete-after-download",
                             "-d",
-                            base_dir,
+                            data_dir,
+                            "--cookie-directory",
+                            cookie_dir,
                         ],
                     )
                     print_result_exception(result)
@@ -605,11 +651,11 @@ class AutodeletePhotosTestCase(TestCase):
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text)
                     self.assertIn(
-                        f"INFO     Downloading the first original photo or video to {base_dir} ...",
+                        f"INFO     Downloading the first original photo or video to {data_dir} ...",
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"DEBUG    Downloading {os.path.join(base_dir, os.path.normpath(files[0]))}",
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
                         self._caplog.text,
                     )
 
@@ -630,16 +676,20 @@ class AutodeletePhotosTestCase(TestCase):
         # check files
         for file_name in files:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected, but missing"
+                data_dir, file_name)), f"{file_name} expected, but missing"
 
         files_in_result = glob.glob(os.path.join(
-            base_dir, "**/*.*"), recursive=True)
+            data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 1
 
     def test_autodelete_photos_dry_run(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         files_to_create = [
             "2018/07/30/IMG_7407.JPG",
@@ -654,15 +704,15 @@ class AutodeletePhotosTestCase(TestCase):
         ]
 
         os.makedirs(os.path.join(
-            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+            data_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
         os.makedirs(os.path.join(
-            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+            data_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
         os.makedirs(os.path.join(
-            base_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
+            data_dir, f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/"))
 
         # create some empty files
         for file_name in files_to_create + files_to_delete:
-            open(os.path.join(base_dir, file_name), "a").close()
+            open(os.path.join(data_dir, file_name), "a").close()
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "autodelete_photos.yml")):
             # Pass fixed client ID via environment variable
@@ -682,7 +732,9 @@ class AutodeletePhotosTestCase(TestCase):
                     "--skip-videos",
                     "--auto-delete",
                     "-d",
-                    base_dir,
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
             print_result_exception(result)
@@ -690,7 +742,7 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertIn(
                 "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading 0 original photos to {base_dir} ...",
+                f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -702,19 +754,19 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             self.assertIn(
-                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[0]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[1]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[2]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     [DRY RUN] Would delete {os.path.join(base_dir, os.path.normpath(files_to_delete[3]))}",
+                f"INFO     [DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
                 self._caplog.text,
             )
 
@@ -724,15 +776,15 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertEqual(result.exit_code, 0, "Exit code")
 
         files_in_result = glob.glob(os.path.join(
-            base_dir, "**/*.*"), recursive=True)
+            data_dir, "**/*.*"), recursive=True)
 
         self.assertEqual(sum(1 for _ in files_in_result), len(files_to_create) + len(files_to_delete), "Files in the result")
 
         # check files
         for file_name in files_to_create:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected, but missing"
+                data_dir, file_name)), f"{file_name} expected, but missing"
 
         for file_name in files_to_delete:
             assert os.path.exists(os.path.join(
-                base_dir, file_name)), f"{file_name} expected to stay, but missing"
+                data_dir, file_name)), f"{file_name} expected to stay, but missing"

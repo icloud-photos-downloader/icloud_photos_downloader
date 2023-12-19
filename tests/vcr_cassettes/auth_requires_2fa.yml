@@ -1,0 +1,100 @@
+interactions:
+- request:
+    body: !!python/unicode '{"accountName": "jdoe@gmail.com", "password": "password1",
+      "rememberMe": true, "trustTokens": []}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['111']
+      Content-Type: ['application/json']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
+      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
+      X-Apple-OAuth-Require-Grant-Code: ['true']
+      X-Apple-OAuth-Response-Mode: ['web_message']
+      X-Apple-OAuth-Response-Type: ['code']
+      X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
+      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+    method: POST
+    uri: https://idmsa.apple.com/appleauth/auth/signin?isRememberMeEnabled=true
+  response:
+    body:
+      string: !!python/unicode '{}'
+    headers:
+      Cache-Control:
+      - 'no-cache'
+      - 'no-store'
+      Connection: ['keep-alive']
+      Content-Type: ['text/html;charset=UTF-8']
+      Date: ['Wed, 13 Dec 2023 05:06:31 GMT']
+      Location: ['/auth']
+      Pragma: ['no-cache']
+      Referrer-Policy: ['origin']
+      Server: ['Apple']
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains; preload']
+      Transfer-Encoding: ['chunked']
+      X-Apple-Auth-Attributes: ['123456789abcdefg']
+      X-Apple-I-Request-ID: ['12345678-1234-1234-1234-123456789012']
+      X-Apple-I-Rscd: ['409']
+      X-Apple-ID-Account-Country: ['USA']
+      X-Apple-ID-Session-Id: ['sess-1234567890']
+      X-Apple-Session-Token: ['token-1234567890']
+      X-Apple-TwoSV-Trust-Eligible: ['true']
+      X-BuildVersion: ['R3_2']
+      content-length: ['23705']
+      scnt: ['scnt-1234567890']
+      vary: ['accept-encoding']
+    status:
+      code: 200
+      message: ''
+- request:
+    body: !!python/unicode '{"accountCountryCode": "USA", "dsWebAuthToken": "token-1234567890", "extended_login": true, "trustToken": ""}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['1157']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+    method: POST
+    uri: https://setup.icloud.com/setup/ws/1/accountLogin
+  response:
+    body:
+      string: !!python/unicode '{"dsInfo":{"lastName":"Doe","iCDPEnabled":false,"tantorMigrated":false,"dsid":"12345678901","hsaEnabled":true,"ironcadeMigrated":true,"locale":"en-us_US","brZoneConsolidated":false,"ICDRSCapableDeviceList":"","isManagedAppleID":false,"isCustomDomainsFeatureAvailable":true,"isHideMyEmailFeatureAvailable":true,"ContinueOnDeviceEligibleDeviceInfo":[],"gilligan-invited":true,"appleIdAliases":[],"hsaVersion":2,"ubiquityEOLEnabled":true,"isPaidDeveloper":false,"countryCode":"USA","notificationId":"12341234-1234-12341234-1234","primaryEmailVerified":true,"aDsID":"123456-12-12345678-1234-1234-1234-123456789012","locked":false,"ICDRSCapableDeviceCount":0,"hasICloudQualifyingDevice":true,"primaryEmail":"jdoe@gmail.com","appleIdEntries":[{"isPrimary":true,"type":"EMAIL","value":"jdoe@gmail.com"}],"gilligan-enabled":true,"isWebAccessAllowed":true,"fullName":"john
+        Doe","mailFlags":{"isThreadingAvailable":false,"isSearchV2Provisioned":false,"rawBits":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"isCKMail":false,"isMppSupportedInCurrentCountry":true},"languageCode":"en-us","appleId":"jdoe@gmail.com","analyticsOptInStatus":false,"firstName":"john","iCloudAppleIdAlias":"","notesMigrated":true,"beneficiaryInfo":{"isBeneficiary":false},"hasPaymentInfo":true,"pcsDeleted":false,"appleIdAlias":"","brMigrated":true,"statusCode":2,"familyEligible":true},"hasMinimumDeviceForPhotosWeb":true,"iCDPEnabled":false,"webservices":{"reminders":{"url":"https://p61-remindersws.icloud.com:443","status":"active"},"ckdatabasews":{"pcsRequired":true,"url":"https://p61-ckdatabasews.icloud.com:443","status":"active"},"photosupload":{"pcsRequired":true,"url":"https://p61-uploadphotosws.icloud.com:443","status":"active"},"photos":{"pcsRequired":true,"uploadUrl":"https://p61-uploadphotosws.icloud.com:443","url":"https://p61-photosws.icloud.com:443","status":"active"},"drivews":{"pcsRequired":true,"url":"https://p61-drivews.icloud.com:443","status":"active"},"uploadimagews":{"url":"https://p61-uploadimagews.icloud.com:443","status":"active"},"schoolwork":{},"cksharews":{"url":"https://p61-ckshare.icloud.com:443","status":"active"},"findme":{"url":"https://p61-fmipweb.icloud.com:443","status":"active"},"ckdeviceservice":{"url":"https://p61-ckdevice.icloud.com:443"},"iworkthumbnailws":{"url":"https://p61-iworkthumbnailws.icloud.com:443","status":"active"},"mccgateway":{"url":"https://p61-mccgateway.icloud.com:443","status":"active"},"calendar":{"isMakoAccount":false,"url":"https://p61-calendarws.icloud.com:443","status":"active"},"docws":{"pcsRequired":true,"url":"https://p61-docws.icloud.com:443","status":"active"},"settings":{"url":"https://p61-settingsws.icloud.com:443","status":"active"},"premiummailsettings":{"url":"https://p61-maildomainws.icloud.com:443","status":"active"},"ubiquity":{"url":"https://p61-ubiquityws.icloud.com:443","status":"active"},"keyvalue":{"url":"https://p61-keyvalueservice.icloud.com:443","status":"active"},"mpp":{"url":"https://relay.icloud-mpp.com","status":"active"},"archivews":{"url":"https://p61-archivews.icloud.com:443","status":"active"},"push":{"url":"https://p61-pushws.icloud.com:443","status":"active"},"iwmb":{"url":"https://p61-iwmb.icloud.com:443","status":"active"},"iworkexportws":{"url":"https://p61-iworkexportws.icloud.com:443","status":"active"},"sharedlibrary":{"url":"https://sharedlibrary.icloud.com:443","status":"active"},"geows":{"url":"https://p61-geows.icloud.com:443","status":"active"},"account":{"iCloudEnv":{"shortId":"p","vipSuffix":"prod"},"url":"https://p61-setup.icloud.com:443","status":"active"},"contacts":{"url":"https://p61-contactsws.icloud.com:443","status":"active"},"developerapi":{"url":"https://developer-api.icloud.com:443","status":"active"}},"pcsEnabled":true,"configBag":{"urls":{"accountCreateUI":"https://appleid.apple.com/widget/account/?widgetKey=#!create","accountLoginUI":"https://idmsa.apple.com/appleauth/auth/signin?widgetKey=","accountLogin":"https://setup.icloud.com/setup/ws/1/accountLogin","accountRepairUI":"https://appleid.apple.com/widget/account/?widgetKey=#!repair","downloadICloudTerms":"https://setup.icloud.com/setup/ws/1/downloadLiteTerms","repairDone":"https://setup.icloud.com/setup/ws/1/repairDone","accountAuthorizeUI":"https://idmsa.apple.com/appleauth/auth/authorize/signin?client_id=","vettingUrlForEmail":"https://id.apple.com/IDMSEmailVetting/vetShareEmail","accountCreate":"https://setup.icloud.com/setup/ws/1/createLiteAccount","getICloudTerms":"https://setup.icloud.com/setup/ws/1/getTerms","vettingUrlForPhone":"https://id.apple.com/IDMSEmailVetting/vetSharePhone"},"accountCreateEnabled":true},"hsaTrustedBrowser":false,"appsOrder":["mail","contacts","calendar","photos","iclouddrive","notes3","reminders","pages","numbers","keynote","newspublisher","find","settings"],"version":2,"isExtendedLogin":true,"pcsServiceIdentitiesIncluded":false,"hsaChallengeRequired":true,"requestInfo":{"country":"US","timeZone":"EST","region":"NC"},"pcsDeleted":false,"iCloudInfo":{"SafariBookmarksHasMigratedToCloudKit":false},"apps":{"calendar":{},"reminders":{},"keynote":{"isQualifiedForBeta":true},"settings":{"canLaunchWithOneFactor":true},"mail":{},"numbers":{"isQualifiedForBeta":true},"photos":{},"pages":{"isQualifiedForBeta":true},"notes3":{},"find":{"canLaunchWithOneFactor":true},"iclouddrive":{},"newspublisher":{"isHidden":true},"contacts":{}}}'
+    headers:
+      Access-Control-Allow-Credentials: ['true']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Cache-Control: ['no-cache, no-store, private']
+      Connection: ['keep-alive']
+      Content-Type: ['application/json; charset=UTF-8']
+      Date: ['Wed, 13 Dec 2023 05:06:31 GMT']
+      Server: ['AppleHttpServer/78689afb4479']
+      Set-Cookie:
+      - 'X-APPLE-UNIQUE-CLIENT-ID="Cw==";Path=/;Domain=.icloud.com;Secure'
+      - 'X-APPLE-WEBAUTH-LOGIN="v=1:t=Cw==BST_IAAAAAAABLw1234~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-WEBAUTH-VALIDATE="v=1:t=Cw==BST_IAAAAAAABLw5678~~";Path=/;Domain=.icloud.com;Secure'
+      - 'X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=Cw==BST_IAAAAAAABLw9012~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-WEBAUTH-USER="v=1:s=1:d=12345678901";Expires=Fri, 12-Jan-2024 05:06:31
+        GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X_APPLE_WEB_KB-ONHCNAXFAIPPFDMR5UZVNO6NIMY="v=1:t=Cw==BST_IAAAAAAABLw3456~~";Expires=Sun,
+        11-Feb-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-DS-WEB-SESSION-TOKEN="websessiontoken1234567890=";Expires=Fri,
+        12-Jan-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
+      X-Apple-Edge-Response-Time: ['501']
+      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
+      X-Responding-Instance: ['setupservice:33200401:mr55p32ic-qukt01202301:7001:2404B363:5934c9004de5']
+      access-control-expose-headers: ['X-Apple-Request-UUID,Via']
+      content-length: ['5758']
+      via: ['via-123456789012345678901234567890']
+      x-apple-user-partition: ['32']
+    status:
+      code: 200
+      message: OK
+version: 1

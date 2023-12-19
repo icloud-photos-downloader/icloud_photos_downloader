@@ -25,7 +25,10 @@ class ListingLibraryTestCase(TestCase):
 
     def test_listing_library(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
@@ -40,7 +43,9 @@ class ListingLibraryTestCase(TestCase):
                     "--password",
                     "password1",
                     "--list-libraries",
-                    "--no-progress-bar"
+                    "--no-progress-bar",
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
 
@@ -54,7 +59,11 @@ class ListingLibraryTestCase(TestCase):
 
     def test_listing_library_error(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
@@ -72,16 +81,18 @@ class ListingLibraryTestCase(TestCase):
                     "doesnotexist",
                     "--no-progress-bar",
                     "-d",
-                    base_dir
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
 
             print_result_exception(result)
-            
+
             self.assertIn(
                 "ERROR    Unknown library: doesnotexist",
                 self._caplog.text,
             )
-            
+
 
             assert result.exit_code == 1

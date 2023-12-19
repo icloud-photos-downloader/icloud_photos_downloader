@@ -29,7 +29,11 @@ class CliTestCase(TestCase):
 
     def test_log_levels(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         parameters = [
             ("debug", ["DEBUG", "INFO"], []),
@@ -38,6 +42,7 @@ class CliTestCase(TestCase):
         ]
         for log_level, expected, not_expected in parameters:
             self._caplog.clear()
+            recreate_path(cookie_dir)
             with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -55,7 +60,9 @@ class CliTestCase(TestCase):
                         "--log-level",
                         log_level,
                         "-d",
-                        base_dir,
+                        data_dir,
+                        "--cookie-directory",
+                        cookie_dir,
                     ],
                 )
                 assert result.exit_code == 0
@@ -64,13 +71,17 @@ class CliTestCase(TestCase):
             for text in not_expected:
                 self.assertNotIn(text, self._caplog.text)
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_tqdm(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Force tqdm progress bar via ENV var
@@ -88,20 +99,26 @@ class CliTestCase(TestCase):
                     "--recent",
                     "0",
                     "-d",
-                    base_dir,
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
             print_result_exception(result)
-            
+
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 
     def test_unicode_directory(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
@@ -120,12 +137,14 @@ class CliTestCase(TestCase):
                     "--log-level",
                     "info",
                     "-d",
-                    base_dir,
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
 

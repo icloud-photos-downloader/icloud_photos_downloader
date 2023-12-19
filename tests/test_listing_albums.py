@@ -25,7 +25,11 @@ class ListingAlbumsTestCase(TestCase):
 
     def test_listing_albums(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        recreate_path(base_dir)
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
@@ -41,6 +45,8 @@ class ListingAlbumsTestCase(TestCase):
                     "password1",
                     "--list-albums",
                     "--no-progress-bar",
+                    "--cookie-directory",
+                    cookie_dir,
                 ],
             )
 
@@ -55,6 +61,6 @@ class ListingAlbumsTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
         assert sum(1 for _ in files_in_result) == 0
