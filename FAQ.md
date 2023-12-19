@@ -64,10 +64,10 @@ Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with
 
 Here are the steps to make it working:
 - download binary from Github [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into desired local folder
-- add executable flag by running `chmod +x icloudpd-1.16.3-macos-amd64`
-- start it from the terminal: `icloudpd-1.16.3-macos-amd64`
+- add executable flag by running `chmod +x icloudpd-1.17.0-macos-amd64`
+- start it from the terminal: `icloudpd-1.17.0-macos-amd64`
 - Apple will tell you that it cannot check for malicous software and refuse to run the app; click "Ok"
-- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.16.3-macos-amd64` as blocked app; Click "Allow"
-- Start `icloudpd-1.16.3-macos-amd64` from the terminal again
+- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.17.0-macos-amd64` as blocked app; Click "Allow"
+- Start `icloudpd-1.17.0-macos-amd64` from the terminal again
 - Apple will show another warning; click "Open"
-- After that you can run `icloudpd-1.16.3-macos-amd64 --help` or any other supported command/option
+- After that you can run `icloudpd-1.17.0-macos-amd64 --help` or any other supported command/option

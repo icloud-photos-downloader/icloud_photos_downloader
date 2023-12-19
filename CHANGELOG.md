@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.17.0 (2023-12-19)
+
 - fix: macos binary failing [#668](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/668) [#700](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/700)
 - fix: 'Invalid email/password combination' exception due to recent iCloud changes [#729](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/729)
 - feature: `--auth-only` parameter to independently create/validate session tokens without listing/downloading photos
