@@ -306,7 +306,8 @@ def main(
 
         # check required directory param only if not list albums
         if not list_albums and not list_libraries and not directory and not auth_only:
-            print('--auth-only, --directory, --list-libraries or --list-albums are required')
+            print(
+                '--auth-only, --directory, --list-libraries or --list-albums are required')
             sys.exit(2)
 
         if auto_delete and delete_after_download:

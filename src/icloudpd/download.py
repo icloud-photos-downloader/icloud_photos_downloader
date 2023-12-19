@@ -6,9 +6,9 @@ import socket
 import time
 import datetime
 from tzlocal import get_localzone
-from requests.exceptions import ConnectionError # pylint: disable=redefined-builtin
+from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 import pyicloud_ipd  # pylint: disable=redefined-builtin
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
@@ -52,7 +52,9 @@ def mkdirs_for_path(logger: logging.Logger, download_path: str) -> bool:
         return False
 
 
-def mkdirs_for_path_dry_run(logger: logging.Logger, download_path: str) -> bool:
+def mkdirs_for_path_dry_run(
+        logger: logging.Logger,
+        download_path: str) -> bool:
     """ DRY Run for Creating hierarchy of folders for file path """
     download_dir = os.path.dirname(download_path)
     if not os.path.exists(download_dir):
@@ -123,7 +125,7 @@ def download_media(
             )
             break
 
-        except (ConnectionError, socket.timeout, PyiCloudAPIResponseError) as ex:
+        except (ConnectionError, socket.timeout, PyiCloudAPIResponseException) as ex:
             if "Invalid global session" in str(ex):
                 logger.error(
                     "Session error, re-authenticating...")

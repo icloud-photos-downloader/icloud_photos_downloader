@@ -16,7 +16,7 @@ def send_2sa_notification(
         smtp_port: int,
         smtp_no_tls: bool,
         to_addr: Optional[str],
-        from_addr: Optional[str]=None):
+        from_addr: Optional[str] = None):
     """Send an email notification when 2SA is expired"""
     to_addr = cast(str, to_addr if to_addr is not None else smtp_email)
     from_addr = from_addr if from_addr is not None else (

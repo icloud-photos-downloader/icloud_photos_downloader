@@ -79,14 +79,12 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
             default=0,
             type=click.IntRange(
                 0,
-                devices_count-1))
-
+                devices_count - 1))
 
     device = devices[device_index]
     if not icloud.send_verification_code(device):
         logger.error("Failed to send two-factor authentication code")
         sys.exit(1)
-
 
     code = click.prompt("Please enter two-factor authentication code")
     if not icloud.validate_verification_code(device, code):
