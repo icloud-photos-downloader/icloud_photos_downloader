@@ -5,8 +5,8 @@ import base64
 import re
 
 from datetime import datetime
-from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedErrror
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseError
+from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 
 import pytz
 
@@ -159,7 +159,7 @@ class PhotoLibrary(object):
         response = request.json()
         indexing_state = response['records'][0]['fields']['state']['value']
         if indexing_state != 'FINISHED':
-            raise PyiCloudServiceNotActivatedErrror(
+            raise PyiCloudServiceNotActivatedException(
                 ('iCloud Photo Library not finished indexing.  Please try '
                  'again in a few minutes'), None)
 
@@ -355,7 +355,7 @@ class PhotoAlbum(object):
         while(True):
             try:
                 request = self.photos_request(offset)
-            except PyiCloudAPIResponseError as ex:
+            except PyiCloudAPIResponseException as ex:
                 if self.exception_handler:
                     exception_retries += 1
                     self.exception_handler(ex, exception_retries)

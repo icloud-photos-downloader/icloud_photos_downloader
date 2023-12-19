@@ -1,145 +1,141 @@
 interactions:
 - request:
-    body: '{"apple_id": "jdoe@gmail.com", "password": "password1", "extended_login":
-      false}'
+    body: !!python/unicode '{"accountName": "jdoe@gmail.com", "password": "password1",
+      "rememberMe": true, "trustTokens": []}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['111']
+      Content-Type: ['application/json']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
+      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
+      X-Apple-OAuth-Require-Grant-Code: ['true']
+      X-Apple-OAuth-Response-Mode: ['web_message']
+      X-Apple-OAuth-Response-Type: ['code']
+      X-Apple-OAuth-State: ['DE309E26-942E-11E8-92F5-14109FE0B321']
+      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+    method: POST
+    uri: https://idmsa.apple.com/appleauth/auth/signin?isRememberMeEnabled=true
+  response:
+    body:
+      string: !!python/unicode '{}'
+    headers:
+      Cache-Control:
+      - 'no-cache'
+      - 'no-store'
+      Connection: ['keep-alive']
+      Content-Type: ['text/html;charset=UTF-8']
+      Date: ['Wed, 13 Dec 2023 05:06:31 GMT']
+      Location: ['/auth']
+      Pragma: ['no-cache']
+      Referrer-Policy: ['origin']
+      Server: ['Apple']
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains; preload']
+      Transfer-Encoding: ['chunked']
+      X-Apple-Auth-Attributes: ['123456789abcdefg']
+      X-Apple-I-Request-ID: ['12345678-1234-1234-1234-123456789012']
+      X-Apple-I-Rscd: ['409']
+      X-Apple-ID-Account-Country: ['USA']
+      X-Apple-ID-Session-Id: ['sess-1234567890']
+      X-Apple-Session-Token: ['token-1234567890']
+      X-Apple-TwoSV-Trust-Eligible: ['true']
+      X-BuildVersion: ['R4_1']
+      content-length: ['23705']
+      scnt: ['scnt-1234567890']
+      vary: ['accept-encoding']
+    status:
+      code: 200
+      message: ''
+- request:
+    body: !!python/unicode '{"accountCountryCode": "USA", "dsWebAuthToken": "token-1234567890", "extended_login": true, "trustToken": ""}'
     headers:
       Accept:
       - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '87'
-      Cookie:
-      - X-APPLE-WEBAUTH-HSA-TRUST-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8iMRDmdzLmljbG91ZC5hdXRovQC85cG4zJBbdBCdB1vgowm5sABRm7HYfY61GpEUXcxASXaRf7Wp9f80mUaRo4WF8yTn16PvLWDJmNQeT2slVHEPNlzdrfnSFWn7VftAkQmQ3gjypxohF7ZCgS45kpEG3FjR-1tLMCXLs_bY5Xuis8OteQUtag~~";
-        X_APPLE_WEB_KB-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8hMRDmdzLmljbG91ZC5hdXRovQDtcfU1UjxOfmatejqo4w0FyqgHkZVJ3uAC-YFwI6qda4pzUbK4pDCh6LpJZ2fE8lS_9ww3O3ol2gam2UDNq3qZQpZ7o0u0dVUynJvB27X--nuAt_tXpQJK5BeMoFxgh_cZjNsisF1vOJg1KXzQ5hPuVMXF3Q~~"
-      Origin:
-      - https://www.icloud.com
-      Referer:
-      - https://www.icloud.com/
-      User-Agent:
-      - Opera/9.52 (X11; Linux i686; U; en)
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['1157']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
     method: POST
-    uri: https://setup.icloud.com/setup/ws/1/login?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321
+    uri: https://setup.icloud.com/setup/ws/1/accountLogin
   response:
     body:
-      string: "{\"dsInfo\":{\"lastName\":\"Doe\",\"iCDPEnabled\":false,\"tantorMigrated\"\
-        :false,\"dsid\":\"185776146\",\"hsaEnabled\":true,\"ironcadeMigrated\":true,\"\
-        locale\":\"de-de_DE\",\"brZoneConsolidated\":false,\"isManagedAppleID\":false,\"\
-        gilligan-invited\":\"true\",\"appleIdAliases\":[\"jdoe@me.com\",\"\
-        jdoe@icloud.com\"],\"hsaVersion\":2,\"isPaidDeveloper\":false,\"countryCode\"\
-        :\"DEU\",\"notificationId\":\"82947cdd-51e8-4295-884b-a87ceb766e06\",\"primaryEmailVerified\"\
-        :true,\"aDsID\":\"000639-05-90e49afe-d7fc-48fd-85a1-af16160afd6a\",\"locked\"\
-        :false,\"hasICloudQualifyingDevice\":true,\"primaryEmail\":\"jdoe@gmail.com\"\
-        ,\"appleIdEntries\":[{\"isPrimary\":true,\"type\":\"EMAIL\",\"value\":\"jdoe@gmail.com\"\
-        },{\"type\":\"EMAIL\",\"value\":\"jdoe@me.com\"},{\"type\":\"EMAIL\"\
-        ,\"value\":\"jdoe@icloud.com\"}],\"gilligan-enabled\":\"true\",\"fullName\"\
-        :\"John Doe\",\"languageCode\":\"de-de\",\"appleId\":\"jdoe@gmail.com\"\
-        ,\"firstName\":\"John\",\"iCloudAppleIdAlias\":\"jdoe@icloud.com\"\
-        ,\"notesMigrated\":true,\"hasPaymentInfo\":false,\"pcsDeleted\":false,\"appleIdAlias\"\
-        :\"jdoe@me.com\",\"brMigrated\":true,\"statusCode\":2},\"hasMinimumDeviceForPhotosWeb\"\
-        :true,\"iCDPEnabled\":false,\"webservices\":{\"reminders\":{\"url\":\"https://p38-remindersws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"notes\":{\"url\":\"https://p43-notesws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"mail\":{\"url\":\"https://p43-mailws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"ckdatabasews\":{\"pcsRequired\":true,\"url\":\"\
-        https://p38-ckdatabasews.icloud.com:443\",\"status\":\"active\"},\"photosupload\"\
-        :{\"pcsRequired\":true,\"url\":\"https://p38-uploadphotosws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"photos\":{\"pcsRequired\":true,\"uploadUrl\":\"\
-        https://p38-uploadphotosws.icloud.com:443\",\"url\":\"https://p38-photosws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"drivews\":{\"pcsRequired\":true,\"url\":\"https://p38-drivews.icloud.com:443\"\
-        ,\"status\":\"active\"},\"uploadimagews\":{\"url\":\"https://p38-uploadimagews.icloud.com:443\"\
-        ,\"status\":\"active\"},\"schoolwork\":{},\"cksharews\":{\"url\":\"https://p38-ckshare.icloud.com:443\"\
-        ,\"status\":\"active\"},\"findme\":{\"url\":\"https://p38-fmipweb.icloud.com:443\"\
-        ,\"status\":\"active\"},\"ckdeviceservice\":{\"url\":\"https://p38-ckdevice.icloud.com:443\"\
-        },\"iworkthumbnailws\":{\"url\":\"https://p38-iworkthumbnailws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"calendar\":{\"url\":\"https://p38-calendarws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"docws\":{\"pcsRequired\":true,\"url\":\"https://p38-docws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"settings\":{\"url\":\"https://p38-settingsws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"ubiquity\":{\"url\":\"https://p38-ubiquityws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"streams\":{\"url\":\"https://p38-streams.icloud.com:443\"\
-        ,\"status\":\"active\"},\"keyvalue\":{\"url\":\"https://p38-keyvalueservice.icloud.com:443\"\
-        ,\"status\":\"active\"},\"archivews\":{\"url\":\"https://p38-archivews.icloud.com:443\"\
-        ,\"status\":\"active\"},\"push\":{\"url\":\"https://p38-pushws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"iwmb\":{\"url\":\"https://p38-iwmb.icloud.com:443\"\
-        ,\"status\":\"active\"},\"iworkexportws\":{\"url\":\"https://p38-iworkexportws.icloud.com:443\"\
-        ,\"status\":\"active\"},\"geows\":{\"url\":\"https://p38-geows.icloud.com:443\"\
-        ,\"status\":\"active\"},\"account\":{\"iCloudEnv\":{\"shortId\":\"p\",\"vipSuffix\"\
-        :\"prod\"},\"url\":\"https://p38-setup.icloud.com:443\",\"status\":\"active\"\
-        },\"fmf\":{\"url\":\"https://p38-fmfweb.icloud.com:443\",\"status\":\"active\"\
-        },\"contacts\":{\"url\":\"https://p38-contactsws.icloud.com:443\",\"status\"\
-        :\"active\"}},\"pcsEnabled\":true,\"configBag\":{\"urls\":{\"accountCreateUI\"\
-        :\"https://appleid.apple.com/widget/account/?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d#!create\"\
-        ,\"accountLoginUI\":\"https://idmsa.apple.com/appleauth/auth/signin?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d\"\
-        ,\"accountLogin\":\"https://setup.icloud.com/setup/ws/1/accountLogin\",\"\
-        accountRepairUI\":\"https://appleid.apple.com/widget/account/?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d#!repair\"\
-        ,\"downloadICloudTerms\":\"https://setup.icloud.com/setup/ws/1/downloadLiteTerms\"\
-        ,\"repairDone\":\"https://setup.icloud.com/setup/ws/1/repairDone\",\"accountAuthorizeUI\"\
-        :\"https://idmsa.apple.com/appleauth/auth/authorize/signin?client_id=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d\"\
-        ,\"vettingUrlForEmail\":\"https://id.apple.com/IDMSEmailVetting/vetShareEmail\"\
-        ,\"accountCreate\":\"https://setup.icloud.com/setup/ws/1/createLiteAccount\"\
-        ,\"getICloudTerms\":\"https://setup.icloud.com/setup/ws/1/getTerms\",\"vettingUrlForPhone\"\
-        :\"https://id.apple.com/IDMSEmailVetting/vetSharePhone\"},\"accountCreateEnabled\"\
-        :\"true\"},\"hsaTrustedBrowser\":true,\"appsOrder\":[\"mail\",\"contacts\"\
-        ,\"calendar\",\"photos\",\"iclouddrive\",\"notes2\",\"reminders\",\"pages\"\
-        ,\"numbers\",\"keynote\",\"newspublisher\",\"fmf\",\"find\",\"settings\"],\"\
-        version\":2,\"isExtendedLogin\":false,\"pcsServiceIdentitiesIncluded\":true,\"\
-        hsaChallengeRequired\":false,\"requestInfo\":{\"country\":\"DE\",\"timeZone\"\
-        :\"GMT+1\",\"region\":\"HE\"},\"pcsDeleted\":false,\"iCloudInfo\":{\"SafariBookmarksHasMigratedToCloudKit\"\
-        :true},\"apps\":{\"calendar\":{},\"reminders\":{},\"keynote\":{\"isQualifiedForBeta\"\
-        :true},\"settings\":{\"canLaunchWithOneFactor\":true},\"mail\":{},\"numbers\"\
-        :{\"isQualifiedForBeta\":true},\"photos\":{},\"pages\":{\"isQualifiedForBeta\"\
-        :true},\"find\":{\"canLaunchWithOneFactor\":true},\"notes2\":{},\"iclouddrive\"\
-        :{},\"newspublisher\":{\"isHidden\":true},\"fmf\":{},\"contacts\":{}}}"
+      string: !!python/unicode '{"dsInfo": {"lastName":"Doe","iCDPEnabled":false,"tantorMigrated":false,"dsid":"12345678901","hsaEnabled":true,
+        "ironcadeMigrated":true,"locale":"en-us_US","brZoneConsolidated":false,"ICDRSCapableDeviceList":"","isManagedAppleID":false,
+        "isCustomDomainsFeatureAvailable":true,"isHideMyEmailFeatureAvailable":true,"ContinueOnDeviceEligibleDeviceInfo":[],"gilligan-invited":true,
+        "appleIdAliases":[],"hsaVersion":2,"ubiquityEOLEnabled":true,"isPaidDeveloper":false,"countryCode":"USA","notificationId":"12341234-1234-12341234-1234",
+        "primaryEmailVerified":true,"aDsID":"123456-12-12345678-1234-1234-1234-123456789012","locked":false,"ICDRSCapableDeviceCount":0,
+        "hasICloudQualifyingDevice":true,"primaryEmail":"jdoe@gmail.com","appleIdEntries": [{"isPrimary":true,"type":"EMAIL","value":"jdoe@gmail.com"}],
+        "gilligan-enabled":true,"isWebAccessAllowed":true,"fullName":"John Doe","mailFlags":{"isThreadingAvailable":false,"isSearchV2Provisioned":false,
+        "rawBits":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        "isCKMail":false,"isMppSupportedInCurrentCountry":true},"languageCode":"en-us","appleId":"jdoe@gmail.com","analyticsOptInStatus":false,
+        "firstName":"john","iCloudAppleIdAlias":"","notesMigrated":true,"beneficiaryInfo":{"isBeneficiary":false},"hasPaymentInfo":true,"pcsDeleted":false,
+        "appleIdAlias":"","brMigrated":true,"statusCode":2,"familyEligible":true},"hasMinimumDeviceForPhotosWeb":true,"iCDPEnabled":false,
+        "webservices":{"reminders":{"url":"https://p61-remindersws.icloud.com:443","status":"active"},"ckdatabasews":{"pcsRequired":true,
+        "url":"https://p61-ckdatabasews.icloud.com:443","status":"active"},"photosupload":{"pcsRequired":true,
+        "url":"https://p61-uploadphotosws.icloud.com:443","status":"active"},"photos":{"pcsRequired":true,
+        "uploadUrl":"https://p61-uploadphotosws.icloud.com:443","url":"https://p61-photosws.icloud.com:443","status":"active"},"drivews":{"pcsRequired":true,
+        "url":"https://p61-drivews.icloud.com:443","status":"active"},"uploadimagews":{"url":"https://p61-uploadimagews.icloud.com:443","status":"active"},
+        "schoolwork":{},"cksharews":{"url":"https://p61-ckshare.icloud.com:443","status":"active"},"findme":{"url":"https://p61-fmipweb.icloud.com:443",
+        "status":"active"},"ckdeviceservice":{"url":"https://p61-ckdevice.icloud.com:443"},
+        "iworkthumbnailws":{"url":"https://p61-iworkthumbnailws.icloud.com:443","status":"active"},
+        "mccgateway":{"url":"https://p61-mccgateway.icloud.com:443","status":"active"},"calendar":{"isMakoAccount":false,
+        "url":"https://p61-calendarws.icloud.com:443","status":"active"},"docws":{"pcsRequired":true,"url":"https://p61-docws.icloud.com:443",
+        "status":"active"},"settings":{"url":"https://p61-settingsws.icloud.com:443","status":"active"},
+        "premiummailsettings":{"url":"https://p61-maildomainws.icloud.com:443","status":"active"},"ubiquity":{"url":"https://p61-ubiquityws.icloud.com:443",
+        "status":"active"},"keyvalue":{"url":"https://p61-keyvalueservice.icloud.com:443","status":"active"},"mpp":{"url":"https://relay.icloud-mpp.com",
+        "status":"active"},"archivews":{"url":"https://p61-archivews.icloud.com:443","status":"active"},"push":{"url":"https://p61-pushws.icloud.com:443",
+        "status":"active"},"iwmb":{"url":"https://p61-iwmb.icloud.com:443","status":"active"},
+        "iworkexportws":{"url":"https://p61-iworkexportws.icloud.com:443","status":"active"},"sharedlibrary":{"url":"https://sharedlibrary.icloud.com:443",
+        "status":"active"},"geows":{"url":"https://p61-geows.icloud.com:443","status":"active"},"account":{"iCloudEnv":{"shortId":"p","vipSuffix":"prod"},
+        "url":"https://p61-setup.icloud.com:443","status":"active"},"contacts":{"url":"https://p61-contactsws.icloud.com:443","status":"active"},
+        "developerapi":{"url":"https://developer-api.icloud.com:443","status":"active"}},"pcsEnabled":true,
+        "configBag":{"urls":{"accountCreateUI":"https://appleid.apple.com/widget/account/?widgetKey=#!create",
+        "accountLoginUI":"https://idmsa.apple.com/appleauth/auth/signin?widgetKey=","accountLogin":"https://setup.icloud.com/setup/ws/1/accountLogin",
+        "accountRepairUI":"https://appleid.apple.com/widget/account/?widgetKey=#!repair",
+        "downloadICloudTerms":"https://setup.icloud.com/setup/ws/1/downloadLiteTerms","repairDone":"https://setup.icloud.com/setup/ws/1/repairDone",
+        "accountAuthorizeUI":"https://idmsa.apple.com/appleauth/auth/authorize/signin?client_id=",
+        "vettingUrlForEmail":"https://id.apple.com/IDMSEmailVetting/vetShareEmail","accountCreate":"https://setup.icloud.com/setup/ws/1/createLiteAccount",
+        "getICloudTerms":"https://setup.icloud.com/setup/ws/1/getTerms","vettingUrlForPhone":"https://id.apple.com/IDMSEmailVetting/vetSharePhone"},
+        "accountCreateEnabled":true},"hsaTrustedBrowser":true,"appsOrder":["mail","contacts","calendar","photos","iclouddrive","notes3","reminders",
+        "pages","numbers","keynote","newspublisher","find","settings"],"version":2,"isExtendedLogin":true,"pcsServiceIdentitiesIncluded":false,
+        "hsaChallengeRequired":false,"requestInfo":{"country":"US","timeZone":"EST","region":"NC"},"pcsDeleted":false,
+        "iCloudInfo":{"SafariBookmarksHasMigratedToCloudKit":false},"apps":{"calendar":{},"reminders":{},"keynote":{"isQualifiedForBeta":true},
+        "settings":{"canLaunchWithOneFactor":true},"mail":{},"numbers":{"isQualifiedForBeta":true},"photos":{},"pages":{"isQualifiedForBeta":true},
+        "notes3":{},"find":{"canLaunchWithOneFactor":true},"iclouddrive":{},"newspublisher":{"isHidden":true},"contacts":{}}}'
     headers:
-      Access-Control-Allow-Credentials:
-      - 'true'
-      Access-Control-Allow-Origin:
-      - https://www.icloud.com
-      Apple-Originating-System:
-      - UnknownOriginatingSystem
-      Cache-Control:
-      - no-cache, no-store, private
-      Connection:
-      - keep-alive
-      Content-Type:
-      - application/json; charset=UTF-8
-      Date:
-      - Thu, 09 May 2019 19:08:25 GMT
-      Server:
-      - AppleHttpServer/70a91026
+      Access-Control-Allow-Credentials: ['true']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Cache-Control: ['no-cache, no-store, private']
+      Connection: ['keep-alive']
+      Content-Type: ['application/json; charset=UTF-8']
+      Date: ['Wed, 13 Dec 2023 05:06:31 GMT']
+      Server: ['AppleHttpServer/78689afb4479']
       Set-Cookie:
-      - X-APPLE-WEBAUTH-PCS-Documents="TGlzdEFwcGw6MTpBcHBsOjE6Aet0kFgu22Q4v11Y/qOmlfbGfGmIUWbq7iLV4XgmvgI/SdE8R4ECLd8+tODOaHWTio4U9gOHEaB+7qqIFkImSgH06gUQRotD1OU8PnTOabk6W0VdmlbHeAQE6ULtSzG7XVscsiCcu5aLxA8JJtkfGnMURxfQWXLZOyWpwhwdBqH2NHaEdYxmiQ==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-Photos="TGlzdEFwcGw6MTpBcHBsOjE6Adciqu4xi/81ZPC13IkyLFVFtr/GsgtNA0HXRnnGQgXNPlVRAbgXG/QvUYvyC9D1uKdIntFx/UMqhXDhaU5K81X77DFl7DBwI7WaT32vreJWnnfh1xVsVBSx6I2T3zchWKSdsDszFDU9Z4hsk6DIw+LGjgawT4St6sNxxnlT4+i57V+Fyeka9A==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-Cloudkit="TGlzdEFwcGw6MTpBcHBsOjE6AfmAQWi6rxOCCulNRk1tj3kF2wLD7kv0YqXm8NsDKtKSBEcAY8GubLQhVQOCfRHxcDTp4OTfLemlO3qPhyuFkVa0VGOeNCIolBYVoQE9H5e+peGabTU++yv5Ve20rXwAjh8vLNvo78PxD1dTH8ynfLdAUpcaieWsJMFejPIJp7iDsmiI9o7qjw==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AbYqqDtTyT+1iBw09mXnbJkLgfk2Js0Uz34hBKAx6xub5M8neMiZaMSc15oS6KpI29jUZE6DKBTJIsX7aqIiwF6ps/FoG0oI3mQwqwZcCYvLz4T4QWOtY5+Gt47LbMfkyKW0e41JF4uqgntZBQyHhycE8WDcWNxzCOOVsGk1Rj1bVjiA5zp3ug==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-Mail="TGlzdEFwcGw6MTpBcHBsOjE6AW6Gir1yEDwLQD0HgUcF3b8+d5gdgkfaQo2wQFwO568nsfVCXRsLVO9Zi1EpDhZPCaOeJ4wxZulXJxqFrMrVwOEUPXD4auTaARLSnuFu+ku/zaR1PNvNLGhVJNDeGT7KN6RGg59CViLOQCsBo2HWAVgDRojSSKTXCozQjkOlmo0ECl3sG6lfkg==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-Notes="TGlzdEFwcGw6MTpBcHBsOjE6AdQ4u7cfpuNFrgK9DjTxgFFOKpa5Izbx41cE631vVcOPbxcSgf5PW5Pk5JZxFxm0uVUblDFRa6/tnoDI1ni5X5IQj9AasZaV5JWjxwr6s78OjIk7//Z/VdJqwfhVaqfQFe9tI/dgB4gvInqdSkL5mako8nf1MHQCMQZA6lhXx75EZ89/Rg5ZeQ==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-News="TGlzdEFwcGw6MTpBcHBsOjE6AfLfcn8J/HQ8lxyiQfSLE3S+lNTE38l+3QSLLPE6CCaZqewgrXQ0RnltMRhH0SYZhFp5ri4FEamk7ynO2lg4aXa6ubTSvpk9VO92yqrd7I7BkLh6O7+Xy/elmaZ0MvD0dKWyeiqgl21tdKjoF7z71oY2j0UNGb+FIzIsivmUGY7opeTxtpbDbw==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AXDzBhH/Uqo2sq+Saaqbg00cX5njb3+8b3GwX/4yeRRQ0/9j8WEDDT07ZS/6RXiNGZ4QIW+Dr8DjHEkZe1z+QSZxPle7eZUrqDoOOBvTMo336k0Rv/o6m873zMuXebZSvMsNFmmmV6h7EWC4wFQVmzA06yUsqfVaGnVS3MhQ1YdIO0yHAxnELw==";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-LOGIN="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTrdyLXuVSPEQTcWV5w50PS_Azhjbb-HFG_w6bQS7fObvGRYVdQ~~";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";Path=/;Domain=.icloud.com;Secure
-      - X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTn8e8w8cEKFkFglizdCuIac2hu4mY-ORpCJLg90bisJJTipVEA~~";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      - X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146";Path=/;Domain=.icloud.com;Secure;HttpOnly
-      Strict-Transport-Security:
-      - max-age=31536000; includeSubDomains
-      X-Apple-Jingle-Correlation-Key:
-      - QKKHZXKR5BBJLCCLVB6OW5TOAY
-      X-Apple-Request-UUID:
-      - 82947cdd-51e8-4295-884b-a87ceb766e06
-      X-Responding-Instance:
-      - setupservice:45300303:pv43p53ic-zteg01101601:8003:1907B259:93f6a337c
-      access-control-expose-headers:
-      - X-Apple-Request-UUID
-      - Via
-      apple-seq:
-      - '0'
-      apple-tk:
-      - 'false'
-      content-length:
-      - '5226'
-      via:
-      - icloudedge:ds12p00ic-ztde01131201:7401:19RC123:Dusseldorf
+      - 'X-APPLE-UNIQUE-CLIENT-ID="Cw==";Path=/;Domain=.icloud.com;Secure'
+      - 'X-APPLE-WEBAUTH-LOGIN="v=1:t=Cw==BST_IAAAAAAABLw1234~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-WEBAUTH-VALIDATE="v=1:t=Cw==BST_IAAAAAAABLw5678~~";Path=/;Domain=.icloud.com;Secure'
+      - 'X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=Cw==BST_IAAAAAAABLw9012~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-WEBAUTH-USER="v=1:s=1:d=12345678901";Expires=Fri, 12-Jan-2024 05:06:31
+        GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X_APPLE_WEB_KB-ONHCNAXFAIPPFDMR5UZVNO6NIMY="v=1:t=Cw==BST_IAAAAAAABLw3456~~";Expires=Sun,
+        11-Feb-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-DS-WEB-SESSION-TOKEN="websessiontoken1234567890=";Expires=Fri,
+        12-Jan-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
+      X-Apple-Edge-Response-Time: ['501']
+      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
+      X-Responding-Instance: ['setupservice:33200401:mr55p32ic-qukt01202301:7001:2404B363:5934c9004de5']
+      access-control-expose-headers: ['X-Apple-Request-UUID,Via']
+      content-length: ['5758']
+      via: ['via-123456789012345678901234567890']
+      x-apple-user-partition: ['32']
     status:
       code: 200
       message: OK
@@ -155,7 +151,7 @@ interactions:
       Referer: ['https://www.icloud.com/']
       User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
     method: POST
-    uri: https://p38-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=185776146&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_ac333066-5d55-4c42-b033-f05bb9d2873c\",\n
         \   \"recordType\" : \"CheckIndexingState\",\n    \"fields\" : {\n      \"progress\"
@@ -209,7 +205,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p38-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
   response:
     body:
       string: "{\n  \"moreComing\" : false,\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\",\n
@@ -278,7 +274,7 @@ interactions:
         X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AbYqqDtTyT+1iBw09mXnbJkLgfk2Js0Uz34hBKAx6xub5M8neMiZaMSc15oS6KpI29jUZE6DKBTJIsX7aqIiwF6ps/FoG0oI3mQwqwZcCYvLz4T4QWOtY5+Gt47LbMfkyKW0e41JF4uqgntZBQyHhycE8WDcWNxzCOOVsGk1Rj1bVjiA5zp3ug==";
         X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AXDzBhH/Uqo2sq+Saaqbg00cX5njb3+8b3GwX/4yeRRQ0/9j8WEDDT07ZS/6RXiNGZ4QIW+Dr8DjHEkZe1z+QSZxPle7eZUrqDoOOBvTMo336k0Rv/o6m873zMuXebZSvMsNFmmmV6h7EWC4wFQVmzA06yUsqfVaGnVS3MhQ1YdIO0yHAxnELw==";
         X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTn8e8w8cEKFkFglizdCuIac2hu4mY-ORpCJLg90bisJJTipVEA~~";
-        X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";
+        X-APPLE-WEBAUTH-USER="v=1:s=0:d=12345678901"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";
         X_APPLE_WEB_KB-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8hMRDmdzLmljbG91ZC5hdXRovQDtcfU1UjxOfmatejqo4w0FyqgHkZVJ3uAC-YFwI6qda4pzUbK4pDCh6LpJZ2fE8lS_9ww3O3ol2gam2UDNq3qZQpZ7o0u0dVUynJvB27X--nuAt_tXpQJK5BeMoFxgh_cZjNsisF1vOJg1KXzQ5hPuVMXF3Q~~"
       Origin:
       - https://www.icloud.com
@@ -287,7 +283,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p38-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=185776146&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body:
       string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_dfc991c9-6f13-4b37-846b-606e3f31186e\"\
@@ -370,7 +366,7 @@ interactions:
         X-APPLE-WEBAUTH-PCS-Safari="TGlzdEFwcGw6MTpBcHBsOjE6AbYqqDtTyT+1iBw09mXnbJkLgfk2Js0Uz34hBKAx6xub5M8neMiZaMSc15oS6KpI29jUZE6DKBTJIsX7aqIiwF6ps/FoG0oI3mQwqwZcCYvLz4T4QWOtY5+Gt47LbMfkyKW0e41JF4uqgntZBQyHhycE8WDcWNxzCOOVsGk1Rj1bVjiA5zp3ug==";
         X-APPLE-WEBAUTH-PCS-Sharing="TGlzdEFwcGw6MTpBcHBsOjE6AXDzBhH/Uqo2sq+Saaqbg00cX5njb3+8b3GwX/4yeRRQ0/9j8WEDDT07ZS/6RXiNGZ4QIW+Dr8DjHEkZe1z+QSZxPle7eZUrqDoOOBvTMo336k0Rv/o6m873zMuXebZSvMsNFmmmV6h7EWC4wFQVmzA06yUsqfVaGnVS3MhQ1YdIO0yHAxnELw==";
         X-APPLE-WEBAUTH-TOKEN="v=2:t=IAAAAAAABLwIAAAAAFzUeqsRDmdzLmljbG91ZC5hdXRovQDLt0yBmlWeKEqUCK4Rb2q8PqCfrUifzfJJ8teReO_K45G1o0NcMXVUOA82EQfoxuHRTelz_j76GhB6arROQOtiEw5l-Gnkb3azTRqRLOy62fHR87-_1kOHvTu_lFJhNeMJcj5lL_vXw4xl_V9VRPGzw_bbyA~~";
-        X-APPLE-WEBAUTH-USER="v=1:s=0:d=185776146"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";
+        X-APPLE-WEBAUTH-USER="v=1:s=0:d=12345678901"; X-APPLE-WEBAUTH-VALIDATE="v=1:t=IAAAAAAABLwIAAAAAFzUeqgRDmdzLmljbG91ZC5hdXRovQAqM-hMbeOKEShIoy1yCDrtQKNtmZFVXlZePfIAlM4M1_354xZEwLFvGllmNkKoz1ZhYFurK-QwOPRtZBlMOANxZ-7761dyikERBSc_V5jNTiwy_dNCsqEDy7btI5YsusdyMvbR8x1wtHTH41xpCJ2T5DiGfQ~~";
         X_APPLE_WEB_KB-MCKQA0JLHJTP6TJZRX7-IO-JETW="v=1:t=IAAAAAAABLwIAAAAAFyy8hMRDmdzLmljbG91ZC5hdXRovQDtcfU1UjxOfmatejqo4w0FyqgHkZVJ3uAC-YFwI6qda4pzUbK4pDCh6LpJZ2fE8lS_9ww3O3ol2gam2UDNq3qZQpZ7o0u0dVUynJvB27X--nuAt_tXpQJK5BeMoFxgh_cZjNsisF1vOJg1KXzQ5hPuVMXF3Q~~"
       Origin:
       - https://www.icloud.com
@@ -379,7 +375,7 @@ interactions:
       User-Agent:
       - Opera/9.52 (X11; Linux i686; U; en)
     method: POST
-    uri: https://p38-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=185776146&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body:
       string: "{\n  \"records\" : [ {\n    \"recordName\" : \"----Root-Folder----\"\
