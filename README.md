@@ -25,7 +25,7 @@ There are three ways to run `icloudpd`:
 - One time download and an option to monitor for iCloud changes continuously (`--watch-with-interval` option)
 - Optimizations for incremental runs (`--until-found` and `--recent` options)
 - Photo meta data (EXIF) updates (`--set-exif-datetime` option)
-- ... and many (use `--help` option to get full list)
+- ... and many more (use `--help` option to get full list)
 
 ## Experimental Mode
 
@@ -39,7 +39,15 @@ To keep your iCloud photo collection synchronized to your local system:
 icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
-Synchronization logic can be adjusted with command-line parameters. Run `icloudpd --help` to get full list.
+- Synchronization logic can be adjusted with command-line parameters. Run `icloudpd --help` to get full list.
+
+To independently create and authorize a session (and complete 2SA/2FA validation if needed) on your local system:
+
+```
+icloudpd --username my@email.address --password my_password --auth-only
+```
+
+- This feature can also be used to check and verify that the session is still authenticated. 
 
 ## FAQ
 
