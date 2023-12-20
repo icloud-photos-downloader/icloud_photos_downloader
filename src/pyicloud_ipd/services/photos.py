@@ -660,10 +660,10 @@ class PhotoAsset(object):
                         version['type'] == "com.apple.quicktime-movie"):
                         if filename.lower().endswith('.heic'):
                             version['filename']=re.sub(
-                                '\.[^.]+$', '_HEVC.MOV', version['filename'])
+                                r'\.[^.]+$', '_HEVC.MOV', version['filename'])
                         else:
                             version['filename'] = re.sub(
-                                '\.[^.]+$', '.MOV', version['filename'])
+                                r'\.[^.]+$', '.MOV', version['filename'])
 
                     self._versions[key] = version
 
