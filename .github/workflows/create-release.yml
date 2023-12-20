@@ -30,7 +30,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
@@ -61,7 +61,7 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
