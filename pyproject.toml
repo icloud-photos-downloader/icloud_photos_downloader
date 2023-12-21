@@ -71,7 +71,7 @@ test = [
 Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
 
 [project.scripts]
-icloudpd = "starters.icloudpd:main"
+icloudpd = "icloudpd.icloudpd:main"
 icloud = "starters.icloud:main"
 icloudpd_ex = "starters.icloudpd_ex:main"
 
