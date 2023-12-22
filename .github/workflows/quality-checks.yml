@@ -33,7 +33,7 @@ jobs:
         scripts/lint
 
   type_check: 
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-20.04
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -52,7 +52,7 @@ jobs:
         scripts/type_check 
 
   test: 
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-20.04
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -94,7 +94,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
     defaults:
       run:
@@ -125,6 +125,8 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
+    # run on earliest possible linux for better compatibility
+    # ubuntu 20.04 has glibc 2.31 -> manylinux_2_31
     runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
@@ -160,6 +162,7 @@ jobs:
           dist/icloud*
 
   build_macos:
+    # earliest possible mac for better compatibility
     runs-on: macos-11
     needs: [get_version]
     defaults:
@@ -195,6 +198,7 @@ jobs:
           dist/icloud*
 
   build_windows:
+    # earliest possible mac for better compatibility
     runs-on: windows-2019
     needs: [get_version]
     defaults:
@@ -261,7 +265,7 @@ jobs:
 
   build_npm:
     runs-on: ubuntu-22.04
-    needs: [get_version,build_src,build_linux,build_macos,build_windows]
+    needs: [get_version,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -292,3 +296,139 @@ jobs:
           npm publish dist/npm/icloudpd --access public --dry-run=true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  validate_linux_bin_whl:
+    strategy: 
+      matrix: 
+        os: [ubuntu-20.04, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    needs: [get_version,build_linux]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Install Python Binary Wheel
+        run: |
+          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux_2_31_x86_64.whl
+
+      - name: Run icloud
+        run: |
+          icloud --help
+
+      - name: Run icloudpd
+        run: |
+          icloudpd --version
+
+  validate_macos_bin_whl:
+    strategy: 
+      matrix: 
+        os: [macos-11, macos-12]
+    runs-on: ${{ matrix.os }}
+    needs: [get_version,build_macos]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Install Python Binary Wheel
+        run: |
+          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-macosx_11_0_x86_64.macosx_11_0_arm64.whl
+
+      - name: Run icloud
+        run: |
+          icloud --help
+
+      - name: Run icloudpd
+        run: |
+          icloudpd --version
+
+  validate_windows_bin_whl:
+    strategy: 
+      matrix: 
+        os: [windows-2019, windows-2022]
+    runs-on: ${{ matrix.os }}
+    needs: [get_version,build_windows]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Install Python Binary Wheel
+        run: |
+          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-win_amd64.whl
+
+      - name: Run icloud
+        run: |
+          icloud --help
+
+      - name: Run icloudpd
+        run: |
+          icloudpd --version
+
+  validate_src_whl:
+    strategy: 
+      matrix: 
+        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, windows-2019, windows-2022]
+    runs-on: ${{ matrix.os }}
+    needs: [get_version,build_src]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Install Python Source Wheel
+        run: |
+          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py3-none-any.whl
+
+      - name: Run icloud
+        run: |
+          icloud --help
+
+      - name: Run icloudpd
+        run: |
+          icloudpd --version

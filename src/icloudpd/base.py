@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 from __future__ import print_function
+from multiprocessing import freeze_support
+freeze_support() # fixing tqdm on macos
+
 import os
 import sys
 import time
