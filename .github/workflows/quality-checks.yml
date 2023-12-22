@@ -24,8 +24,7 @@ jobs:
     - name: Run Inside Container
       uses: addnab/docker-run-action@v3
       with:
-        registry: quay.io
-        image: pypa/manylinux1_x86_64
+        image: quay.io/pypa/manylinux1_x86_64
         options: -v ${{ github.workspace }}:/work
         run: |
           echo "TBD: Install Python vXX"
