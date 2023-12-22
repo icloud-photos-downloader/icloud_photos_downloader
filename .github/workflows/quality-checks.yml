@@ -14,7 +14,8 @@ on:
 jobs:
 
   lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
+    container: quay.io/pypa/manylinux1_x86_64
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -33,7 +34,8 @@ jobs:
         scripts/lint
 
   type_check: 
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-22.04
+    container: quay.io/pypa/manylinux1_x86_64
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -52,7 +54,8 @@ jobs:
         scripts/type_check 
 
   test: 
-    runs-on: ubuntu-20.04 
+    runs-on: ubuntu-22.04
+    container: quay.io/pypa/manylinux1_x86_64
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -94,8 +97,9 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
+    container: quay.io/pypa/manylinux1_x86_64
     defaults:
       run:
         shell: bash
@@ -125,8 +129,9 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
+    container: quay.io/pypa/manylinux1_x86_64
     defaults:
       run:
         shell: bash

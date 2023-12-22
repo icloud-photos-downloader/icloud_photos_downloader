@@ -3,7 +3,7 @@ set -euo pipefail
 
 # prepare bin packages in dist
 # expects python with installed dependencies
-# required param: version
+# required param: version arch
 
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-windows-$2
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-windows-$2

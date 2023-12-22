@@ -3,7 +3,7 @@ set -euo pipefail
 
 # prepare binary wheels in dist
 # expects dist to have comipled binary versions
-# required param: version
+# required params: version
 # https://packaging.python.org/en/latest/specifications/platform-compatibility-tags/#platform-compatibility-tags
 
 # clean start

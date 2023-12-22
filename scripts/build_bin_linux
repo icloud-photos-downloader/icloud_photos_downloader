@@ -3,7 +3,7 @@ set -euo pipefail
 
 # prepare npm packages in dist
 # expects dist to have comipled binary versions
-# required param: version
+# required params: version arch
 
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-linux-$2
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-linux-$2
