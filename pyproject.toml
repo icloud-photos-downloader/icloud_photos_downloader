@@ -71,8 +71,9 @@ test = [
 Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
 
 [project.scripts]
-icloudpd = "starters.icloudpd:main"
-icloud = "starters.icloud:main"
+icloudpd = "icloudpd.base:main"
+icloud = "pyicloud_ipd.cmdline:main"
+# the following may not work in src distro
 icloudpd_ex = "starters.icloudpd_ex:main"
 
 [tool.pytest.ini_options]
@@ -90,7 +91,7 @@ addopts = "--doctest-modules"
 
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
-# exclude = ["starters"]
+exclude = ["starters"]
 
 [[tool.mypy.overrides]]
 module = ['piexif.*', 'vcr.*']
