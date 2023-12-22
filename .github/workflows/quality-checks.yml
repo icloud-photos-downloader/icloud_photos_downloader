@@ -425,11 +425,10 @@ jobs:
         run: |
           pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py3-none-any.whl
 
+      - name: Run icloud
+        run: |
+          icloud --help
+
       - name: Run icloudpd
         run: |
           icloudpd --version
-
-      # - name: Run icloud
-      #   run: |
-      #     icloud --help
-

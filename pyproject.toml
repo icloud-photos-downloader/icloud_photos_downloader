@@ -90,7 +90,7 @@ addopts = "--doctest-modules"
 
 [tool.setuptools.packages.find]
 where = ["src"]  # list of folders that contain the packages (["."] by default)
-exclude = ["starters"]
+# exclude = ["starters"]
 
 [[tool.mypy.overrides]]
 module = ['piexif.*', 'vcr.*']
