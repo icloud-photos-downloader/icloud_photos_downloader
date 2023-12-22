@@ -13,9 +13,32 @@ on:
 
 jobs:
 
+  min:
+    runs-on: ubuntu-22.04
+    # strategy:
+    #   matrix:
+    #     python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Run Inside Container
+      uses: addnab/docker-run-action@v3
+      with:
+        registry: quay.io
+        image: pypa/manylinux1_x86_64
+        options: -v ${{ github.workspace }}:/work
+        run: |
+          echo "TBD: Install Python vXX"
+          echo "Checking pip Version"
+          pip --version
+          cd /work
+          echo "Install Test dependencies"
+          pip install -e .[test]
+          echo "Run Lint"
+          scripts/lint
+
   lint:
     runs-on: ubuntu-22.04
-    container: quay.io/pypa/manylinux2010_x86_64
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -35,7 +58,6 @@ jobs:
 
   type_check: 
     runs-on: ubuntu-22.04
-    container: quay.io/pypa/manylinux2010_x86_64
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -55,7 +77,6 @@ jobs:
 
   test: 
     runs-on: ubuntu-22.04
-    container: quay.io/pypa/manylinux2010_x86_64
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -99,7 +120,6 @@ jobs:
   build_src:
     runs-on: ubuntu-22.04
     needs: [get_version]
-    container: quay.io/pypa/manylinux2010_x86_64
     defaults:
       run:
         shell: bash
@@ -131,7 +151,6 @@ jobs:
   build_linux:
     runs-on: ubuntu-22.04
     needs: [get_version]
-    container: quay.io/pypa/manylinux2010_x86_64
     defaults:
       run:
         shell: bash
