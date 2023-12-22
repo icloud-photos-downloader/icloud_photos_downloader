@@ -265,7 +265,7 @@ jobs:
 
   build_npm:
     runs-on: ubuntu-22.04
-    needs: [get_version,build_src,build_linux,build_macos,build_windows]
+    needs: [get_version,build_linux,build_macos,build_windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
