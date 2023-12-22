@@ -13,31 +13,8 @@ on:
 
 jobs:
 
-  min:
-    runs-on: ubuntu-22.04
-    # strategy:
-    #   matrix:
-    #     python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
-    steps:
-    - uses: actions/checkout@v3
-
-    - name: Run Inside Container
-      uses: addnab/docker-run-action@v3
-      with:
-        image: quay.io/pypa/manylinux1_x86_64
-        options: -v ${{ github.workspace }}:/work
-        run: |
-          echo "TBD: Install Python vXX"
-          echo "Checking pip Version"
-          pip --version
-          cd /work
-          echo "Install Test dependencies"
-          pip install -e .[test]
-          echo "Run Lint"
-          scripts/lint
-
   lint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     strategy:
       matrix:
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -56,7 +33,7 @@ jobs:
         scripts/lint
 
   type_check: 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -75,7 +52,7 @@ jobs:
         scripts/type_check 
 
   test: 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     strategy: 
       matrix: 
         python-version: [3.8, 3.9, '3.10', 3.11, 3.12]
@@ -117,7 +94,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_src:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
@@ -148,7 +125,9 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    runs-on: ubuntu-22.04
+    # run on earliest possible linux for better compatibility
+    # ubuntu 20.04 has glibc 2.31 -> manylinux_2_31
+    runs-on: ubuntu-20.04
     needs: [get_version]
     defaults:
       run:
@@ -183,6 +162,7 @@ jobs:
           dist/icloud*
 
   build_macos:
+    # earliest possible mac for better compatibility
     runs-on: macos-11
     needs: [get_version]
     defaults:
@@ -218,6 +198,7 @@ jobs:
           dist/icloud*
 
   build_windows:
+    # earliest possible mac for better compatibility
     runs-on: windows-2019
     needs: [get_version]
     defaults:
@@ -315,3 +296,34 @@ jobs:
           npm publish dist/npm/icloudpd --access public --dry-run=true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  validate_linux_whl:
+    runs-on: ubuntu-20.04
+    needs: [get_version,build_linux,build_macos,build_windows]
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Install Python Binary Wheel
+        run: |
+          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux_2_31_x86_64.whl
+
+      - name: Run icloud
+        run: |
+          icloud --help
+
+      - name: Run icloudpd
+        run: |
+          icloudpd --version
