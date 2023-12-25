@@ -127,7 +127,8 @@ jobs:
   build_linux:
     runs-on: ubuntu-22.04
     needs: [get_version]
-    strategy: 
+    strategy:
+      fail-fast: false
       matrix: 
         platform: ["amd64", "arm64" ] #, "386", "arm/v7", "arm/v6"]
     defaults:
