@@ -151,6 +151,9 @@ jobs:
           echo "install patchelf..."
           apt-get update -y && apt-get install -y patchelf
           cd /work
+          echo "create venv and active..."
+          python3 -m venv .venv
+          source .venv/bin/activate
           echo "install deps..."
           pip3 install -e .[dev,devlinux]
           echo "build binary..."
