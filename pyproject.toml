@@ -47,7 +47,7 @@ dev = [
 ]
 devlinux = [
     "auditwheel==5.4.0",
-    "staticx==0.14.1",
+    #"staticx==0.14.1",
     "scons==4.6.0"
 ]
 test = [

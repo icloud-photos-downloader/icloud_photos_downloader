@@ -155,7 +155,9 @@ jobs:
           python3 -m venv .venv
           source .venv/bin/activate
           echo "install deps..."
-          BOOTLOADER_CC=musl-gcc pip3 install -e .[dev,devlinux]
+          pip3 install -e .[dev,devlinux]
+          echo "install staticx..."
+          BOOTLOADER_CC=musl-gcc pip3 install https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz
           echo "build binary..."
           scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}}
           echo "build binary dist..."
