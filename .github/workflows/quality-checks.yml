@@ -130,7 +130,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix: 
-        platform: ["amd64", "arm64" ] #, "386", "arm/v7", "arm/v6"]
+        platform: ["amd64", "arm64", "386", "arm/v7", "arm/v6"]
     defaults:
       run:
         shell: bash
