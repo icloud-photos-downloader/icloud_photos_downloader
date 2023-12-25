@@ -302,19 +302,14 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   validate_linux_bin_whl:
-    strategy: 
-      matrix: 
-        os: [ubuntu-20.04, ubuntu-22.04]
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-22.04
     needs: [get_version,build_linux]
+    # strategy: 
+    #   matrix: 
+    #     image: ["debian:11"]
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -323,9 +318,14 @@ jobs:
           path: |
             dist
 
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
       - name: Install Python Binary Wheel
         run: |
-          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux_2_31_x86_64.whl
+          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux_2_5_x86_64.manylinux1_x86_64.whl
 
       - name: Run icloud
         run: |
