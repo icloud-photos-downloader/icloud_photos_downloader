@@ -145,8 +145,10 @@ jobs:
       uses: addnab/docker-run-action@v3
       with:
         image: python:3.12
-        options: -v ${{ github.workspace }}:/work
+        options: -v ${{ github.workspace }}:/work --entrypoint /bin/sh
         run: |
+          echo "install patchelf..."
+          apt-get update -y && apt-get install -y patchelf
           cd /work
           echo "install deps..."
           pip3 install -e .[dev]
