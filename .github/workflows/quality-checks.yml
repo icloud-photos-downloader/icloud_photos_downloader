@@ -144,15 +144,10 @@ jobs:
     - name: Build Linux for ${{ matrix.platform }}
       uses: addnab/docker-run-action@v3
       with:
-        image: ubuntu:22.04
+        image: python:3.12
         options: -v ${{ github.workspace }}:/work
         run: |
-          echo "Install python..."
-          apt-get update -y && apt-get install -y python@3.12
           cd /work
-          echo "create venv and active..."
-          python3 -m venv .venv
-          source .venv/bin/activate
           echo "install deps..."
           pip3 install -e .[dev]
           echo "build binary..."
