@@ -125,10 +125,11 @@ jobs:
           dist/icloud*.whl
 
   build_linux:
-    # run on earliest possible linux for better compatibility
-    # ubuntu 20.04 has glibc 2.31 -> manylinux_2_31
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [get_version]
+    strategy: 
+      matrix: 
+        platform: ["amd64" ] #, "arm64", "386", "arm/v7", "arm/v6"]
     defaults:
       run:
         shell: bash
@@ -136,23 +137,29 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+    - name: Set up QEMU
+      if: matrix.platform != 'amd64' # && matrix.platform != '386'
+      uses: docker/setup-qemu-action@v2
+
+    - name: Build Linux for ${{ matrix.platform }}
+      uses: addnab/docker-run-action@v3
       with:
-        python-version: '3.12'
+        image: ubuntu:22.04
+        options: -v ${{ github.workspace }}:/work
+        run: |
+          echo "Install python..."
+          apt-get update -y && apt-get install -y python@3.12
+          cd /work
+          echo "create venv and active..."
+          python3 -m venv .venv
+          source .venv/bin/activate
+          echo "install deps..."
+          pip3 install -e .[dev]
+          echo "build binary..."
+          scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}}
+          echo "build binary dist..."
+          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}}
     
-    - name: Install Dev dependencies
-      run: |
-        pip install -e .[dev]
-
-    - name: Build Release Executables
-      run: |
-        scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}} amd64
-
-    - name: Build Python Binary Wheel
-      run: |
-        scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}}
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
@@ -245,12 +252,6 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-
-    - name: Builder instance name
-      run: echo ${{ steps.buildx.outputs.name }}
-
-    - name: Available platforms
-      run: echo ${{ steps.buildx.outputs.platforms }}
 
     - name: Build Release Docker
       uses: docker/build-push-action@v3
