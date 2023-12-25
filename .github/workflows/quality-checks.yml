@@ -150,8 +150,11 @@ jobs:
         run: |
           echo "install patchelf..."
           apt-get update -y && apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev 
-          cd /work
+          echo "install rustup..."
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          source "$HOME/.cargo/env"
           echo "create venv and active..."
+          cd /work
           python3 -m venv .venv
           source .venv/bin/activate
           echo "install deps..."
