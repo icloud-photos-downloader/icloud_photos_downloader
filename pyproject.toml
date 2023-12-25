@@ -44,6 +44,8 @@ dev = [
     "twine==4.0.2",
     "pyinstaller==5.13.2",
     "wheel==0.42.0",
+]
+devlinux = [
     "auditwheel==5.4.0",
     "staticx==0.14.1"
 ]

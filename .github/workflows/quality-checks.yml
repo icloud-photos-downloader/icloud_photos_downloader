@@ -151,7 +151,7 @@ jobs:
           apt-get update -y && apt-get install -y patchelf
           cd /work
           echo "install deps..."
-          pip3 install -e .[dev]
+          pip3 install -e .[dev,devlinux]
           echo "build binary..."
           scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}}
           echo "build binary dist..."
