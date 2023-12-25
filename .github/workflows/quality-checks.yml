@@ -129,7 +129,7 @@ jobs:
     needs: [get_version]
     strategy: 
       matrix: 
-        platform: ["amd64" ] #, "arm64", "386", "arm/v7", "arm/v6"]
+        platform: ["amd64", "arm64" ] #, "386", "arm/v7", "arm/v6"]
     defaults:
       run:
         shell: bash
@@ -145,7 +145,7 @@ jobs:
       uses: addnab/docker-run-action@v3
       with:
         image: python:3.12
-        options: -v ${{ github.workspace }}:/work --entrypoint /bin/sh
+        options: -v ${{ github.workspace }}:/work --entrypoint /bin/sh --platform linux/${{ matrix.platform }}
         run: |
           echo "install patchelf..."
           apt-get update -y && apt-get install -y patchelf
