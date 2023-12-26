@@ -131,6 +131,7 @@ jobs:
       fail-fast: false
       matrix:
         BUILD_PROP:
+        # https://doc.rust-lang.org/nightly/rustc/platform-support.html
           - [
               "amd64",
               "x86_64-unknown-linux-gnu",
@@ -141,7 +142,7 @@ jobs:
           ]
           - [
               "386",
-              "i686-unknown-linux-gnux32",
+              "i686-unknown-linux-gnu",
           ]
           - [
               "arm/v7",
@@ -155,7 +156,7 @@ jobs:
       PLATFORM: ${{ matrix.BUILD_PROP[0] }}
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
     
-    name: "${{ matrix.BUILD_PROP[0] }}"
+    name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}"
     defaults:
       run:
         shell: bash
