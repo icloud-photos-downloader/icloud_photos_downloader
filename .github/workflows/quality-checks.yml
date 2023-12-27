@@ -333,6 +333,7 @@ jobs:
 
   validate_linux_whl_apt:
     strategy: 
+      fail-fast: false
       matrix:
         image: 
           - [ 
