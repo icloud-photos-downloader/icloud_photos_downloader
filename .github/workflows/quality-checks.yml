@@ -486,15 +486,13 @@ jobs:
       matrix: 
         os: [macos-11, macos-12]
     runs-on: ${{ matrix.os }}
-    needs: [get_version,build_macos]
+    needs: [ get_version, build_macos, build_src ]
 
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Make folder for results
+        run: |
+          mkdir -p results
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -503,17 +501,28 @@ jobs:
           path: |
             dist
 
-      - name: Install Python Binary Wheel
+      - name: Run test for ${{ matrix.os }} on amd64
+        id: run_test
+        continue-on-error: true
         run: |
-          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-macosx_11_0_x86_64.macosx_11_0_arm64.whl
-
-      - name: Run icloud
-        run: |
+          pip install --file-links dist icloudpd==${{needs.get_version.outputs.icloudpd_version}}
           icloud --help
-
-      - name: Run icloudpd
-        run: |
           icloudpd --version
+          echo "check if src..."
+          pip3 list | grep keyring | head -n 1 > results/${{ matrix.os }}.amd64.pass
+
+      - name: Record failure for ${{ matrix.os }} on amd64
+        if: ${{ steps.run_test.outcome == 'failure' }} 
+        run: |
+          touch results/${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          if-no-files-found: error
+          path: |
+            results/*
 
   validate_windows_bin_whl:
     strategy: 
