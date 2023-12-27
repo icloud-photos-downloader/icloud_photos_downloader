@@ -369,6 +369,10 @@ jobs:
           path: |
             dist
 
+      - name: Make folder for results
+        run: |
+          mkdir -p results
+
       - name: Set up QEMU
         if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
         uses: docker/setup-qemu-action@v2
@@ -394,9 +398,8 @@ jobs:
             icloud -h
             echo "test icloudpd..."
             icloudpd --version
-            mkdir -p results
             echo "check if src..."
-            pip3 list | grep keyring | head -n 1 > results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
+            pip3 list | grep keyring | head -n 1 > /work/results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
