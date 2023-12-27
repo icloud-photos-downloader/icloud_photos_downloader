@@ -307,54 +307,54 @@ jobs:
             "python3_12", #variant name
             "python:3.12", #image
             ] 
-          - [ 
-            "debian_6_squeeze", #variant name
-            "debian:squeeze", #image
-            ] 
-          - [ 
-            "debian_7_wheezy", #variant name
-            "debian:wheezy", #image
-            ] 
-          - [ 
-            "debian_8_jessie", #variant name
-            "debian:jessie", #image
-            ] 
-          - [ 
-            "debian_9_stretch", #variant name
-            "debian:stretch", #image
-            ] 
-          - [ 
-            "debian_10_buster", #variant name
-            "debian:buster", #image
-            ] 
-          - [ 
-            "debian_11_bullseye", #variant name
-            "debian:bullseye", #image
-            ] 
+          # - [ 
+          #   "debian_6_squeeze", #variant name
+          #   "debian:squeeze", #image
+          #   ] 
+          # - [ 
+          #   "debian_7_wheezy", #variant name
+          #   "debian:wheezy", #image
+          #   ] 
+          # - [ 
+          #   "debian_8_jessie", #variant name
+          #   "debian:jessie", #image
+          #   ] 
+          # - [ 
+          #   "debian_9_stretch", #variant name
+          #   "debian:stretch", #image
+          #   ] 
+          # - [ 
+          #   "debian_10_buster", #variant name
+          #   "debian:buster", #image
+          #   ] 
+          # - [ 
+          #   "debian_11_bullseye", #variant name
+          #   "debian:bullseye", #image
+          #   ] 
           - [ 
             "debian_12_bookworm", #variant name
             "debian:bookworm", #image
             ] 
-          - [ 
-            "ubuntu_12_precise", #variant name
-            "ubuntu:precise", #image
-            ] 
-          - [ 
-            "ubuntu_14_trusty", #variant name
-            "ubuntu:trusty", #image
-            ] 
-          - [ 
-            "ubuntu_16_xenial", #variant name
-            "ubuntu:xenial", #image
-            ] 
-          - [ 
-            "ubuntu_18_bionic", #variant name
-            "ubuntu:bionic", #image
-            ] 
-          - [ 
-            "ubuntu_20_focal", #variant name
-            "ubuntu:focal", #image
-            ] 
+          # - [ 
+          #   "ubuntu_12_precise", #variant name
+          #   "ubuntu:precise", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_14_trusty", #variant name
+          #   "ubuntu:trusty", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_16_xenial", #variant name
+          #   "ubuntu:xenial", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_18_bionic", #variant name
+          #   "ubuntu:bionic", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_20_focal", #variant name
+          #   "ubuntu:focal", #image
+          #   ] 
           - [ 
             "ubuntu_22_jammy", #variant name
             "ubuntu:jammy", #image
@@ -365,31 +365,31 @@ jobs:
             "amd64",  # platform spec
             "",  # image prefix
           ]
-          - [
-            "i386",  # variant name
-            "i386",  # platform spec
-            "i386/",  # image prefix
-          ]
+          # - [
+          #   "i386",  # variant name
+          #   "i386",  # platform spec
+          #   "i386/",  # image prefix
+          # ]
           - [
             "arm64",  # variant name
             "arm64",  # platform spec
             "",  # image prefix
           ]
-          - [
-            "arm32v7",  # variant name
-            "arm/v7",  # platform spec
-            "arm32v7/",  # image prefix
-          ]
-          - [
-            "arm32v6",  # variant name
-            "arm/v6",  # platform spec
-            "arm32v6/",  # image prefix
-          ]
-          - [
-            "arm32v5",  # variant name
-            "arm/v5",  # platform spec
-            "arm32v5/",  # image prefix
-          ]
+          # - [
+          #   "arm32v7",  # variant name
+          #   "arm/v7",  # platform spec
+          #   "arm32v7/",  # image prefix
+          # ]
+          # - [
+          #   "arm32v6",  # variant name
+          #   "arm/v6",  # platform spec
+          #   "arm32v6/",  # image prefix
+          # ]
+          # - [
+          #   "arm32v5",  # variant name
+          #   "arm/v5",  # platform spec
+          #   "arm32v5/",  # image prefix
+          # ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
 
@@ -465,64 +465,64 @@ jobs:
             "alpine_3_18", #variant name
             "alpine:3.18", #image
             ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-          - [ 
-            "alpine_3_12", #variant name
-            "alpine:3.12", #image
-            ] 
-          - [ 
-            "alpine_3_11", #variant name
-            "alpine:3.11", #image
-            ] 
-          - [ 
-            "alpine_3_10", #variant name
-            "alpine:3.10", #image
-            ] 
+          # - [ 
+          #   "alpine_3_17", #variant name
+          #   "alpine:3.17", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_16", #variant name
+          #   "alpine:3.16", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_15", #variant name
+          #   "alpine:3.15", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_14", #variant name
+          #   "alpine:3.14", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_13", #variant name
+          #   "alpine:3.13", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_12", #variant name
+          #   "alpine:3.12", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_11", #variant name
+          #   "alpine:3.11", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_10", #variant name
+          #   "alpine:3.10", #image
+          #   ] 
         prop: 
           - [
             "amd64",  # variant name
             "amd64",  # platform spec
             "",  # image prefix
           ]
-          - [
-            "i386",  # variant name
-            "i386",  # platform spec
-            "i386/",  # image prefix
-          ]
+          # - [
+          #   "i386",  # variant name
+          #   "i386",  # platform spec
+          #   "i386/",  # image prefix
+          # ]
           - [
             "arm64",  # variant name
             "arm64",  # platform spec
             "",  # image prefix
           ]
-          - [
-            "arm32v7",  # variant name
-            "arm/v7",  # platform spec
-            "arm32v7/",  # image prefix
-          ]
-          - [
-            "arm32v6",  # variant name
-            "arm/v6",  # platform spec
-            "arm32v6/",  # image prefix
-          ]
+          # - [
+          #   "arm32v7",  # variant name
+          #   "arm/v7",  # platform spec
+          #   "arm32v7/",  # image prefix
+          # ]
+          # - [
+          #   "arm32v6",  # variant name
+          #   "arm/v6",  # platform spec
+          #   "arm32v6/",  # image prefix
+          # ]
           # - [
           #   "arm32v5",  # variant name
           #   "arm/v5",  # platform spec
