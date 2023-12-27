@@ -373,7 +373,9 @@ jobs:
         uses: docker/setup-qemu-action@v2
 
       - name: Run test for ${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        id: run_test
         uses: addnab/docker-run-action@v3
+        continue-on-error: true
         with:
           image: ${{ matrix.image[1] }}
           options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
@@ -393,7 +395,12 @@ jobs:
             icloudpd --version
             mkdir -p results
             echo "check if src..."
-            pip3 list | grep keyring | head -n 1 > results_${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
+            pip3 list | grep keyring | head -n 1 > results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
+
+      - name: Record failure for ${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: ${{ steps.run_test.outcome == 'failure' }} 
+        run: |
+          touch results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.fail
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
