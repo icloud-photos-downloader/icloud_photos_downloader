@@ -481,10 +481,10 @@ jobs:
           path: |
             results/*
 
-  validate_macos_bin_whl:
+  validate_nonlinux_whl:
     strategy: 
       matrix: 
-        os: [macos-11, macos-12]
+        os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
     needs: [ get_version, build_macos, build_src ]
 
@@ -492,7 +492,7 @@ jobs:
 
       - name: Make folder for results
         run: |
-          mkdir -p results
+          mkdir results
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
