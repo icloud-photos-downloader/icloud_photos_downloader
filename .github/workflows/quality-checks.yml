@@ -433,11 +433,18 @@ jobs:
         run: |
           mkdir -p results
 
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
       - name: Set up QEMU
         if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
         uses: docker/setup-qemu-action@v2
 
-      - name: Run test for ${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         id: run_test
         uses: addnab/docker-run-action@v3
         continue-on-error: true
@@ -453,23 +460,23 @@ jobs:
             python3 -m venv .venv
             . .venv/bin/activate
             echo "install icloudpd..."
-            pip3 install icloudpd==${{needs.get_version.outputs.icloudpd_version}}
+            pip3 install icloudpd==${{needs.get_version.outputs.icloudpd_version}} --file-links /work/dist
             echo "test icloud..."
             icloud -h
             echo "test icloudpd..."
             icloudpd --version
             echo "check if src..."
-            pip3 list | grep keyring | head -n 1 > /work/results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
+            pip3 list | grep keyring | head -n 1 > /work/results/${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          touch results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.fail
+          touch results/${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-whl-compatibility
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
           if-no-files-found: error
           path: |
             results/*
