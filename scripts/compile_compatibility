@@ -19,9 +19,12 @@ def matrix(files):
 
 def main():
     """ param: folder """
-    files = [[os.path.getsize(f)] + f.split('.') for f in os.listdir(sys.argv[1] if len(sys.argv) > 1 else ".") if os.path.isfile(f) and len(f.split('.')) == 4]
+    folder = sys.argv[1] if len(sys.argv) > 1 else "."
+    files = [f for f in os.listdir(folder) if not os.path.isdir(f)]
+    fts = [[os.path.getsize(os.path.join(folder,f))] + f.split('.') for f in files if len(f.split('.')) == 4]
     print("# Minimal Effort Compatibility")
-    groups = [(k, list(g)) for k, g in itertools.groupby(sorted(files, key = lambda ft: ft[1]), key = lambda ft: ft[1])]
+    print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
+    groups = [(k, list(g)) for k, g in itertools.groupby(sorted(fts, key = lambda ft: ft[1]), key = lambda ft: ft[1])]
     for (g, f) in groups: 
         print(f"## {g}")
         matrix(f)
