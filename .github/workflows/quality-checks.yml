@@ -391,7 +391,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src ]
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
 
     steps:
 
@@ -454,7 +454,7 @@ jobs:
       matrix: 
         os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    needs: [ get_version, build_macos, build_windows, build_src ]
+    needs: [ get_version, build_macos, build_windows, build_linux, build_src ]
 
     steps:
 
