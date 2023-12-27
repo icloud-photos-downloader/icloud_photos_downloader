@@ -338,6 +338,22 @@ jobs:
       matrix:
         image: 
           - [ 
+            "debian_6", #variant name
+            "debian:6", #image
+            ] 
+          - [ 
+            "debian_7", #variant name
+            "debian:7", #image
+            ] 
+          - [ 
+            "debian_8", #variant name
+            "debian:8", #image
+            ] 
+          - [ 
+            "debian_9", #variant name
+            "debian:9", #image
+            ] 
+          - [ 
             "debian_10", #variant name
             "debian:10", #image
             ] 
@@ -346,12 +362,28 @@ jobs:
             "debian:11", #image
             ] 
           - [ 
-            "ubuntu_20_04", #variant name
-            "ubuntu:20.04", #image
+            "ubuntu_12_precise", #variant name
+            "ubuntu:precise", #image
             ] 
           - [ 
-            "ubuntu_22_04", #variant name
-            "ubuntu:22.04", #image
+            "ubuntu_14_trusty", #variant name
+            "ubuntu:trusty", #image
+            ] 
+          - [ 
+            "ubuntu_16_xenial", #variant name
+            "ubuntu:xenial", #image
+            ] 
+          - [ 
+            "ubuntu_18_bionic", #variant name
+            "ubuntu:bionic", #image
+            ] 
+          - [ 
+            "ubuntu_20_focal", #variant name
+            "ubuntu:focal", #image
+            ] 
+          - [ 
+            "ubuntu_22_jammy", #variant name
+            "ubuntu:jammy", #image
             ] 
         prop: 
           - [
