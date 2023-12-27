@@ -339,31 +339,31 @@ jobs:
         image: 
           - [ 
             "debian_6_squeezy", #variant name
-            "debian:6", #image
+            "debian:squeezy", #image
             ] 
           - [ 
             "debian_7_wheezy", #variant name
-            "debian:7", #image
+            "debian:wheezy", #image
             ] 
           - [ 
             "debian_8_jessie", #variant name
-            "debian:8", #image
+            "debian:jessie", #image
             ] 
           - [ 
             "debian_9_stretch", #variant name
-            "debian:9", #image
+            "debian:stretch", #image
             ] 
           - [ 
             "debian_10_buster", #variant name
-            "debian:10", #image
+            "debian:buster", #image
             ] 
           - [ 
             "debian_11_bullseye", #variant name
-            "debian:11", #image
+            "debian:bullseye", #image
             ] 
           - [ 
             "debian_12_bookworm", #variant name
-            "debian:12", #image
+            "debian:bookworm", #image
             ] 
           - [ 
             "ubuntu_12_precise", #variant name
@@ -393,26 +393,32 @@ jobs:
           - [
             "amd64",  # variant name
             "amd64",  # platform spec
+            "",  # image prefix
           ]
           - [
             "i386",  # variant name
             "i386",  # platform spec
+            "i386/",  # image prefix
           ]
           - [
             "arm64",  # variant name
             "arm64",  # platform spec
+            "",  # image prefix
           ]
           - [
-            "armv7",  # variant name
+            "arm32v7",  # variant name
             "arm/v7",  # platform spec
+            "arm32v7/",  # image prefix
           ]
           - [
-            "armv6",  # variant name
+            "arm32v6",  # variant name
             "arm/v6",  # platform spec
+            "arm32v6/",  # image prefix
           ]
           - [
-            "armv5",  # variant name
+            "arm32v5",  # variant name
             "arm/v5",  # platform spec
+            "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux, build_src ]
@@ -432,7 +438,7 @@ jobs:
         uses: addnab/docker-run-action@v3
         continue-on-error: true
         with:
-          image: ${{ matrix.image[1] }}
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
           options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
           run: |
             set -e pipefail
@@ -451,7 +457,7 @@ jobs:
             echo "check if src..."
             pip3 list | grep keyring | head -n 1 > /work/results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
 
-      - name: Record failure for ${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
           touch results/${{ matrix.image[0] }}_${{ matrix.prop[0] }}.fail
@@ -459,7 +465,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-whl-validation
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-whl-compatibility
           if-no-files-found: error
           path: |
             results/*
