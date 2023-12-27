@@ -304,7 +304,7 @@ jobs:
       matrix:
         image: 
           - [ 
-            "python3.12", #variant name
+            "python3_12", #variant name
             "python:3.12", #image
             ] 
           - [ 
@@ -447,6 +447,144 @@ jobs:
           path: |
             compatibility/*
 
+  compatibility_linux_pip_apk:
+    name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
+    strategy: 
+      fail-fast: false
+      matrix:
+        image: 
+          - [ 
+            "python3_12_alpine3_18", #variant name
+            "python:3.12-alpine3.18", #image
+            ] 
+          - [ 
+            "alpine_3_19", #variant name
+            "alpine:3.19", #image
+            ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
+          - [ 
+            "alpine_3_12", #variant name
+            "alpine:3.12", #image
+            ] 
+          - [ 
+            "alpine_3_11", #variant name
+            "alpine:3.11", #image
+            ] 
+          - [ 
+            "alpine_3_10", #variant name
+            "alpine:3.10", #image
+            ] 
+        prop: 
+          - [
+            "amd64",  # variant name
+            "amd64",  # platform spec
+            "",  # image prefix
+          ]
+          - [
+            "i386",  # variant name
+            "i386",  # platform spec
+            "i386/",  # image prefix
+          ]
+          - [
+            "arm64",  # variant name
+            "arm64",  # platform spec
+            "",  # image prefix
+          ]
+          - [
+            "arm32v7",  # variant name
+            "arm/v7",  # platform spec
+            "arm32v7/",  # image prefix
+          ]
+          - [
+            "arm32v6",  # variant name
+            "arm/v6",  # platform spec
+            "arm32v6/",  # image prefix
+          ]
+          # - [
+          #   "arm32v5",  # variant name
+          #   "arm/v5",  # platform spec
+          #   "arm32v5/",  # image prefix
+          # ]
+    runs-on: ubuntu-22.04
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+
+    steps:
+
+      - name: Make folder for compatibility
+        run: |
+          mkdir compatibility
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Set up QEMU
+        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
+        uses: docker/setup-qemu-action@v2
+
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        id: run_test
+        uses: addnab/docker-run-action@v3
+        continue-on-error: true
+        with:
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
+          options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
+          run: |
+            set -e pipefail
+            echo "install default python..."
+            apk update -y && apk add -y python3 python3-venv
+            echo "create venv and active..."
+            cd /work
+            python3 -m venv .venv
+            . .venv/bin/activate
+            echo "install icloudpd..."
+            pip3 install --find-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}}
+            echo "test icloud..."
+            icloud -h
+            echo "test icloudpd..."
+            icloudpd --version
+            echo "check if src..."
+            pip3 list | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: ${{ steps.run_test.outcome == 'failure' }} 
+        run: |
+          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+
+      - name: Upload compatibility result
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          if-no-files-found: error
+          path: |
+            compatibility/*
+
   compatibility_nonlinux_pip:
     name: "PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
@@ -492,11 +630,13 @@ jobs:
           path: |
             compatibility/*
 
+
+
   compatibility_report:
     name: "Build Compatibility Report"
 
     runs-on: ubuntu-22.04
-    needs: [ get_version, compatibility_nonlinux_pip, compatibility_linux_pip_apt ]
+    needs: [ get_version, compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk ]
 
     steps:
 
