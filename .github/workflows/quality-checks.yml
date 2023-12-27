@@ -448,7 +448,9 @@ jobs:
             results/*
 
   validate_nonlinux_whl:
+    name: "WHL on ${{ matrix.os }} on amd64 platform"
     strategy: 
+      fail-fast: false
       matrix: 
         os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
