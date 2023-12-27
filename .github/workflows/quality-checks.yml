@@ -332,6 +332,7 @@ jobs:
           icloudpd --version
 
   validate_linux_whl_apt:
+    name: "WHL on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
       fail-fast: false
       matrix:
@@ -341,13 +342,25 @@ jobs:
             "debian:10", #image
             ] 
           - [ 
+            "debian_11", #variant name
+            "debian:11", #image
+            ] 
+          - [ 
             "ubuntu_20_04", #variant name
             "ubuntu:20.04", #image
+            ] 
+          - [ 
+            "ubuntu_22_04", #variant name
+            "ubuntu:22.04", #image
             ] 
         prop: 
           - [
             "amd64",  # variant name
             "amd64",  # platform spec
+          ]
+          - [
+            "i386",  # variant name
+            "i386",  # platform spec
           ]
           - [
             "arm64",  # variant name
@@ -356,6 +369,14 @@ jobs:
           - [
             "armv7",  # variant name
             "arm/v7",  # platform spec
+          ]
+          - [
+            "armv6",  # variant name
+            "arm/v6",  # platform spec
+          ]
+          - [
+            "armv5",  # variant name
+            "arm/v5",  # platform spec
           ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux, build_src ]
