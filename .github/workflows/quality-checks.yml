@@ -338,28 +338,32 @@ jobs:
       matrix:
         image: 
           - [ 
-            "debian_6", #variant name
+            "debian_6_squeezy", #variant name
             "debian:6", #image
             ] 
           - [ 
-            "debian_7", #variant name
+            "debian_7_wheezy", #variant name
             "debian:7", #image
             ] 
           - [ 
-            "debian_8", #variant name
+            "debian_8_jessie", #variant name
             "debian:8", #image
             ] 
           - [ 
-            "debian_9", #variant name
+            "debian_9_stretch", #variant name
             "debian:9", #image
             ] 
           - [ 
-            "debian_10", #variant name
+            "debian_10_buster", #variant name
             "debian:10", #image
             ] 
           - [ 
-            "debian_11", #variant name
+            "debian_11_bullseye", #variant name
             "debian:11", #image
+            ] 
+          - [ 
+            "debian_12_bookworm", #variant name
+            "debian:12", #image
             ] 
           - [ 
             "ubuntu_12_precise", #variant name
