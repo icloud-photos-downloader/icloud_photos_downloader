@@ -338,6 +338,10 @@ jobs:
       matrix:
         image: 
           - [ 
+            "python3.12", #variant name
+            "python:3.12", #image
+            ] 
+          - [ 
             "debian_6_squeezy", #variant name
             "debian:squeezy", #image
             ] 
