@@ -342,8 +342,8 @@ jobs:
             "python:3.12", #image
             ] 
           - [ 
-            "debian_6_squeezy", #variant name
-            "debian:squeezy", #image
+            "debian_6_squeeze", #variant name
+            "debian:squeeze", #image
             ] 
           - [ 
             "debian_7_wheezy", #variant name
