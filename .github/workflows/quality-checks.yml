@@ -659,6 +659,10 @@ jobs:
 
       - name: Compile compatibility Report
         run: |
+          echo "debugging report..."
+          ls -la compatibility/*
+          scripts/compile_compatibility compatibility
+          echo "save report..."
           scripts/compile_compatibility compatibility > dist/compatibility-${{needs.get_version.outputs.icloudpd_version}}.md
 
       - name: Upload compatibility report
