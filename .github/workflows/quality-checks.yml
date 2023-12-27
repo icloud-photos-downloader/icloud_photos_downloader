@@ -331,6 +331,78 @@ jobs:
         run: |
           icloudpd --version
 
+  validate_linux_whl_apt:
+    strategy: 
+      matrix:
+        image: 
+          - [ 
+            "debian_10", #variant name
+            "debian:10", #image
+            ] 
+          - [ 
+            "ubuntu_20_04", #variant name
+            "ubuntu:20.04", #image
+            ] 
+        prop: 
+          - [
+            "amd64",  # variant name
+            "amd64",  # platform spec
+          ]
+          - [
+            "arm64",  # variant name
+            "arm64",  # platform spec
+          ]
+          - [
+            "armv7",  # variant name
+            "arm/v7",  # platform spec
+          ]
+    runs-on: ubuntu-22.04
+    needs: [ get_version, build_linux ]
+
+    steps:
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          path: |
+            dist
+
+      - name: Set up QEMU
+        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
+        uses: docker/setup-qemu-action@v2
+
+      - name: Run test for ${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        uses: addnab/docker-run-action@v3
+        with:
+          image: ${{ matrix.image[1] }}
+          options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
+          run: |
+            set -e pipefail
+            echo "install default python..."
+            apt-get update -y && apt-get install -y python3
+            echo "create venv and active..."
+            cd /work
+            python3 -m venv .venv
+            . .venv/bin/activate
+            echo "install icloudpd..."
+            pip3 install icloudpd==${{needs.get_version.outputs.icloudpd_version}}
+            echo "test icloud..."
+            icloud -h
+            echo "test icloudpd..."
+            icloudpd --version
+            mkdir -p results
+            echo "check if src..."
+            pip3 list | grep keyring | head -n 1 > results_${{ matrix.image[0] }}_${{ matrix.prop[0] }}.pass
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-whl-validation
+          if-no-files-found: error
+          path: |
+            results/*
+
   validate_macos_bin_whl:
     strategy: 
       matrix: 
