@@ -8,7 +8,7 @@ import itertools
 def matrix(files):
     archs = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[3]), key = lambda ft: ft[3])]
     # caption
-    print('|'.join(["oses and dist"] + archs))
+    print('|'.join(["OSes and distros"] + archs))
     print('|'.join(['-'] + ['-' for a in archs]))
 
     oses = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[2]), key = lambda ft: ft[2])]
@@ -24,6 +24,7 @@ def main():
     fts = [[os.path.getsize(os.path.join(folder,f))] + f.split('.') for f in files if len(f.split('.')) == 4]
     print("# Minimal Effort Compatibility")
     print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
+    print("")
     print("Legend:")
     print("- N/A - not applicable/available")
     print("- pass - test pass")
