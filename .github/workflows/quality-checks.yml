@@ -297,8 +297,8 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  validate_linux_whl_apt:
-    name: "WHL on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
+  compatibility_linux_pip_apt:
+    name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
       fail-fast: false
       matrix:
@@ -395,9 +395,9 @@ jobs:
 
     steps:
 
-      - name: Make folder for results
+      - name: Make folder for compatibility
         run: |
-          mkdir -p results
+          mkdir compatibility
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -432,12 +432,12 @@ jobs:
             echo "test icloudpd..."
             icloudpd --version
             echo "check if src..."
-            pip3 list | grep keyring | head -n 1 > /work/results/${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            pip3 list | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          touch results/${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v3
@@ -445,10 +445,10 @@ jobs:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
           if-no-files-found: error
           path: |
-            results/*
+            compatibility/*
 
-  validate_nonlinux_whl:
-    name: "WHL on ${{ matrix.os }} on amd64 platform"
+  compatibility_nonlinux_pip:
+    name: "PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
       fail-fast: false
       matrix: 
@@ -458,9 +458,9 @@ jobs:
 
     steps:
 
-      - name: Make folder for results
+      - name: Make folder for compatibility
         run: |
-          mkdir results
+          mkdir compatibility
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -477,17 +477,48 @@ jobs:
           icloud --help
           icloudpd --version
           echo "check if src..."
-          pip3 list | grep keyring | head -n 1 > results/${{ matrix.os }}.amd64.pass
+          pip3 list | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
 
       - name: Record failure for ${{ matrix.os }} on amd64
         if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          touch results/${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
-      - name: Upload artifacts
+      - name: Upload compatibility
         uses: actions/upload-artifact@v3
         with:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
           if-no-files-found: error
           path: |
-            results/*
+            compatibility/*
+
+  compatibility_report:
+    name: "Build Compatibility Report"
+
+    runs-on: ubuntu-22.04
+    needs: [ get_version, compatibility_nonlinux_pip, compatibility_linux_pip_apt ]
+
+    steps:
+
+      - name: Make folder for artifacts
+        run: |
+          mkdir dist
+
+      - name: Download compatibility results
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          path: |
+            compatibility
+
+      - name: Compile compatibility Report
+        run: |
+          scripts/compile_compatibility compatibility > dist/compatibility-${{needs.get_version.outputs.icloudpd_version}}.md
+
+      - name: Upload compatibility report
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          if-no-files-found: error
+          path: |
+            dist/*
