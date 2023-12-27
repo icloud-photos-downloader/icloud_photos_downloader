@@ -9,12 +9,12 @@ def matrix(files):
     archs = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[3]), key = lambda ft: ft[3])]
     # caption
     print('|'.join(["oses and dist"] + archs))
-    print('---')
+    print('|'.join(['-'] + ['-' for a in archs]))
 
     oses = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[2]), key = lambda ft: ft[2])]
     for o in oses:
         results_raw = [list(filter(lambda ft: ft[2] == o and ft[3] == a, files)) for a in archs]
-        results = ["N/A" if len(r) == 0 else r[0][4] for r in results_raw]
+        results = ["N/A" if len(r) == 0 else (r[0][4] + ("" if r[0][0] == 0 else " (src)")) for r in results_raw]
         print('|'.join([o] + results))
 
 def main():
@@ -24,6 +24,11 @@ def main():
     fts = [[os.path.getsize(os.path.join(folder,f))] + f.split('.') for f in files if len(f.split('.')) == 4]
     print("# Minimal Effort Compatibility")
     print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
+    print("Legend:")
+    print("- N/A - not applicable/available")
+    print("- pass - test pass")
+    print("- fail - test fail")
+    print("- pass (src) - test pass using src (for pip)")
     groups = [(k, list(g)) for k, g in itertools.groupby(sorted(fts, key = lambda ft: ft[1]), key = lambda ft: ft[1])]
     for (g, f) in groups: 
         print(f"## {g}")
