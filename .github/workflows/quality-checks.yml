@@ -454,7 +454,7 @@ jobs:
       matrix: 
         os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    needs: [ get_version, build_macos, build_src ]
+    needs: [ get_version, build_macos, build_windows, build_src ]
 
     steps:
 
