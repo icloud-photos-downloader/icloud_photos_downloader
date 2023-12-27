@@ -383,13 +383,6 @@ jobs:
 
     steps:
 
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
-          path: |
-            dist
-
       - name: Make folder for results
         run: |
           mkdir -p results
