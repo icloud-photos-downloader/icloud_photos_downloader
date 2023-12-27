@@ -460,7 +460,7 @@ jobs:
             python3 -m venv .venv
             . .venv/bin/activate
             echo "install icloudpd..."
-            pip3 install --file-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}}
+            pip3 install --find-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}}
             echo "test icloud..."
             icloud -h
             echo "test icloudpd..."
@@ -505,7 +505,7 @@ jobs:
         id: run_test
         continue-on-error: true
         run: |
-          pip install --file-links dist icloudpd==${{needs.get_version.outputs.icloudpd_version}}
+          pip install --find-links dist icloudpd==${{needs.get_version.outputs.icloudpd_version}}
           icloud --help
           icloudpd --version
           echo "check if src..."
