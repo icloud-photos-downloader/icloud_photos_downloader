@@ -434,9 +434,10 @@ jobs:
             icloud -h &&
             echo "test icloudpd..." &&
             icloudpd --version &&
-            touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-          # echo "check if src..." &&
-          # pip3 list | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            echo "check if src..." &&
+            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
+
+          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
@@ -576,9 +577,9 @@ jobs:
             icloud -h &&
             echo "test icloudpd..." &&
             icloudpd --version &&
-            touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-          # echo "check if src..." &&
-          # pip3 list | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            echo "check if src..." &&
+            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
+          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
@@ -626,7 +627,7 @@ jobs:
 
         # &&
         # echo "check if src..."  &&
-        # pip3 list | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
+        # pip3 list --disable-pip-version-check | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
 
       - name: Record failure for ${{ matrix.os }} on amd64
         if: ${{ steps.run_test.outcome == 'failure' }} 
