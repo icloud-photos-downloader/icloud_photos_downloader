@@ -5,14 +5,18 @@ set -euo pipefail
 # expects python with installed dependencies
 # required params: version plat
 
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-linux
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-linux
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py --name icloudpd-ex-$1-linux
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-linux-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-linux-$2
+pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py --name icloudpd-ex-$1-linux-$2
 
-staticx dist/icloudpd-$1-linux dist/icloudpd-$1-linux-$2
-staticx dist/icloud-$1-linux dist/icloud-$1-linux-$2
-staticx dist/icloudpd-ex-$1-linux dist/icloudpd-ex-$1-linux-$2
+staticx dist/icloudpd-$1-linux-$2 dist/icloudpd-$1-linux-$2.static
+staticx dist/icloud-$1-linux-$2 dist/icloud-$1-linux-$2.static
+staticx dist/icloudpd-ex-$1-linux-$2 dist/icloudpd-ex-$1-linux-$2.static
 
-rm dist/icloudpd-$1-linux
-rm dist/icloud-$1-linux
-rm dist/icloudpd-ex-$1-linux
+mv -f dist/icloudpd-$1-linux-$2.static dist/icloudpd-$1-linux-$2
+mv -f dist/icloud-$1-linux-$2.static dist/icloud-$1-linux-$2
+mv -f dist/icloudpd-ex-$1-linux-$2.static dist/icloudpd-ex-$1-linux-$2
+
+chmod 755 dist/icloudpd-$1-linux-$2
+chmod 755 dist/icloud-$1-linux-$2
+chmod 755 dist/icloudpd-ex-$1-linux-$2
