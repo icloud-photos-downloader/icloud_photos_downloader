@@ -26,7 +26,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install Test dependencies
       run: |
-        pip install -e .[test]
+        pip3 install --disable-pip-version-check -e .[test]
 
     - name: Lint
       run: |
@@ -46,7 +46,7 @@ jobs:
         cache: 'pip' 
     - name: Install Test dependencies 
       run: | 
-        pip install -e .[test] 
+        pip3 install --disable-pip-version-check -e .[test] 
     - name: Type Check 
       run: | 
         scripts/type_check 
@@ -65,7 +65,7 @@ jobs:
         cache: 'pip' 
     - name: Install Test dependencies 
       run: | 
-        pip install -e .[test] 
+        pip3 install --disable-pip-version-check -e .[test] 
  
     - name: Test
       run: |
@@ -110,7 +110,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: |
-        pip install -e .[dev]
+        pip3 install --disable-pip-version-check -e .[dev]
 
     - name: Build Python Wheel
       run: |
@@ -143,7 +143,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: |
-        pip install -e .[dev]
+        pip3 install --disable-pip-version-check -e .[dev]
 
     - name: Build Release Executables
       run: |
@@ -179,7 +179,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: |
-        pip install -e .[dev]
+        pip3 install --disable-pip-version-check -e .[dev]
 
     - name: Build Release Executables
       run: |
@@ -215,7 +215,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: |
-        pip install -e .[dev]
+        pip3 install --disable-pip-version-check -e .[dev]
 
     - name: Build Release Executables
       run: |
@@ -297,20 +297,110 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
-  validate_linux_bin_whl:
+  compatibility_linux_pip_apt:
+    name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
-      matrix: 
-        os: [ubuntu-20.04, ubuntu-22.04]
-    runs-on: ${{ matrix.os }}
-    needs: [get_version,build_linux]
+      fail-fast: false
+      matrix:
+        image: 
+          - [ 
+            "python3_12", #variant name
+            "python:3.12", #image
+            ] 
+          - [ 
+            "debian_6_squeeze", #variant name
+            "debian:squeeze", #image
+            ] 
+          - [ 
+            "debian_7_wheezy", #variant name
+            "debian:wheezy", #image
+            ] 
+          - [ 
+            "debian_8_jessie", #variant name
+            "debian:jessie", #image
+            ] 
+          - [ 
+            "debian_9_stretch", #variant name
+            "debian:stretch", #image
+            ] 
+          - [ 
+            "debian_10_buster", #variant name
+            "debian:buster", #image
+            ] 
+          - [ 
+            "debian_11_bullseye", #variant name
+            "debian:bullseye", #image
+            ] 
+          - [ 
+            "debian_12_bookworm", #variant name
+            "debian:bookworm", #image
+            ] 
+          - [ 
+            "ubuntu_12_precise", #variant name
+            "ubuntu:precise", #image
+            ] 
+          - [ 
+            "ubuntu_14_trusty", #variant name
+            "ubuntu:trusty", #image
+            ] 
+          - [ 
+            "ubuntu_16_xenial", #variant name
+            "ubuntu:xenial", #image
+            ] 
+          - [ 
+            "ubuntu_18_bionic", #variant name
+            "ubuntu:bionic", #image
+            ] 
+          - [ 
+            "ubuntu_20_focal", #variant name
+            "ubuntu:focal", #image
+            ] 
+          - [ 
+            "ubuntu_22_jammy", #variant name
+            "ubuntu:jammy", #image
+            ] 
+        prop: 
+          - [
+            "amd64",  # variant name
+            "amd64",  # platform spec
+            "",  # image prefix
+          ]
+          - [
+            "i386",  # variant name
+            "i386",  # platform spec
+            "i386/",  # image prefix
+          ]
+          - [
+            "arm64",  # variant name
+            "arm64",  # platform spec
+            "",  # image prefix
+          ]
+          - [
+            "arm32v7",  # variant name
+            "arm/v7",  # platform spec
+            "arm32v7/",  # image prefix
+          ]
+          - [
+            "arm32v6",  # variant name
+            "arm/v6",  # platform spec
+            "arm32v6/",  # image prefix
+          ]
+          - [
+            "arm32v5",  # variant name
+            "arm/v5",  # platform spec
+            "arm32v5/",  # image prefix
+          ]
+    runs-on: ubuntu-22.04
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Make folder for compatibility
+        run: |
+          mkdir compatibility
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -319,32 +409,141 @@ jobs:
           path: |
             dist
 
-      - name: Install Python Binary Wheel
-        run: |
-          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-manylinux_2_31_x86_64.whl
+      - name: Set up QEMU
+        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
+        uses: docker/setup-qemu-action@v2
 
-      - name: Run icloud
-        run: |
-          icloud --help
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        id: run_test
+        uses: addnab/docker-run-action@v3
+        continue-on-error: true
+        with:
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
+          shell: bash
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
+          run: >
+            echo "install default python..." &&
+            apt-get update -y && apt-get install -y python3 python3-venv &&
+            echo "create venv and active..." &&
+            cd /work &&
+            python3 -m venv .venv &&
+            . .venv/bin/activate &&
+            echo "install icloudpd..." &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
+            echo "test icloud..." &&
+            icloud -h &&
+            echo "test icloudpd..." &&
+            icloudpd --version &&
+            echo "check if src..." &&
+            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
 
-      - name: Run icloudpd
-        run: |
-          icloudpd --version
+          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
-  validate_macos_bin_whl:
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: ${{ steps.run_test.outcome == 'failure' }} 
+        run: |
+          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+
+      - name: Upload compatibility result
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          if-no-files-found: error
+          path: |
+            compatibility/*
+
+  compatibility_linux_pip_apk:
+    name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
     strategy: 
-      matrix: 
-        os: [macos-11, macos-12]
-    runs-on: ${{ matrix.os }}
-    needs: [get_version,build_macos]
+      fail-fast: false
+      matrix:
+        image: 
+          - [ 
+            "python3_12_alpine3_18", #variant name
+            "python:3.12-alpine3.18", #image
+            ] 
+          - [ 
+            "alpine_3_19", #variant name
+            "alpine:3.19", #image
+            ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
+          - [ 
+            "alpine_3_12", #variant name
+            "alpine:3.12", #image
+            ] 
+          - [ 
+            "alpine_3_11", #variant name
+            "alpine:3.11", #image
+            ] 
+          - [ 
+            "alpine_3_10", #variant name
+            "alpine:3.10", #image
+            ] 
+        prop: 
+          - [
+            "amd64",  # variant name
+            "amd64",  # platform spec
+            "",  # image prefix
+          ]
+          - [
+            "i386",  # variant name
+            "i386",  # platform spec
+            "i386/",  # image prefix
+          ]
+          - [
+            "arm64",  # variant name
+            "arm64",  # platform spec
+            "",  # image prefix
+          ]
+          - [
+            "arm32v7",  # variant name
+            "arm/v7",  # platform spec
+            "arm32v7/",  # image prefix
+          ]
+          - [
+            "arm32v6",  # variant name
+            "arm/v6",  # platform spec
+            "arm32v6/",  # image prefix
+          ]
+          - [
+            "arm32v5",  # variant name
+            "arm/v5",  # platform spec
+            "arm32v5/",  # image prefix
+          ]
+    runs-on: ubuntu-22.04
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Make folder for compatibility
+        run: |
+          mkdir compatibility
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -353,32 +552,62 @@ jobs:
           path: |
             dist
 
-      - name: Install Python Binary Wheel
-        run: |
-          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-macosx_11_0_x86_64.macosx_11_0_arm64.whl
+      - name: Set up QEMU
+        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
+        uses: docker/setup-qemu-action@v2
 
-      - name: Run icloud
-        run: |
-          icloud --help
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        id: run_test
+        uses: addnab/docker-run-action@v3
+        continue-on-error: true
+        with:
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
+          shell: bash
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
+          run: >
+            echo "install default python..." &&
+            apk update && apk add python3 &&
+            echo "create venv and active..." &&
+            cd /work &&
+            python3 -m venv .venv &&
+            . .venv/bin/activate &&
+            echo "install icloudpd..." &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
+            echo "test icloud..." &&
+            icloud -h &&
+            echo "test icloudpd..." &&
+            icloudpd --version &&
+            echo "check if src..." &&
+            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
+          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
-      - name: Run icloudpd
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          icloudpd --version
+          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
-  validate_windows_bin_whl:
+      - name: Upload compatibility result
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          if-no-files-found: error
+          path: |
+            compatibility/*
+
+  compatibility_nonlinux_pip:
+    name: "PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
+      fail-fast: false
       matrix: 
-        os: [windows-2019, windows-2022]
+        os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    needs: [get_version,build_windows]
+    needs: [ get_version, build_macos, build_windows, build_linux, build_src ]
 
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Set up Python 3.12
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.12'
+      - name: Make folder for compatibility
+        run: |
+          mkdir compatibility
 
       - name: Download artifacts
         uses: actions/download-artifact@v3
@@ -387,48 +616,73 @@ jobs:
           path: |
             dist
 
-      - name: Install Python Binary Wheel
-        run: |
-          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py2.py3-none-win_amd64.whl
+      - name: Run test for ${{ matrix.os }} on amd64
+        id: run_test
+        continue-on-error: true
+        run: >
+          pip3 install --disable-pip-version-check --find-links dist icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
+          icloud --help &&
+          icloudpd --version &&
+          touch compatibility/pip.${{ matrix.os }}.amd64.pass
 
-      - name: Run icloud
-        run: |
-          icloud --help
+        # &&
+        # echo "check if src..."  &&
+        # pip3 list --disable-pip-version-check | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
 
-      - name: Run icloudpd
+      - name: Record failure for ${{ matrix.os }} on amd64
+        if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          icloudpd --version
+          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
-  validate_src_whl:
-    strategy: 
-      matrix: 
-        os: [ubuntu-20.04, ubuntu-22.04, macos-11, macos-12, windows-2019, windows-2022]
-    runs-on: ${{ matrix.os }}
-    needs: [get_version,build_src]
+      - name: Upload compatibility result
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          if-no-files-found: error
+          path: |
+            compatibility/*
+
+  compatibility_report:
+    name: "Build Compatibility Report"
+
+    runs-on: ubuntu-22.04
+    needs: [ get_version, compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk ]
+    defaults:
+      run:
+        shell: bash
 
     steps:
-      - uses: actions/checkout@v3
+
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Set up Python 3.12
         uses: actions/setup-python@v4
         with:
           python-version: '3.12'
+    
+      - name: Make folder for artifacts
+        run: |
+          mkdir dist
 
-      - name: Download artifacts
+      - name: Download compatibility results
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
           path: |
-            dist
+            compatibility
 
-      - name: Install Python Source Wheel
+      - name: Compile compatibility Report
         run: |
-          pip install dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-py3-none-any.whl
+          echo "debugging report..."
+          scripts/compile_compatibility compatibility
+          echo "save report..."
+          scripts/compile_compatibility compatibility > dist/compatibility-${{needs.get_version.outputs.icloudpd_version}}.md
 
-      - name: Run icloud
-        run: |
-          icloud --help
-
-      - name: Run icloudpd
-        run: |
-          icloudpd --version
+      - name: Upload compatibility report
+        uses: actions/upload-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          if-no-files-found: error
+          path: |
+            dist/*

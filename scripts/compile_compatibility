@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+""" takes results of compatibility tests and compie into one file """
+
+import os
+import sys
+import itertools
+
+def matrix(files):
+    archs = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[3]), key = lambda ft: ft[3])]
+    # caption
+    print('|'.join(["OSes and distros"] + archs))
+    print('|'.join(['-'] + ['-' for a in archs]))
+
+    oses = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[2]), key = lambda ft: ft[2])]
+    for o in oses:
+        results_raw = [list(filter(lambda ft: ft[2] == o and ft[3] == a, files)) for a in archs]
+        results = ["N/A" if len(r) == 0 else (r[0][4] + ("" if r[0][0] == 0 else " (src)")) for r in results_raw]
+        print('|'.join([o] + results))
+
+def main():
+    """ param: folder """
+    folder = sys.argv[1] if len(sys.argv) > 1 else "."
+    files = [f for f in os.listdir(folder) if not os.path.isdir(f)]
+    fts = [[os.path.getsize(os.path.join(folder,f))] + f.split('.') for f in files if len(f.split('.')) == 4]
+    print("# Minimal Effort Compatibility")
+    print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
+    print("")
+    print("Legend:")
+    print("- N/A - not applicable/available")
+    print("- pass - test pass")
+    print("- fail - test fail")
+    print("- pass (src) - test pass using src (for pip)")
+    groups = [(k, list(g)) for k, g in itertools.groupby(sorted(fts, key = lambda ft: ft[1]), key = lambda ft: ft[1])]
+    for (g, f) in groups: 
+        print(f"## {g}")
+        matrix(f)
+
+if __name__ == "__main__":
+    main()
