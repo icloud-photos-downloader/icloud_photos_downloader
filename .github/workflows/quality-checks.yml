@@ -429,7 +429,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --find-links /work/dist --no-index icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
+            pip3 install --find-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
@@ -572,7 +572,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --find-links /work/dist --no-index icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
+            pip3 install --find-links /work/dist icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
@@ -620,7 +620,7 @@ jobs:
         id: run_test
         continue-on-error: true
         run: >
-          pip3 install --find-links dist --no-index icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
+          pip3 install --find-links dist icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
           icloud --help &&
           icloudpd --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
