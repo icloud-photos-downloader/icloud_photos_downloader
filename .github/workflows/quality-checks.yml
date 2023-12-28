@@ -398,6 +398,9 @@ jobs:
 
     steps:
 
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Make folder for compatibility
         run: |
           mkdir compatibility
@@ -539,6 +542,9 @@ jobs:
 
     steps:
 
+      - name: Checkout code
+        uses: actions/checkout@v3
+
       - name: Make folder for compatibility
         run: |
           mkdir compatibility
@@ -601,6 +607,9 @@ jobs:
     needs: [ get_version, build_macos, build_windows, build_linux, build_src ]
 
     steps:
+
+      - name: Checkout code
+        uses: actions/checkout@v3
 
       - name: Make folder for compatibility
         run: |
