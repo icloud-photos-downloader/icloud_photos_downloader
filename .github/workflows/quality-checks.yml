@@ -392,6 +392,9 @@ jobs:
           # ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+    defaults:
+      run:
+        shell: bash
 
     steps:
 
@@ -418,7 +421,7 @@ jobs:
           image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
           options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
           run: |
-            set -e pipefail
+            set -euo pipefail
             echo "install default python..."
             apt-get update -y && apt-get install -y python3 python3-venv
             echo "create venv and active..."
@@ -530,6 +533,9 @@ jobs:
           # ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+    defaults:
+      run:
+        shell: bash
 
     steps:
 
@@ -556,7 +562,7 @@ jobs:
           image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
           options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
           run: |
-            set -e pipefail
+            set -euo pipefail
             echo "install default python..."
             apk update && apk add python3
             echo "create venv and active..."
@@ -635,6 +641,9 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: [ get_version, compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk ]
+    defaults:
+      run:
+        shell: bash
 
     steps:
 
@@ -659,6 +668,7 @@ jobs:
 
       - name: Compile compatibility Report
         run: |
+          set -euo pipefail
           echo "debugging report..."
           scripts/compile_compatibility compatibility
           echo "save report..."
