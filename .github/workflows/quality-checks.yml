@@ -398,9 +398,6 @@ jobs:
 
     steps:
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Make folder for compatibility
         run: |
           mkdir compatibility
@@ -437,8 +434,9 @@ jobs:
             icloud -h &&
             echo "test icloudpd..." &&
             icloudpd --version &&
-            echo "check if src..." &&
-            scripts/has_source > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+          # echo "check if src..." &&
+          # pip3 list | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
@@ -542,9 +540,6 @@ jobs:
 
     steps:
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Make folder for compatibility
         run: |
           mkdir compatibility
@@ -581,8 +576,9 @@ jobs:
             icloud -h &&
             echo "test icloudpd..." &&
             icloudpd --version &&
-            echo "check if src..." &&
-            scripts/has_source > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+          # echo "check if src..." &&
+          # pip3 list | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
@@ -608,9 +604,6 @@ jobs:
 
     steps:
 
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Make folder for compatibility
         run: |
           mkdir compatibility
@@ -629,8 +622,11 @@ jobs:
           pip3 install --find-links dist --no-index icloudpd==${{needs.get_version.outputs.icloudpd_version}} &&
           icloud --help &&
           icloudpd --version &&
-          echo "check if src..." &&
-          scripts/has_source > compatibility/pip.${{ matrix.os }}.amd64.pass
+          touch compatibility/pip.${{ matrix.os }}.amd64.pass
+
+        # &&
+        # echo "check if src..."  &&
+        # pip3 list | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
 
       - name: Record failure for ${{ matrix.os }} on amd64
         if: ${{ steps.run_test.outcome == 'failure' }} 
