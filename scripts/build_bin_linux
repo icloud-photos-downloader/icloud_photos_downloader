@@ -9,9 +9,9 @@ pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzd
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-linux-$2
 pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py --name icloudpd-ex-$1-linux-$2
 
-staticx dist/icloudpd-$1-linux-$2 dist/icloudpd-$1-linux-$2.static
-staticx dist/icloud-$1-linux-$2 dist/icloud-$1-linux-$2.static
-staticx dist/icloudpd-ex-$1-linux-$2 dist/icloudpd-ex-$1-linux-$2.static
+staticx --loglevel INFO dist/icloudpd-$1-linux-$2 dist/icloudpd-$1-linux-$2.static
+staticx --loglevel INFO dist/icloud-$1-linux-$2 dist/icloud-$1-linux-$2.static
+staticx --loglevel INFO dist/icloudpd-ex-$1-linux-$2 dist/icloudpd-ex-$1-linux-$2.static
 
 mv -f dist/icloudpd-$1-linux-$2.static dist/icloudpd-$1-linux-$2
 mv -f dist/icloud-$1-linux-$2.static dist/icloud-$1-linux-$2
