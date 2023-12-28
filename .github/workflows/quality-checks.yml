@@ -375,11 +375,11 @@ jobs:
             "arm64",  # platform spec
             "",  # image prefix
           ]
-          # - [
-          #   "arm32v7",  # variant name
-          #   "arm/v7",  # platform spec
-          #   "arm32v7/",  # image prefix
-          # ]
+          - [
+            "arm32v7",  # variant name
+            "arm/v7",  # platform spec
+            "arm32v7/",  # image prefix
+          ]
           # - [
           #   "arm32v6",  # variant name
           #   "arm/v6",  # platform spec
@@ -515,11 +515,11 @@ jobs:
             "arm64",  # platform spec
             "",  # image prefix
           ]
-          # - [
-          #   "arm32v7",  # variant name
-          #   "arm/v7",  # platform spec
-          #   "arm32v7/",  # image prefix
-          # ]
+          - [
+            "arm32v7",  # variant name
+            "arm/v7",  # platform spec
+            "arm32v7/",  # image prefix
+          ]
           # - [
           #   "arm32v6",  # variant name
           #   "arm/v6",  # platform spec
