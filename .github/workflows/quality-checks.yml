@@ -421,7 +421,6 @@ jobs:
           image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
           options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
           run: |
-            set -euo pipefail
             echo "install default python..."
             apt-get update -y && apt-get install -y python3 python3-venv
             echo "create venv and active..."
@@ -562,7 +561,6 @@ jobs:
           image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
           options: -v ${{ github.workspace }}:/work --entrypoint /bin/bash --platform linux/${{ matrix.prop[1] }}
           run: |
-            set -euo pipefail
             echo "install default python..."
             apk update && apk add python3
             echo "create venv and active..."
@@ -668,7 +666,6 @@ jobs:
 
       - name: Compile compatibility Report
         run: |
-          set -euo pipefail
           echo "debugging report..."
           scripts/compile_compatibility compatibility
           echo "save report..."
