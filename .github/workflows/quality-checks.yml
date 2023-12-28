@@ -148,14 +148,14 @@ jobs:
               "arm/v7",
               "armv7-unknown-linux-gnueabihf",
           ]
-          - [
-              "arm/v6",
-              "arm-unknown-linux-gnueabi",
-          ]
-          - [
-              "arm/v5",
-              "arm-unknown-linux-gnueabi",
-          ]
+          # - [
+          #     "arm/v6",
+          #     "arm-unknown-linux-gnueabi",
+          # ]
+          # - [
+          #     "arm/v5",
+          #     "arm-unknown-linux-gnueabi",
+          # ]
     env:
       PLATFORM: ${{ matrix.BUILD_PROP[0] }}
       TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
