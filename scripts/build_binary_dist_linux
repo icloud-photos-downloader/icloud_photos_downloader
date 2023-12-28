@@ -3,7 +3,7 @@ set -euo pipefail
 
 # prepare binary wheels in dist
 # expects dist to have comipled binary versions
-# required param: version
+# required param: version plat
 
 # clean start
 rm -rf dist/binary_dist
@@ -13,10 +13,8 @@ cp -r binary_dist dist/binary_dist
 cp LICENSE.md dist/binary_dist/
 cp README_PYPI.md dist/binary_dist/
 
-# cp dist/icloudpd-$1-linux-amd64 dist/binary_dist/src/icloudpd/icloudpd
-# cp dist/icloud-$1-linux-amd64 dist/binary_dist/src/icloud/icloud
-staticx dist/icloudpd-$1-linux dist/binary_dist/src/icloudpd/icloudpd
-staticx dist/icloud-$1-linux dist/binary_dist/src/icloud/icloud
+cp dist/icloudpd-$1-linux-$2 dist/binary_dist/src/icloudpd/icloudpd
+cp dist/icloud-$1-linux-$2 dist/binary_dist/src/icloud/icloud
 python3 -m pip wheel dist/binary_dist/ -w dist/binary_dist --no-deps --no-build-isolation
 
 # mv -f dist/binary_dist/icloudpd-$1-py2.py3-none-any.whl dist/icloudpd-$1-py2.py3-none-manylinux_2_31_x86_64.whl
