@@ -1,0 +1,4 @@
+#!/bin/bash
+set -euo pipefail
+
+pip3 list | grep keyring | head -n 1
