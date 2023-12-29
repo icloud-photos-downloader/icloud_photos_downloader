@@ -628,7 +628,7 @@ jobs:
         continue-on-error: true
         with:
           image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
-          shell: bash
+          shell: sh
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
           run: >
             echo "install default python..." &&
