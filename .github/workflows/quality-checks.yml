@@ -135,32 +135,38 @@ jobs:
           - [
               "amd64", # docker plat
               "x86_64-unknown-linux-gnu", # rust triplet
-              "amd64", # file suffix
+              "amd64", # internal file suffix
+              "x86_64", # pip file suffix
           ]
           - [
               "arm64",
               "aarch64-unknown-linux-gnu",
               "arm64", # file suffix
+              "aarch64", # pip file suffix
           ]
           - [
               "386",
               "i686-unknown-linux-gnu",
               "386", # file suffix
+              "i686", # pip file suffix
           ]
           - [
               "arm/v7",
               "armv7-unknown-linux-gnueabihf",
-              "amd32v7", # file suffix
+              "arm32v7", # file suffix
+              "armv7l", # pip file suffix
           ]
           # - [
           #     "arm/v6",
           #     "arm-unknown-linux-gnueabi",
           #     "arm32v6", # file suffix
+          #     "armv6", # pip file suffix
           # ]
           # - [
           #     "arm/v5",
           #     "arm-unknown-linux-gnueabi",
-          #     "arm32v6", # file suffix
+          #     "arm32v5", # file suffix
+              # "armv5", # pip file suffix
           # ]
     # env:
     #   PLATFORM: ${{ matrix.BUILD_PROP[0] }}
@@ -208,7 +214,7 @@ jobs:
           echo "build binary..." &&
           scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} &&
           echo "build binary dist..." &&
-          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }}
+          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} ${{ matrix.BUILD_PROP[3] }}
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
