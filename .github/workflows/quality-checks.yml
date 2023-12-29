@@ -137,11 +137,11 @@ jobs:
               "x86_64-unknown-linux-gnu", # rust triplet
               "amd64", # file suffix
           ]
-          # - [
-          #     "arm64",
-          #     "aarch64-unknown-linux-gnu",
-          #     "arm64", # file suffix
-          # ]
+          - [
+              "arm64",
+              "aarch64-unknown-linux-gnu",
+              "arm64", # file suffix
+          ]
           - [
               "386",
               "i686-unknown-linux-gnu",
@@ -162,10 +162,10 @@ jobs:
           #     "arm-unknown-linux-gnueabi",
           #     "arm32v6", # file suffix
           # ]
-    env:
-      PLATFORM: ${{ matrix.BUILD_PROP[0] }}
-      TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
-      SUFFIX: ${{ matrix.BUILD_PROP[2] }}
+    # env:
+    #   PLATFORM: ${{ matrix.BUILD_PROP[0] }}
+    #   TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
+    #   SUFFIX: ${{ matrix.BUILD_PROP[2] }}
     
     name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}"
     defaults:
@@ -175,13 +175,15 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    # - name: Set up QEMU
-    #   if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
-    #   uses: docker/setup-qemu-action@v2
-
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
-      run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      uses: docker/setup-qemu-action@v2
+
+    # for sha256:fe60359c92e86a43cc87b3d906006245f77bfc0565676b80004cc666e4feb9f0 image
+    # fails in staticx with "ldd: exited with unknown exit code (139)"
+    # - name: Set up QEMU
+    #   if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
+    #   run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
     - name: Build Linux for ${{ matrix.BUILD_PROP[0] }}
       uses: addnab/docker-run-action@v3
@@ -458,6 +460,7 @@ jobs:
           path: |
             dist
 
+      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
       #   uses: docker/setup-qemu-action@v2
