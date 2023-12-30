@@ -455,11 +455,18 @@ jobs:
 
     steps:
 
+      - name: Get image
+        id: get_image 
+        run: | 
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT
+ 
       - name: Make folder for compatibility
+        if: steps.get_image.outputs.digest != '' 
         run: |
           mkdir compatibility
 
       - name: Download artifacts
+        if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
@@ -472,10 +479,11 @@ jobs:
       #   uses: docker/setup-qemu-action@v2
 
       - name: Set up QEMU
-        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: steps.get_image.outputs.digest != '' 
         id: run_test
         uses: addnab/docker-run-action@v3
         continue-on-error: true
@@ -507,6 +515,7 @@ jobs:
           touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
       - name: Upload compatibility result
+        if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v3
         with:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
@@ -603,11 +612,18 @@ jobs:
 
     steps:
 
+      - name: Get image
+        id: get_image 
+        run: | 
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT
+
       - name: Make folder for compatibility
+        if: steps.get_image.outputs.digest != '' 
         run: |
           mkdir compatibility
 
       - name: Download artifacts
+        if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
@@ -619,10 +635,11 @@ jobs:
       #   uses: docker/setup-qemu-action@v2
 
       - name: Set up QEMU
-        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
 
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: steps.get_image.outputs.digest != '' 
         id: run_test
         uses: addnab/docker-run-action@v3
         continue-on-error: true
@@ -653,6 +670,7 @@ jobs:
           touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
 
       - name: Upload compatibility result
+        if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v3
         with:
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
