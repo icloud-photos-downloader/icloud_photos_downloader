@@ -722,7 +722,7 @@ jobs:
       - name: Record failure for ${{ matrix.os }} on amd64
         if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+          touch compatibility/pip.${{ matrix.os }}.amd64.fail
 
       - name: Upload compatibility result
         uses: actions/upload-artifact@v3
