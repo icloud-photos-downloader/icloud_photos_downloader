@@ -364,22 +364,26 @@ jobs:
             "python3_12", #variant name
             "python:3.12", #image
             ] 
-          - [ 
-            "debian_6_squeeze", #variant name
-            "debian:squeeze", #image
-            ] 
-          - [ 
-            "debian_7_wheezy", #variant name
-            "debian:wheezy", #image
-            ] 
-          - [ 
-            "debian_8_jessie", #variant name
-            "debian:jessie", #image
-            ] 
-          - [ 
-            "debian_9_stretch", #variant name
-            "debian:stretch", #image
-            ] 
+          # apt-get does not work for debian 6 anymore
+          # - [ 
+          #   "debian_6_squeeze", #variant name
+          #   "debian:squeeze", #image
+          #   ] 
+          # apt-get does not work for debian 7 anymore
+          # - [ 
+          #   "debian_7_wheezy", #variant name
+          #   "debian:wheezy", #image
+          #   ] 
+          # apt-get does not work for debian 8 anymore
+          # - [ 
+          #   "debian_8_jessie", #variant name
+          #   "debian:jessie", #image
+          #   ] 
+          # apt-get does not work for debian 7 anymore
+          # - [ 
+          #   "debian_9_stretch", #variant name
+          #   "debian:stretch", #image
+          #   ] 
           - [ 
             "debian_10_buster", #variant name
             "debian:buster", #image
@@ -392,14 +396,16 @@ jobs:
             "debian_12_bookworm", #variant name
             "debian:bookworm", #image
             ] 
-          - [ 
-            "ubuntu_12_precise", #variant name
-            "ubuntu:precise", #image
-            ] 
-          - [ 
-            "ubuntu_14_trusty", #variant name
-            "ubuntu:trusty", #image
-            ] 
+          # apt-get does not work for ubuntu 12 anymore
+          # - [ 
+          #   "ubuntu_12_precise", #variant name
+          #   "ubuntu:precise", #image
+          #   ] 
+          # apt-get does not work have venv for ubuntu 14 -- TBD
+          # - [ 
+          #   "ubuntu_14_trusty", #variant name
+          #   "ubuntu:trusty", #image
+          #   ] 
           - [ 
             "ubuntu_16_xenial", #variant name
             "ubuntu:xenial", #image
