@@ -1073,31 +1073,31 @@ jobs:
             "amd64",  # platform spec 
             "",  # image prefix 
           ] 
-          # - [ 
-          #   "386",  # variant name 
-          #   "386",  # platform spec 
-          #   "i386/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm64",  # variant name 
-          #   "arm64",  # platform spec 
-          #   "",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v7",  # variant name 
-          #   "arm/v7",  # platform spec 
-          #   "arm32v7/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v6",  # variant name 
-          #   "arm/v6",  # platform spec 
-          #   "arm32v6/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
+          - [ 
+            "386",  # variant name 
+            "386",  # platform spec 
+            "i386/",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+          - [ 
+            "arm32v6",  # variant name 
+            "arm/v6",  # platform spec 
+            "arm32v6/",  # image prefix 
+          ] 
+          - [ 
+            "arm32v5",  # variant name 
+            "arm/v5",  # platform spec 
+            "arm32v5/",  # image prefix 
+          ] 
     runs-on: ubuntu-22.04 
     needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ] 
     defaults: 
