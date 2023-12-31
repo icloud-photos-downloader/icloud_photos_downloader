@@ -445,8 +445,8 @@ jobs:
             "",  # image prefix
           ]
           - [
-            "i386",  # variant name
-            "i386",  # platform spec
+            "386",  # variant name
+            "386",  # platform spec
             "i386/",  # image prefix
           ]
           - [
@@ -602,8 +602,8 @@ jobs:
             "",  # image prefix
           ]
           - [
-            "i386",  # variant name
-            "i386",  # platform spec
+            "386",  # variant name
+            "386",  # platform spec
             "i386/",  # image prefix
           ]
           - [
@@ -853,8 +853,8 @@ jobs:
             "",  # image prefix 
           ] 
           - [ 
-            "i386",  # variant name 
-            "i386",  # platform spec 
+            "386",  # variant name 
+            "386",  # platform spec 
             "i386/",  # image prefix 
           ] 
           - [ 
@@ -1074,8 +1074,8 @@ jobs:
             "",  # image prefix 
           ] 
           # - [ 
-          #   "i386",  # variant name 
-          #   "i386",  # platform spec 
+          #   "386",  # variant name 
+          #   "386",  # platform spec 
           #   "i386/",  # image prefix 
           # ] 
           # - [ 
