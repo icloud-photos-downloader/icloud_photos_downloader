@@ -5,7 +5,15 @@ import os
 import sys
 import itertools
 
+def stats(files):
+    """ Print statistics """
+    total = len(files)
+    passed = len([f for f in files if f[4] == 'pass'])
+    print(f"Compatibility rate: {round(100*passed/total,1) if total > 0 else 0}% ({passed} passed out of {total})")
+    print("")
+
 def matrix(files):
+    """ Prints matrix """
     archs = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[3]), key = lambda ft: ft[3])]
     # sort by priority of archs
     presort = [ "amd64", "arm64", "arm32v7" ]
@@ -28,14 +36,17 @@ def main():
     print("# Minimal Effort Compatibility")
     print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
     print("")
+    stats(fts)
     print("Legend:")
     print("- N/A - not applicable/available")
     print("- pass - test pass")
     print("- fail - test fail")
     print("- pass (src) - test pass using src (for pip)")
+    print("")
     groups = [(k, list(g)) for k, g in itertools.groupby(sorted(fts, key = lambda ft: ft[1]), key = lambda ft: ft[1])]
     for (g, f) in groups: 
         print(f"## {g}")
+        stats(f)
         matrix(f)
 
 if __name__ == "__main__":
