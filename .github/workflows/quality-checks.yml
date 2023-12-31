@@ -470,7 +470,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ]
     defaults:
       run:
         shell: bash
@@ -627,7 +627,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows ]
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ]
     defaults:
       run:
         shell: bash
@@ -707,7 +707,7 @@ jobs:
       matrix: 
         os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    needs: [ get_version, build_macos, build_windows, build_linux, build_src ]
+    needs: [ get_version, build_macos, build_windows, build_linux, build_src, build_docker ]
 
     steps:
 
@@ -878,7 +878,7 @@ jobs:
             "arm32v5/",  # image prefix 
           ] 
     runs-on: ubuntu-22.04 
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows ] 
+    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ] 
     defaults: 
       run: 
         shell: bash 
@@ -962,7 +962,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
-    needs: [ get_version, build_macos, build_windows, build_linux, build_src ] 
+    needs: [ get_version, build_macos, build_windows, build_linux, build_src, build_docker ] 
  
     steps: 
  
@@ -1019,7 +1019,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
-    needs: [ get_version, build_macos, build_windows, build_linux, build_src ] 
+    needs: [ get_version, build_macos, build_windows, build_linux, build_src, build_docker ] 
  
     steps: 
  
