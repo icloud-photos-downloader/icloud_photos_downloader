@@ -7,13 +7,16 @@ import itertools
 
 def matrix(files):
     archs = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[3]), key = lambda ft: ft[3])]
+    # sort by priority of archs
+    presort = [ "amd64", "arm64", "arm32v7" ]
+    archs_sorted = sorted(archs, key = lambda k: f"{presort.index(k) if k in presort else 9}{k}")
     # caption
-    print('|'.join(["OSes and distros"] + archs))
-    print('|'.join(['-'] + ['-' for a in archs]))
+    print('|'.join(["OSes and distros"] + archs_sorted))
+    print('|'.join(['-'] + ['-' for a in archs_sorted]))
 
     oses = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[2]), key = lambda ft: ft[2])]
     for o in oses:
-        results_raw = [list(filter(lambda ft: ft[2] == o and ft[3] == a, files)) for a in archs]
+        results_raw = [list(filter(lambda ft: ft[2] == o and ft[3] == a, files)) for a in archs_sorted]
         results = ["N/A" if len(r) == 0 else (r[0][4] + ("" if r[0][0] == 0 else " (src)")) for r in results_raw]
         print('|'.join([o] + results))
 
