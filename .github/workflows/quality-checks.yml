@@ -213,6 +213,8 @@ jobs:
           BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz &&
           echo "build binary..." &&
           scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} &&
+          echo "convert to static binary..." && 
+          scripts/build_bin_linux_static ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} && 
           echo "build binary dist..." &&
           scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} ${{ matrix.BUILD_PROP[3] }}
     
@@ -303,6 +305,13 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Download artifacts 
+      uses: actions/download-artifact@v3 
+      with: 
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+        path: | 
+          dist 
+ 
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v2
 
@@ -314,7 +323,7 @@ jobs:
       with:
         context: .
         file: ./Dockerfile
-        platforms: linux/amd64
+        platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7 #,linux/arm/v6,linux/arm/v5
         push: false
         # build-args: ICLOUDPD_VERSION=${{needs.get_version.outputs.icloudpd_version}} 
         load: true  # load into docker 
@@ -324,9 +333,7 @@ jobs:
           icloudpd/icloudpd:commit-${{ github.sha }} 
  
     - name: Save docker image to tar 
-      run: > 
-        mkdir dist && 
-        docker save icloudpd/icloudpd:commit-${{ github.sha }} > dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-docker.tar 
+      run: docker save icloudpd/icloudpd:commit-${{ github.sha }} > dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-docker.tar 
  
     - name: Upload artifacts 
       uses: actions/upload-artifact@v3 

@@ -15,18 +15,34 @@ RUN pip3 install -e .[dev]
 
 RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py
 
-FROM alpine:3.18 as runtime
 
-RUN apk add --no-cache tzdata
-
-ENV TZ=UTC
-
+FROM alpine:3.18 as runtime_amd64_none
 WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-amd64 icloudpd_ex
 
+FROM alpine:3.18 as runtime_386_none
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-386 icloudpd_ex
+
+FROM alpine:3.18 as runtime_arm64_none
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-arm64 icloudpd_ex
+
+FROM alpine:3.18 as runtime_arm_v7
+WORKDIR /app/dist
+COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
+
+FROM alpine:3.18 as runtime_arm_v6
+WORKDIR /app
 COPY --from=build /app/dist/icloudpd_ex .
 
-ENTRYPOINT ["/app/icloudpd_ex"]
+FROM alpine:3.18 as runtime_arm_v5
+WORKDIR /app
+COPY --from=build /app/dist/icloudpd_ex .
 
-# RUN set -xe \
-#   && ln -s /app/icloudpd /usr/local/bin/icloudpd \
-#   && ln -s /app/icloud /usr/local/bin/icloud 
+FROM runtime_${TARGETARCH}_${TARGETVARIAN:-none} as runtime
+RUN apk add --no-cache tzdata
+ENV TZ=UTC
+WORKDIR /app
+RUN chmod +x /app/icloudpd_ex
+ENTRYPOINT ["/app/icloudpd_ex"]
