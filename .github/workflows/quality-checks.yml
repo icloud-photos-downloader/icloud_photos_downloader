@@ -1285,34 +1285,23 @@ jobs:
  
     steps: 
  
-      - name: Make folder for compatibility 
-        run: | 
-          mkdir compatibility 
- 
-      - name: Download artifacts 
-        uses: actions/download-artifact@v3 
-        with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci
-          path: | 
-            dist 
- 
+      - name: Install JQ
+        run: sudo apt-get update && sudo apt-get install -y jq
+
       - name: Setup config 
         shell: bash 
-        run: | 
-           sudo mkdir -p /etc/docker 
-           ls -la /etc/docker
-           cat <<EOF | sudo tee /etc/docker/daemon.json 
-           { 
-               "insecure-registries" : [ "172.17.0.1:5000" ] 
-           } 
-           EOF 
+        run: >
+          sudo mkdir -p /etc/docker &&
+          sudo touch /etc/docker/daemon.json &&
+          (cat /etc/docker/daemon.json | jq --arg registry 172.17.0.1:5000 '."insecure-registries" += [$registry]' | sudo tee /etc/docker/daemon.json)
+
       - name: Reload Docker 
         id: reload_docker
         continue-on-error: true 
         shell: bash 
-        run: | 
-           sudo cat /etc/docker/daemon.json 
-           sudo systemctl daemon-reload && sudo systemctl restart docker 
+        run: >
+           sudo systemctl daemon-reload &&
+           sudo systemctl restart docker
 
       - name: Journal for Docker
         if: steps.reload_docker.outcome == 'failure'
@@ -1323,6 +1312,19 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         shell: bash 
         run: docker run -d -p 5000:5000 registry:2 
+ 
+      - name: Download artifacts 
+        if: steps.reload_docker.outcome != 'failure'
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci
+          path: | 
+            dist 
+ 
+      - name: Make folder for compatibility 
+        if: steps.reload_docker.outcome != 'failure'
+        run: | 
+          mkdir compatibility 
  
       - name: Run skopeo 
         if: steps.reload_docker.outcome != 'failure'
