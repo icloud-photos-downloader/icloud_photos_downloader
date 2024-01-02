@@ -119,7 +119,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-src
         if-no-files-found: error
         path: |
           dist/icloud*.whl
@@ -221,7 +221,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -257,7 +257,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-macos
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -293,14 +293,14 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-windows
         if-no-files-found: error
         path: |
           dist/icloud*
 
   build_docker:
     runs-on: ubuntu-22.04
-    needs: [get_version, build_linux, build_src, build_windows, build_macos ] # extra dependencies are need to avoid issue with GH concur access to artifacts
+    needs: [get_version, build_linux ]
 
     steps:
     - uses: actions/checkout@v3
@@ -308,7 +308,7 @@ jobs:
     - name: Download artifacts 
       uses: actions/download-artifact@v3 
       with: 
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
         path: | 
           dist 
  
@@ -337,7 +337,7 @@ jobs:
     - name: Upload artifacts 
       uses: actions/upload-artifact@v3 
       with: 
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci 
         if-no-files-found: error 
         path: | 
           dist/icloud*.tar
@@ -355,10 +355,24 @@ jobs:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download artifacts
+      - name: Download artifacts (Linux)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
+          path: |
+            dist
+
+      - name: Download artifacts (MacOS)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-macos
+          path: |
+            dist
+
+      - name: Download artifacts (Windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-windows
           path: |
             dist
 
@@ -476,7 +490,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ]
+    needs: [ get_version, build_linux, build_src ]
     defaults:
       run:
         shell: bash
@@ -493,11 +507,19 @@ jobs:
         run: |
           mkdir compatibility
 
-      - name: Download artifacts
+      - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (bin)
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
           path: |
             dist
 
@@ -546,7 +568,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-linux-pip-apt
           if-no-files-found: error
           path: |
             compatibility/*
@@ -633,7 +655,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ]
+    needs: [ get_version, build_linux, build_src ]
     defaults:
       run:
         shell: bash
@@ -650,11 +672,19 @@ jobs:
         run: |
           mkdir compatibility
 
-      - name: Download artifacts
+      - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (linux)
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
           path: |
             dist
 
@@ -701,7 +731,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-linux-pip-apk
           if-no-files-found: error
           path: |
             compatibility/*
@@ -713,7 +743,7 @@ jobs:
       matrix: 
         os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    needs: [ get_version, build_macos, build_windows, build_linux, build_src, build_docker ]
+    needs: [ get_version, build_macos, build_windows, build_src ]
 
     steps:
 
@@ -721,10 +751,24 @@ jobs:
         run: |
           mkdir compatibility
 
-      - name: Download artifacts
+      - name: Download artifacts (src)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (macos)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-macos
+          path: |
+            dist
+
+      - name: Download artifacts (windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-windows
           path: |
             dist
 
@@ -749,7 +793,7 @@ jobs:
       - name: Upload compatibility result
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-nonlinux-pip
           if-no-files-found: error
           path: |
             compatibility/*
@@ -884,7 +928,7 @@ jobs:
             "arm32v5/",  # image prefix 
           ] 
     runs-on: ubuntu-22.04 
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ] 
+    needs: [ get_version, build_linux ] 
     defaults: 
       run: 
         shell: bash 
@@ -905,7 +949,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux 
           path: | 
             dist 
  
@@ -947,7 +991,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-linux-bin
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -968,7 +1012,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
-    needs: [ get_version, build_macos, build_windows, build_linux, build_src, build_docker ] 
+    needs: [ get_version, build_macos ] 
  
     steps: 
  
@@ -979,7 +1023,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-macos
           path: | 
             dist 
  
@@ -1004,7 +1048,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-macos-bin 
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1025,7 +1069,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
-    needs: [ get_version, build_macos, build_windows, build_linux, build_src, build_docker ] 
+    needs: [ get_version, build_windows ] 
  
     steps: 
  
@@ -1036,7 +1080,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-windows 
           path: | 
             dist 
  
@@ -1058,7 +1102,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-windows-bin 
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1105,7 +1149,7 @@ jobs:
             "arm32v5/",  # image prefix 
           ] 
     runs-on: ubuntu-22.04 
-    needs: [ get_version, build_linux, build_src, build_macos, build_windows, build_docker ] 
+    needs: [ get_version, build_docker ] 
     defaults: 
       run: 
         shell: bash 
@@ -1119,7 +1163,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci
           path: | 
             dist 
  
@@ -1177,7 +1221,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-docker 
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1205,10 +1249,52 @@ jobs:
         run: |
           mkdir dist
 
-      - name: Download compatibility results
+      - name: Download compatibility results (nonlinux-pip)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-nonlinux-pip
+          path: |
+            compatibility
+
+      - name: Download compatibility results (linux-pip-apt)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-linux-pip-apt
+          path: |
+            compatibility
+
+      - name: Download compatibility results (linux-pip-apk)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-linux-pip-apk
+          path: |
+            compatibility
+
+      - name: Download compatibility results (linux-bin)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-linux-bin
+          path: |
+            compatibility
+
+      - name: Download compatibility results (macos-bin)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-macos-bin
+          path: |
+            compatibility
+
+      - name: Download compatibility results (windows-bin)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-windows-bin
+          path: |
+            compatibility
+
+      - name: Download compatibility results (docker)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-docker
           path: |
             compatibility
 
@@ -1222,7 +1308,7 @@ jobs:
       - name: Upload compatibility report
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility
           if-no-files-found: error
           path: |
             dist/*
