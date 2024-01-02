@@ -317,6 +317,8 @@ jobs:
 
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
+      with:
+        version: v0.12.0
 
     - name: Build Release Docker
       uses: docker/build-push-action@v3
@@ -325,15 +327,12 @@ jobs:
         file: ./Dockerfile
         platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7 #,linux/arm/v6,linux/arm/v5
         push: false
-        # build-args: ICLOUDPD_VERSION=${{needs.get_version.outputs.icloudpd_version}} 
-        load: true  # load into docker 
-        tags: | 
-          icloudpd/icloudpd:latest 
-          icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}} 
-          icloudpd/icloudpd:commit-${{ github.sha }} 
- 
-    - name: Save docker image to tar 
-      run: docker save icloudpd/icloudpd:commit-${{ github.sha }} > dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-docker.tar 
+        outputs: type=oci,dest=dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci.tar
+        load: false  # load into docker 
+        # tags: | 
+        #   icloudpd/icloudpd:latest 
+        #   icloudpd/icloudpd:${{needs.get_version.outputs.icloudpd_version}} 
+        #   icloudpd/icloudpd:commit-${{ github.sha }} 
  
     - name: Upload artifacts 
       uses: actions/upload-artifact@v3 
@@ -341,7 +340,7 @@ jobs:
         name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-artifacts 
         if-no-files-found: error 
         path: | 
-          dist/icloud* 
+          dist/icloud*.tar
 
   build_npm:
     runs-on: ubuntu-22.04
@@ -1124,10 +1123,34 @@ jobs:
           path: | 
             dist 
  
-      - name: Load docker image 
+      - name: Setup config 
+        shell: bash 
         run: | 
-          docker load --input dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-docker.tar 
+           sudo mkdir -p /etc/docker 
+           cat <<EOF | sudo tee /etc/docker/daemon.json 
+           { 
+               "insecure-registries" : [ "172.17.0.1:5000" ] 
+           } 
+           EOF 
+      - name: Reload Docker 
+        shell: bash 
+        run: | 
+           sudo cat /etc/docker/daemon.json 
+           sudo systemctl daemon-reload && sudo systemctl restart docker 
+
+      - name: Start Registry 
+        shell: bash 
+        run: docker run -d -p 5000:5000 registry:2 
  
+      - name: Run skopeo 
+        uses: addnab/docker-run-action@v3 
+        with: 
+          image: quay.io/skopeo/stable:v1.14.0 
+          shell: sh 
+          options: -v ${{ github.workspace }}/dist:/dist 
+          run: > 
+            skopeo copy --preserve-digests --dest-tls-verify=false --all oci-archive:/dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci.tar docker://172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} 
+  
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
       #   uses: docker/setup-qemu-action@v2 
@@ -1139,7 +1162,7 @@ jobs:
       - name: Run test on ${{ matrix.prop[1] }} 
         id: run_test 
         continue-on-error: true 
-        run: docker run --rm -i --platform linux/${{ matrix.prop[1] }} icloudpd/icloudpd:commit-${{ github.sha }} --help 
+        run: docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} --help 
  
       - name: Record success on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome != 'failure' }}  
