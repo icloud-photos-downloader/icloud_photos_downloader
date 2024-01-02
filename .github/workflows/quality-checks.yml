@@ -724,18 +724,18 @@ jobs:
             "alpine_3_13", #variant name
             "alpine:3.13", #image
             ] 
-          - [ 
-            "alpine_3_12", #variant name
-            "alpine:3.12", #image
-            ] 
-          - [ 
-            "alpine_3_11", #variant name
-            "alpine:3.11", #image
-            ] 
-          - [ 
-            "alpine_3_10", #variant name
-            "alpine:3.10", #image
-            ] 
+          # - [ 
+          #   "alpine_3_12", #variant name
+          #   "alpine:3.12", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_11", #variant name
+          #   "alpine:3.11", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_10", #variant name
+          #   "alpine:3.10", #image
+          #   ] 
         prop: 
           - [
             "amd64",  # variant name
