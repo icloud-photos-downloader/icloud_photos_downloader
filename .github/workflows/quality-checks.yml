@@ -216,7 +216,9 @@ jobs:
           echo "convert to static binary..." && 
           scripts/build_bin_linux_static ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} && 
           echo "build binary dist..." &&
-          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} ${{ matrix.BUILD_PROP[3] }}
+          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} &&
+          echo "add musl to binary dist..." &&
+          scripts/build_binary_dist_linux_add_musl ${{ matrix.BUILD_PROP[3] }}
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v3

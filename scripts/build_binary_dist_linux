@@ -3,7 +3,7 @@ set -euo pipefail
 
 # prepare binary wheels in dist
 # expects dist to have comipled binary versions
-# required param: version plat_int plat_pip
+# required param: version plat_int
 
 # clean start
 rm -rf dist/binary_dist
@@ -17,12 +17,7 @@ cp dist/icloudpd-$1-linux-$2 dist/binary_dist/src/icloudpd/icloudpd
 cp dist/icloud-$1-linux-$2 dist/binary_dist/src/icloud/icloud
 python3 -m pip wheel --disable-pip-version-check dist/binary_dist/ -w dist/binary_dist --no-deps --no-build-isolation
 
-# mv -f dist/binary_dist/icloudpd-$1-py2.py3-none-any.whl dist/icloudpd-$1-py2.py3-none-manylinux_2_5_$3.manylinux1_$3.musllinux_1_1_$3.whl
-
 python3 -m auditwheel --verbose repair dist/binary_dist/icloudpd-$1-py2.py3-none-any.whl
-
-# add musl
-for i in wheelhouse/*.whl; do mv ${i} ${i/%.whl/.musllinux_1_1_$3.whl};done
 
 # move to artifacts
 mv -f wheelhouse/*.whl dist/
