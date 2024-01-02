@@ -40,7 +40,7 @@ FROM alpine:3.18 as runtime_arm_v5
 WORKDIR /app
 COPY --from=build /app/dist/icloudpd_ex .
 
-FROM runtime_${TARGETARCH}_${TARGETVARIAN:-none} as runtime
+FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} as runtime
 RUN apk add --no-cache tzdata
 ENV TZ=UTC
 WORKDIR /app
