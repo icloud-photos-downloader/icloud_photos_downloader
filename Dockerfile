@@ -29,7 +29,7 @@ WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-arm64 icloudpd_ex
 
 FROM alpine:3.18 as runtime_arm_v7
-WORKDIR /app/dist
+WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
 
 FROM alpine:3.18 as runtime_arm_v6
