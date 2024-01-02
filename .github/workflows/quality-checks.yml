@@ -589,11 +589,11 @@ jobs:
             "arm/v6",  # platform spec
             "arm32v6/",  # image prefix
           ]
-          - [
-            "arm32v5",  # variant name
-            "arm/v5",  # platform spec
-            "arm32v5/",  # image prefix
-          ]
+          # - [
+          #   "arm32v5",  # variant name
+          #   "arm/v5",  # platform spec
+          #   "arm32v5/",  # image prefix
+          # ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux_1, build_linux_2, build_src ]
     defaults:
@@ -762,11 +762,11 @@ jobs:
             "arm/v6",  # platform spec
             "arm32v6/",  # image prefix
           ]
-          - [
-            "arm32v5",  # variant name
-            "arm/v5",  # platform spec
-            "arm32v5/",  # image prefix
-          ]
+          # - [
+          #   "arm32v5",  # variant name
+          #   "arm/v5",  # platform spec
+          #   "arm32v5/",  # image prefix
+          # ]
     runs-on: ubuntu-22.04
     needs: [ get_version, build_linux_1, build_linux_2, build_src ]
     defaults:
@@ -1043,11 +1043,11 @@ jobs:
             "arm/v6",  # platform spec 
             "arm32v6/",  # image prefix 
           ] 
-          - [ 
-            "arm32v5",  # variant name 
-            "arm/v5",  # platform spec 
-            "arm32v5/",  # image prefix 
-          ] 
+          # - [ 
+          #   "arm32v5",  # variant name 
+          #   "arm/v5",  # platform spec 
+          #   "arm32v5/",  # image prefix 
+          # ] 
     runs-on: ubuntu-22.04 
     needs: [ get_version, build_linux_1, build_linux_2 ] 
     defaults: 
@@ -1272,11 +1272,11 @@ jobs:
             "arm/v6",  # platform spec 
             "arm32v6/",  # image prefix 
           ] 
-          - [ 
-            "arm32v5",  # variant name 
-            "arm/v5",  # platform spec 
-            "arm32v5/",  # image prefix 
-          ] 
+          # - [ 
+          #   "arm32v5",  # variant name 
+          #   "arm/v5",  # platform spec 
+          #   "arm32v5/",  # image prefix 
+          # ] 
     runs-on: ubuntu-22.04 
     needs: [ get_version, build_docker ] 
     defaults: 
