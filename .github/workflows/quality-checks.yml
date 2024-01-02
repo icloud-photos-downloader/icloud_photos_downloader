@@ -1171,22 +1171,32 @@ jobs:
         shell: bash 
         run: | 
            sudo mkdir -p /etc/docker 
+           ls -la /etc/docker
            cat <<EOF | sudo tee /etc/docker/daemon.json 
            { 
                "insecure-registries" : [ "172.17.0.1:5000" ] 
            } 
            EOF 
       - name: Reload Docker 
+        id: reload_docker
+        continue-on-error: true 
         shell: bash 
         run: | 
            sudo cat /etc/docker/daemon.json 
            sudo systemctl daemon-reload && sudo systemctl restart docker 
 
+      - name: Journal for Docker
+        if: steps.reload_docker.outcome == 'failure'
+        shell: bash
+        run: journalctl -xeu docker.service
+
       - name: Start Registry 
+        if: steps.reload_docker.outcome != 'failure'
         shell: bash 
         run: docker run -d -p 5000:5000 registry:2 
  
       - name: Run skopeo 
+        if: steps.reload_docker.outcome != 'failure'
         uses: addnab/docker-run-action@v3 
         with: 
           image: quay.io/skopeo/stable:v1.14.0 
@@ -1200,25 +1210,27 @@ jobs:
       #   uses: docker/setup-qemu-action@v2 
  
       - name: Set up QEMU 
-        if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
+        if: steps.reload_docker.outcome != 'failure' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
         run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
  
       - name: Run test on ${{ matrix.prop[1] }} 
+        if: steps.reload_docker.outcome != 'failure'
         id: run_test 
         continue-on-error: true 
         run: docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} --help 
  
       - name: Record success on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome != 'failure' }}  
+        if: steps.reload_docker.outcome != 'failure' && steps.run_test.outcome != 'failure'
         run: | 
           touch compatibility/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
+        if: steps.run_test.outcome == 'failure'
         run: | 
           touch compatibility/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
  
       - name: Upload compatibility result 
+        if: steps.reload_docker.outcome != 'failure'
         uses: actions/upload-artifact@v3 
         with: 
           name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-compatibility-docker 
