@@ -34,7 +34,7 @@ COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
 
 FROM alpine:3.18 as runtime_arm_v6
 WORKDIR /app
-COPY --from=build /app/dist/icloudpd_ex .
+COPY dist/icloudpd-ex-*.*.*-linux-arm32v6 icloudpd_ex
 
 FROM alpine:3.18 as runtime_arm_v5
 WORKDIR /app

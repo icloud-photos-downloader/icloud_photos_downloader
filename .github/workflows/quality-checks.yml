@@ -124,7 +124,7 @@ jobs:
         path: |
           dist/icloud*.whl
 
-  build_linux:
+  build_linux_1:
     runs-on: ubuntu-22.04
     needs: [get_version]
     strategy:
@@ -173,7 +173,7 @@ jobs:
     #   TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
     #   SUFFIX: ${{ matrix.BUILD_PROP[2] }}
     
-    name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}"
+    name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}" with Debian
     defaults:
       run:
         shell: bash
@@ -223,7 +223,103 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-1
+        if-no-files-found: error
+        path: |
+          dist/icloud*
+
+  build_linux_2:
+    runs-on: ubuntu-22.04
+    needs: [get_version]
+    strategy:
+      fail-fast: false
+      matrix:
+        BUILD_PROP:
+        # https://doc.rust-lang.org/nightly/rustc/platform-support.html
+          # - [
+          #     "amd64", # docker plat
+          #     "x86_64-unknown-linux-gnu", # rust triplet
+          #     "amd64", # internal file suffix
+          #     "x86_64", # pip file suffix
+          # ]
+          # - [
+          #     "arm64",
+          #     "aarch64-unknown-linux-gnu",
+          #     "arm64", # file suffix
+          #     "aarch64", # pip file suffix
+          # ]
+          # - [
+          #     "386",
+          #     "i686-unknown-linux-gnu",
+          #     "386", # file suffix
+          #     "i686", # pip file suffix
+          # ]
+          # - [
+          #     "arm/v7",
+          #     "armv7-unknown-linux-gnueabihf",
+          #     "arm32v7", # file suffix
+          #     "armv7l", # pip file suffix
+          # ]
+          - [
+              "arm/v6",
+              "arm-unknown-linux-gnueabi",
+              "arm32v6", # file suffix
+              "armv6", # pip file suffix
+          ]
+          # - [
+          #     "arm/v5",
+          #     "arm-unknown-linux-gnueabi",
+          #     "arm32v5", # file suffix
+          #     "armv5", # pip file suffix
+          # ]
+    # env:
+    #   PLATFORM: ${{ matrix.BUILD_PROP[0] }}
+    #   TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
+    #   SUFFIX: ${{ matrix.BUILD_PROP[2] }}
+    
+    name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}" with Alpine
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up QEMU
+      if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
+      uses: docker/setup-qemu-action@v2
+
+    # for sha256:fe60359c92e86a43cc87b3d906006245f77bfc0565676b80004cc666e4feb9f0 image
+    # fails in staticx with "ldd: exited with unknown exit code (139)"
+    # - name: Set up QEMU
+    #   if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
+    #   run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+
+    - name: Build Linux for ${{ matrix.BUILD_PROP[0] }} ALPINE
+      uses: addnab/docker-run-action@v3
+      with:
+        image: python:3.12-alpine3.18
+        shell: sh
+        options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.BUILD_PROP[0] }}
+        run: >
+          echo "Install pkgs..." &&
+          apk update &&
+          apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev tzdata bash patchelf &&
+          echo "create venv and active..." &&
+          cd /work &&
+          python3 -m venv .venv &&
+          . .venv/bin/activate &&
+          echo "install deps..." &&
+          pip3 install --disable-pip-version-check -e .[dev,devlinux] &&
+          echo "build binary..." &&
+          scripts/build_bin_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }} &&
+          echo "build binary dist..." &&
+          scripts/build_binary_dist_linux ${{needs.get_version.outputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-2
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -302,15 +398,22 @@ jobs:
 
   build_docker:
     runs-on: ubuntu-22.04
-    needs: [get_version, build_linux ]
+    needs: [get_version, build_linux_1, build_linux_2 ]
 
     steps:
     - uses: actions/checkout@v3
 
-    - name: Download artifacts 
+    - name: Download artifacts 1
       uses: actions/download-artifact@v3 
       with: 
-        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-1
+        path: | 
+          dist 
+ 
+    - name: Download artifacts 2
+      uses: actions/download-artifact@v3 
+      with: 
+        name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-2
         path: | 
           dist 
  
@@ -327,7 +430,7 @@ jobs:
       with:
         context: .
         file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7 #,linux/arm/v6,linux/arm/v5
+        platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6 #,linux/arm/v5
         push: false
         outputs: type=oci,dest=dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-oci.tar
         load: false  # load into docker 
@@ -346,7 +449,7 @@ jobs:
 
   build_npm:
     runs-on: ubuntu-22.04
-    needs: [get_version,build_linux,build_macos,build_windows]
+    needs: [get_version,build_linux_1,build_macos,build_windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -360,7 +463,7 @@ jobs:
       - name: Download artifacts (Linux)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-1
           path: |
             dist
 
@@ -492,7 +595,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src ]
+    needs: [ get_version, build_linux_1, build_linux_2, build_src ]
     defaults:
       run:
         shell: bash
@@ -517,11 +620,19 @@ jobs:
           path: |
             dist
 
-      - name: Download artifacts (bin)
+      - name: Download artifacts (bin 1)
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-1
+          path: |
+            dist
+
+      - name: Download artifacts (bin 2)
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-2
           path: |
             dist
 
@@ -657,7 +768,7 @@ jobs:
             "arm32v5/",  # image prefix
           ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux, build_src ]
+    needs: [ get_version, build_linux_1, build_linux_2, build_src ]
     defaults:
       run:
         shell: bash
@@ -682,11 +793,19 @@ jobs:
           path: |
             dist
 
-      - name: Download artifacts (linux)
+      - name: Download artifacts (linux 1)
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-1
+          path: |
+            dist
+
+      - name: Download artifacts (linux 2)
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-2
           path: |
             dist
 
@@ -930,7 +1049,7 @@ jobs:
             "arm32v5/",  # image prefix 
           ] 
     runs-on: ubuntu-22.04 
-    needs: [ get_version, build_linux ] 
+    needs: [ get_version, build_linux_1, build_linux_2 ] 
     defaults: 
       run: 
         shell: bash 
@@ -947,11 +1066,19 @@ jobs:
         run: | 
           mkdir compatibility 
  
-      - name: Download artifacts 
+      - name: Download artifacts 1
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-1
+          path: | 
+            dist 
+ 
+      - name: Download artifacts 2
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{needs.get_version.outputs.icloudpd_version}}-bin-linux-2
           path: | 
             dist 
  
