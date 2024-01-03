@@ -1,0 +1,197 @@
+on:
+  workflow_call:
+    inputs:
+      icloudpd_version:
+        required: true
+        type: string
+      icloudpd_changelog:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: false
+        type: string
+      DOCKERHUB_PASSWORD:
+        required: false
+        type: string
+      NPM_TOKEN:
+        required: false
+        type: string
+      PYPI_USERNAME:
+        required: false
+        type: string
+      PYPI_PASSWORD:
+        required: false
+        type: string
+
+name: Publish Release
+
+jobs:
+
+  build_publish_docker:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-oci
+          path: |
+            dist
+
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: icloudpd/icloudpd
+          readme-filepath: ./README_DOCKER.md
+          short-description: ${{ github.event.repository.description }}
+
+  npm:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Setup Node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          path: |
+            dist
+
+      - name: Publish NPM
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --access public
+          npm publish dist/npm/@icloudpd/win32-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public
+          npm publish dist/npm/icloudpd --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  pypi:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+      
+      - name: Install Dev dependencies
+        run: |
+          pip3 install -e .[dev]
+
+      - name: Download artifacts (src)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (linux 1)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          path: |
+            dist
+
+      - name: Download artifacts (linux 2)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          path: |
+            dist
+
+      - name: Download artifacts (macos)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          path: |
+            dist
+
+      - name: Download artifacts (windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+          path: |
+            dist
+
+      - name: Publish PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
+
+  release:
+    runs-on: ubuntu-22.04
+    steps:
+
+      - name: Download artifacts (src)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (linux 1)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          path: |
+            dist
+
+      - name: Download artifacts (linux 2)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          path: |
+            dist
+
+      - name: Download artifacts (macos)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          path: |
+            dist
+
+      - name: Download artifacts (windows)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+          path: |
+            dist
+
+      - name: Download artifacts (docker)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-oci
+          path: |
+            dist
+
+      - name: Download artifacts (compatibility)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{inputs.icloudpd_version}}-compatibility
+          path: |
+            dist
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          body: ${{ inputs.icloudpd_changelog }}
+
