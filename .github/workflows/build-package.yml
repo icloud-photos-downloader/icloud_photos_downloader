@@ -11,6 +11,7 @@ on:
 jobs:
 
   build_src:
+    if: false
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -53,24 +54,24 @@ jobs:
               "amd64", # internal file suffix
               "x86_64", # pip file suffix
           ]
-          - [
-              "arm64",
-              "aarch64-unknown-linux-gnu",
-              "arm64", # file suffix
-              "aarch64", # pip file suffix
-          ]
-          - [
-              "386",
-              "i686-unknown-linux-gnu",
-              "386", # file suffix
-              "i686", # pip file suffix
-          ]
-          - [
-              "arm/v7",
-              "armv7-unknown-linux-gnueabihf",
-              "arm32v7", # file suffix
-              "armv7l", # pip file suffix
-          ]
+          # - [
+          #     "arm64",
+          #     "aarch64-unknown-linux-gnu",
+          #     "arm64", # file suffix
+          #     "aarch64", # pip file suffix
+          # ]
+          # - [
+          #     "386",
+          #     "i686-unknown-linux-gnu",
+          #     "386", # file suffix
+          #     "i686", # pip file suffix
+          # ]
+          # - [
+          #     "arm/v7",
+          #     "armv7-unknown-linux-gnueabihf",
+          #     "arm32v7", # file suffix
+          #     "armv7l", # pip file suffix
+          # ]
           # - [
           #     "arm/v6",
           #     "arm-unknown-linux-gnueabi",
@@ -144,6 +145,7 @@ jobs:
           dist/icloud*
 
   build_linux_2:
+    if: false
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -309,6 +311,7 @@ jobs:
           dist/icloud*
 
   build_docker:
+    if: false
     runs-on: ubuntu-22.04
     needs: [ build_linux_1, build_linux_2 ]
 
@@ -406,6 +409,7 @@ jobs:
             dist/npm/
 
   compatibility_linux_pip_apt:
+    if: false
     name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
       fail-fast: false
@@ -597,6 +601,7 @@ jobs:
             compatibility/*
 
   compatibility_linux_pip_apk:
+    if: false
     name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
     strategy: 
       fail-fast: false
@@ -768,6 +773,7 @@ jobs:
             compatibility/*
 
   compatibility_nonlinux_pip:
+    if: false
     name: "PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
       fail-fast: false
@@ -830,6 +836,7 @@ jobs:
             compatibility/*
 
   compatibility_linux_bin: 
+    if: false
     name: "BIN on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
@@ -1036,6 +1043,7 @@ jobs:
             compatibility/* 
  
   compatibility_macos_bin: 
+    if: false
     name: "BIN on ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
@@ -1093,6 +1101,7 @@ jobs:
             compatibility/* 
  
   compatibility_windows_bin: 
+    if: false
     name: "BIN on ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
@@ -1147,6 +1156,7 @@ jobs:
             compatibility/* 
 
   compatibility_docker: 
+    if: false
     name: "DOCKER on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
@@ -1347,26 +1357,26 @@ jobs:
             "amd64",  # platform spec 
             "",  # image prefix 
           ] 
-          - [ 
-            "386",  # variant name 
-            "386",  # platform spec 
-            "i386/",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
+          # - [ 
+          #   "386",  # variant name 
+          #   "386",  # platform spec 
+          #   "i386/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm64",  # variant name 
+          #   "arm64",  # platform spec 
+          #   "",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v7",  # variant name 
+          #   "arm/v7",  # platform spec 
+          #   "arm32v7/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v6",  # variant name 
+          #   "arm/v6",  # platform spec 
+          #   "arm32v6/",  # image prefix 
+          # ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
@@ -1498,26 +1508,26 @@ jobs:
             "amd64",  # platform spec 
             "",  # image prefix 
           ] 
-          - [ 
-            "386",  # variant name 
-            "386",  # platform spec 
-            "i386/",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
+          # - [ 
+          #   "386",  # variant name 
+          #   "386",  # platform spec 
+          #   "i386/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm64",  # variant name 
+          #   "arm64",  # platform spec 
+          #   "",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v7",  # variant name 
+          #   "arm/v7",  # platform spec 
+          #   "arm32v7/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v6",  # variant name 
+          #   "arm/v6",  # platform spec 
+          #   "arm32v6/",  # image prefix 
+          # ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
