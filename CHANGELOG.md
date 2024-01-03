@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.17.3 (2024-01-03)
+
+- improve compatibility for diffeent platforms [#748](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/748)
+
 ## 1.17.2 (2023-12-22)
 
 - fix: module not found [#748](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/748)
