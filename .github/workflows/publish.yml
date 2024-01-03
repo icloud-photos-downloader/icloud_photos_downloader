@@ -44,7 +44,8 @@ jobs:
           shell: sh 
           options: -v ${{ github.workspace }}/dist:/dist 
           run: > 
-            skopeo copy --preserve-digests --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all oci-archive:/dist/icloudpd-${{inputs.icloudpd_version}}-oci.tar docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}}
+            (skopeo copy --preserve-digests --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all oci-archive:/dist/icloudpd-${{inputs.icloudpd_version}}-oci.tar docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}}) &&
+            (skopeo copy --preserve-digests --src-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}} docker://docker.io/icloudpd/icloudpd:latest)
   
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
