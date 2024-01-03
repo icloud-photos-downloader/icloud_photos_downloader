@@ -1395,10 +1395,21 @@ jobs:
         run: |  
           echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
 
+      - name: Create Config
+        if: steps.get_image.outputs.digest != ''  
+        run: |
+          touch ~/config.yaml
+          echo "
+          packages:
+            '**':
+              access: $anonymous
+              publish: $anonymous" > ~/config.yaml
+          cat ${{ github.workspace }}/config.yaml
+
       - name: Start Registry 
         if: steps.get_image.outputs.digest != ''  
         shell: bash 
-        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 verdaccio/verdaccio 
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/config.yaml:/config.yaml verdaccio/verdaccio --config /config.yaml
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
@@ -1418,12 +1429,9 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup user
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          curl -XPUT -H "Content-type: application/json" -d '{ "name": "ci", "password": "ci" }' 'http://172.17.0.1:4873/-/user/org.couchdb.user:ci'
+          registry-url: 'http://172.17.0.1:4873'
+        env:
+          NODE_AUTH_TOKEN: "fake"
 
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
@@ -1433,6 +1441,8 @@ jobs:
           npm publish dist/@icloudpd/darwin-x64 --access public --registry http://172.17.0.1:4873
           npm publish dist/@icloudpd/darwin-arm64 --access public --registry http://172.17.0.1:4873
           npm publish dist/icloudpd --access public --registry http://172.17.0.1:4873
+        env:
+          NODE_AUTH_TOKEN: "fake"
 
       - name: Set up QEMU 
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
