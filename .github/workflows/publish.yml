@@ -137,8 +137,10 @@ jobs:
           path: |
             dist
 
-      - name: Debug artifacts
-        run: ls -la dist
+      - name: Remove intermidiate artofacts
+        run: |
+          rm dist/*.dynamic
+          rm dist/*.static
 
       - name: Publish PyPI
         env:
