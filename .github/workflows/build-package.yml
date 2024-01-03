@@ -1402,8 +1402,8 @@ jobs:
           echo "
           packages:
             '**':
-              access: $anonymous
-              publish: $anonymous" > ${{ github.workspace }}/npm_config.yaml
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
