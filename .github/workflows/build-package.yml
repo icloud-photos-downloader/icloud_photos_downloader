@@ -397,6 +397,14 @@ jobs:
         run: |
           scripts/build_npm ${{inputs.icloudpd_version}}
 
+      - name: Upload artifacts 
+        uses: actions/upload-artifact@v3 
+        with: 
+          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          if-no-files-found: error 
+          path: | 
+            dist/npm/
+
       - name: Publish NPM (Dry-run)
         run: |
           npm publish dist/npm/@icloudpd/linux-x64 --access public --dry-run=true

@@ -28,19 +28,29 @@ name: Publish Release
 
 jobs:
 
-  build_publish_docker:
+  docker:
     runs-on: ubuntu-22.04
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
-      - name: Download artifacts
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{inputs.icloudpd_version}}-oci
-          path: |
-            dist
 
+      - name: Download artifacts 
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{inputs.icloudpd_version}}-oci
+          path: | 
+            dist 
+ 
+      - name: Run skopeo 
+        uses: addnab/docker-run-action@v3 
+        with: 
+          image: quay.io/skopeo/stable:v1.14.0 
+          shell: sh 
+          options: -v ${{ github.workspace }}/dist:/dist 
+          run: > 
+            skopeo copy --preserve-digests --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all oci-archive:/dist/icloudpd-${{inputs.icloudpd_version}}-oci.tar docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}}
+  
       - name: Update repo description
         uses: peter-evans/dockerhub-description@v3
         with:
@@ -69,13 +79,16 @@ jobs:
           path: |
             dist
 
+      - name: Debug artifacts
+        run: ls -la dist
+
       - name: Publish NPM
         run: |
-          npm publish dist/npm/@icloudpd/linux-x64 --access public
-          npm publish dist/npm/@icloudpd/win32-x64 --access public
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public
-          npm publish dist/npm/icloudpd --access public
+          npm publish dist/@icloudpd/linux-x64 --access public
+          npm publish dist/@icloudpd/win32-x64 --access public
+          npm publish dist/@icloudpd/darwin-x64 --access public
+          npm publish dist/@icloudpd/darwin-arm64 --access public
+          npm publish dist/icloudpd --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
@@ -129,6 +142,9 @@ jobs:
           path: |
             dist
 
+      - name: Debug artifacts
+        run: ls -la dist
+
       - name: Publish PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
@@ -136,7 +152,7 @@ jobs:
         run: |
           python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
 
-  release:
+  gh_release:
     runs-on: ubuntu-22.04
     steps:
 
