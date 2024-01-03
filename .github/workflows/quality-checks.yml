@@ -96,5 +96,5 @@ jobs:
   build_package:
     needs: [get_version]
     uses: ./.github/workflows/build-package.yml
-      with:
-        icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
