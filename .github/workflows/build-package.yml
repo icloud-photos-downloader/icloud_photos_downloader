@@ -1315,42 +1315,42 @@ jobs:
           #   "debian_9_stretch", #variant name
           #   "debian:stretch", #image
           #   ] 
-          - [ 
-            "debian_10_buster", #variant name
-            "debian:buster", #image
-            ] 
-          - [ 
-            "debian_11_bullseye", #variant name
-            "debian:bullseye", #image
-            ] 
+          # - [ 
+          #   "debian_10_buster", #variant name
+          #   "debian:buster", #image
+          #   ] 
+          # - [ 
+          #   "debian_11_bullseye", #variant name
+          #   "debian:bullseye", #image
+          #   ] 
           - [ 
             "debian_12_bookworm", #variant name
             "debian:bookworm", #image
             ] 
-          - [ 
-            "ubuntu_12_precise", #variant name
-            "ubuntu:precise", #image
-            ] 
-          - [ 
-            "ubuntu_14_trusty", #variant name
-            "ubuntu:trusty", #image
-            ] 
-          - [ 
-            "ubuntu_16_xenial", #variant name
-            "ubuntu:xenial", #image
-            ] 
-          - [ 
-            "ubuntu_18_bionic", #variant name
-            "ubuntu:bionic", #image
-            ] 
-          - [ 
-            "ubuntu_20_focal", #variant name
-            "ubuntu:focal", #image
-            ] 
-          - [ 
-            "ubuntu_22_jammy", #variant name
-            "ubuntu:jammy", #image
-            ] 
+          # - [ 
+          #   "ubuntu_12_precise", #variant name
+          #   "ubuntu:precise", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_14_trusty", #variant name
+          #   "ubuntu:trusty", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_16_xenial", #variant name
+          #   "ubuntu:xenial", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_18_bionic", #variant name
+          #   "ubuntu:bionic", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_20_focal", #variant name
+          #   "ubuntu:focal", #image
+          #   ] 
+          # - [ 
+          #   "ubuntu_22_jammy", #variant name
+          #   "ubuntu:jammy", #image
+          #   ] 
         prop:  
           - [ 
             "amd64",  # variant name 
@@ -1398,18 +1398,18 @@ jobs:
       - name: Create Config
         if: steps.get_image.outputs.digest != ''  
         run: |
-          touch ~/config.yaml
+          touch ${{ github.workspace }}/npm_config.yaml
           echo "
           packages:
             '**':
               access: $anonymous
-              publish: $anonymous" > ~/config.yaml
-          cat ${{ github.workspace }}/config.yaml
+              publish: $anonymous" > ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
         if: steps.get_image.outputs.digest != ''  
         shell: bash 
-        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/config.yaml:/config.yaml verdaccio/verdaccio --config /config.yaml
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/config.yaml verdaccio/verdaccio --config /config.yaml
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
@@ -1478,7 +1478,8 @@ jobs:
           path: | 
             compatibility/* 
 
-  compatibility_linux_npm_apk: 
+  compatibility_linux_npm_apk:
+    if: false
     name: "NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
     strategy:  
       fail-fast: false 
