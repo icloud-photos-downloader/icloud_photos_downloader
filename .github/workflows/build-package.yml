@@ -507,7 +507,7 @@ jobs:
           #   "arm32v5/",  # image prefix
           # ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux_1, build_linux_2, build_src ]
+    needs: [ build_linux_1, build_linux_2, build_src ]
     defaults:
       run:
         shell: bash
@@ -680,7 +680,7 @@ jobs:
           #   "arm32v5/",  # image prefix
           # ]
     runs-on: ubuntu-22.04
-    needs: [ get_version, build_linux_1, build_linux_2, build_src ]
+    needs: [ build_linux_1, build_linux_2, build_src ]
     defaults:
       run:
         shell: bash
@@ -776,7 +776,7 @@ jobs:
       matrix: 
         os: [ macos-11, macos-12, windows-2019, windows-2022 ]
     runs-on: ${{ matrix.os }}
-    needs: [ get_version, build_macos, build_windows, build_src ]
+    needs: [ build_macos, build_windows, build_src ]
 
     steps:
 
@@ -961,7 +961,7 @@ jobs:
           #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
-    needs: [ get_version, build_linux_1, build_linux_2 ] 
+    needs: [ build_linux_1, build_linux_2 ] 
     defaults: 
       run: 
         shell: bash 
@@ -1053,7 +1053,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
-    needs: [ get_version, build_macos ] 
+    needs: [ build_macos ] 
  
     steps: 
  
@@ -1110,7 +1110,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
-    needs: [ get_version, build_windows ] 
+    needs: [ build_windows ] 
  
     steps: 
  
@@ -1190,7 +1190,7 @@ jobs:
           #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
-    needs: [ get_version, build_docker ] 
+    needs: [ build_docker ] 
     defaults: 
       run: 
         shell: bash 
@@ -1285,7 +1285,7 @@ jobs:
     name: "Build Compatibility Report"
 
     runs-on: ubuntu-22.04
-    needs: [ get_version, compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk, compatibility_linux_bin, compatibility_macos_bin, compatibility_windows_bin, compatibility_docker ]
+    needs: [ compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk, compatibility_linux_bin, compatibility_macos_bin, compatibility_windows_bin, compatibility_docker ]
     defaults:
       run:
         shell: bash
