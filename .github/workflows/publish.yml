@@ -10,19 +10,14 @@ on:
     secrets:
       DOCKERHUB_USERNAME:
         required: false
-        type: string
       DOCKERHUB_PASSWORD:
         required: false
-        type: string
       NPM_TOKEN:
         required: false
-        type: string
       PYPI_USERNAME:
         required: false
-        type: string
       PYPI_PASSWORD:
         required: false
-        type: string
 
 name: Publish Release
 
