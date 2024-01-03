@@ -58,9 +58,6 @@ jobs:
   npm:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
@@ -73,9 +70,6 @@ jobs:
           name: icloudpd-${{inputs.icloudpd_version}}-npm
           path: |
             dist
-
-      - name: Debug artifacts
-        run: ls -la dist
 
       - name: Publish NPM
         run: |
