@@ -1,32 +1,26 @@
-FROM python:3.12-alpine3.18 as build
-
+FROM alpine:3.18 as runtime_amd64_none
 WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-amd64 icloudpd_ex
 
-ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
+FROM alpine:3.18 as runtime_386_none
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-386 icloudpd_ex
 
-RUN set -xe \
-  && apk update \
-  && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
+FROM alpine:3.18 as runtime_arm64_none
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-arm64 icloudpd_ex
 
-COPY pyproject.toml .
-COPY src src
+FROM alpine:3.18 as runtime_arm_v7
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
 
-RUN pip3 install -e .[dev]
+FROM alpine:3.18 as runtime_arm_v6
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-arm32v6 icloudpd_ex
 
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd_ex.py
-
-FROM alpine:3.18 as runtime
-
+FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} as runtime
 RUN apk add --no-cache tzdata
-
 ENV TZ=UTC
-
 WORKDIR /app
-
-COPY --from=build /app/dist/icloudpd_ex .
-
+RUN chmod +x /app/icloudpd_ex
 ENTRYPOINT ["/app/icloudpd_ex"]
-
-# RUN set -xe \
-#   && ln -s /app/icloudpd /usr/local/bin/icloudpd \
-#   && ln -s /app/icloud /usr/local/bin/icloud 

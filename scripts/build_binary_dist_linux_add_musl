@@ -1,0 +1,9 @@
+#!/bin/bash
+set -euo pipefail
+
+# add musl suffix to binary wheels in dist
+# expects dist to have wheels
+# required param: plat_pip
+
+# add musl
+for i in dist/*.whl; do mv ${i} ${i/%.whl/.musllinux_1_1_$1.whl};done
