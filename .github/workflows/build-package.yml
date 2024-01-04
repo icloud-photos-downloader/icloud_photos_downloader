@@ -1401,23 +1401,26 @@ jobs:
         run: |
           touch ${{ github.workspace }}/npm_config.yaml
           echo "
+          storage: /verdaccio/storage/data
           packages:
             '**':
               access: \$anonymous
               publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
         if: steps.get_image.outputs.digest != ''  
         shell: bash 
-        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/config.yaml verdaccio/verdaccio --config /config.yaml
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio
 
       - name: Test Registry 
         if: steps.get_image.outputs.digest != ''  
         shell: bash 
         run: |
-          apt-get update && apt-get -y install curl
+          echo "docker ps..."
           docker ps
+          echo "repo get..."
           curl http://172.17.0.1:4873
 
       - name: Make folder for compatibility 
