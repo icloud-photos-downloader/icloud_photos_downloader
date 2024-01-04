@@ -1685,7 +1685,7 @@ jobs:
 
       - name: Start Registry 
         shell: bash 
-        run: npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml > ${{ github.workspace }}/verdaccio.log &
+        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml > ${{ github.workspace }}/verdaccio.log) &
 
       - name: Make folder for compatibility 
         run: | 
@@ -1703,7 +1703,7 @@ jobs:
           echo "ls..."
           ls -la
           echo "ps..."
-          ps -ef
+          ps -ef | grep verdaccio
           echo "log..."
           cat ${{ github.workspace }}/verdaccio.log
           echo "curl..."
