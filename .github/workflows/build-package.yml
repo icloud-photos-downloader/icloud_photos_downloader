@@ -1838,7 +1838,18 @@ jobs:
     name: "Build Compatibility Report"
 
     runs-on: ubuntu-22.04
-    needs: [ compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk, compatibility_linux_bin, compatibility_macos_bin, compatibility_windows_bin, compatibility_docker, compatibility_linux_npm_apt, compatibility_linux_npm_apk, compatibility_macos_npm, compatibility_windows_npm ]
+    needs: 
+      - compatibility_nonlinux_pip
+      - compatibility_linux_pip_apt
+      - compatibility_linux_pip_apk
+      - compatibility_linux_bin
+      - compatibility_macos_bin
+      - compatibility_windows_bin
+      - compatibility_docker
+      - compatibility_linux_npm_apt
+      - compatibility_linux_npm_apk
+      - compatibility_macos_npm
+      - compatibility_windows_npm
     defaults:
       run:
         shell: bash
