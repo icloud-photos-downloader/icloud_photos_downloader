@@ -1412,7 +1412,7 @@ jobs:
       - name: Start Registry 
         if: steps.get_image.outputs.digest != ''  
         shell: bash 
-        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
 
       - name: Test Registry 
         if: steps.get_image.outputs.digest != ''  
@@ -1420,6 +1420,8 @@ jobs:
         run: |
           echo "docker ps..."
           docker ps
+          echo "bump curl..."
+          apt-get update && apt-get install -y curl
           echo "repo get..."
           curl -v http://localhost:4873
 
