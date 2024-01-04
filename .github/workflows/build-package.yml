@@ -11,7 +11,6 @@ on:
 jobs:
 
   build_src:
-    if: false
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -54,24 +53,24 @@ jobs:
               "amd64", # internal file suffix
               "x86_64", # pip file suffix
           ]
-          # - [
-          #     "arm64",
-          #     "aarch64-unknown-linux-gnu",
-          #     "arm64", # file suffix
-          #     "aarch64", # pip file suffix
-          # ]
-          # - [
-          #     "386",
-          #     "i686-unknown-linux-gnu",
-          #     "386", # file suffix
-          #     "i686", # pip file suffix
-          # ]
-          # - [
-          #     "arm/v7",
-          #     "armv7-unknown-linux-gnueabihf",
-          #     "arm32v7", # file suffix
-          #     "armv7l", # pip file suffix
-          # ]
+          - [
+              "arm64",
+              "aarch64-unknown-linux-gnu",
+              "arm64", # file suffix
+              "aarch64", # pip file suffix
+          ]
+          - [
+              "386",
+              "i686-unknown-linux-gnu",
+              "386", # file suffix
+              "i686", # pip file suffix
+          ]
+          - [
+              "arm/v7",
+              "armv7-unknown-linux-gnueabihf",
+              "arm32v7", # file suffix
+              "armv7l", # pip file suffix
+          ]
           # - [
           #     "arm/v6",
           #     "arm-unknown-linux-gnueabi",
@@ -146,7 +145,6 @@ jobs:
           dist/icloud*
 
   build_linux_2:
-    if: false
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -312,7 +310,6 @@ jobs:
           dist/icloud*
 
   build_docker:
-    if: false
     runs-on: ubuntu-22.04
     needs: [ build_linux_1, build_linux_2 ]
 
@@ -410,7 +407,6 @@ jobs:
             dist/npm/
 
   compatibility_linux_pip_apt:
-    if: false
     name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
       fail-fast: false
@@ -602,7 +598,6 @@ jobs:
             compatibility/*
 
   compatibility_linux_pip_apk:
-    if: false
     name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
     strategy: 
       fail-fast: false
@@ -774,7 +769,6 @@ jobs:
             compatibility/*
 
   compatibility_nonlinux_pip:
-    if: false
     name: "PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
       fail-fast: false
@@ -837,7 +831,6 @@ jobs:
             compatibility/*
 
   compatibility_linux_bin: 
-    if: false
     name: "BIN on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
@@ -1044,7 +1037,6 @@ jobs:
             compatibility/* 
  
   compatibility_macos_bin: 
-    if: false
     name: "BIN on ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
@@ -1102,7 +1094,6 @@ jobs:
             compatibility/* 
  
   compatibility_windows_bin: 
-    if: false
     name: "BIN on ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
@@ -1157,7 +1148,6 @@ jobs:
             compatibility/* 
 
   compatibility_docker: 
-    if: false
     name: "DOCKER on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
@@ -1311,73 +1301,73 @@ jobs:
           #   "debian_8_jessie", #variant name
           #   "debian:jessie", #image
           #   ] 
-          # apt-get does not work for debian 7 anymore
+          # apt-get does not work for debian 9 anymore
           # - [ 
           #   "debian_9_stretch", #variant name
           #   "debian:stretch", #image
           #   ] 
-          # - [ 
-          #   "debian_10_buster", #variant name
-          #   "debian:buster", #image
-          #   ] 
-          # - [ 
-          #   "debian_11_bullseye", #variant name
-          #   "debian:bullseye", #image
-          #   ] 
+          - [ 
+            "debian_10_buster", #variant name
+            "debian:buster", #image
+            ] 
+          - [ 
+            "debian_11_bullseye", #variant name
+            "debian:bullseye", #image
+            ] 
           - [ 
             "debian_12_bookworm", #variant name
             "debian:bookworm", #image
             ] 
-          # - [ 
-          #   "ubuntu_12_precise", #variant name
-          #   "ubuntu:precise", #image
-          #   ] 
-          # - [ 
-          #   "ubuntu_14_trusty", #variant name
-          #   "ubuntu:trusty", #image
-          #   ] 
-          # - [ 
-          #   "ubuntu_16_xenial", #variant name
-          #   "ubuntu:xenial", #image
-          #   ] 
-          # - [ 
-          #   "ubuntu_18_bionic", #variant name
-          #   "ubuntu:bionic", #image
-          #   ] 
-          # - [ 
-          #   "ubuntu_20_focal", #variant name
-          #   "ubuntu:focal", #image
-          #   ] 
-          # - [ 
-          #   "ubuntu_22_jammy", #variant name
-          #   "ubuntu:jammy", #image
-          #   ] 
+          - [ 
+            "ubuntu_12_precise", #variant name
+            "ubuntu:precise", #image
+            ] 
+          - [ 
+            "ubuntu_14_trusty", #variant name
+            "ubuntu:trusty", #image
+            ] 
+          - [ 
+            "ubuntu_16_xenial", #variant name
+            "ubuntu:xenial", #image
+            ] 
+          - [ 
+            "ubuntu_18_bionic", #variant name
+            "ubuntu:bionic", #image
+            ] 
+          - [ 
+            "ubuntu_20_focal", #variant name
+            "ubuntu:focal", #image
+            ] 
+          - [ 
+            "ubuntu_22_jammy", #variant name
+            "ubuntu:jammy", #image
+            ] 
         prop:  
           - [ 
             "amd64",  # variant name 
             "amd64",  # platform spec 
             "",  # image prefix 
           ] 
-          # - [ 
-          #   "386",  # variant name 
-          #   "386",  # platform spec 
-          #   "i386/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm64",  # variant name 
-          #   "arm64",  # platform spec 
-          #   "",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v7",  # variant name 
-          #   "arm/v7",  # platform spec 
-          #   "arm32v7/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v6",  # variant name 
-          #   "arm/v6",  # platform spec 
-          #   "arm32v6/",  # image prefix 
-          # ] 
+          - [ 
+            "386",  # variant name 
+            "386",  # platform spec 
+            "i386/",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+          - [ 
+            "arm32v6",  # variant name 
+            "arm/v6",  # platform spec 
+            "arm32v6/",  # image prefix 
+          ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
@@ -1497,56 +1487,56 @@ jobs:
             "alpine_3_19", #variant name
             "alpine:3.19", #image
             ] 
-          # - [ 
-          #   "alpine_3_18", #variant name
-          #   "alpine:3.18", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_17", #variant name
-          #   "alpine:3.17", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_16", #variant name
-          #   "alpine:3.16", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_15", #variant name
-          #   "alpine:3.15", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_14", #variant name
-          #   "alpine:3.14", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_13", #variant name
-          #   "alpine:3.13", #image
-          #   ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
         prop:  
           - [ 
             "amd64",  # variant name 
             "amd64",  # platform spec 
             "",  # image prefix 
           ] 
-          # - [ 
-          #   "386",  # variant name 
-          #   "386",  # platform spec 
-          #   "i386/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm64",  # variant name 
-          #   "arm64",  # platform spec 
-          #   "",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v7",  # variant name 
-          #   "arm/v7",  # platform spec 
-          #   "arm32v7/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v6",  # variant name 
-          #   "arm/v6",  # platform spec 
-          #   "arm32v6/",  # image prefix 
-          # ] 
+          - [ 
+            "386",  # variant name 
+            "386",  # platform spec 
+            "i386/",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+          - [ 
+            "arm32v6",  # variant name 
+            "arm/v6",  # platform spec 
+            "arm32v6/",  # image prefix 
+          ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
