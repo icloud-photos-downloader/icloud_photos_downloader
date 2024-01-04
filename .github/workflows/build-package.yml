@@ -1443,8 +1443,6 @@ jobs:
         with:
           node-version: '16.x'
           registry-url: 'http://localhost:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
 
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
