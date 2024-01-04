@@ -1441,7 +1441,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
+          node-version: '20.x'
           registry-url: 'http://localhost:4873'
 
       - name: Publish NPM
