@@ -138,11 +138,6 @@ jobs:
           path: |
             dist
 
-      - name: Remove intermidiate artofacts
-        run: |
-          rm dist/*.dynamic
-          rm dist/*.static
-
       - name: Publish PyPI
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
