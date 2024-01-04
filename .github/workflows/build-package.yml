@@ -1421,7 +1421,7 @@ jobs:
           echo "docker ps..."
           docker ps
           echo "repo get..."
-          curl http://localhost:4873
+          curl -v http://localhost:4873
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
