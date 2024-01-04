@@ -1685,7 +1685,7 @@ jobs:
 
       - name: Start Registry 
         shell: bash 
-        run: npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml &
+        run: npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml > ${{ github.workspace }}/verdaccio.log &
 
       - name: Make folder for compatibility 
         run: | 
@@ -1700,6 +1700,11 @@ jobs:
 
       - name: Test Registry
         run: | 
+          echo "ps..."
+          ps
+          echo "log..."
+          cat ${{ github.workspace }}/verdaccio.log
+          echo "curl..."
           curl -v https://localhost:4873
 
       - name: Publish NPM
