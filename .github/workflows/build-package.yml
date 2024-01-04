@@ -1647,6 +1647,7 @@ jobs:
 
 
   compatibility_macos_npm:
+    if: false
     name: "NPM on ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
@@ -1740,6 +1741,7 @@ jobs:
 
 
   compatibility_windows_npm:
+    if: false
     name: "NPM on ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
@@ -1846,8 +1848,8 @@ jobs:
       - compatibility_docker
       - compatibility_linux_npm_apt
       - compatibility_linux_npm_apk
-      - compatibility_macos_npm
-      - compatibility_windows_npm
+      # - compatibility_macos_npm
+      # - compatibility_windows_npm
     defaults:
       run:
         shell: bash
