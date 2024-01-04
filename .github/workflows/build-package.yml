@@ -1700,8 +1700,10 @@ jobs:
 
       - name: Test Registry
         run: | 
+          echo "ls..."
+          ls -la
           echo "ps..."
-          ps
+          ps -ef
           echo "log..."
           cat ${{ github.workspace }}/verdaccio.log
           echo "curl..."
