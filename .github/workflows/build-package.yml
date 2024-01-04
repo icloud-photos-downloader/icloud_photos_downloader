@@ -1651,7 +1651,7 @@ jobs:
     strategy:  
       fail-fast: false 
       matrix: 
-        os: [ "macos_11" ]
+        os: [ "macos-11" ]
     runs-on: ${{ matrix.os }} 
     needs: [ build_npm ] 
     defaults: 
