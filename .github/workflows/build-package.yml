@@ -1670,8 +1670,9 @@ jobs:
       - name: Create Config
         run: |
           touch ${{ github.workspace }}/npm_config.yaml
+          mkdir ${{ github.workspace }}/verdaccio
           echo "
-          storage: /verdaccio/storage/data
+          storage: ${{ github.workspace }}/verdaccio
           max_body_size: 1000mb
           packages:
             '**':
