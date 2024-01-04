@@ -1392,7 +1392,6 @@ jobs:
     steps: 
  
       - name: Create Config
-        # if: steps.get_image.outputs.digest != ''  
         run: |
           touch ${{ github.workspace }}/npm_config.yaml
           echo "
@@ -1406,7 +1405,6 @@ jobs:
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
-        # if: steps.get_image.outputs.digest != ''  
         shell: bash 
         run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
 
@@ -1428,14 +1426,14 @@ jobs:
           path: | 
             dist/npm 
  
-      - name: Test Registry 
-        if: steps.get_image.outputs.digest != ''  
-        shell: bash 
-        run: |
-          echo "docker ps..."
-          docker ps
-          echo "repo get..."
-          curl -v http://localhost:4873
+      # - name: Test Registry 
+      #   if: steps.get_image.outputs.digest != ''  
+      #   shell: bash 
+      #   run: |
+      #     echo "docker ps..."
+      #     docker ps
+      #     echo "repo get..."
+      #     curl -v http://localhost:4873
 
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
@@ -1490,7 +1488,6 @@ jobs:
             compatibility/* 
 
   compatibility_linux_npm_apk:
-    if: false
     name: "NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
     strategy:  
       fail-fast: false 
@@ -1500,30 +1497,30 @@ jobs:
             "alpine_3_19", #variant name
             "alpine:3.19", #image
             ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
+          # - [ 
+          #   "alpine_3_18", #variant name
+          #   "alpine:3.18", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_17", #variant name
+          #   "alpine:3.17", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_16", #variant name
+          #   "alpine:3.16", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_15", #variant name
+          #   "alpine:3.15", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_14", #variant name
+          #   "alpine:3.14", #image
+          #   ] 
+          # - [ 
+          #   "alpine_3_13", #variant name
+          #   "alpine:3.13", #image
+          #   ] 
         prop:  
           - [ 
             "amd64",  # variant name 
@@ -1563,15 +1560,27 @@ jobs:
  
     steps: 
  
+      - name: Create Config
+        run: |
+          touch ${{ github.workspace }}/npm_config.yaml
+          echo "
+          storage: /verdaccio/storage/data
+          max_body_size: 1000mb
+          packages:
+            '**':
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Start Registry 
+        shell: bash 
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
+
       - name: Get image 
         id: get_image  
         run: |  
           echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
-
-      - name: Start Registry 
-        if: steps.get_image.outputs.digest != ''  
-        shell: bash 
-        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 verdaccio/verdaccio 
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
@@ -1584,28 +1593,23 @@ jobs:
         with: 
           name: icloudpd-${{inputs.icloudpd_version}}-npm
           path: | 
-            dist 
+            dist/npm
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
         uses: actions/setup-node@v3
         with:
-          node-version: '16.x'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Setup user
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          curl -XPUT -H "Content-type: application/json" -d '{ "name": "ci", "password": "ci" }' 'http://172.17.0.1:4873/-/user/org.couchdb.user:ci'
+          node-version: '20.x'
+          registry-url: 'https://localhost:4873'
 
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
-          npm publish dist/@icloudpd/linux-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/@icloudpd/win32-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/@icloudpd/darwin-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/@icloudpd/darwin-arm64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/icloudpd --access public --registry http://172.17.0.1:4873
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://172.17.0.1:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://172.17.0.1:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://172.17.0.1:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://172.17.0.1:4873
+          npm publish dist/npm/icloudpd --access public --registry http://172.17.0.1:4873
 
       - name: Set up QEMU 
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
