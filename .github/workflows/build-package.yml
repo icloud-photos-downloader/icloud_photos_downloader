@@ -1402,8 +1402,6 @@ jobs:
           touch ${{ github.workspace }}/npm_config.yaml
           echo "
           storage: /verdaccio/storage/data
-          listen:
-            - 0.0.0.0:4873
           packages:
             '**':
               access: \$anonymous
@@ -1423,7 +1421,7 @@ jobs:
           echo "docker ps..."
           docker ps
           echo "repo get..."
-          curl http://172.17.0.1:4873
+          curl http://localhost:4873
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
@@ -1443,18 +1441,18 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '16.x'
-          registry-url: 'http://172.17.0.1:4873'
+          registry-url: 'http://localhost:4873'
         env:
           NODE_AUTH_TOKEN: "fake"
 
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
-          npm publish dist/@icloudpd/linux-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/@icloudpd/win32-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/@icloudpd/darwin-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/@icloudpd/darwin-arm64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/icloudpd --access public --registry http://172.17.0.1:4873
+          npm publish dist/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/icloudpd --access public --registry http://localhost:4873
         env:
           NODE_AUTH_TOKEN: "fake"
 
