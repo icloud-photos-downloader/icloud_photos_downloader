@@ -1666,6 +1666,8 @@ jobs:
         with:
           node-version: '20.x'
           registry-url: 'https://localhost:4873'
+        env:
+          NODE_AUTH_TOKEN: "fake"
 
       - name: Create Config
         run: |
@@ -1696,6 +1698,10 @@ jobs:
           path: | 
             dist/npm
 
+      - name: Test Registry
+        run: | 
+          curl -v https://localhost:4873
+
       - name: Publish NPM
         run: |
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
@@ -1703,6 +1709,8 @@ jobs:
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
           npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+        env:
+          NODE_AUTH_TOKEN: "fake"
 
       - name: Run test on ${{ matrix.os }} 
         id: run_test 
