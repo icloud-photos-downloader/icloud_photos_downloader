@@ -1682,8 +1682,7 @@ jobs:
 
       - name: Start Registry 
         shell: bash 
-        run: |
-          npx verdaccio --config ${{ github.workspace }}/npm_config.yaml
+        run: npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml &
 
       - name: Make folder for compatibility 
         run: | 
