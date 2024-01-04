@@ -1605,11 +1605,11 @@ jobs:
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
-          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://172.17.0.1:4873
-          npm publish dist/npm/icloudpd --access public --registry http://172.17.0.1:4873
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
 
       - name: Set up QEMU 
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
@@ -1646,11 +1646,90 @@ jobs:
             compatibility/* 
 
 
+  compatibility_macos_npm:
+    name: "NPM on ${{ matrix.os }} on amd64 platform" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        os: [ "macos_11" ]
+    runs-on: ${{ matrix.os }} 
+    needs: [ build_npm ] 
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Setup Node
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'https://localhost:4873'
+
+      - name: Create Config
+        run: |
+          touch ${{ github.workspace }}/npm_config.yaml
+          echo "
+          storage: /verdaccio/storage/data
+          max_body_size: 1000mb
+          packages:
+            '**':
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Start Registry 
+        shell: bash 
+        run: |
+          npx verdaccio --config ${{ github.workspace }}/npm_config.yaml
+
+      - name: Make folder for compatibility 
+        run: | 
+          mkdir compatibility 
+ 
+      - name: Download artifacts
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          path: | 
+            dist/npm
+
+      - name: Publish NPM
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+
+      - name: Run test on ${{ matrix.os }} 
+        id: run_test 
+        continue-on-error: true 
+        run: > 
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          touch /work/compatibility/npm.${{ matrix.os }}.amd64.pass 
+ 
+      - name: Record failure on ${{ matrix.os }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/npm.${{ matrix.os }}.amd64.fail 
+ 
+      - name: Upload compatibility result 
+        uses: actions/upload-artifact@v3 
+        with: 
+          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-macos-npm
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+
   compatibility_report:
     name: "Build Compatibility Report"
 
     runs-on: ubuntu-22.04
-    needs: [ compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk, compatibility_linux_bin, compatibility_macos_bin, compatibility_windows_bin, compatibility_docker, compatibility_linux_npm_apt, compatibility_linux_npm_apk ]
+    needs: [ compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk, compatibility_linux_bin, compatibility_macos_bin, compatibility_windows_bin, compatibility_docker, compatibility_linux_npm_apt, compatibility_linux_npm_apk, compatibility_macos_npm ]
     defaults:
       run:
         shell: bash
