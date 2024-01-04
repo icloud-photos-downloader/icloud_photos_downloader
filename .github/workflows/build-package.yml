@@ -1680,12 +1680,11 @@ jobs:
             '**':
               access: \$anonymous
               publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
-          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
         shell: bash 
-        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml > ${{ github.workspace }}/verdaccio.log) &
+        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml --listen 0.0.0.0:4873 > ${{ github.workspace }}/verdaccio.log) &
 
       - name: Make folder for compatibility 
         run: | 
@@ -1774,12 +1773,11 @@ jobs:
             '**':
               access: \$anonymous
               publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
-          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
         shell: bash 
-        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml > ${{ github.workspace }}/verdaccio.log) &
+        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml --listen 0.0.0.0:4873 > ${{ github.workspace }}/verdaccio.log) &
 
       - name: Make folder for compatibility 
         run: | 
