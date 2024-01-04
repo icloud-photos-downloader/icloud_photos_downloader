@@ -1411,6 +1411,14 @@ jobs:
         shell: bash 
         run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/config.yaml verdaccio/verdaccio --config /config.yaml
 
+      - name: Test Registry 
+        if: steps.get_image.outputs.digest != ''  
+        shell: bash 
+        run: |
+          apt-get update && apt-get -y install curl
+          docker ps
+          curl http://172.17.0.1:4873
+
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
         run: | 
