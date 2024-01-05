@@ -35,7 +35,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{ inputs.icloudpd_version }}-src
+        name: icloudpd-${{ github.sha }}-src
         if-no-files-found: error
         path: |
           dist/icloud*.whl
@@ -138,7 +138,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+        name: icloudpd-${{github.sha}}-bin-linux-1
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -233,7 +233,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+        name: icloudpd-${{github.sha}}-bin-linux-2
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -268,7 +268,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+        name: icloudpd-${{github.sha}}-bin-macos
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -303,7 +303,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v3
       with:
-        name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+        name: icloudpd-${{github.sha}}-bin-windows
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -318,14 +318,14 @@ jobs:
     - name: Download artifacts 1
       uses: actions/download-artifact@v3 
       with: 
-        name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+        name: icloudpd-${{github.sha}}-bin-linux-1
         path: | 
           dist 
  
     - name: Download artifacts 2
       uses: actions/download-artifact@v3 
       with: 
-        name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+        name: icloudpd-${{github.sha}}-bin-linux-2
         path: | 
           dist 
  
@@ -354,7 +354,7 @@ jobs:
     - name: Upload artifacts 
       uses: actions/upload-artifact@v3 
       with: 
-        name: icloudpd-${{inputs.icloudpd_version}}-oci 
+        name: icloudpd-${{github.sha}}-oci 
         if-no-files-found: error 
         path: | 
           dist/icloud*.tar
@@ -375,21 +375,21 @@ jobs:
       - name: Download artifacts (Linux)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          name: icloudpd-${{github.sha}}-bin-linux-1
           path: |
             dist
 
       - name: Download artifacts (MacOS)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos
           path: |
             dist
 
       - name: Download artifacts (Windows)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+          name: icloudpd-${{github.sha}}-bin-windows
           path: |
             dist
 
@@ -400,7 +400,7 @@ jobs:
       - name: Upload artifacts 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          name: icloudpd-${{github.sha}}-npm
           if-no-files-found: error 
           path: | 
             dist/npm/
@@ -536,7 +536,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-src
+          name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
@@ -544,7 +544,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          name: icloudpd-${{github.sha}}-bin-linux-1
           path: |
             dist
 
@@ -552,7 +552,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-2
           path: |
             dist
 
@@ -582,7 +582,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
@@ -601,7 +601,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-pip-apt
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt
           if-no-files-found: error
           path: |
             compatibility/*
@@ -709,7 +709,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-src
+          name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
@@ -717,7 +717,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          name: icloudpd-${{github.sha}}-bin-linux-1
           path: |
             dist
 
@@ -725,7 +725,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-2
           path: |
             dist
 
@@ -754,7 +754,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
@@ -772,7 +772,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-pip-apk
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk
           if-no-files-found: error
           path: |
             compatibility/*
@@ -795,21 +795,21 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-src
+          name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
       - name: Download artifacts (macos)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos
           path: |
             dist
 
       - name: Download artifacts (windows)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+          name: icloudpd-${{github.sha}}-bin-windows
           path: |
             dist
 
@@ -817,7 +817,7 @@ jobs:
         id: run_test
         continue-on-error: true
         run: >
-          pip3 install --disable-pip-version-check --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --help &&
           icloudpd --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
@@ -834,7 +834,7 @@ jobs:
       - name: Upload compatibility result
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-nonlinux-pip
+          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip
           if-no-files-found: error
           path: |
             compatibility/*
@@ -990,7 +990,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          name: icloudpd-${{github.sha}}-bin-linux-1
           path: | 
             dist 
  
@@ -998,7 +998,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-2
           path: | 
             dist 
  
@@ -1025,10 +1025,13 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloud..." && 
             dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} -h && 
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd-ex..." && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --help && 
             touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1040,7 +1043,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-bin
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1072,7 +1075,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos
           path: | 
             dist 
  
@@ -1083,10 +1086,13 @@ jobs:
           echo "prep test..." && 
           chmod +x dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
+          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
           echo "test icloud..." && 
           dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --help && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --version && 
+          echo "test icloudpd-ex..." && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --help && 
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -1097,7 +1103,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-macos-bin 
+          name: icloudpd-${{github.sha}}-compatibility-macos-bin 
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1129,7 +1135,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows 
+          name: icloudpd-${{github.sha}}-bin-windows 
           path: | 
             dist 
  
@@ -1141,6 +1147,8 @@ jobs:
           dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --help && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
+          echo "test icloudpd-ex..." && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --help && 
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -1151,7 +1159,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-windows-bin 
+          name: icloudpd-${{github.sha}}-compatibility-windows-bin 
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1237,7 +1245,7 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-oci
+          name: icloudpd-${{github.sha}}-oci
           path: | 
             dist 
  
@@ -1287,7 +1295,7 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-docker 
+          name: icloudpd-${{github.sha}}-compatibility-docker 
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1318,49 +1326,49 @@ jobs:
       - name: Download compatibility results (nonlinux-pip)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-nonlinux-pip
+          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip
           path: |
             compatibility
 
       - name: Download compatibility results (linux-pip-apt)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-pip-apt
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt
           path: |
             compatibility
 
       - name: Download compatibility results (linux-pip-apk)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-pip-apk
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk
           path: |
             compatibility
 
       - name: Download compatibility results (linux-bin)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-bin
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin
           path: |
             compatibility
 
       - name: Download compatibility results (macos-bin)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-macos-bin
+          name: icloudpd-${{github.sha}}-compatibility-macos-bin
           path: |
             compatibility
 
       - name: Download compatibility results (windows-bin)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-windows-bin
+          name: icloudpd-${{github.sha}}-compatibility-windows-bin
           path: |
             compatibility
 
       - name: Download compatibility results (docker)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-docker
+          name: icloudpd-${{github.sha}}-compatibility-docker
           path: |
             compatibility
 
@@ -1374,7 +1382,7 @@ jobs:
       - name: Upload compatibility report
         uses: actions/upload-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility
+          name: icloudpd-${{github.sha}}-compatibility
           if-no-files-found: error
           path: |
             dist/*

@@ -33,7 +33,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-oci
+          name: icloudpd-${{github.sha}}-oci
           path: | 
             dist 
  
@@ -71,7 +71,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          name: icloudpd-${{github.sha}}-npm
           path: |
             dist
 
@@ -106,42 +106,37 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-src
+          name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
       - name: Download artifacts (linux 1)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          name: icloudpd-${{github.sha}}-bin-linux-1
           path: |
             dist
 
       - name: Download artifacts (linux 2)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-2
           path: |
             dist
 
       - name: Download artifacts (macos)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos
           path: |
             dist
 
       - name: Download artifacts (windows)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+          name: icloudpd-${{github.sha}}-bin-windows
           path: |
             dist
-
-      - name: Remove intermidiate artofacts
-        run: |
-          rm dist/*.dynamic
-          rm dist/*.static
 
       - name: Publish PyPI
         env:
@@ -157,49 +152,49 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-src
+          name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
       - name: Download artifacts (linux 1)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-1
+          name: icloudpd-${{github.sha}}-bin-linux-1
           path: |
             dist
 
       - name: Download artifacts (linux 2)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-2
           path: |
             dist
 
       - name: Download artifacts (macos)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos
           path: |
             dist
 
       - name: Download artifacts (windows)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-bin-windows
+          name: icloudpd-${{github.sha}}-bin-windows
           path: |
             dist
 
       - name: Download artifacts (docker)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-oci
+          name: icloudpd-${{github.sha}}-oci
           path: |
             dist
 
       - name: Download artifacts (compatibility)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility
+          name: icloudpd-${{github.sha}}-compatibility
           path: |
             dist
 
