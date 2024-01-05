@@ -59,9 +59,6 @@ jobs:
   npm:
     runs-on: ubuntu-22.04
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
       - name: Setup Node
         uses: actions/setup-node@v3
         with:
@@ -73,18 +70,15 @@ jobs:
         with:
           name: icloudpd-${{github.sha}}-npm
           path: |
-            dist
-
-      - name: Debug artifacts
-        run: ls -la dist
+            dist/npm
 
       - name: Publish NPM
         run: |
-          npm publish dist/@icloudpd/linux-x64 --access public
-          npm publish dist/@icloudpd/win32-x64 --access public
-          npm publish dist/@icloudpd/darwin-x64 --access public
-          npm publish dist/@icloudpd/darwin-arm64 --access public
-          npm publish dist/icloudpd --access public
+          npm publish dist/npm/@icloudpd/linux-x64 --access public
+          npm publish dist/npm/@icloudpd/win32-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public
+          npm publish dist/npm/icloudpd --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 

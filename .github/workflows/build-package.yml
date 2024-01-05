@@ -114,7 +114,7 @@ jobs:
         options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.BUILD_PROP[0] }}
         run: >
           echo "install os pkgs..." &&
-          apt-get update -y && apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev &&
+          export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev &&
           echo "install rustup..."  &&
           (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host ${{ matrix.BUILD_PROP[1] }}) &&
           . "$HOME/.cargo/env" &&
@@ -405,16 +405,6 @@ jobs:
           path: | 
             dist/npm/
 
-      - name: Publish NPM (Dry-run)
-        run: |
-          npm publish dist/npm/@icloudpd/linux-x64 --access public --dry-run=true
-          npm publish dist/npm/@icloudpd/win32-x64 --access public --dry-run=true
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public --dry-run=true
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --dry-run=true
-          npm publish dist/npm/icloudpd --access public --dry-run=true
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
   compatibility_linux_pip_apt:
     name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
@@ -576,7 +566,7 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
           run: >
             echo "install default python..." &&
-            apt-get update -y && apt-get install -y python3 python3-venv &&
+            export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv &&
             echo "create venv and active..." &&
             cd /work &&
             python3 -m venv .venv &&
@@ -1300,11 +1290,567 @@ jobs:
           path: | 
             compatibility/* 
   
+  compatibility_linux_npm_apt: 
+    name: "NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        image:  
+          # apt-get does not work for debian 6 anymore
+          # - [ 
+          #   "debian_6_squeeze", #variant name
+          #   "debian:squeeze", #image
+          #   ] 
+          # apt-get does not work for debian 7 anymore
+          # - [ 
+          #   "debian_7_wheezy", #variant name
+          #   "debian:wheezy", #image
+          #   ] 
+          # apt-get does not work for debian 8 anymore
+          # - [ 
+          #   "debian_8_jessie", #variant name
+          #   "debian:jessie", #image
+          #   ] 
+          # apt-get does not work for debian 9 anymore
+          # - [ 
+          #   "debian_9_stretch", #variant name
+          #   "debian:stretch", #image
+          #   ] 
+          - [ 
+            "debian_10_buster", #variant name
+            "debian:buster", #image
+            ] 
+          - [ 
+            "debian_11_bullseye", #variant name
+            "debian:bullseye", #image
+            ] 
+          - [ 
+            "debian_12_bookworm", #variant name
+            "debian:bookworm", #image
+            ] 
+          - [ 
+            "ubuntu_12_precise", #variant name
+            "ubuntu:precise", #image
+            ] 
+          - [ 
+            "ubuntu_14_trusty", #variant name
+            "ubuntu:trusty", #image
+            ] 
+          - [ 
+            "ubuntu_16_xenial", #variant name
+            "ubuntu:xenial", #image
+            ] 
+          - [ 
+            "ubuntu_18_bionic", #variant name
+            "ubuntu:bionic", #image
+            ] 
+          - [ 
+            "ubuntu_20_focal", #variant name
+            "ubuntu:focal", #image
+            ] 
+          - [ 
+            "ubuntu_22_jammy", #variant name
+            "ubuntu:jammy", #image
+            ] 
+        prop:  
+          - [ 
+            "amd64",  # variant name 
+            "amd64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "386",  # variant name 
+            "386",  # platform spec 
+            "i386/",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+          - [ 
+            "arm32v6",  # variant name 
+            "arm/v6",  # platform spec 
+            "arm32v6/",  # image prefix 
+          ] 
+          # - [ 
+          #   "arm32v5",  # variant name 
+          #   "arm/v5",  # platform spec 
+          #   "arm32v5/",  # image prefix 
+          # ] 
+    runs-on: ubuntu-22.04 
+    needs: [ build_npm ] 
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Create Config
+        run: |
+          touch ${{ github.workspace }}/npm_config.yaml
+          echo "
+          storage: /verdaccio/storage/data
+          max_body_size: 1000mb
+          packages:
+            '**':
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Start Registry 
+        shell: bash 
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
+
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+
+      - name: Make folder for compatibility 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir compatibility 
+ 
+      - name: Download artifacts
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-npm
+          path: | 
+            dist/npm 
+ 
+      # - name: Test Registry 
+      #   if: steps.get_image.outputs.digest != ''  
+      #   shell: bash 
+      #   run: |
+      #     echo "docker ps..."
+      #     docker ps
+      #     echo "repo get..."
+      #     curl -v http://localhost:4873
+
+      - name: Setup Node
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'http://localhost:4873'
+
+      - name: Publish NPM
+        if: steps.get_image.outputs.digest != ''  
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+        env:
+          NODE_AUTH_TOKEN: "fake"
+
+      - name: Set up QEMU 
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+ 
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_test 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install npm..." && 
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
+            echo "test icloudpd..." && 
+            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+            touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+ 
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+ 
+      - name: Upload compatibility result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+  compatibility_linux_npm_apk:
+    name: "NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        image:  
+          - [ 
+            "alpine_3_19", #variant name
+            "alpine:3.19", #image
+            ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
+        prop:  
+          - [ 
+            "amd64",  # variant name 
+            "amd64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "386",  # variant name 
+            "386",  # platform spec 
+            "i386/",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
+          # - [ 
+          #   "arm32v7",  # variant name 
+          #   "arm/v7",  # platform spec 
+          #   "arm32v7/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v6",  # variant name 
+          #   "arm/v6",  # platform spec 
+          #   "arm32v6/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v5",  # variant name 
+          #   "arm/v5",  # platform spec 
+          #   "arm32v5/",  # image prefix 
+          # ] 
+    runs-on: ubuntu-22.04 
+    needs: [ build_npm ] 
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Create Config
+        run: |
+          touch ${{ github.workspace }}/npm_config.yaml
+          echo "
+          storage: /verdaccio/storage/data
+          max_body_size: 1000mb
+          packages:
+            '**':
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          sudo chown 10001:65533 ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Start Registry 
+        shell: bash 
+        run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
+
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+
+      - name: Make folder for compatibility 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir compatibility 
+ 
+      - name: Download artifacts
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-npm
+          path: | 
+            dist/npm
+ 
+      - name: Setup Node
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'https://localhost:4873'
+
+      - name: Publish NPM
+        if: steps.get_image.outputs.digest != ''  
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+
+      - name: Set up QEMU 
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+ 
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_test 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install npm..." && 
+            apk update && apk add npm &&
+            echo "test icloudpd..." && 
+            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+            touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+ 
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+ 
+      - name: Upload compatibility result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+
+  compatibility_macos_npm:
+    if: false
+    name: "NPM on ${{ matrix.os }} on amd64 platform" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        os: [ "macos-11" ]
+    runs-on: ${{ matrix.os }} 
+    needs: [ build_npm ] 
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Setup Node
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'http://localhost:4873'
+        env:
+          NODE_AUTH_TOKEN: "fake"
+
+      - name: Create Config
+        run: |
+          touch ${{ github.workspace }}/npm_config.yaml
+          mkdir ${{ github.workspace }}/verdaccio
+          echo "
+          storage: ${{ github.workspace }}/verdaccio
+          max_body_size: 1000mb
+          packages:
+            '**':
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Start Registry 
+        shell: bash 
+        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml --listen 0.0.0.0:4873 > ${{ github.workspace }}/verdaccio.log) &
+
+      - name: Make folder for compatibility 
+        run: | 
+          mkdir compatibility 
+ 
+      - name: Download artifacts
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-npm
+          path: | 
+            dist/npm
+
+      - name: Test Registry
+        run: | 
+          echo "ls..."
+          ls -la
+          echo "ps..."
+          ps -ef | grep verdaccio
+          echo "log..."
+          cat ${{ github.workspace }}/verdaccio.log
+          echo "curl..."
+          curl -v http://localhost:4873
+
+      - name: Publish NPM
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+        env:
+          NODE_AUTH_TOKEN: "fake"
+
+      - name: Run test on ${{ matrix.os }} 
+        id: run_test 
+        continue-on-error: true 
+        run: > 
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          touch /work/compatibility/npm.${{ matrix.os }}.amd64.pass 
+ 
+      - name: Record failure on ${{ matrix.os }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/npm.${{ matrix.os }}.amd64.fail 
+ 
+      - name: Upload compatibility result 
+        uses: actions/upload-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-macos-npm
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+
+  compatibility_windows_npm:
+    if: false
+    name: "NPM on ${{ matrix.os }} on amd64 platform" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        os: [ "windows-2019" ]
+    runs-on: ${{ matrix.os }} 
+    needs: [ build_npm ] 
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Setup Node
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20.x'
+          registry-url: 'http://localhost:4873'
+        env:
+          NODE_AUTH_TOKEN: "fake"
+
+      - name: Create Config
+        run: |
+          touch ${{ github.workspace }}/npm_config.yaml
+          mkdir ${{ github.workspace }}/verdaccio
+          echo "
+          storage: ${{ github.workspace }}/verdaccio
+          max_body_size: 1000mb
+          packages:
+            '**':
+              access: \$anonymous
+              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+          cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Start Registry 
+        shell: bash 
+        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml --listen 0.0.0.0:4873 > ${{ github.workspace }}/verdaccio.log) &
+
+      - name: Make folder for compatibility 
+        run: | 
+          mkdir compatibility 
+ 
+      - name: Download artifacts
+        uses: actions/download-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-npm
+          path: | 
+            dist/npm
+
+      - name: Test Registry
+        run: | 
+          echo "ls..."
+          ls -la
+          echo "ps..."
+          ps -ef | grep verdaccio
+          echo "log..."
+          cat ${{ github.workspace }}/verdaccio.log
+          echo "curl..."
+          curl -v http://localhost:4873
+
+      - name: Publish NPM
+        run: |
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+        env:
+          NODE_AUTH_TOKEN: "fake"
+
+      - name: Run test on ${{ matrix.os }} 
+        id: run_test 
+        continue-on-error: true 
+        run: > 
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          touch /work/compatibility/npm.${{ matrix.os }}.amd64.pass 
+ 
+      - name: Record failure on ${{ matrix.os }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/npm.${{ matrix.os }}.amd64.fail 
+ 
+      - name: Upload compatibility result 
+        uses: actions/upload-artifact@v3 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-macos-npm
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+
   compatibility_report:
     name: "Build Compatibility Report"
 
     runs-on: ubuntu-22.04
-    needs: [ compatibility_nonlinux_pip, compatibility_linux_pip_apt, compatibility_linux_pip_apk, compatibility_linux_bin, compatibility_macos_bin, compatibility_windows_bin, compatibility_docker ]
+    needs: 
+      - compatibility_nonlinux_pip
+      - compatibility_linux_pip_apt
+      - compatibility_linux_pip_apk
+      - compatibility_linux_bin
+      - compatibility_macos_bin
+      - compatibility_windows_bin
+      - compatibility_docker
+      - compatibility_linux_npm_apt
+      - compatibility_linux_npm_apk
+      # - compatibility_macos_npm
+      # - compatibility_windows_npm
     defaults:
       run:
         shell: bash
@@ -1371,6 +1917,21 @@ jobs:
           name: icloudpd-${{github.sha}}-compatibility-docker
           path: |
             compatibility
+
+      - name: Download compatibility results (linux-npm-apt)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt
+          path: |
+            compatibility
+
+      - name: Download compatibility results (linux-npm-apk)
+        uses: actions/download-artifact@v3
+        with:
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk
+          path: |
+            compatibility
+
 
       - name: Compile compatibility Report
         run: |
