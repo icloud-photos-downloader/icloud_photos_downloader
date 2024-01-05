@@ -12,8 +12,24 @@ on:
   workflow_dispatch:
 
 jobs:
+  skip_check:
+    # continue-on-error: true # Uncomment once integration is finished
+    runs-on: ubuntu-22.04
+    # Map a step output to a job output
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'same_content_newer'
+          skip_after_successful_duplicate: 'true'
+          paths_ignore: '["**/*.md", "examples/**"]'
+          do_not_skip: '["workflow_dispatch", "schedule"]'
 
   lint:
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-20.04
     strategy:
       matrix:
@@ -33,6 +49,8 @@ jobs:
         scripts/lint
 
   type_check: 
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-20.04
     strategy: 
       matrix: 
@@ -52,6 +70,8 @@ jobs:
         scripts/type_check 
 
   test: 
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-20.04
     strategy: 
       matrix: 
@@ -72,6 +92,8 @@ jobs:
         scripts/test
 
   get_version:
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v3
@@ -94,6 +116,8 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_package:
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
     needs: [get_version]
     uses: ./.github/workflows/build-package.yml
     with:
