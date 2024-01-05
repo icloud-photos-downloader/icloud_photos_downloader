@@ -217,7 +217,6 @@ jobs:
         options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.BUILD_PROP[0] }}
         run: >
           echo "Install pkgs..." &&
-          set TZ=UTC &&
           apk update &&
           apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev tzdata bash patchelf &&
           echo "create venv and active..." &&
@@ -1538,16 +1537,17 @@ jobs:
             "arm64",  # platform spec 
             "",  # image prefix 
           ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
+          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
+          # - [ 
+          #   "arm32v7",  # variant name 
+          #   "arm/v7",  # platform spec 
+          #   "arm32v7/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm32v6",  # variant name 
+          #   "arm/v6",  # platform spec 
+          #   "arm32v6/",  # image prefix 
+          # ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
