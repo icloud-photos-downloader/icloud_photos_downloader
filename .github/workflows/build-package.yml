@@ -1019,6 +1019,7 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloud..." && 
             dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} -h && 
             echo "test icloudpd..." && 
@@ -1079,6 +1080,7 @@ jobs:
           echo "prep test..." && 
           chmod +x dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
+          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
           echo "test icloud..." && 
           dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --help && 
           echo "test icloudpd..." && 
