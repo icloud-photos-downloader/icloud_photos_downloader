@@ -114,7 +114,7 @@ jobs:
         options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.BUILD_PROP[0] }}
         run: >
           echo "install os pkgs..." &&
-          apt-get update -y && apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev &&
+          export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev &&
           echo "install rustup..."  &&
           (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host ${{ matrix.BUILD_PROP[1] }}) &&
           . "$HOME/.cargo/env" &&
@@ -217,6 +217,7 @@ jobs:
         options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.BUILD_PROP[0] }}
         run: >
           echo "Install pkgs..." &&
+          set TZ=UTC &&
           apk update &&
           apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev tzdata bash patchelf &&
           echo "create venv and active..." &&
@@ -566,7 +567,7 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
           run: >
             echo "install default python..." &&
-            apt-get update -y && apt-get install -y python3 python3-venv &&
+            export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv &&
             echo "create venv and active..." &&
             cd /work &&
             python3 -m venv .venv &&
@@ -1468,7 +1469,7 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
           run: > 
             echo "install npm..." && 
-            apt-get update && apt-get install -y npm &&
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
             echo "test icloudpd..." && 
             npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
