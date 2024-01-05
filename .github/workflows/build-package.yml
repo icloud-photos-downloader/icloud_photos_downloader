@@ -1423,7 +1423,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          name: icloudpd-${{github.sha}}-npm
           path: | 
             dist/npm 
  
@@ -1483,7 +1483,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-npm-apt
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1592,7 +1592,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          name: icloudpd-${{github.sha}}-npm
           path: | 
             dist/npm
  
@@ -1641,7 +1641,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-npm-apk
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1695,7 +1695,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          name: icloudpd-${{github.sha}}-npm
           path: | 
             dist/npm
 
@@ -1735,7 +1735,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-macos-npm
+          name: icloudpd-${{github.sha}}-compatibility-macos-npm
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1789,7 +1789,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-npm
+          name: icloudpd-${{github.sha}}-npm
           path: | 
             dist/npm
 
@@ -1829,7 +1829,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v3 
         with: 
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-macos-npm
+          name: icloudpd-${{github.sha}}-compatibility-macos-npm
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1921,14 +1921,14 @@ jobs:
       - name: Download compatibility results (linux-npm-apt)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-npm-apt
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt
           path: |
             compatibility
 
       - name: Download compatibility results (linux-npm-apk)
         uses: actions/download-artifact@v3
         with:
-          name: icloudpd-${{inputs.icloudpd_version}}-compatibility-linux-npm-apk
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk
           path: |
             compatibility
 
