@@ -579,7 +579,7 @@ jobs:
             apt-get update -y && apt-get install -y python3 &&
             cd /work &&
             echo "install icloudpd..." &&
-            sudo pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
@@ -748,7 +748,7 @@ jobs:
             apk update && apk add python3 &&
             cd /work &&
             echo "install icloudpd..." &&
-            sudo pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
