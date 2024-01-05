@@ -576,13 +576,10 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
           run: >
             echo "install default python..." &&
-            apt-get update -y && apt-get install -y python3 python3-venv &&
-            echo "create venv and active..." &&
+            apt-get update -y && apt-get install -y python3 &&
             cd /work &&
-            python3 -m venv .venv &&
-            . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            sudo pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
@@ -749,12 +746,9 @@ jobs:
           run: >
             echo "install default python..." &&
             apk update && apk add python3 &&
-            echo "create venv and active..." &&
             cd /work &&
-            python3 -m venv .venv &&
-            . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            sudo pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
             icloud -h &&
             echo "test icloudpd..." &&
