@@ -30,7 +30,7 @@ from icloudpd import download
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.string_helpers import truncate_middle
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.paths import clean_filename, local_download_path
+from icloudpd.paths import clean_filename, local_download_path, filename_with_size
 from icloudpd import exif_datetime
 # Must import the constants object so that we can mock values in tests.
 from icloudpd import constants
@@ -242,6 +242,17 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               is_flag=True,
               default=False,
               )
+@click.option(
+    "--enable-edited-photos",
+    help="Download the edited photos, such as portrait (default: Not download)",
+    is_flag=False,
+)
+@click.option(
+    "--edited-photo-size",
+    help="Edited(like portrait) Photo size to download (default: full)",
+    type=click.Choice(["full", "medium", "thumb"]),
+    default="full",
+)
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.17.3")
@@ -282,7 +293,9 @@ def main(
         delete_after_download: bool,
         domain: str,
         watch_with_interval: Optional[int],
-        dry_run: bool
+        dry_run: bool,
+        enable_edited_photos: bool,
+        edited_photo_size
 ):
     """Download all iCloud photos to a local directory"""
 
@@ -337,6 +350,8 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
+                    enable_edited_photos,
+                    edited_photo_size,
                     dry_run) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
@@ -387,6 +402,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: str,
+        enable_edited_photos: bool,
+        edited_photo_size: str,
         dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
@@ -599,6 +616,48 @@ def download_builder(
                                     "Downloaded %s",
                                     truncated_path
                                 )
+
+            # Also download the edited photo (such as portrait) if present
+            if enable_edited_photos:
+                edited_size = edited_photo_size + "Edited"
+                if edited_size in photo.versions:
+                    version = photo.versions[edited_size]
+                    filename = version["filename"]
+                    if edited_photo_size != "full":
+                        filename = f"-{edited_photo_size}.".join(filename.rsplit(".", 1))
+
+                    edited_download_path = os.path.join(download_dir, filename)
+                    edited_file_exist = os.path.isfile(edited_download_path)
+                    if only_print_filenames and not edited_file_exist:
+                        print(edited_download_path)
+                    else:
+                        if edited_file_exist:
+                            edited_file_size = os.stat(edited_download_path).st_size
+                            edited_photo_size_num = version["size"]
+                            if edited_file_size != edited_photo_size_num:
+                                # The case exists when you edited on a portrait photo
+                                edited_download_path = f"-{edited_photo_size_num}.".join(
+                                    edited_download_path.rsplit(".", 1)
+                                )
+                                logger.debug(
+                                    "%s deduplicated",
+                                    truncate_middle(edited_download_path, 96)
+                                )
+                                edited_file_exist = os.path.isfile(edited_download_path)
+                            if edited_file_exist:
+                                logger.debug(
+                                    "%s already exists",
+                                    truncate_middle(edited_download_path, 96)
+                                )
+                        if not edited_file_exist:
+                            truncated_path = truncate_middle(edited_download_path, 96)
+                            logger.debug("Downloading %s...", truncated_path)
+                            download_result = download.download_media(
+                                logger, dry_run, icloud, photo, edited_download_path, edited_size)
+                            success = download_result and success
+                            if download_result:
+                                logger.info("Downloaded %s", truncated_path)
+
             return success
         return download_photo_
     return state_

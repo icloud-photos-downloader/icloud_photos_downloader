@@ -544,6 +544,12 @@ class PhotoAsset(object):
         u"thumb": u"resVidSmall"
     }
 
+    EDITED_VERSION_LOOKUP = {
+        u"fullEdited": u"resJPEGFull",
+        u"mediumEdited": u"resJPEGMed",
+        u"thumbEdited": u"resJPEGThumb",
+    }
+
     @property
     def id(self):
         return self._master_record['recordName']
@@ -666,6 +672,57 @@ class PhotoAsset(object):
                                 r'\.[^.]+$', '.MOV', version['filename'])
 
                     self._versions[key] = version
+
+            # Resource for the edited photos (portrait)
+            # The portrait photo resources are in the
+            if self.item_type != "movie":
+                for key, prefix in self.EDITED_VERSION_LOOKUP.items():
+                    if '%sRes' % prefix in self._asset_record['fields']:
+                        f = self._asset_record['fields']
+
+                        type_entry = f.get('%sFileType' % prefix)
+
+                        # Follow the convention of "Image Capture" that add E to the beginning.
+                        edited_filename = re.sub(r'_(\d{4})\.', r'_E\1.', self.filename)
+                        if edited_filename == self.filename:
+                            # In case the file name not match the above pattern
+                            edited_filename = f"-EDITED.".join(self.filename.rsplit(".", 1))
+
+                        # In case the file type extension is not the same as original file.
+                        if type_entry and type_entry['value'] in self.ITEM_TYPE_EXTENSIONS:
+                            file_extension = self.ITEM_TYPE_EXTENSIONS[type_entry['value']]
+                            edited_filename_splits = edited_filename.rsplit(".", 1)
+                            if edited_filename_splits[1] != file_extension:
+                                edited_filename = edited_filename_splits[0] + "." + file_extension
+
+                        version = {'filename': edited_filename}
+
+                        if type_entry:
+                            version['type'] = type_entry['value']
+                        else:
+                            version['type'] = None
+
+                        width_entry = f.get('%sWidth' % prefix)
+                        if width_entry:
+                            version['width'] = width_entry['value']
+                        else:
+                            version['width'] = None
+
+                        height_entry = f.get('%sHeight' % prefix)
+                        if height_entry:
+                            version['height'] = height_entry['value']
+                        else:
+                            version['height'] = None
+
+                        size_entry = f.get('%sRes' % prefix)
+                        if size_entry:
+                            version['size'] = size_entry['value']['size']
+                            version['url'] = size_entry['value']['downloadURL']
+                        else:
+                            version['size'] = None
+                            version['url'] = None
+
+                        self._versions[key] = version
 
         return self._versions
 
