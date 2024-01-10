@@ -245,7 +245,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "--enable-edited-photos",
     help="Download the edited photos, such as portrait (default: Not download)",
-    is_flag=False,
+    is_flag=True,
+    default=False,
 )
 @click.option(
     "--edited-photo-size",
