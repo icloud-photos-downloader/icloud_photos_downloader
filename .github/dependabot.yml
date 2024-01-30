@@ -10,3 +10,11 @@ updates:
     schedule:
       interval: "daily"
     open-pull-requests-limit: 5
+  - package-ecosystem: github-actions
+    directory: /
+    groups:
+      github-actions:
+        patterns:
+          - "*"  # Group all Actions updates into a single larger pull request
+    schedule:
+      interval: weekly
