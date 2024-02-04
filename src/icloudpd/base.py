@@ -418,8 +418,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: str,
-        created_before: datetime.datetime,
-        created_after: datetime.datetime,
+        created_before: datetime.datetime | None,
+        created_after: datetime.datetime | None,
         dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
