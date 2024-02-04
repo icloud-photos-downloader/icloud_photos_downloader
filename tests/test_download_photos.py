@@ -2293,3 +2293,99 @@ class DownloadPhotoTestCase(TestCase):
 
         self.assertEqual(sum(1 for _ in files_in_result),
                          0, "Files in the result")
+
+    def test_skip_by_created_before(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+        
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-live-photos",
+                    "--skip-videos",
+                    "--dry-run",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--created-before", 
+                    "2000-01-01"
+                ]
+            )
+            print_result_exception(result)
+
+            assert result.exit_code == 0
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"DEBUG    Skipping IMG_7409.JPG, date is after", self._caplog.text
+            )
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0, "No files should have been downloaded."
+
+    def test_skip_by_created_after(self):
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-live-photos",
+                    "--skip-videos",
+                    "--dry-run",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    1,
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--created-after", 
+                    "2020-01-01"
+                ] 
+            )
+            print_result_exception(result)
+            assert result.exit_code == 0
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"DEBUG    Skipping IMG_7409.JPG, date is before", self._caplog.text
+            )
+            files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
+            assert sum(1 for _ in files_in_result) == 0, "No files should have been downloaded."

@@ -233,6 +233,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["com", "cn"]),
     default="com",
 )
+@click.option("--created-before",
+              help="Only download pictures/videos created before specified date in YYYY-MM-DD format.",
+              default=None,
+              )
+@click.option("--created-after",
+              help="Only download pictures/videos created after specified date in YYYY-MM-DD format.",
+              default=None,
+              )
 @click.option("--watch-with-interval",
               help="Run downloading in a infinite cycle, waiting specified seconds between runs",
               type=click.IntRange(1),
@@ -281,6 +289,8 @@ def main(
         threads_num: int,    # pylint: disable=W0613
         delete_after_download: bool,
         domain: str,
+        created_before: str,
+        created_after: str,
         watch_with_interval: Optional[int],
         dry_run: bool
 ):
@@ -324,6 +334,25 @@ def main(
             )
             sys.exit(2)
 
+        if created_before:
+            try:
+                created_before = datetime.datetime.strptime(
+                    created_before, "%Y-%m-%d")
+            except ValueError:
+                print("Given --created-before does not match required format YYYY-MM-DD.")
+                sys.exit(2)
+
+            created_before = created_before.replace(tzinfo=get_localzone())
+
+        if created_after:
+            try:
+                created_after = datetime.datetime.strptime(created_after, "%Y-%m-%d")
+            except ValueError:
+                print("Given --created-after does not match required format YYYY-MM-DD.")
+                sys.exit(2)
+
+            created_after = created_after.replace(tzinfo=get_localzone())
+
         sys.exit(
             core(
                 download_builder(
@@ -337,6 +366,8 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
+                    created_before,
+                    created_after,
                     dry_run) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
@@ -387,6 +418,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: str,
+        created_before: datetime.datetime | None,
+        created_after: datetime.datetime | None,
         dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
@@ -394,6 +427,7 @@ def download_builder(
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
             filename = clean_filename(photo.filename)
+
             if skip_videos and photo.item_type != "image":
                 logger.debug(
                     "Skipping %s, only downloading photos." +
@@ -417,6 +451,18 @@ def download_builder(
                     "Could not convert photo created date to local timezone (%s)",
                     photo.created)
                 created_date = photo.created
+
+            if created_before and created_date > created_before:
+                logger.debug(
+                    "Skipping %s, date is after the given latest date.",
+                    filename)
+                return False
+
+            if created_after and created_date < created_after:
+                logger.debug(
+                    "Skipping %s, date is before the given earliest date.",
+                    filename)
+                return False
 
             try:
                 if folder_structure.lower() == "none":

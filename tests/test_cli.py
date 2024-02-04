@@ -209,3 +209,37 @@ class CliTestCase(TestCase):
             ],
         )
         assert result.exit_code == 2
+
+    def test_bad_created_before_format(self):
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--created-before", 
+                "alpha"
+            ],
+        )
+        assert result.exit_code == 2
+
+    def test_bad_created_after_format(self):
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--created-after", 
+                "alpha"
+            ],
+        )
+        assert result.exit_code == 2
