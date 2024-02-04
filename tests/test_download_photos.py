@@ -2339,6 +2339,11 @@ class DownloadPhotoTestCase(TestCase):
                 f"DEBUG    Skipping IMG_7409.JPG, date is after", self._caplog.text
             )
 
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0, "No files should have been downloaded."
+
     def test_skip_by_created_after(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
@@ -2382,3 +2387,5 @@ class DownloadPhotoTestCase(TestCase):
             self.assertIn(
                 f"DEBUG    Skipping IMG_7409.JPG, date is before", self._caplog.text
             )
+            files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
+            assert sum(1 for _ in files_in_result) == 0, "No files should have been downloaded."
