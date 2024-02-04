@@ -2294,15 +2294,22 @@ class DownloadPhotoTestCase(TestCase):
         self.assertEqual(sum(1 for _ in files_in_result),
                          0, "Files in the result")
 
-    def test_skip_by_date_before(self):
+    def test_skip_by_created_before(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
 
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
+        
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
 
-        default_args = [
+            result = runner.invoke(
+                main,
+                [
                     "--username",
                     "jdoe@gmail.com",
                     "--password",
@@ -2319,16 +2326,9 @@ class DownloadPhotoTestCase(TestCase):
                     data_dir,
                     "--cookie-directory",
                     cookie_dir,
+                    "--created-before", 
+                    "2000-01-01"
                 ]
-        
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-
-            result = runner.invoke(
-                main,
-                default_args + ["--date-before", "2000-01-01"],
             )
             print_result_exception(result)
 
@@ -2339,7 +2339,7 @@ class DownloadPhotoTestCase(TestCase):
                 f"DEBUG    Skipping IMG_7409.JPG, date is after", self._caplog.text
             )
 
-    def test_skip_by_date_after(self):
+    def test_skip_by_created_after(self):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2347,7 +2347,14 @@ class DownloadPhotoTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        default_args = [
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+
+            result = runner.invoke(
+                main,
+                [
                     "--username",
                     "jdoe@gmail.com",
                     "--password",
@@ -2364,15 +2371,9 @@ class DownloadPhotoTestCase(TestCase):
                     data_dir,
                     "--cookie-directory",
                     cookie_dir,
-                ]
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-
-            result = runner.invoke(
-                main,
-                default_args + ["--date-after", "2020-01-01"],
+                    "--created-after", 
+                    "2020-01-01"
+                ] 
             )
             print_result_exception(result)
             assert result.exit_code == 0

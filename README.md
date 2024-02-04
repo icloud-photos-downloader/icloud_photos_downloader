@@ -25,7 +25,7 @@ There are three ways to run `icloudpd`:
 - One time download and an option to monitor for iCloud changes continuously (`--watch-with-interval` option)
 - Optimizations for incremental runs (`--until-found` and `--recent` options)
 - Photo meta data (EXIF) updates (`--set-exif-datetime` option)
-- Filter items to download by creation date (`--date-before` and/or `--date-after`)
+- Filter items to download by creation date (`--created-before` and/or `--created-after`)
 - ... and many more (use `--help` option to get full list)
 
 ## Experimental Mode

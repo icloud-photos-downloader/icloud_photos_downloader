@@ -233,14 +233,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["com", "cn"]),
     default="com",
 )
-@click.option("--date-before",
-              help="Latest date with which to filter which photo/videos will be downloaded, "
-              "specified in the format YYYY-MM-DD.",
+@click.option("--created-before",
+              help="Only download pictures/videos created before specified date in YYYY-MM-DD format.",
               default=None,
               )
-@click.option("--date-after",
-              help="Earliest date with which to filter which photo/videos will be downloaded, "
-              "specified in the format YYYY-MM-DD.",
+@click.option("--created-after",
+              help="Only download pictures/videos created after specified date in YYYY-MM-DD format.",
               default=None,
               )
 @click.option("--watch-with-interval",
@@ -291,8 +289,8 @@ def main(
         threads_num: int,    # pylint: disable=W0613
         delete_after_download: bool,
         domain: str,
-        date_before: str,
-        date_after: str,
+        created_before: str,
+        created_after: str,
         watch_with_interval: Optional[int],
         dry_run: bool
 ):
@@ -336,24 +334,24 @@ def main(
             )
             sys.exit(2)
 
-        if date_before:
+        if created_before:
             try:
-                date_before = datetime.datetime.strptime(
-                    date_before, "%Y-%m-%d")
+                created_before = datetime.datetime.strptime(
+                    created_before, "%Y-%m-%d")
             except ValueError:
-                print("Given --date-before does not match required format YYYY-MM-DD.")
+                print("Given --created-before does not match required format YYYY-MM-DD.")
                 sys.exit(2)
 
-            date_before = date_before.replace(tzinfo=get_localzone())
+            created_before = created_before.replace(tzinfo=get_localzone())
 
-        if date_after:
+        if created_after:
             try:
-                date_after = datetime.datetime.strptime(date_after, "%Y-%m-%d")
+                created_after = datetime.datetime.strptime(created_after, "%Y-%m-%d")
             except ValueError:
-                print("Given --date-after does not match required format YYYY-MM-DD.")
+                print("Given --created-after does not match required format YYYY-MM-DD.")
                 sys.exit(2)
 
-            date_after = date_after.replace(tzinfo=get_localzone())
+            created_after = created_after.replace(tzinfo=get_localzone())
 
         sys.exit(
             core(
@@ -368,8 +366,8 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
-                    date_before,
-                    date_after,
+                    created_before,
+                    created_after,
                     dry_run) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
@@ -420,8 +418,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: str,
-        date_before: datetime.datetime,
-        date_after: datetime.datetime,
+        created_before: datetime.datetime,
+        created_after: datetime.datetime,
         dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
@@ -454,13 +452,13 @@ def download_builder(
                     photo.created)
                 created_date = photo.created
 
-            if date_before and created_date > date_before:
+            if created_before and created_date > created_before:
                 logger.debug(
                     "Skipping %s, date is after the given latest date.",
                     filename)
                 return False
 
-            if date_after and created_date < date_after:
+            if created_after and created_date < created_after:
                 logger.debug(
                     "Skipping %s, date is before the given earliest date.",
                     filename)
