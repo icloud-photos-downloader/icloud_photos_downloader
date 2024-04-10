@@ -43,7 +43,7 @@ jobs:
 
       - name: Merge body
         run: |
-          echo ${{needs.get_version.outputs.icloudpd_changelog}} > body.md
+          echo "${{needs.get_version.outputs.icloudpd_changelog}}" > body.md
           echo '## Test' >> body.md
           cat CHANGELOG.md >> body.md
 
