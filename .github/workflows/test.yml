@@ -50,9 +50,7 @@ jobs:
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: 
-            - "CHANGELOG.md"
-            - "body.md"
+          artifacts: "CHANGELOG.md,body.md"
           # body: ${{needs.get_version.outputs.icloudpd_changelog}}
           bodyFile: body.md
           tag: 'v1.17.4-dev4'
