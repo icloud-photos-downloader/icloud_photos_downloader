@@ -28,10 +28,10 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Download artifacts 
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-oci
           path: | 
@@ -60,13 +60,13 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16.x'
+          node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-npm
           path: |
@@ -86,10 +86,10 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
       
@@ -98,37 +98,17 @@ jobs:
           pip3 install -e .[dev]
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
-      - name: Download artifacts (linux 1)
-        uses: actions/download-artifact@v3
+      - name: Download artifacts (bin)
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-1
-          path: |
-            dist
-
-      - name: Download artifacts (linux 2)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-linux-2
-          path: |
-            dist
-
-      - name: Download artifacts (macos)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-macos
-          path: |
-            dist
-
-      - name: Download artifacts (windows)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-windows
+          pattern: icloudpd-${{github.sha}}-bin-*
+          merge-multiple: true
           path: |
             dist
 
@@ -144,49 +124,29 @@ jobs:
     steps:
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
-      - name: Download artifacts (linux 1)
-        uses: actions/download-artifact@v3
+      - name: Download artifacts (bin)
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-1
-          path: |
-            dist
-
-      - name: Download artifacts (linux 2)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-linux-2
-          path: |
-            dist
-
-      - name: Download artifacts (macos)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-macos
-          path: |
-            dist
-
-      - name: Download artifacts (windows)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-windows
+          pattern: icloudpd-${{github.sha}}-bin-*
+          merge-multiple: true
           path: |
             dist
 
       - name: Download artifacts (docker)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-oci
           path: |
             dist
 
       - name: Download artifacts (compatibility)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-compatibility
           path: |

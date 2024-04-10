@@ -10,7 +10,7 @@ jobs:
   get_version:
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Retrieve version and Changelog
       id: get_version

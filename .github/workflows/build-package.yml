@@ -17,10 +17,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     
@@ -33,7 +33,7 @@ jobs:
         scripts/build
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: icloudpd-${{ github.sha }}-src
         if-no-files-found: error
@@ -94,11 +94,11 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     # for sha256:fe60359c92e86a43cc87b3d906006245f77bfc0565676b80004cc666e4feb9f0 image
     # fails in staticx with "ldd: exited with unknown exit code (139)"
@@ -136,9 +136,9 @@ jobs:
           scripts/build_binary_dist_linux_add_musl ${{ matrix.BUILD_PROP[3] }}
     
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-1
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -197,11 +197,11 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     # for sha256:fe60359c92e86a43cc87b3d906006245f77bfc0565676b80004cc666e4feb9f0 image
     # fails in staticx with "ldd: exited with unknown exit code (139)"
@@ -231,9 +231,9 @@ jobs:
           scripts/build_binary_dist_linux ${{inputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-2
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -246,10 +246,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     
@@ -266,9 +266,9 @@ jobs:
         scripts/build_binary_dist_macos ${{inputs.icloudpd_version}}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-macos
+        name: icloudpd-${{github.sha}}-bin-macos-amd64
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -281,10 +281,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     
@@ -301,9 +301,9 @@ jobs:
         scripts/build_binary_dist_windows ${{inputs.icloudpd_version}}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-windows
+        name: icloudpd-${{github.sha}}-bin-windows-amd64
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -313,32 +313,26 @@ jobs:
     needs: [ build_linux_1, build_linux_2 ]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - name: Download artifacts 1
-      uses: actions/download-artifact@v3 
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
       with: 
-        name: icloudpd-${{github.sha}}-bin-linux-1
-        path: | 
-          dist 
- 
-    - name: Download artifacts 2
-      uses: actions/download-artifact@v3 
-      with: 
-        name: icloudpd-${{github.sha}}-bin-linux-2
+        pattern: icloudpd-${{github.sha}}-bin-linux-*
+        merge-multiple: true
         path: | 
           dist 
  
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         version: v0.12.0
 
     - name: Build Release Docker
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v5
       with:
         context: .
         file: ./Dockerfile
@@ -352,7 +346,7 @@ jobs:
         #   icloudpd/icloudpd:commit-${{ github.sha }} 
  
     - name: Upload artifacts 
-      uses: actions/upload-artifact@v3 
+      uses: actions/upload-artifact@v4 
       with: 
         name: icloudpd-${{github.sha}}-oci 
         if-no-files-found: error 
@@ -364,32 +358,19 @@ jobs:
     needs: [build_linux_1,build_macos,build_windows]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: '16.x'
+          node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
-      - name: Download artifacts (Linux)
-        uses: actions/download-artifact@v3
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-1
-          path: |
-            dist
-
-      - name: Download artifacts (MacOS)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-macos
-          path: |
-            dist
-
-      - name: Download artifacts (Windows)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-windows
+          pattern: icloudpd-${{github.sha}}-bin-*
+          merge-multiple: true
           path: |
             dist
 
@@ -398,7 +379,7 @@ jobs:
           scripts/build_npm ${{inputs.icloudpd_version}}
 
       - name: Upload artifacts 
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-npm
           if-no-files-found: error 
@@ -524,32 +505,24 @@ jobs:
 
       - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
-      - name: Download artifacts (bin 1)
+      - name: Download artifacts (bin)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-1
-          path: |
-            dist
-
-      - name: Download artifacts (bin 2)
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
           path: |
             dist
 
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
-      #   uses: docker/setup-qemu-action@v2
+      #   uses: docker/setup-qemu-action@v3
 
       - name: Set up QEMU
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
@@ -589,9 +562,9 @@ jobs:
 
       - name: Upload compatibility result
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error
           path: |
             compatibility/*
@@ -697,31 +670,23 @@ jobs:
 
       - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
-      - name: Download artifacts (linux 1)
+      - name: Download artifacts (linux)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-1
-          path: |
-            dist
-
-      - name: Download artifacts (linux 2)
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
           path: |
             dist
 
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
-      #   uses: docker/setup-qemu-action@v2
+      #   uses: docker/setup-qemu-action@v3
 
       - name: Set up QEMU
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
@@ -760,9 +725,9 @@ jobs:
 
       - name: Upload compatibility result
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error
           path: |
             compatibility/*
@@ -783,23 +748,23 @@ jobs:
           mkdir compatibility
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
       - name: Download artifacts (macos)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos-amd64
           path: |
             dist
 
       - name: Download artifacts (windows)
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-windows
+          name: icloudpd-${{github.sha}}-bin-windows-amd64
           path: |
             dist
 
@@ -822,9 +787,9 @@ jobs:
           touch compatibility/pip.${{ matrix.os }}.amd64.fail
 
       - name: Upload compatibility result
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip
+          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip-${{ matrix.os }}-amd64
           if-no-files-found: error
           path: |
             compatibility/*
@@ -976,26 +941,18 @@ jobs:
         run: | 
           mkdir compatibility 
  
-      - name: Download artifacts 1
+      - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-linux-1
-          path: | 
-            dist 
- 
-      - name: Download artifacts 2
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v3 
-        with: 
-          name: icloudpd-${{github.sha}}-bin-linux-2
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
           path: | 
             dist 
  
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
-      #   uses: docker/setup-qemu-action@v2 
+      #   uses: docker/setup-qemu-action@v3 
  
       - name: Set up QEMU 
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
@@ -1031,9 +988,9 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1063,9 +1020,9 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts 
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos-amd64
           path: | 
             dist 
  
@@ -1091,9 +1048,9 @@ jobs:
           touch compatibility/pip.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-bin 
+          name: icloudpd-${{github.sha}}-compatibility-macos-bin-${{ matrix.prop[0] }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1123,9 +1080,9 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts 
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-windows 
+          name: icloudpd-${{github.sha}}-bin-windows-amd64 
           path: | 
             dist 
  
@@ -1147,9 +1104,9 @@ jobs:
           touch compatibility/pip.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-windows-bin 
+          name: icloudpd-${{github.sha}}-compatibility-windows-bin-${{ matrix.prop[0] }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1233,7 +1190,7 @@ jobs:
  
       - name: Download artifacts 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-oci
           path: | 
@@ -1257,7 +1214,7 @@ jobs:
   
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
-      #   uses: docker/setup-qemu-action@v2 
+      #   uses: docker/setup-qemu-action@v3 
  
       - name: Set up QEMU 
         if: steps.reload_docker.outcome != 'failure' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
@@ -1283,9 +1240,9 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-docker 
+          name: icloudpd-${{github.sha}}-compatibility-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1420,7 +1377,7 @@ jobs:
  
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-npm
           path: | 
@@ -1437,7 +1394,7 @@ jobs:
 
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -1480,9 +1437,9 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1590,7 +1547,7 @@ jobs:
  
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-npm
           path: | 
@@ -1598,7 +1555,7 @@ jobs:
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'https://localhost:4873'
@@ -1639,9 +1596,9 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1664,7 +1621,7 @@ jobs:
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -1693,7 +1650,7 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-npm
           path: | 
@@ -1733,9 +1690,9 @@ jobs:
           touch compatibility/npm.${{ matrix.os }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-npm
+          name: icloudpd-${{github.sha}}-compatibility-macos-npm-${{ matrix.os }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1758,7 +1715,7 @@ jobs:
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -1787,7 +1744,7 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts
-        uses: actions/download-artifact@v3 
+        uses: actions/download-artifact@v4 
         with: 
           name: icloudpd-${{github.sha}}-npm
           path: | 
@@ -1827,9 +1784,9 @@ jobs:
           touch compatibility/npm.${{ matrix.os }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v3 
+        uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-npm
+          name: icloudpd-${{github.sha}}-compatibility-windows-npm-${{ matrix.os }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1858,10 +1815,10 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
     
@@ -1869,71 +1826,15 @@ jobs:
         run: |
           mkdir dist
 
-      - name: Download compatibility results (nonlinux-pip)
-        uses: actions/download-artifact@v3
+      - name: Download Compatibility Results
+        uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip
+          pattern: icloudpd-${{github.sha}}-compatibility-*
+          merge-multiple: true
           path: |
             compatibility
 
-      - name: Download compatibility results (linux-pip-apt)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt
-          path: |
-            compatibility
-
-      - name: Download compatibility results (linux-pip-apk)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk
-          path: |
-            compatibility
-
-      - name: Download compatibility results (linux-bin)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin
-          path: |
-            compatibility
-
-      - name: Download compatibility results (macos-bin)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-macos-bin
-          path: |
-            compatibility
-
-      - name: Download compatibility results (windows-bin)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-windows-bin
-          path: |
-            compatibility
-
-      - name: Download compatibility results (docker)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-docker
-          path: |
-            compatibility
-
-      - name: Download compatibility results (linux-npm-apt)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt
-          path: |
-            compatibility
-
-      - name: Download compatibility results (linux-npm-apk)
-        uses: actions/download-artifact@v3
-        with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk
-          path: |
-            compatibility
-
-
-      - name: Compile compatibility Report
+      - name: Compile Compatibility Report
         run: |
           echo "debugging report..."
           scripts/compile_compatibility compatibility
@@ -1941,7 +1842,7 @@ jobs:
           scripts/compile_compatibility compatibility > dist/compatibility-${{inputs.icloudpd_version}}.md
 
       - name: Upload compatibility report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-compatibility
           if-no-files-found: error
