@@ -1439,7 +1439,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apt-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1598,7 +1598,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-apk-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
