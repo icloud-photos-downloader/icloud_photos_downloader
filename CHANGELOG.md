@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.17.4 (2024-04-10)
+
 - fix: restore support for SMS MFA [#803](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/803)
 
 ## 1.17.3 (2024-01-03)
