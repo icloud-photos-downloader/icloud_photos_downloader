@@ -116,9 +116,10 @@ def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
                     device.get("phoneNumber"))))
             # pylint: enable-msg=consider-using-f-string
 
-        index_str =  f"..{len(devices)-1}" if len(devices) > 1 else ""
-        code = click.prompt(f"Please enter two-factor authentication code or device index (0{index_str}) to send SMS with a code",
-                            type=click.IntRange(
+        index_str = f"..{len(devices) - 1}" if len(devices) > 1 else ""
+        code = click.prompt(
+            f"Please enter two-factor authentication code or device index (0{index_str}) to send SMS with a code",
+            type=click.IntRange(
                 0,
                 999999))
 
@@ -128,9 +129,11 @@ def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
             if not icloud.send_verification_code(device):
                 logger.error("Failed to send two-factor authentication code")
                 sys.exit(1)
-            code = click.prompt("Please enter two-factor authentication code that you received over SMS", type=click.IntRange(
-                0,
-                999999))
+            code = click.prompt(
+                "Please enter two-factor authentication code that you received over SMS",
+                type=click.IntRange(
+                    0,
+                    999999))
             if not icloud.validate_verification_code(device, code):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
@@ -139,7 +142,9 @@ def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
     else:
-        code = click.prompt("Please enter two-factor authentication code", type=click.IntRange(
+        code = click.prompt(
+            "Please enter two-factor authentication code",
+            type=click.IntRange(
                 0,
                 999999))
         if not icloud.validate_2fa_code(code):

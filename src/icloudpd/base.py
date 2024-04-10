@@ -1,40 +1,38 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 from __future__ import print_function
-from multiprocessing import freeze_support
-freeze_support() # fixing tqdm on macos
-
-import os
-import sys
-import time
-import datetime
-import logging
-from logging import Logger
-import itertools
-import subprocess
-import json
-from typing import Callable, Optional, TypeVar, cast
-import urllib
-import click
-
-from tqdm import tqdm
-from tqdm.contrib.logging import logging_redirect_tqdm
-from tzlocal import get_localzone
-from pyicloud_ipd import PyiCloudService
-
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.services.photos import PhotoAsset
-
-from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
-from icloudpd import download
-from icloudpd.email_notifications import send_2sa_notification
-from icloudpd.string_helpers import truncate_middle
-from icloudpd.autodelete import autodelete_photos
-from icloudpd.paths import clean_filename, local_download_path
-from icloudpd import exif_datetime
-# Must import the constants object so that we can mock values in tests.
-from icloudpd import constants
 from icloudpd.counter import Counter
+from icloudpd import constants
+from icloudpd import exif_datetime
+from icloudpd.paths import clean_filename, local_download_path
+from icloudpd.autodelete import autodelete_photos
+from icloudpd.string_helpers import truncate_middle
+from icloudpd.email_notifications import send_2sa_notification
+from icloudpd import download
+from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd import PyiCloudService
+from tzlocal import get_localzone
+from tqdm.contrib.logging import logging_redirect_tqdm
+from tqdm import tqdm
+import click
+import urllib
+from typing import Callable, Optional, TypeVar, cast
+import json
+import subprocess
+import itertools
+from logging import Logger
+import logging
+import datetime
+import time
+import sys
+import os
+from multiprocessing import freeze_support
+freeze_support()  # fixing tqdm on macos
+
+
+# Must import the constants object so that we can mock values in tests.
 
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
@@ -441,8 +439,7 @@ def download_builder(
                 versions = photo.versions
             except KeyError as ex:
                 print(
-                    f"KeyError: {ex} attribute was not found in the photo fields."
-                )
+                    f"KeyError: {ex} attribute was not found in the photo fields.")
                 with open(file='icloudpd-photo-error.json', mode='w', encoding='utf8') as outfile:
                     # pylint: disable=protected-access
                     json.dump({
