@@ -17,10 +17,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     
@@ -94,11 +94,11 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     # for sha256:fe60359c92e86a43cc87b3d906006245f77bfc0565676b80004cc666e4feb9f0 image
     # fails in staticx with "ldd: exited with unknown exit code (139)"
@@ -197,11 +197,11 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     # for sha256:fe60359c92e86a43cc87b3d906006245f77bfc0565676b80004cc666e4feb9f0 image
     # fails in staticx with "ldd: exited with unknown exit code (139)"
@@ -246,10 +246,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     
@@ -281,10 +281,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Set up Python 3.12
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: '3.12'
     
@@ -313,7 +313,7 @@ jobs:
     needs: [ build_linux_1, build_linux_2 ]
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Download artifacts 1
       uses: actions/download-artifact@v3 
@@ -330,15 +330,15 @@ jobs:
           dist 
  
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v2
+      uses: docker/setup-qemu-action@v3
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v2
+      uses: docker/setup-buildx-action@v3
       with:
         version: v0.12.0
 
     - name: Build Release Docker
-      uses: docker/build-push-action@v3
+      uses: docker/build-push-action@v5
       with:
         context: .
         file: ./Dockerfile
@@ -364,10 +364,10 @@ jobs:
     needs: [build_linux_1,build_macos,build_windows]
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '16.x'
           registry-url: 'https://registry.npmjs.org'
@@ -549,7 +549,7 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
-      #   uses: docker/setup-qemu-action@v2
+      #   uses: docker/setup-qemu-action@v3
 
       - name: Set up QEMU
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
@@ -721,7 +721,7 @@ jobs:
 
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
-      #   uses: docker/setup-qemu-action@v2
+      #   uses: docker/setup-qemu-action@v3
 
       - name: Set up QEMU
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386'
@@ -995,7 +995,7 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
-      #   uses: docker/setup-qemu-action@v2 
+      #   uses: docker/setup-qemu-action@v3 
  
       - name: Set up QEMU 
         if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
@@ -1257,7 +1257,7 @@ jobs:
   
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
-      #   uses: docker/setup-qemu-action@v2 
+      #   uses: docker/setup-qemu-action@v3 
  
       - name: Set up QEMU 
         if: steps.reload_docker.outcome != 'failure' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
@@ -1437,7 +1437,7 @@ jobs:
 
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -1598,7 +1598,7 @@ jobs:
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'https://localhost:4873'
@@ -1664,7 +1664,7 @@ jobs:
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -1758,7 +1758,7 @@ jobs:
  
       - name: Setup Node
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -1858,10 +1858,10 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Set up Python 3.12
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.12'
     
