@@ -41,9 +41,18 @@ jobs:
 
       - uses: actions/checkout@v3
 
+      - name: Merge body
+      - run: |
+          echo ${{needs.get_version.outputs.icloudpd_changelog}} > body.md
+          echo '## Test' >> body.md
+          cat CHANGELOG.md >> body.md
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "CHANGELOG.md"
-          body: ${{needs.get_version.outputs.icloudpd_changelog}}
-          tag: 'v1.17.4-dev3'
+          artifacts: 
+            - "CHANGELOG.md"
+            - "body.md"
+          # body: ${{needs.get_version.outputs.icloudpd_changelog}}
+          bodyFile: body.md
+          tag: 'v1.17.4-dev4'
