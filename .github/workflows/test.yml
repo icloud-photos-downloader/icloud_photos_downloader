@@ -42,7 +42,7 @@ jobs:
       - uses: actions/checkout@v3
 
       - name: Merge body
-      - run: |
+        run: |
           echo ${{needs.get_version.outputs.icloudpd_changelog}} > body.md
           echo '## Test' >> body.md
           cat CHANGELOG.md >> body.md
