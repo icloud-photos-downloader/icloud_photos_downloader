@@ -52,6 +52,48 @@ interactions:
       code: 200
       message: ''
 - request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Cookie:
+      - 'X-APPLE-UNIQUE-CLIENT-ID="Cw==";Path=/;Domain=.icloud.com;Secure'
+      - 'X-APPLE-WEBAUTH-LOGIN="v=1:t=Cw==BST_IAAAAAAABLw1234~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-WEBAUTH-VALIDATE="v=1:t=Cw==BST_IAAAAAAABLw5678~~";Path=/;Domain=.icloud.com;Secure'
+      - 'X-APPLE-WEBAUTH-HSA-LOGIN="v=2:t=Cw==BST_IAAAAAAABLw9012~~";Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-WEBAUTH-USER="v=1:s=1:d=12345678901";Expires=Fri, 12-Jan-2024 05:06:31
+        GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X_APPLE_WEB_KB-ONHCNAXFAIPPFDMR5UZVNO6NIMY="v=1:t=Cw==BST_IAAAAAAABLw3456~~";Expires=Sun,
+        11-Feb-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      - 'X-APPLE-DS-WEB-SESSION-TOKEN="websessiontoken1234567890=";Expires=Fri,
+        12-Jan-2024 05:06:31 GMT;Path=/;Domain=.icloud.com;Secure;HttpOnly'
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+    method: GET
+    uri: https://setup.icloud.com/setup/ws/1/listDevices?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
+  response:
+    body:
+      string: !!python/unicode '{"devices":[{"deviceType":"SMS","areaCode":"","phoneNumber":"*******03","deviceId":"1"}]}'
+    headers:
+      Access-Control-Allow-Credentials: ['true']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Cache-Control: ['no-cache, no-store, private']
+      Connection: ['keep-alive']
+      Content-Type: ['application/json; charset=UTF-8']
+      Date: ['Fri, 15 Dec 2023 09:54:34 GMT']
+      Server: ['AppleHttpServer/2f080fc0']
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
+      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
+      X-Responding-Instance: ['setupservice:21800401:nk11p18ic-setupsvc004:8001:1813B80:3b85e7d76']
+      access-control-expose-headers: ['X-Apple-Request-UUID, Via']
+      content-length: ['89']
+      via: ['via-123456789012345678901234567890']
+    status:
+      code: 200
+      message: OK
+- request:
     body: !!python/unicode '{"accountCountryCode": "USA", "dsWebAuthToken": "token-1234567890", "extended_login": true, "trustToken": ""}'
     headers:
       Accept:

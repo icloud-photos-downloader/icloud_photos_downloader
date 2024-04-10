@@ -203,7 +203,7 @@ class TwoStepAuthTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "Please enter two-factor authentication code: 654321", result.output
+                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321", result.output
             )
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
