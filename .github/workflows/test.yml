@@ -46,3 +46,4 @@ jobs:
         with:
           artifacts: "CHANGELOG.md"
           body: ${{needs.get_version.outputs.icloudpd_changelog}}
+          tag: ${{ github.sha }}
