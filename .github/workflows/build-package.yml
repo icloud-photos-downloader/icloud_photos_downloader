@@ -138,7 +138,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-1-${{ matrix.BUILD_PROP[2] }}
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -233,7 +233,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-2-${{ matrix.BUILD_PROP[2] }}
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -268,7 +268,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-macos
+        name: icloudpd-${{github.sha}}-bin-macos-amd64
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -303,7 +303,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-windows
+        name: icloudpd-${{github.sha}}-bin-windows-amd64
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -515,8 +515,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
-          merge-multiple: true
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
           path: |
             dist
 
@@ -681,8 +680,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
-          merge-multiple: true
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
           path: |
             dist
 
@@ -759,14 +757,14 @@ jobs:
       - name: Download artifacts (macos)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos-amd64
           path: |
             dist
 
       - name: Download artifacts (windows)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-windows
+          name: icloudpd-${{github.sha}}-bin-windows-amd64
           path: |
             dist
 
@@ -947,8 +945,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
-          merge-multiple: true
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
           path: | 
             dist 
  
@@ -1025,7 +1022,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-macos
+          name: icloudpd-${{github.sha}}-bin-macos-amd64
           path: | 
             dist 
  
@@ -1085,7 +1082,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-windows 
+          name: icloudpd-${{github.sha}}-bin-windows-amd64 
           path: | 
             dist 
  
