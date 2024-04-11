@@ -387,7 +387,7 @@ jobs:
             dist/npm/
 
   compatibility_linux_pip_apt:
-    name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
+    name: "Compatibility PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
     strategy: 
       fail-fast: false
       matrix:
@@ -564,13 +564,13 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error
           path: |
             compatibility/*
 
   compatibility_linux_pip_apk:
-    name: "PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
+    name: "Compatibility PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
     strategy: 
       fail-fast: false
       matrix:
@@ -727,19 +727,19 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error
           path: |
             compatibility/*
 
-  compatibility_nonlinux_pip:
-    name: "PIP on ${{ matrix.os }} on amd64 platform"
+  compatibility_macos_pip:
+    name: "Compatibility PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
       fail-fast: false
       matrix: 
-        os: [ macos-11, macos-12, windows-2019, windows-2022 ]
+        os: [ "macos-11", "macos-12", "macos-13", "macos-14" ]
     runs-on: ${{ matrix.os }}
-    needs: [ build_macos, build_windows, build_src ]
+    needs: [ build_macos, build_src ]
 
     steps:
 
@@ -758,6 +758,57 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-bin-macos-amd64
+          path: |
+            dist
+
+      - name: Run test for ${{ matrix.os }} on amd64
+        id: run_test
+        continue-on-error: true
+        run: >
+          echo "create venv and active..." &&
+          python3 -m venv .venv &&
+          . .venv/bin/activate &&
+          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          icloud --help &&
+          icloudpd --version &&
+          touch compatibility/pip.${{ matrix.os }}.amd64.pass
+
+        # &&
+        # echo "check if src..."  &&
+        # pip3 list --disable-pip-version-check | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
+
+      - name: Record failure for ${{ matrix.os }} on amd64
+        if: ${{ steps.run_test.outcome == 'failure' }} 
+        run: |
+          touch compatibility/pip.${{ matrix.os }}.amd64.fail
+
+      - name: Upload compatibility result
+        uses: actions/upload-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-compatibility-macos-pip-${{ matrix.os }}-amd64
+          if-no-files-found: error
+          path: |
+            compatibility/*
+
+  compatibility_windows_pip:
+    name: "Compatibility PIP on ${{ matrix.os }} on amd64 platform"
+    strategy: 
+      fail-fast: false
+      matrix: 
+        os: [ "windows-2019", "windows-2022" ]
+    runs-on: ${{ matrix.os }}
+    needs: [ build_windows, build_src ]
+
+    steps:
+
+      - name: Make folder for compatibility
+        run: |
+          mkdir compatibility
+
+      - name: Download artifacts (src)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-src
           path: |
             dist
 
@@ -789,13 +840,13 @@ jobs:
       - name: Upload compatibility result
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip-${{ matrix.os }}-amd64
+          name: icloudpd-${{github.sha}}-compatibility-windows-pip-${{ matrix.os }}-amd64
           if-no-files-found: error
           path: |
             compatibility/*
 
   compatibility_linux_bin: 
-    name: "BIN on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
+    name: "Compatibility BIN on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -996,7 +1047,7 @@ jobs:
             compatibility/* 
  
   compatibility_macos_bin: 
-    name: "BIN on ${{ matrix.prop[0] }} on amd64 platform" 
+    name: "Compatibility BIN on ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix:  
@@ -1007,6 +1058,14 @@ jobs:
             ] 
           - [ 
             "macos-12", 
+            "macos", 
+            ] 
+          - [ 
+            "macos-13", 
+            "macos", 
+            ] 
+          - [ 
+            "macos-14", 
             "macos", 
             ] 
  
@@ -1045,7 +1104,7 @@ jobs:
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
-          touch compatibility/pip.${{ matrix.prop[0] }}.amd64.fail 
+          touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
@@ -1056,7 +1115,7 @@ jobs:
             compatibility/* 
  
   compatibility_windows_bin: 
-    name: "BIN on ${{ matrix.prop[0] }} on amd64 platform" 
+    name: "Compatibility BIN on ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix:  
@@ -1101,7 +1160,7 @@ jobs:
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
-          touch compatibility/pip.${{ matrix.prop[0] }}.amd64.fail 
+          touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
@@ -1112,7 +1171,7 @@ jobs:
             compatibility/* 
 
   compatibility_docker: 
-    name: "DOCKER on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
+    name: "Compatibility DOCKER on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1248,7 +1307,7 @@ jobs:
             compatibility/* 
   
   compatibility_linux_npm_apt: 
-    name: "NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT" 
+    name: "Compatibility NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1445,7 +1504,7 @@ jobs:
             compatibility/* 
 
   compatibility_linux_npm_apk:
-    name: "NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
+    name: "Compatibility NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1606,11 +1665,11 @@ jobs:
 
   compatibility_macos_npm:
     if: false
-    name: "NPM on ${{ matrix.os }} on amd64 platform" 
+    name: "Compatibility NPM on ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix: 
-        os: [ "macos-11" ]
+        os: [ "macos-11", "macos-12", "macos-13", "macos-14" ]
     runs-on: ${{ matrix.os }} 
     needs: [ build_npm ] 
     defaults: 
@@ -1700,7 +1759,7 @@ jobs:
 
   compatibility_windows_npm:
     if: false
-    name: "NPM on ${{ matrix.os }} on amd64 platform" 
+    name: "Compatibility NPM on ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1797,7 +1856,8 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: 
-      - compatibility_nonlinux_pip
+      - compatibility_macos_pip
+      - compatibility_windows_pip
       - compatibility_linux_pip_apt
       - compatibility_linux_pip_apk
       - compatibility_linux_bin
