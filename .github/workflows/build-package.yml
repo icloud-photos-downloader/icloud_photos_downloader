@@ -737,7 +737,7 @@ jobs:
     strategy: 
       fail-fast: false
       matrix: 
-        os: [ macos-11, macos-12, windows-2019, windows-2022 ]
+        os: [ "macos-11", "macos-12", "macos-13", "macos-14", "windows-2019", "windows-2022" ]
     runs-on: ${{ matrix.os }}
     needs: [ build_macos, build_windows, build_src ]
 
@@ -1003,11 +1003,19 @@ jobs:
         prop:  
           - [ 
             "macos-11", # GH os 
-            "macos",    # file suffix 
+            "macos11",    # file suffix 
             ] 
           - [ 
             "macos-12", 
-            "macos", 
+            "macos12", 
+            ] 
+          - [ 
+            "macos-13", 
+            "macos13", 
+            ] 
+          - [ 
+            "macos-14", 
+            "macos14", 
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
@@ -1610,7 +1618,7 @@ jobs:
     strategy:  
       fail-fast: false 
       matrix: 
-        os: [ "macos-11" ]
+        os: [ "macos-11", "macos-12", "macos-13", "macos-14" ]
     runs-on: ${{ matrix.os }} 
     needs: [ build_npm ] 
     defaults: 
