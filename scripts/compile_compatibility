@@ -33,7 +33,7 @@ def main():
     folder = sys.argv[1] if len(sys.argv) > 1 else "."
     files = [f for f in os.listdir(folder) if not os.path.isdir(f)]
     fts = [[os.path.getsize(os.path.join(folder,f))] + f.split('.') for f in files if len(f.split('.')) == 4]
-    print("# Minimal Effort Compatibility")
+    print("## Minimal Effort Compatibility")
     print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
     print("")
     stats(fts)
@@ -45,7 +45,7 @@ def main():
     print("")
     groups = [(k, list(g)) for k, g in itertools.groupby(sorted(fts, key = lambda ft: ft[1]), key = lambda ft: ft[1])]
     for (g, f) in groups: 
-        print(f"## {g}")
+        print(f"### {g}")
         stats(f)
         matrix(f)
 

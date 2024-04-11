@@ -152,9 +152,14 @@ jobs:
           path: |
             dist
 
+      - name: Merge Release Notes
+        run: |
+          echo "${{ inputs.icloudpd_changelog }}" > dist/Notes.md
+          cat dist/compatibility-*.md >> dist/Notes.md
+
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*"
-          body: ${{ inputs.icloudpd_changelog }}
+          bodyFile: dist/Notes.md
 
