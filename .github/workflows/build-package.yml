@@ -1687,7 +1687,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          registry-url: 'http://localhost:4873'
+          registry-url: 'http://0.0.0.0:4873'
         env:
           NODE_AUTH_TOKEN: "fake"
 
@@ -1698,6 +1698,7 @@ jobs:
           echo "
           storage: ${{ github.workspace }}/verdaccio
           max_body_size: 1000mb
+          log: { type: stdout, format: pretty, level: http }
           packages:
             '**':
               access: \$anonymous
@@ -1728,7 +1729,7 @@ jobs:
           echo "log..."
           cat ${{ github.workspace }}/verdaccio.log
           echo "curl..."
-          curl -v http://localhost:4873
+          curl -v http://0.0.0.0:4873
 
       - name: Publish NPM
         run: |
