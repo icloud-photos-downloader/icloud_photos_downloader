@@ -732,14 +732,14 @@ jobs:
           path: |
             compatibility/*
 
-  compatibility_nonlinux_pip:
+  compatibility_macos_pip:
     name: "Compatibility PIP on ${{ matrix.os }} on amd64 platform"
     strategy: 
       fail-fast: false
       matrix: 
-        os: [ "macos-11", "macos-12", "macos-13", "macos-14", "windows-2019", "windows-2022" ]
+        os: [ "macos-11", "macos-12", "macos-13", "macos-14" ]
     runs-on: ${{ matrix.os }}
-    needs: [ build_macos, build_windows, build_src ]
+    needs: [ build_macos, build_src ]
 
     steps:
 
@@ -792,7 +792,69 @@ jobs:
       - name: Upload compatibility result
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-nonlinux-pip-${{ matrix.os }}-amd64
+          name: icloudpd-${{github.sha}}-compatibility-macos-pip-${{ matrix.os }}-amd64
+          if-no-files-found: error
+          path: |
+            compatibility/*
+
+  compatibility_windows_pip:
+    name: "Compatibility PIP on ${{ matrix.os }} on amd64 platform"
+    strategy: 
+      fail-fast: false
+      matrix: 
+        os: [ "windows-2019", "windows-2022" ]
+    runs-on: ${{ matrix.os }}
+    needs: [ build_windows, build_src ]
+
+    steps:
+
+      - name: Make folder for compatibility
+        run: |
+          mkdir compatibility
+
+      - name: Download artifacts (src)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (macos)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-bin-macos-amd64
+          path: |
+            dist
+
+      - name: Download artifacts (windows)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-bin-windows-amd64
+          path: |
+            dist
+
+      - name: Run test for ${{ matrix.os }} on amd64
+        id: run_test
+        continue-on-error: true
+        run: >
+          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          icloud --help &&
+          icloudpd --version &&
+          touch compatibility/pip.${{ matrix.os }}.amd64.pass
+
+        # &&
+        # echo "check if src..."  &&
+        # pip3 list --disable-pip-version-check | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
+
+      - name: Record failure for ${{ matrix.os }} on amd64
+        if: ${{ steps.run_test.outcome == 'failure' }} 
+        run: |
+          touch compatibility/pip.${{ matrix.os }}.amd64.fail
+
+      - name: Upload compatibility result
+        uses: actions/upload-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-compatibility-windows-pip-${{ matrix.os }}-amd64
           if-no-files-found: error
           path: |
             compatibility/*
@@ -1808,7 +1870,8 @@ jobs:
 
     runs-on: ubuntu-22.04
     needs: 
-      - compatibility_nonlinux_pip
+      - compatibility_macos_pip
+      - compatibility_windows_pip
       - compatibility_linux_pip_apt
       - compatibility_linux_pip_apk
       - compatibility_linux_bin
