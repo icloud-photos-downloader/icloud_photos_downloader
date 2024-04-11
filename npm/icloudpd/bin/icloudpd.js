@@ -23,7 +23,7 @@ var knownPlatforms = {
 if (platformKey in knownPlatforms) {
     var { pkgName, subPath } = knownPlatforms[platformKey];
     var binPath = require.resolve(`${pkgName}/${subPath}`);
-    require("child_process").execFileSync(binPath, process.argv.slice(2), { stdio: "inherit" });
+    require("child_process").execFileSync(binPath, process.argv.slice(2), { stdio: "pipe" });
 } else {
     throw new Error(`Unsupported platform: '${platformKey}'`);
 }
