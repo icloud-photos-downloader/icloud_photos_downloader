@@ -8,6 +8,10 @@ var knownPlatforms = {
         "pkgName": "@icloudpd/linux-x64",
         "subPath": "bin/icloudpd" 
     },
+    "linux arm64 LE": {
+        "pkgName": "@icloudpd/linux-arm64",
+        "subPath": "bin/icloudpd" 
+    },
     "darwin x64 LE": {
         "pkgName": "@icloudpd/darwin-x64",
         "subPath": "bin/icloudpd" 
