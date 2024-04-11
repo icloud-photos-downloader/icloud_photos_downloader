@@ -1006,19 +1006,19 @@ jobs:
         prop:  
           - [ 
             "macos-11", # GH os 
-            "macos11",    # file suffix 
+            "macos",    # file suffix 
             ] 
           - [ 
             "macos-12", 
-            "macos12", 
+            "macos", 
             ] 
           - [ 
             "macos-13", 
-            "macos13", 
+            "macos", 
             ] 
           - [ 
             "macos-14", 
-            "macos14", 
+            "macos", 
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
