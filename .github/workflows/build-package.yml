@@ -733,12 +733,28 @@ jobs:
             compatibility/*
 
   compatibility_macos_pip:
-    name: "Compatibility PIP on ${{ matrix.os }} on amd64 platform"
+    name: "Compatibility PIP on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform"
     strategy: 
       fail-fast: false
       matrix: 
-        os: [ "macos-11", "macos-12", "macos-13", "macos-14" ]
-    runs-on: ${{ matrix.os }}
+        prop: 
+          - [
+            "macos-11",  # os
+            "amd64",  # platform spec
+          ]
+          - [
+            "macos-12",  # os
+            "amd64",  # platform spec
+          ]
+          - [
+            "macos-13",  # os
+            "amd64",  # platform spec
+          ]
+          - [
+            "macos-14",  # os
+            "arm64",  # platform spec
+          ]
+    runs-on: ${{ matrix.prop[0] }}
     needs: [ build_macos, build_src ]
 
     steps:
@@ -761,7 +777,7 @@ jobs:
           path: |
             dist
 
-      - name: Run test for ${{ matrix.os }} on amd64
+      - name: Run test for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }}
         id: run_test
         continue-on-error: true
         run: >
@@ -771,21 +787,21 @@ jobs:
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --help &&
           icloudpd --version &&
-          touch compatibility/pip.${{ matrix.os }}.amd64.pass
+          touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
         # &&
         # echo "check if src..."  &&
         # pip3 list --disable-pip-version-check | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
 
-      - name: Record failure for ${{ matrix.os }} on amd64
+      - name: Record failure for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_test.outcome == 'failure' }} 
         run: |
-          touch compatibility/pip.${{ matrix.os }}.amd64.fail
+          touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail
 
       - name: Upload compatibility result
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-macos-pip-${{ matrix.os }}-amd64
+          name: icloudpd-${{github.sha}}-compatibility-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
           path: |
             compatibility/*
@@ -1047,26 +1063,26 @@ jobs:
             compatibility/* 
  
   compatibility_macos_bin: 
-    name: "Compatibility BIN on ${{ matrix.prop[0] }} on amd64 platform" 
+    name: "Compatibility BIN on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix:  
         prop:  
           - [ 
             "macos-11", # GH os 
-            "macos",    # file suffix 
+            "amd64",    # platform 
             ] 
           - [ 
             "macos-12", 
-            "macos", 
+            "amd64", 
             ] 
           - [ 
             "macos-13", 
-            "macos", 
+            "amd64", 
             ] 
           - [ 
             "macos-14", 
-            "macos", 
+            "arm64", 
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
@@ -1090,26 +1106,26 @@ jobs:
         continue-on-error: true 
         run: > 
           echo "prep test..." && 
-          chmod +x dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
-          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
-          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 && 
+          chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
+          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
+          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
           echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --help && 
+          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --help && 
           echo "test icloudpd..." && 
-          dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --version && 
+          dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64 --help && 
-          touch compatibility/bin.${{ matrix.prop[0] }}.amd64.pass 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --help && 
+          touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
-          touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
+          touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-bin-${{ matrix.prop[0] }}-amd64
+          name: icloudpd-${{github.sha}}-compatibility-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1665,12 +1681,28 @@ jobs:
 
   compatibility_macos_npm:
     if: false
-    name: "Compatibility NPM on ${{ matrix.os }} on amd64 platform" 
+    name: "Compatibility NPM on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix: 
-        os: [ "macos-11", "macos-12", "macos-13", "macos-14" ]
-    runs-on: ${{ matrix.os }} 
+        prop:  
+          - [ 
+            "macos-11", # GH os 
+            "amd64",    # platform 
+            ] 
+          - [ 
+            "macos-12", 
+            "amd64", 
+            ] 
+          - [ 
+            "macos-13", 
+            "amd64", 
+            ] 
+          - [ 
+            "macos-14", 
+            "arm64", 
+            ] 
+    runs-on: ${{ matrix.prop[0] }} 
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -1736,22 +1768,22 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      - name: Run test on ${{ matrix.os }} 
+      - name: Run test on ${{ matrix.prop[0] }} 
         id: run_test 
         continue-on-error: true 
         run: > 
           npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
-          touch /work/compatibility/npm.${{ matrix.os }}.amd64.pass 
+          touch /work/compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
-      - name: Record failure on ${{ matrix.os }} 
+      - name: Record failure on ${{ matrix.prop[0] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
-          touch compatibility/npm.${{ matrix.os }}.amd64.fail 
+          touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-npm-${{ matrix.os }}-amd64
+          name: icloudpd-${{github.sha}}-compatibility-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
