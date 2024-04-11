@@ -564,7 +564,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apt-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error
           path: |
             compatibility/*
@@ -727,7 +727,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-apk-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error
           path: |
             compatibility/*
@@ -1053,7 +1053,7 @@ jobs:
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
-          touch compatibility/pip.${{ matrix.prop[0] }}.amd64.fail 
+          touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
@@ -1109,7 +1109,7 @@ jobs:
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
-          touch compatibility/pip.${{ matrix.prop[0] }}.amd64.fail 
+          touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
