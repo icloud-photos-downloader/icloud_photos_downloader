@@ -772,6 +772,9 @@ jobs:
         id: run_test
         continue-on-error: true
         run: >
+          echo "create venv and active..." &&
+          python3 -m venv .venv &&
+          . .venv/bin/activate &&
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --help &&
           icloudpd --version &&
