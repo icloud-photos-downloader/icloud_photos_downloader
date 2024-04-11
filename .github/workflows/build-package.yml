@@ -761,13 +761,6 @@ jobs:
           path: |
             dist
 
-      - name: Download artifacts (windows)
-        uses: actions/download-artifact@v4
-        with:
-          name: icloudpd-${{github.sha}}-bin-windows-amd64
-          path: |
-            dist
-
       - name: Run test for ${{ matrix.os }} on amd64
         id: run_test
         continue-on-error: true
@@ -816,13 +809,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: icloudpd-${{github.sha}}-src
-          path: |
-            dist
-
-      - name: Download artifacts (macos)
-        uses: actions/download-artifact@v4
-        with:
-          name: icloudpd-${{github.sha}}-bin-macos-amd64
           path: |
             dist
 
