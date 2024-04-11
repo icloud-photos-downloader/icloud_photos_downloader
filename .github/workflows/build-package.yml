@@ -1407,7 +1407,13 @@ jobs:
  
     steps: 
  
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+
       - name: Create Config
+        if: steps.get_image.outputs.digest != '' 
         run: |
           touch ${{ github.workspace }}/npm_config.yaml
           echo "
@@ -1421,13 +1427,9 @@ jobs:
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
+        if: steps.get_image.outputs.digest != '' 
         shell: bash 
         run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
-
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
@@ -1577,7 +1579,13 @@ jobs:
  
     steps: 
  
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+
       - name: Create Config
+        if: steps.get_image.outputs.digest != '' 
         run: |
           touch ${{ github.workspace }}/npm_config.yaml
           echo "
@@ -1591,13 +1599,9 @@ jobs:
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Start Registry 
+        if: steps.get_image.outputs.digest != '' 
         shell: bash 
         run: docker run -d -p 4873:4873 -e VERDACCIO_PORT=4873 -v ${{ github.workspace }}/npm_config.yaml:/verdaccio/conf/config.yaml:ro verdaccio/verdaccio:5
-
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
 
       - name: Make folder for compatibility 
         if: steps.get_image.outputs.digest != ''  
