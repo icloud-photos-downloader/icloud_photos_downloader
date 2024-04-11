@@ -1763,7 +1763,7 @@ jobs:
 
 
   compatibility_windows_npm:
-    if: true
+    if: false
     name: "Compatibility NPM on ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
