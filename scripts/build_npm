@@ -44,6 +44,13 @@ chmod +x dist/npm/@icloudpd/linux-arm/bin/icloudpd
 cp LICENSE.md dist/npm/@icloudpd/linux-arm/
 jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/linux-arm/package.json > dist/npm/@icloudpd/linux-arm/package.json
 
+# linux-ia32
+mkdir -p dist/npm/@icloudpd/linux-ia32/bin
+cp dist/icloudpd-$1-linux-386 dist/npm/@icloudpd/linux-ia32/bin/icloudpd
+chmod +x dist/npm/@icloudpd/linux-ia32/bin/icloudpd
+cp LICENSE.md dist/npm/@icloudpd/linux-ia32/
+jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/linux-ia32/package.json > dist/npm/@icloudpd/linux-ia32/package.json
+
 # macos x64
 mkdir -p dist/npm/@icloudpd/darwin-x64/bin
 cp dist/icloudpd-$1-macos-amd64 dist/npm/@icloudpd/darwin-x64/bin/icloudpd
