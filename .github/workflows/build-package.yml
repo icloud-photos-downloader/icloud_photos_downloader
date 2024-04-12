@@ -1768,6 +1768,8 @@ jobs:
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
           npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+        env:
+          NODE_AUTH_TOKEN: "fake"
 
       - name: Run test on ${{ matrix.prop[0] }} 
         id: run_test 
