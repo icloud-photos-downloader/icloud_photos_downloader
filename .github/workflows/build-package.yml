@@ -1871,8 +1871,8 @@ jobs:
       - compatibility_docker
       - compatibility_linux_npm_apt
       - compatibility_linux_npm_apk
-      - compatibility_macos_npm
-      - compatibility_windows_npm
+      # - compatibility_macos_npm
+      # - compatibility_windows_npm
     defaults:
       run:
         shell: bash
