@@ -1479,6 +1479,9 @@ jobs:
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1642,6 +1645,9 @@ jobs:
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1684,7 +1690,6 @@ jobs:
 
 
   compatibility_macos_npm:
-    if: false
     name: "Compatibility NPM on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
@@ -1714,14 +1719,10 @@ jobs:
  
     steps: 
  
-      - name: Setup Node
-        if: steps.get_image.outputs.digest != ''  
+      - name: Setup Node for Registry Server
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          registry-url: 'http://0.0.0.0:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
 
       - name: Create Config
         run: |
@@ -1730,16 +1731,22 @@ jobs:
           echo "
           storage: ${{ github.workspace }}/verdaccio
           max_body_size: 1000mb
-          log: { type: stdout, format: pretty, level: http }
+          log: { type: file, format: plain, level: http, path: ${{ github.workspace }}/verdaccio.log }
           packages:
             '**':
               access: \$anonymous
-              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+              publish: \$anonymous
+          listen:
+            - localhost:4873" > ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
+
+      - name: Install Registry
+        shell: bash 
+        run: npm install -g verdaccio@5
 
       - name: Start Registry 
         shell: bash 
-        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml --listen 0.0.0.0:4873 > ${{ github.workspace }}/verdaccio.log) &
+        run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
 
       - name: Make folder for compatibility 
         run: | 
@@ -1752,19 +1759,19 @@ jobs:
           path: | 
             dist/npm
 
-      - name: Test Registry
-        run: | 
-          echo "ls..."
-          ls -la
-          echo "ps..."
-          ps -ef | grep verdaccio
-          echo "log..."
-          cat ${{ github.workspace }}/verdaccio.log
-          echo "curl..."
-          curl -v http://0.0.0.0:4873
-
+      - name: Setup Node for Test
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'http://localhost:4873'
+        env:
+          NODE_AUTH_TOKEN: "fake"
+          
       - name: Publish NPM
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1778,7 +1785,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
-          touch /work/compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+          touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[0] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
@@ -1795,12 +1802,13 @@ jobs:
 
 
   compatibility_windows_npm:
-    if: false
     name: "Compatibility NPM on ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix: 
-        os: [ "windows-2019", "windows-2022" ]
+        os: 
+          - "windows-2019"
+          - "windows-2022"
     runs-on: ${{ matrix.os }} 
     needs: [ build_npm ] 
     defaults: 
@@ -1809,31 +1817,34 @@ jobs:
  
     steps: 
  
-      - name: Setup Node
-        if: steps.get_image.outputs.digest != ''  
+      - name: Setup Node for Registry Server
         uses: actions/setup-node@v4
         with:
           node-version: '20.x'
-          registry-url: 'http://localhost:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
 
       - name: Create Config
         run: |
-          touch ${{ github.workspace }}/npm_config.yaml
-          mkdir ${{ github.workspace }}/verdaccio
+          touch npm_config.yaml
+          mkdir verdaccio
           echo "
-          storage: ${{ github.workspace }}/verdaccio
+          storage: verdaccio
+          log: { type: file, format: plain, level: debug, path: verdaccio.log }
           max_body_size: 1000mb
           packages:
             '**':
               access: \$anonymous
-              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
-          cat ${{ github.workspace }}/npm_config.yaml
+              publish: \$anonymous
+          listen:
+            - localhost:4873" > npm_config.yaml
+          cat npm_config.yaml
+
+      - name: Install Registry 
+        shell: bash 
+        run: npm install -g verdaccio@5
 
       - name: Start Registry 
         shell: bash 
-        run: (npx -y verdaccio@5 --config ${{ github.workspace }}/npm_config.yaml --listen 0.0.0.0:4873 > ${{ github.workspace }}/verdaccio.log) &
+        run: verdaccio --config npm_config.yaml &
 
       - name: Make folder for compatibility 
         run: | 
@@ -1846,19 +1857,20 @@ jobs:
           path: | 
             dist/npm
 
-      - name: Test Registry
-        run: | 
-          echo "ls..."
-          ls -la
-          echo "ps..."
-          ps -ef | grep verdaccio
-          echo "log..."
-          cat ${{ github.workspace }}/verdaccio.log
-          echo "curl..."
-          curl -v http://localhost:4873
+      - name: Setup Node for Test
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'http://localhost:4873'
+        env:
+          NODE_AUTH_TOKEN: "fake"
 
       - name: Publish NPM
+        continue-on-error: true 
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1872,7 +1884,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
-          touch /work/compatibility/npm.${{ matrix.os }}.amd64.pass 
+          touch compatibility/npm.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
@@ -1886,7 +1898,6 @@ jobs:
           if-no-files-found: error 
           path: | 
             compatibility/* 
-
 
   compatibility_report:
     name: "Build Compatibility Report"
@@ -1903,8 +1914,8 @@ jobs:
       - compatibility_docker
       - compatibility_linux_npm_apt
       - compatibility_linux_npm_apk
-      # - compatibility_macos_npm
-      # - compatibility_windows_npm
+      - compatibility_macos_npm
+      - compatibility_windows_npm
     defaults:
       run:
         shell: bash

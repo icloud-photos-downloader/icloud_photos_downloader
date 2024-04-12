@@ -74,6 +74,9 @@ jobs:
 
       - name: Publish NPM
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public
           npm publish dist/npm/@icloudpd/linux-x64 --access public
           npm publish dist/npm/@icloudpd/win32-x64 --access public
           npm publish dist/npm/@icloudpd/darwin-x64 --access public
