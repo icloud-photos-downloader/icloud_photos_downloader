@@ -1479,6 +1479,9 @@ jobs:
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1642,6 +1645,9 @@ jobs:
       - name: Publish NPM
         if: steps.get_image.outputs.digest != ''  
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1763,6 +1769,9 @@ jobs:
           
       - name: Publish NPM
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
@@ -1859,7 +1868,13 @@ jobs:
       - name: Publish NPM
         continue-on-error: true 
         run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-ia32 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
           npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
           npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
         env:
           NODE_AUTH_TOKEN: "fake"
