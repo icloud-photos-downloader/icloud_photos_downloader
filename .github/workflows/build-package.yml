@@ -1737,7 +1737,7 @@ jobs:
               access: \$anonymous
               publish: \$anonymous
           listen:
-            - localhost:8743" > ${{ github.workspace }}/npm_config.yaml
+            - localhost:4873" > ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Install Registry
