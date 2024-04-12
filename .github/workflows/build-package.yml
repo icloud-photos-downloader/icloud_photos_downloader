@@ -1724,14 +1724,14 @@ jobs:
           mkdir ${{ github.workspace }}/verdaccio
           echo "
           storage: ${{ github.workspace }}/verdaccio
-          listen:
-            - localhost:8743
           max_body_size: 1000mb
           log: { type: file, format: plain, level: http, path: ${{ github.workspace }}/verdaccio.log }
           packages:
             '**':
               access: \$anonymous
-              publish: \$anonymous" > ${{ github.workspace }}/npm_config.yaml
+              publish: \$anonymous
+          listen:
+            - localhost:8743" > ${{ github.workspace }}/npm_config.yaml
           cat ${{ github.workspace }}/npm_config.yaml
 
       - name: Install Registry
