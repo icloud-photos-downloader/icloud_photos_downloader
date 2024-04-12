@@ -1,7 +1,7 @@
 {
-    "name": "@icloudpd/linux-x64",
+    "name": "@icloudpd/linux-arm64",
     "version": "0.0.1",
-    "description": "The Linux 64-bit binary for icloudpd, a iCloud Photo Downloader.",
+    "description": "The Linux ARM 64-bit binary for icloudpd, a iCloud Photo Downloader.",
     "repository": {
       "type": "git",
       "url": "git+https://github.com/icloud_photos_downloader/icloud_photos_downloader.git"
@@ -15,6 +15,6 @@
       "linux"
     ],
     "cpu": [
-      "x64"
+      "arm64"
     ]
   }
