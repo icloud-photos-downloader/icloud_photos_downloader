@@ -8,6 +8,9 @@
   "bin": {
     "icloudpd": "bin/icloudpd.js"
   },
+  "scripts": {
+    "preinstall": "node preinstall.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/icloud_photos_downloader/icloud_photos_downloader.git"
@@ -23,6 +26,9 @@
   },
   "homepage": "https://github.com/icloud_photos_downloader/icloud_photos_downloader#readme",
   "optionalDependencies": {
+    "@icloudpd/linux-arm": "0.0.1",
+    "@icloudpd/linux-arm64": "0.0.1",
+    "@icloudpd/linux-ia32": "0.0.1",
     "@icloudpd/linux-x64": "0.0.1",
     "@icloudpd/win32-x64": "0.0.1",
     "@icloudpd/darwin-x64": "0.0.1",
