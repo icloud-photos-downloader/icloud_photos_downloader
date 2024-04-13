@@ -1713,6 +1713,96 @@ jobs:
           path: | 
             compatibility/* 
 
+  # record QEMU failures for completeness
+  compatibility_linux_npm_apk_fail:
+    name: "Compatibility NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK failures" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        image:  
+          - [ 
+            "alpine_3_19", #variant name
+            "alpine:3.19", #image
+            ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
+        prop:  
+          # - [ 
+          #   "amd64",  # variant name 
+          #   "amd64",  # platform spec 
+          #   "",  # image prefix 
+          # ] 
+          # - [ 
+          #   "386",  # variant name 
+          #   "386",  # platform spec 
+          #   "i386/",  # image prefix 
+          # ] 
+          # - [ 
+          #   "arm64",  # variant name 
+          #   "arm64",  # platform spec 
+          #   "",  # image prefix 
+          # ] 
+          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
+          - [ 
+            "arm32v6",  # variant name 
+            "arm/v6",  # platform spec 
+            "arm32v6/",  # image prefix 
+          ] 
+          # - [ 
+          #   "arm32v5",  # variant name 
+          #   "arm/v5",  # platform spec 
+          #   "arm32v5/",  # image prefix 
+          # ] 
+    runs-on: ubuntu-22.04 
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Make folder for compatibility 
+        run: | 
+          mkdir compatibility 
+
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        run: | 
+          touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+ 
+      - name: Upload compatibility result 
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
 
   compatibility_macos_npm:
     name: "Compatibility NPM on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
@@ -1939,6 +2029,7 @@ jobs:
       - compatibility_docker
       - compatibility_linux_npm_apt
       - compatibility_linux_npm_apk
+      - compatibility_linux_npm_apk_fail
       - compatibility_macos_npm
       - compatibility_windows_npm
     defaults:
