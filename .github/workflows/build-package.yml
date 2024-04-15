@@ -1638,6 +1638,10 @@ jobs:
         run: |  
           echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
 
+      - name: Checkout code
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/checkout@v4
+
       - name: Setup Node for Registry Server
         if: steps.get_image.outputs.digest != '' 
         uses: actions/setup-node@v4
@@ -1723,9 +1727,7 @@ jobs:
           run: > 
             echo "install npm..." && 
             export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
-            echo "test icloudpd..." && 
-            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
-            touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+            /work/scripts/npx_optional /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
@@ -1906,10 +1908,9 @@ jobs:
             echo "install npm..." && 
             apk update && apk add npm &&
             echo "test icloudpd..." && 
-            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --help &&
-            touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
- 
+            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+            touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
@@ -2003,6 +2004,10 @@ jobs:
         run: |  
           echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
 
+      - name: Checkout code
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/checkout@v4
+
       - name: Setup Node for Registry Server
         if: steps.get_image.outputs.digest != '' 
         uses: actions/setup-node@v4
@@ -2088,9 +2093,7 @@ jobs:
           run: > 
             echo "install npm..." && 
             apk update && apk add npm &&
-            echo "test icloudpd..." && 
-            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
-            touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+            /work/scripts/npx_optional /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  

@@ -25,7 +25,7 @@ def matrix(files):
     oses = [k for k, _ in itertools.groupby(sorted(files, key = lambda ft: ft[2]), key = lambda ft: ft[2])]
     for o in oses:
         results_raw = [list(filter(lambda ft: ft[2] == o and ft[3] == a, files)) for a in archs_sorted]
-        results = ["N/A" if len(r) == 0 else (r[0][4] + ("" if r[0][0] == 0 else " (src)")) for r in results_raw]
+        results = ["N/A" if len(r) == 0 or r[0][4] == "na" else (r[0][4] + ("" if r[0][0] == 0 else " (src)")) for r in results_raw]
         print('|'.join([o] + results))
 
 def main():
