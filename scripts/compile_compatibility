@@ -5,9 +5,13 @@ import os
 import sys
 import itertools
 
+def normalize(files):
+    presort = [ "pass", "fail", "na" ]
+    return [(list(g) + [ [0, k.split('.')[0], k.split('.')[1], k.split('.')[2], 'na'] ])[0] for (k, g) in itertools.groupby(sorted(files, key = lambda k: f"{k[1]}.{k[2]}.{k[3]}.{presort.index(k[4]) if k[4] in presort else 9}"), key = lambda k: f"{k[1]}.{k[2]}.{k[3]}")]
+
 def stats(files):
     """ Print statistics """
-    total = len(files)
+    total = len([f for f in files if f[4] != 'na'])
     passed = len([f for f in files if f[4] == 'pass'])
     print(f"Compatibility rate: {round(100*passed/total,1) if total > 0 else 0}% ({passed} passed out of {total})")
     print("")
