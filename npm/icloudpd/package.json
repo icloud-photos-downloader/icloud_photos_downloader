@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "iCloud Photo Downloader",
   "engines": {
-    "node": ">=4"
+    "node": ">=6"
   },
   "bin": {
     "icloudpd": "bin/icloudpd.js"
