@@ -1908,8 +1908,9 @@ jobs:
             echo "install npm..." && 
             apk update && apk add npm &&
             echo "test icloudpd..." && 
-            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
-            touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
+            icloudpd --help  &&
+            touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
