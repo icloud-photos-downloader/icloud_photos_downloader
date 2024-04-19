@@ -240,6 +240,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               is_flag=True,
               default=False,
               )
+@click.option(
+    "--x-days-ago",
+    help="Number of days ago to filter photos by",
+    type=click.IntRange(1),
+)
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.17.4")
@@ -280,6 +285,7 @@ def main(
         delete_after_download: bool,
         domain: str,
         watch_with_interval: Optional[int],
+        x_days_ago,
         dry_run: bool
 ):
     """Download all iCloud photos to a local directory"""
@@ -313,6 +319,10 @@ def main(
 
         if auto_delete and delete_after_download:
             print('--auto-delete and --delete-after-download are mutually exclusive')
+            sys.exit(2)
+
+        if recent and x_days_ago:
+            print('--recent and --x-days-ago are mutually exclusive')
             sys.exit(2)
 
         if watch_with_interval and (
@@ -367,6 +377,7 @@ def main(
                 domain,
                 logger,
                 watch_with_interval,
+                x_days_ago,
                 dry_run))
 
 
@@ -744,6 +755,7 @@ def core(
         domain: str,
         logger: logging.Logger,
         watch_interval: Optional[int],
+        x_days_ago: Optional[int],
         dry_run: bool
 ):
     """Download all iCloud photos to a local directory"""
@@ -838,7 +850,13 @@ def core(
 
             photos.exception_handler = error_handler
 
+            if x_days_ago is not None:
+                cutoff_date = datetime.datetime.now() - datetime.timedelta(days=x_days_ago)
+                photos = filter(lambda photo: hasattr(photo, 'created') and photo.created > cutoff_date, photos)
+
             photos_count: Optional[int] = len(photos)
+
+            print(f"Filter photos count: {photos_count}")
 
             # Optional: Only download the x most recent photos.
             if recent is not None:
