@@ -104,7 +104,7 @@ def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
     try:
         devices = icloud.trusted_devices
     except:
-        device = []
+        devices = []
     if len(devices) > 0:
         if len(devices) > 99:
             logger.error("Too many trusted devices for authentication")
