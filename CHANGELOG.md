@@ -3,6 +3,7 @@
 ## Unreleased
 
 - experimental: fix errors in npm packages
+- fix: allow calls for trusted devices to fail silently [#819](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/819)
 
 ## 1.17.4 (2024-04-10)
 
