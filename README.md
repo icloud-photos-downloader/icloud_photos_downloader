@@ -39,15 +39,19 @@ To keep your iCloud photo collection synchronized to your local system:
 icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
-- Synchronization logic can be adjusted with command-line parameters. Run `icloudpd --help` to get full list.
+> [!IMPORTANT]
+> It is `icloudpd`, not `icloud` executable
+
+> [!TIP]
+> Synchronization logic can be adjusted with command-line parameters. Run `icloudpd --help` to get full list.
 
 To independently create and authorize a session (and complete 2SA/2FA validation if needed) on your local system:
 
 ```
 icloudpd --username my@email.address --password my_password --auth-only
 ```
-
-- This feature can also be used to check and verify that the session is still authenticated. 
+> [!TIP]
+> This feature can also be used to check and verify that the session is still authenticated. 
 
 ## FAQ
 
