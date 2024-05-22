@@ -4,7 +4,7 @@ from multiprocessing import RawValue, Lock
 
 
 class Counter(object):
-    def __init__(self, value=0):
+    def __init__(self, value:int=0):
         self.initial_value = value
         self.val = RawValue('i', value)
         self.lock = Lock()
@@ -19,4 +19,4 @@ class Counter(object):
 
     def value(self) -> int:
         with self.lock:
-            return self.val.value
+            return int(self.val.value)
