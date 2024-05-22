@@ -1,4 +1,5 @@
 from typing import Any, Optional
+import typing
 from uuid import uuid1
 import inspect
 import json
@@ -227,7 +228,7 @@ class PyiCloudService:
             password = get_password_from_keyring(apple_id)
 
         self.user = {"accountName": apple_id, "password": password}
-        self.data: dict = {}
+        self.data: dict = {} # type: ignore[type-arg]
         self.params = {}
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
@@ -499,7 +500,7 @@ class PyiCloudService:
             params=self.params,
             data=data
         )
-        return request.json().get('success', False)
+        return typing.cast(bool, request.json().get('success', False))
 
     def validate_verification_code(self, device, code: str) -> bool:
         """Verifies a verification code received on a trusted device."""
@@ -582,7 +583,7 @@ class PyiCloudService:
             raise PyiCloudServiceNotActivatedException(
                 "Webservice not available", ws_key
             )
-        return self._webservices[ws_key]["url"]
+        return typing.cast(str, self._webservices[ws_key]["url"])
 
     @property
     def devices(self):

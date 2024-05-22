@@ -6,6 +6,7 @@ import re
 
 from datetime import datetime
 from typing import Optional
+import typing
 
 from requests import Response
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
@@ -337,13 +338,13 @@ class PhotoAlbum(object):
     def photos_request(self, offset: int) -> Response:
         url = ('%s/records/query?' % self.service._service_endpoint) + \
             urlencode(self.service.params)
-        return self.service.session.post(
+        return typing.cast(Response, self.service.session.post(
             url,
             data=json.dumps(self._list_query_gen(
                 offset, self.list_type, self.direction,
                 self.query_filter)),
             headers={'Content-type': 'text/plain'}
-        )
+        ))
 
 
     @property
@@ -676,11 +677,11 @@ class PhotoAsset(object):
         if version not in self.versions:
             return None
 
-        return self._service.session.get(
+        return typing.cast(Response, self._service.session.get(
             self.versions[version]['url'],
             stream=True,
             **kwargs
-        )
+        ))
 
     def __repr__(self):
         return "<%s: id=%s>" % (
