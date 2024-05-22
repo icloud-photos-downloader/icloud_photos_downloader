@@ -61,7 +61,7 @@ test = [
     "autopep8==2.0.2",
     "pytest-timeout==2.1.0",
     "pytest-xdist==3.3.1",
-    "mypy==1.7.0",
+    "mypy==1.10.0",
     "types-pytz==2022.7.1.2",
     "types-tzlocal==4.3.0.0",
     "types-requests==2.31.0.2",
