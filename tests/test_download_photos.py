@@ -1963,7 +1963,7 @@ class DownloadPhotoTestCase(TestCase):
 
             def mock_raise_response_error(_arg: Any) -> NoReturn:
                 raise PyiCloudAPIResponseException(
-                    "INTERNAL_ERROR", "INTERNAL_ERROR")
+                    "INTERNAL_ERROR", 500)
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAsset, "download") as pa_download:
@@ -2028,7 +2028,7 @@ class DownloadPhotoTestCase(TestCase):
 
             def mock_raise_response_error(_offset: int) -> NoReturn:
                 raise PyiCloudAPIResponseException(
-                    "INTERNAL_ERROR", "INTERNAL_ERROR")
+                    "INTERNAL_ERROR", 500)
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:

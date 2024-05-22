@@ -1,3 +1,4 @@
+from typing import Any
 from uuid import uuid1
 import inspect
 import json
@@ -306,7 +307,7 @@ class PyiCloudService:
 
         self._photos = None
 
-    def authenticate(self, force_refresh=False, service=None):
+    def authenticate(self, force_refresh=False, service:(Any|None)=None):
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.

@@ -32,7 +32,7 @@ class IPDLogger(logging.Logger):
             self.tqdm.write(message)
 
 
-def setup_logger():
+def setup_logger() -> logging.Logger:
     """Set up logger and add stdout handler"""
     logging.setLoggerClass(IPDLogger)
     logger = logging.getLogger("icloudpd")
