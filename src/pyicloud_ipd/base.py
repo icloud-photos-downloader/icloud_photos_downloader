@@ -1,4 +1,4 @@
-from typing import Any, Optional
+from typing import Any, NoReturn, Optional
 import typing
 from uuid import uuid1
 import inspect
@@ -181,7 +181,7 @@ class PyiCloudSession(Session):
 
         return response
 
-    def _raise_error(self, code, reason):
+    def _raise_error(self, code: str, reason: str) -> NoReturn:
         if (
             self.service.requires_2sa
             and reason == "Missing X-APPLE-WEBAUTH-TOKEN cookie"
@@ -192,7 +192,7 @@ class PyiCloudSession(Session):
                 "Please log into https://icloud.com/ to manually "
                 "finish setting up your iCloud service"
             )
-            api_error = PyiCloudServiceNotActivatedException(reason, code)
+            api_error: Exception = PyiCloudServiceNotActivatedException(reason, code)
             LOGGER.error(api_error)
 
             raise (api_error)
@@ -201,7 +201,7 @@ class PyiCloudSession(Session):
                 reason + ".  Please wait a few minutes then try again."
                 "The remote servers might be trying to throttle requests."
             )
-        if code in [421, 450, 500]:
+        if code in ["421", "450", "500"]:
             reason = "Authentication required for Account."
 
         api_error = PyiCloudAPIResponseException(reason, code)

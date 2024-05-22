@@ -580,7 +580,7 @@ class DownloadPhotoTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
             def mock_raise_response_error(_arg: Any) -> NoReturn:
-                raise PyiCloudAPIResponseException("Invalid global session", 100)
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAsset, "download") as pa_download:
@@ -657,7 +657,7 @@ class DownloadPhotoTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
             def mock_raise_response_error(_offset: int) -> NoReturn:
-                raise PyiCloudAPIResponseException("Invalid global session", 100)
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
@@ -809,7 +809,7 @@ class DownloadPhotoTestCase(TestCase):
             # Pass fixed client ID via environment variable
 
             def mock_raise_response_error() -> None:
-                raise PyiCloudAPIResponseException("Api Error", 100)
+                raise PyiCloudAPIResponseException("Api Error", "100")
 
             with mock.patch.object(PhotoLibrary, "_fetch_folders") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
@@ -1963,7 +1963,7 @@ class DownloadPhotoTestCase(TestCase):
 
             def mock_raise_response_error(_arg: Any) -> NoReturn:
                 raise PyiCloudAPIResponseException(
-                    "INTERNAL_ERROR", 500)
+                    "INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAsset, "download") as pa_download:
@@ -2028,7 +2028,7 @@ class DownloadPhotoTestCase(TestCase):
 
             def mock_raise_response_error(_offset: int) -> NoReturn:
                 raise PyiCloudAPIResponseException(
-                    "INTERNAL_ERROR", 500)
+                    "INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
