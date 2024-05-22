@@ -4,7 +4,7 @@ import traceback
 from click.testing import Result
 
 
-def print_result_exception(result: Result):
+def print_result_exception(result: Result) -> None:
     ex = result.exception
     if ex:
         # This only works on Python 3

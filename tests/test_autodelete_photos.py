@@ -1,3 +1,5 @@
+import logging
+from typing import Any, NoReturn
 from unittest import TestCase
 from icloudpd import constants
 from vcr import VCR
@@ -23,13 +25,13 @@ vcr = VCR(decode_compressed_response=True, record_mode="new_episodes")
 class AutodeletePhotosTestCase(TestCase):
 
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_autodelete_invalid_creation_date(self):
+    def test_autodelete_invalid_creation_date(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -45,7 +47,7 @@ class AutodeletePhotosTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, tz=None):
+                def astimezone(self, _tz:(Any|None)=None) -> NoReturn:
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
@@ -140,7 +142,7 @@ class AutodeletePhotosTestCase(TestCase):
                     assert not os.path.exists(
                         os.path.join(data_dir, file_name)), f"{file_name} not expected, but present"
 
-    def test_download_autodelete_photos(self):
+    def test_download_autodelete_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -238,7 +240,7 @@ class AutodeletePhotosTestCase(TestCase):
                 assert not os.path.exists(os.path.join(
                     data_dir, file_name)), f"{file_name} not expected, but present"
 
-    def test_autodelete_photos(self):
+    def test_autodelete_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -341,7 +343,7 @@ class AutodeletePhotosTestCase(TestCase):
             assert not os.path.exists(os.path.join(
                 data_dir, file_name)), f"{file_name} not expected, but present"
 
-    def test_retry_delete_after_download_session_error(self):
+    def test_retry_delete_after_download_session_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -355,7 +357,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_, a1_, a2_):
+            def mock_raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_:PhotoAsset) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
                     raise PyiCloudAPIResponseException(
@@ -369,7 +371,7 @@ class AutodeletePhotosTestCase(TestCase):
                     # but do nothing on the second try.
                     orig_authenticate = PyiCloudService.authenticate
 
-                    def mocked_authenticate(self):
+                    def mocked_authenticate(self:PyiCloudService) -> None:
                         if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
                             orig_authenticate(self)
                             setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)
@@ -434,7 +436,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
-    def test_retry_fail_delete_after_download_session_error(self):
+    def test_retry_fail_delete_after_download_session_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -448,7 +450,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_, a1_, a2_):
+            def mock_raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_:PhotoAsset) -> None:
                 raise PyiCloudAPIResponseException("Invalid global session", 100)
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -459,7 +461,7 @@ class AutodeletePhotosTestCase(TestCase):
                     # but do nothing on the second try.
                     orig_authenticate = PyiCloudService.authenticate
 
-                    def mocked_authenticate(self):
+                    def mocked_authenticate(self:PyiCloudService) -> None:
                         if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
                             orig_authenticate(self)
                             setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)
@@ -524,7 +526,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
-    def test_retry_delete_after_download_internal_error(self):
+    def test_retry_delete_after_download_internal_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -538,7 +540,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_, a1_, a2_):
+            def mock_raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_:PhotoAsset) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
                     raise PyiCloudAPIResponseException(
@@ -605,7 +607,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
-    def test_retry_fail_delete_after_download_internal_error(self):
+    def test_retry_fail_delete_after_download_internal_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -619,7 +621,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_, a1_, a2_):
+            def mock_raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_:PhotoAsset) -> None:
                 raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -683,7 +685,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
-    def test_autodelete_photos_dry_run(self):
+    def test_autodelete_photos_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")

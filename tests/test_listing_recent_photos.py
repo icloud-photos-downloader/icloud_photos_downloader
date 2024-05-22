@@ -16,13 +16,13 @@ vcr = VCR(decode_compressed_response=True)
 class ListingRecentPhotosTestCase(TestCase):
 
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_listing_recent_photos(self):
+    def test_listing_recent_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -48,7 +48,7 @@ class ListingRecentPhotosTestCase(TestCase):
                     "--only-print-filenames",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -90,7 +90,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_listing_photos_does_not_create_folders(self):
+    def test_listing_photos_does_not_create_folders(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -120,7 +120,7 @@ class ListingRecentPhotosTestCase(TestCase):
                     "--only-print-filenames",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -139,7 +139,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_listing_recent_photos_with_missing_filenameEnc(self):
+    def test_listing_recent_photos_with_missing_filenameEnc(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -167,7 +167,7 @@ class ListingRecentPhotosTestCase(TestCase):
                             "--only-print-filenames",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -176,7 +176,7 @@ class ListingRecentPhotosTestCase(TestCase):
                     )
                     print_result_exception(result)
 
-                    self.assertEqual.__self__.maxDiff = None
+                    self.assertEqual.__self__.maxDiff = None # type: ignore[attr-defined]
 
                     filenames = result.output.splitlines()
 
@@ -209,7 +209,7 @@ class ListingRecentPhotosTestCase(TestCase):
 
     # This was used to solve the missing filenameEnc error. I found
     # another case where it might crash. (Maybe Apple changes the downloadURL key)
-    def test_listing_recent_photos_with_missing_downloadURL(self):
+    def test_listing_recent_photos_with_missing_downloadURL(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -237,7 +237,7 @@ class ListingRecentPhotosTestCase(TestCase):
                             "--only-print-filenames",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -246,7 +246,7 @@ class ListingRecentPhotosTestCase(TestCase):
                     )
                     print_result_exception(result)
 
-                    self.assertEqual.__self__.maxDiff = None
+                    self.assertEqual.__self__.maxDiff = None # type: ignore[attr-defined]
                     self.assertEqual("""\
 KeyError: 'downloadURL' attribute was not found in the photo fields.
 icloudpd has saved the photo record to: ./icloudpd-photo-error.json

@@ -18,13 +18,13 @@ vcr = VCR(decode_compressed_response=True)
 
 class TwoStepAuthTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None: 
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_2sa_flow_invalid_code(self):
+    def test_2sa_flow_invalid_code(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -56,7 +56,7 @@ class TwoStepAuthTestCase(TestCase):
 
             assert result.exit_code == 1
 
-    def test_2sa_flow_valid_code(self):
+    def test_2sa_flow_valid_code(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -98,7 +98,7 @@ class TwoStepAuthTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-    def test_2sa_flow_failed_send_code(self):
+    def test_2sa_flow_failed_send_code(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -140,7 +140,7 @@ class TwoStepAuthTestCase(TestCase):
                 )
                 assert result.exit_code == 1
 
-    def test_2fa_flow_invalid_code(self):
+    def test_2fa_flow_invalid_code(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -172,7 +172,7 @@ class TwoStepAuthTestCase(TestCase):
 
             assert result.exit_code == 1
 
-    def test_2fa_flow_valid_code(self):
+    def test_2fa_flow_valid_code(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 

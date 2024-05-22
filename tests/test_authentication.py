@@ -17,13 +17,13 @@ vcr = VCR(decode_compressed_response=True)
 
 class AuthenticationTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_failed_auth(self):
+    def test_failed_auth(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -44,7 +44,7 @@ class AuthenticationTestCase(TestCase):
         self.assertTrue(
             "Invalid email/password combination." in str(context.exception))
 
-    def test_2sa_required(self):
+    def test_2sa_required(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -70,7 +70,7 @@ class AuthenticationTestCase(TestCase):
                 in str(context.exception)
             )
 
-    def test_2fa_required(self):
+    def test_2fa_required(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -96,7 +96,7 @@ class AuthenticationTestCase(TestCase):
                 in str(context.exception)
             )
 
-    def test_successful_token_validation(self):
+    def test_successful_token_validation(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -144,7 +144,7 @@ class AuthenticationTestCase(TestCase):
             self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
             assert result.exit_code == 0
 
-    def test_password_prompt(self):
+    def test_password_prompt(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 

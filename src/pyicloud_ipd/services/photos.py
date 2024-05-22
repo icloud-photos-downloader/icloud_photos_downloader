@@ -5,6 +5,8 @@ import base64
 import re
 
 from datetime import datetime
+
+from requests import Response
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 
@@ -331,7 +333,7 @@ class PhotoAlbum(object):
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
-    def photos_request(self, offset):
+    def photos_request(self, offset: int) -> Response:
         url = ('%s/records/query?' % self.service._service_endpoint) + \
             urlencode(self.service.params)
         return self.service.session.post(
@@ -427,7 +429,7 @@ class PhotoAlbum(object):
 
         return query
 
-    def _list_query_gen(self, offset, list_type, direction, query_filter=None):
+    def _list_query_gen(self, offset: int, list_type: str, direction: str, query_filter=None):
         query = {
             u'query': {
                 u'filterBy': [
@@ -669,7 +671,7 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, version='original', **kwargs):
+    def download(self, version='original', **kwargs) -> (Response | None):
         if version not in self.versions:
             return None
 

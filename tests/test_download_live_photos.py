@@ -23,13 +23,13 @@ vcr = VCR(decode_compressed_response=True)
 
 class DownloadLivePhotoTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_skip_existing_downloads_for_live_photos(self):
+    def test_skip_existing_downloads_for_live_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -61,7 +61,7 @@ class DownloadLivePhotoTestCase(TestCase):
                     "3",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -94,7 +94,7 @@ class DownloadLivePhotoTestCase(TestCase):
         for file_name in files_to_download:
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"
 
-    def test_skip_existing_live_photodownloads(self):
+    def test_skip_existing_live_photodownloads(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -137,7 +137,7 @@ class DownloadLivePhotoTestCase(TestCase):
                     "3",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -182,7 +182,7 @@ class DownloadLivePhotoTestCase(TestCase):
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), f"file {file_name} expected, but not found"
 
-    def test_skip_existing_live_photo_print_filenames(self):
+    def test_skip_existing_live_photo_print_filenames(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -225,7 +225,7 @@ class DownloadLivePhotoTestCase(TestCase):
                     "3",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "--only-print-filenames",
                     "-d",
                     data_dir,

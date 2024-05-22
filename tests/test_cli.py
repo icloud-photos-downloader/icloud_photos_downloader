@@ -1,4 +1,5 @@
 # coding=utf-8
+from typing import Sequence, Tuple
 from unittest import TestCase
 import os
 import shutil
@@ -16,18 +17,18 @@ vcr = VCR(decode_compressed_response=True)
 
 class CliTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_cli(self):
+    def test_cli(self) -> None:
         runner = CliRunner()
         result = runner.invoke(main, ["--help"])
         assert result.exit_code == 0
 
-    def test_log_levels(self):
+    def test_log_levels(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -35,7 +36,7 @@ class CliTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        parameters = [
+        parameters: Sequence[Tuple[str, Sequence[str], Sequence[str]]] = [
             ("debug", ["DEBUG", "INFO"], []),
             ("info", ["INFO"], ["DEBUG"]),
             ("error", [], ["DEBUG", "INFO"]),
@@ -75,7 +76,7 @@ class CliTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_tqdm(self):
+    def test_tqdm(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -112,7 +113,7 @@ class CliTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_unicode_directory(self):
+    def test_unicode_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -148,7 +149,7 @@ class CliTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_missing_directory(self):
+    def test_missing_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         # need path removed
         if os.path.exists(base_dir):
@@ -176,7 +177,7 @@ class CliTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_missing_directory_param(self):
+    def test_missing_directory_param(self) -> None:
         runner = CliRunner()
         result = runner.invoke(
             main,
@@ -193,7 +194,7 @@ class CliTestCase(TestCase):
         )
         assert result.exit_code == 2
 
-    def test_conflict_options_delete_after_download_and_auto_delete(self):
+    def test_conflict_options_delete_after_download_and_auto_delete(self) -> None:
         runner = CliRunner()
         result = runner.invoke(
             main,
