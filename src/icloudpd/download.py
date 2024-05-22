@@ -5,6 +5,7 @@ import os
 import socket
 import time
 import datetime
+from requests import Response
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
 import pyicloud_ipd  # pylint: disable=redefined-builtin
@@ -67,7 +68,7 @@ def mkdirs_for_path_dry_run(
 
 def download_response_to_path(
         _logger: logging.Logger,
-        response,
+        response: Response,
         download_path: str,
         created_date: datetime.datetime) -> bool:
     """ Saves response content into file with desired created date """
@@ -83,7 +84,7 @@ def download_response_to_path(
 
 def download_response_to_path_dry_run(
         logger: logging.Logger,
-        _response,
+        _response: Response,
         download_path: str,
         _created_date: datetime.datetime) -> bool:
     """ Pretends to save response content into a file with desired created date """

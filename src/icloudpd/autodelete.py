@@ -6,6 +6,7 @@ import os
 from tzlocal import get_localzone
 from icloudpd.paths import local_download_path
 import pyicloud_ipd
+from pyicloud_ipd.services.photos import PhotoLibrary, PhotosService
 
 
 def delete_file(logger: logging.Logger, path: str) -> bool:
@@ -24,9 +25,9 @@ def delete_file_dry_run(logger: logging.Logger, path: str) -> bool:
 def autodelete_photos(
         logger: logging.Logger,
         dry_run: bool,
-        library_object,
+        library_object: PhotoLibrary,
         folder_structure: str,
-        directory: str):
+        directory: str) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -51,7 +52,7 @@ def autodelete_photos(
         for size in ["small", "original", "medium", "thumb"]:
             path = os.path.normpath(
                 local_download_path(
-                    media, size, download_dir))
+                    media.filename, size, download_dir))
             if os.path.exists(path):
                 logger.debug("Deleting %s...", path)
                 delete_local = delete_file_dry_run if dry_run else delete_file

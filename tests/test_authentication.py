@@ -37,8 +37,9 @@ class AuthenticationTestCase(TestCase):
                 authenticator(setup_logger(), "com")(
                     "bad_username",
                     "bad_password",
-                    cookie_directory=cookie_dir,
-                    client_id="EC5646DE-9423-11E8-BF21-14109FE0B321",
+                    cookie_dir,
+                    False,
+                    "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
         self.assertTrue(
@@ -60,9 +61,9 @@ class AuthenticationTestCase(TestCase):
                 authenticator(setup_logger(), "com")(
                     "jdoe@gmail.com",
                     "password1",
-                    raise_error_on_2sa=True,
-                    cookie_directory=cookie_dir,
-                    client_id="DE309E26-942E-11E8-92F5-14109FE0B321",
+                    cookie_dir,
+                    True,
+                    "DE309E26-942E-11E8-92F5-14109FE0B321",
                 )
 
             self.assertTrue(
@@ -86,9 +87,9 @@ class AuthenticationTestCase(TestCase):
                 authenticator(setup_logger(), "com")(
                     "jdoe@gmail.com",
                     "password1",
-                    raise_error_on_2sa=True,
-                    cookie_directory=cookie_dir,
-                    client_id="EC5646DE-9423-11E8-BF21-14109FE0B321",
+                    cookie_dir,
+                    True,
+                    "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
             self.assertTrue(

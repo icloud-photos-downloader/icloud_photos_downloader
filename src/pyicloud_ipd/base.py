@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Optional
 from uuid import uuid1
 import inspect
 import json
@@ -220,8 +220,8 @@ class PyiCloudService:
     """
 
     def __init__(
-        self, domain, apple_id, password=None, cookie_directory=None, verify=True,
-        client_id=None, with_family=True,
+        self, domain:str, apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
+        client_id:Optional[str]=None, with_family:bool=True,
     ):
         if password is None:
             password = get_password_from_keyring(apple_id)
@@ -490,7 +490,7 @@ class PyiCloudService:
         )
         return request.json().get('devices')
 
-    def send_verification_code(self, device):
+    def send_verification_code(self, device) -> bool:
         """ Requests that a verification code is sent to the given device"""
         data = json.dumps(device)
         request = self.session.post(
@@ -500,7 +500,7 @@ class PyiCloudService:
         )
         return request.json().get('success', False)
 
-    def validate_verification_code(self, device, code):
+    def validate_verification_code(self, device, code: str) -> bool:
         """Verifies a verification code received on a trusted device."""
         device.update({"verificationCode": code, "trustBrowser": True})
         data = json.dumps(device)
@@ -524,7 +524,7 @@ class PyiCloudService:
 
         return not self.requires_2sa
 
-    def validate_2fa_code(self, code):
+    def validate_2fa_code(self, code:str) -> bool:
         """Verifies a verification code received via Apple's 2FA system (HSA2)."""
         data = {"securityCode": {"code": code}}
 
@@ -554,7 +554,7 @@ class PyiCloudService:
         self.trust_session()
         return not self.requires_2sa
 
-    def trust_session(self):
+    def trust_session(self) -> bool:
         """Request session trust to avoid user log in going forward."""
         headers = self._get_auth_headers()
 
@@ -575,7 +575,7 @@ class PyiCloudService:
             LOGGER.error("Session trust failed.")
             return False
 
-    def _get_webservice_url(self, ws_key):
+    def _get_webservice_url(self, ws_key) -> str:
         """Get webservice URL, raise an exception if not exists."""
         if self._webservices.get(ws_key) is None:
             raise PyiCloudServiceNotActivatedException(

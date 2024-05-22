@@ -26,7 +26,7 @@ import click
 
 
 @click.group()
-def commands():
+def commands() -> None:
     pass
 
 
@@ -59,7 +59,7 @@ def commands():
     default="com",
     help="Root Domain for requests to iCloud. com or cn",
 )
-def icloud(username, password, non_interactive, delete_from_keyring, domain):
+def icloud(_username:str, _password:str, _non_interactive:bool, _delete_from_keyring:bool, _domain:str) -> None:
     """Legacy iCloud utils (keyring)"""
     # raise Exception("blah")
     icloud_main(sys.argv[2:])
@@ -68,38 +68,38 @@ def icloud(username, password, non_interactive, delete_from_keyring, domain):
 @commands.command()
 @click.argument('appleid')  # , help="AppleID of the account to use")
 @click.argument('target')  # , help="Target path template")
-def copy(appleid, target):
+def copy(_appleid:str, _target:str) -> None:
     """Copy assets from iCloud to local storage"""
 
 
 @commands.command()
-def move():
+def move() -> None:
     """Move assets from iCloud to local storage"""
 
 
 @commands.group()
-def auth():
+def auth() -> None:
     """Manages persistant credentials"""
 
 
 @auth.command()
 @click.argument('appleid')  # , help="AppleID of the account to use")
-def add(appleid):
+def add(_appleid:str) -> None:
     """Add credentials to keyring"""
 
 
 @auth.command()
 @click.argument('appleid')  # , help="AppleID of the account to use")
-def delete(appleid):
+def delete(_appleid:str) -> None:
     """Delete credentials from keyring"""
 
 
 @commands.group()
-def watch():
+def watch() -> None:
     """Watch for iCloud changes"""
 
 
-def main():
+def main() -> None:
     commands.add_command(icloudpd_main, name="icloudpd")
     watch.add_command(copy)
     watch.add_command(move)

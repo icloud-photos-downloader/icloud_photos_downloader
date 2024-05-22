@@ -6,6 +6,7 @@ command line scripts, and related.
 import argparse
 import pickle
 import sys
+from typing import NoReturn
 
 from click import confirm
 
@@ -28,7 +29,7 @@ def create_pickled_data(idevice, filename):
         pickle.dump(idevice.content, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def main(args=None):
+def main(args=None) -> NoReturn:
     """Main commandline entrypoint."""
     if args is None:
         args = sys.argv[1:]

@@ -9,11 +9,11 @@ class Counter(object):
         self.val = RawValue('i', value)
         self.lock = Lock()
 
-    def increment(self):
+    def increment(self) -> None:
         with self.lock:
             self.val.value += 1
 
-    def reset(self):
+    def reset(self) -> None:
         with self.lock:
             self.val = RawValue('i', self.initial_value)
 
