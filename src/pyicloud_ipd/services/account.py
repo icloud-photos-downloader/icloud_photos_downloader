@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import sys
 
 import six

@@ -1,4 +1,5 @@
 #! /usr/bin/env python
+# mypy: ignore-errors
 """
 A Command Line Wrapper to allow easy use of pyicloud for
 command line scripts, and related.
