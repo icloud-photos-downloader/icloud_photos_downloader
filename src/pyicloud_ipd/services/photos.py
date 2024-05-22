@@ -5,6 +5,7 @@ import base64
 import re
 
 from datetime import datetime
+from typing import Optional
 
 from requests import Response
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
@@ -671,7 +672,7 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, version='original', **kwargs) -> (Response | None):
+    def download(self, version='original', **kwargs) -> Optional[Response]:
         if version not in self.versions:
             return None
 

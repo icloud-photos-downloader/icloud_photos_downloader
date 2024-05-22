@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, List, NoReturn, Sequence
+from typing import Any, Callable, List, NoReturn, Optional, Sequence
 from unittest import TestCase
 from requests import Response
 from vcr import VCR
@@ -168,7 +168,7 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> (Response | None):
+        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, size)
                 setattr(PhotoAsset, "already_downloaded", True)
@@ -1080,7 +1080,7 @@ class DownloadPhotoTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, _tz:(Any|None)=None) -> NoReturn:
+                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
@@ -1160,7 +1160,7 @@ class DownloadPhotoTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, _tz:(Any|None)=None) -> NoReturn:
+                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
@@ -1305,7 +1305,7 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self: PhotoAsset, size: str) -> (Response | None):
+        def mocked_download(self: PhotoAsset, size: str) -> Optional[Response]:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(self, size)
                 setattr(PhotoAsset, "already_downloaded", True)

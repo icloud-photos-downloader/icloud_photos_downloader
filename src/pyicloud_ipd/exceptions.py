@@ -1,4 +1,7 @@
 
+from typing import Optional
+
+
 class PyiCloudException(Exception):
     """Generic iCloud exception."""
     pass
@@ -7,7 +10,7 @@ class PyiCloudException(Exception):
 #API
 class PyiCloudAPIResponseException(PyiCloudException):
     """iCloud response exception."""
-    def __init__(self, reason:str, code:(int|None)=None, retry:bool=False):
+    def __init__(self, reason:str, code:Optional[int]=None, retry:bool=False):
         self.reason = reason
         self.code = code
         message = reason or ""
@@ -53,7 +56,7 @@ class PyiCloudConnectionException(PyiCloudException):
 
 
 class PyiCloudAPIResponseError(PyiCloudException):
-    def __init__(self, reason:str, code:(int|None)):
+    def __init__(self, reason:str, code:(Optional[int])):
         self.reason = reason
         self.code = code
         message = reason

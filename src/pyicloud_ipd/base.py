@@ -307,7 +307,7 @@ class PyiCloudService:
 
         self._photos = None
 
-    def authenticate(self, force_refresh=False, service:(Any|None)=None):
+    def authenticate(self, force_refresh=False, service:(Optional[Any])=None):
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.

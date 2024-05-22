@@ -1,5 +1,5 @@
 import logging
-from typing import Any, NoReturn
+from typing import Any, NoReturn, Optional
 from unittest import TestCase
 from icloudpd import constants
 from vcr import VCR
@@ -47,7 +47,7 @@ class AutodeletePhotosTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, _tz:(Any|None)=None) -> NoReturn:
+                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
