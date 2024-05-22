@@ -227,9 +227,9 @@ class PyiCloudService:
             password = get_password_from_keyring(apple_id)
 
         self.user = {"accountName": apple_id, "password": password}
-        self.data = {}
+        self.data: dict = {}
         self.params = {}
-        self.client_id = client_id or ("auth-%s" % str(uuid1()).lower())
+        self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
 
         self.password_filter = PyiCloudPasswordFilter(password)
@@ -269,8 +269,9 @@ class PyiCloudService:
                 self.session_data = json.load(session_f)
         except:  # pylint: disable=bare-except
             LOGGER.info("Session file does not exist")
-        if self.session_data.get("client_id"):
-            self.client_id = self.session_data.get("client_id")
+        session_client_id: Optional[str] = self.session_data.get("client_id")
+        if session_client_id:
+            self.client_id = session_client_id
         else:
             self.session_data.update({"client_id": self.client_id})
 
@@ -283,10 +284,10 @@ class PyiCloudService:
         })
 
         cookiejar_path = self.cookiejar_path
-        self.session.cookies = cookielib.LWPCookieJar(filename=cookiejar_path)
+        self.session.cookies = cookielib.LWPCookieJar(filename=cookiejar_path) # type: ignore[assignment]
         if path.exists(cookiejar_path):
             try:
-                self.session.cookies.load(ignore_discard=True, ignore_expires=True)
+                self.session.cookies.load(ignore_discard=True, ignore_expires=True) # type: ignore[attr-defined]
                 LOGGER.debug("Read cookies from %s", cookiejar_path)
             except:
                 # Most likely a pickled cookiejar from earlier versions.
