@@ -30,7 +30,7 @@ dependencies = [
     "tqdm==4.66.0",
     "piexif==1.1.3",
     "urllib3==1.26.16",
-    "typing_extensions==4.11.0"
+    "typing_extensions==4.11.0",
     # from pyicloud_ipd
     "six==1.16.0",
     "tzlocal==4.3.1",
