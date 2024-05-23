@@ -1,3 +1,4 @@
+import sys
 from typing import Any, NoReturn, Optional, Sequence
 import typing
 from uuid import uuid1
@@ -592,7 +593,7 @@ class PyiCloudService:
     def devices(self): # type: ignore
         """ Return all devices."""
         service_root = self._get_webservice_url("findme")
-        return FindMyiPhoneServiceManager(
+        return FindMyiPhoneServiceManager( # type: ignore
             service_root,
             self.session,
             self.params
@@ -600,8 +601,8 @@ class PyiCloudService:
 
     @property
     def account(self): # type: ignore
-        service_root = self._gget_webservice_url("account")
-        return AccountService(
+        service_root = self._gget_webservice_url("account") # type: ignore
+        return AccountService( # type: ignore
             service_root,
             self.session,
             self.params
@@ -615,7 +616,7 @@ class PyiCloudService:
     def files(self): # type: ignore
         if not hasattr(self, '_files'):
             service_root = self._get_webservice_url("ubiquity")
-            self._files = UbiquityService(
+            self._files = UbiquityService( # type: ignore
                 service_root,
                 self.session,
                 self.params
@@ -633,17 +634,17 @@ class PyiCloudService:
     @property
     def calendar(self): # type: ignore
         service_root = self._get_webservice_url("calendar")
-        return CalendarService(service_root, self.session, self.params)
+        return CalendarService(service_root, self.session, self.params)# type: ignore
 
     @property
     def contacts(self): # type: ignore
         service_root = self._get_webservice_url("contacts")
-        return ContactsService(service_root, self.session, self.params)
+        return ContactsService(service_root, self.session, self.params)# type: ignore
 
     @property
     def reminders(self): # type: ignore
         service_root = self._get_webservice_url("reminders")
-        return RemindersService(service_root, self.session, self.params)
+        return RemindersService(service_root, self.session, self.params)# type: ignore
 
     def __unicode__(self) -> str:
         return 'iCloud API: %s' % self.user.get('accountName')

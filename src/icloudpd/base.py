@@ -10,7 +10,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
-from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd import PyiCloudService
 from tzlocal import get_localzone
@@ -784,7 +784,7 @@ def core(
     download_photo = downloader(icloud)
 
     # Access to the selected library. Defaults to the primary photos object.
-    library_object = icloud.photos
+    library_object: PhotoLibrary = icloud.photos
 
     if list_libraries:
         libraries_dict = icloud.photos.libraries
