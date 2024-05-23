@@ -1,5 +1,6 @@
 import sys
 from typing import Any, NoReturn, Optional, Sequence
+from typing_extensions import override
 import typing
 from uuid import uuid1
 import inspect
@@ -45,10 +46,11 @@ HEADER_DATA = {
 
 
 class PyiCloudPasswordFilter(logging.Filter):
-    def __init__(self, password):
+    def __init__(self, password: str):
         super().__init__(password)
 
-    def filter(self, record):
+    @override
+    def filter(self, record: logging.LogRecord) -> bool:
         message = record.getMessage()
         if self.name in message:
             record.msg = message.replace(self.name, "*" * 8)
@@ -60,10 +62,11 @@ class PyiCloudPasswordFilter(logging.Filter):
 class PyiCloudSession(Session):
     """iCloud session."""
 
-    def __init__(self, service):
+    def __init__(self, service: Any):
         self.service = service
         super().__init__()
 
+    @override
     def request(self, method, url, **kwargs):  # pylint: disable=arguments-differ
 
         # Charge logging to the right service endpoint
@@ -128,18 +131,18 @@ class PyiCloudSession(Session):
 
             if has_retried is None and response.status_code in [421, 450, 500]:
                 api_error = PyiCloudAPIResponseException(
-                    response.reason, response.status_code, retry=True
+                    response.reason, str(response.status_code), True
                 )
                 request_logger.debug(api_error)
                 kwargs["retried"] = True
                 return self.request(method, url, **kwargs)
 
-            self._raise_error(response.status_code, response.reason)
+            self._raise_error(str(response.status_code), response.reason)
 
         if content_type not in json_mimetypes:
             if self.service.session_data.get("apple_rscd") == "401":
-                code = "401"
-                reason = "Invalid username/password combination."
+                code: Optional[str] = "401"
+                reason: Optional[str] = "Invalid username/password combination."
                 self._raise_error(code, reason)
 
             return response
@@ -228,9 +231,9 @@ class PyiCloudService:
         if password is None:
             password = get_password_from_keyring(apple_id)
 
-        self.user = {"accountName": apple_id, "password": password}
-        self.data: dict = {} # type: ignore[type-arg]
-        self.params = {}
+        self.user: dict[str, Any] = {"accountName": apple_id, "password": password}
+        self.data: dict[str, Any] = {} 
+        self.params: dict[str, Any] = {}
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
 
@@ -310,7 +313,7 @@ class PyiCloudService:
 
         self._photos: Optional[PhotosService] = None
 
-    def authenticate(self, force_refresh=False, service:(Optional[Any])=None) -> None:
+    def authenticate(self, force_refresh:bool=False, service:Optional[Any]=None) -> None:
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.
@@ -351,11 +354,13 @@ class PyiCloudService:
 
             headers = self._get_auth_headers()
 
-            if self.session_data.get("scnt"):
-                headers["scnt"] = self.session_data.get("scnt")
-
-            if self.session_data.get("session_id"):
-                headers["X-Apple-ID-Session-Id"] = self.session_data.get("session_id")
+            scnt = self.session_data.get("scnt")
+            if scnt:
+                headers["scnt"] = scnt
+            
+            session_id = self.session_data.get("session_id")
+            if session_id:
+                headers["X-Apple-ID-Session-Id"] = session_id
 
             try:
                 self.session.post(
@@ -402,7 +407,7 @@ class PyiCloudService:
             msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
             raise PyiCloudConnectionException(msg)
 
-    def _authenticate_with_credentials_service(self, service) -> None:
+    def _authenticate_with_credentials_service(self, service: str) -> None:
         """Authenticate to a specific service using credentials."""
         data = {
             "appName": service,
@@ -426,7 +431,8 @@ class PyiCloudService:
         try:
             req = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
             LOGGER.debug("Session token is still valid")
-            return req.json()
+            result: dict[str, Any] = req.json()
+            return result
         except PyiCloudAPIResponseException as err:
             LOGGER.debug("Invalid authentication token")
             raise err
