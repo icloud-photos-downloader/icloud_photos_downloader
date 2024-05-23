@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.17.6 (2024-05-23)
+
 - fix: missing exception [#836](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/836)
 
 ## 1.17.5 (2024-04-27)
