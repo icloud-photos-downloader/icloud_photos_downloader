@@ -1,5 +1,5 @@
 import sys
-from typing import Any, NoReturn, Optional, Sequence
+from typing import Any, Dict, NoReturn, Optional, Sequence
 from typing_extensions import override
 import typing
 from uuid import uuid1
@@ -232,9 +232,9 @@ class PyiCloudService:
         if password is None:
             password = get_password_from_keyring(apple_id)
 
-        self.user: dict[str, Any] = {"accountName": apple_id, "password": password}
-        self.data: dict[str, Any] = {} 
-        self.params: dict[str, Any] = {}
+        self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
+        self.data: Dict[str, Any] = {} 
+        self.params: Dict[str, Any] = {}
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
 
@@ -426,19 +426,19 @@ class PyiCloudService:
             msg = "Invalid email/password combination."
             raise PyiCloudFailedLoginException(msg, error) from error
 
-    def _validate_token(self) -> dict[str, Any]:
+    def _validate_token(self) -> Dict[str, Any]:
         """Checks if the current access token is still valid."""
         LOGGER.debug("Checking session token validity")
         try:
             req = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
             LOGGER.debug("Session token is still valid")
-            result: dict[str, Any] = req.json()
+            result: Dict[str, Any] = req.json()
             return result
         except PyiCloudAPIResponseException as err:
             LOGGER.debug("Invalid authentication token")
             raise err
 
-    def _get_auth_headers(self, overrides: Optional[dict[str, str]]=None) -> dict[str, str]:
+    def _get_auth_headers(self, overrides: Optional[Dict[str, str]]=None) -> Dict[str, str]:
         headers = {
             "Accept": "*/*",
             "Content-Type": "application/json",
@@ -492,18 +492,18 @@ class PyiCloudService:
         return typing.cast(bool, self.data.get("hsaTrustedBrowser", False))
 
     @property
-    def trusted_devices(self) -> Sequence[dict[str, Any]]:
+    def trusted_devices(self) -> Sequence[Dict[str, Any]]:
         """ Returns devices trusted for two-step authentication."""
         request = self.session.get(
             '%s/listDevices' % self.SETUP_ENDPOINT,
             params=self.params
         )
-        devices: Optional[Sequence[dict[str, Any]]] = request.json().get('devices')
+        devices: Optional[Sequence[Dict[str, Any]]] = request.json().get('devices')
         if devices:
             return devices
         return []
 
-    def send_verification_code(self, device: dict[str, Any]) -> bool:
+    def send_verification_code(self, device: Dict[str, Any]) -> bool:
         """ Requests that a verification code is sent to the given device"""
         data = json.dumps(device)
         request = self.session.post(
@@ -513,7 +513,7 @@ class PyiCloudService:
         )
         return typing.cast(bool, request.json().get('success', False))
 
-    def validate_verification_code(self, device: dict[str, Any], code: str) -> bool:
+    def validate_verification_code(self, device: Dict[str, Any], code: str) -> bool:
         """Verifies a verification code received on a trusted device."""
         device.update({"verificationCode": code, "trustBrowser": True})
         data = json.dumps(device)

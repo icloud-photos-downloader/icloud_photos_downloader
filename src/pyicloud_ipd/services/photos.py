@@ -5,7 +5,7 @@ import base64
 import re
 
 from datetime import datetime
-from typing import Any, Callable, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 import typing
 
 from requests import Response
@@ -146,7 +146,7 @@ class PhotoLibrary(object):
         self.service = service
         self.zone_id = zone_id
 
-        self._albums: Optional[dict[str, PhotoAlbum]] = None
+        self._albums: Optional[Dict[str, PhotoAlbum]] = None
 
         url = ('%s/records/query?%s' %
                (self.service._service_endpoint, urlencode(self.service.params)))
@@ -168,7 +168,7 @@ class PhotoLibrary(object):
                  'again in a few minutes'), None)
 
     @property
-    def albums(self) -> dict[str, "PhotoAlbum"]:
+    def albums(self) -> Dict[str, "PhotoAlbum"]:
         if not self._albums:
             self._albums = {
                 name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props) # type: ignore[arg-type]
@@ -205,7 +205,7 @@ class PhotoLibrary(object):
 
         return self._albums
 
-    def _fetch_folders(self) -> Sequence[dict[str, Any]]:
+    def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
         url = ('%s/records/query?%s' %
                (self.service._service_endpoint, urlencode(self.service.params)))
         json_data = json.dumps({
@@ -220,7 +220,7 @@ class PhotoLibrary(object):
         )
         response = request.json()
 
-        return typing.cast(Sequence[dict[str, Any]], response['records'])
+        return typing.cast(Sequence[Dict[str, Any]], response['records'])
 
     @property
     def all(self) -> "PhotoAlbum":
@@ -232,7 +232,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: Any, params: dict[str, Any]):
+    def __init__(self, service_root: str, session: Any, params: Dict[str, Any]):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -240,7 +240,7 @@ class PhotosService(PhotoLibrary):
             ('%s/database/1/com.apple.photos.cloud/production/private'
              % self._service_root)
 
-        self._libraries: Optional[dict[str, PhotoLibrary]] = None
+        self._libraries: Optional[Dict[str, PhotoLibrary]] = None
 
         self.params.update({
             'remapEnums': True,
@@ -259,7 +259,7 @@ class PhotosService(PhotoLibrary):
             service=self, zone_id={u'zoneName': u'PrimarySync'})
 
     @property
-    def libraries(self) -> dict[str, PhotoLibrary]:
+    def libraries(self) -> Dict[str, PhotoLibrary]:
         if not self._libraries:
             try:
                 url = ('%s/zones/list' %
@@ -518,7 +518,7 @@ class PhotoAsset(object):
         self._master_record = master_record
         self._asset_record = asset_record
 
-        self._versions: Optional[dict[str, dict[str, Any]]] = None
+        self._versions: Optional[Dict[str, Dict[str, Any]]] = None
 
     ITEM_TYPES = {
         u"public.heic": u"image",
@@ -620,7 +620,7 @@ class PhotoAsset(object):
         return 'unknown'
 
     @property
-    def versions(self) -> dict[str, dict[str, Any]]:
+    def versions(self) -> Dict[str, Dict[str, Any]]:
         if not self._versions:
             self._versions = {}
             if self.item_type == "movie":
