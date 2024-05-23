@@ -68,7 +68,8 @@ test = [
     "types-six==1.16.0",
     "types-urllib3==1.26.16",
     "types-tqdm==4.66.0.1",
-    "types-mock==5.1.0.1"
+    "types-mock==5.1.0.1",
+    "typing-extensions==4.11.0"
 ]
 
 [project.urls]
