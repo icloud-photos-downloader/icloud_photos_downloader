@@ -116,7 +116,7 @@ jobs:
       icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_package:
-    needs: [get_version, skip_check]
+    needs: [get_version, skip_check, type_check, lint, test]
     if: needs.skip_check.outputs.should_skip != 'true'
     uses: ./.github/workflows/build-package.yml
     with:

@@ -1,4 +1,7 @@
 
+from typing import Optional
+
+
 class PyiCloudException(Exception):
     """Generic iCloud exception."""
     pass
@@ -7,7 +10,7 @@ class PyiCloudException(Exception):
 #API
 class PyiCloudAPIResponseException(PyiCloudException):
     """iCloud response exception."""
-    def __init__(self, reason, code=None, retry=False):
+    def __init__(self, reason:str, code:Optional[str]=None, retry:bool=False):
         self.reason = reason
         self.code = code
         message = reason or ""
@@ -32,7 +35,7 @@ class PyiCloudFailedLoginException(PyiCloudException):
 
 class PyiCloud2SARequiredException(PyiCloudException):
     """iCloud 2SA required exception."""
-    def __init__(self, apple_id):
+    def __init__(self, apple_id: str):
         message = "Two-step authentication required for account: %s" % apple_id
         super().__init__(message)
 
@@ -53,7 +56,7 @@ class PyiCloudConnectionException(PyiCloudException):
 
 
 class PyiCloudAPIResponseError(PyiCloudException):
-    def __init__(self, reason, code):
+    def __init__(self, reason:str, code:(Optional[int])):
         self.reason = reason
         self.code = code
         message = reason
@@ -64,7 +67,7 @@ class PyiCloudAPIResponseError(PyiCloudException):
 
 
 class PyiCloud2SARequiredError(PyiCloudException):
-    def __init__(self, url):
+    def __init__(self, url: str):
         message = "Two-step authentication required for %s" % url
         super(PyiCloud2SARequiredError, self).__init__(message)
 

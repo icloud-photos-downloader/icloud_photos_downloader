@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 import sys
 
 import six
@@ -29,7 +30,7 @@ class AccountService(object):
 
 
 @six.python_2_unicode_compatible
-class AccountDevice(dict):
+class AccountDevice(dict): # type: ignore[type-arg]
     def __init__(self, device_info):
         super(AccountDevice, self).__init__(device_info)
 

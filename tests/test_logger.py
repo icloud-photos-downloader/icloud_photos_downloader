@@ -12,7 +12,7 @@ import datetime
 class LoggerTestCase(TestCase):
     # Tests the formatter that is set up in setup_logger()
     @freeze_time("2018-01-01 00:00:00-0000")
-    def test_logger_output(self):
+    def test_logger_output(self) -> None:
         logger = setup_logger()
         test_logger = logging.getLogger("icloudpd-test")
         string_io = StringIO()
@@ -31,25 +31,25 @@ class LoggerTestCase(TestCase):
         self.assertIn("DEBUG    Test debug output", output)
         self.assertIn("ERROR    Test error output", output)
 
-    def test_logger_tqdm_fallback(self):
+    def test_logger_tqdm_fallback(self) -> None:
         logging.setLoggerClass(IPDLogger)
         logger = logging.getLogger("icloudpd-test")
-        logger.log = MagicMock()
-        logger.set_tqdm_description("foo")
+        logger.log = MagicMock() # type: ignore[assignment]
+        logger.set_tqdm_description("foo") #type: ignore[attr-defined]
         logger.log.assert_called_once_with(logging.INFO, "foo")
 
-        logger.log = MagicMock()
-        logger.tqdm_write("bar")
+        logger.log = MagicMock() #type: ignore[method-assign]
+        logger.tqdm_write("bar")#type: ignore[attr-defined]
         logger.log.assert_called_once_with(logging.INFO, "bar")
 
-        logger.set_tqdm(MagicMock())
-        logger.tqdm.write = MagicMock()
-        logger.tqdm.set_description = MagicMock()
-        logger.log = MagicMock()
-        logger.set_tqdm_description("baz")
-        logger.tqdm.set_description.assert_called_once_with("baz")
-        logger.tqdm_write("qux")
-        logger.tqdm.write.assert_called_once_with("qux")
+        logger.set_tqdm(MagicMock())#type: ignore[attr-defined]
+        logger.tqdm.write = MagicMock()#type: ignore[attr-defined]
+        logger.tqdm.set_description = MagicMock()#type: ignore[attr-defined]
+        logger.log = MagicMock() #type: ignore[method-assign]
+        logger.set_tqdm_description("baz")#type: ignore[attr-defined]
+        logger.tqdm.set_description.assert_called_once_with("baz")#type: ignore[attr-defined]
+        logger.tqdm_write("qux")#type: ignore[attr-defined]
+        logger.tqdm.write.assert_called_once_with("qux")#type: ignore[attr-defined]
         logger.log.assert_not_called
 
-        logger.set_tqdm(None)
+        logger.set_tqdm(None)#type: ignore[attr-defined]

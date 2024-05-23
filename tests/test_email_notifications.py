@@ -16,14 +16,14 @@ vcr = VCR(decode_compressed_response=True)
 
 class EmailNotificationsTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     @freeze_time("2018-01-01")
-    def test_2sa_required_email_notification(self):
+    def test_2sa_required_email_notification(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -77,7 +77,7 @@ class EmailNotificationsTestCase(TestCase):
             )
 
     @freeze_time("2018-01-01")
-    def test_2sa_notification_without_smtp_login_and_tls(self):
+    def test_2sa_notification_without_smtp_login_and_tls(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -126,7 +126,7 @@ class EmailNotificationsTestCase(TestCase):
             )
 
     @freeze_time("2018-01-01")
-    def test_2sa_required_notification_script(self):
+    def test_2sa_required_notification_script(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -160,7 +160,7 @@ class EmailNotificationsTestCase(TestCase):
             subprocess_patched.assert_called_once_with(["./test_script.sh"])
 
     @freeze_time("2018-01-01")
-    def test_2sa_required_email_notification_from(self):
+    def test_2sa_required_email_notification_from(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")

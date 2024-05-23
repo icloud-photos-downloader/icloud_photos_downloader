@@ -5,6 +5,10 @@ import base64
 import re
 
 from datetime import datetime
+from typing import Any, Callable, Dict, Optional, Sequence
+import typing
+
+from requests import Response
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 
@@ -142,7 +146,7 @@ class PhotoLibrary(object):
         self.service = service
         self.zone_id = zone_id
 
-        self._albums = None
+        self._albums: Optional[Dict[str, PhotoAlbum]] = None
 
         url = ('%s/records/query?%s' %
                (self.service._service_endpoint, urlencode(self.service.params)))
@@ -164,10 +168,10 @@ class PhotoLibrary(object):
                  'again in a few minutes'), None)
 
     @property
-    def albums(self):
+    def albums(self) -> Dict[str, "PhotoAlbum"]:
         if not self._albums:
             self._albums = {
-                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props)
+                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props) # type: ignore[arg-type]
                 for (name, props) in self.SMART_FOLDERS.items()
             }
 
@@ -201,7 +205,7 @@ class PhotoLibrary(object):
 
         return self._albums
 
-    def _fetch_folders(self):
+    def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
         url = ('%s/records/query?%s' %
                (self.service._service_endpoint, urlencode(self.service.params)))
         json_data = json.dumps({
@@ -216,10 +220,10 @@ class PhotoLibrary(object):
         )
         response = request.json()
 
-        return response['records']
+        return typing.cast(Sequence[Dict[str, Any]], response['records'])
 
     @property
-    def all(self):
+    def all(self) -> "PhotoAlbum":
         return self.albums['All Photos']
 
 
@@ -228,7 +232,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root, session, params):
+    def __init__(self, service_root: str, session: Any, params: Dict[str, Any]):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -236,7 +240,7 @@ class PhotosService(PhotoLibrary):
             ('%s/database/1/com.apple.photos.cloud/production/private'
              % self._service_root)
 
-        self._libraries = None
+        self._libraries: Optional[Dict[str, PhotoLibrary]] = None
 
         self.params.update({
             'remapEnums': True,
@@ -249,13 +253,13 @@ class PhotosService(PhotoLibrary):
         #     'clientInstanceId': self.params.pop('clientId')
         # })
 
-        self._photo_assets = {}
+        # self._photo_assets = {}
 
         super(PhotosService, self).__init__(
             service=self, zone_id={u'zoneName': u'PrimarySync'})
 
     @property
-    def libraries(self):
+    def libraries(self) -> Dict[str, PhotoLibrary]:
         if not self._libraries:
             try:
                 url = ('%s/zones/list' %
@@ -297,6 +301,7 @@ class PhotoAlbum(object):
         self.direction = direction
         self.query_filter = query_filter
         self.page_size = page_size
+        self.exception_handler: Optional[Callable[[Exception, int], None]] = None
 
         self._len = None
 
@@ -331,16 +336,16 @@ class PhotoAlbum(object):
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
-    def photos_request(self, offset):
+    def photos_request(self, offset: int) -> Response:
         url = ('%s/records/query?' % self.service._service_endpoint) + \
             urlencode(self.service.params)
-        return self.service.session.post(
+        return typing.cast(Response, self.service.session.post(
             url,
             data=json.dumps(self._list_query_gen(
                 offset, self.list_type, self.direction,
                 self.query_filter)),
             headers={'Content-type': 'text/plain'}
-        )
+        ))
 
 
     @property
@@ -427,7 +432,7 @@ class PhotoAlbum(object):
 
         return query
 
-    def _list_query_gen(self, offset, list_type, direction, query_filter=None):
+    def _list_query_gen(self, offset: int, list_type: str, direction: str, query_filter=None):
         query = {
             u'query': {
                 u'filterBy': [
@@ -513,7 +518,7 @@ class PhotoAsset(object):
         self._master_record = master_record
         self._asset_record = asset_record
 
-        self._versions = None
+        self._versions: Optional[Dict[str, Dict[str, Any]]] = None
 
     ITEM_TYPES = {
         u"public.heic": u"image",
@@ -615,7 +620,7 @@ class PhotoAsset(object):
         return 'unknown'
 
     @property
-    def versions(self):
+    def versions(self) -> Dict[str, Dict[str, Any]]:
         if not self._versions:
             self._versions = {}
             if self.item_type == "movie":
@@ -669,15 +674,15 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, version='original', **kwargs):
+    def download(self, version='original', **kwargs) -> Optional[Response]:
         if version not in self.versions:
             return None
 
-        return self._service.session.get(
+        return typing.cast(Response, self._service.session.get(
             self.versions[version]['url'],
             stream=True,
             **kwargs
-        )
+        ))
 
     def __repr__(self):
         return "<%s: id=%s>" % (

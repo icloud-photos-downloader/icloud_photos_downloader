@@ -1,4 +1,7 @@
+import logging
+from typing import Any, Callable, List, NoReturn, Optional, Sequence
 from unittest import TestCase
+from requests import Response
 from vcr import VCR
 import os
 import sys
@@ -25,13 +28,13 @@ vcr = VCR(decode_compressed_response=True)
 
 class DownloadPhotoTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
-    def test_download_and_skip_existing_photos(self):
+    def test_download_and_skip_existing_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -72,7 +75,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--set-exif-datetime",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -136,7 +139,7 @@ class DownloadPhotoTestCase(TestCase):
             "2018-07-31 07:22:24",
             photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
-    def test_download_photos_and_set_exif(self):
+    def test_download_photos_and_set_exif(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -165,9 +168,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self, size):
+        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, size)
+                response = orig_download(pa, size)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -196,7 +199,7 @@ class DownloadPhotoTestCase(TestCase):
                             # "--skip-live-photos",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -239,7 +242,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_photos_and_get_exif_exceptions(self):
+    def test_download_photos_and_get_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -273,7 +276,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--set-exif-datetime",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--cookie-directory",
@@ -314,7 +317,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_skip_existing_downloads(self):
+    def test_skip_existing_downloads(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -327,7 +330,7 @@ class DownloadPhotoTestCase(TestCase):
             ("2018/07/31/IMG_7409.MOV", 3294075),
         ]
 
-        files_to_download = [
+        files_to_download: List[str] = [
         ]
 
         os.makedirs(os.path.join(data_dir, "2018/07/31/"))
@@ -353,7 +356,7 @@ class DownloadPhotoTestCase(TestCase):
                     # "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -392,7 +395,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_until_found(self):
+    def test_until_found(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -453,7 +456,7 @@ class DownloadPhotoTestCase(TestCase):
                             "20",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -508,7 +511,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_handle_io_error(self):
+    def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -537,7 +540,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-live-photos",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--cookie-directory",
@@ -566,7 +569,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_handle_session_error_during_download(self):
+    def test_handle_session_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -576,8 +579,8 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
-            def mock_raise_response_error(arg):
-                raise PyiCloudAPIResponseException("Invalid global session", 100)
+            def mock_raise_response_error(_arg: Any) -> NoReturn:
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAsset, "download") as pa_download:
@@ -587,7 +590,7 @@ class DownloadPhotoTestCase(TestCase):
                     # but do nothing on the second try.
                     orig_authenticate = PyiCloudService.authenticate
 
-                    def mocked_authenticate(self):
+                    def mocked_authenticate(self: PyiCloudService) -> None:
                         if not hasattr(self, "already_authenticated"):
                             orig_authenticate(self)
                             setattr(self, "already_authenticated", True)
@@ -612,7 +615,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-live-photos",
                                 "--no-progress-bar",
                                 "--threads-num",
-                                1,
+                                "1",
                                 "-d",
                                 data_dir,
                                 "--cookie-directory",
@@ -643,7 +646,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_handle_session_error_during_photo_iteration(self):
+    def test_handle_session_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -653,8 +656,8 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
-            def mock_raise_response_error(offset):
-                raise PyiCloudAPIResponseException("Invalid global session", 100)
+            def mock_raise_response_error(_offset: int) -> NoReturn:
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:
                 with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
@@ -664,7 +667,7 @@ class DownloadPhotoTestCase(TestCase):
                     # but do nothing on the second try.
                     orig_authenticate = PyiCloudService.authenticate
 
-                    def mocked_authenticate(self):
+                    def mocked_authenticate(self: PyiCloudService) -> None:
                         if not hasattr(self, "already_authenticated"):
                             orig_authenticate(self)
                             setattr(self, "already_authenticated", True)
@@ -689,7 +692,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-live-photos",
                                 "--no-progress-bar",
                                 "--threads-num",
-                                1,
+                                "1",
                                 "-d",
                                 data_dir,
                                 "--cookie-directory",
@@ -720,7 +723,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_handle_connection_error(self):
+    def test_handle_connection_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -731,7 +734,7 @@ class DownloadPhotoTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
 
-            def mock_raise_response_error(arg):
+            def mock_raise_response_error(_arg: Any) -> NoReturn:
                 raise ConnectionError("Connection Error")
 
             with mock.patch.object(PhotoAsset, "download") as pa_download:
@@ -741,7 +744,7 @@ class DownloadPhotoTestCase(TestCase):
                 # but do nothing on the second try.
                 orig_authenticate = PyiCloudService.authenticate
 
-                def mocked_authenticate(self):
+                def mocked_authenticate(self: PyiCloudService) -> None:
                     if not hasattr(self, "already_authenticated"):
                         orig_authenticate(self)
                         setattr(self, "already_authenticated", True)
@@ -766,7 +769,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-live-photos",
                                 "--no-progress-bar",
                                 "--threads-num",
-                                1,
+                                "1",
                                 "-d",
                                 data_dir,
                                 "--cookie-directory",
@@ -794,7 +797,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_handle_albums_error(self):
+    def test_handle_albums_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -805,8 +808,8 @@ class DownloadPhotoTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
 
-            def mock_raise_response_error():
-                raise PyiCloudAPIResponseException("Api Error", 100)
+            def mock_raise_response_error() -> None:
+                raise PyiCloudAPIResponseException("Api Error", "100")
 
             with mock.patch.object(PhotoLibrary, "_fetch_folders") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
@@ -815,7 +818,7 @@ class DownloadPhotoTestCase(TestCase):
                 # but do nothing on the second try.
                 orig_authenticate = PyiCloudService.authenticate
 
-                def mocked_authenticate(self):
+                def mocked_authenticate(self: PyiCloudService) -> None:
                     if not hasattr(self, "already_authenticated"):
                         orig_authenticate(self)
                         setattr(self, "already_authenticated", True)
@@ -840,7 +843,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--skip-live-photos",
                                 "--no-progress-bar",
                                 "--threads-num",
-                                1,
+                                "1",
                                 "-d",
                                 data_dir,
                                 "--cookie-directory",
@@ -856,7 +859,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_missing_size(self):
+    def test_missing_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -883,7 +886,7 @@ class DownloadPhotoTestCase(TestCase):
                         "3",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--cookie-directory",
@@ -921,7 +924,7 @@ class DownloadPhotoTestCase(TestCase):
 
         self.assertEqual(sum(1 for _ in files_in_result), 0, "Files in result")
 
-    def test_size_fallback_to_original(self):
+    def test_size_fallback_to_original(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -956,7 +959,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "thumb",
                                 "--no-progress-bar",
                                 "--threads-num",
-                                1,
+                                "1",
                                 "-d",
                                 data_dir,
                                 "--cookie-directory",
@@ -995,7 +998,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_force_size(self):
+    def test_force_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1028,7 +1031,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--force-size",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -1061,7 +1064,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_invalid_creation_date(self):
+    def test_invalid_creation_date(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1077,7 +1080,7 @@ class DownloadPhotoTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, tz=None):
+                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
@@ -1098,7 +1101,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-live-photos",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--cookie-directory",
@@ -1141,7 +1144,7 @@ class DownloadPhotoTestCase(TestCase):
                         reason="does not run on windows")
     @pytest.mark.skipif(sys.platform == 'darwin',
                         reason="does not run on mac")
-    def test_invalid_creation_year(self):
+    def test_invalid_creation_year(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1157,7 +1160,7 @@ class DownloadPhotoTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, tz=None):
+                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
@@ -1178,7 +1181,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-live-photos",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--cookie-directory",
@@ -1217,7 +1220,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_unknown_item_type(self):
+    def test_unknown_item_type(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1247,7 +1250,7 @@ class DownloadPhotoTestCase(TestCase):
                             "1",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -1280,7 +1283,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_download_and_dedupe_existing_photos(self):
+    def test_download_and_dedupe_existing_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1302,7 +1305,7 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self, size):
+        def mocked_download(self: PhotoAsset, size: str) -> Optional[Response]:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(self, size)
                 setattr(PhotoAsset, "already_downloaded", True)
@@ -1400,7 +1403,7 @@ class DownloadPhotoTestCase(TestCase):
 
                 assert result.exit_code == 0
 
-    def test_download_photos_and_set_exif_exceptions(self):
+    def test_download_photos_and_set_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1437,7 +1440,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--set-exif-datetime",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -1481,7 +1484,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_chinese(self):
+    def test_download_chinese(self) -> None:
         base_dir = os.path.join(
             self.fixtures_path, inspect.stack()[0][3], "中文")
         cookie_dir = os.path.join(base_dir, "cookie")
@@ -1513,7 +1516,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--set-exif-datetime",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -1563,7 +1566,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_after_delete(self):
+    def test_download_after_delete(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1599,7 +1602,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--skip-live-photos",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "--delete-after-download",
                             "-d",
                             data_dir,
@@ -1637,7 +1640,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_after_delete_fail(self):
+    def test_download_after_delete_fail(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1663,7 +1666,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "--delete-after-download",
                     "-d",
                     data_dir,
@@ -1697,7 +1700,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_download_over_old_original_photos(self):
+    def test_download_over_old_original_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1738,7 +1741,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--set-exif-datetime",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -1805,7 +1808,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_normalized_names(self):
+    def test_download_normalized_names(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1849,7 +1852,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--set-exif-datetime",
                     "--no-progress-bar",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -1871,7 +1874,7 @@ class DownloadPhotoTestCase(TestCase):
                 file_name))), f"File {file_name} expected, but does not exist"
 
     @pytest.mark.skip("not ready yet. may be not needed")
-    def test_download_watch(self):
+    def test_download_watch(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1893,19 +1896,19 @@ class DownloadPhotoTestCase(TestCase):
             with open(os.path.join(data_dir, file_name), "a") as f:
                 f.truncate(file_size)
 
-        def my_sleep(target_duration):
-            counter = 0
+        # def my_sleep(_target_duration: int) -> Callable[[int], None]:
+        #     counter: int = 0
 
-            def sleep_(duration):
-                if counter > duration:
-                    raise ValueError("SLEEP MOCK")
-                counter = counter + 1
-            return sleep_
+        #     def sleep_(duration: int) -> None:
+        #         if counter > duration:
+        #             raise ValueError("SLEEP MOCK")
+        #         counter = counter + 1
+        #     return sleep_
 
         with mock.patch("time.sleep") as sleep_patched:
             # import random
             target_duration = 1
-            sleep_patched.side_effect = my_sleep(target_duration)
+            # sleep_patched.side_effect = my_sleep(target_duration)
             with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
                 runner = CliRunner(env={
@@ -1925,11 +1928,11 @@ class DownloadPhotoTestCase(TestCase):
                         "--set-exif-datetime",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--watch-with-interval",
-                        target_duration,
+                        str(target_duration),
                         "--cookie-directory",
                         cookie_dir,
                     ],
@@ -1948,7 +1951,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_handle_internal_error_during_download(self):
+    def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1958,7 +1961,7 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
-            def mock_raise_response_error(arg):
+            def mock_raise_response_error(_arg: Any) -> NoReturn:
                 raise PyiCloudAPIResponseException(
                     "INTERNAL_ERROR", "INTERNAL_ERROR")
 
@@ -1983,7 +1986,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--skip-live-photos",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -2013,7 +2016,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_handle_internal_error_during_photo_iteration(self):
+    def test_handle_internal_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2023,7 +2026,7 @@ class DownloadPhotoTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
 
-            def mock_raise_response_error(offset):
+            def mock_raise_response_error(_offset: int) -> NoReturn:
                 raise PyiCloudAPIResponseException(
                     "INTERNAL_ERROR", "INTERNAL_ERROR")
 
@@ -2048,7 +2051,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--skip-live-photos",
                             "--no-progress-bar",
                             "--threads-num",
-                            1,
+                            "1",
                             "-d",
                             data_dir,
                             "--cookie-directory",
@@ -2079,7 +2082,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 0
 
-    def test_handle_io_error_mkdir(self):
+    def test_handle_io_error_mkdir(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2108,7 +2111,7 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-live-photos",
                         "--no-progress-bar",
                         "--threads-num",
-                        1,
+                        "1",
                         "-d",
                         data_dir,
                         "--cookie-directory",
@@ -2135,7 +2138,7 @@ class DownloadPhotoTestCase(TestCase):
         self.assertEqual(sum(1 for _ in files_in_result),
                          0, "Files at the end")
 
-    def test_dry_run(self):
+    def test_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2169,7 +2172,7 @@ class DownloadPhotoTestCase(TestCase):
                     "--no-progress-bar",
                     "--dry-run",
                     "--threads-num",
-                    1,
+                    "1",
                     "-d",
                     data_dir,
                     "--cookie-directory",
@@ -2217,7 +2220,7 @@ class DownloadPhotoTestCase(TestCase):
         self.assertEqual(sum(1 for _ in files_in_result),
                          0, "Files in the result")
 
-    def test_download_after_delete_dry_run(self):
+    def test_download_after_delete_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2225,7 +2228,7 @@ class DownloadPhotoTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        def raise_response_error(a0_, a1_, a2_):
+        def raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_: PhotoAsset) -> NoReturn:
             raise Exception("Unexpected call to delete_photo")
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
@@ -2258,7 +2261,7 @@ class DownloadPhotoTestCase(TestCase):
                                 "--no-progress-bar",
                                 "--dry-run",
                                 "--threads-num",
-                                1,
+                                "1",
                                 "--delete-after-download",
                                 "-d",
                                 data_dir,

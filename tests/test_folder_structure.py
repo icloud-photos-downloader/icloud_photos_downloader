@@ -1,3 +1,4 @@
+from typing import List
 from unittest import TestCase
 import os
 from os.path import normpath
@@ -15,14 +16,14 @@ vcr = VCR(decode_compressed_response=True)
 class FolderStructureTestCase(TestCase):
 
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog):
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     # This is basically a copy of the listing_recent_photos test #
-    def test_default_folder_structure(self):
+    def test_default_folder_structure(self) -> None:
         ### Tests if the default directory structure is constructed correctly ###
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
@@ -31,7 +32,7 @@ class FolderStructureTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        files_to_download = [
+        files_to_download: List[str] = [
         ]
 
         # Note - This test uses the same cassette as test_download_photos.py
@@ -96,7 +97,7 @@ class FolderStructureTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
 
 
-    def test_folder_structure_none(self):
+    def test_folder_structure_none(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -104,7 +105,7 @@ class FolderStructureTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        files_to_download = []
+        files_to_download: List[str] = []
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):

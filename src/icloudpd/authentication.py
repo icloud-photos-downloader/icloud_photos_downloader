@@ -2,6 +2,7 @@
 
 import logging
 import sys
+from typing import Callable, Optional
 import click
 import pyicloud_ipd
 
@@ -13,14 +14,14 @@ class TwoStepAuthRequiredError(Exception):
     """
 
 
-def authenticator(logger: logging.Logger, domain: str):
+def authenticator(logger: logging.Logger, domain: str) -> Callable[[str, Optional[str], Optional[str], bool, Optional[str]], pyicloud_ipd.PyiCloudService]:
     """Wraping authentication with domain context"""
     def authenticate_(
-            username,
-            password,
-            cookie_directory=None,
-            raise_error_on_2sa=False,
-            client_id=None,
+            username:str,
+            password:Optional[str],
+            cookie_directory:Optional[str]=None,
+            raise_error_on_2sa:bool=False,
+            client_id:Optional[str]=None,
     ) -> pyicloud_ipd.PyiCloudService:
         """Authenticate with iCloud username and password"""
         logger.debug("Authenticating...")
@@ -59,7 +60,7 @@ def authenticator(logger: logging.Logger, domain: str):
     return authenticate_
 
 
-def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
+def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger) -> None:
     """Request two-step authentication. Prompts for SMS or device"""
     devices = icloud.trusted_devices
     devices_count = len(devices)
@@ -99,7 +100,7 @@ def request_2sa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
     )
 
 
-def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger):
+def request_2fa(icloud: pyicloud_ipd.PyiCloudService, logger: logging.Logger) -> None:
     """Request two-factor authentication."""
     try:
         devices = icloud.trusted_devices

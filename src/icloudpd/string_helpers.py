@@ -1,7 +1,7 @@
 """String helper functions"""
 
 
-def truncate_middle(string: str, length: int):
+def truncate_middle(string: str, length: int) -> str:
     """Truncates a string to a maximum length, inserting "..." in the middle"""
     if len(string) <= length:
         return string

@@ -2,7 +2,7 @@ from unittest import TestCase
 from icloudpd.string_helpers import truncate_middle
 
 class TruncateMiddleTestCase(TestCase):
-    def test_truncate_middle(self):
+    def test_truncate_middle(self) -> None:
         assert truncate_middle("test_filename.jpg", 50) == "test_filename.jpg"
         assert truncate_middle("test_filename.jpg", 17) == "test_filename.jpg"
         assert truncate_middle("test_filename.jpg", 16) == "test_f...me.jpg"

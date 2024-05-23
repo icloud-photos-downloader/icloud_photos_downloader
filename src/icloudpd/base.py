@@ -10,7 +10,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
-from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd import PyiCloudService
 from tzlocal import get_localzone
@@ -18,7 +18,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tqdm import tqdm
 import click
 import urllib
-from typing import Callable, Optional, TypeVar, cast
+from typing import Callable, Iterable, NoReturn, Optional, Sequence, TypeVar, cast
 import json
 import subprocess
 import itertools
@@ -247,7 +247,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 # pylint: disable-msg=too-many-branches,too-many-locals
 def main(
         directory: Optional[str],
-        username: Optional[str],
+        username: str,
         password: Optional[str],
         auth_only: bool,
         cookie_directory: str,
@@ -257,8 +257,8 @@ def main(
         until_found: Optional[int],
         album: str,
         list_albums: bool,
-        library,
-        list_libraries,
+        library: str,
+        list_libraries: bool,
         skip_videos: bool,
         skip_live_photos: bool,
         force_size: bool,
@@ -281,7 +281,7 @@ def main(
         domain: str,
         watch_with_interval: Optional[int],
         dry_run: bool
-):
+) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
     logging.basicConfig(
@@ -470,7 +470,7 @@ def download_builder(
                 download_size = "original"
 
             download_path = local_download_path(
-                photo, download_size, download_dir)
+                photo.filename, download_size, download_dir)
 
             original_download_path = None
             file_exists = os.path.isfile(download_path)
@@ -604,7 +604,7 @@ def download_builder(
 def delete_photo(
         logger: logging.Logger,
         icloud: PyiCloudService,
-        photo: PhotoAsset):
+        photo: PhotoAsset) -> None:
     """Delete a photo from the iCloud account."""
     clean_filename_local = clean_filename(photo.filename)
     logger.debug(
@@ -638,7 +638,7 @@ def delete_photo(
 def delete_photo_dry_run(
         logger: logging.Logger,
         _icloud: PyiCloudService,
-        photo: PhotoAsset):
+        photo: PhotoAsset) -> None:
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
         "[DRY RUN] Would delete %s in iCloud",
@@ -665,9 +665,9 @@ def retrier(
                 raise
 
 
-def session_error_handle_builder(logger: Logger, icloud: PyiCloudService):
+def session_error_handle_builder(logger: Logger, icloud: PyiCloudService) -> Callable[[Exception, int], None]:
     """Build handler for session error"""
-    def session_error_handler(ex, attempt):
+    def session_error_handler(ex: Exception, attempt: int) -> None:
         """Handles session errors in the PhotoAlbum photos iterator"""
         if "Invalid global session" in str(ex):
             if attempt > constants.MAX_RETRIES:
@@ -685,7 +685,7 @@ def session_error_handle_builder(logger: Logger, icloud: PyiCloudService):
     return session_error_handler
 
 
-def internal_error_handle_builder(logger: logging.Logger):
+def internal_error_handle_builder(logger: logging.Logger) -> Callable[[Exception, int], None]:
     """Build handler for internal error"""
     def internal_error_handler(ex: Exception, attempt: int) -> None:
         """Handles session errors in the PhotoAlbum photos iterator"""
@@ -702,9 +702,9 @@ def internal_error_handle_builder(logger: logging.Logger):
     return internal_error_handler
 
 
-def compose_handlers(handlers):
+def compose_handlers(handlers: Sequence[Callable[[Exception, int], None]]) -> Callable[[Exception, int], None]:
     """Compose multiple error handlers"""
-    def composed(ex, retries):
+    def composed(ex: Exception, retries: int) -> None:
         for handler in handlers:
             handler(ex, retries)
     return composed
@@ -716,7 +716,7 @@ def compose_handlers(handlers):
 def core(
         downloader: Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]],
         directory: Optional[str],
-        username: Optional[str],
+        username: str,
         password: Optional[str],
         auth_only: bool,
         cookie_directory: str,
@@ -725,8 +725,8 @@ def core(
         until_found: Optional[int],
         album: str,
         list_albums: bool,
-        library,
-        list_libraries,
+        library: str,
+        list_libraries: bool,
         skip_videos: bool,
         auto_delete: bool,
         only_print_filenames: bool,
@@ -745,7 +745,7 @@ def core(
         logger: logging.Logger,
         watch_interval: Optional[int],
         dry_run: bool
-):
+) -> int:
     """Download all iCloud photos to a local directory"""
 
     raise_error_on_2sa = (
@@ -759,7 +759,7 @@ def core(
             password,
             cookie_directory,
             raise_error_on_2sa,
-            client_id=os.environ.get("CLIENT_ID"),
+            os.environ.get("CLIENT_ID"),
         )
     except TwoStepAuthRequiredError:
         if notification_script is not None:
@@ -784,7 +784,7 @@ def core(
     download_photo = downloader(icloud)
 
     # Access to the selected library. Defaults to the primary photos object.
-    library_object = icloud.photos
+    library_object: PhotoLibrary = icloud.photos
 
     if list_libraries:
         libraries_dict = icloud.photos.libraries
@@ -840,15 +840,17 @@ def core(
 
             photos_count: Optional[int] = len(photos)
 
+            photos_enumerator: Iterable[PhotoAsset] = photos
+
             # Optional: Only download the x most recent photos.
             if recent is not None:
                 photos_count = recent
-                photos = itertools.islice(photos, recent)
+                photos_enumerator = itertools.islice(photos_enumerator, recent)
 
             if until_found is not None:
                 photos_count = None
                 # ensure photos iterator doesn't have a known length
-                photos = (p for p in photos)
+                photos_enumerator = (p for p in photos_enumerator)
 
             # Skip the one-line progress bar if we're only printing the filenames,
             # or if the progress bar is explicitly disabled,
@@ -856,11 +858,11 @@ def core(
             skip_bar = not os.environ.get("FORCE_TQDM") and (
                 only_print_filenames or no_progress_bar or not sys.stdout.isatty())
             if skip_bar:
-                photos_enumerator = photos
+                photos_enumerator = photos_enumerator
                 # logger.set_tqdm(None)
             else:
                 photos_enumerator = tqdm(
-                    iterable=photos,
+                    iterable=photos_enumerator,
                     total=photos_count,
                     leave=False,
                     dynamic_ncols=True,
@@ -907,7 +909,7 @@ def core(
                             consecutive_files_found,
                             item) and delete_after_download:
 
-                        def delete_cmd():
+                        def delete_cmd() -> None:
                             delete_local = delete_photo_dry_run if dry_run else delete_photo
                             delete_local(logger, icloud, item)
 
