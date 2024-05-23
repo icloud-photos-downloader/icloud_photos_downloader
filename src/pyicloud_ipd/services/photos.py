@@ -253,7 +253,7 @@ class PhotosService(PhotoLibrary):
         #     'clientInstanceId': self.params.pop('clientId')
         # })
 
-        self._photo_assets = {}
+        # self._photo_assets = {}
 
         super(PhotosService, self).__init__(
             service=self, zone_id={u'zoneName': u'PrimarySync'})

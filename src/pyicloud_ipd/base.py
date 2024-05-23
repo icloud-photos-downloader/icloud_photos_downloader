@@ -53,8 +53,8 @@ class PyiCloudPasswordFilter(logging.Filter):
     def filter(self, record: logging.LogRecord) -> bool:
         message = record.getMessage()
         if self.name in message:
-            record.msg = message.replace(self.name, "*" * 8)
-            record.args = []
+            record.msg = message.replace(self.name, "********")
+            record.args = [] # type: ignore[assignment] 
 
         return True
 
@@ -459,7 +459,7 @@ class PyiCloudService:
         """Get path for cookiejar file."""
         return path.join(
             self._cookie_directory,
-            "".join([c for c in self.user.get("accountName") if match(r"\w", c)]),
+            "".join([c for c in self.user.get("accountName") if match(r"\w", c)]), # type: ignore[union-attr]
         )
 
     @property
@@ -467,7 +467,7 @@ class PyiCloudService:
         """Get path for session data file."""
         return path.join(
             self._cookie_directory,
-            "".join([c for c in self.user.get("accountName") if match(r"\w", c)])
+            "".join([c for c in self.user.get("accountName") if match(r"\w", c)]) # type: ignore[union-attr]
             + ".session",
         )
 
