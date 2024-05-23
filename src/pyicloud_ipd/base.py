@@ -496,7 +496,7 @@ class PyiCloudService:
             return devices
         return []
 
-    def send_verification_code(self, device) -> bool:
+    def send_verification_code(self, device: dict[str, Any]) -> bool:
         """ Requests that a verification code is sent to the given device"""
         data = json.dumps(device)
         request = self.session.post(
@@ -506,7 +506,7 @@ class PyiCloudService:
         )
         return typing.cast(bool, request.json().get('success', False))
 
-    def validate_verification_code(self, device, code: str) -> bool:
+    def validate_verification_code(self, device: dict[str, Any], code: str) -> bool:
         """Verifies a verification code received on a trusted device."""
         device.update({"verificationCode": code, "trustBrowser": True})
         data = json.dumps(device)
@@ -536,11 +536,13 @@ class PyiCloudService:
 
         headers = self._get_auth_headers({"Accept": "application/json"})
 
-        if self.session_data.get("scnt"):
-            headers["scnt"] = self.session_data.get("scnt")
-
-        if self.session_data.get("session_id"):
-            headers["X-Apple-ID-Session-Id"] = self.session_data.get("session_id")
+        scnt = self.session_data.get("scnt")
+        if scnt:
+            headers["scnt"] = scnt
+        
+        session_id = self.session_data.get("session_id")
+        if session_id:
+            headers["X-Apple-ID-Session-Id"] = session_id
 
         try:
             self.session.post(
@@ -564,11 +566,13 @@ class PyiCloudService:
         """Request session trust to avoid user log in going forward."""
         headers = self._get_auth_headers()
 
-        if self.session_data.get("scnt"):
-            headers["scnt"] = self.session_data.get("scnt")
-
-        if self.session_data.get("session_id"):
-            headers["X-Apple-ID-Session-Id"] = self.session_data.get("session_id")
+        scnt = self.session_data.get("scnt")
+        if scnt:
+            headers["scnt"] = scnt
+        
+        session_id = self.session_data.get("session_id")
+        if session_id:
+            headers["X-Apple-ID-Session-Id"] = session_id
 
         try:
             self.session.get(
@@ -581,7 +585,7 @@ class PyiCloudService:
             LOGGER.error("Session trust failed.")
             return False
 
-    def _get_webservice_url(self, ws_key) -> str:
+    def _get_webservice_url(self, ws_key: str) -> str:
         """Get webservice URL, raise an exception if not exists."""
         if self._webservices.get(ws_key) is None:
             raise PyiCloudServiceNotActivatedException(
@@ -649,12 +653,12 @@ class PyiCloudService:
     def __unicode__(self) -> str:
         return 'iCloud API: %s' % self.user.get('accountName')
 
-    def __str__(self):
+    def __str__(self) -> str:
         as_unicode = self.__unicode__()
         if sys.version_info[0] >= 3:
             return as_unicode
         else:
             return as_unicode.encode('ascii', 'ignore')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<%s>' % str(self)

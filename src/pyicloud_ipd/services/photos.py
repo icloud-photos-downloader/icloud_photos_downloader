@@ -232,7 +232,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root, session, params):
+    def __init__(self, service_root: str, session: Any, params: dict[str, Any]):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
