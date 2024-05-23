@@ -14,6 +14,7 @@ import http.cookiejar as cookielib
 import getpass
 
 from pyicloud_ipd.exceptions import (
+    PyiCloudConnectionException,
     PyiCloudFailedLoginException,
     PyiCloudAPIResponseException,
     PyiCloud2SARequiredException,
