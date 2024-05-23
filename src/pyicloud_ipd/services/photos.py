@@ -5,7 +5,7 @@ import base64
 import re
 
 from datetime import datetime
-from typing import Any, Optional, Sequence
+from typing import Any, Callable, Optional, Sequence
 import typing
 
 from requests import Response
@@ -301,6 +301,7 @@ class PhotoAlbum(object):
         self.direction = direction
         self.query_filter = query_filter
         self.page_size = page_size
+        self.exception_handler: Optional[Callable[[Exception, int], None]] = None
 
         self._len = None
 

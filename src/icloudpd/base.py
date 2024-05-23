@@ -18,7 +18,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tqdm import tqdm
 import click
 import urllib
-from typing import Callable, NoReturn, Optional, Sequence, TypeVar, cast
+from typing import Callable, Iterable, NoReturn, Optional, Sequence, TypeVar, cast
 import json
 import subprocess
 import itertools
@@ -840,15 +840,17 @@ def core(
 
             photos_count: Optional[int] = len(photos)
 
+            photos_enumerator: Iterable[PhotoAsset] = photos
+
             # Optional: Only download the x most recent photos.
             if recent is not None:
                 photos_count = recent
-                photos = itertools.islice(photos, recent)
+                photos_enumerator = itertools.islice(photos_enumerator, recent)
 
             if until_found is not None:
                 photos_count = None
                 # ensure photos iterator doesn't have a known length
-                photos = (p for p in photos)
+                photos_enumerator = (p for p in photos_enumerator)
 
             # Skip the one-line progress bar if we're only printing the filenames,
             # or if the progress bar is explicitly disabled,
@@ -856,11 +858,11 @@ def core(
             skip_bar = not os.environ.get("FORCE_TQDM") and (
                 only_print_filenames or no_progress_bar or not sys.stdout.isatty())
             if skip_bar:
-                photos_enumerator = photos
+                photos_enumerator = photos_enumerator
                 # logger.set_tqdm(None)
             else:
                 photos_enumerator = tqdm(
-                    iterable=photos,
+                    iterable=photos_enumerator,
                     total=photos_count,
                     leave=False,
                     dynamic_ncols=True,
