@@ -1,4 +1,4 @@
-from typing import Any, NoReturn, Optional
+from typing import Any, NoReturn, Optional, Sequence
 import typing
 from uuid import uuid1
 import inspect
@@ -307,9 +307,9 @@ class PyiCloudService:
 
         self.authenticate()
 
-        self._photos = None
+        self._photos: Optional[PhotosService] = None
 
-    def authenticate(self, force_refresh=False, service:(Optional[Any])=None):
+    def authenticate(self, force_refresh=False, service:(Optional[Any])=None) -> None:
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.
@@ -377,7 +377,7 @@ class PyiCloudService:
         LOGGER.info("Authentication completed successfully")
         LOGGER.debug(self.params)
 
-    def _authenticate_with_token(self):
+    def _authenticate_with_token(self) -> None:
         """Authenticate using session token."""
         data = {
             "accountCountryCode": self.session_data.get("account_country"),
@@ -401,7 +401,7 @@ class PyiCloudService:
             msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
             raise PyiCloudConnectionException(msg)
 
-    def _authenticate_with_credentials_service(self, service):
+    def _authenticate_with_credentials_service(self, service) -> None:
         """Authenticate to a specific service using credentials."""
         data = {
             "appName": service,
@@ -419,7 +419,7 @@ class PyiCloudService:
             msg = "Invalid email/password combination."
             raise PyiCloudFailedLoginException(msg, error) from error
 
-    def _validate_token(self):
+    def _validate_token(self) -> dict[str, Any]:
         """Checks if the current access token is still valid."""
         LOGGER.debug("Checking session token validity")
         try:
@@ -430,7 +430,7 @@ class PyiCloudService:
             LOGGER.debug("Invalid authentication token")
             raise err
 
-    def _get_auth_headers(self, overrides=None):
+    def _get_auth_headers(self, overrides: Optional[dict[str, str]]=None) -> dict[str, str]:
         headers = {
             "Accept": "*/*",
             "Content-Type": "application/json",
@@ -448,7 +448,7 @@ class PyiCloudService:
         return headers
 
     @property
-    def cookiejar_path(self):
+    def cookiejar_path(self) -> str:
         """Get path for cookiejar file."""
         return path.join(
             self._cookie_directory,
@@ -456,7 +456,7 @@ class PyiCloudService:
         )
 
     @property
-    def session_path(self):
+    def session_path(self) -> str:
         """Get path for session data file."""
         return path.join(
             self._cookie_directory,
@@ -465,32 +465,35 @@ class PyiCloudService:
         )
 
     @property
-    def requires_2sa(self):
+    def requires_2sa(self) -> bool:
         """Returns True if two-step authentication is required."""
         return self.data.get("dsInfo", {}).get("hsaVersion", 0) >= 1 and (
             self.data.get("hsaChallengeRequired", False) or not self.is_trusted_session
         )
 
     @property
-    def requires_2fa(self):
+    def requires_2fa(self) -> bool:
         """Returns True if two-factor authentication is required."""
         return self.data["dsInfo"].get("hsaVersion", 0) == 2 and (
             self.data.get("hsaChallengeRequired", False) or not self.is_trusted_session
         ) and self.data["dsInfo"].get("hasICloudQualifyingDevice", False)
 
     @property
-    def is_trusted_session(self):
+    def is_trusted_session(self) -> bool:
         """Returns True if the session is trusted."""
-        return self.data.get("hsaTrustedBrowser", False)
+        return typing.cast(bool, self.data.get("hsaTrustedBrowser", False))
 
     @property
-    def trusted_devices(self):
+    def trusted_devices(self) -> Sequence[dict[str, Any]]:
         """ Returns devices trusted for two-step authentication."""
         request = self.session.get(
             '%s/listDevices' % self.SETUP_ENDPOINT,
             params=self.params
         )
-        return request.json().get('devices')
+        devices: Optional[Sequence[dict[str, Any]]] = request.json().get('devices')
+        if devices:
+            return devices
+        return []
 
     def send_verification_code(self, device) -> bool:
         """ Requests that a verification code is sent to the given device"""
@@ -586,7 +589,7 @@ class PyiCloudService:
         return typing.cast(str, self._webservices[ws_key]["url"])
 
     @property
-    def devices(self):
+    def devices(self): # type: ignore
         """ Return all devices."""
         service_root = self._get_webservice_url("findme")
         return FindMyiPhoneServiceManager(
@@ -596,7 +599,7 @@ class PyiCloudService:
         )
 
     @property
-    def account(self):
+    def account(self): # type: ignore
         service_root = self._gget_webservice_url("account")
         return AccountService(
             service_root,
@@ -605,11 +608,11 @@ class PyiCloudService:
         )
 
     @property
-    def iphone(self):
+    def iphone(self): # type: ignore
         return self.devices[0]
 
     @property
-    def files(self):
+    def files(self): # type: ignore
         if not hasattr(self, '_files'):
             service_root = self._get_webservice_url("ubiquity")
             self._files = UbiquityService(
@@ -620,7 +623,7 @@ class PyiCloudService:
         return self._files
 
     @property
-    def photos(self):
+    def photos(self) -> PhotosService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
@@ -628,21 +631,21 @@ class PyiCloudService:
         return self._photos
 
     @property
-    def calendar(self):
+    def calendar(self): # type: ignore
         service_root = self._get_webservice_url("calendar")
         return CalendarService(service_root, self.session, self.params)
 
     @property
-    def contacts(self):
+    def contacts(self): # type: ignore
         service_root = self._get_webservice_url("contacts")
         return ContactsService(service_root, self.session, self.params)
 
     @property
-    def reminders(self):
+    def reminders(self): # type: ignore
         service_root = self._get_webservice_url("reminders")
         return RemindersService(service_root, self.session, self.params)
 
-    def __unicode__(self):
+    def __unicode__(self) -> str:
         return 'iCloud API: %s' % self.user.get('accountName')
 
     def __str__(self):
