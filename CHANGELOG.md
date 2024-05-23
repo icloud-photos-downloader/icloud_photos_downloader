@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: missing exception [#836](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/836)
+
 ## 1.17.5 (2024-04-27)
 
 - experimental: fix errors in npm packages
