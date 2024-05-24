@@ -171,7 +171,7 @@ class PhotoLibrary(object):
     def albums(self) -> Dict[str, "PhotoAlbum"]:
         if not self._albums:
             self._albums = {
-                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props) # type: ignore[arg-type]
+                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props) # type: ignore[arg-type, no-untyped-call] # TODO dynamically builing params
                 for (name, props) in self.SMART_FOLDERS.items()
             }
 
