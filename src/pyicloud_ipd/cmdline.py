@@ -12,12 +12,13 @@ from click import confirm
 
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
+from pyicloud_ipd.services.findmyiphone import AppleDevice
 from . import utils
 
 DEVICE_ERROR = "Please use the --device switch to indicate which device to use."
 
 
-def create_pickled_data(idevice, filename: str) -> None:
+def create_pickled_data(idevice: AppleDevice, filename: str) -> None:
     """
     This helper will output the idevice to a pickled file named
     after the passed filename.

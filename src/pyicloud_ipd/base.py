@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, NoReturn, Optional, Sequence
+from typing import Any, Dict, Iterable, NoReturn, Optional, Sequence
 from typing_extensions import override
 import typing
 from uuid import uuid1
@@ -20,7 +20,7 @@ from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudServiceNotActivatedException,
 )
-from pyicloud_ipd.services.findmyiphone import FindMyiPhoneServiceManager
+from pyicloud_ipd.services.findmyiphone import AppleDevice, FindMyiPhoneServiceManager
 from pyicloud_ipd.services.calendar import CalendarService
 from pyicloud_ipd.services.ubiquity import UbiquityService
 from pyicloud_ipd.services.contacts import ContactsService
@@ -602,14 +602,14 @@ class PyiCloudService:
         return typing.cast(str, self._webservices[ws_key]["url"])
 
     @property
-    def devices(self): # type: ignore
+    def devices(self) -> Sequence[AppleDevice]: 
         """ Return all devices."""
         service_root = self._get_webservice_url("findme")
-        return FindMyiPhoneServiceManager( # type: ignore
+        return typing.cast(Sequence[AppleDevice], FindMyiPhoneServiceManager(
             service_root,
             self.session,
             self.params
-        )
+        ))
 
     @property
     def account(self): # type: ignore
