@@ -10,7 +10,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.base import PyiCloudService
 from tzlocal import get_localzone
@@ -603,15 +603,16 @@ def download_builder(
 
 def delete_photo(
         logger: logging.Logger,
-        icloud: PyiCloudService,
+        photo_service: PhotosService,
+        library_object: PhotoLibrary,
         photo: PhotoAsset) -> None:
     """Delete a photo from the iCloud account."""
     clean_filename_local = clean_filename(photo.filename)
     logger.debug(
         "Deleting %s in iCloud...", clean_filename_local)
     # pylint: disable=W0212
-    url = f"{icloud.photos._service_endpoint}/records/modify?"\
-        f"{urllib.parse.urlencode(icloud.photos.params)}"
+    url = f"{photo_service._service_endpoint}/records/modify?"\
+        f"{urllib.parse.urlencode(photo_service.params)}"
     post_data = json.dumps(
         {
             "atomic": True,
@@ -625,10 +626,10 @@ def delete_photo(
                     "recordType": "CPLAsset",
                 }
             }],
-            "zoneID": {"zoneName": "PrimarySync"}
+            "zoneID": library_object.zone_id
         }
     )
-    icloud.photos.session.post(
+    photo_service.session.post(
         url, data=post_data, headers={
             "Content-type": "application/json"})
     logger.info(
@@ -637,12 +638,14 @@ def delete_photo(
 
 def delete_photo_dry_run(
         logger: logging.Logger,
-        _icloud: PyiCloudService,
+        _photo_service: PhotosService,
+        library_object: PhotoLibrary,
         photo: PhotoAsset) -> None:
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
-        "[DRY RUN] Would delete %s in iCloud",
-        clean_filename(photo.filename)
+        "[DRY RUN] Would delete %s in iCloud library %s",
+        clean_filename(photo.filename),
+        library_object.zone_id['zoneName']
     )
 
 
@@ -911,7 +914,7 @@ def core(
 
                         def delete_cmd() -> None:
                             delete_local = delete_photo_dry_run if dry_run else delete_photo
-                            delete_local(logger, icloud, item)
+                            delete_local(logger, icloud.photos, library_object, item)
 
                         retrier(delete_cmd, error_handler)
 
