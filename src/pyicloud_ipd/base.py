@@ -160,13 +160,14 @@ class PyiCloudSession(Session):
 
         if isinstance(data, dict):
             if data.get("hasError"):
-                errors = data.get("service_errors")
+                errors: Optional[Sequence[Dict[str, Any]]] = typing.cast(Optional[Sequence[Dict[str, Any]]], data.get("service_errors"))
                 # service_errors returns a list of dict
                 #    dict includes the keys: code, title, message, supressDismissal
                 # Assuming a single error for now
                 # May need to revisit to capture and handle multiple errors
-                code = errors[0].get("code")
-                reason = errors[0].get("message")
+                if errors:
+                    code = errors[0].get("code")
+                    reason = errors[0].get("message")
                 self._raise_error(code or "Unknown", reason or "Unknown")
             elif not data.get("success"):
                 reason = data.get("errorMessage")

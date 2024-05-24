@@ -292,7 +292,7 @@ class PhotosService(PhotoLibrary):
 
 class PhotoAlbum(object):
 
-    def __init__(self, service, name: str, list_type: str, obj_type: str, direction: str,
+    def __init__(self, service:Any, name: str, list_type: str, obj_type: str, direction: str,
                  query_filter:Optional[Sequence[Dict[str, Any]]]=None, page_size:int=100, zone_id:Optional[Dict[str, Any]]=None):
         self.name = name
         self.service = service
@@ -314,7 +314,7 @@ class PhotoAlbum(object):
     def title(self) -> str:
         return self.name
 
-    def __iter__(self):
+    def __iter__(self) -> Generator["PhotoAsset", Any, None]:
         return self.photos
 
     def __len__(self) -> int:
@@ -433,7 +433,7 @@ class PhotoAlbum(object):
         return query
 
     def _list_query_gen(self, offset: int, list_type: str, direction: str, query_filter:Optional[Sequence[Dict[str,None]]]=None) -> Dict[str, Any]:
-        query = {
+        query: Dict[str, Any] = {
             u'query': {
                 u'filterBy': [
                     {u'fieldName': u'startRank', u'fieldValue':
@@ -551,7 +551,7 @@ class PhotoAsset(object):
 
     @property
     def id(self) -> str:
-        return self._master_record['recordName']
+        return typing.cast(str, self._master_record['recordName'])
 
     @property
     def filename(self) -> str:
@@ -569,7 +569,7 @@ class PhotoAsset(object):
 
     @property
     def size(self) -> int:
-        return self._master_record['fields']['resOriginalRes']['value']['size']
+        return typing.cast(int, self._master_record['fields']['resOriginalRes']['value']['size'])
 
     @property
     def created(self) -> datetime:
@@ -632,7 +632,7 @@ class PhotoAsset(object):
                 if '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']
                     filename = self.filename
-                    version = {'filename': filename}
+                    version: Dict[str, Any] = {'filename': filename}
 
                     width_entry = f.get('%sWidth' % prefix)
                     if width_entry:
