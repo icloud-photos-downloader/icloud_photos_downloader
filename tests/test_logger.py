@@ -34,7 +34,7 @@ class LoggerTestCase(TestCase):
     def test_logger_tqdm_fallback(self) -> None:
         logging.setLoggerClass(IPDLogger)
         logger = logging.getLogger("icloudpd-test")
-        logger.log = MagicMock() # type: ignore[assignment]
+        logger.log = MagicMock() # type: ignore[method-assign]
         logger.set_tqdm_description("foo") #type: ignore[attr-defined]
         logger.log.assert_called_once_with(logging.INFO, "foo")
 

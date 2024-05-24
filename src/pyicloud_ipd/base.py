@@ -20,15 +20,13 @@ from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudServiceNotActivatedException,
 )
-from pyicloud_ipd.services import (
-    FindMyiPhoneServiceManager,
-    CalendarService,
-    UbiquityService,
-    ContactsService,
-    RemindersService,
-    PhotosService,
-    AccountService,
-)
+from pyicloud_ipd.services.findmyiphone import FindMyiPhoneServiceManager
+from pyicloud_ipd.services.calendar import CalendarService
+from pyicloud_ipd.services.ubiquity import UbiquityService
+from pyicloud_ipd.services.contacts import ContactsService
+from pyicloud_ipd.services.reminders import RemindersService
+from pyicloud_ipd.services.photos import PhotosService
+from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.utils import get_password_from_keyring
 
 
@@ -70,12 +68,12 @@ class PyiCloudSession(Session):
     @override
     # type: ignore 
     # pylint: disable=arguments-differ 
-    def request(self, method, url, **kwargs):  
+    def request(self, method: str, url, **kwargs):  
 
         # Charge logging to the right service endpoint
         callee = inspect.stack()[2]
         module = inspect.getmodule(callee[0])
-        request_logger = logging.getLogger(module.__name__).getChild("http")
+        request_logger = logging.getLogger(module.__name__).getChild("http") #type: ignore[union-attr]
         if self.service.password_filter not in request_logger.filters:
             request_logger.addFilter(self.service.password_filter)
 
@@ -103,7 +101,7 @@ class PyiCloudSession(Session):
             LOGGER.debug("Saved session data to file")
 
         # Save cookies to file
-        self.cookies.save(ignore_discard=True, ignore_expires=True)
+        self.cookies.save(ignore_discard=True, ignore_expires=True) # type: ignore[attr-defined]
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
 
         if not response.ok and (
@@ -128,7 +126,7 @@ class PyiCloudSession(Session):
                     except PyiCloudAPIResponseException:
                         LOGGER.debug("Re-authentication failed")
                     kwargs["retried"] = True
-                    return self.request(method, url, **kwargs) # type: ignore[no-untyped-call] # overriding is not type-safe
+                    return self.request(method, url, **kwargs)
             except Exception:
                 pass
 

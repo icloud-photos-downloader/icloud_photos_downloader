@@ -11,6 +11,7 @@ from requests.exceptions import ConnectionError  # pylint: disable=redefined-bui
 import pyicloud_ipd  # pylint: disable=redefined-builtin
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.base import PyiCloudService
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
@@ -100,7 +101,7 @@ def download_response_to_path_dry_run(
 def download_media(
         logger: logging.Logger,
         dry_run: bool,
-        icloud: pyicloud_ipd.PyiCloudService,
+        icloud: PyiCloudService,
         photo: PhotoAsset,
         download_path: str,
         size: str) -> bool:

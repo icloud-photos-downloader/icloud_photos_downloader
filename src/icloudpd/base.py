@@ -12,7 +12,7 @@ from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd import PyiCloudService
+from pyicloud_ipd.base import PyiCloudService
 from tzlocal import get_localzone
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tqdm import tqdm
