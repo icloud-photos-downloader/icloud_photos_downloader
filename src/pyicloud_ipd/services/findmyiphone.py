@@ -1,6 +1,7 @@
-# mypy: ignore-errors
 import json
 import sys
+from typing import Any, Dict, Iterable, Optional, Sequence
+import typing
 
 import six
 
@@ -15,7 +16,7 @@ class FindMyiPhoneServiceManager(object):
 
     """
 
-    def __init__(self, service_root, session, params):
+    def __init__(self, service_root: str, session:Any, params: Dict[str, Any]):
         self.session = session
         self.params = params
         self._service_root = service_root
@@ -25,10 +26,10 @@ class FindMyiPhoneServiceManager(object):
         self._fmip_message_url = '%s/sendMessage' % self._fmip_endpoint
         self._fmip_lost_url = '%s/lostDevice' % self._fmip_endpoint
 
-        self._devices = {}
+        self._devices:Dict[str, AppleDevice] = {}
         self.refresh_client()
 
-    def refresh_client(self):
+    def refresh_client(self) -> None:
         """ Refreshes the FindMyiPhoneService endpoint,
 
         This ensures that the location data is up-to-date.
@@ -67,35 +68,35 @@ class FindMyiPhoneServiceManager(object):
         if not self._devices:
             raise PyiCloudNoDevicesException()
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: Any) -> "AppleDevice":
         if isinstance(key, int):
             if six.PY3:
-                key = list(self.keys())[key]
+                key = list(self.keys())[key] # type: ignore[operator]
             else:
                 key = self.keys()[key]
         return self._devices[key]
 
-    def __getattr__(self, attr):
-        return getattr(self._devices, attr)
+    def __getattr__(self, attr: str) -> "AppleDevice":
+        return typing.cast(AppleDevice, getattr(self._devices, attr))
 
-    def __unicode__(self):
+    def __unicode__(self) -> str:
         return six.text_type(self._devices)
 
-    def __str__(self):
+    def __str__(self) -> str:
         as_unicode = self.__unicode__()
         if sys.version_info[0] >= 3:
             return as_unicode
         else:
             return as_unicode.encode('ascii', 'ignore')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return six.text_type(self)
-
+    
 
 class AppleDevice(object):
     def __init__(
-        self, content, session, params, manager,
-        sound_url=None, lost_url=None, message_url=None
+        self, content:Dict[str,Any], session:Any, params:Dict[str, Any], manager: FindMyiPhoneServiceManager,
+        sound_url:Optional[str]=None, lost_url:Optional[str]=None, message_url:Optional[str]=None
     ):
         self.content = content
         self.manager = manager
@@ -106,14 +107,14 @@ class AppleDevice(object):
         self.lost_url = lost_url
         self.message_url = message_url
 
-    def update(self, data):
+    def update(self, data: Dict[str, Any]) -> None:
         self.content = data
 
-    def location(self):
+    def location(self) -> Any:
         self.manager.refresh_client()
         return self.content['location']
 
-    def status(self, additional=[]):
+    def status(self, additional:Sequence[str]=[]) -> Dict[str, Any]:
         """ Returns status information for device.
 
         This returns only a subset of possible properties.
@@ -121,12 +122,12 @@ class AppleDevice(object):
         self.manager.refresh_client()
         fields = ['batteryLevel', 'deviceDisplayName', 'deviceStatus', 'name']
         fields += additional
-        properties = {}
+        properties: Dict[str, Any] = {}
         for field in fields:
             properties[field] = self.content.get(field)
         return properties
 
-    def play_sound(self, subject='Find My iPhone Alert'):
+    def play_sound(self, subject:str='Find My iPhone Alert') -> None:
         """ Send a request to the device to play a sound.
 
         It's possible to pass a custom message by changing the `subject`.
@@ -145,9 +146,9 @@ class AppleDevice(object):
         )
 
     def display_message(
-        self, subject='Find My iPhone Alert', message="This is a note",
-        sounds=False
-    ):
+        self, subject:str='Find My iPhone Alert', message:str="This is a note",
+        sounds:bool=False
+    ) -> None:
         """ Send a request to the device to play a sound.
 
         It's possible to pass a custom message by changing the `subject`.
@@ -168,10 +169,10 @@ class AppleDevice(object):
         )
 
     def lost_device(
-        self, number,
-        text='This iPhone has been lost. Please call me.',
-        newpasscode=""
-    ):
+        self, number:str,
+        text:str='This iPhone has been lost. Please call me.',
+        newpasscode:str=""
+    ) -> None:
         """ Send a request to the device to trigger 'lost mode'.
 
         The device will show the message in `text`, and if a number has
@@ -194,16 +195,16 @@ class AppleDevice(object):
         )
 
     @property
-    def data(self):
+    def data(self) -> Dict[str, Any]:
         return self.content
 
-    def __getitem__(self, key):
+    def __getitem__(self, key: str) -> Any:
         return self.content[key]
 
-    def __getattr__(self, attr):
+    def __getattr__(self, attr: str) -> Any:
         return getattr(self.content, attr)
 
-    def __unicode__(self):
+    def __unicode__(self) -> str:
         display_name = self['deviceDisplayName']
         name = self['name']
         return '%s: %s' % (
@@ -211,12 +212,12 @@ class AppleDevice(object):
             name,
         )
 
-    def __str__(self):
+    def __str__(self) -> str:
         as_unicode = self.__unicode__()
         if sys.version_info[0] >= 3:
             return as_unicode
         else:
             return as_unicode.encode('ascii', 'ignore')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return '<AppleDevice(%s)>' % str(self)

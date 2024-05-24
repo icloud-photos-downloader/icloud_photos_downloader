@@ -5,7 +5,7 @@ import base64
 import re
 
 from datetime import datetime
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple
 import typing
 
 from requests import Response
@@ -142,7 +142,7 @@ class PhotoLibrary(object):
         },
     }
 
-    def __init__(self, service, zone_id):
+    def __init__(self, service: Any, zone_id: Dict[str, Any]):
         self.service = service
         self.zone_id = zone_id
 
@@ -171,7 +171,7 @@ class PhotoLibrary(object):
     def albums(self) -> Dict[str, "PhotoAlbum"]:
         if not self._albums:
             self._albums = {
-                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props) # type: ignore[arg-type]
+                name: PhotoAlbum(self.service, name, zone_id=self.zone_id, **props) # type: ignore[arg-type] # dynamically builing params 
                 for (name, props) in self.SMART_FOLDERS.items()
             }
 
@@ -292,8 +292,8 @@ class PhotosService(PhotoLibrary):
 
 class PhotoAlbum(object):
 
-    def __init__(self, service, name, list_type, obj_type, direction,
-                 query_filter=None, page_size=100, zone_id=None):
+    def __init__(self, service:Any, name: str, list_type: str, obj_type: str, direction: str,
+                 query_filter:Optional[Sequence[Dict[str, Any]]]=None, page_size:int=100, zone_id:Optional[Dict[str, Any]]=None):
         self.name = name
         self.service = service
         self.list_type = list_type
@@ -303,21 +303,21 @@ class PhotoAlbum(object):
         self.page_size = page_size
         self.exception_handler: Optional[Callable[[Exception, int], None]] = None
 
-        self._len = None
+        self._len: Optional[int] = None
 
         if zone_id:
-            self._zone_id = zone_id
+            self._zone_id: Dict[str, Any] = zone_id
         else:
             self._zone_id = {u'zoneName': u'PrimarySync'}
 
     @property
-    def title(self):
+    def title(self) -> str:
         return self.name
 
-    def __iter__(self):
+    def __iter__(self) -> Generator["PhotoAsset", Any, None]:
         return self.photos
 
-    def __len__(self):
+    def __len__(self) -> int:
         if self._len is None:
             url = ('%s/internal/records/query/batch?%s' %
                    (self.service._service_endpoint,
@@ -349,7 +349,7 @@ class PhotoAlbum(object):
 
 
     @property
-    def photos(self):
+    def photos(self) -> Generator["PhotoAsset", Any, None]:
         if self.direction == "DESCENDING":
             offset = len(self) - 1
         else:
@@ -408,7 +408,7 @@ class PhotoAlbum(object):
             else:
                 break
 
-    def _count_query_gen(self, obj_type):
+    def _count_query_gen(self, obj_type: str) -> Dict[str, Any]:
         query = {
             u'batch': [{
                 u'resultsLimit': 1,
@@ -432,8 +432,8 @@ class PhotoAlbum(object):
 
         return query
 
-    def _list_query_gen(self, offset: int, list_type: str, direction: str, query_filter=None):
-        query = {
+    def _list_query_gen(self, offset: int, list_type: str, direction: str, query_filter:Optional[Sequence[Dict[str,None]]]=None) -> Dict[str, Any]:
+        query: Dict[str, Any] = {
             u'query': {
                 u'filterBy': [
                     {u'fieldName': u'startRank', u'fieldValue':
@@ -495,17 +495,17 @@ class PhotoAlbum(object):
 
         return query
 
-    def __unicode__(self):
+    def __unicode__(self) -> str:
         return self.title
 
-    def __str__(self):
+    def __str__(self) -> str:
         as_unicode = self.__unicode__()
         if sys.version_info[0] >= 3:
             return as_unicode
         else:
             return as_unicode.encode('ascii', 'ignore')
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s: '%s'>" % (
             type(self).__name__,
             self
@@ -513,7 +513,7 @@ class PhotoAlbum(object):
 
 
 class PhotoAsset(object):
-    def __init__(self, service, master_record, asset_record):
+    def __init__(self, service:Any, master_record: Dict[str, Any], asset_record: Dict[str, Any]):
         self._service = service
         self._master_record = master_record
         self._asset_record = asset_record
@@ -550,11 +550,11 @@ class PhotoAsset(object):
     }
 
     @property
-    def id(self):
-        return self._master_record['recordName']
+    def id(self) -> str:
+        return typing.cast(str, self._master_record['recordName'])
 
     @property
-    def filename(self):
+    def filename(self) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
             return base64.b64decode(
@@ -568,15 +568,15 @@ class PhotoAsset(object):
         return '.'.join([filename, self.item_type_extension])
 
     @property
-    def size(self):
-        return self._master_record['fields']['resOriginalRes']['value']['size']
+    def size(self) -> int:
+        return typing.cast(int, self._master_record['fields']['resOriginalRes']['value']['size'])
 
     @property
-    def created(self):
+    def created(self) -> datetime:
         return self.asset_date
 
     @property
-    def asset_date(self):
+    def asset_date(self) -> datetime:
         try:
             dt = datetime.fromtimestamp(
                 self._asset_record['fields']['assetDate']['value'] / 1000.0,
@@ -586,19 +586,19 @@ class PhotoAsset(object):
         return dt
 
     @property
-    def added_date(self):
+    def added_date(self) -> datetime:
         dt = datetime.fromtimestamp(
             self._asset_record['fields']['addedDate']['value'] / 1000.0,
             tz=pytz.utc)
         return dt
 
     @property
-    def dimensions(self):
+    def dimensions(self) -> Tuple[int, int]:
         return (self._master_record['fields']['resOriginalWidth']['value'],
                 self._master_record['fields']['resOriginalHeight']['value'])
 
     @property
-    def item_type(self):
+    def item_type(self) -> str:
         fields = self._master_record['fields']
         if 'itemType' not in fields or 'value' not in fields['itemType']:
             return 'unknown'
@@ -610,7 +610,7 @@ class PhotoAsset(object):
         return 'movie'
 
     @property
-    def item_type_extension(self):
+    def item_type_extension(self) -> str:
         fields = self._master_record['fields']
         if 'itemType' not in fields or 'value' not in fields['itemType']:
             return 'unknown'
@@ -632,7 +632,7 @@ class PhotoAsset(object):
                 if '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']
                     filename = self.filename
-                    version = {'filename': filename}
+                    version: Dict[str, Any] = {'filename': filename}
 
                     width_entry = f.get('%sWidth' % prefix)
                     if width_entry:
@@ -674,7 +674,7 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, version='original', **kwargs) -> Optional[Response]:
+    def download(self, version:str='original', **kwargs: Any) -> Optional[Response]:
         if version not in self.versions:
             return None
 
@@ -684,7 +684,7 @@ class PhotoAsset(object):
             **kwargs
         ))
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s: id=%s>" % (
             type(self).__name__,
             self.id

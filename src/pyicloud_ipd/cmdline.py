@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# mypy: ignore-errors
 """
 A Command Line Wrapper to allow easy use of pyicloud for
 command line scripts, and related.
@@ -7,18 +6,19 @@ command line scripts, and related.
 import argparse
 import pickle
 import sys
-from typing import NoReturn
+from typing import NoReturn, Optional, Sequence
 
 from click import confirm
 
-from pyicloud_ipd import PyiCloudService
+from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
+from pyicloud_ipd.services.findmyiphone import AppleDevice
 from . import utils
 
 DEVICE_ERROR = "Please use the --device switch to indicate which device to use."
 
 
-def create_pickled_data(idevice, filename):
+def create_pickled_data(idevice: AppleDevice, filename: str) -> None:
     """
     This helper will output the idevice to a pickled file named
     after the passed filename.
@@ -30,7 +30,7 @@ def create_pickled_data(idevice, filename):
         pickle.dump(idevice.content, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
 
-def main(args=None) -> NoReturn:
+def main(args:Optional[Sequence[str]]=None) -> NoReturn:
     """Main commandline entrypoint."""
     if args is None:
         args = sys.argv[1:]
@@ -247,8 +247,8 @@ def main(args=None) -> NoReturn:
                     )
 
                 print("\nWhich device would you like to use?")
-                device = int(input("(number) --> "))
-                device = devices[device]
+                device_index = int(input("(number) --> "))
+                device = devices[device_index]
                 if not api.send_verification_code(device):
                     print("Failed to send verification code")
                     sys.exit(1)

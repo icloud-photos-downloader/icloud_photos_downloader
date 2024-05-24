@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, NoReturn, Optional, Sequence
+from typing import Any, Dict, Iterable, NoReturn, Optional, Sequence
 from typing_extensions import override
 import typing
 from uuid import uuid1
@@ -20,15 +20,13 @@ from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudServiceNotActivatedException,
 )
-from pyicloud_ipd.services import (
-    FindMyiPhoneServiceManager,
-    CalendarService,
-    UbiquityService,
-    ContactsService,
-    RemindersService,
-    PhotosService,
-    AccountService,
-)
+from pyicloud_ipd.services.findmyiphone import AppleDevice, FindMyiPhoneServiceManager
+from pyicloud_ipd.services.calendar import CalendarService
+from pyicloud_ipd.services.ubiquity import UbiquityService
+from pyicloud_ipd.services.contacts import ContactsService
+from pyicloud_ipd.services.reminders import RemindersService
+from pyicloud_ipd.services.photos import PhotosService
+from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.utils import get_password_from_keyring
 
 
@@ -68,12 +66,14 @@ class PyiCloudSession(Session):
         super().__init__()
 
     @override
-    def request(self, method, url, **kwargs):  # pylint: disable=arguments-differ
+    # type: ignore 
+    # pylint: disable=arguments-differ 
+    def request(self, method: str, url, **kwargs):  
 
         # Charge logging to the right service endpoint
         callee = inspect.stack()[2]
         module = inspect.getmodule(callee[0])
-        request_logger = logging.getLogger(module.__name__).getChild("http")
+        request_logger = logging.getLogger(module.__name__).getChild("http") #type: ignore[union-attr]
         if self.service.password_filter not in request_logger.filters:
             request_logger.addFilter(self.service.password_filter)
 
@@ -101,7 +101,7 @@ class PyiCloudSession(Session):
             LOGGER.debug("Saved session data to file")
 
         # Save cookies to file
-        self.cookies.save(ignore_discard=True, ignore_expires=True)
+        self.cookies.save(ignore_discard=True, ignore_expires=True) # type: ignore[attr-defined]
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
 
         if not response.ok and (
@@ -144,7 +144,7 @@ class PyiCloudSession(Session):
             if self.service.session_data.get("apple_rscd") == "401":
                 code: Optional[str] = "401"
                 reason: Optional[str] = "Invalid username/password combination."
-                self._raise_error(code, reason)
+                self._raise_error(code or "Unknown", reason or "Unknown")
 
             return response
 
@@ -158,14 +158,15 @@ class PyiCloudSession(Session):
 
         if isinstance(data, dict):
             if data.get("hasError"):
-                errors = data.get("service_errors")
+                errors: Optional[Sequence[Dict[str, Any]]] = typing.cast(Optional[Sequence[Dict[str, Any]]], data.get("service_errors"))
                 # service_errors returns a list of dict
                 #    dict includes the keys: code, title, message, supressDismissal
                 # Assuming a single error for now
                 # May need to revisit to capture and handle multiple errors
-                code = errors[0].get("code")
-                reason = errors[0].get("message")
-                self._raise_error(code, reason)
+                if errors:
+                    code = errors[0].get("code")
+                    reason = errors[0].get("message")
+                self._raise_error(code or "Unknown", reason or "Unknown")
             elif not data.get("success"):
                 reason = data.get("errorMessage")
                 reason = reason or data.get("reason")
@@ -182,7 +183,7 @@ class PyiCloudSession(Session):
                     code = data.get("error")
 
                 if reason:
-                    self._raise_error(code, reason)
+                    self._raise_error(code or "Unknown", reason)
 
         return response
 
@@ -601,14 +602,14 @@ class PyiCloudService:
         return typing.cast(str, self._webservices[ws_key]["url"])
 
     @property
-    def devices(self): # type: ignore
+    def devices(self) -> Sequence[AppleDevice]: 
         """ Return all devices."""
         service_root = self._get_webservice_url("findme")
-        return FindMyiPhoneServiceManager( # type: ignore
+        return typing.cast(Sequence[AppleDevice], FindMyiPhoneServiceManager(
             service_root,
             self.session,
             self.params
-        )
+        ))
 
     @property
     def account(self): # type: ignore
