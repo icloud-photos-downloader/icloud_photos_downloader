@@ -68,7 +68,9 @@ class PyiCloudSession(Session):
         super().__init__()
 
     @override
-    def request(self, method, url, **kwargs):  # pylint: disable=arguments-differ
+    # type: ignore 
+    # pylint: disable=arguments-differ 
+    def request(self, method, url, **kwargs):  
 
         # Charge logging to the right service endpoint
         callee = inspect.stack()[2]
@@ -126,7 +128,7 @@ class PyiCloudSession(Session):
                     except PyiCloudAPIResponseException:
                         LOGGER.debug("Re-authentication failed")
                     kwargs["retried"] = True
-                    return self.request(method, url, **kwargs)
+                    return self.request(method, url, **kwargs) # type: ignore[no-untyped-call] # overriding is not type-safe
             except Exception:
                 pass
 
@@ -144,7 +146,7 @@ class PyiCloudSession(Session):
             if self.service.session_data.get("apple_rscd") == "401":
                 code: Optional[str] = "401"
                 reason: Optional[str] = "Invalid username/password combination."
-                self._raise_error(code, reason)
+                self._raise_error(code or "Unknown", reason or "Unknown")
 
             return response
 
@@ -165,7 +167,7 @@ class PyiCloudSession(Session):
                 # May need to revisit to capture and handle multiple errors
                 code = errors[0].get("code")
                 reason = errors[0].get("message")
-                self._raise_error(code, reason)
+                self._raise_error(code or "Unknown", reason or "Unknown")
             elif not data.get("success"):
                 reason = data.get("errorMessage")
                 reason = reason or data.get("reason")
@@ -182,7 +184,7 @@ class PyiCloudSession(Session):
                     code = data.get("error")
 
                 if reason:
-                    self._raise_error(code, reason)
+                    self._raise_error(code or "Unknown", reason)
 
         return response
 
