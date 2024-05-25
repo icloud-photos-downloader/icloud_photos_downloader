@@ -4,8 +4,7 @@ import os
 
 def clean_filename(filename: str) -> str:
     """Replaces invalid chars in filenames with '_'"""
-    result = filename.encode(
-        "utf-8").decode("ascii", "ignore")
+    result = filename #.encode("utf-8").decode("ascii", "ignore")
     invalid = '<>:"/\\|?*\0'
 
     for char in invalid:

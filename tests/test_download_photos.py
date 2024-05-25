@@ -1566,6 +1566,87 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
+    def test_download_chinese_filename(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_download = [
+            '2018/07/31/IMG_中文_7409.JPG' # SU1HX+S4reaWh183NDA5LkpQRw==
+        ]
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_chinese.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f'INFO     Downloading the first original photo to {data_dir} ...',
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "IMG_中文_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+
+            # Check that file was downloaded
+            self.assertTrue(
+                os.path.exists(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG'))))
+            # Check that mtime was updated to the photo creation date
+            photo_mtime = os.path.getmtime(os.path.join(
+                data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG')))
+            photo_modified_time = datetime.datetime.utcfromtimestamp(
+                photo_mtime)
+            self.assertEqual(
+                "2018-07-31 07:22:24",
+                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download)
+
+        for file_name in files_to_download:
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
     def test_download_after_delete(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
