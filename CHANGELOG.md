@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: support unicode filename [#845](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/845)
+
 ## 1.17.7 (2024-05-25)
 
 - fix: keyring exception [#841](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/841)
