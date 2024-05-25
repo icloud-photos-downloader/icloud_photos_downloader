@@ -1400,6 +1400,10 @@ jobs:
             "ubuntu_22_jammy", #variant name
             "ubuntu:jammy", #image
             ] 
+          - [ 
+            "ubuntu_24_noble", #variant name
+            "ubuntu:noble", #image
+            ] 
         prop:  
           - [ 
             "amd64",  # variant name 
