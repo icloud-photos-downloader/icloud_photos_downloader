@@ -121,21 +121,21 @@ scripts/build
 Building platform executables:
 
 ``` sh
-scripts/build_bin_linux 1.17.6 amd64
+scripts/build_bin_linux 1.17.7 amd64
 ```
 Note: that command is for Linux, including devcontainers. Windows & MacOS scripts must be executed on respective platforms.
 
 Building Python wheels (with single executables; platform-specific):
 
 ``` sh
-scripts/build_binary_dist_linux 1.17.6
+scripts/build_binary_dist_linux 1.17.7
 ```
 Note: that the step expects executables to be already prepared by previous step
 
 Building NPM packages (with single executables; platform-specific):
 
 ``` sh
-scripts/build_npm 1.17.6
+scripts/build_npm 1.17.7
 ```
 Note: that the step expects executables to be already prepared by previous steps
 
