@@ -38,7 +38,7 @@ def main():
     files = [f for f in os.listdir(folder) if not os.path.isdir(f)]
     fts = [[os.path.getsize(os.path.join(folder,f))] + f.split('.') for f in files if len(f.split('.')) == 4]
     print("## Minimal Effort Compatibility")
-    print("Checks if icloudpd can be installed using minimal effort. Minimal effort may require installing default version of package manager using OS tools")
+    print("Checks if `icloudpd` can be installed using minimal effort and ran bare minimum functionality of help screen. Minimal effort may require installing default version of package manager using OS tools")
     print("")
     stats(fts)
     print("Legend:")
