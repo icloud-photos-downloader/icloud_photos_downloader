@@ -36,13 +36,14 @@ dependencies = [
     "tzlocal==4.3.1",
     "pytz==2022.7.1",
     "certifi==2022.12.7",
-    "keyring==23.13.1",
-    "keyrings-alt==4.2.0"
+    "keyring==25.2.1",
+    "keyrings-alt==5.0.1"
 ]
 
 [project.optional-dependencies]
 dev = [
     "twine==4.0.2",
+    # 6+ breaks keyring https://github.com/AndreyNikiforov/keyring_test
     "pyinstaller==6.7.0",
     "wheel==0.42.0",
 ]

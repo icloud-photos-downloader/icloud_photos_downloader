@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: keyring exception [#841](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/841)
 - fix: delete iCloud asset in respective shared library [#802](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/802)
 
 ## 1.17.6 (2024-05-23)
