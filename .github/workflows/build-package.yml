@@ -454,6 +454,10 @@ jobs:
             "ubuntu_22_jammy", #variant name
             "ubuntu:jammy", #image
             ] 
+          - [ 
+            "ubuntu_24_noble", #variant name
+            "ubuntu:noble", #image
+            ] 
         prop: 
           - [
             "amd64",  # variant name
@@ -578,6 +582,10 @@ jobs:
           - [ 
             "python3_12_alpine3_18", #variant name
             "python:3.12-alpine3.18", #image
+            ] 
+          - [ 
+            "alpine_3_20", #variant name
+            "alpine:3.20", #image
             ] 
           - [ 
             "alpine_3_19", #variant name
@@ -868,6 +876,10 @@ jobs:
       matrix: 
         image:  
           - [ 
+            "alpine_3_20", #variant name
+            "alpine:3.20", #image
+            ] 
+          - [ 
             "alpine_3_19", #variant name
             "alpine:3.19", #image
             ] 
@@ -958,6 +970,10 @@ jobs:
           - [  
             "ubuntu_22_jammy", #variant name 
             "ubuntu:jammy", #image 
+            ]  
+          - [  
+            "ubuntu_24_noble", #variant name 
+            "ubuntu:noble", #image 
             ]  
         prop:  
           - [ 
@@ -1384,6 +1400,10 @@ jobs:
             "ubuntu_22_jammy", #variant name
             "ubuntu:jammy", #image
             ] 
+          - [ 
+            "ubuntu_24_noble", #variant name
+            "ubuntu:noble", #image
+            ] 
         prop:  
           - [ 
             "amd64",  # variant name 
@@ -1594,6 +1614,10 @@ jobs:
             "ubuntu_22_jammy", #variant name
             "ubuntu:jammy", #image
             ] 
+          - [ 
+            "ubuntu_24_noble", #variant name
+            "ubuntu:noble", #image
+            ] 
         prop:  
           - [ 
             "amd64",  # variant name 
@@ -1749,6 +1773,10 @@ jobs:
       fail-fast: false 
       matrix: 
         image:  
+          - [ 
+            "alpine_3_20", #variant name
+            "alpine:3.20", #image
+            ] 
           - [ 
             "alpine_3_19", #variant name
             "alpine:3.19", #image
@@ -1933,6 +1961,10 @@ jobs:
       matrix: 
         image:  
           - [ 
+            "alpine_3_20", #variant name
+            "alpine:3.20", #image
+            ] 
+          - [ 
             "alpine_3_19", #variant name
             "alpine:3.19", #image
             ] 
@@ -2115,6 +2147,10 @@ jobs:
       fail-fast: false 
       matrix: 
         image:  
+          - [ 
+            "alpine_3_20", #variant name - TODO Test
+            "alpine:3.20", #image
+            ] 
           - [ 
             "alpine_3_19", #variant name
             "alpine:3.19", #image
