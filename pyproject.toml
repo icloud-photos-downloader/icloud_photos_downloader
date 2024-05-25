@@ -43,7 +43,8 @@ dependencies = [
 [project.optional-dependencies]
 dev = [
     "twine==4.0.2",
-    "pyinstaller==6.7.0",
+    # 6+ breaks keyring https://github.com/AndreyNikiforov/keyring_test
+    "pyinstaller==5.13.2",
     "wheel==0.42.0",
 ]
 devlinux = [
