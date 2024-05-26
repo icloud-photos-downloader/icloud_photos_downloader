@@ -263,7 +263,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               )
 @click.option("--keep-unicode-in-filenames", 
               "filename_cleaner",
-              help="Wheather to remove unicode chars from file names or not",
+              help="Keep unicode chars in file names or remove non all ascii chars",
               type=bool,
               default=False,
               callback=build_filename_cleaner,
