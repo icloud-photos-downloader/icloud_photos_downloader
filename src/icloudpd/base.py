@@ -4,7 +4,7 @@ from __future__ import print_function
 from icloudpd.counter import Counter
 from icloudpd import constants
 from icloudpd import exif_datetime
-from icloudpd.paths import clean_filename, local_download_path
+from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
@@ -31,6 +31,27 @@ import os
 from multiprocessing import freeze_support
 freeze_support()  # fixing tqdm on macos
 
+Tin = TypeVar('Tin')
+Tout = TypeVar('Tout')
+Tinter = TypeVar('Tinter')
+def compose(f:Callable[[Tinter], Tout], g: Callable[[Tin], Tinter]) -> Callable[[Tin], Tout]:
+    """f after g composition of functions"""
+    def inter_(value: Tin) -> Tout:
+        return f(g(value))
+    return inter_
+
+def identity(value: Tin) -> Tin:
+    """identity function"""
+    return value
+
+def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool) -> Callable[[str], str]:
+    # redefining typed vars instead of using in ternary directly is a mypy hack
+    r: Callable[[str], str] = remove_unicode_chars
+    i: Callable[[str], str] = identity
+    return compose(
+        (r if not is_keep_unicode else i),
+        clean_filename,
+        ) 
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -240,6 +261,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               is_flag=True,
               default=False,
               )
+@click.option("--keep-unicode-in-filenames", 
+              "filename_cleaner",
+              help="Keep unicode chars in file names or remove non all ascii chars",
+              type=bool,
+              default=False,
+              callback=build_filename_cleaner,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.17.7")
@@ -280,7 +308,8 @@ def main(
         delete_after_download: bool,
         domain: str,
         watch_with_interval: Optional[int],
-        dry_run: bool
+        dry_run: bool,
+        filename_cleaner: Callable[[str], str],
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -335,7 +364,8 @@ def main(
                     set_exif_datetime,
                     skip_live_photos,
                     live_photo_size,
-                    dry_run) if directory is not None else (
+                    dry_run,
+                    filename_cleaner) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
                 directory,
@@ -367,7 +397,9 @@ def main(
                 domain,
                 logger,
                 watch_with_interval,
-                dry_run))
+                dry_run, 
+                filename_cleaner))
+
 
 
 # pylint: disable-msg=too-many-arguments,too-many-statements
@@ -385,13 +417,14 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: str,
-        dry_run: bool) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
+        dry_run: bool,
+        filename_cleaner: Callable[[str], str]) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
             icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
-            filename = clean_filename(photo.filename)
+            filename = filename_cleaner(photo.filename)
             if skip_videos and photo.item_type != "image":
                 logger.debug(
                     "Skipping %s, only downloading photos." +
@@ -470,7 +503,7 @@ def download_builder(
                 download_size = "original"
 
             download_path = local_download_path(
-                photo.filename, download_size, download_dir)
+                filename, download_size, download_dir)
 
             original_download_path = None
             file_exists = os.path.isfile(download_path)
@@ -521,8 +554,7 @@ def download_builder(
                     success = download_result
 
                     if download_result:
-                        if not dry_run and set_exif_datetime and clean_filename(
-                                photo.filename) .lower() .endswith(
+                        if not dry_run and set_exif_datetime and filename.lower() .endswith(
                                 (".jpg", ".jpeg")) and not exif_datetime.get_photo_exif(
                                 logger, download_path):
                             # %Y:%m:%d looks wrong, but it's the correct format
@@ -550,13 +582,13 @@ def download_builder(
                 lp_size = live_photo_size + "Video"
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
-                    filename = version["filename"]
+                    lp_filename = filename_cleaner(version["filename"])
                     if live_photo_size != "original":
                         # Add size to filename if not original
-                        filename = filename.replace(
+                        lp_filename = lp_filename.replace(
                             ".MOV", f"-{live_photo_size}.MOV"
                         )
-                    lp_download_path = os.path.join(download_dir, filename)
+                    lp_download_path = os.path.join(download_dir, lp_filename)
 
                     lp_file_exists = os.path.isfile(lp_download_path)
 
@@ -602,12 +634,13 @@ def download_builder(
 
 
 def delete_photo(
+        filename_cleaner: Callable[[str], str],
         logger: logging.Logger,
         photo_service: PhotosService,
         library_object: PhotoLibrary,
         photo: PhotoAsset) -> None:
     """Delete a photo from the iCloud account."""
-    clean_filename_local = clean_filename(photo.filename)
+    clean_filename_local = filename_cleaner(photo.filename)
     logger.debug(
         "Deleting %s in iCloud...", clean_filename_local)
     # pylint: disable=W0212
@@ -637,6 +670,7 @@ def delete_photo(
 
 
 def delete_photo_dry_run(
+        filename_cleaner: Callable[[str], str],
         logger: logging.Logger,
         _photo_service: PhotosService,
         library_object: PhotoLibrary,
@@ -644,7 +678,7 @@ def delete_photo_dry_run(
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
         "[DRY RUN] Would delete %s in iCloud library %s",
-        clean_filename(photo.filename),
+        filename_cleaner(photo.filename),
         library_object.zone_id['zoneName']
     )
 
@@ -747,7 +781,8 @@ def core(
         domain: str,
         logger: logging.Logger,
         watch_interval: Optional[int],
-        dry_run: bool
+        dry_run: bool,
+        filename_cleaner: Callable[[str], str],
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -914,7 +949,7 @@ def core(
 
                         def delete_cmd() -> None:
                             delete_local = delete_photo_dry_run if dry_run else delete_photo
-                            delete_local(logger, icloud.photos, library_object, item)
+                            delete_local(filename_cleaner, logger, icloud.photos, library_object, item)
 
                         retrier(delete_cmd, error_handler)
 
