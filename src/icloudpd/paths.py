@@ -1,11 +1,15 @@
 """Path functions"""
 import os
 
+def remove_unicode_chars(value: str) -> str:
+    """Removes unicode chars from the string"""
+    result =  value.encode("utf-8").decode("ascii", "ignore")
+    return result
 
 def clean_filename(filename: str) -> str:
     """Replaces invalid chars in filenames with '_'"""
-    result = filename #.encode("utf-8").decode("ascii", "ignore")
     invalid = '<>:"/\\|?*\0'
+    result = filename
 
     for char in invalid:
         result = result.replace(char, '_')

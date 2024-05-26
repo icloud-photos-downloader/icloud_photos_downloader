@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- fix: support unicode filename [#845](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/845)
+- feature: added parameter `--keep-unicode-in-filenames` with default `false` for compatibility [#845](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/845)
 
 ## 1.17.7 (2024-05-25)
 

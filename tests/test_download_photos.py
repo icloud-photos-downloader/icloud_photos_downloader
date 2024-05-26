@@ -1,5 +1,5 @@
 import logging
-from typing import Any, Callable, List, NoReturn, Optional, Sequence
+from typing import Any, Callable, List, NoReturn, Optional, Sequence, Tuple
 from unittest import TestCase
 from requests import Response
 from vcr import VCR
@@ -406,27 +406,27 @@ class DownloadPhotoTestCase(TestCase):
         os.makedirs(os.path.join(data_dir, "2018/07/30/"))
         os.makedirs(os.path.join(data_dir, "2018/07/31/"))
 
-        files_to_download = []
-        files_to_skip = []
+        files_to_download: Sequence[Tuple[str, str]] = [
+            ("2018/07/31/IMG_7409.JPG", "photo"),
+            ("2018/07/31/IMG_7409-medium.MOV", "photo"),
+            ("2018/07/30/IMG_7407.JPG", "photo"),
+            ("2018/07/30/IMG_7407-medium.MOV", "photo"),
+            ("2018/07/30/IMG_7403.MOV", "video"),
+            ("2018/07/30/IMG_7402.MOV", "video"),
+            ("2018/07/30/IMG_7399-medium.MOV", "photo")
+        ]
+        files_to_skip: Sequence[Tuple[str, str, int]] = [
+            ("2018/07/30/IMG_7408.JPG", "photo", 1151066),
+            ("2018/07/30/IMG_7408-medium.MOV", "photo", 894467),
+            ("2018/07/30/IMG_7405.MOV", "video", 36491351),
+            ("2018/07/30/IMG_7404.MOV", "video", 225935003),
+            # TODO large files on Windows times out
+            ("2018/07/30/IMG_7401.MOV", "photo", 565699696),
+            ("2018/07/30/IMG_7400.JPG", "photo", 2308885),
+            ("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639),
+            ("2018/07/30/IMG_7399.JPG", "photo", 2251047)
+        ]
 
-        files_to_download.append(("2018/07/31/IMG_7409.JPG", "photo"))
-        files_to_download.append(("2018/07/31/IMG_7409-medium.MOV", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7408.JPG", "photo", 1151066))
-        files_to_skip.append(
-            ("2018/07/30/IMG_7408-medium.MOV", "photo", 894467))
-        files_to_download.append(("2018/07/30/IMG_7407.JPG", "photo"))
-        files_to_download.append(("2018/07/30/IMG_7407-medium.MOV", "photo"))
-        files_to_skip.append(("2018/07/30/IMG_7405.MOV", "video", 36491351))
-        files_to_skip.append(("2018/07/30/IMG_7404.MOV", "video", 225935003))
-        files_to_download.append(("2018/07/30/IMG_7403.MOV", "video"))
-        files_to_download.append(("2018/07/30/IMG_7402.MOV", "video"))
-        # TODO large files on Windows times out
-        files_to_skip.append(("2018/07/30/IMG_7401.MOV", "photo", 565699696))
-        files_to_skip.append(("2018/07/30/IMG_7400.JPG", "photo", 2308885))
-        files_to_skip.append(
-            ("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639))
-        files_to_skip.append(("2018/07/30/IMG_7399.JPG", "photo", 2251047))
-        files_to_download.append(("2018/07/30/IMG_7399-medium.MOV", "photo"))
 
         for f in files_to_skip:
             with open(os.path.join(data_dir, f[0]), "a") as fi:
@@ -486,19 +486,18 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
 
-                    for f in files_to_skip:
-                        expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(f[0]))} already exists"
+                    for s in files_to_skip:
+                        expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(s[0]))} already exists"
                         self.assertIn(expected_message, self._caplog.text)
+
+                    for d in files_to_download:
+                        expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(d[0]))} already exists"
+                        self.assertNotIn(expected_message, self._caplog.text)
 
                     self.assertIn(
                         "INFO     Found 3 consecutive previously downloaded photos. Exiting",
                         self._caplog.text,
                     )
-                    self.assertNotIn(
-                        f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/30/IMG_7399-medium.MOV'))} already exists",
-                        self._caplog.text
-                    )
-
                     assert result.exit_code == 0
 
         files_in_result = glob.glob(os.path.join(
@@ -1566,7 +1565,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_chinese_filename(self) -> None:
+    def test_download_one_recent_live_photo(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -1575,68 +1574,161 @@ class DownloadPhotoTestCase(TestCase):
             recreate_path(dir)
 
         files_to_download = [
-            '2018/07/31/IMG_中文_7409.JPG' # SU1HX+S4reaWh183NDA5LkpQRw==
+            '2018/07/31/IMG_7409.JPG',
+            '2018/07/31/IMG_7409.MOV',
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_chinese.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
-                ],
-            )
-            print_result_exception(result)
+        # Download the first photo, but mock the video download
+        orig_download = PhotoAsset.download
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f'INFO     Downloading the first original photo to {data_dir} ...',
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG'))}",
-                self._caplog.text,
-            )
-            self.assertNotIn(
-                "IMG_中文_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+            if not hasattr(PhotoAsset, "already_downloaded"):
+                response = orig_download(pa, size)
+                setattr(PhotoAsset, "already_downloaded", True)
+                return response
+            return mock.MagicMock()
 
-            # Check that file was downloaded
-            self.assertTrue(
-                os.path.exists(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG'))))
-            # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG')))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(
-                photo_mtime)
-            self.assertEqual(
-                "2018-07-31 07:22:24",
-                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+            with mock.patch(
+                "icloudpd.exif_datetime.get_photo_exif"
+            ) as get_exif_patched:
+                get_exif_patched.return_value = False
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+                    # Pass fixed client ID via environment variable
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            # "--set-exif-datetime",
+                            # '--skip-videos',
+                            # "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--threads-num",
+                            "1",
+                            "-d",
+                            data_dir,
+                            "--cookie-directory",
+                            cookie_dir,
+                        ],
+                    )
+                    print_result_exception(result)
 
-            assert result.exit_code == 0
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo or video to {data_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded", self._caplog.text
+                    )
+                    assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download)
+
+        for file_name in files_to_download:
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    def test_download_one_recent_live_photo_chinese(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_download = [
+            '2018/07/31/IMG_中文_7409.JPG',  # SU1HX+S4reaWh183NDA5LkpQRw==
+            '2018/07/31/IMG_中文_7409.MOV',
+        ]
+
+        # Download the first photo, but mock the video download
+        orig_download = PhotoAsset.download
+
+        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+            if not hasattr(PhotoAsset, "already_downloaded"):
+                response = orig_download(pa, size)
+                setattr(PhotoAsset, "already_downloaded", True)
+                return response
+            return mock.MagicMock()
+
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+            with mock.patch(
+                "icloudpd.exif_datetime.get_photo_exif"
+            ) as get_exif_patched:
+                get_exif_patched.return_value = False
+                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_chinese.yml")):
+                    # Pass fixed client ID via environment variable
+                    runner = CliRunner(env={
+                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+                    })
+                    result = runner.invoke(
+                        main,
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            # "--set-exif-datetime",
+                            # '--skip-videos',
+                            # "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--keep-unicode-in-filenames",
+                            "true",
+                            "--threads-num",
+                            "1",
+                            "-d",
+                            data_dir,
+                            "--cookie-directory",
+                            cookie_dir,
+                        ],
+                    )
+                    print_result_exception(result)
+
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo or video to {data_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.JPG'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_中文_7409.MOV'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded", self._caplog.text
+                    )
+                    assert result.exit_code == 0
 
         files_in_result = glob.glob(os.path.join(
             data_dir, "**/*.*"), recursive=True)
