@@ -122,7 +122,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             # pylint: enable-msg=consider-using-f-string
 
         index_str = f"..{len(devices) - 1}" if len(devices) > 1 else ""
-        code = click.prompt(
+        code:int = click.prompt(
             f"Please enter two-factor authentication code or device index (0{index_str}) to send SMS with a code",
             type=click.IntRange(
                 0,
@@ -139,11 +139,11 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 type=click.IntRange(
                     0,
                     999999))
-            if not icloud.validate_verification_code(device, code):
+            if not icloud.validate_verification_code(device, str(code)):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
         else:
-            if not icloud.validate_2fa_code(code):
+            if not icloud.validate_2fa_code(str(code)):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
     else:
@@ -152,7 +152,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             type=click.IntRange(
                 0,
                 999999))
-        if not icloud.validate_2fa_code(code):
+        if not icloud.validate_2fa_code(str(code)):
             logger.error("Failed to verify two-factor authentication code")
             sys.exit(1)
     logger.info(
