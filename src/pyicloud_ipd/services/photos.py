@@ -16,6 +16,8 @@ import pytz
 
 from urllib.parse import urlencode
 
+from pyicloud_ipd.session import PyiCloudSession
+
 logger = logging.getLogger(__name__)
 
 
@@ -142,7 +144,7 @@ class PhotoLibrary(object):
         },
     }
 
-    def __init__(self, service: Any, zone_id: Dict[str, Any]):
+    def __init__(self, service: "PhotosService", zone_id: Dict[str, Any]):
         self.service = service
         self.zone_id = zone_id
 
@@ -232,7 +234,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: Any, params: Dict[str, Any]):
+    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any]):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -292,7 +294,7 @@ class PhotosService(PhotoLibrary):
 
 class PhotoAlbum(object):
 
-    def __init__(self, service:Any, name: str, list_type: str, obj_type: str, direction: str,
+    def __init__(self, service:PhotosService, name: str, list_type: str, obj_type: str, direction: str,
                  query_filter:Optional[Sequence[Dict[str, Any]]]=None, page_size:int=100, zone_id:Optional[Dict[str, Any]]=None):
         self.name = name
         self.service = service
@@ -339,13 +341,13 @@ class PhotoAlbum(object):
     def photos_request(self, offset: int) -> Response:
         url = ('%s/records/query?' % self.service._service_endpoint) + \
             urlencode(self.service.params)
-        return typing.cast(Response, self.service.session.post(
+        return self.service.session.post(
             url,
             data=json.dumps(self._list_query_gen(
                 offset, self.list_type, self.direction,
                 self.query_filter)),
             headers={'Content-type': 'text/plain'}
-        ))
+        )
 
 
     @property
@@ -513,7 +515,7 @@ class PhotoAlbum(object):
 
 
 class PhotoAsset(object):
-    def __init__(self, service:Any, master_record: Dict[str, Any], asset_record: Dict[str, Any]):
+    def __init__(self, service:PhotosService, master_record: Dict[str, Any], asset_record: Dict[str, Any]):
         self._service = service
         self._master_record = master_record
         self._asset_record = asset_record
@@ -678,11 +680,11 @@ class PhotoAsset(object):
         if version not in self.versions:
             return None
 
-        return typing.cast(Response, self._service.session.get(
+        return self._service.session.get(
             self.versions[version]['url'],
             stream=True,
             **kwargs
-        ))
+        )
 
     def __repr__(self) -> str:
         return "<%s: id=%s>" % (
