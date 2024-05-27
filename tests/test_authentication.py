@@ -222,4 +222,5 @@ class AuthenticationTestCase(TestCase):
                 "user interaction until 2FA expires.",
                 self._caplog.text,
             )
+            self.assertNotIn("Failed to parse response with JSON mimetype", self._caplog.text)
             assert result.exit_code == 0

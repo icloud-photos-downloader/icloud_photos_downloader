@@ -185,7 +185,7 @@ interactions:
     uri: https://idmsa.apple.com/appleauth/auth/verify/trusteddevice/securitycode
   response:
     body:
-      string: !!python/unicode '{}'
+      string: !!binary
     headers:
       Cache-Control:
       - 'no-cache'
@@ -213,7 +213,6 @@ interactions:
       X-Content-Type-Options: ['nosniff']
       X-FRAME-OPTIONS: ['DENY']
       X-XSS-Protection: ['1; mode=block']
-      content-length: ['203']
       scnt: ['scnt-1234567890']
       vary: ['accept-encoding']
     status:
