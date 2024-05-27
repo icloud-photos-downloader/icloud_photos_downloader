@@ -50,7 +50,7 @@ class TwoStepAuthTestCase(TestCase):
                 input="0\n901431\n",
             )
             self.assertIn(
-                "ERROR    Failed to verify two-factor authentication code",
+                "ERROR    Failed to verify two-step authentication code",
                 self._caplog.text,
             )
 
@@ -83,13 +83,13 @@ class TwoStepAuthTestCase(TestCase):
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
-                "INFO     Two-step/two-factor authentication is required",
+                "INFO     Two-step authentication is required",
                 self._caplog.text,
             )
             self.assertIn("  0: SMS to *******03", result.output)
             self.assertIn("Please choose an option: [0]: 0", result.output)
             self.assertIn(
-                "Please enter two-factor authentication code: 654321", result.output
+                "Please enter two-step authentication code: 654321", result.output
             )
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
@@ -129,13 +129,13 @@ class TwoStepAuthTestCase(TestCase):
                 )
                 self.assertIn("DEBUG    Authenticating...", self._caplog.text)
                 self.assertIn(
-                    "INFO     Two-step/two-factor authentication is required",
+                    "INFO     Two-step authentication is required",
                     self._caplog.text,
                 )
                 self.assertIn("  0: SMS to *******03", result.output)
                 self.assertIn("Please choose an option: [0]: 0", result.output)
                 self.assertIn(
-                    "ERROR    Failed to send two-factor authentication code",
+                    "ERROR    Failed to send two-step authentication code",
                     self._caplog.text,
                 )
                 assert result.exit_code == 1
@@ -199,7 +199,7 @@ class TwoStepAuthTestCase(TestCase):
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
-                "INFO     Two-step/two-factor authentication is required",
+                "INFO     Two-factor authentication is required",
                 self._caplog.text,
             )
             self.assertIn(
@@ -207,7 +207,7 @@ class TwoStepAuthTestCase(TestCase):
             )
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
-                "user interaction until 2SA expires.",
+                "user interaction until 2FA expires.",
                 self._caplog.text,
             )
             assert result.exit_code == 0
