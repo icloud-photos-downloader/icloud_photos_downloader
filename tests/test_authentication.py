@@ -67,7 +67,7 @@ class AuthenticationTestCase(TestCase):
                 )
 
             self.assertTrue(
-                "Two-step/two-factor authentication is required"
+                "Two-step authentication is required"
                 in str(context.exception)
             )
 
@@ -93,7 +93,7 @@ class AuthenticationTestCase(TestCase):
                 )
 
             self.assertTrue(
-                "Two-step/two-factor authentication is required"
+                "Two-factor authentication is required"
                 in str(context.exception)
             )
 
@@ -145,7 +145,7 @@ class AuthenticationTestCase(TestCase):
             self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
             assert result.exit_code == 0
 
-    def test_password_prompt(self) -> None:
+    def test_password_prompt_2sa(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
 
@@ -170,17 +170,57 @@ class AuthenticationTestCase(TestCase):
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
-                "INFO     Two-step/two-factor authentication is required",
+                "INFO     Two-step authentication is required",
                 self._caplog.text,
             )
             self.assertIn("  0: SMS to *******03", result.output)
             self.assertIn("Please choose an option: [0]: 0", result.output)
             self.assertIn(
-                "Please enter two-factor authentication code: 654321", result.output
+                "Please enter two-step authentication code: 654321", result.output
             )
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
                 "user interaction until 2SA expires.",
                 self._caplog.text,
             )
+            assert result.exit_code == 0
+
+    def test_password_prompt_2fa(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2fa_flow_valid_code.yml")):
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--no-progress-bar",
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--auth-only",
+                ],
+                input="password1\n654321\n",
+            )
+            self.assertIn("DEBUG    Authenticating...", self._caplog.text)
+            self.assertIn(
+                "INFO     Two-factor authentication is required",
+                self._caplog.text,
+            )
+            self.assertIn("  0: SMS to *******03", result.output)
+            self.assertIn(
+                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321", result.output
+            )
+            self.assertIn(
+                "INFO     Great, you're all set up. The script can now be run without "
+                "user interaction until 2FA expires.",
+                self._caplog.text,
+            )
+            self.assertNotIn("Failed to parse response with JSON mimetype", self._caplog.text)
             assert result.exit_code == 0

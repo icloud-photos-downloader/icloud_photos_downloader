@@ -149,7 +149,7 @@ class PyiCloudSession(Session):
             return response
 
         try:
-            data = response.json()
+            data = response.json() if response.status_code != 204 else {}
         except:  # pylint: disable=bare-except
             request_logger.warning("Failed to parse response with JSON mimetype")
             return response
