@@ -1,20 +1,9 @@
 from unittest import TestCase
 from vcr import VCR
 import os
-import sys
-import shutil
 import pytest
-import mock
-import datetime
-from mock import call, ANY
 from click.testing import CliRunner
-import piexif
-from piexif._exceptions import InvalidImageDataError
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotosService
-from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from requests.exceptions import ConnectionError
-from icloudpd.base import main
+from icloudpd.base import lp_filename_original, main, lp_filename_concatinator
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 import inspect
 import glob
@@ -28,6 +17,15 @@ class DownloadLivePhotoTestCase(TestCase):
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
+
+    def test_lp_filename_generator(self) -> None:
+        self.assertEqual(lp_filename_concatinator('IMG_1234.HEIC'), "IMG_1234_HEVC.MOV", "happy path HEIC")
+        self.assertEqual(lp_filename_concatinator('IMG_1234.JPG'), "IMG_1234.MOV", "happy path JPG")
+        self.assertEqual(lp_filename_concatinator('IMG_1234'), "IMG_1234", "no ext")
+        self.assertEqual(lp_filename_concatinator('IMG.1234.HEIC'), "IMG.1234_HEVC.MOV", "dots")
+
+        self.assertEqual(lp_filename_original('IMG_1234.HEIC'), "IMG_1234.MOV", "happy path HEIC")
+        self.assertEqual(lp_filename_original('IMG_1234.JPG'), "IMG_1234.MOV", "happy path JPG")
 
     def test_skip_existing_downloads_for_live_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

@@ -29,22 +29,12 @@ import time
 import sys
 import os
 from multiprocessing import freeze_support
+
+from pyicloud_ipd.utils import compose, identity
 freeze_support()  # fixing tqdm on macos
 
-Tin = TypeVar('Tin')
-Tout = TypeVar('Tout')
-Tinter = TypeVar('Tinter')
-def compose(f:Callable[[Tinter], Tout], g: Callable[[Tin], Tinter]) -> Callable[[Tin], Tout]:
-    """f after g composition of functions"""
-    def inter_(value: Tin) -> Tout:
-        return f(g(value))
-    return inter_
-
-def identity(value: Tin) -> Tin:
-    """identity function"""
-    return value
-
 def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool) -> Callable[[str], str]:
+    """Map keep_unicode parameter for function for cleaning filenames"""
     # redefining typed vars instead of using in ternary directly is a mypy hack
     r: Callable[[str], str] = remove_unicode_chars
     i: Callable[[str], str] = identity
@@ -52,6 +42,22 @@ def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep
         (r if not is_keep_unicode else i),
         clean_filename,
         ) 
+
+def lp_filename_concatinator(filename: str) -> str:
+    name, ext = os.path.splitext(filename)
+    if not ext:
+        return filename
+    return name + ("_HEVC.MOV" if  ext.lower().endswith('.heic') else ".MOV")
+
+def lp_filename_original(filename: str) -> str:
+    name, ext = os.path.splitext(filename)
+    if not ext:
+        return filename
+    return name + ".MOV"
+
+def build_lp_filename_generator(_ctx: click.Context, _param: click.Parameter, lp_filename_policy: str) -> Callable[[str], str]:
+    # redefining typed vars instead of using in ternary directly is a mypy hack
+    return lp_filename_original if lp_filename_policy == 'original' else lp_filename_concatinator
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -268,6 +274,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default=False,
               callback=build_filename_cleaner,
               )
+@click.option("--live-photo-mov-filename-policy", 
+              "lp_filename_generator",
+              help="How to produce filenames for video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep filename as it is.",
+              type=click.Choice(['suffix', 'original'], case_sensitive=False),
+              default='suffix',
+              callback=build_lp_filename_generator,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.17.7")
@@ -310,6 +323,7 @@ def main(
         watch_with_interval: Optional[int],
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
+        lp_filename_generator: Callable[[str], str],
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -398,7 +412,8 @@ def main(
                 logger,
                 watch_with_interval,
                 dry_run, 
-                filename_cleaner))
+                filename_cleaner,
+                lp_filename_generator))
 
 
 
@@ -783,6 +798,7 @@ def core(
         watch_interval: Optional[int],
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
+        lp_filename_generator: Callable[[str], str],
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -792,7 +808,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain)(
+        icloud = authenticator(logger, domain, lp_filename_generator)(
             username,
             password,
             cookie_directory,

@@ -1,4 +1,5 @@
 import getpass
+from typing import Callable, TypeVar
 import keyring
 import sys
 
@@ -69,3 +70,17 @@ def underscore_to_camelcase(word:str , initial_capital: bool=False) -> str:
         words[0] = words[0].lower()
 
     return ''.join(words)
+
+_Tin = TypeVar('_Tin')
+_Tout = TypeVar('_Tout')
+_Tinter = TypeVar('_Tinter')
+def compose(f:Callable[[_Tinter], _Tout], g: Callable[[_Tin], _Tinter]) -> Callable[[_Tin], _Tout]:
+    """f after g composition of functions"""
+    def inter_(value: _Tin) -> _Tout:
+        return f(g(value))
+    return inter_
+
+def identity(value: _Tin) -> _Tin:
+    """identity function"""
+    return value
+
