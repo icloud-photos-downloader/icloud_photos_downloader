@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Retrieve version and Changelog
+    - name: Retrieve version
       id: get_version
       run: |
         echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
@@ -20,14 +20,26 @@ jobs:
         scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT
 
+    - name: Retrieve Changelog
+      id: get_change_log
+      run: |
+        scripts/extract_releasenotes CHANGELOG.md > dist/changelog-${{steps.get_version.outputs.icloudpd_version}}.md
+
     - name: Log version and Changelog
       run: |
         echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
-        echo "icloudpd_changelog=${{steps.get_version.outputs.icloudpd_changelog}}"
+        cat dist/changelog-${{steps.get_version.outputs.icloudpd_version}}.md
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-changelog
+        if-no-files-found: error
+        path: |
+          dist/changelog-*.md
 
     outputs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
-      icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_package:
     needs: [get_version]
@@ -35,8 +47,40 @@ jobs:
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
-  publish:
+  build_notes:
     needs: [get_version, build_package]
+    runs-on: ubuntu-22.04
+    steps:
+
+    - name: Download artifacts (compatibility)
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-compatibility
+        path: |
+          dist
+
+    - name: Download artifacts (changelog)
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-changelog
+        path: |
+          dist
+
+    - name: Merge Release Notes
+      run: |
+        cat dist/changelog-*.md > dist/notes.md
+        cat dist/compatibility-*.md >> dist/notes.md
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-notes
+        if-no-files-found: error
+        path: |
+          dist/notes.md
+
+  publish:
+    needs: [get_version, build_package, build_notes]
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
