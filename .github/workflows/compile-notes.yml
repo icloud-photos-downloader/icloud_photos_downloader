@@ -39,4 +39,4 @@ jobs:
         name: icloudpd-${{ github.sha }}-notes
         if-no-files-found: error
         path: |
-          dist/notes.md
+          dist/notes-${{inputs.icloudpd_version}}.md

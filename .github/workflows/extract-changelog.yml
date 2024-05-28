@@ -1,0 +1,37 @@
+
+name: Extract Changelog
+
+on:
+  workflow_call:
+    inputs:
+      icloudpd_version:
+        required: true
+        type: string
+
+jobs:
+
+  extract_changelog:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Make dist folder
+      run: |
+        mkdir -p dist
+
+    - name: Retrieve Changelog
+      id: get_change_log
+      run: |
+        scripts/extract_releasenotes CHANGELOG.md > dist/changelog-${{inputs.icloudpd_version}}.md
+
+    - name: Log Changelog
+      run: |
+        cat dist/changelog-${{inputs.icloudpd_version}}.md
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-changelog
+        if-no-files-found: error
+        path: |
+          dist/changelog-*.md
