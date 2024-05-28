@@ -274,9 +274,9 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default=False,
               callback=build_filename_cleaner,
               )
-@click.option("--live-photo-video-filename-policy", 
+@click.option("--live-photo-mov-filename-policy", 
               "lp_filename_generator",
-              help="How to produce filenames for video portion of live photos",
+              help="How to produce filenames for video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep filename as it is.",
               type=click.Choice(['suffix', 'original'], case_sensitive=False),
               default='suffix',
               callback=build_lp_filename_generator,
