@@ -20,6 +20,10 @@ jobs:
         scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
         echo 'EOF' >> $GITHUB_OUTPUT
 
+    - name: Make dist folder
+      run: |
+        mkdir -p dist
+
     - name: Retrieve Changelog
       id: get_change_log
       run: |
