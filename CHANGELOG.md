@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.18.0 (2024-05-27)
+
 - feature: add parameter `--live-photo-mov-filename-policy` to control naming of video portion of live photos with default `suffix` for compatibility [#500](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/500)
 - feature: add parameter `--keep-unicode-in-filenames` with default `false` for compatibility [#845](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/845)
 - fix: avoid parsing json from empty responses [#837](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/837)
