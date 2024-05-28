@@ -234,7 +234,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any]):
+    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], lp_filename_generator: Callable[[str], str]):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -243,6 +243,7 @@ class PhotosService(PhotoLibrary):
              % self._service_root)
 
         self._libraries: Optional[Dict[str, PhotoLibrary]] = None
+        self.lp_filename_generator = lp_filename_generator
 
         self.params.update({
             'remapEnums': True,
@@ -665,12 +666,13 @@ class PhotoAsset(object):
                     # Change live photo movie file extension to .MOV
                     if (self.item_type == "image" and
                         version['type'] == "com.apple.quicktime-movie"):
-                        if filename.lower().endswith('.heic'):
-                            version['filename']=re.sub(
-                                r'\.[^.]+$', '_HEVC.MOV', version['filename'])
-                        else:
-                            version['filename'] = re.sub(
-                                r'\.[^.]+$', '.MOV', version['filename'])
+                        version['filename'] = self._service.lp_filename_generator(version['filename'])
+                        # if filename.lower().endswith('.heic'):
+                        #     version['filename']=re.sub(
+                        #         r'\.[^.]+$', '_HEVC.MOV', version['filename'])
+                        # else:
+                        #     version['filename'] = re.sub(
+                        #         r'\.[^.]+$', '.MOV', version['filename'])
 
                     self._versions[key] = version
 

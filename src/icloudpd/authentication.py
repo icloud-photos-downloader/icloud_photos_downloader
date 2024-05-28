@@ -15,7 +15,7 @@ class TwoStepAuthRequiredError(Exception):
     """
 
 
-def authenticator(logger: logging.Logger, domain: str) -> Callable[[str, Optional[str], Optional[str], bool, Optional[str]], PyiCloudService]:
+def authenticator(logger: logging.Logger, domain: str, lp_filename_generator: Callable[[str], str]) -> Callable[[str, Optional[str], Optional[str], bool, Optional[str]], PyiCloudService]:
     """Wraping authentication with domain context"""
     def authenticate_(
             username:str,
@@ -31,6 +31,7 @@ def authenticator(logger: logging.Logger, domain: str) -> Callable[[str, Optiona
                 # If password not provided on command line variable will be set to None
                 # and PyiCloud will attempt to retrieve from its keyring
                 icloud = PyiCloudService(
+                    lp_filename_generator,
                     domain,
                     username, password,
                     cookie_directory=cookie_directory,

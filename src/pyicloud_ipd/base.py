@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
@@ -54,12 +54,15 @@ class PyiCloudService:
     """
 
     def __init__(
-        self, domain:str, apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
+        self, 
+        lp_filename_generator: Callable[[str], str],
+        domain:str, apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
         client_id:Optional[str]=None, with_family:bool=True,
     ):
         if password is None:
             password = get_password_from_keyring(apple_id)
 
+        self.lp_filename_generator = lp_filename_generator
         self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
         self.data: Dict[str, Any] = {} 
         self.params: Dict[str, Any] = {}
@@ -109,7 +112,7 @@ class PyiCloudService:
         else:
             self.session_data.update({"client_id": self.client_id})
 
-        self.session = PyiCloudSession(self)
+        self.session:PyiCloudSession = PyiCloudSession(self)
         self.session.verify = verify
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
@@ -467,7 +470,7 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params)
+            self._photos = PhotosService(service_root, self.session, self.params, self.lp_filename_generator)
         return self._photos
 
     @property

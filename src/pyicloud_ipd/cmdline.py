@@ -200,6 +200,7 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
 
         try:
             api = PyiCloudService(
+                
                 domain,
                 username.strip(),
                 password.strip(),
