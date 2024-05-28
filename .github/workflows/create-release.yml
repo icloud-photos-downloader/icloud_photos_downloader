@@ -12,22 +12,23 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Retrieve version and Changelog
+    - name: Retrieve version
       id: get_version
       run: |
         echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
-        echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
-        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
 
-    - name: Log version and Changelog
+    - name: Log version
       run: |
         echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
-        echo "icloudpd_changelog=${{steps.get_version.outputs.icloudpd_changelog}}"
 
     outputs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
-      icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
+
+  extract_changelog:
+    needs: [get_version]
+    uses: ./.github/workflows/extract-changelog.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
   build_package:
     needs: [get_version]
@@ -35,12 +36,17 @@ jobs:
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
+  compile_notes:
+    needs: [get_version, build_package, extract_changelog]
+    uses: ./.github/workflows/compile-notes.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+
   publish:
-    needs: [get_version, build_package]
+    needs: [get_version, build_package, compile_notes]
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
-      icloudpd_changelog: ${{needs.get_version.outputs.icloudpd_changelog}}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

@@ -4,9 +4,6 @@ on:
       icloudpd_version:
         required: true
         type: string
-      icloudpd_changelog:
-        required: true
-        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -155,14 +152,16 @@ jobs:
           path: |
             dist
 
-      - name: Merge Release Notes
-        run: |
-          echo "${{ inputs.icloudpd_changelog }}" > dist/Notes.md
-          cat dist/compatibility-*.md >> dist/Notes.md
+      - name: Download artifacts (notes)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-notes
+          path: |
+            dist
 
       - name: Create Release
         uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*"
-          bodyFile: dist/Notes.md
+          bodyFile: dist/notes-${{inputs.icloudpd_version}}.md
 

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: release notes [#849](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/849)
+
 ## 1.18.0 (2024-05-27)
 
 - feature: add parameter `--live-photo-mov-filename-policy` to control naming of video portion of live photos with default `suffix` for compatibility [#500](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/500)
