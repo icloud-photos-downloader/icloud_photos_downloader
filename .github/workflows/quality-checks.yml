@@ -98,26 +98,46 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Retrieve version and Changelog
+    - name: Retrieve version
       id: get_version
       run: |
         echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
-        echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
-        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
+
+    - name: Make dist folder
+      run: |
+        mkdir -p dist
+
+    - name: Retrieve Changelog
+      id: get_change_log
+      run: |
+        scripts/extract_releasenotes CHANGELOG.md > dist/changelog-${{steps.get_version.outputs.icloudpd_version}}.md
 
     - name: Log version and Changelog
       run: |
         echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
-        echo "icloudpd_changelog=${{steps.get_version.outputs.icloudpd_changelog}}"
+        cat dist/changelog-${{steps.get_version.outputs.icloudpd_version}}.md
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-changelog
+        if-no-files-found: error
+        path: |
+          dist/changelog-*.md
 
     outputs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
-      icloudpd_changelog: ${{steps.get_version.outputs.icloudpd_changelog}}
 
   build_package:
     needs: [get_version, skip_check, type_check, lint, test]
     if: needs.skip_check.outputs.should_skip != 'true'
     uses: ./.github/workflows/build-package.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+
+  compile_notes:
+    needs: [get_version, build_package]
+    if: needs.skip_check.outputs.should_skip != 'true'
+    uses: ./.github/workflows/compile-notes.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}

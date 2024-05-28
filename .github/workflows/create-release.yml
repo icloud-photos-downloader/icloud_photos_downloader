@@ -16,9 +16,6 @@ jobs:
       id: get_version
       run: |
         echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
-        echo 'icloudpd_changelog<<EOF' >> $GITHUB_OUTPUT
-        scripts/extract_releasenotes CHANGELOG.md >> $GITHUB_OUTPUT
-        echo 'EOF' >> $GITHUB_OUTPUT
 
     - name: Make dist folder
       run: |
@@ -51,40 +48,14 @@ jobs:
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
-  build_notes:
+  compile_notes:
     needs: [get_version, build_package]
-    runs-on: ubuntu-22.04
-    steps:
-
-    - name: Download artifacts (compatibility)
-      uses: actions/download-artifact@v4
-      with:
-        name: icloudpd-${{github.sha}}-compatibility
-        path: |
-          dist
-
-    - name: Download artifacts (changelog)
-      uses: actions/download-artifact@v4
-      with:
-        name: icloudpd-${{github.sha}}-changelog
-        path: |
-          dist
-
-    - name: Merge Release Notes
-      run: |
-        cat dist/changelog-*.md > dist/notes.md
-        cat dist/compatibility-*.md >> dist/notes.md
-
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: icloudpd-${{ github.sha }}-notes
-        if-no-files-found: error
-        path: |
-          dist/notes.md
+    uses: ./.github/workflows/compile-notes.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
   publish:
-    needs: [get_version, build_package, build_notes]
+    needs: [get_version, build_package, compile_notes]
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
