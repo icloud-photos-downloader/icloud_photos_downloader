@@ -163,5 +163,5 @@ jobs:
         uses: ncipollo/release-action@v1
         with:
           artifacts: "dist/*"
-          bodyFile: dist/notes.md
+          bodyFile: dist/notes-${{inputs.icloudpd_version}}.md
 
