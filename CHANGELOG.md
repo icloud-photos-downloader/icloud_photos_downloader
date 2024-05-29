@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: release notes [#849](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/849)
+- fix: auto deletion when `--folder-structure` is set to `none` [#831](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/831)
 
 ## 1.18.0 (2024-05-27)
 

@@ -46,7 +46,21 @@ def autodelete_photos(
                 media.created)
             created_date = media.created
 
-        date_path = folder_structure.format(created_date)
+        if folder_structure.lower() == "none":
+            date_path = ""
+        else:
+            try:
+                date_path = folder_structure.format(created_date)
+            except ValueError:  # pragma: no cover
+                # This error only seems to happen in Python 2
+                logger.error(
+                    "Photo created date was not valid (%s)", created_date)
+                # e.g. ValueError: year=5 is before 1900
+                # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
+                # Just use the Unix epoch
+                created_date = datetime.datetime.fromtimestamp(0)
+                date_path = folder_structure.format(created_date)
+
         download_dir = os.path.join(directory, date_path)
 
         for size in ["small", "original", "medium", "thumb"]:
