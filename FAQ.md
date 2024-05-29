@@ -71,3 +71,7 @@ Here are the steps to make it working:
 - Start `icloudpd-1.18.0-macos-amd64` from the terminal again
 - Apple will show another warning; click "Open"
 - After that you can run `icloudpd-1.18.0-macos-amd64 --help` or any other supported command/option
+
+## Running on Synology NAS
+
+The error `Failed to execv() /tmp/staticx-kJmNbp` has a workaround by (from an SSH terminal in my case) running `sudo mount /tmp -o remount,exec`. #788
