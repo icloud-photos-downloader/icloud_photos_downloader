@@ -1,6 +1,7 @@
 """
 Delete any files found in "Recently Deleted"
 """
+import datetime
 import logging
 import os
 from tzlocal import get_localzone
