@@ -2022,7 +2022,6 @@ class DownloadPhotoTestCase(TestCase):
                     "5",
                     "--skip-videos",
                     "--skip-live-photos",
-                    "--set-exif-datetime",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
