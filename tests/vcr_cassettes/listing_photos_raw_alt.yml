@@ -978,10 +978,10 @@ interactions:
     body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"AY6c+BsE0jjaXx9tmVGJM1D2VcEO\",\n
         \   \"recordType\" : \"CPLMaster\",\n    \"fields\" : {\n      \"resVidSmallHeight\"
         : {\n        \"value\" : 581,\n        \"type\" : \"INT64\"\n      },\n      \"itemType\"
-        : {\n        \"value\" : \"com.adobe.raw-image\",\n        \"type\" : \"STRING\"\n
+        : {\n        \"value\" : \"com.canon.cr2-raw-image\",\n        \"type\" : \"STRING\"\n
         \     },\n      \"resJPEGThumbFingerprint\" : {\n        \"value\" : \"AfUG5knGXZGAUdjilPQHcFw5MQAz\",\n
         \       \"type\" : \"STRING\"\n      },\n      \"filenameEnc\" : {\n        \"value\"
-        : \"SU1HXzc0MDkuRE5H\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n
+        : \"SU1HXzc0MDkuQ1Iy\",\n        \"type\" : \"ENCRYPTED_BYTES\"\n      },\n
         \     \"originalOrientation\" : {\n        \"value\" : 6,\n        \"type\"
         : \"INT64\"\n      },\n      \"resOriginalVidComplFileType\" : {\n        \"value\"
         : \"com.apple.quicktime-movie\",\n        \"type\" : \"STRING\"\n      },\n
@@ -1016,9 +1016,9 @@ interactions:
         \         \"size\" : 1884695,\n          \"wrappingKey\" : \"Aj375aJi6sEmqgJPj64+7Q==\",\n
         \         \"referenceChecksum\" : \"AfUMnLhKAW8bwnMCwMMXLMKCslue\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/${f}?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ\"\n
-        \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
-        : {\n        \"value\" : \"com.apple.quicktime-movie\",\n        \"type\"
-        : \"STRING\"\n      },\n      \"resVidSmallRes\" : {\n        \"value\" :
+        \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalAltFileType\"
+        : {\n        \"value\" : \"public.jpeg\",\n        \"type\"
+        : \"STRING\"\n      },\n      \"resOriginalAltRes\" : {\n        \"value\" :
         {\n          \"fileChecksum\" : \"AU1su88KMDhy1lv1ePqK9tLE5WZZ\",\n          \"size\"
         : 503598,\n          \"wrappingKey\" : \"NzrFrCvgMnbo497seRaA8A==\",\n          \"referenceChecksum\"
         : \"Aewv9OJtyVk3GSnF52VRAMBIoMbQ\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AU1su88KMDhy1lv1ePqK9tLE5WZZAewv9OJtyVk3GSnF52VRAMBIoMbQ/${f}?o=Aml341-JPIlpbDxurGGOYAHrl_SdCRgwTZYTbCRLpx6X&v=1&x=3&a=B7zVl3SIIZClIzgbRXrvrXjujsRCA1LaRAEAAAMW2kQ&e=1533044225&k=NzrFrCvgMnbo497seRaA8A&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=C8qXLULvFGWyYnWneAHwn7W4SLU\"\n
@@ -1040,7 +1040,7 @@ interactions:
         \         \"referenceChecksum\" : \"Ae5ZrJWBwZt2Yno7JdP4ldL3Hfox\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AfUG5knGXZGAUdjilPQHcFw5MQAzAe5ZrJWBwZt2Yno7JdP4ldL3Hfox/${f}?o=AkE7VTGas3vhs1PYISki1nCbaQm9uqeso1RdrxvGZhPu&v=1&x=3&a=B-CCYNv2Jr5GBe4BAyS87drxWrJ9A1LaRAEAAAMW2kQ&e=1533044225&k=UJwyqR4rdth3Mm59AJtPug&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=dfGRo-F43MAOkn2SF-qwPEcXN8A\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalFileType\"
-        : {\n        \"value\" : \"com.adobe.raw-image\",\n        \"type\" : \"STRING\"\n
+        : {\n        \"value\" : \"com.canon.cr2-raw-image\",\n        \"type\" : \"STRING\"\n
         \     },\n      \"resJPEGMedFingerprint\" : {\n        \"value\" : \"AW7t47BPFmYbGTxwBzn6WCa7VF09\",\n
         \       \"type\" : \"STRING\"\n      }\n    },\n    \"pluginFields\" : { },\n
         \   \"recordChangeTag\" : \"49lb\",\n    \"created\" : {\n      \"timestamp\"
@@ -11681,6 +11681,41 @@ interactions:
       string: !!binary |
         /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
         AAEaAAUAAAABAAAAogEbAAUAAAABAAAAqgEoAAMAAAABAAIAAAExAAIAAAAHAAAAsgEyAAIAAAAU
+        nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
+    headers:
+      Accept-Ranges: [bytes]
+      Access-Control-Allow-Credentials: ['false']
+      Access-Control-Allow-Headers: ['']
+      Access-Control-Allow-Methods: ['GET,OPTIONS']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Apple-Originating-System: [UnknownOriginatingSystem]
+      Connection: [keep-alive]
+      Content-Disposition: [attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D]
+      Content-Length: ['1884695']
+      Content-Type: [application/octet-stream]
+      Date: ['Tue, 31 Jul 2018 12:37:09 GMT']
+      Server: [AppleHttpServer/2f080fc0]
+      X-Apple-Jingle-Correlation-Key: [4D26XAWYA5OIGHZSB362CI4HYY]
+      X-Apple-Request-UUID: [02b17a96-ee7c-4379-aecf-532ffda2c021-11533040629205]
+      X-Responding-Instance: ['contentvendorws:301500304:si03p01ic-ztde010306:8404:18RC199:nocommit']
+      apple-seq: ['0']
+      apple-tk: ['false']
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+    method: GET
+    uri: https://cvws.icloud-content.com/B/AU1su88KMDhy1lv1ePqK9tLE5WZZAewv9OJtyVk3GSnF52VRAMBIoMbQ/$%7Bf%7D?o=Aml341-JPIlpbDxurGGOYAHrl_SdCRgwTZYTbCRLpx6X&v=1&x=3&a=B7zVl3SIIZClIzgbRXrvrXjujsRCA1LaRAEAAAMW2kQ&e=1533044225&k=NzrFrCvgMnbo497seRaA8A&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=C8qXLULvFGWyYnWneAHwn7W4SLU
+  response:
+    body:
+      string: !!binary |
+        /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
         nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
     headers:
       Accept-Ranges: [bytes]
