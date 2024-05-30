@@ -2541,8 +2541,7 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    @pytest.mark.skip("not ready yet. needs vcr data for download")
-    def test_download_multiple_sizes(self) -> None:
+    def test_download_two_sizes(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2554,11 +2553,11 @@ class DownloadPhotoTestCase(TestCase):
         ]
 
         files_to_download = [
-            '2018/07/31/IMG_7409.JPG'
+            '2018/07/31/IMG_7409.JPG',
             '2018/07/31/IMG_7409-thumb.JPG'
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_two_sizes.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -2605,10 +2604,6 @@ class DownloadPhotoTestCase(TestCase):
             )
             self.assertNotIn(
                 "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "DEBUG    Skipping IMG_7409.MOV, only downloading photos.",
                 self._caplog.text,
             )
             self.assertIn(
