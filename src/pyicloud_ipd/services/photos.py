@@ -527,7 +527,8 @@ class PhotoAsset(object):
         u"public.heic": u"image",
         u"public.jpeg": u"image",
         u"public.png": u"image",
-        u"com.apple.quicktime-movie": u"movie"
+        u"com.apple.quicktime-movie": u"movie",
+        u"com.adobe.raw-image": u"image",
     }
 
     ITEM_TYPE_EXTENSIONS = {
