@@ -6,6 +6,7 @@
 - fix: auto deletion when `--folder-structure` is set to `none` [#831](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/831)
 - fix: Apple/Adobe raw photos are recognised as images [#662](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/662)
 - feature: support multiple `--size` parameter specification in command line
+- fix: file extensions for non-original version matching type of the asset in the version
 
 ## 1.18.0 (2024-05-27)
 
