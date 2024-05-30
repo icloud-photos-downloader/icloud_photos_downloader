@@ -98,7 +98,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "--size",
     help="Image size to download (default: original)",
-    type=click.Choice(["original", "medium", "thumb"]),
+    type=click.Choice(["original", "medium", "thumb", "adjusted"]),
     default=["original"],
     multiple=True,
 )
@@ -508,7 +508,7 @@ def download_builder(
             success = False
 
             for download_size in size:
-                if download_size not in versions and size != "original":
+                if download_size not in versions and download_size != "original":
                     if force_size:
                         logger.error(
                             "%s size does not exist for %s. Skipping...",

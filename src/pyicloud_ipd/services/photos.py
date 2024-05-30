@@ -635,6 +635,19 @@ class PhotoAsset(object):
             else:
                 typed_version_lookup = self.PHOTO_VERSION_LOOKUP
 
+            # handle adjustments
+            _adjusted = self._asset_record['fields'].get('resJPEGFullRes')
+            if _adjusted:
+                _f, _ = os.path.splitext(self.filename)
+                _t = self._asset_record['fields']['resJPEGFullFileType']['value']
+                _v: Dict[str, Any] = {
+                    "type": _t,
+                    "filename" : _f + "." + self.ITEM_TYPE_EXTENSIONS.get(_t, "JPG"),
+                    "size": _adjusted["value"]["size"] ,
+                    "url": _adjusted["value"]["downloadURL"],
+                }
+                self._versions["adjusted"] = _v
+
             for key, prefix in typed_version_lookup.items():
                 if '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']

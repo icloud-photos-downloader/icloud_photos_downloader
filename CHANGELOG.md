@@ -7,6 +7,7 @@
 - fix: Apple/Adobe raw photos are recognised as images [#662](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/662)
 - feature: support multiple `--size` parameter specification in command line
 - fix: file extensions for non-original version matching type of the asset in the version
+- feature: support downloading adjusted files with `--size adjusted` parameter (portraits, edits, etc) [#769](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/769) [#704](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/704) [#350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/350) [#249](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/249)
 
 ## 1.18.0 (2024-05-27)
 
