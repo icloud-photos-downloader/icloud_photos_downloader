@@ -1,3 +1,4 @@
+import os
 import sys
 import json
 import logging
@@ -536,7 +537,8 @@ class PhotoAsset(object):
         u"public.heic": u"HEIC",
         u"public.jpeg": u"JPG",
         u"public.png": u"PNG",
-        u"com.apple.quicktime-movie": u"MOV"
+        u"com.apple.quicktime-movie": u"MOV",
+        u"com.adobe.raw-image": u"DNG",
     }
 
     PHOTO_VERSION_LOOKUP = {
@@ -675,6 +677,11 @@ class PhotoAsset(object):
                         # else:
                         #     version['filename'] = re.sub(
                         #         r'\.[^.]+$', '.MOV', version['filename'])
+                    else:
+                        # for non live photo movie, try to change file type to match asset type
+                        _f, _e = os.path.splitext(version["filename"])
+                        version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
+
 
                     self._versions[key] = version
 
