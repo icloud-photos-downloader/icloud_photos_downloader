@@ -937,8 +937,8 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
 
-                with mock.patch.object(PhotoAsset, "versions") as pa:
-                    pa.return_value = ["original", "medium"]
+                with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
+                    pa.return_value = {"original": {"filename": "IMG_7409.JPG"}, "medium": {"filename":"IMG_7409-medium.JPG"}}
 
                     with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                         # Pass fixed client ID via environment variable
@@ -2542,3 +2542,88 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
+    @pytest.mark.skip("not ready yet. needs vcr data for download")
+    def test_download_multiple_sizes(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_create: Sequence[Tuple[str, int]] = [
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.JPG'
+            '2018/07/31/IMG_7409-thumb.JPG'
+        ]
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--size",
+                    "original",
+                    "--size",
+                    "thumb",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading the first original,thumb photo to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-thumb.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "DEBUG    Skipping IMG_7409.MOV, only downloading photos.",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"

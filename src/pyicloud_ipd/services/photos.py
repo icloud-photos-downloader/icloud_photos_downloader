@@ -17,6 +17,7 @@ import pytz
 from urllib.parse import urlencode
 
 from pyicloud_ipd.session import PyiCloudSession
+from pyicloud_ipd.utils import filename_with_size
 
 logger = logging.getLogger(__name__)
 
@@ -636,7 +637,7 @@ class PhotoAsset(object):
                 if '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']
                     filename = self.filename
-                    version: Dict[str, Any] = {'filename': filename}
+                    version: Dict[str, Any] = {'filename': filename_with_size(filename, key)}
 
                     width_entry = f.get('%sWidth' % prefix)
                     if width_entry:
@@ -667,7 +668,7 @@ class PhotoAsset(object):
                     # Change live photo movie file extension to .MOV
                     if (self.item_type == "image" and
                         version['type'] == "com.apple.quicktime-movie"):
-                        version['filename'] = self._service.lp_filename_generator(version['filename'])
+                        version['filename'] = self._service.lp_filename_generator(filename) # without size
                         # if filename.lower().endswith('.heic'):
                         #     version['filename']=re.sub(
                         #         r'\.[^.]+$', '_HEVC.MOV', version['filename'])
