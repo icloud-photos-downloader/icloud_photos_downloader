@@ -86,6 +86,6 @@ def identity(value: _Tin) -> _Tin:
 
 def filename_with_size(filename: str, size: str) -> str:
     """Returns the filename with size, e.g. IMG1234.jpg, IMG1234-small.jpg"""
-    if size == 'original':
+    if size == 'original' or size == 'alternative':
         return filename
     return (f"-{size}.").join(filename.rsplit(".", 1))

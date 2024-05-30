@@ -98,7 +98,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "--size",
     help="Image size to download (default: original)",
-    type=click.Choice(["original", "medium", "thumb", "adjusted"]),
+    type=click.Choice(["original", "medium", "thumb", "adjusted", "alternative"]),
     default=["original"],
     multiple=True,
 )

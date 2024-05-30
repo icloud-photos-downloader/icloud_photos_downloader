@@ -531,6 +531,17 @@ class PhotoAsset(object):
         u"public.png": u"image",
         u"com.apple.quicktime-movie": u"movie",
         u"com.adobe.raw-image": u"image",
+        u"com.canon.cr2-raw-image": u"image",
+        u'com.canon.crw-raw-image': u"image",
+        u'com.sony.arw-raw-image': u"image",
+        u'com.fuji.raw-image': u"image",
+        u'com.panasonic.rw2-raw-image': u"image",
+        u'com.nikon.nrw-raw-image': u"image",
+        u'com.pentax.raw-image': u"image",
+        u'com.nikon.raw-image': u"image",
+        u'com.olympus.raw-image': u"image",
+        u'com.canon.cr3-raw-image': u"image",
+        u'com.olympus.or-raw-image': u"image",
     }
 
     ITEM_TYPE_EXTENSIONS = {
@@ -539,10 +550,22 @@ class PhotoAsset(object):
         u"public.png": u"PNG",
         u"com.apple.quicktime-movie": u"MOV",
         u"com.adobe.raw-image": u"DNG",
+        u"com.canon.cr2-raw-image": u"CR2",
+        u'com.canon.crw-raw-image': u"CRW",
+        u'com.sony.arw-raw-image': u"ARW",
+        u'com.fuji.raw-image': u"RAF",
+        u'com.panasonic.rw2-raw-image': u"RW2",
+        u'com.nikon.nrw-raw-image': u"NRF",
+        u'com.pentax.raw-image': u"PEF",
+        u'com.nikon.raw-image': u"NEF",
+        u'com.olympus.raw-image': u"ORF",
+        u'com.canon.cr3-raw-image': u"CR3",
+        u'com.olympus.or-raw-image': u"ORF",
     }
 
     PHOTO_VERSION_LOOKUP = {
         u"original": u"resOriginal",
+        u"alternative": u"resOriginalAlt",
         u"medium": u"resJPEGMed",
         u"thumb": u"resJPEGThumb",
         u"originalVideo": u"resOriginalVidCompl",
