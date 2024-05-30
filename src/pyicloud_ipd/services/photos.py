@@ -664,8 +664,6 @@ class PhotoAsset(object):
                     type_entry = f.get('%sFileType' % prefix)
                     if type_entry:
                         version['type'] = type_entry['value']
-                        _f, _e = os.path.splitext(version["filename"])
-                        version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
                     else:
                         version['type'] = None
 
@@ -679,6 +677,11 @@ class PhotoAsset(object):
                         # else:
                         #     version['filename'] = re.sub(
                         #         r'\.[^.]+$', '.MOV', version['filename'])
+                    else:
+                        # for non live photo movie, try to change file type to match asset type
+                        _f, _e = os.path.splitext(version["filename"])
+                        version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
+
 
                     self._versions[key] = version
 
