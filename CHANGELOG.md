@@ -4,10 +4,12 @@
 
 - fix: release notes [#849](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/849)
 - fix: auto deletion when `--folder-structure` is set to `none` [#831](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/831)
-- fix: Apple/Adobe raw photos are recognised as images [#662](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/662)
+- fix: Apple/Adobe DNG raw photos are recognised as images [#662](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/662)
 - feature: support multiple `--size` parameter specification in command line
 - fix: file extensions for non-original version matching type of the asset in the version
-- feature: support downloading adjusted files with `--size adjusted` parameter (portraits, edits, etc) [#769](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/769) [#704](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/704) [#350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/350) [#249](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/249)
+- feature: support downloading adjusted files with `--size adjusted` parameter (portraits, edits, etc) with fallback to `original` [#769](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/769) [#704](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/704) [#350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/350) [#249](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/249)
+- feature: support for CR2,CR3,CRW,ARW,RAF,RW2,NRF,PEF,NEF,ORF raw image formats [#675](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/675)
+- feature: support `--size alternative` for alternative originals, e.g. raw+jpeg, with fallback to `original` [#675](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/675)
 
 ## 1.18.0 (2024-05-27)
 
