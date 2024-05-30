@@ -22,6 +22,10 @@ Authentication to iCloud with hardware keys (FIDO) is not supported.
 
 Advanced Data Protection (ADP) for iCloud accounts is not supported because iCloudPD simulates web access, which is disabled with ADP.
 
+### Occasional Errors
+
+Some authentication errors may be resolved by clearing `.pycloud` subfolder in the user's home dir. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
+
 ### System Keyring
 
 You can store your password in the system keyring using the `icloud` command-line tool:
