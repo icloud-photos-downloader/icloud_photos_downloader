@@ -64,10 +64,10 @@ def autodelete_photos(
 
         download_dir = os.path.join(directory, date_path)
 
-        for size in ["small", "original", "medium", "thumb"]:
+        for _key in media.versions.keys():
             path = os.path.normpath(
                 local_download_path(
-                    media.filename, size, download_dir))
+                    media.versions[_key]["filename"], download_dir))
             if os.path.exists(path):
                 logger.debug("Deleting %s...", path)
                 delete_local = delete_file_dry_run if dry_run else delete_file
