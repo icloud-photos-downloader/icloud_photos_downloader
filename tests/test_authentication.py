@@ -8,8 +8,8 @@ import pyicloud_ipd
 from icloudpd.base import lp_filename_concatinator, main
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 import inspect
-import glob
 
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True)
@@ -34,7 +34,7 @@ class AuthenticationTestCase(TestCase):
             with self.assertRaises(
                 pyicloud_ipd.exceptions.PyiCloudFailedLoginException
             ) as context:
-                authenticator(setup_logger(), "com", lp_filename_concatinator, False)(
+                authenticator(setup_logger(), "com", lp_filename_concatinator, RawTreatmentPolicy.AS_IS)(
                     "bad_username",
                     "bad_password",
                     cookie_dir,
@@ -58,7 +58,7 @@ class AuthenticationTestCase(TestCase):
                 # delete ./tests/vcr_cassettes/auth_requires_2sa.yml,
                 # put your actual credentials in here, run the test,
                 # and then replace with dummy credentials.
-                authenticator(setup_logger(), "com", lp_filename_concatinator, False)(
+                authenticator(setup_logger(), "com", lp_filename_concatinator, RawTreatmentPolicy.AS_IS)(
                     "jdoe@gmail.com",
                     "password1",
                     cookie_dir,
@@ -84,7 +84,7 @@ class AuthenticationTestCase(TestCase):
                 # delete ./tests/vcr_cassettes/auth_requires_2fa.yml,
                 # put your actual credentials in here, run the test,
                 # and then replace with dummy credentials.
-                authenticator(setup_logger(), "com", lp_filename_concatinator, False)(
+                authenticator(setup_logger(), "com", lp_filename_concatinator, RawTreatmentPolicy.AS_IS)(
                     "jdoe@gmail.com",
                     "password1",
                     cookie_dir,

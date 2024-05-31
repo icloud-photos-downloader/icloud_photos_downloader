@@ -10,6 +10,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.base import PyiCloudService
@@ -18,7 +19,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tqdm import tqdm
 import click
 import urllib
-from typing import Callable, Iterable, NoReturn, Optional, Sequence, TypeVar, cast
+from typing import Callable, Iterable, Never, NoReturn, Optional, Sequence, TypeVar, cast
 import json
 import subprocess
 import itertools
@@ -58,6 +59,17 @@ def lp_filename_original(filename: str) -> str:
 def build_lp_filename_generator(_ctx: click.Context, _param: click.Parameter, lp_filename_policy: str) -> Callable[[str], str]:
     # redefining typed vars instead of using in ternary directly is a mypy hack
     return lp_filename_original if lp_filename_policy == 'original' else lp_filename_concatinator
+
+def raw_policy_generator(_ctx: click.Context, _param: click.Parameter, raw_policy: str) -> RawTreatmentPolicy:
+    # redefining typed vars instead of using in ternary directly is a mypy hack
+    if raw_policy == "as-is":
+        return RawTreatmentPolicy.AS_IS
+    elif raw_policy == "original":
+        return RawTreatmentPolicy.AS_ORIGINAL
+    elif raw_policy == "alternative":
+        return RawTreatmentPolicy.AS_ALTERNATIVE
+    else:
+        raise ValueError(f"policy was provided with unsupported value of '{raw_policy}'")
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -284,12 +296,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default='suffix',
               callback=build_lp_filename_generator,
               )
-@click.option("--use-raw-as-original", 
-              help="For raw+jpeg photos, raw will always treated as original",
-              type=bool,
-              default=False,
+@click.option("--raw-treatment-policy", 
+              "raw_policy",
+              help="For raw+jpeg photos, raw will always treated as original, alternative, or as is",
+              type=click.Choice(['as-is', 'original', 'alternative'], case_sensitive=False),
+              default="as-is",
               show_default=True,
-              is_flag=True,
+              callback=raw_policy_generator,
               )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
@@ -334,7 +347,7 @@ def main(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
-        use_raw_as_original:bool,
+        raw_policy:RawTreatmentPolicy,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -425,7 +438,7 @@ def main(
                 dry_run, 
                 filename_cleaner,
                 lp_filename_generator,
-                use_raw_as_original))
+                raw_policy))
 
 
 
@@ -815,7 +828,7 @@ def core(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
-        use_raw_as_original: bool
+        raw_policy: RawTreatmentPolicy
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -825,7 +838,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain, lp_filename_generator, use_raw_as_original)(
+        icloud = authenticator(logger, domain, lp_filename_generator, raw_policy)(
             username,
             password,
             cookie_directory,

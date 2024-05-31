@@ -12,6 +12,7 @@ from click import confirm
 
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.findmyiphone import AppleDevice
 from . import utils
 
@@ -202,7 +203,7 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
             api = PyiCloudService(
                 utils.identity,
                 domain,
-                False,
+                RawTreatmentPolicy.AS_IS,
                 username.strip(),
                 password.strip(),
             )
