@@ -97,16 +97,18 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 @click.option(
     "--size",
-    help="Image size to download (default: original)",
+    help="Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` - never. If `adjusted` or `alternative` specified and is missing, then `original` is used.",
     type=click.Choice(["original", "medium", "thumb", "adjusted", "alternative"]),
     default=["original"],
     multiple=True,
+    show_default=True,
 )
 @click.option(
     "--live-photo-size",
-    help="Live Photo video size to download (default: original)",
+    help="Live Photo video size to download",
     type=click.Choice(["original", "medium", "thumb"]),
     default="original",
+    show_default=True,
 )
 @click.option(
     "--recent",
@@ -603,11 +605,11 @@ def download_builder(
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
                     lp_filename = filename_cleaner(version["filename"])
-                    if live_photo_size != "original":
-                        # Add size to filename if not original
-                        lp_filename = lp_filename.replace(
-                            ".MOV", f"-{live_photo_size}.MOV"
-                        )
+                    # if live_photo_size != "original":
+                    #     # Add size to filename if not original
+                    #     lp_filename = lp_filename.replace(
+                    #         ".MOV", f"-{live_photo_size}.MOV"
+                    #     )
                     lp_download_path = os.path.join(download_dir, lp_filename)
 
                     lp_file_exists = os.path.isfile(lp_download_path)

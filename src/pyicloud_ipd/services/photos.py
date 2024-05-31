@@ -18,7 +18,7 @@ import pytz
 from urllib.parse import urlencode
 
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import filename_with_size
+from pyicloud_ipd.utils import disambiguate_filenames
 
 logger = logging.getLogger(__name__)
 
@@ -568,6 +568,7 @@ class PhotoAsset(object):
         u"alternative": u"resOriginalAlt",
         u"medium": u"resJPEGMed",
         u"thumb": u"resJPEGThumb",
+        u"adjusted": u"resJPEGFull",
         u"originalVideo": u"resOriginalVidCompl",
         u"mediumVideo": u"resVidMed",
         u"thumbVideo": u"resVidSmall",
@@ -652,30 +653,22 @@ class PhotoAsset(object):
     @property
     def versions(self) -> Dict[str, Dict[str, Any]]:
         if not self._versions:
-            self._versions = {}
+            _versions: Dict[str, Dict[str, Any]] = {}
             if self.item_type == "movie":
                 typed_version_lookup = self.VIDEO_VERSION_LOOKUP
             else:
                 typed_version_lookup = self.PHOTO_VERSION_LOOKUP
 
-            # handle adjustments
-            _adjusted = self._asset_record['fields'].get('resJPEGFullRes')
-            if _adjusted:
-                _f, _ = os.path.splitext(self.filename)
-                _t = self._asset_record['fields']['resJPEGFullFileType']['value']
-                _v: Dict[str, Any] = {
-                    "type": _t,
-                    "filename" : _f + "." + self.ITEM_TYPE_EXTENSIONS.get(_t, "JPG"),
-                    "size": _adjusted["value"]["size"] ,
-                    "url": _adjusted["value"]["downloadURL"],
-                }
-                self._versions["adjusted"] = _v
+            # self._master_record["dummy"] ## trigger dump
 
             for key, prefix in typed_version_lookup.items():
-                if '%sRes' % prefix in self._master_record['fields']:
+                f: Optional[Dict[str, Any]] = None
+                if '%sRes' % prefix in self._asset_record['fields']:
+                    f = self._asset_record['fields']
+                if not f and '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']
-                    filename = self.filename
-                    version: Dict[str, Any] = {'filename': filename_with_size(filename, key)}
+                if f:
+                    version: Dict[str, Any] = {'filename': self.filename}
 
                     width_entry = f.get('%sWidth' % prefix)
                     if width_entry:
@@ -706,7 +699,7 @@ class PhotoAsset(object):
                     # Change live photo movie file extension to .MOV
                     if (self.item_type == "image" and
                         version['type'] == "com.apple.quicktime-movie"):
-                        version['filename'] = self._service.lp_filename_generator(filename) # without size
+                        version['filename'] = self._service.lp_filename_generator(self.filename) # without size
                         # if filename.lower().endswith('.heic'):
                         #     version['filename']=re.sub(
                         #         r'\.[^.]+$', '_HEVC.MOV', version['filename'])
@@ -719,7 +712,10 @@ class PhotoAsset(object):
                         version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
 
 
-                    self._versions[key] = version
+                    _versions[key] = version
+
+            # disambiguate filenames with size names
+            self._versions = disambiguate_filenames(_versions)
 
         return self._versions
 
