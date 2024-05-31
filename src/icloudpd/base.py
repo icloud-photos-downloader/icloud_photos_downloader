@@ -19,7 +19,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tqdm import tqdm
 import click
 import urllib
-from typing import Callable, Iterable, Never, NoReturn, Optional, Sequence, TypeVar, cast
+from typing import Callable, Iterable, NoReturn, Optional, Sequence, TypeVar, cast
 import json
 import subprocess
 import itertools
