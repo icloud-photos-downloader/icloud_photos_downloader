@@ -544,7 +544,8 @@ def download_builder(
                         continue    # that should avoid double download for original
                     download_size = "original"
 
-                filename = versions[download_size]["filename"]
+                version = versions[download_size]
+                filename = version["filename"]
 
                 download_path = local_download_path(
                     filename, download_dir)
@@ -564,7 +565,6 @@ def download_builder(
                     # for later: this crashes if download-size medium is specified
                     file_size = os.stat(
                         original_download_path or download_path).st_size
-                    version = versions[download_size]
                     photo_size = version["size"]
                     if file_size != photo_size:
                         download_path = (f"-{photo_size}.").join(
@@ -594,7 +594,7 @@ def download_builder(
                         )
 
                         download_result = download.download_media(
-                            logger, dry_run, icloud, photo, download_path, download_size)
+                            logger, dry_run, icloud, photo, download_path, version, download_size)
                         success = download_result
 
                         if download_result:
@@ -665,7 +665,7 @@ def download_builder(
                                 truncated_path
                             )
                             download_result = download.download_media(
-                                logger, dry_run, icloud, photo, lp_download_path, lp_size)
+                                logger, dry_run, icloud, photo, lp_download_path, version, lp_size)
                             success = download_result and success
                             if download_result:
                                 logger.info(

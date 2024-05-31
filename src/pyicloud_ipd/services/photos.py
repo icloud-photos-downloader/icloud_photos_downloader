@@ -730,14 +730,10 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, version:str='original', **kwargs: Any) -> Optional[Response]:
-        if version not in self.versions:
-            return None
-
+    def download(self, url: str) -> Response:
         return self._service.session.get(
-            self.versions[version]['url'],
-            stream=True,
-            **kwargs
+            url,
+            stream=True
         )
 
     def __repr__(self) -> str:

@@ -169,9 +169,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, size)
+                response = orig_download(pa, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -471,6 +471,7 @@ class DownloadPhotoTestCase(TestCase):
                             lambda f: call(
                                 ANY, False, ANY, ANY, os.path.join(
                                     data_dir, os.path.normpath(f[0])),
+                                    ANY,
                                 "mediumVideo" if (
                                     f[1] == 'photo' and f[0].endswith('.MOV')
                                 ) else "original"),
@@ -905,7 +906,17 @@ class DownloadPhotoTestCase(TestCase):
 
                 # These error messages should not be repeated more than once for each size
                 for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
-                    for size in ["original", "originalVideo"]:
+                    for size in ["original"]:
+                        self.assertEqual(
+                            sum(1 for line in self._caplog.text.splitlines() if line ==
+                                f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}"
+                        )
+
+                for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
+                    for size in ["originalVideo"]:
                         self.assertEqual(
                             sum(1 for line in self._caplog.text.splitlines() if line ==
                                 f"ERROR    Could not find URL to download {filename} for size {size}"
@@ -988,6 +999,7 @@ class DownloadPhotoTestCase(TestCase):
                             ANY,
                             ANY,
                             f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                            ANY,
                             "original",
                         )
 
@@ -1305,9 +1317,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self: PhotoAsset, size: str) -> Optional[Response]:
+        def mocked_download(self: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, size)
+                response = orig_download(self, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -1582,9 +1594,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, size)
+                response = orig_download(pa, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -1668,9 +1680,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, size)
+                response = orig_download(pa, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()

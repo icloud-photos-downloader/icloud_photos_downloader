@@ -5,6 +5,7 @@ import os
 import socket
 import time
 import datetime
+from typing import Any, Dict
 from requests import Response
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
@@ -103,6 +104,7 @@ def download_media(
         icloud: PyiCloudService,
         photo: PhotoAsset,
         download_path: str,
+        version: Dict[str, Any],
         size: str) -> bool:
     """Download the photo to path, with retries and error handling"""
 
@@ -114,14 +116,14 @@ def download_media(
 
     for retries in range(constants.MAX_RETRIES):
         try:
-            photo_response = photo.download(size)
+            photo_response = photo.download(version["url"])
             if photo_response:
                 return download_local(
                     logger, photo_response, download_path, photo.created)
 
             logger.error(
                 "Could not find URL to download %s for size %s",
-                photo.filename,
+                version["filename"],
                 size
             )
             break
