@@ -296,9 +296,9 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default='suffix',
               callback=build_lp_filename_generator,
               )
-@click.option("--raw-treatment-policy", 
+@click.option("--align-raw",
               "raw_policy",
-              help="For raw+jpeg photos, raw will always treated as original, alternative, or as is",
+              help="For photo assets with raw and jpeg, treat raw always in the specified size: `original` (raw+jpeg), `alternative` (jpeg+raw), or unchanged (as-is). It matters when choosing sizes to download",
               type=click.Choice(['as-is', 'original', 'alternative'], case_sensitive=False),
               default="as-is",
               show_default=True,
