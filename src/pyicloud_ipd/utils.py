@@ -96,8 +96,6 @@ def identity(value: _Tin) -> _Tin:
 #     return (f"-{size}.").join(filename.rsplit(".", 1))
 
 def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
-    if "IMG_7865" in _versions["original"]["filename"]:
-        print(_versions)
     _results: Dict[ str, Dict[str, Any]] = {}
     for _size, _version in _versions.items():
         _results[_size] = _version.copy()
@@ -121,7 +119,5 @@ def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]]) -> Dict[str, Di
         _n, _e = os.path.splitext(_results[_size]["filename"])
         _results[_size]["filename"] = f"{_n}-{_size_cleaned}{_e}"
 
-    if "IMG_7865" in _versions["original"]["filename"]:
-        print(_results)
     return _results
 

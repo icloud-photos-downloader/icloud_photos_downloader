@@ -4,7 +4,7 @@ from unittest import TestCase
 from pyicloud_ipd.utils import disambiguate_filenames
 
 class PathsTestCase(TestCase):
-    def test_disambiguate_filenames_all_different(self):
+    def test_disambiguate_filenames_all_different(self) -> None:
         """probably unreal use case """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -61,7 +61,7 @@ class PathsTestCase(TestCase):
         _result = disambiguate_filenames(_setup)
         self.assertDictEqual(_result, _expect)
     
-    def test_disambiguate_filenames_adj_alt_same(self):
+    def test_disambiguate_filenames_adj_alt_same(self) -> None:
         """ keep adj the same name as org, so it is picked by soft matching names """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -118,7 +118,7 @@ class PathsTestCase(TestCase):
         _result = disambiguate_filenames(_setup)
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_adj_same(self):
+    def test_disambiguate_filenames_org_adj_same(self) -> None:
         """ tweak adj """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -169,7 +169,7 @@ class PathsTestCase(TestCase):
         _result = disambiguate_filenames(_setup)
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_adj_diff(self):
+    def test_disambiguate_filenames_org_adj_diff(self) -> None:
         """ keep as is """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -220,7 +220,7 @@ class PathsTestCase(TestCase):
         _result = disambiguate_filenames(_setup)
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_alt_diff(self):
+    def test_disambiguate_filenames_org_alt_diff(self) -> None:
         """ keep then as is """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -271,7 +271,7 @@ class PathsTestCase(TestCase):
         _result = disambiguate_filenames(_setup)
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_adj_same_with_alt_diff(self):
+    def test_disambiguate_filenames_org_adj_same_with_alt_diff(self) -> None:
         """ tweak adj """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {

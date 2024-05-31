@@ -56,13 +56,16 @@ class PyiCloudService:
     def __init__(
         self, 
         lp_filename_generator: Callable[[str], str],
-        domain:str, apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
+        domain:str, 
+        use_raw_as_original: bool,
+        apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
         client_id:Optional[str]=None, with_family:bool=True,
     ):
         if password is None:
             password = get_password_from_keyring(apple_id)
 
         self.lp_filename_generator = lp_filename_generator
+        self.use_raw_as_original = use_raw_as_original
         self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
         self.data: Dict[str, Any] = {} 
         self.params: Dict[str, Any] = {}
@@ -470,7 +473,7 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params, self.lp_filename_generator)
+            self._photos = PhotosService(service_root, self.session, self.params, self.lp_filename_generator, self.use_raw_as_original)
         return self._photos
 
     @property

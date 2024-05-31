@@ -236,7 +236,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], lp_filename_generator: Callable[[str], str]):
+    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], lp_filename_generator: Callable[[str], str], use_raw_as_original: bool):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -246,6 +246,7 @@ class PhotosService(PhotoLibrary):
 
         self._libraries: Optional[Dict[str, PhotoLibrary]] = None
         self.lp_filename_generator = lp_filename_generator
+        self.use_raw_as_original = use_raw_as_original
 
         self.params.update({
             'remapEnums': True,
@@ -713,6 +714,13 @@ class PhotoAsset(object):
 
 
                     _versions[key] = version
+
+            # swap original & alternative if raw is alt & flag is set
+            if "alternative" in _versions and "raw" in _versions["alternative"]["type"] and self._service.use_raw_as_original:
+                _a = dict(_versions["alternative"])
+                _o = dict(_versions["original"])
+                _versions["alternative"] = _o
+                _versions["original"] = _a
 
             # disambiguate filenames with size names
             self._versions = disambiguate_filenames(_versions)

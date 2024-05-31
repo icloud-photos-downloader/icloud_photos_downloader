@@ -284,6 +284,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default='suffix',
               callback=build_lp_filename_generator,
               )
+@click.option("--use-raw-as-original", 
+              help="For raw+jpeg photos, raw will always treated as original",
+              type=bool,
+              default=False,
+              show_default=True,
+              is_flag=True,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.18.0")
@@ -327,6 +334,7 @@ def main(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
+        use_raw_as_original:bool,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -416,7 +424,8 @@ def main(
                 watch_with_interval,
                 dry_run, 
                 filename_cleaner,
-                lp_filename_generator))
+                lp_filename_generator,
+                use_raw_as_original))
 
 
 
@@ -806,6 +815,7 @@ def core(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
+        use_raw_as_original: bool
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -815,7 +825,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain, lp_filename_generator)(
+        icloud = authenticator(logger, domain, lp_filename_generator, use_raw_as_original)(
             username,
             password,
             cookie_directory,
