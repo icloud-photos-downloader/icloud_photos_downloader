@@ -8,7 +8,6 @@ import datetime
 from requests import Response
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
-import pyicloud_ipd  # pylint: disable=redefined-builtin
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.base import PyiCloudService

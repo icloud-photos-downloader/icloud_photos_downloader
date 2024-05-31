@@ -1,6 +1,6 @@
 import getpass
 import os
-from typing import Any, Callable, Dict, Optional, TypeVar
+from typing import Any, Callable, Dict, Optional, Sequence, TypeVar
 import keyring
 import sys
 
@@ -95,29 +95,45 @@ def identity(value: _Tin) -> _Tin:
 #         return filename
 #     return (f"-{size}.").join(filename.rsplit(".", 1))
 
-def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]], _sizes:Sequence[str]) -> Dict[str, Dict[str, Any]]:
     _results: Dict[ str, Dict[str, Any]] = {}
-    for _size, _version in _versions.items():
-        _results[_size] = _version.copy()
-        if _size in ["original", "originalVideo"]:
-            # never adjust
-            continue
-        elif _size in ["alternative"]:
-            if not (_results[_size]["filename"] == _versions["original"]["filename"] or ("adjusted" in _versions and _results[_size]["filename"] == _versions["adjusted"]["filename"])):
-                # if different from original or adjusted, then do not need to change
-                continue
-        elif _size in ["adjusted"]:
-            if _results[_size]["filename"] != _versions["original"]["filename"]:
-                # if different from original, then do not need to change
-                continue
+    # add those that were requested
+    for _size in _sizes:
+        _version = _versions.get(_size)
+        if _version:
+            _results[_size] = _version.copy()
 
-        # otherwise add size
-        if "Video" in _size:
-            _size_cleaned = _size[:-5]
+    # adjusted
+    if "adjusted" in _sizes:
+        if "original" not in _sizes:
+            if "adjusted" not in _results:
+                # clone
+                _results["adjusted"] = _versions["original"].copy()
         else:
-            _size_cleaned = _size
-        _n, _e = os.path.splitext(_results[_size]["filename"])
-        _results[_size]["filename"] = f"{_n}-{_size_cleaned}{_e}"
+            if "adjusted" in _results and _results["original"]["filename"] == _results["adjusted"]["filename"]:
+                _n, _e = os.path.splitext(_results["adjusted"]["filename"])
+                _results["adjusted"]["filename"] = _n + "-adjusted" + _e
+
+    # alternative
+    if "alternative" in _sizes:
+        if "original" not in _sizes and "adjusted" not in _results:
+            if "alternative" not in _results:
+                # clone
+                _results["alternative"] = _versions["original"].copy()
+        else:
+            if "adjusted" in _results and _results["adjusted"]["filename"] == _results["alternative"]["filename"] or "original" in _results and _results["original"]["filename"] == _results["alternative"]["filename"]:
+                _n, _e = os.path.splitext(_results["alternative"]["filename"])
+                _results["alternative"]["filename"] = _n + "-alternative" + _e
+
+    for _size in _sizes:
+        if _size not in ["original", "adjusted", "alternative"]:
+            if _size not in _results:
+                # ensure original is downloaded - mimic existing behavior
+                if "original" not in _sizes:
+                    _results["original"] = _versions["original"].copy()
+            # else:
+            #     _n, _e = os.path.splitext(_results[_size]["filename"])
+            #     _results[_size]["filename"] = f"{_n}-{_size}{_e}"
 
     return _results
 

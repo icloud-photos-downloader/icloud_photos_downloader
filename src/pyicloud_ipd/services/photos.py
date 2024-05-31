@@ -19,7 +19,6 @@ from urllib.parse import urlencode
 
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import disambiguate_filenames
 
 logger = logging.getLogger(__name__)
 
@@ -237,7 +236,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], lp_filename_generator: Callable[[str], str], raw_policy: RawTreatmentPolicy):
+    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], filename_cleaner:Callable[[str], str], lp_filename_generator: Callable[[str], str], raw_policy: RawTreatmentPolicy):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -246,6 +245,8 @@ class PhotosService(PhotoLibrary):
              % self._service_root)
 
         self._libraries: Optional[Dict[str, PhotoLibrary]] = None
+
+        self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy
 
@@ -590,9 +591,9 @@ class PhotoAsset(object):
     def filename(self) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
-            return base64.b64decode(
+            return self._service.filename_cleaner(base64.b64decode(
                 fields['filenameEnc']['value']
-            ).decode('utf-8')
+            ).decode('utf-8'))
 
         # Some photos don't have a filename.
         # In that case, just use the truncated fingerprint (hash),
@@ -661,7 +662,7 @@ class PhotoAsset(object):
             else:
                 typed_version_lookup = self.PHOTO_VERSION_LOOKUP
 
-            # self._master_record["dummy"] ## trigger dump
+            # self._master_record["dummy"] ## to trigger dump
 
             for key, prefix in typed_version_lookup.items():
                 f: Optional[Dict[str, Any]] = None
@@ -702,17 +703,19 @@ class PhotoAsset(object):
                     if (self.item_type == "image" and
                         version['type'] == "com.apple.quicktime-movie"):
                         version['filename'] = self._service.lp_filename_generator(self.filename) # without size
-                        # if filename.lower().endswith('.heic'):
-                        #     version['filename']=re.sub(
-                        #         r'\.[^.]+$', '_HEVC.MOV', version['filename'])
-                        # else:
-                        #     version['filename'] = re.sub(
-                        #         r'\.[^.]+$', '.MOV', version['filename'])
                     else:
                         # for non live photo movie, try to change file type to match asset type
                         _f, _e = os.path.splitext(version["filename"])
                         version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
 
+                    # add size
+                    if "Video" in key:
+                        _size_cleaned = key[:-5]
+                    else:
+                        _size_cleaned = key
+                    if _size_cleaned not in ["original", "adjusted", "alternative"]:
+                        _f, _e = os.path.splitext(version["filename"])
+                        version["filename"] = _f + f"-{_size_cleaned}" + _e
 
                     _versions[key] = version
 
@@ -723,8 +726,7 @@ class PhotoAsset(object):
                 _versions["alternative"] = _o
                 _versions["original"] = _a
 
-            # disambiguate filenames with size names
-            self._versions = disambiguate_filenames(_versions)
+            self._versions = _versions
 
         return self._versions
 

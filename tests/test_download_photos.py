@@ -1,6 +1,7 @@
 import logging
-from typing import Any, Callable, List, NoReturn, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Tuple
 from unittest import TestCase
+from mock import PropertyMock
 from requests import Response
 from vcr import VCR
 import os
@@ -938,7 +939,7 @@ class DownloadPhotoTestCase(TestCase):
                 ut_patched.return_value = None
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
-                    pa.return_value = {"original": {"filename": "IMG_7409.JPG"}, "medium": {"filename":"IMG_7409-medium.JPG"}}
+                    pa.return_value = {"original": {"filename": "IMG_7409.JPG"}, "medium": {"filename":"IMG_7409.JPG"}}
 
                     with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                         # Pass fixed client ID via environment variable
@@ -1008,8 +1009,8 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
-            with mock.patch.object(PhotoAsset, "versions") as pa:
-                pa.return_value = ["original", "medium"]
+            with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
+                pa.return_value = {"original": { "filename": "IMG1.JPG"}, "medium": {"filename": "IMG_1.JPG"}}
 
                 with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
@@ -2703,7 +2704,8 @@ class DownloadPhotoTestCase(TestCase):
             assert os.path.exists(os.path.join(data_dir, os.path.normpath(
                 file_name))), f"File {file_name} expected, but does not exist"
 
-    def test_download_raw_photos_policy_alt(self) -> None:
+    def test_download_raw_photos_policy_alt_with_adj(self) -> None:
+        """ raw+jpeg does not have adj and we do not need raw, just jpeg (orig) """
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -2719,7 +2721,7 @@ class DownloadPhotoTestCase(TestCase):
             '2018/07/31/IMG_7409.JPG'
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt.yml")):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt_adj.yml")):
             # Pass fixed client ID via environment variable
             runner = CliRunner(env={
                 "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
@@ -2736,8 +2738,8 @@ class DownloadPhotoTestCase(TestCase):
                     "--skip-videos",
                     "--skip-live-photos",
                     "--no-progress-bar",
-                    # "--size",
-                    # "alternative",
+                    "--size",
+                    "adjusted",
                     "--raw-treatment-policy",
                     "alternative",
                     "--threads-num",
@@ -2753,7 +2755,7 @@ class DownloadPhotoTestCase(TestCase):
             self.assertIn(
                 "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
+                f"INFO     Downloading the first adjusted photo to {data_dir} ...",
                 self._caplog.text,
             )
             for file_name in files_to_download:

@@ -357,7 +357,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_: Any, a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
+            def mock_raise_response_error(a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
                     raise PyiCloudAPIResponseException(
@@ -450,7 +450,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_: Any, a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
+            def mock_raise_response_error(a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
                 raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -540,7 +540,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_: Any, a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
+            def mock_raise_response_error(a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
                     raise PyiCloudAPIResponseException(
@@ -621,7 +621,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
-            def mock_raise_response_error(a0_: Any, a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
+            def mock_raise_response_error(a1_:logging.Logger, a2_:PhotosService, a3_:PhotoLibrary, a4_:PhotoAsset) -> None:
                 raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -831,6 +831,10 @@ class AutodeletePhotosTestCase(TestCase):
                     "0",
                     "--skip-videos",
                     "--auto-delete",
+                    "--size",
+                    "medium",
+                    "--size",
+                    "original",
                     "--folder-structure",
                     "none",
                     "-d",
@@ -842,7 +846,7 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertIn(
                 "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading 0 original photos to {data_dir} ...",
+                f"INFO     Downloading 0 medium,original photos to {data_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(

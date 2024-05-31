@@ -4,8 +4,8 @@ from unittest import TestCase
 from pyicloud_ipd.utils import disambiguate_filenames
 
 class PathsTestCase(TestCase):
-    def test_disambiguate_filenames_all_different(self) -> None:
-        """probably unreal use case """
+    def test_disambiguate_filenames_all_diff(self) -> None:
+        """ want all and they are all different (probably unreal case) """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
                 "filename": "IMG_1.DNG"
@@ -42,27 +42,12 @@ class PathsTestCase(TestCase):
             "adjusted": {
                 "filename": "IMG_1.JPG"
             },
-            "medium": {
-                "filename": "IMG_1-medium.JPG"
-            },
-            "thumb": {
-                "filename": "IMG_1-thumb.JPG"
-            },
-            "originalVideo": {
-                "filename": "IMG_1.MOV"
-            },
-            "mediumVideo": {
-                "filename": "IMG_1-medium.MOV"
-            },
-            "thumbVideo": {
-                "filename": "IMG_1-thumb.MOV"
-            },
         }
-        _result = disambiguate_filenames(_setup)
+        _result = disambiguate_filenames(_setup, ["original", "alternative", "adjusted"])
         self.assertDictEqual(_result, _expect)
     
-    def test_disambiguate_filenames_adj_alt_same(self) -> None:
-        """ keep adj the same name as org, so it is picked by soft matching names """
+    def test_disambiguate_filenames_keep_orgraw_alt_adj(self) -> None:
+        """ keep originals as raw, keep alt as well, but edit alt; edits are the same file type - alternative will be renamed """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
                 "filename": "IMG_1.DNG"
@@ -99,27 +84,12 @@ class PathsTestCase(TestCase):
             "adjusted": {
                 "filename": "IMG_1.JPG"
             },
-            "medium": {
-                "filename": "IMG_1-medium.JPG"
-            },
-            "thumb": {
-                "filename": "IMG_1-thumb.JPG"
-            },
-            "originalVideo": {
-                "filename": "IMG_1.MOV"
-            },
-            "mediumVideo": {
-                "filename": "IMG_1-medium.MOV"
-            },
-            "thumbVideo": {
-                "filename": "IMG_1-thumb.MOV"
-            },
         }
-        _result = disambiguate_filenames(_setup)
+        _result = disambiguate_filenames(_setup, ["original", "alternative", "adjusted"])
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_adj_same(self) -> None:
-        """ tweak adj """
+    def test_disambiguate_filenames_keep_latest(self) -> None:
+        """ want to keep just latest """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
                 "filename": "IMG_1.HEIC"
@@ -144,32 +114,14 @@ class PathsTestCase(TestCase):
             },
         }
         _expect: Dict[str, Dict[str, Any]] = {
-            "original": {
+            "adjusted": {
                 "filename": "IMG_1.HEIC"
             },
-            "adjusted": {
-                "filename": "IMG_1-adjusted.HEIC"
-            },
-            "medium": {
-                "filename": "IMG_1-medium.JPG"
-            },
-            "thumb": {
-                "filename": "IMG_1-thumb.JPG"
-            },
-            "originalVideo": {
-                "filename": "IMG_1.MOV"
-            },
-            "mediumVideo": {
-                "filename": "IMG_1-medium.MOV"
-            },
-            "thumbVideo": {
-                "filename": "IMG_1-thumb.MOV"
-            },
         }
-        _result = disambiguate_filenames(_setup)
+        _result = disambiguate_filenames(_setup, ["adjusted"])
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_adj_diff(self) -> None:
+    def test_disambiguate_filenames_keep_org_adj_diff(self) -> None:
         """ keep as is """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -201,26 +153,11 @@ class PathsTestCase(TestCase):
             "adjusted": {
                 "filename": "IMG_1.JPG"
             },
-            "medium": {
-                "filename": "IMG_1-medium.JPG"
-            },
-            "thumb": {
-                "filename": "IMG_1-thumb.JPG"
-            },
-            "originalVideo": {
-                "filename": "IMG_1.MOV"
-            },
-            "mediumVideo": {
-                "filename": "IMG_1-medium.MOV"
-            },
-            "thumbVideo": {
-                "filename": "IMG_1-thumb.MOV"
-            },
         }
-        _result = disambiguate_filenames(_setup)
+        _result = disambiguate_filenames(_setup, ["original", "adjusted"])
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_alt_diff(self) -> None:
+    def test_disambiguate_filenames_keep_org_alt_diff(self) -> None:
         """ keep then as is """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -252,26 +189,11 @@ class PathsTestCase(TestCase):
             "alternative": {
                 "filename": "IMG_1.JPG"
             },
-            "medium": {
-                "filename": "IMG_1-medium.JPG"
-            },
-            "thumb": {
-                "filename": "IMG_1-thumb.JPG"
-            },
-            "originalVideo": {
-                "filename": "IMG_1.MOV"
-            },
-            "mediumVideo": {
-                "filename": "IMG_1-medium.MOV"
-            },
-            "thumbVideo": {
-                "filename": "IMG_1-thumb.MOV"
-            },
         }
-        _result = disambiguate_filenames(_setup)
+        _result = disambiguate_filenames(_setup, ["original", "alternative"])
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_org_adj_same_with_alt_diff(self) -> None:
+    def test_disambiguate_filenames_keep_all_when_org_adj_same(self) -> None:
         """ tweak adj """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
@@ -309,21 +231,6 @@ class PathsTestCase(TestCase):
             "adjusted": {
                 "filename": "IMG_1-adjusted.JPG"
             },
-            "medium": {
-                "filename": "IMG_1-medium.JPG"
-            },
-            "thumb": {
-                "filename": "IMG_1-thumb.JPG"
-            },
-            "originalVideo": {
-                "filename": "IMG_1.MOV"
-            },
-            "mediumVideo": {
-                "filename": "IMG_1-medium.MOV"
-            },
-            "thumbVideo": {
-                "filename": "IMG_1-thumb.MOV"
-            },
         }
-        _result = disambiguate_filenames(_setup)
+        _result = disambiguate_filenames(_setup, ["original", "adjusted", "alternative"])
         self.assertDictEqual(_result, _expect)
