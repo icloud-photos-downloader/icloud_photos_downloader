@@ -113,7 +113,7 @@ def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]]) -> Dict[str, Di
 
         # otherwise add size
         if "Video" in _size:
-            _size_cleaned = _size.removesuffix("Video")
+            _size_cleaned = _size[:-5]
         else:
             _size_cleaned = _size
         _n, _e = os.path.splitext(_results[_size]["filename"])
