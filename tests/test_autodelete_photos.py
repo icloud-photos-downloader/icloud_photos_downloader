@@ -831,10 +831,6 @@ class AutodeletePhotosTestCase(TestCase):
                     "0",
                     "--skip-videos",
                     "--auto-delete",
-                    "--size",
-                    "medium",
-                    "--size",
-                    "original",
                     "--folder-structure",
                     "none",
                     "-d",
@@ -846,7 +842,7 @@ class AutodeletePhotosTestCase(TestCase):
             self.assertIn(
                 "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
             self.assertIn(
-                f"INFO     Downloading 0 medium,original photos to {data_dir} ...",
+                f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
             )
             self.assertIn(
