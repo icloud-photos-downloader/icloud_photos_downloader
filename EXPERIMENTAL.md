@@ -34,17 +34,17 @@ Legacy command (compatible with prior versions):
 
 `docker run -it --rm icloudpd:icloudpd icloud --help`
 
-`icloudpd-1.18.0-windows-amd64 --help`
+`icloudpd-1.19.0-windows-amd64 --help`
 
 Help:
 
 `docker run -it --rm icloudpd:icloudpd`
 
-`icloudpd-ex-1.18.0-windows-amd64 --help`
+`icloudpd-ex-1.19.0-windows-amd64 --help`
 
 Example:
 
 `docker run -it --rm icloudpd:icloudpd copy my@email.address /path/to/{album}/{date_created:%Y/%Y-%m}`
 
-`icloudpd-ex-1.18.0-windows-amd64 copy my@email.address /path/to/{album}/{date_created:%Y/%Y-%m}`
+`icloudpd-ex-1.19.0-windows-amd64 copy my@email.address /path/to/{album}/{date_created:%Y/%Y-%m}`
 

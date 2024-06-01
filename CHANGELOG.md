@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.19.0 (2024-05-31)
+
 - fix: release notes [#849](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/849)
 - fix: auto deletion when `--folder-structure` is set to `none` [#831](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/831)
 - fix: Apple/Adobe DNG raw photos are recognised as images [#662](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/662)
