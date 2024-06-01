@@ -16,6 +16,7 @@ from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
 )
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.findmyiphone import AppleDevice, FindMyiPhoneServiceManager
 from pyicloud_ipd.services.calendar import CalendarService
 from pyicloud_ipd.services.ubiquity import UbiquityService
@@ -40,8 +41,6 @@ HEADER_DATA = {
     "scnt": "scnt",
 }
 
-
-
 class PyiCloudService:
     """
     A base authentication class for the iCloud service. Handles the
@@ -55,14 +54,19 @@ class PyiCloudService:
 
     def __init__(
         self, 
+        filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
-        domain:str, apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
+        domain:str, 
+        raw_policy: RawTreatmentPolicy,
+        apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
         client_id:Optional[str]=None, with_family:bool=True,
     ):
         if password is None:
             password = get_password_from_keyring(apple_id)
 
+        self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
+        self.raw_policy = raw_policy
         self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
         self.data: Dict[str, Any] = {} 
         self.params: Dict[str, Any] = {}
@@ -470,7 +474,7 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params, self.lp_filename_generator)
+            self._photos = PhotosService(service_root, self.session, self.params, self.filename_cleaner, self.lp_filename_generator, self.raw_policy)
         return self._photos
 
     @property

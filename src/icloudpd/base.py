@@ -10,6 +10,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.base import PyiCloudService
@@ -30,7 +31,7 @@ import sys
 import os
 from multiprocessing import freeze_support
 
-from pyicloud_ipd.utils import compose, identity
+from pyicloud_ipd.utils import compose, disambiguate_filenames, identity
 freeze_support()  # fixing tqdm on macos
 
 def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool) -> Callable[[str], str]:
@@ -58,6 +59,17 @@ def lp_filename_original(filename: str) -> str:
 def build_lp_filename_generator(_ctx: click.Context, _param: click.Parameter, lp_filename_policy: str) -> Callable[[str], str]:
     # redefining typed vars instead of using in ternary directly is a mypy hack
     return lp_filename_original if lp_filename_policy == 'original' else lp_filename_concatinator
+
+def raw_policy_generator(_ctx: click.Context, _param: click.Parameter, raw_policy: str) -> RawTreatmentPolicy:
+    # redefining typed vars instead of using in ternary directly is a mypy hack
+    if raw_policy == "as-is":
+        return RawTreatmentPolicy.AS_IS
+    elif raw_policy == "original":
+        return RawTreatmentPolicy.AS_ORIGINAL
+    elif raw_policy == "alternative":
+        return RawTreatmentPolicy.AS_ALTERNATIVE
+    else:
+        raise ValueError(f"policy was provided with unsupported value of '{raw_policy}'")
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -97,16 +109,18 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 @click.option(
     "--size",
-    help="Image size to download (default: original)",
+    help="Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` - never. If `adjusted` or `alternative` specified and is missing, then `original` is used.",
     type=click.Choice(["original", "medium", "thumb", "adjusted", "alternative"]),
     default=["original"],
     multiple=True,
+    show_default=True,
 )
 @click.option(
     "--live-photo-size",
-    help="Live Photo video size to download (default: original)",
+    help="Live Photo video size to download",
     type=click.Choice(["original", "medium", "thumb"]),
     default="original",
+    show_default=True,
 )
 @click.option(
     "--recent",
@@ -153,7 +167,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 @click.option(
     "--force-size",
-    help="Only download the requested size "
+    help="Only download the requested size (`adjusted` and `alternate` will not be forced)"
     + "(default: download original if size is not available)",
     is_flag=True,
 )
@@ -282,6 +296,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               default='suffix',
               callback=build_lp_filename_generator,
               )
+@click.option("--align-raw",
+              "raw_policy",
+              help="For photo assets with raw and jpeg, treat raw always in the specified size: `original` (raw+jpeg), `alternative` (jpeg+raw), or unchanged (as-is). It matters when choosing sizes to download",
+              type=click.Choice(['as-is', 'original', 'alternative'], case_sensitive=False),
+              default="as-is",
+              show_default=True,
+              callback=raw_policy_generator,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.18.0")
@@ -325,6 +347,7 @@ def main(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
+        raw_policy:RawTreatmentPolicy,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -380,7 +403,7 @@ def main(
                     skip_live_photos,
                     live_photo_size,
                     dry_run,
-                    filename_cleaner) if directory is not None else (
+                    ) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
                 directory,
@@ -414,7 +437,8 @@ def main(
                 watch_with_interval,
                 dry_run, 
                 filename_cleaner,
-                lp_filename_generator))
+                lp_filename_generator,
+                raw_policy))
 
 
 
@@ -433,8 +457,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: str,
-        dry_run: bool,
-        filename_cleaner: Callable[[str], str]) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
+        dry_run: bool
+        ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
             icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
@@ -481,7 +505,7 @@ def download_builder(
                     date_path = folder_structure.format(created_date)
 
             try:
-                versions = photo.versions
+                versions = disambiguate_filenames(photo.versions, size)
             except KeyError as ex:
                 print(
                     f"KeyError: {ex} attribute was not found in the photo fields.")
@@ -520,7 +544,8 @@ def download_builder(
                         continue    # that should avoid double download for original
                     download_size = "original"
 
-                filename = filename_cleaner(versions[download_size]["filename"])
+                version = versions[download_size]
+                filename = version["filename"]
 
                 download_path = local_download_path(
                     filename, download_dir)
@@ -540,7 +565,6 @@ def download_builder(
                     # for later: this crashes if download-size medium is specified
                     file_size = os.stat(
                         original_download_path or download_path).st_size
-                    version = photo.versions[download_size]
                     photo_size = version["size"]
                     if file_size != photo_size:
                         download_path = (f"-{photo_size}.").join(
@@ -570,7 +594,7 @@ def download_builder(
                         )
 
                         download_result = download.download_media(
-                            logger, dry_run, icloud, photo, download_path, download_size)
+                            logger, dry_run, icloud, photo, download_path, version, download_size)
                         success = download_result
 
                         if download_result:
@@ -602,12 +626,12 @@ def download_builder(
                 lp_size = live_photo_size + "Video"
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
-                    lp_filename = filename_cleaner(version["filename"])
-                    if live_photo_size != "original":
-                        # Add size to filename if not original
-                        lp_filename = lp_filename.replace(
-                            ".MOV", f"-{live_photo_size}.MOV"
-                        )
+                    lp_filename = version["filename"]
+                    # if live_photo_size != "original":
+                    #     # Add size to filename if not original
+                    #     lp_filename = lp_filename.replace(
+                    #         ".MOV", f"-{live_photo_size}.MOV"
+                    #     )
                     lp_download_path = os.path.join(download_dir, lp_filename)
 
                     lp_file_exists = os.path.isfile(lp_download_path)
@@ -641,7 +665,7 @@ def download_builder(
                                 truncated_path
                             )
                             download_result = download.download_media(
-                                logger, dry_run, icloud, photo, lp_download_path, lp_size)
+                                logger, dry_run, icloud, photo, lp_download_path, version, lp_size)
                             success = download_result and success
                             if download_result:
                                 logger.info(
@@ -654,13 +678,12 @@ def download_builder(
 
 
 def delete_photo(
-        filename_cleaner: Callable[[str], str],
         logger: logging.Logger,
         photo_service: PhotosService,
         library_object: PhotoLibrary,
         photo: PhotoAsset) -> None:
     """Delete a photo from the iCloud account."""
-    clean_filename_local = filename_cleaner(photo.filename)
+    clean_filename_local = photo.filename
     logger.debug(
         "Deleting %s in iCloud...", clean_filename_local)
     # pylint: disable=W0212
@@ -690,7 +713,6 @@ def delete_photo(
 
 
 def delete_photo_dry_run(
-        filename_cleaner: Callable[[str], str],
         logger: logging.Logger,
         _photo_service: PhotosService,
         library_object: PhotoLibrary,
@@ -698,7 +720,7 @@ def delete_photo_dry_run(
     """Dry run for deleting a photo from the iCloud"""
     logger.info(
         "[DRY RUN] Would delete %s in iCloud library %s",
-        filename_cleaner(photo.filename),
+        photo.filename,
         library_object.zone_id['zoneName']
     )
 
@@ -804,6 +826,7 @@ def core(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
+        raw_policy: RawTreatmentPolicy
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -813,7 +836,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain, lp_filename_generator)(
+        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy)(
             username,
             password,
             cookie_directory,
@@ -970,7 +993,7 @@ def core(
 
                         def delete_cmd() -> None:
                             delete_local = delete_photo_dry_run if dry_run else delete_photo
-                            delete_local(filename_cleaner, logger, icloud.photos, library_object, item)
+                            delete_local(logger, icloud.photos, library_object, item)
 
                         retrier(delete_cmd, error_handler)
 
@@ -984,7 +1007,7 @@ def core(
 
             if auto_delete:
                 autodelete_photos(logger, dry_run, library_object,
-                                  folder_structure, directory)
+                                  folder_structure, directory, size)
 
             if watch_interval:  # pragma: no cover
                 logger.info(f"Waiting for {watch_interval} sec...")

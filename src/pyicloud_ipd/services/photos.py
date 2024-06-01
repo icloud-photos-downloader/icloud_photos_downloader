@@ -17,8 +17,8 @@ import pytz
 
 from urllib.parse import urlencode
 
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import filename_with_size
 
 logger = logging.getLogger(__name__)
 
@@ -236,7 +236,7 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], lp_filename_generator: Callable[[str], str]):
+    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], filename_cleaner:Callable[[str], str], lp_filename_generator: Callable[[str], str], raw_policy: RawTreatmentPolicy):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -245,7 +245,10 @@ class PhotosService(PhotoLibrary):
              % self._service_root)
 
         self._libraries: Optional[Dict[str, PhotoLibrary]] = None
+
+        self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
+        self.raw_policy = raw_policy
 
         self.params.update({
             'remapEnums': True,
@@ -568,6 +571,7 @@ class PhotoAsset(object):
         u"alternative": u"resOriginalAlt",
         u"medium": u"resJPEGMed",
         u"thumb": u"resJPEGThumb",
+        u"adjusted": u"resJPEGFull",
         u"originalVideo": u"resOriginalVidCompl",
         u"mediumVideo": u"resVidMed",
         u"thumbVideo": u"resVidSmall",
@@ -587,9 +591,9 @@ class PhotoAsset(object):
     def filename(self) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
-            return base64.b64decode(
+            return self._service.filename_cleaner(base64.b64decode(
                 fields['filenameEnc']['value']
-            ).decode('utf-8')
+            ).decode('utf-8'))
 
         # Some photos don't have a filename.
         # In that case, just use the truncated fingerprint (hash),
@@ -652,30 +656,22 @@ class PhotoAsset(object):
     @property
     def versions(self) -> Dict[str, Dict[str, Any]]:
         if not self._versions:
-            self._versions = {}
+            _versions: Dict[str, Dict[str, Any]] = {}
             if self.item_type == "movie":
                 typed_version_lookup = self.VIDEO_VERSION_LOOKUP
             else:
                 typed_version_lookup = self.PHOTO_VERSION_LOOKUP
 
-            # handle adjustments
-            _adjusted = self._asset_record['fields'].get('resJPEGFullRes')
-            if _adjusted:
-                _f, _ = os.path.splitext(self.filename)
-                _t = self._asset_record['fields']['resJPEGFullFileType']['value']
-                _v: Dict[str, Any] = {
-                    "type": _t,
-                    "filename" : _f + "." + self.ITEM_TYPE_EXTENSIONS.get(_t, "JPG"),
-                    "size": _adjusted["value"]["size"] ,
-                    "url": _adjusted["value"]["downloadURL"],
-                }
-                self._versions["adjusted"] = _v
+            # self._master_record["dummy"] ## to trigger dump
 
             for key, prefix in typed_version_lookup.items():
-                if '%sRes' % prefix in self._master_record['fields']:
+                f: Optional[Dict[str, Any]] = None
+                if '%sRes' % prefix in self._asset_record['fields']:
+                    f = self._asset_record['fields']
+                if not f and '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']
-                    filename = self.filename
-                    version: Dict[str, Any] = {'filename': filename_with_size(filename, key)}
+                if f:
+                    version: Dict[str, Any] = {'filename': self.filename}
 
                     width_entry = f.get('%sWidth' % prefix)
                     if width_entry:
@@ -706,31 +702,38 @@ class PhotoAsset(object):
                     # Change live photo movie file extension to .MOV
                     if (self.item_type == "image" and
                         version['type'] == "com.apple.quicktime-movie"):
-                        version['filename'] = self._service.lp_filename_generator(filename) # without size
-                        # if filename.lower().endswith('.heic'):
-                        #     version['filename']=re.sub(
-                        #         r'\.[^.]+$', '_HEVC.MOV', version['filename'])
-                        # else:
-                        #     version['filename'] = re.sub(
-                        #         r'\.[^.]+$', '.MOV', version['filename'])
+                        version['filename'] = self._service.lp_filename_generator(self.filename) # without size
                     else:
                         # for non live photo movie, try to change file type to match asset type
                         _f, _e = os.path.splitext(version["filename"])
                         version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
 
+                    # add size
+                    if "Video" in key:
+                        _size_cleaned = key[:-5]
+                    else:
+                        _size_cleaned = key
+                    if _size_cleaned not in ["original", "adjusted", "alternative"]:
+                        _f, _e = os.path.splitext(version["filename"])
+                        version["filename"] = _f + f"-{_size_cleaned}" + _e
 
-                    self._versions[key] = version
+                    _versions[key] = version
+
+            # swap original & alternative according to swap_raw_policy
+            if "alternative" in _versions and (("raw" in _versions["alternative"]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions["original"]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
+                _a = dict(_versions["alternative"])
+                _o = dict(_versions["original"])
+                _versions["alternative"] = _o
+                _versions["original"] = _a
+
+            self._versions = _versions
 
         return self._versions
 
-    def download(self, version:str='original', **kwargs: Any) -> Optional[Response]:
-        if version not in self.versions:
-            return None
-
+    def download(self, url: str) -> Response:
         return self._service.session.get(
-            self.versions[version]['url'],
-            stream=True,
-            **kwargs
+            url,
+            stream=True
         )
 
     def __repr__(self) -> str:

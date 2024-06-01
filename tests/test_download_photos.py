@@ -1,6 +1,7 @@
 import logging
-from typing import Any, Callable, List, NoReturn, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Tuple
 from unittest import TestCase
+from mock import PropertyMock
 from requests import Response
 from vcr import VCR
 import os
@@ -168,9 +169,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, size)
+                response = orig_download(pa, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -470,6 +471,7 @@ class DownloadPhotoTestCase(TestCase):
                             lambda f: call(
                                 ANY, False, ANY, ANY, os.path.join(
                                     data_dir, os.path.normpath(f[0])),
+                                    ANY,
                                 "mediumVideo" if (
                                     f[1] == 'photo' and f[0].endswith('.MOV')
                                 ) else "original"),
@@ -904,7 +906,17 @@ class DownloadPhotoTestCase(TestCase):
 
                 # These error messages should not be repeated more than once for each size
                 for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
-                    for size in ["original", "originalVideo"]:
+                    for size in ["original"]:
+                        self.assertEqual(
+                            sum(1 for line in self._caplog.text.splitlines() if line ==
+                                f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}"
+                        )
+
+                for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
+                    for size in ["originalVideo"]:
                         self.assertEqual(
                             sum(1 for line in self._caplog.text.splitlines() if line ==
                                 f"ERROR    Could not find URL to download {filename} for size {size}"
@@ -938,7 +950,7 @@ class DownloadPhotoTestCase(TestCase):
                 ut_patched.return_value = None
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
-                    pa.return_value = {"original": {"filename": "IMG_7409.JPG"}, "medium": {"filename":"IMG_7409-medium.JPG"}}
+                    pa.return_value = {"original": {"filename": "IMG_7409.JPG"}, "medium": {"filename":"IMG_7409.JPG"}}
 
                     with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                         # Pass fixed client ID via environment variable
@@ -987,6 +999,7 @@ class DownloadPhotoTestCase(TestCase):
                             ANY,
                             ANY,
                             f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                            ANY,
                             "original",
                         )
 
@@ -1008,8 +1021,8 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
-            with mock.patch.object(PhotoAsset, "versions") as pa:
-                pa.return_value = ["original", "medium"]
+            with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
+                pa.return_value = {"original": { "filename": "IMG1.JPG"}, "medium": {"filename": "IMG_1.JPG"}}
 
                 with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable
@@ -1304,9 +1317,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self: PhotoAsset, size: str) -> Optional[Response]:
+        def mocked_download(self: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, size)
+                response = orig_download(self, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -1581,9 +1594,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, size)
+                response = orig_download(pa, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -1667,9 +1680,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, size:str) -> Optional[Response]:
+        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, size)
+                response = orig_download(pa, _url)
                 setattr(PhotoAsset, "already_downloaded", True)
                 return response
             return mock.MagicMock()
@@ -2683,6 +2696,241 @@ class DownloadPhotoTestCase(TestCase):
                 f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    def test_download_raw_photos_policy_alt_with_adj(self) -> None:
+        """ raw+jpeg does not have adj and we do not need raw, just jpeg (orig) """
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_create: Sequence[Tuple[str, int]] = [
+        ]
+
+        files_to_download = [
+            # '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            '2018/07/31/IMG_7409.JPG'
+        ]
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt_adj.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--size",
+                    "adjusted",
+                    "--align-raw",
+                    "alternative",
+                    "--threads-num",
+                    "1",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading the first adjusted photo to {data_dir} ...",
+                self._caplog.text,
+            )
+            for file_name in files_to_download:
+                self.assertIn(
+                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(file_name))}",
+                    self._caplog.text,
+                )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    def test_download_raw_photos_policy_orig(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_create: Sequence[Tuple[str, int]] = [
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            # '2018/07/31/IMG_7409.JPG'
+        ]
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    # "--size",
+                    # "original",
+                    "--align-raw",
+                    "original",
+                    "--threads-num",
+                    "1",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading the first original photo to {data_dir} ...",
+                self._caplog.text,
+            )
+            for file_name in files_to_download:
+                self.assertIn(
+                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(file_name))}",
+                    self._caplog.text,
+                )
+            self.assertNotIn(
+                "IMG_7409.MOV",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(
+            files_to_create) + len(files_to_download)
+
+        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
+                file_name))), f"File {file_name} expected, but does not exist"
+
+    def test_download_raw_photos_policy_as_is(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_create: Sequence[Tuple[str, int]] = [
+        ]
+
+        files_to_download = [
+            '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            # '2018/07/31/IMG_7409.JPG'
+        ]
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    # "--size",
+                    # "original",
+                    "--align-raw",
+                    "as-is",
+                    "--threads-num",
+                    "1",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            print_result_exception(result)
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading the first original photo to {data_dir} ...",
+                self._caplog.text,
+            )
+            for file_name in files_to_download:
+                self.assertIn(
+                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(file_name))}",
+                    self._caplog.text,
+                )
             self.assertNotIn(
                 "IMG_7409.MOV",
                 self._caplog.text,
