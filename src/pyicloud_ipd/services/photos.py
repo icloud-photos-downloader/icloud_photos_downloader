@@ -6,7 +6,7 @@ import base64
 import re
 
 from datetime import datetime
-from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple
+from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, Union
 import typing
 
 from requests import Response
@@ -19,6 +19,7 @@ from urllib.parse import urlencode
 
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
 
@@ -526,7 +527,7 @@ class PhotoAsset(object):
         self._master_record = master_record
         self._asset_record = asset_record
 
-        self._versions: Optional[Dict[str, Dict[str, Any]]] = None
+        self._versions: Optional[Dict[VersionSize, Dict[str, Any]]] = None
 
     ITEM_TYPES = {
         u"public.heic": u"image",
@@ -566,21 +567,28 @@ class PhotoAsset(object):
         u'com.olympus.or-raw-image': u"ORF",
     }
 
-    PHOTO_VERSION_LOOKUP = {
-        u"original": u"resOriginal",
-        u"alternative": u"resOriginalAlt",
-        u"medium": u"resJPEGMed",
-        u"thumb": u"resJPEGThumb",
-        u"adjusted": u"resJPEGFull",
-        u"originalVideo": u"resOriginalVidCompl",
-        u"mediumVideo": u"resVidMed",
-        u"thumbVideo": u"resVidSmall",
+    PHOTO_VERSION_LOOKUP: Dict[VersionSize, str] = {
+        AssetVersionSize.ORIGINAL: u"resOriginal",
+        AssetVersionSize.ALTERNATIVE: u"resOriginalAlt",
+        AssetVersionSize.MEDIUM: u"resJPEGMed",
+        AssetVersionSize.THUMB: u"resJPEGThumb",
+        AssetVersionSize.ADJUSTED: u"resJPEGFull",
+        LivePhotoVersionSize.ORIGINAL: u"resOriginalVidCompl",
+        LivePhotoVersionSize.MEDIUM: u"resVidMed",
+        LivePhotoVersionSize.THUMB: u"resVidSmall",
     }
 
-    VIDEO_VERSION_LOOKUP = {
-        u"original": u"resOriginal",
-        u"medium": u"resVidMed",
-        u"thumb": u"resVidSmall"
+    VIDEO_VERSION_LOOKUP: Dict[VersionSize, str] = {
+        AssetVersionSize.ORIGINAL: u"resOriginal",
+        AssetVersionSize.MEDIUM: u"resVidMed",
+        AssetVersionSize.THUMB: u"resVidSmall"
+    }
+
+    VERSION_FILENAME_SUFFIX_LOOKUP: Dict[VersionSize, str] = {
+        AssetVersionSize.MEDIUM: u"medium",
+        AssetVersionSize.THUMB: u"thumb",
+        LivePhotoVersionSize.MEDIUM: u"medium",
+        LivePhotoVersionSize.THUMB: u"thumb",
     }
 
     @property
@@ -654,11 +662,11 @@ class PhotoAsset(object):
         return 'unknown'
 
     @property
-    def versions(self) -> Dict[str, Dict[str, Any]]:
+    def versions(self) -> Dict[VersionSize, Dict[str, Any]]:
         if not self._versions:
-            _versions: Dict[str, Dict[str, Any]] = {}
+            _versions: Dict[VersionSize, Dict[str, Any]] = {}
             if self.item_type == "movie":
-                typed_version_lookup = self.VIDEO_VERSION_LOOKUP
+                typed_version_lookup: Dict[VersionSize, str] = self.VIDEO_VERSION_LOOKUP
             else:
                 typed_version_lookup = self.PHOTO_VERSION_LOOKUP
 
@@ -708,23 +716,20 @@ class PhotoAsset(object):
                         _f, _e = os.path.splitext(version["filename"])
                         version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
 
-                    # add size
-                    if "Video" in key:
-                        _size_cleaned = key[:-5]
-                    else:
-                        _size_cleaned = key
-                    if _size_cleaned not in ["original", "adjusted", "alternative"]:
+                    # add size suffix
+                    if key in self.VERSION_FILENAME_SUFFIX_LOOKUP:
+                        _size_suffix = self.VERSION_FILENAME_SUFFIX_LOOKUP[key]
                         _f, _e = os.path.splitext(version["filename"])
-                        version["filename"] = _f + f"-{_size_cleaned}" + _e
+                        version["filename"] = _f + f"-{_size_suffix}" + _e
 
                     _versions[key] = version
 
             # swap original & alternative according to swap_raw_policy
-            if "alternative" in _versions and (("raw" in _versions["alternative"]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions["original"]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
-                _a = dict(_versions["alternative"])
-                _o = dict(_versions["original"])
-                _versions["alternative"] = _o
-                _versions["original"] = _a
+            if AssetVersionSize.ALTERNATIVE in _versions and (("raw" in _versions[AssetVersionSize.ALTERNATIVE]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions[AssetVersionSize.ORIGINAL]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
+                _a = dict(_versions[AssetVersionSize.ALTERNATIVE])
+                _o = dict(_versions[AssetVersionSize.ORIGINAL])
+                _versions[AssetVersionSize.ALTERNATIVE] = _o
+                _versions[AssetVersionSize.ORIGINAL] = _a
 
             self._versions = _versions
 

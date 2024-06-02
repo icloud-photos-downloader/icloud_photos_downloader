@@ -20,6 +20,7 @@ from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 import inspect
 import glob
@@ -472,9 +473,9 @@ class DownloadPhotoTestCase(TestCase):
                                 ANY, False, ANY, ANY, os.path.join(
                                     data_dir, os.path.normpath(f[0])),
                                     ANY,
-                                "mediumVideo" if (
+                                LivePhotoVersionSize.MEDIUM if (
                                     f[1] == 'photo' and f[0].endswith('.MOV')
-                                ) else "original"),
+                                ) else AssetVersionSize.ORIGINAL),
                             files_to_download,
                         )
                     )
@@ -950,7 +951,7 @@ class DownloadPhotoTestCase(TestCase):
                 ut_patched.return_value = None
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
-                    pa.return_value = {"original": {"filename": "IMG_7409.JPG"}, "medium": {"filename":"IMG_7409.JPG"}}
+                    pa.return_value = {AssetVersionSize.ORIGINAL: {"filename": "IMG_7409.JPG"}, AssetVersionSize.MEDIUM: {"filename":"IMG_7409.JPG"}}
 
                     with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                         # Pass fixed client ID via environment variable
@@ -1000,7 +1001,7 @@ class DownloadPhotoTestCase(TestCase):
                             ANY,
                             f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                             ANY,
-                            "original",
+                            AssetVersionSize.ORIGINAL,
                         )
 
                         assert result.exit_code == 0
@@ -1022,7 +1023,7 @@ class DownloadPhotoTestCase(TestCase):
             dp_patched.return_value = True
 
             with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
-                pa.return_value = {"original": { "filename": "IMG1.JPG"}, "medium": {"filename": "IMG_1.JPG"}}
+                pa.return_value = {AssetVersionSize.ORIGINAL: { "filename": "IMG1.JPG"}, AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"}}
 
                 with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                     # Pass fixed client ID via environment variable

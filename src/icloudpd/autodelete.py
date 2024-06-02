@@ -9,6 +9,7 @@ from tzlocal import get_localzone
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.services.photos import PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
+from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
 
 def delete_file(logger: logging.Logger, path: str) -> bool:
@@ -30,7 +31,7 @@ def autodelete_photos(
         library_object: PhotoLibrary,
         folder_structure: str,
         directory: str,
-        _sizes: Sequence[str]) -> None:
+        _sizes: Sequence[AssetVersionSize]) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -67,13 +68,14 @@ def autodelete_photos(
         download_dir = os.path.join(directory, date_path)
 
         paths:Set[str] = set({})
+        _size:VersionSize
         for _size, _version in disambiguate_filenames(media.versions, _sizes).items():
-            if _size in ["alternative", "adjusted"]:
+            if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 paths.add(os.path.normpath(
                     local_download_path(
                         _version["filename"], download_dir)))
         for _size, _version in media.versions.items():
-            if _size not in ["alternative", "adjusted"]:
+            if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 paths.add(os.path.normpath(
                     local_download_path(
                         _version["filename"], download_dir)))

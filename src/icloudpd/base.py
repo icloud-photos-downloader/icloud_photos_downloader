@@ -32,6 +32,7 @@ import os
 from multiprocessing import freeze_support
 
 from pyicloud_ipd.utils import compose, disambiguate_filenames, identity
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 freeze_support()  # fixing tqdm on macos
 
 def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool) -> Callable[[str], str]:
@@ -70,6 +71,32 @@ def raw_policy_generator(_ctx: click.Context, _param: click.Parameter, raw_polic
         return RawTreatmentPolicy.AS_ALTERNATIVE
     else:
         raise ValueError(f"policy was provided with unsupported value of '{raw_policy}'")
+
+def size_generator(_ctx: click.Context, _param: click.Parameter, sizes: Sequence[str]) -> Sequence[AssetVersionSize]:
+    def _map(size: str) -> AssetVersionSize:
+        if size == "original":
+            return AssetVersionSize.ORIGINAL
+        elif size == "adjusted":
+            return AssetVersionSize.ADJUSTED
+        elif size == "alternative":
+            return AssetVersionSize.ALTERNATIVE
+        elif size == "medium":
+            return AssetVersionSize.MEDIUM
+        elif size == "thumb":
+            return AssetVersionSize.THUMB
+        else:
+            raise ValueError(f"size was provided with unsupported value of '{size}'")    
+    return [_map(_s) for _s in sizes]
+
+def lp_size_generator(_ctx: click.Context, _param: click.Parameter, size: str) -> LivePhotoVersionSize:
+    if size == "original":
+        return LivePhotoVersionSize.ORIGINAL
+    elif size == "medium":
+        return LivePhotoVersionSize.MEDIUM
+    elif size == "thumb":
+        return LivePhotoVersionSize.THUMB
+    else:
+        raise ValueError(f"size was provided with unsupported value of '{size}'")    
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -114,6 +141,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     default=["original"],
     multiple=True,
     show_default=True,
+    callback=size_generator,
 )
 @click.option(
     "--live-photo-size",
@@ -121,6 +149,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.Choice(["original", "medium", "thumb"]),
     default="original",
     show_default=True,
+    callback=lp_size_generator,
 )
 @click.option(
     "--recent",
@@ -315,8 +344,8 @@ def main(
         password: Optional[str],
         auth_only: bool,
         cookie_directory: str,
-        size: Sequence[str],
-        live_photo_size: str,
+        size: Sequence[AssetVersionSize],
+        live_photo_size: LivePhotoVersionSize,
         recent: Optional[int],
         until_found: Optional[int],
         album: str,
@@ -451,12 +480,12 @@ def download_builder(
         skip_videos: bool,
         folder_structure: str,
         directory: str,
-        size: Sequence[str],
+        size: Sequence[AssetVersionSize],
         force_size: bool,
         only_print_filenames: bool,
         set_exif_datetime: bool,
         skip_live_photos: bool,
-        live_photo_size: str,
+        live_photo_size: LivePhotoVersionSize,
         dry_run: bool
         ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
@@ -532,17 +561,17 @@ def download_builder(
             success = False
 
             for download_size in size:
-                if download_size not in versions and download_size != "original":
+                if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
                     if force_size:
                         logger.error(
                             "%s size does not exist for %s. Skipping...",
-                            download_size,
+                            download_size.value,
                             photo.filename
                         )
                         return False
-                    if "original" in size:
+                    if AssetVersionSize.ORIGINAL in size:
                         continue    # that should avoid double download for original
-                    download_size = "original"
+                    download_size = AssetVersionSize.ORIGINAL
 
                 version = versions[download_size]
                 filename = version["filename"]
@@ -552,11 +581,11 @@ def download_builder(
 
                 original_download_path = None
                 file_exists = os.path.isfile(download_path)
-                if not file_exists and download_size == "original":
+                if not file_exists and download_size == AssetVersionSize.ORIGINAL:
                     # Deprecation - We used to download files like IMG_1234-original.jpg,
                     # so we need to check for these.
                     # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
-                    original_download_path = (f"-{download_size}.").join(
+                    original_download_path = (f"-original.").join(
                         download_path.rsplit(".", 1)
                     )
                     file_exists = os.path.isfile(original_download_path)
@@ -623,7 +652,7 @@ def download_builder(
 
             # Also download the live photo if present
             if not skip_live_photos:
-                lp_size = live_photo_size + "Video"
+                lp_size = live_photo_size
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
                     lp_filename = version["filename"]
@@ -799,7 +828,7 @@ def core(
         password: Optional[str],
         auth_only: bool,
         cookie_directory: str,
-        size: Sequence[str],
+        size: Sequence[AssetVersionSize],
         recent: Optional[int],
         until_found: Optional[int],
         album: str,
@@ -966,7 +995,7 @@ def core(
                 ("Downloading %s %s" +
                  " photo%s%s to %s ..."),
                 photos_count_str,
-                ",".join(size),
+                ",".join([_s.value for _s in size]),
                 plural_suffix,
                 video_suffix,
                 directory
