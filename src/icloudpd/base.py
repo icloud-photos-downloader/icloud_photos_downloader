@@ -574,7 +574,7 @@ def download_builder(
                     download_size = AssetVersionSize.ORIGINAL
 
                 version = versions[download_size]
-                filename = version["filename"]
+                filename = version.filename
 
                 download_path = local_download_path(
                     filename, download_dir)
@@ -594,7 +594,7 @@ def download_builder(
                     # for later: this crashes if download-size medium is specified
                     file_size = os.stat(
                         original_download_path or download_path).st_size
-                    photo_size = version["size"]
+                    photo_size = version.size
                     if file_size != photo_size:
                         download_path = (f"-{photo_size}.").join(
                             download_path.rsplit(".", 1)
@@ -655,7 +655,7 @@ def download_builder(
                 lp_size = live_photo_size
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
-                    lp_filename = version["filename"]
+                    lp_filename = version.filename
                     # if live_photo_size != "original":
                     #     # Add size to filename if not original
                     #     lp_filename = lp_filename.replace(
@@ -670,7 +670,7 @@ def download_builder(
                     else:
                         if lp_file_exists:
                             lp_file_size = os.stat(lp_download_path).st_size
-                            lp_photo_size = version["size"]
+                            lp_photo_size = version.size
                             if lp_file_size != lp_photo_size:
                                 lp_download_path = (f"-{lp_photo_size}.").join(
                                     lp_download_path.rsplit(".", 1)

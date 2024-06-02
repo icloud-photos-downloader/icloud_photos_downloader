@@ -1,3 +1,4 @@
+import copy
 import os
 import sys
 import json
@@ -10,6 +11,7 @@ from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, Un
 import typing
 
 from requests import Response
+from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 
@@ -522,12 +524,12 @@ class PhotoAlbum(object):
 
 
 class PhotoAsset(object):
-    def __init__(self, service:PhotosService, master_record: Dict[str, Any], asset_record: Dict[str, Any]):
+    def __init__(self, service:PhotosService, master_record: Dict[str, Any], asset_record: Dict[str, Any]) -> None:
         self._service = service
         self._master_record = master_record
         self._asset_record = asset_record
 
-        self._versions: Optional[Dict[VersionSize, Dict[str, Any]]] = None
+        self._versions: Optional[Dict[VersionSize, AssetVersion]] = None
 
     ITEM_TYPES = {
         u"public.heic": u"image",
@@ -662,9 +664,9 @@ class PhotoAsset(object):
         return 'unknown'
 
     @property
-    def versions(self) -> Dict[VersionSize, Dict[str, Any]]:
+    def versions(self) -> Dict[VersionSize, AssetVersion]:
         if not self._versions:
-            _versions: Dict[VersionSize, Dict[str, Any]] = {}
+            _versions: Dict[VersionSize, AssetVersion] = {}
             if self.item_type == "movie":
                 typed_version_lookup: Dict[VersionSize, str] = self.VIDEO_VERSION_LOOKUP
             else:
@@ -681,31 +683,33 @@ class PhotoAsset(object):
                 if f:
                     version: Dict[str, Any] = {'filename': self.filename}
 
-                    width_entry = f.get('%sWidth' % prefix)
-                    if width_entry:
-                        version['width'] = width_entry['value']
-                    else:
-                        version['width'] = None
+                    # width_entry = f.get('%sWidth' % prefix)
+                    # if width_entry:
+                    #     version['width'] = width_entry['value']
+                    # else:
+                    #     version['width'] = None
 
-                    height_entry = f.get('%sHeight' % prefix)
-                    if height_entry:
-                        version['height'] = height_entry['value']
-                    else:
-                        version['height'] = None
+                    # height_entry = f.get('%sHeight' % prefix)
+                    # if height_entry:
+                    #     version['height'] = height_entry['value']
+                    # else:
+                    #     version['height'] = None
 
                     size_entry = f.get('%sRes' % prefix)
                     if size_entry:
                         version['size'] = size_entry['value']['size']
                         version['url'] = size_entry['value']['downloadURL']
                     else:
-                        version['size'] = None
-                        version['url'] = None
+                        raise ValueError(f"Expected {prefix}Res, but missing it")
+                        # version['size'] = None
+                        # version['url'] = None
 
                     type_entry = f.get('%sFileType' % prefix)
                     if type_entry:
                         version['type'] = type_entry['value']
                     else:
-                        version['type'] = None
+                        raise ValueError(f"Expected {prefix}FileType, but missing it")
+                        # version['type'] = None
 
                     # Change live photo movie file extension to .MOV
                     if (self.item_type == "image" and
@@ -722,12 +726,12 @@ class PhotoAsset(object):
                         _f, _e = os.path.splitext(version["filename"])
                         version["filename"] = _f + f"-{_size_suffix}" + _e
 
-                    _versions[key] = version
+                    _versions[key] = AssetVersion(version["filename"], version['size'], version['url'], version['type'])
 
             # swap original & alternative according to swap_raw_policy
-            if AssetVersionSize.ALTERNATIVE in _versions and (("raw" in _versions[AssetVersionSize.ALTERNATIVE]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions[AssetVersionSize.ORIGINAL]["type"] and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
-                _a = dict(_versions[AssetVersionSize.ALTERNATIVE])
-                _o = dict(_versions[AssetVersionSize.ORIGINAL])
+            if AssetVersionSize.ALTERNATIVE in _versions and (("raw" in _versions[AssetVersionSize.ALTERNATIVE].type and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions[AssetVersionSize.ORIGINAL].type and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
+                _a = copy.copy(_versions[AssetVersionSize.ALTERNATIVE])
+                _o = copy.copy(_versions[AssetVersionSize.ORIGINAL])
                 _versions[AssetVersionSize.ALTERNATIVE] = _o
                 _versions[AssetVersionSize.ORIGINAL] = _a
 

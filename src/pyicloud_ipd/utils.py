@@ -1,9 +1,11 @@
+import copy
 import getpass
 import os
 from typing import Any, Callable, Dict, Optional, Sequence, TypeVar
 import keyring
 import sys
 
+from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
 from .exceptions import PyiCloudNoStoredPasswordAvailableException
@@ -97,43 +99,43 @@ def identity(value: _Tin) -> _Tin:
 #         return filename
 #     return (f"-{size}.").join(filename.rsplit(".", 1))
 
-def disambiguate_filenames(_versions: Dict[VersionSize, Dict[str, Any]], _sizes:Sequence[AssetVersionSize]) -> Dict[AssetVersionSize, Dict[str, Any]]:
-    _results: Dict[AssetVersionSize, Dict[str, Any]] = {}
+def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize]) -> Dict[AssetVersionSize, AssetVersion]:
+    _results: Dict[AssetVersionSize, AssetVersion] = {}
     # add those that were requested
     for _size in _sizes:
         _version = _versions.get(_size)
         if _version:
-            _results[_size] = _version.copy()
+            _results[_size] = copy.copy(_version)
 
     # adjusted
     if AssetVersionSize.ADJUSTED in _sizes:
         if AssetVersionSize.ORIGINAL not in _sizes:
             if AssetVersionSize.ADJUSTED not in _results:
                 # clone
-                _results[AssetVersionSize.ADJUSTED] = _versions[AssetVersionSize.ORIGINAL].copy()
+                _results[AssetVersionSize.ADJUSTED] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
         else:
-            if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ORIGINAL]["filename"] == _results[AssetVersionSize.ADJUSTED]["filename"]:
-                _n, _e = os.path.splitext(_results[AssetVersionSize.ADJUSTED]["filename"])
-                _results[AssetVersionSize.ADJUSTED]["filename"] = _n + "-adjusted" + _e
+            if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ADJUSTED].filename:
+                _n, _e = os.path.splitext(_results[AssetVersionSize.ADJUSTED].filename)
+                _results[AssetVersionSize.ADJUSTED].filename = _n + "-adjusted" + _e
 
     # alternative
     if AssetVersionSize.ALTERNATIVE in _sizes:
         if AssetVersionSize.ORIGINAL not in _sizes and AssetVersionSize.ADJUSTED not in _results:
             if AssetVersionSize.ALTERNATIVE not in _results:
                 # clone
-                _results[AssetVersionSize.ALTERNATIVE] = _versions[AssetVersionSize.ORIGINAL].copy()
+                _results[AssetVersionSize.ALTERNATIVE] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
         else:
             if AssetVersionSize.ALTERNATIVE in _results:
-                if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ADJUSTED]["filename"] == _results[AssetVersionSize.ALTERNATIVE]["filename"] or AssetVersionSize.ORIGINAL in _results and _results[AssetVersionSize.ORIGINAL]["filename"] == _results[AssetVersionSize.ALTERNATIVE]["filename"]:
-                    _n, _e = os.path.splitext(_results[AssetVersionSize.ALTERNATIVE]["filename"])
-                    _results[AssetVersionSize.ALTERNATIVE]["filename"] = _n + "-alternative" + _e
+                if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ADJUSTED].filename == _results[AssetVersionSize.ALTERNATIVE].filename or AssetVersionSize.ORIGINAL in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ALTERNATIVE].filename:
+                    _n, _e = os.path.splitext(_results[AssetVersionSize.ALTERNATIVE].filename)
+                    _results[AssetVersionSize.ALTERNATIVE].filename = _n + "-alternative" + _e
 
     for _size in _sizes:
         if _size not in [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE]:
             if _size not in _results:
                 # ensure original is downloaded - mimic existing behavior
                 if AssetVersionSize.ORIGINAL not in _sizes:
-                    _results[AssetVersionSize.ORIGINAL] = _versions[AssetVersionSize.ORIGINAL].copy()
+                    _results[AssetVersionSize.ORIGINAL] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
             # else:
             #     _n, _e = os.path.splitext(_results[_size]["filename"])
             #     _results[_size]["filename"] = f"{_n}-{_size}{_e}"
@@ -141,3 +143,9 @@ def disambiguate_filenames(_versions: Dict[VersionSize, Dict[str, Any]], _sizes:
 
     return _results
 
+_Tin2 = TypeVar("_Tin2")
+def get_property(prop_name: str, src: Dict[str, _Tin2]) -> Optional[_Tin2]:
+    return src.get(prop_name)
+
+def parse_res(filename:str, res: Dict[str, Any]) -> AssetVersion:
+    raise NotImplementedError()

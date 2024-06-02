@@ -73,12 +73,12 @@ def autodelete_photos(
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 paths.add(os.path.normpath(
                     local_download_path(
-                        _version["filename"], download_dir)))
+                        _version.filename, download_dir)))
         for _size, _version in media.versions.items():
             if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 paths.add(os.path.normpath(
                     local_download_path(
-                        _version["filename"], download_dir)))
+                        _version.filename, download_dir)))
         for path in paths:
             if os.path.exists(path):
                 logger.debug("Deleting %s...", path)
