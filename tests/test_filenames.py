@@ -235,7 +235,7 @@ class PathsTestCase(TestCase):
         _result = disambiguate_filenames(_setup, ["original", "adjusted", "alternative"])
         self.assertDictEqual(_result, _expect)
 
-    def test_disambiguate_filenames_keep_adj_alt_missing(self) -> None:
+    def test_disambiguate_filenames_keep_org_alt_missing(self) -> None:
         """ keep alt when it is missing """
         _setup: Dict[str, Dict[str, Any]] = {
             "original": {
