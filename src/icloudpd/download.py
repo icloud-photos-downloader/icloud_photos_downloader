@@ -15,6 +15,7 @@ from pyicloud_ipd.base import PyiCloudService
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
+from pyicloud_ipd.version_size import VersionSize
 
 
 def update_mtime(created: datetime.datetime, download_path: str) -> None:
@@ -105,7 +106,7 @@ def download_media(
         photo: PhotoAsset,
         download_path: str,
         version: Dict[str, Any],
-        size: str) -> bool:
+        size: VersionSize) -> bool:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
@@ -124,7 +125,7 @@ def download_media(
             logger.error(
                 "Could not find URL to download %s for size %s",
                 version["filename"],
-                size
+                size.value
             )
             break
 
