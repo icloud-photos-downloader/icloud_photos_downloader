@@ -121,9 +121,10 @@ def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]], _sizes:Sequence
                 # clone
                 _results["alternative"] = _versions["original"].copy()
         else:
-            if "adjusted" in _results and _results["adjusted"]["filename"] == _results["alternative"]["filename"] or "original" in _results and _results["original"]["filename"] == _results["alternative"]["filename"]:
-                _n, _e = os.path.splitext(_results["alternative"]["filename"])
-                _results["alternative"]["filename"] = _n + "-alternative" + _e
+            if "alternative" in _results:
+                if "adjusted" in _results and _results["adjusted"]["filename"] == _results["alternative"]["filename"] or "original" in _results and _results["original"]["filename"] == _results["alternative"]["filename"]:
+                    _n, _e = os.path.splitext(_results["alternative"]["filename"])
+                    _results["alternative"]["filename"] = _n + "-alternative" + _e
 
     for _size in _sizes:
         if _size not in ["original", "adjusted", "alternative"]:
@@ -134,6 +135,7 @@ def disambiguate_filenames(_versions: Dict[str, Dict[str, Any]], _sizes:Sequence
             # else:
             #     _n, _e = os.path.splitext(_results[_size]["filename"])
             #     _results[_size]["filename"] = f"{_n}-{_size}{_e}"
+
 
     return _results
 

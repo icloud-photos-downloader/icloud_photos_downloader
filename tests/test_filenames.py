@@ -234,3 +234,96 @@ class PathsTestCase(TestCase):
         }
         _result = disambiguate_filenames(_setup, ["original", "adjusted", "alternative"])
         self.assertDictEqual(_result, _expect)
+
+    def test_disambiguate_filenames_keep_adj_alt_missing(self) -> None:
+        """ keep alt when it is missing """
+        _setup: Dict[str, Dict[str, Any]] = {
+            "original": {
+                "filename": "IMG_1.HEIC"
+            },
+            "adjusted": {
+                "filename": "IMG_1.JPG"
+            },
+            "medium": {
+                "filename": "IMG_1.JPG"
+            },
+            "thumb": {
+                "filename": "IMG_1.JPG"
+            },
+            "originalVideo": {
+                "filename": "IMG_1.MOV"
+            },
+            "mediumVideo": {
+                "filename": "IMG_1.MOV"
+            },
+            "thumbVideo": {
+                "filename": "IMG_1.MOV"
+            },
+        }
+        _expect: Dict[str, Dict[str, Any]] = {
+            "original": {
+                "filename": "IMG_1.HEIC"
+            },
+        }
+        _result = disambiguate_filenames(_setup, ["original", "alternative"])
+        self.assertDictEqual(_result, _expect)
+
+    def test_disambiguate_filenames_keep_alt_missing(self) -> None:
+        """ keep alt when it is missing """
+        _setup: Dict[str, Dict[str, Any]] = {
+            "original": {
+                "filename": "IMG_1.HEIC"
+            },
+            "medium": {
+                "filename": "IMG_1.JPG"
+            },
+            "thumb": {
+                "filename": "IMG_1.JPG"
+            },
+            "originalVideo": {
+                "filename": "IMG_1.MOV"
+            },
+            "mediumVideo": {
+                "filename": "IMG_1.MOV"
+            },
+            "thumbVideo": {
+                "filename": "IMG_1.MOV"
+            },
+        }
+        _expect: Dict[str, Dict[str, Any]] = {
+            "alternative": {
+                "filename": "IMG_1.HEIC"
+            },
+        }
+        _result = disambiguate_filenames(_setup, ["alternative"])
+        self.assertDictEqual(_result, _expect)
+
+    def test_disambiguate_filenames_keep_adj_alt_missing(self) -> None:
+        """ keep alt when it is missing """
+        _setup: Dict[str, Dict[str, Any]] = {
+            "original": {
+                "filename": "IMG_1.HEIC"
+            },
+            "medium": {
+                "filename": "IMG_1.JPG"
+            },
+            "thumb": {
+                "filename": "IMG_1.JPG"
+            },
+            "originalVideo": {
+                "filename": "IMG_1.MOV"
+            },
+            "mediumVideo": {
+                "filename": "IMG_1.MOV"
+            },
+            "thumbVideo": {
+                "filename": "IMG_1.MOV"
+            },
+        }
+        _expect: Dict[str, Dict[str, Any]] = {
+            "adjusted": {
+                "filename": "IMG_1.HEIC"
+            },
+        }
+        _result = disambiguate_filenames(_setup, ["adjusted", "alternative"])
+        self.assertDictEqual(_result, _expect)        
