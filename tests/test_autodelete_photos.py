@@ -888,3 +888,201 @@ class AutodeletePhotosTestCase(TestCase):
         for file_name in files_to_delete:
             assert not os.path.exists(os.path.join(
                 data_dir, file_name)), f"{file_name} not expected, but present"
+
+    def test_autodelete_photos_lp(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_create = [
+            "2018/07/30/IMG_7407.JPG",
+            "2018/07/30/IMG_7407-original.JPG"
+        ]
+
+        files_to_delete = [
+            f"2018/07/30/IMG_7406.MOV",
+            f"2018/07/26/IMG_7383.PNG",
+            f"2018/07/12/IMG_7190.JPG",
+            f"2018/07/12/IMG_7190-medium.JPG",
+            f"2018/07/12/IMG_7190.MOV", # Live Photo for JPG
+        ]
+
+        # create some empty files
+        for file_name in files_to_create + files_to_delete:
+            path_name, _ = os.path.split(file_name)
+            os.makedirs(os.path.join(data_dir, path_name), exist_ok=True)
+            open(os.path.join(data_dir, file_name), "a").close()
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "autodelete_photos.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--skip-videos",
+                    "--auto-delete",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading 0 original photos to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+            self.assertIn(
+                "INFO     Deleting any files found in 'Recently Deleted'...",
+                self._caplog.text,
+            )
+
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
+                self._caplog.text,
+            )
+
+            self.assertNotIn("IMG_7407.JPG", self._caplog.text)
+            self.assertNotIn("IMG_7407-original.JPG", self._caplog.text)
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_create)
+
+        # check files
+        for file_name in files_to_create:
+            assert os.path.exists(os.path.join(
+                data_dir, file_name)), f"{file_name} expected, but missing"
+
+        for file_name in files_to_delete:
+            assert not os.path.exists(os.path.join(
+                data_dir, file_name)), f"{file_name} not expected, but present"
+
+    def test_autodelete_photos_lp_heic(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_create = [
+            "2018/07/30/IMG_7407.JPG",
+            "2018/07/30/IMG_7407-original.JPG"
+        ]
+
+        files_to_delete = [
+            f"2018/07/30/IMG_7406.MOV",
+            f"2018/07/26/IMG_7383.PNG",
+            f"2018/07/12/IMG_7190.HEIC", # SU1HXzcxOTAuSlBH -> SU1HXzcxOTAuSEVJQw==
+            f"2018/07/12/IMG_7190-medium.JPG",
+            f"2018/07/12/IMG_7190_HEVC.MOV", # Live Photo for HEIC
+        ]
+
+        # create some empty files
+        for file_name in files_to_create + files_to_delete:
+            path_name, _ = os.path.split(file_name)
+            os.makedirs(os.path.join(data_dir, path_name), exist_ok=True)
+            open(os.path.join(data_dir, file_name), "a").close()
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "autodelete_photos_heic.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(env={
+                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+            })
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--skip-videos",
+                    "--auto-delete",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading 0 original photos to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+            self.assertIn(
+                "INFO     Deleting any files found in 'Recently Deleted'...",
+                self._caplog.text,
+            )
+
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
+                self._caplog.text,
+            )
+
+            self.assertNotIn("IMG_7407.JPG", self._caplog.text)
+            self.assertNotIn("IMG_7407-original.JPG", self._caplog.text)
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(
+            data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_create)
+
+        # check files
+        for file_name in files_to_create:
+            assert os.path.exists(os.path.join(
+                data_dir, file_name)), f"{file_name} expected, but missing"
+
+        for file_name in files_to_delete:
+            assert not os.path.exists(os.path.join(
+                data_dir, file_name)), f"{file_name} not expected, but present"
