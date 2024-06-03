@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.19.1 (2024-06-02)
+
 - fix: KeyError alternative [#859](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/859)
 
 ## 1.19.0 (2024-05-31)

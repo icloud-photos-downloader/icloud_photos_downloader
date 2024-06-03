@@ -121,21 +121,21 @@ scripts/build
 Building platform executables:
 
 ``` sh
-scripts/build_bin_linux 1.19.0 amd64
+scripts/build_bin_linux 1.19.1 amd64
 ```
 Note: that command is for Linux, including devcontainers. Windows & MacOS scripts must be executed on respective platforms.
 
 Building Python wheels (with single executables; platform-specific):
 
 ``` sh
-scripts/build_binary_dist_linux 1.19.0
+scripts/build_binary_dist_linux 1.19.1
 ```
 Note: that the step expects executables to be already prepared by previous step
 
 Building NPM packages (with single executables; platform-specific):
 
 ``` sh
-scripts/build_npm 1.19.0
+scripts/build_npm 1.19.1
 ```
 Note: that the step expects executables to be already prepared by previous steps
 
@@ -180,4 +180,4 @@ We have github actions taking care for building, testing, and releasing software
 - Update CHANGELOG.md with release changes if they were not added with commits
 - Update CHANGELOG.md with date of the release
 - Commit & push changes (either directly or through pull requests)
-- Add version tag to head (`git tag v1.19.0`) and push it to master (`git push origin v1.19.0` ) -- there seems to be no way to do that in UI
+- Add version tag to head (`git tag v1.19.1`) and push it to master (`git push origin v1.19.1` ) -- there seems to be no way to do that in UI
