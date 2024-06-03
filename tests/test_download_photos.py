@@ -15,6 +15,7 @@ from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
 from icloudpd import constants
+from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotoLibrary
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -951,7 +952,7 @@ class DownloadPhotoTestCase(TestCase):
                 ut_patched.return_value = None
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
-                    pa.return_value = {AssetVersionSize.ORIGINAL: {"filename": "IMG_7409.JPG"}, AssetVersionSize.MEDIUM: {"filename":"IMG_7409.JPG"}}
+                    pa.return_value = {AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"), AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie")}
 
                     with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                         # Pass fixed client ID via environment variable

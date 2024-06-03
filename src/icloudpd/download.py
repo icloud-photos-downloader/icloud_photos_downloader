@@ -9,6 +9,7 @@ from typing import Any, Dict
 from requests import Response
 from tzlocal import get_localzone
 from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.base import PyiCloudService
@@ -105,7 +106,7 @@ def download_media(
         icloud: PyiCloudService,
         photo: PhotoAsset,
         download_path: str,
-        version: Dict[str, Any],
+        version: AssetVersion,
         size: VersionSize) -> bool:
     """Download the photo to path, with retries and error handling"""
 
@@ -117,14 +118,14 @@ def download_media(
 
     for retries in range(constants.MAX_RETRIES):
         try:
-            photo_response = photo.download(version["url"])
+            photo_response = photo.download(version.url)
             if photo_response:
                 return download_local(
                     logger, photo_response, download_path, photo.created)
 
             logger.error(
                 "Could not find URL to download %s for size %s",
-                version["filename"],
+                version.filename,
                 size.value
             )
             break
