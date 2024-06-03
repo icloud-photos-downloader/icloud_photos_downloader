@@ -179,5 +179,5 @@ We have github actions taking care for building, testing, and releasing software
 - Bump version in all files, including all source files
 - Update CHANGELOG.md with release changes if they were not added with commits
 - Update CHANGELOG.md with date of the release
-- Commit & push/merge changes
-- Add version tag to head and push to master -- there seems to be no way to do that in UI and seems to be better not to mix with prev steps that require merge
+- Commit & push changes (either directly or through pull requests)
+- Add version tag to head (`git tag v1.19.0`) and push it to master (`git push origin v1.19.0` ) -- there seems to be no way to do that in UI
