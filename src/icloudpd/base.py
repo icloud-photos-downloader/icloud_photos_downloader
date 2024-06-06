@@ -2,6 +2,7 @@
 """Main script that uses Click to parse command-line arguments"""
 from __future__ import print_function
 import getpass
+import typing
 
 from click import Option, Parameter
 from icloudpd.counter import Counter
@@ -13,7 +14,6 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
-from pyicloud_ipd.password_provider import PasswordProvider
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -93,9 +93,10 @@ def size_generator(_ctx: click.Context, _param: click.Parameter, sizes: Sequence
     return [_map(_s) for _s in sizes]
 
 def ask_password_in_console(_user:str) -> Optional[str]:
-    return getpass.getpass(
-            f'Enter iCloud password for {_user}: '
-        )
+    return typing.cast(Optional[str], click.prompt("iCloud Password", hide_input=True))
+    # return getpass.getpass(
+    #         f'iCloud Password for {_user}:'
+    #     )
 
 def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
     _with_password = [_p for _p in _params if _name in _p.name]
@@ -373,7 +374,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               "password_providers",
               help="Specifies passwords provider to check in the specified order",
               type=click.Choice(['console', 'keyring', 'parameter'], case_sensitive=False),
-              default=["parameter", "console", "keyring"],
+              default=["parameter", "keyring", "console"],
               show_default=True,
               multiple=True,
               callback=password_provider_generator,

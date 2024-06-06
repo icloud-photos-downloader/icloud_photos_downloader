@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- feature: customize order of checking for password with `--password-provider` parameter
+- feature: customize choice and the order of checking for password with `--password-provider` parameter
 
 ## 1.19.1 (2024-06-02)
 
