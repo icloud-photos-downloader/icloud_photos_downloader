@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 from __future__ import print_function
+import getpass
+
+from click import Option, Parameter
 from icloudpd.counter import Counter
 from icloudpd import constants
 from icloudpd import exif_datetime
@@ -10,6 +13,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.password_provider import PasswordProvider
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -19,7 +23,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tqdm import tqdm
 import click
 import urllib
-from typing import Callable, Iterable, NoReturn, Optional, Sequence, TypeVar, cast
+from typing import Callable, Dict, Iterable, List, NoReturn, Optional, Sequence, Tuple, TypeVar, cast
 import json
 import subprocess
 import itertools
@@ -31,7 +35,7 @@ import sys
 import os
 from multiprocessing import freeze_support
 
-from pyicloud_ipd.utils import compose, disambiguate_filenames, identity
+from pyicloud_ipd.utils import compose, constant, disambiguate_filenames, get_password_from_keyring, identity, store_password_in_keyring
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 freeze_support()  # fixing tqdm on macos
 
@@ -88,6 +92,37 @@ def size_generator(_ctx: click.Context, _param: click.Parameter, sizes: Sequence
             raise ValueError(f"size was provided with unsupported value of '{size}'")    
     return [_map(_s) for _s in sizes]
 
+def ask_password_in_console(_user:str) -> Optional[str]:
+    return getpass.getpass(
+            f'Enter iCloud password for {_user}: '
+        )
+
+def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
+    _with_password = [_p for _p in _params if _name in _p.name]
+    if len(_with_password) == 0:
+        return None
+    return _with_password[0]
+
+def dummy_password_writter(_u:str, _p:str) -> None:
+    pass
+
+def password_provider_generator(_ctx: click.Context, _param: click.Parameter, providers: Sequence[str]) -> Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]:
+    def _map(provider: str) -> Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]:
+        if provider == "console":
+            return (ask_password_in_console, dummy_password_writter)
+        elif provider == "keyring":
+            return (get_password_from_keyring, store_password_in_keyring)
+        elif provider == "parameter":
+            # TODO get from parameter
+            # _param: Optional[Parameter] = get_click_param_by_name("password", _ctx.command.params)
+            # if _param:
+            #     _password: str = _param.consume_value(_ctx, {})
+            #     return constant(_password)
+            return (constant(None), dummy_password_writter)
+        else:
+            raise ValueError(f"password provider was given an unsupported value of '{provider}'")    
+    return dict([(_s, _map(_s)) for _s in providers])
+
 def lp_size_generator(_ctx: click.Context, _param: click.Parameter, size: str) -> LivePhotoVersionSize:
     if size == "original":
         return LivePhotoVersionSize.ORIGINAL
@@ -121,6 +156,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     help="Your iCloud password "
     "(default: use PyiCloud keyring or prompt for password)",
     metavar="<password>",
+    # is_eager=True,
 )
 @click.option(
     "--auth-only",
@@ -333,6 +369,15 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               show_default=True,
               callback=raw_policy_generator,
               )
+@click.option("--password-provider",
+              "password_providers",
+              help="Specifies passwords provider to check in the specified order",
+              type=click.Choice(['console', 'keyring', 'parameter'], case_sensitive=False),
+              default=["parameter", "console", "keyring"],
+              show_default=True,
+              multiple=True,
+              callback=password_provider_generator,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.19.1")
@@ -377,6 +422,7 @@ def main(
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
         raw_policy:RawTreatmentPolicy,
+        password_providers: Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]],
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -415,6 +461,18 @@ def main(
                 list_albums or only_print_filenames):  # pragma: no cover
             print(
                 '--watch_with_interval is not compatible with --list_albums, --only_print_filenames'
+            )
+            sys.exit(2)
+
+
+        # hacky way to use one param in another
+        if password and "parameter" in password_providers:
+            # replace
+            password_providers["parameter"] = (constant(password), lambda _r, _w: None)
+
+        if len(password_providers) == 0:  # pragma: no cover
+            print(
+                'You need to specify at least one --password-provider'
             )
             sys.exit(2)
 
@@ -467,7 +525,9 @@ def main(
                 dry_run, 
                 filename_cleaner,
                 lp_filename_generator,
-                raw_policy))
+                raw_policy,
+                password_providers,
+                ))
 
 
 
@@ -855,7 +915,8 @@ def core(
         dry_run: bool,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
-        raw_policy: RawTreatmentPolicy
+        raw_policy: RawTreatmentPolicy,
+        password_providers: Dict[str,Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]],
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -865,9 +926,8 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy)(
+        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy, password_providers)(
             username,
-            password,
             cookie_directory,
             raise_error_on_2sa,
             os.environ.get("CLIENT_ID"),

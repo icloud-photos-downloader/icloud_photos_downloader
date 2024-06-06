@@ -58,12 +58,9 @@ class PyiCloudService:
         lp_filename_generator: Callable[[str], str],
         domain:str, 
         raw_policy: RawTreatmentPolicy,
-        apple_id: str, password:Optional[str]=None, cookie_directory:Optional[str]=None, verify:bool=True,
+        apple_id: str, password:str, cookie_directory:Optional[str]=None, verify:bool=True,
         client_id:Optional[str]=None, with_family:bool=True,
     ):
-        if password is None:
-            password = get_password_from_keyring(apple_id)
-
         self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy

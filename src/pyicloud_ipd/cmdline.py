@@ -191,10 +191,10 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
         if not username:
             parser.error("No username supplied")
 
-        if not password:
-            password = utils.get_password(
-                username, interactive=command_line.interactive
-            )
+        # if not password:
+        #     password = utils.get_password(
+        #         username, interactive=command_line.interactive
+        #     )
 
         if not password:
             parser.error("No password supplied")

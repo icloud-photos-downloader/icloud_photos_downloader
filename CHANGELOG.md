@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: customize order of checking for password with `--password-provider` parameter
+
 ## 1.19.1 (2024-06-02)
 
 - fix: KeyError alternative [#859](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/859)
