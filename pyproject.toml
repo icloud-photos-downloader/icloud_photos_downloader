@@ -31,6 +31,8 @@ dependencies = [
     "piexif==1.1.3",
     "urllib3==1.26.16",
     "typing_extensions==4.11.0",
+    "Flask==3.0.3",
+    "waitress==3.0.0",
     # from pyicloud_ipd
     "six==1.16.0",
     "tzlocal==5.1",
@@ -73,6 +75,7 @@ test = [
     "types-urllib3==1.26.16",
     "types-tqdm==4.66.0.20240417",
     "types-mock==5.1.0.1"
+    "types-waitress==3.0.0.20240423",
 ]
 
 [project.urls]

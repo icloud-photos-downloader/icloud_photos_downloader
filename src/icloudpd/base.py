@@ -548,8 +548,7 @@ def main(
             print("You need to specify at least one --password-provider")
             sys.exit(2)
 
-        sys.exit(
-            core(
+        result = core(
                 download_builder(
                     logger,
                     skip_videos,
@@ -600,8 +599,8 @@ def main(
                 raw_policy,
                 file_match_policy,
                 password_providers,
-            )
-        )
+                )
+        sys.exit(result)
 
 
 def download_builder(
