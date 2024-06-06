@@ -98,11 +98,11 @@ def ask_password_in_console(_user:str) -> Optional[str]:
     #         f'iCloud Password for {_user}:'
     #     )
 
-def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
-    _with_password = [_p for _p in _params if _name in _p.name]
-    if len(_with_password) == 0:
-        return None
-    return _with_password[0]
+# def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
+#     _with_password = [_p for _p in _params if _name in _p.name]
+#     if len(_with_password) == 0:
+#         return None
+#     return _with_password[0]
 
 def dummy_password_writter(_u:str, _p:str) -> None:
     pass
