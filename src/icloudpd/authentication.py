@@ -2,7 +2,7 @@
 
 import logging
 import sys
-from typing import Callable, Optional
+from typing import Callable, Dict, Optional, Sequence, Tuple
 import click
 import pyicloud_ipd
 from pyicloud_ipd.base import PyiCloudService
@@ -16,34 +16,48 @@ class TwoStepAuthRequiredError(Exception):
     """
 
 
-def authenticator(logger: logging.Logger, domain: str, filename_cleaner: Callable[[str], str], lp_filename_generator: Callable[[str], str], raw_policy:RawTreatmentPolicy) -> Callable[[str, Optional[str], Optional[str], bool, Optional[str]], PyiCloudService]:
+def authenticator(
+        logger: logging.Logger, 
+        domain: str, 
+        filename_cleaner: Callable[[str], str], 
+        lp_filename_generator: Callable[[str], str], 
+        raw_policy:RawTreatmentPolicy, 
+        password_providers: Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
     """Wraping authentication with domain context"""
     def authenticate_(
             username:str,
-            password:Optional[str],
             cookie_directory:Optional[str]=None,
             raise_error_on_2sa:bool=False,
             client_id:Optional[str]=None,
     ) -> PyiCloudService:
         """Authenticate with iCloud username and password"""
         logger.debug("Authenticating...")
-        while True:
-            try:
-                # If password not provided on command line variable will be set to None
-                # and PyiCloud will attempt to retrieve from its keyring
+        icloud: Optional[PyiCloudService] = None
+        _valid_password: Optional[str] = None
+        for _, _pair in password_providers.items():
+            _reader, _ = _pair
+            _password = _reader(username)
+            if _password:
                 icloud = PyiCloudService(
                     filename_cleaner,
                     lp_filename_generator,
                     domain,
                     raw_policy,
-                    username, password,
+                    username, _password,
                     cookie_directory=cookie_directory,
                     client_id=client_id,
                 )
+                _valid_password = _password
                 break
-            except pyicloud_ipd.exceptions.PyiCloudNoStoredPasswordAvailableException:
-                # Prompt for password if not stored in PyiCloud's keyring
-                password = click.prompt("iCloud Password", hide_input=True)
+
+        if not icloud:
+            raise NotImplementedError("None of providers gave password")
+        
+        if _valid_password:
+            # save valid password to all providers
+            for _, _pair in password_providers.items():
+                _, _writer = _pair
+                _writer(username, _valid_password)
 
         if icloud.requires_2fa:
             if raise_error_on_2sa:
@@ -69,7 +83,7 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     """Request two-step authentication. Prompts for SMS or device"""
     devices = icloud.trusted_devices
     devices_count = len(devices)
-    device_index = 0
+    device_index: int = 0
     if devices_count > 0:
         for i, device in enumerate(devices):
             # pylint: disable-msg=consider-using-f-string
@@ -82,7 +96,7 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
 
         device_index = click.prompt(
             "Please choose an option:",
-            default=0,
+            default="0",
             type=click.IntRange(
                 0,
                 devices_count - 1))
