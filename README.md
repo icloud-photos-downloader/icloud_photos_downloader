@@ -2,7 +2,7 @@
 
 - A command-line tool to download all your iCloud photos.
 - Works on Linux, Windows, and MacOS; laptop, desktop, and NAS
-- Available as an executable for direct downloading and through package managers/ecosystems ([Docker](README_DOCKER.md), [PyPI](README_PYPI.md), [AUR](README_AUR.md), Experimental: [Npm](README_NPM.md))
+- Available as an executable for direct downloading and through package managers/ecosystems ([Docker](README_DOCKER.md), [PyPI](README_PYPI.md), [AUR](README_AUR.md), [Npm](README_NPM.md))
 - Developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)). 
 
 We aim to release new versions once a week (Friday), if there is something worth delivering.
@@ -11,7 +11,7 @@ We aim to release new versions once a week (Friday), if there is something worth
 
 There are three ways to run `icloudpd`:
 1. Download executable for your platform from the Github [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) and run it
-1. Use package manager to install, update, and, in some cases, run ([Docker](README_DOCKER.md), [PyPI](README_PYPI.md), [AUR](README_AUR.md), Experimental: [Npm](README_NPM.md))
+1. Use package manager to install, update, and, in some cases, run ([Docker](README_DOCKER.md), [PyPI](README_PYPI.md), [AUR](README_AUR.md), [Npm](README_NPM.md))
 1. Build and run from the source
 
 ## Features

@@ -2,7 +2,7 @@
 
 A command-line tool to download all your iCloud photos.
 
-## [EXPERIMENTAL] Install, Run, and Use
+## Install, Run, and Use
 
 ``` sh
 npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
