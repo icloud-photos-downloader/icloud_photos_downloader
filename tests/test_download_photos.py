@@ -22,7 +22,7 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from requests.exceptions import ConnectionError
 from icloudpd.base import main
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-from tests.helpers import path_from_project_root, print_result_exception, recreate_path
+from tests.helpers import assert_files, combine_file_lists, create_files, path_from_project_root, print_result_exception, recreate_path
 import inspect
 import glob
 
@@ -46,18 +46,15 @@ class DownloadPhotoTestCase(TestCase):
             recreate_path(dir)
 
         files_to_create = [
-            ("2018/07/30/IMG_7408.JPG", 1151066),
-            ("2018/07/30/IMG_7407.JPG", 656257),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
         ]
 
         files_to_download = [
-            '2018/07/31/IMG_7409.JPG'
+            ("2018/07/31", "IMG_7409.JPG")
         ]
 
-        os.makedirs(os.path.join(data_dir, "2018/07/30/"))
-        for (file_name, file_size) in files_to_create:
-            with open(os.path.join(data_dir, file_name), "a") as f:
-                f.truncate(file_size)
+        create_files(data_dir, files_to_create)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
@@ -93,22 +90,23 @@ class DownloadPhotoTestCase(TestCase):
                 f"INFO     Downloading 5 original photos to {data_dir} ...",
                 self._caplog.text,
             )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                self._caplog.text,
-            )
+            for dir_name, file_name in files_to_download:
+                file_path = os.path.join(dir_name, file_name)
+                self.assertIn(
+                    f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
+                    self._caplog.text,
+                )
             self.assertNotIn(
                 "IMG_7409.MOV",
                 self._caplog.text,
             )
-            self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/30/IMG_7407.JPG'))} already exists",
-                self._caplog.text,
-            )
+            for dir_name, file_name in ([(dir_name, file_name) for (dir_name, file_name, _) in files_to_create]):
+                file_path = os.path.join(dir_name, file_name)
+                self.assertIn(
+                    f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
+                    self._caplog.text,
+                )
+
             self.assertIn(
                 "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
                 self._caplog.text,
@@ -123,15 +121,18 @@ class DownloadPhotoTestCase(TestCase):
 
             assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
+        files_to_assert = combine_file_lists(files_to_create, files_to_download)
+        assert_files(self.assertTrue, data_dir, files_to_assert)
 
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
+        # files_in_result = glob.glob(os.path.join(
+        #     data_dir, "**/*.*"), recursive=True)
 
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        # assert sum(1 for _ in files_in_result) == len(
+        #     files_to_create) + len(files_to_download)
+
+        # for dir_name, file_name in files_to_download + ([(dir_name, file_name) for (dir_name, file_name, _) in files_to_create]):
+        #     file_path = os.path.join(dir_name, file_name)
+        #     assert os.path.exists(os.path.join(data_dir, file_path)), f"File {file_path} expected, but does not exist"
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
