@@ -4,11 +4,11 @@
 name: Produce Artifacts
 
 on: 
-  # pull_request:
+  pull_request:
     # branches: [ master ]
   workflow_dispatch:
-    branches:
-      - '**'
+    # branches:
+    #   - '**'
 
 
 jobs:
