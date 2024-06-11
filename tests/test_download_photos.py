@@ -50,7 +50,7 @@ class DownloadPhotoTestCase(TestCase):
         ]
 
         data_dir, result = run_icloudpd_test(
-            self.assertTrue, 
+            self.assertEqual, 
             self.vcr_path, 
             base_dir, 
             "listing_photos.yml",
@@ -150,7 +150,7 @@ class DownloadPhotoTestCase(TestCase):
             ) as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
-                    self.assertTrue, 
+                    self.assertEqual, 
                     self.vcr_path, 
                     base_dir, 
                     "listing_photos.yml",
@@ -206,7 +206,7 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch.object(piexif, "load") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
 
-            data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
+            data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -254,7 +254,7 @@ class DownloadPhotoTestCase(TestCase):
             ("2018/07/31","IMG_7409.MOV", 3294075),
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", files_to_create, [],
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", files_to_create, [],
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -321,7 +321,7 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
                 data_dir, result = run_icloudpd_test(
-                    self.assertTrue, 
+                    self.assertEqual, 
                     self.vcr_path, 
                     base_dir, 
                     "listing_photos.yml", 
@@ -388,7 +388,7 @@ class DownloadPhotoTestCase(TestCase):
             m.side_effect = IOError
 
             data_dir, result = run_icloudpd_test(
-                self.assertTrue, 
+                self.assertEqual, 
                 self.vcr_path, 
                 base_dir, 
                 "listing_photos.yml",
@@ -448,7 +448,7 @@ class DownloadPhotoTestCase(TestCase):
                 ):
                     # Pass fixed client ID via environment variable
                     _, result = run_icloudpd_test(
-                        self.assertTrue, 
+                        self.assertEqual, 
                         self.vcr_path, 
                         base_dir, 
                         "listing_photos.yml", 
@@ -509,7 +509,7 @@ class DownloadPhotoTestCase(TestCase):
                     PyiCloudService, "authenticate", new=mocked_authenticate
                 ):
                     # Pass fixed client ID via environment variable
-                    _, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -564,7 +564,7 @@ class DownloadPhotoTestCase(TestCase):
                 with mock.patch.object(
                     PyiCloudService, "authenticate", new=mocked_authenticate
                 ):
-                    _, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -616,7 +616,7 @@ class DownloadPhotoTestCase(TestCase):
                 with mock.patch.object(
                     PyiCloudService, "authenticate", new=mocked_authenticate
                 ):
-                    _, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -641,7 +641,7 @@ class DownloadPhotoTestCase(TestCase):
             pa_download.return_value = False
 
             data_dir, result = run_icloudpd_test(
-                self.assertTrue, 
+                self.assertEqual, 
                 self.vcr_path, 
                 base_dir, 
                 "listing_photos.yml", 
@@ -706,7 +706,7 @@ class DownloadPhotoTestCase(TestCase):
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
                     pa.return_value = {AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"), AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie")}
 
-                    data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                             [
                                 "--username",
                                 "jdoe@gmail.com",
@@ -758,7 +758,7 @@ class DownloadPhotoTestCase(TestCase):
                 pa.return_value = {AssetVersionSize.ORIGINAL: { "filename": "IMG1.JPG"}, AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"}}
 
                 data_dir, result = run_icloudpd_test(
-                    self.assertTrue, 
+                    self.assertEqual, 
                     self.vcr_path, 
                     base_dir, 
                     "listing_photos.yml",
@@ -815,7 +815,7 @@ class DownloadPhotoTestCase(TestCase):
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
             data_dir, result = run_icloudpd_test(
-                self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
+                self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -870,7 +870,7 @@ class DownloadPhotoTestCase(TestCase):
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
-            data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
+            data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -915,7 +915,7 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch.object(PhotoAsset, "item_type", new_callable=mock.PropertyMock) as it_mock:
                 it_mock.return_value = 'unknown'
 
-                data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -976,7 +976,7 @@ class DownloadPhotoTestCase(TestCase):
             return mock.MagicMock()
 
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", files_to_create,files_to_download,
+            data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", files_to_create,files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",

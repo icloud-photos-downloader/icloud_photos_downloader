@@ -44,19 +44,25 @@ def create_files(data_dir:str, files_to_create: Sequence[Tuple[str, str, int]]) 
 
 # class IterableAdd(SupportsAdd, Iterable, Protocol): ...
 
+
 def combine_file_lists(files_to_create: Sequence[Tuple[str, str, int]], files_to_download: List[Tuple[str, str]]) -> Sequence[Tuple[str, str]]:
     return ([(dir_name, file_name) for (dir_name, file_name, _) in files_to_create]) + files_to_download
 
-def assert_files(assert_func: Callable[[bool, str], None], data_dir: str, files_to_assert: Sequence[Tuple[str, str]]) -> None:
+_T = TypeVar("_T")
+
+class AssertEquality(Protocol):
+    def __call__(self, __first: _T, __second: _T, __msg: str) -> None: ...
+
+def assert_files(assert_equal: AssertEquality, data_dir: str, files_to_assert: Sequence[Tuple[str, str]]) -> None:
         files_in_result = glob.glob(os.path.join(
             data_dir, "**/*.*"), recursive=True)
 
-        assert_func(sum(1 for _ in files_in_result) == len(files_to_assert), "File count does not match")
+        assert_equal(sum(1 for _ in files_in_result), len(files_to_assert), "File count does not match")
 
         for dir_name, file_name in files_to_assert:
             normalized_dir_name = os.path.normpath(dir_name)
             file_path = os.path.join(normalized_dir_name, file_name)
-            assert_func(os.path.exists(os.path.join(data_dir, file_path)), f"File {file_path} expected, but does not exist")
+            assert_equal(os.path.exists(os.path.join(data_dir, file_path)), True, f"File {file_path} expected, but does not exist")
 
 def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
     with vcr.use_cassette(cassette_path):
@@ -72,7 +78,7 @@ def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
         return result
 
 def run_icloudpd_test(
-        assert_true: Callable[[bool, str], None], 
+        assert_equal: AssertEquality, 
         vcr_path:str, 
         base_dir: str, 
         cassette_filename: str, 
@@ -97,6 +103,6 @@ def run_icloudpd_test(
         )
 
     files_to_assert = combine_file_lists(files_to_create, files_to_download)
-    assert_files(assert_true, data_dir, files_to_assert)
+    assert_files(assert_equal, data_dir, files_to_assert)
     
     return (data_dir, result)
