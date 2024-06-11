@@ -696,11 +696,6 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_size_fallback_to_original(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -711,13 +706,7 @@ class DownloadPhotoTestCase(TestCase):
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
                     pa.return_value = {AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"), AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie")}
 
-                    with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                        # Pass fixed client ID via environment variable
-                        runner = CliRunner(env={
-                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                        })
-                        result = runner.invoke(
-                            main,
+                    data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                             [
                                 "--username",
                                 "jdoe@gmail.com",
@@ -730,52 +719,37 @@ class DownloadPhotoTestCase(TestCase):
                                 "--no-progress-bar",
                                 "--threads-num",
                                 "1",
-                                "-d",
-                                data_dir,
-                                "--cookie-directory",
-                                cookie_dir,
                             ],
                         )
-                        print_result_exception(result)
-                        self.assertIn(
-                            "DEBUG    Looking up all photos and videos from album All Photos...",
-                            self._caplog.text,
-                        )
-                        self.assertIn(
-                            f"INFO     Downloading the first thumb photo or video to {data_dir} ...",
-                            self._caplog.text,
-                        )
-                        self.assertIn(
-                            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                            self._caplog.text,
-                        )
-                        self.assertIn(
-                            "INFO     All photos have been downloaded", self._caplog.text
-                        )
-                        dp_patched.assert_called_once_with(
-                            ANY,
-                            False,
-                            ANY,
-                            ANY,
-                            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                            ANY,
-                            AssetVersionSize.ORIGINAL,
-                        )
+                    self.assertIn(
+                        "DEBUG    Looking up all photos and videos from album All Photos...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"INFO     Downloading the first thumb photo or video to {data_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded", self._caplog.text
+                    )
+                    dp_patched.assert_called_once_with(
+                        ANY,
+                        False,
+                        ANY,
+                        ANY,
+                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        ANY,
+                        AssetVersionSize.ORIGINAL,
+                    )
 
-                        assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+                    assert result.exit_code == 0
 
     def test_force_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -783,13 +757,13 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
                 pa.return_value = {AssetVersionSize.ORIGINAL: { "filename": "IMG1.JPG"}, AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"}}
 
-                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                    # Pass fixed client ID via environment variable
-                    runner = CliRunner(env={
-                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    })
-                    result = runner.invoke(
-                        main,
+                data_dir, result = run_icloudpd_test(
+                    self.assertTrue, 
+                    self.vcr_path, 
+                    base_dir, 
+                    "listing_photos.yml",
+                    [], 
+                    [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -803,48 +777,33 @@ class DownloadPhotoTestCase(TestCase):
                             "--no-progress-bar",
                             "--threads-num",
                             "1",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
                         ],
                     )
-                    print_result_exception(result)
 
-                    self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        f"INFO     Downloading the first thumb photo or video to {data_dir} ...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded", self._caplog.text
-                    )
-                    dp_patched.assert_not_called
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    f"INFO     Downloading the first thumb photo or video to {data_dir} ...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     All photos have been downloaded", self._caplog.text
+                )
+                dp_patched.assert_not_called
 
-                    assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+                assert result.exit_code == 0
 
     def test_invalid_creation_date(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         files_to_download = [
-            '2018/01/01/IMG_7409.JPG'
+            ('2018/01/01', 'IMG_7409.JPG')
         ]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
@@ -855,13 +814,8 @@ class DownloadPhotoTestCase(TestCase):
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
-            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
-                result = runner.invoke(
-                    main,
+            data_dir, result = run_icloudpd_test(
+                self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -873,43 +827,29 @@ class DownloadPhotoTestCase(TestCase):
                         "--no-progress-bar",
                         "--threads-num",
                         "1",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
                     ],
                 )
-                print_result_exception(result)
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
-                assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(files_to_download)
-
-        for file_name in files_to_download:
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+            self.assertIn(
+                "DEBUG    Looking up all photos and videos from album All Photos...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Downloading the first original photo or video to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+            assert result.exit_code == 0
 
     @pytest.mark.skipif(sys.platform == 'win32',
                         reason="does not run on windows")
@@ -917,14 +857,9 @@ class DownloadPhotoTestCase(TestCase):
                         reason="does not run on mac")
     def test_invalid_creation_year(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         files_to_download = [
-            '5/01/01/IMG_7409.JPG'
+            ('5/01/01', 'IMG_7409.JPG')
         ]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
@@ -935,13 +870,7 @@ class DownloadPhotoTestCase(TestCase):
                     raise ValueError('Invalid date')
             dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
-            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
-                result = runner.invoke(
-                    main,
+            data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -953,51 +882,32 @@ class DownloadPhotoTestCase(TestCase):
                         "--no-progress-bar",
                         "--threads-num",
                         "1",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
                     ],
                 )
-                print_result_exception(result)
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
-                assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(files_to_download)
-
-        for file_name in files_to_download:
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+            self.assertIn(
+                "DEBUG    Looking up all photos and videos from album All Photos...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"INFO     Downloading the first original photo or video to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
+            assert result.exit_code == 0
 
     def test_unknown_item_type(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
@@ -1005,13 +915,7 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch.object(PhotoAsset, "item_type", new_callable=mock.PropertyMock) as it_mock:
                 it_mock.return_value = 'unknown'
 
-                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                    # Pass fixed client ID via environment variable
-                    runner = CliRunner(env={
-                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    })
-                    result = runner.invoke(
-                        main,
+                data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -1022,56 +926,44 @@ class DownloadPhotoTestCase(TestCase):
                             "--no-progress-bar",
                             "--threads-num",
                             "1",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
                         ],
                     )
-                    print_result_exception(result)
 
-                    self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "DEBUG    Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
-                        self._caplog.text,
-                    )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded", self._caplog.text
-                    )
-                    dp_patched.assert_not_called
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    f"INFO     Downloading the first original photo or video to {data_dir} ...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "DEBUG    Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    "INFO     All photos have been downloaded", self._caplog.text
+                )
+                dp_patched.assert_not_called
 
-                    assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+                assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
+        files_to_create = [
+            ("2018/07/31", "IMG_7409.JPG", 1),
+            ("2018/07/31", "IMG_7409.MOV",1),
+            ("2018/07/30", "IMG_7408.JPG",1151066),
+            ("2018/07/30", "IMG_7408.MOV",1606512),
+        ]
 
-        os.makedirs(os.path.join(data_dir, os.path.normpath("2018/07/31/")))
-        with open(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")), "a") as f:
-            f.truncate(1)
-        with open(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.MOV")), "a") as f:
-            f.truncate(1)
-        os.makedirs(os.path.join(data_dir, os.path.normpath("2018/07/30/")))
-        with open(os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")), "a") as f:
-            f.truncate(1151066)
-        with open(os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")), "a") as f:
-            f.truncate(1606512)
+        files_to_download = [
+            ("2018/07/31", "IMG_7409-1884695.JPG"),
+            ("2018/07/31", "IMG_7409-3294075.MOV"),
+            ("2018/07/30", "IMG_7407.JPG"),
+            ("2018/07/30", "IMG_7407.MOV"),
+        ]
 
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
@@ -1084,13 +976,7 @@ class DownloadPhotoTestCase(TestCase):
             return mock.MagicMock()
 
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
-                result = runner.invoke(
-                    main,
+            data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", files_to_create,files_to_download,
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -1101,78 +987,54 @@ class DownloadPhotoTestCase(TestCase):
                         "--skip-videos",
                         # "--set-exif-datetime",
                         "--no-progress-bar",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
                         "--threads-num",
                         "1",
                     ],
                 )
-                print_result_exception(result)
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-                self.assertIn(
-                    f"INFO     Downloading 5 original photos to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))}",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))}",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/30/IMG_7408.JPG'))} already exists",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/30/IMG_7408.MOV'))} already exists",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "DEBUG    Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
-                )
-                self.assertIn(
-                    "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
-                )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading 5 original photos to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
+                self._caplog.text,
+            )
+            self.assertIn(
+                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "DEBUG    Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
+            )
+            self.assertIn(
+                "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
+            )
+            self.assertIn(
+                "INFO     All photos have been downloaded", self._caplog.text
+            )
 
-                # Check that file was downloaded
-                self.assertTrue(
-                    os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG"))))
-                # Check that mtime was updated to the photo creation date
-                photo_mtime = os.path.getmtime(os.path.join(
-                    data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
-                photo_modified_time = datetime.datetime.utcfromtimestamp(
-                    photo_mtime)
-                self.assertEqual(
-                    "2018-07-31 07:22:24",
-                    photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
-                self.assertTrue(
-                    os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))))
-                photo_mtime = os.path.getmtime(os.path.join(
-                    data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
-                photo_modified_time = datetime.datetime.utcfromtimestamp(
-                    photo_mtime)
-                self.assertEqual(
-                    "2018-07-31 07:22:24",
-                    photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+            # Check that mtime was updated to the photo creation date
+            photo_mtime = os.path.getmtime(os.path.join(
+                data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
+            photo_modified_time = datetime.datetime.utcfromtimestamp(
+                photo_mtime)
+            self.assertEqual(
+                "2018-07-31 07:22:24",
+                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+            self.assertTrue(
+                os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))))
+            photo_mtime = os.path.getmtime(os.path.join(
+                data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
+            photo_modified_time = datetime.datetime.utcfromtimestamp(
+                photo_mtime)
+            self.assertEqual(
+                "2018-07-31 07:22:24",
+                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
-                assert result.exit_code == 0
+            assert result.exit_code == 0
 
     def test_download_photos_and_set_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
