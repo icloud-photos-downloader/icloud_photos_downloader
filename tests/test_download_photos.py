@@ -248,32 +248,13 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_skip_existing_downloads(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         files_to_create = [
-            ("2018/07/31/IMG_7409.JPG", 1884695),
-            ("2018/07/31/IMG_7409.MOV", 3294075),
+            ("2018/07/31","IMG_7409.JPG", 1884695),
+            ("2018/07/31","IMG_7409.MOV", 3294075),
         ]
 
-        files_to_download: List[str] = [
-        ]
-
-        os.makedirs(os.path.join(data_dir, "2018/07/31/"))
-        for (file_name, file_size) in files_to_create:
-            with open(os.path.join(data_dir, file_name), "a") as f:
-                f.truncate(file_size)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertTrue, self.vcr_path, base_dir, "listing_photos.yml", files_to_create, [],
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -286,92 +267,66 @@ class DownloadPhotoTestCase(TestCase):
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
+        assert result.exit_code == 0
 
-            self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-            )
-            self.assertIn(
-                f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_download) + len(files_to_create)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        self.assertIn(
+            "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
+        )
+        self.assertIn(
+            f"INFO     Downloading the first original photo or video to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertIn(
+            f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists",
+            self._caplog.text,
+        )
+        self.assertIn(
+            f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
     def test_until_found(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        os.makedirs(os.path.join(data_dir, "2018/07/30/"))
-        os.makedirs(os.path.join(data_dir, "2018/07/31/"))
-
-        files_to_download: Sequence[Tuple[str, str]] = [
-            ("2018/07/31/IMG_7409.JPG", "photo"),
-            ("2018/07/31/IMG_7409-medium.MOV", "photo"),
-            ("2018/07/30/IMG_7407.JPG", "photo"),
-            ("2018/07/30/IMG_7407-medium.MOV", "photo"),
-            ("2018/07/30/IMG_7403.MOV", "video"),
-            ("2018/07/30/IMG_7402.MOV", "video"),
-            ("2018/07/30/IMG_7399-medium.MOV", "photo")
+        files_to_download_ext: Sequence[Tuple[str, str, str]] = [
+            ("2018/07/31","IMG_7409.JPG", "photo"),
+            ("2018/07/31","IMG_7409-medium.MOV", "photo"),
+            ("2018/07/30","IMG_7407.JPG", "photo"),
+            ("2018/07/30","IMG_7407-medium.MOV", "photo"),
+            ("2018/07/30","IMG_7403.MOV", "video"),
+            ("2018/07/30","IMG_7402.MOV", "video"),
+            ("2018/07/30","IMG_7399-medium.MOV", "photo")
         ]
-        files_to_skip: Sequence[Tuple[str, str, int]] = [
-            ("2018/07/30/IMG_7408.JPG", "photo", 1151066),
-            ("2018/07/30/IMG_7408-medium.MOV", "photo", 894467),
-            ("2018/07/30/IMG_7405.MOV", "video", 36491351),
-            ("2018/07/30/IMG_7404.MOV", "video", 225935003),
+        files_to_create_ext: Sequence[Tuple[str, str, str, int]] = [
+            ("2018/07/30","IMG_7408.JPG", "photo", 1151066),
+            ("2018/07/30","IMG_7408-medium.MOV", "photo", 894467),
+            ("2018/07/30","IMG_7405.MOV", "video", 36491351),
+            ("2018/07/30","IMG_7404.MOV", "video", 225935003),
             # TODO large files on Windows times out
-            ("2018/07/30/IMG_7401.MOV", "photo", 565699696),
-            ("2018/07/30/IMG_7400.JPG", "photo", 2308885),
-            ("2018/07/30/IMG_7400-medium.MOV", "photo", 1238639),
-            ("2018/07/30/IMG_7399.JPG", "photo", 2251047)
+            ("2018/07/30","IMG_7401.MOV", "photo", 565699696),
+            ("2018/07/30","IMG_7400.JPG", "photo", 2308885),
+            ("2018/07/30","IMG_7400-medium.MOV", "photo", 1238639),
+            ("2018/07/30","IMG_7399.JPG", "photo", 2251047)
         ]
+        files_to_create = [(dir_name, file_name, size) for dir_name, file_name, _, size in files_to_create_ext]
 
-
-        for f in files_to_skip:
-            with open(os.path.join(data_dir, f[0]), "a") as fi:
-                fi.truncate(f[2])
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
             with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
-                with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                    # Pass fixed client ID via environment variable
-                    runner = CliRunner(env={
-                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    })
-                    result = runner.invoke(
-                        main,
+                data_dir, result = run_icloudpd_test(
+                    self.assertTrue, 
+                    self.vcr_path, 
+                    base_dir, 
+                    "listing_photos.yml", 
+                    files_to_create, 
+                    [], # we fake downloading
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -386,59 +341,44 @@ class DownloadPhotoTestCase(TestCase):
                             "--no-progress-bar",
                             "--threads-num",
                             "1",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
                         ],
                     )
-                    print_result_exception(result)
 
-                    expected_calls = list(
-                        map(
-                            lambda f: call(
-                                ANY, False, ANY, ANY, os.path.join(
-                                    data_dir, os.path.normpath(f[0])),
-                                    ANY,
-                                LivePhotoVersionSize.MEDIUM if (
-                                    f[1] == 'photo' and f[0].endswith('.MOV')
-                                ) else AssetVersionSize.ORIGINAL),
-                            files_to_download,
-                        )
+                expected_calls = list(
+                    map(
+                        lambda f: call(
+                            ANY, False, ANY, ANY, os.path.join(data_dir, 
+                                os.path.normpath(f[0]), f[1]),
+                                ANY,
+                            LivePhotoVersionSize.MEDIUM if (
+                                f[2] == 'photo' and f[1].endswith('.MOV')
+                            ) else AssetVersionSize.ORIGINAL),
+                        files_to_download_ext,
                     )
-                    dp_patched.assert_has_calls(expected_calls)
+                )
+                dp_patched.assert_has_calls(expected_calls)
 
-                    self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-                    )
-                    self.assertIn(
-                        f"INFO     Downloading ??? original photos and videos to {data_dir} ...",
-                        self._caplog.text,
-                    )
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
+                )
+                self.assertIn(
+                    f"INFO     Downloading ??? original photos and videos to {data_dir} ...",
+                    self._caplog.text,
+                )
 
-                    for s in files_to_skip:
-                        expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(s[0]))} already exists"
-                        self.assertIn(expected_message, self._caplog.text)
+                for s in files_to_create:
+                    expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(s[0]), s[1])} already exists"
+                    self.assertIn(expected_message, self._caplog.text)
 
-                    for d in files_to_download:
-                        expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(d[0]))} already exists"
-                        self.assertNotIn(expected_message, self._caplog.text)
+                for d in files_to_download_ext:
+                    expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(d[0]), d[1])} already exists"
+                    self.assertNotIn(expected_message, self._caplog.text)
 
-                    self.assertIn(
-                        "INFO     Found 3 consecutive previously downloaded photos. Exiting",
-                        self._caplog.text,
-                    )
-                    assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_skip)  # we faked downloading
-
-        for file_name in ([file_name for (file_name, _, _) in files_to_skip]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+                self.assertIn(
+                    "INFO     Found 3 consecutive previously downloaded photos. Exiting",
+                    self._caplog.text,
+                )
+                assert result.exit_code == 0
 
     def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
