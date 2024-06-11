@@ -3,8 +3,7 @@
 
 name: Produce Artifacts
 
-on:
-  workflow_dispatch:
+on: workflow_dispatch
 
 jobs:
   get_version:
