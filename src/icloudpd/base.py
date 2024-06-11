@@ -545,6 +545,7 @@ def main(
                 filename_cleaner,
                 lp_filename_generator,
                 raw_policy,
+                file_match_policy,
                 password_providers,
                 ))
 
@@ -935,6 +936,7 @@ def core(
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
         raw_policy: RawTreatmentPolicy,
+        file_match_policy: FileMatchPolicy,
         password_providers: Dict[str,Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]],
 ) -> int:
     """Download all iCloud photos to a local directory"""
@@ -945,7 +947,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy, password_providers)(
+        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy, file_match_policy, password_providers)(
             username,
             cookie_directory,
             raise_error_on_2sa,

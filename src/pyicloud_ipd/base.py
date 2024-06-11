@@ -16,6 +16,7 @@ from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
 )
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.findmyiphone import AppleDevice, FindMyiPhoneServiceManager
 from pyicloud_ipd.services.calendar import CalendarService
@@ -58,12 +59,14 @@ class PyiCloudService:
         lp_filename_generator: Callable[[str], str],
         domain:str, 
         raw_policy: RawTreatmentPolicy,
+        file_match_policy: FileMatchPolicy,
         apple_id: str, password:str, cookie_directory:Optional[str]=None, verify:bool=True,
         client_id:Optional[str]=None, with_family:bool=True,
     ):
         self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy
+        self.file_match_policy = file_match_policy
         self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
         self.data: Dict[str, Any] = {} 
         self.params: Dict[str, Any] = {}
@@ -471,7 +474,15 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params, self.filename_cleaner, self.lp_filename_generator, self.raw_policy)
+            self._photos = PhotosService(
+                service_root, 
+                self.session, 
+                self.params, 
+                self.filename_cleaner, 
+                self.lp_filename_generator, 
+                self.raw_policy,
+                self.file_match_policy
+                )
         return self._photos
 
     @property

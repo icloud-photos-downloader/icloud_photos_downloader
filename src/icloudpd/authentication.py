@@ -6,6 +6,7 @@ from typing import Callable, Dict, Optional, Sequence, Tuple
 import click
 import pyicloud_ipd
 from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 
@@ -22,6 +23,7 @@ def authenticator(
         filename_cleaner: Callable[[str], str], 
         lp_filename_generator: Callable[[str], str], 
         raw_policy:RawTreatmentPolicy, 
+        file_match_policy: FileMatchPolicy,
         password_providers: Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
     """Wraping authentication with domain context"""
     def authenticate_(
@@ -43,6 +45,7 @@ def authenticator(
                     lp_filename_generator,
                     domain,
                     raw_policy,
+                    file_match_policy,
                     username, _password,
                     cookie_directory=cookie_directory,
                     client_id=client_id,
