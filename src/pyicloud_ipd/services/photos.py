@@ -614,7 +614,7 @@ class PhotoAsset(object):
             _filename = self._service.filename_cleaner(base64.b64decode(
                 fields['filenameEnc']['value']
             ).decode('utf-8'))
-            if self._service.file_match_policy == FileMatchPolicy.NAME_WITH_ID7_SUFFIX:
+            if self._service.file_match_policy == FileMatchPolicy.NAME_ID7:
                 _f, _e = os.path.splitext(_filename)
                 _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]
                 _filename = f"{_f}_{_a}{_e}"

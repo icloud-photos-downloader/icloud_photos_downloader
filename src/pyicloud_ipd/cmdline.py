@@ -206,7 +206,7 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
                 utils.identity,
                 domain,
                 RawTreatmentPolicy.AS_IS,
-                FileMatchPolicy.NAME_WITH_SIZE_SUFFIX,
+                FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 username.strip(),
                 password.strip(),
             )

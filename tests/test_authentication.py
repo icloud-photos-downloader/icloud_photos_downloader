@@ -42,7 +42,7 @@ class AuthenticationTestCase(TestCase):
                     identity, 
                     lp_filename_concatinator, 
                     RawTreatmentPolicy.AS_IS, 
-                    FileMatchPolicy.NAME_WITH_SIZE_SUFFIX, 
+                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, 
                     {"test": (constant("dummy"), dummy_password_writter)}
                     )(
                         "bad_username",
@@ -73,7 +73,7 @@ class AuthenticationTestCase(TestCase):
                     identity, 
                     lp_filename_concatinator, 
                     RawTreatmentPolicy.AS_IS, 
-                    FileMatchPolicy.NAME_WITH_SIZE_SUFFIX,
+                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)}
                     )(
                         "jdoe@gmail.com",
@@ -106,7 +106,7 @@ class AuthenticationTestCase(TestCase):
                     identity, 
                     lp_filename_concatinator, 
                     RawTreatmentPolicy.AS_IS, 
-                    FileMatchPolicy.NAME_WITH_SIZE_SUFFIX,
+                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)}
                     )(
                         "jdoe@gmail.com",

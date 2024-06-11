@@ -137,9 +137,9 @@ def lp_size_generator(_ctx: click.Context, _param: click.Parameter, size: str) -
 
 def file_match_policy_generator(_ctx: click.Context, _param: click.Parameter, policy: str) -> FileMatchPolicy:
     if policy == "name-size-dedup-with-suffix":
-        return FileMatchPolicy.NAME_WITH_SIZE_SUFFIX
+        return FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
     elif policy == "name-id7":
-        return FileMatchPolicy.NAME_WITH_ID7_SUFFIX
+        return FileMatchPolicy.NAME_ID7
     else:
         raise ValueError(f"policy was provided with unsupported value of '{policy}'")    
 
@@ -673,7 +673,7 @@ def download_builder(
                     file_exists = os.path.isfile(original_download_path)
 
                 if file_exists:
-                    if file_match_policy == FileMatchPolicy.NAME_WITH_SIZE_SUFFIX:
+                    if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
                         # for later: this crashes if download-size medium is specified
                         file_size = os.stat(
                             original_download_path or download_path).st_size
@@ -752,7 +752,7 @@ def download_builder(
                         print(lp_download_path)
                     else:
                         if lp_file_exists:
-                            if file_match_policy == FileMatchPolicy.NAME_WITH_SIZE_SUFFIX:
+                            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
                                 lp_file_size = os.stat(lp_download_path).st_size
                                 lp_photo_size = version.size
                                 if lp_file_size != lp_photo_size:
