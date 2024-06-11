@@ -22,11 +22,11 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ("2020/11/04","IMG_0516.HEIC"),
-            ("2020/11/04","IMG_0514.HEIC"),
-            ("2020/11/04","IMG_0514_HEVC.MOV"),
-            ("2020/11/04","IMG_0512.HEIC"),
-            ("2020/11/04","IMG_0512_HEVC.MOV")
+            ("2020/11/04","IMG_0516_QVcwekp.HEIC"),
+            ("2020/11/04","IMG_0514_QVZtSTE.HEIC"),
+            ("2020/11/04","IMG_0514_QVZtSTE_HEVC.MOV"),
+            ("2020/11/04","IMG_0512_QWRFR00.HEIC"),
+            ("2020/11/04","IMG_0512_QWRFR00_HEVC.MOV")
         ]
 
         _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "download_live_photos.yml", [], files_to_download,
@@ -52,14 +52,14 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2020/11/04","IMG_0516.HEIC", 1651485),
-            ("2020/11/04","IMG_0514_HEVC.MOV", 3951774),
+            ("2020/11/04","IMG_0516_QVcwekp.HEIC", 1651485),
+            ("2020/11/04","IMG_0514_QVZtSTE_HEVC.MOV", 3951774),
         ]
 
         files_to_download = [
-            ("2020/11/04","IMG_0514.HEIC"),
-            ("2020/11/04","IMG_0512.HEIC"),
-            ("2020/11/04","IMG_0512_HEVC.MOV")
+            ("2020/11/04","IMG_0514_QVZtSTE.HEIC"),
+            ("2020/11/04","IMG_0512_QWRFR00.HEIC"),
+            ("2020/11/04","IMG_0512_QWRFR00_HEVC.MOV")
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "download_live_photos.yml", files_to_create, files_to_download,
@@ -92,14 +92,14 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2020/11/04","IMG_0516.HEIC", 1651485),
-            ("2020/11/04","IMG_0514_HEVC.MOV", 3951774),
+            ("2020/11/04","IMG_0516_QVcwekp.HEIC", 1651485),
+            ("2020/11/04","IMG_0514_QVZtSTE_HEVC.MOV", 3951774),
         ]
 
         # files_to_download = [
-        #     ("2020/11/04","IMG_0514.HEIC"),
-        #     ("2020/11/04","IMG_0512.HEIC"),
-        #     ("2020/11/04","IMG_0512_HEVC.MOV")
+        #     ("2020/11/04","IMG_0514_QVZtSTE.HEIC"),
+        #     ("2020/11/04","IMG_0512_QWRFR00.HEIC"),
+        #     ("2020/11/04","IMG_0512_QWRFR00_HEVC.MOV")
         # ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "download_live_photos.yml", files_to_create, [],
@@ -124,20 +124,20 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
         assert len(filenames) == 3
 
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2020/11/04/IMG_0514.HEIC")),
+            os.path.join(data_dir, os.path.normpath("2020/11/04/IMG_0514_QVZtSTE.HEIC")),
             filenames[0]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2020/11/04/IMG_0512.HEIC")),
+            os.path.join(data_dir, os.path.normpath("2020/11/04/IMG_0512_QWRFR00.HEIC")),
             filenames[1]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2020/11/04/IMG_0512_HEVC.MOV")),
+            os.path.join(data_dir, os.path.normpath("2020/11/04/IMG_0512_QWRFR00_HEVC.MOV")),
             filenames[2]
         )
 
         # Double check that a mocked file does not get listed again. It's already there!
-        assert "2020/11/04/IMG_0514_HEVC.MOV" not in filenames
+        assert "2020/11/04/IMG_0514_QVZtSTE_HEVC.MOV" not in filenames
 
         assert result.exit_code == 0
 

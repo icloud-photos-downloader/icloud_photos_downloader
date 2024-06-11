@@ -15,6 +15,7 @@ from click.testing import CliRunner
 import piexif
 from piexif._exceptions import InvalidImageDataError
 from icloudpd import constants
+from icloudpd.string_helpers import truncate_middle
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotoLibrary
 from pyicloud_ipd.base import PyiCloudService
@@ -41,12 +42,12 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1151066),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257),
         ]
 
         files_to_download = [
-            ("2018/07/31", "IMG_7409.JPG")
+            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG")
         ]
 
         data_dir, result = run_icloudpd_test(
@@ -83,26 +84,26 @@ class DownloadPhotoNameIDTestCase(TestCase):
         for dir_name, file_name in files_to_download:
             file_path = os.path.join(dir_name, file_name)
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
+                f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, file_path), 96)}",
                 self._caplog.text,
             )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         for dir_name, file_name in ([(dir_name, file_name) for (dir_name, file_name, _) in files_to_create]):
             file_path = os.path.join(dir_name, file_name)
             self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
+                f"DEBUG    {truncate_middle(os.path.join(data_dir, file_path), 96)} already exists",
                 self._caplog.text,
             )
 
         self.assertIn(
-            "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
+            "DEBUG    Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.",
             self._caplog.text,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
+            "DEBUG    Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.",
             self._caplog.text,
         )
         self.assertIn(
@@ -112,7 +113,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(os.path.join(
-            data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+            data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG")))
         photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
         self.assertEqual(
             "2018-07-31 07:22:24",
@@ -122,16 +123,16 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1151066),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257),
         ]
 
         files_to_download = [
-            ('2018/07/30','IMG_7405.MOV'),
-            ('2018/07/30','IMG_7407.MOV'),
-            ('2018/07/30','IMG_7408.MOV'),
-            ('2018/07/31','IMG_7409.JPG'),
-            ('2018/07/31','IMG_7409.MOV'),
+            ('2018/07/30','IMG_7405_QVkrUjN.MOV'),
+            ('2018/07/30','IMG_7407_QVovd0F.MOV'),
+            ('2018/07/30','IMG_7408_QVI4T2l.MOV'),
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG'),
+            ('2018/07/31','IMG_7409_QVk2Yyt.MOV'),
         ]
 
         # Download the first photo, but mock the video download
@@ -182,14 +183,14 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertIn(
-            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}",
             self._caplog.text,
         )
         # 2018:07:31 07:22:24 utc
         expectedDatetime = datetime.datetime(
             2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
         self.assertIn(
-            f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
+            f"DEBUG    Setting EXIF timestamp for {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}: {expectedDatetime}",
             self._caplog.text,
         )
         self.assertIn(
@@ -200,7 +201,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31', 'IMG_7409.JPG')
+            ('2018/07/31', 'IMG_7409_QVk2Yyt.JPG')
         ]
 
         with mock.patch.object(piexif, "load") as piexif_patched:
@@ -231,15 +232,15 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         # self.assertIn(
-        #     f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+        #     f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
         #     self._caplog.text,
         # )
         self.assertIn(
-            f"DEBUG    Error fetching EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            f"DEBUG    Error fetching EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
             self._caplog.text,
         )
         self.assertIn(
-            f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
             self._caplog.text,
         )
         self.assertIn(
@@ -250,8 +251,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/31","IMG_7409.JPG", 1884695),
-            ("2018/07/31","IMG_7409.MOV", 3294075),
+            ("2018/07/31","IMG_7409_QVk2Yyt.JPG", 1884695),
+            ("2018/07/31","IMG_7409_QVk2Yyt.MOV", 3294075),
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", files_to_create, [],
@@ -279,11 +280,11 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertIn(
-            f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists",
+            f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)} already exists",
             self._caplog.text,
         )
         self.assertIn(
-            f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
+            f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.MOV')), 96)} already exists",
             self._caplog.text,
         )
         self.assertIn(
@@ -294,24 +295,24 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download_ext: Sequence[Tuple[str, str, str]] = [
-            ("2018/07/31","IMG_7409.JPG", "photo"),
-            ("2018/07/31","IMG_7409-medium.MOV", "photo"),
-            ("2018/07/30","IMG_7407.JPG", "photo"),
-            ("2018/07/30","IMG_7407-medium.MOV", "photo"),
-            ("2018/07/30","IMG_7403.MOV", "video"),
-            ("2018/07/30","IMG_7402.MOV", "video"),
-            ("2018/07/30","IMG_7399-medium.MOV", "photo")
+            ("2018/07/31","IMG_7409_QVk2Yyt.JPG", "photo"),
+            ("2018/07/31","IMG_7409_QVk2Yyt-medium.MOV", "photo"),
+            ("2018/07/30","IMG_7407_QVovd0F.JPG", "photo"),
+            ("2018/07/30","IMG_7407_QVovd0F-medium.MOV", "photo"),
+            ("2018/07/30","IMG_7403_QVc0VWt.MOV", "video"),
+            ("2018/07/30","IMG_7402_QVdYaDd.MOV", "video"),
+            ("2018/07/30","IMG_7399_QVVMcXN-medium.MOV", "photo")
         ]
         files_to_create_ext: Sequence[Tuple[str, str, str, int]] = [
-            ("2018/07/30","IMG_7408.JPG", "photo", 1151066),
-            ("2018/07/30","IMG_7408-medium.MOV", "photo", 894467),
-            ("2018/07/30","IMG_7405.MOV", "video", 36491351),
-            ("2018/07/30","IMG_7404.MOV", "video", 225935003),
+            ("2018/07/30","IMG_7408_QVI4T2l.JPG", "photo", 1151066),
+            ("2018/07/30","IMG_7408_QVI4T2l-medium.MOV", "photo", 894467),
+            ("2018/07/30","IMG_7405_QVkrUjN.MOV", "video", 36491351),
+            ("2018/07/30","IMG_7404_QVI5TWx.MOV", "video", 225935003),
             # TODO large files on Windows times out
-            ("2018/07/30","IMG_7401.MOV", "photo", 565699696),
-            ("2018/07/30","IMG_7400.JPG", "photo", 2308885),
-            ("2018/07/30","IMG_7400-medium.MOV", "photo", 1238639),
-            ("2018/07/30","IMG_7399.JPG", "photo", 2251047)
+            ("2018/07/30","IMG_7401_QVRJanZ.MOV", "photo", 565699696),
+            ("2018/07/30","IMG_7400_QVhFL01.JPG", "photo", 2308885),
+            ("2018/07/30","IMG_7400_QVhFL01-medium.MOV", "photo", 1238639),
+            ("2018/07/30","IMG_7399_QVVMcXN.JPG", "photo", 2251047)
         ]
         files_to_create = [(dir_name, file_name, size) for dir_name, file_name, _, size in files_to_create_ext]
 
@@ -367,11 +368,11 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
 
                 for s in files_to_create:
-                    expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(s[0]), s[1])} already exists"
+                    expected_message = f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath(s[0]), s[1]), 96)} already exists"
                     self.assertIn(expected_message, self._caplog.text)
 
                 for d in files_to_download_ext:
-                    expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(d[0]), d[1])} already exists"
+                    expected_message = f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath(d[0]), d[1]), 96)} already exists"
                     self.assertNotIn(expected_message, self._caplog.text)
 
                 self.assertIn(
@@ -417,7 +418,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
             self.assertIn(
                 "ERROR    IOError while writing file to "
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}. "
+                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}. "
                 "You might have run out of disk space, or the file might "
                 "be too large for your OS. Skipping this file...",
                 self._caplog.text,
@@ -478,7 +479,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     )
 
                     self.assertIn(
-                        "ERROR    Could not download IMG_7409.JPG. Please try again later.",
+                        "ERROR    Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
                         self._caplog.text,
                     )
 
@@ -583,13 +584,13 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     # Error msg should be repeated 5 times
                     assert (
                         self._caplog.text.count(
-                            "Error downloading IMG_7409.JPG, retrying after 0 seconds..."
+                            "Error downloading IMG_7409_QVk2Yyt.JPG, retrying after 0 seconds..."
                         )
                         == 5
                     )
 
                     self.assertIn(
-                        "ERROR    Could not download IMG_7409.JPG. Please try again later.",
+                        "ERROR    Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
                         self._caplog.text,
                     )
                     assert result.exit_code == 0
@@ -669,7 +670,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
 
             # These error messages should not be repeated more than once for each size
-            for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
+            for filename in ["IMG_7409_QVk2Yyt.JPG", "IMG_7408_QVI4T2l.JPG", "IMG_7407_QVovd0F.JPG"]:
                 for size in ["original"]:
                     self.assertEqual(
                         sum(1 for line in self._caplog.text.splitlines() if line ==
@@ -679,7 +680,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         f"Errors for {filename} size {size}"
                     )
 
-            for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
+            for filename in ["IMG_7409_QVk2Yyt.MOV", "IMG_7408_QVI4T2l.MOV", "IMG_7407_QVovd0F.MOV"]:
                 for size in ["originalVideo"]:
                     self.assertEqual(
                         sum(1 for line in self._caplog.text.splitlines() if line ==
@@ -704,7 +705,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 ut_patched.return_value = None
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
-                    pa.return_value = {AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"), AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie")}
+                    pa.return_value = {AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409_QVk2Yyt.JPG", 1, "http", "jpeg"), AssetVersionSize.MEDIUM: AssetVersion("IMG_7409_QVk2Yyt.JPG", 2, "ftp", "movie")}
 
                     data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                             [
@@ -730,7 +731,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -741,7 +742,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         False,
                         ANY,
                         ANY,
-                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
                         ANY,
                         AssetVersionSize.ORIGINAL,
                     )
@@ -789,7 +790,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
+                    "ERROR    thumb size does not exist for IMG_7409_QVk2Yyt.JPG. Skipping...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -803,7 +804,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/01/01', 'IMG_7409.JPG')
+            ('2018/01/01', 'IMG_7409_QVk2Yyt.JPG')
         ]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
@@ -843,7 +844,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409_QVk2Yyt.JPG'))}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -859,7 +860,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('5/01/01', 'IMG_7409.JPG')
+            ('5/01/01', 'IMG_7409_QVk2Yyt.JPG')
         ]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
@@ -898,7 +899,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
+                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409_QVk2Yyt.JPG'))}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -938,7 +939,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "DEBUG    Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
+                    "DEBUG    Skipping IMG_7409_QVk2Yyt.JPG, only downloading photos and videos. (Item type was: unknown)",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -952,17 +953,17 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/31", "IMG_7409.JPG", 1),
-            ("2018/07/31", "IMG_7409.MOV",1),
-            ("2018/07/30", "IMG_7408.JPG",1151066),
-            ("2018/07/30", "IMG_7408.MOV",1606512),
+            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG", 1),
+            ("2018/07/31", "IMG_7409_QVk2Yyt.MOV",1),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG",1151066),
+            ("2018/07/30", "IMG_7408_QVI4T2l.MOV",1606512),
         ]
 
         files_to_download = [
-            ("2018/07/31", "IMG_7409-1884695.JPG"),
-            ("2018/07/31", "IMG_7409-3294075.MOV"),
-            ("2018/07/30", "IMG_7407.JPG"),
-            ("2018/07/30", "IMG_7407.MOV"),
+            ("2018/07/31", "IMG_7409_QVk2Yyt-1884695.JPG"),
+            ("2018/07/31", "IMG_7409_QVk2Yyt-3294075.MOV"),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG"),
+            ("2018/07/30", "IMG_7407_QVovd0F.MOV"),
         ]
 
         # Download the first photo, but mock the video download
@@ -999,18 +1000,18 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             # self.assertIn(
-            #     f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
+            #     f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-1884695.JPG'))} deduplicated",
             #     self._caplog.text,
             # )
             # self.assertIn(
-            #     f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
+            #     f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV'))} deduplicated",
             #     self._caplog.text,
             # )
             self.assertIn(
-                "DEBUG    Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
+                "DEBUG    Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.", self._caplog.text
             )
             self.assertIn(
-                "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
+                "DEBUG    Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.", self._caplog.text
             )
             self.assertIn(
                 "INFO     All photos have been downloaded", self._caplog.text
@@ -1018,16 +1019,16 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             # Check that mtime was updated to the photo creation date
             photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
+                data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt-1884695.JPG")))
             photo_modified_time = datetime.datetime.utcfromtimestamp(
                 photo_mtime)
             self.assertEqual(
                 "2018-07-31 07:22:24",
                 photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
             self.assertTrue(
-                os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))))
+                os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV"))))
             photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
+                data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV")))
             photo_modified_time = datetime.datetime.utcfromtimestamp(
                 photo_mtime)
             self.assertEqual(
@@ -1040,7 +1041,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG')
         ]
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
@@ -1076,11 +1077,11 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 expectedDatetime = datetime.datetime(
                     2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
                 self.assertIn(
-                    f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
+                    f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}: {expectedDatetime}",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                    f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1093,7 +1094,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self.fixtures_path, inspect.stack()[0][3], "中文")
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG')
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
@@ -1120,7 +1121,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
@@ -1129,7 +1130,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(os.path.join(
-            data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG')))
+            data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')))
         photo_modified_time = datetime.datetime.utcfromtimestamp(
             photo_mtime)
         self.assertEqual(
@@ -1142,8 +1143,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG'),
-            ('2018/07/31','IMG_7409.MOV'),
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG'),
+            ('2018/07/31','IMG_7409_QVk2Yyt.MOV'),
         ]
 
         # Download the first photo, but mock the video download
@@ -1195,8 +1196,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_中文_7409.JPG'),  # SU1HX+S4reaWh183NDA5LkpQRw==
-            ('2018/07/31','IMG_中文_7409.MOV'),
+            ('2018/07/31','IMG_中文_7409_QVk2Yyt.JPG'),  # SU1HX+S4reaWh183NDA5LkpQRw==
+            ('2018/07/31','IMG_中文_7409_QVk2Yyt.MOV'),
         ]
 
         # Download the first photo, but mock the video download
@@ -1250,7 +1251,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG')
         ]
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
@@ -1283,7 +1284,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
+                    "INFO     Deleted IMG_7409_QVk2Yyt.JPG in iCloud", self._caplog.text
                 )
                 self.assertIn(
                     "INFO     All photos have been downloaded", self._caplog.text
@@ -1318,7 +1319,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
+            "INFO     Deleted IMG_7409_QVk2Yyt.JPG in iCloud", self._caplog.text
         )
         self.assertIn(
             "INFO     All photos have been downloaded", self._caplog.text
@@ -1330,12 +1331,12 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/30", "IMG_7408-original.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257)
+            ("2018/07/30", "IMG_7408_QVI4T2l-original.JPG", 1151066),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257)
         ]
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG')
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml",files_to_create,files_to_download,
@@ -1362,15 +1363,15 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
+            "DEBUG    Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.",
             self._caplog.text,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
+            "DEBUG    Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.",
             self._caplog.text,
         )
         self.assertIn(
@@ -1379,7 +1380,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(os.path.join(
-            data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+            data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG")))
         photo_modified_time = datetime.datetime.utcfromtimestamp(
             photo_mtime)
         self.assertEqual(
@@ -1392,15 +1393,15 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1151066),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257),
         ]
 
         files_to_download = [
             # <>:"/\|?*  -- windows
             # / & \0x00 -- linux
             # SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
-            ('2018/07/31','i_n v_a_l_i_d_p_a_t_h_.JPG')
+            ('2018/07/31','i_n v_a_l_i_d_p_a_t_h__QVk2Yyt.JPG')
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_bad_filename.yml", files_to_create, files_to_download,
@@ -1431,12 +1432,12 @@ class DownloadPhotoNameIDTestCase(TestCase):
             recreate_path(dir)
 
         files_to_create = [
-            ("2018/07/30/IMG_7408.JPG", 1151066),
-            ("2018/07/30/IMG_7407.JPG", 656257),
+            ("2018/07/30/IMG_7408_QVI4T2l.JPG", 1151066),
+            ("2018/07/30/IMG_7407_QVovd0F.JPG", 656257),
         ]
 
         files_to_download = [
-            '2018/07/31/IMG_7409.JPG'
+            '2018/07/31/IMG_7409_QVk2Yyt.JPG'
         ]
 
         os.makedirs(os.path.join(data_dir, "2018/07/30/"))
@@ -1535,7 +1536,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 # )
 
                 self.assertIn(
-                    "ERROR    Could not download IMG_7409.JPG. Please try again later.",
+                    "ERROR    Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
                     self._caplog.text,
                 )
 
@@ -1673,7 +1674,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         #     self._caplog.text,
         # )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertNotIn(
@@ -1728,7 +1729,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
+                        "INFO     [DRY RUN] Would delete IMG_7409_QVk2Yyt.JPG in iCloud", self._caplog.text
                     )
                     self.assertIn(
                         "INFO     All photos have been downloaded", self._caplog.text
@@ -1741,7 +1742,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.DNG') # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H
+            ('2018/07/31','IMG_7409_QVk2Yyt.DNG') # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw.yml", [], files_to_download,
@@ -1767,7 +1768,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
@@ -1779,8 +1780,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_download_two_sizes_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG'),
-            ('2018/07/31','IMG_7409-thumb.JPG')
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG'),
+            ('2018/07/31','IMG_7409_QVk2Yyt-thumb.JPG')
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_two_sizes.yml", [], files_to_download,
@@ -1810,7 +1811,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
@@ -1823,8 +1824,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         
         files_to_download = [
-            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            ('2018/07/31','IMG_7409.JPG')
+            ('2018/07/31','IMG_7409_QVk2Yyt.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG')
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
@@ -1854,7 +1855,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
@@ -1868,8 +1869,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            # '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            ('2018/07/31','IMG_7409.JPG')
+            # '2018/07/31/IMG_7409_QVk2Yyt.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            ('2018/07/31','IMG_7409_QVk2Yyt.JPG')
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt_adj.yml", [], files_to_download,
@@ -1899,7 +1900,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
@@ -1912,8 +1913,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            # '2018/07/31/IMG_7409.JPG'
+            ('2018/07/31','IMG_7409_QVk2Yyt.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            # '2018/07/31/IMG_7409_QVk2Yyt.JPG'
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
@@ -1943,7 +1944,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
@@ -1956,8 +1957,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            # '2018/07/31/IMG_7409.JPG'
+            ('2018/07/31','IMG_7409_QVk2Yyt.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            # '2018/07/31/IMG_7409_QVk2Yyt.JPG'
         ]
 
         data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
@@ -1987,7 +1988,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         self.assertNotIn(
-            "IMG_7409.MOV",
+            "IMG_7409_QVk2Yyt.MOV",
             self._caplog.text,
         )
         self.assertIn(
