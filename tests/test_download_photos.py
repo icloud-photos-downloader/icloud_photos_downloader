@@ -382,138 +382,109 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
+        
+        with mock.patch("icloudpd.download.open", create=True) as m:
+            # Raise IOError when we try to write to the destination file
+            m.side_effect = IOError
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
+            data_dir, result = run_icloudpd_test(
+                self.assertTrue, 
+                self.vcr_path, 
+                base_dir, 
+                "listing_photos.yml",
+                [], 
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            with mock.patch("icloudpd.download.open", create=True) as m:
-                # Raise IOError when we try to write to the destination file
-                m.side_effect = IOError
-
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print_result_exception(result)
-
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-                self.assertIn(
-                    f"INFO     Downloading the first original photo to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "ERROR    IOError while writing file to "
-                    f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}. "
-                    "You might have run out of disk space, or the file might "
-                    "be too large for your OS. Skipping this file...",
-                    self._caplog.text,
-                )
-                assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+            self.assertIn(
+                f"INFO     Downloading the first original photo to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "ERROR    IOError while writing file to "
+                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}. "
+                "You might have run out of disk space, or the file might "
+                "be too large for your OS. Skipping this file...",
+                self._caplog.text,
+            )
+            assert result.exit_code == 0
 
     def test_handle_session_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
+        def mock_raise_response_error(_arg: Any) -> NoReturn:
+            raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+        with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch.object(PhotoAsset, "download") as pa_download:
+                pa_download.side_effect = mock_raise_response_error
 
-            def mock_raise_response_error(_arg: Any) -> NoReturn:
-                raise PyiCloudAPIResponseException("Invalid global session", "100")
+                # Let the initial authenticate() call succeed,
+                # but do nothing on the second try.
+                orig_authenticate = PyiCloudService.authenticate
 
-            with mock.patch("time.sleep") as sleep_mock:
-                with mock.patch.object(PhotoAsset, "download") as pa_download:
-                    pa_download.side_effect = mock_raise_response_error
+                def mocked_authenticate(self: PyiCloudService) -> None:
+                    if not hasattr(self, "already_authenticated"):
+                        orig_authenticate(self)
+                        setattr(self, "already_authenticated", True)
 
-                    # Let the initial authenticate() call succeed,
-                    # but do nothing on the second try.
-                    orig_authenticate = PyiCloudService.authenticate
+                with mock.patch.object(
+                    PyiCloudService, "authenticate", new=mocked_authenticate
+                ):
+                    # Pass fixed client ID via environment variable
+                    _, result = run_icloudpd_test(
+                        self.assertTrue, 
+                        self.vcr_path, 
+                        base_dir, 
+                        "listing_photos.yml", 
+                        [], 
+                        [],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--threads-num",
+                            "1",
+                        ],
+                    )
 
-                    def mocked_authenticate(self: PyiCloudService) -> None:
-                        if not hasattr(self, "already_authenticated"):
-                            orig_authenticate(self)
-                            setattr(self, "already_authenticated", True)
-
-                    with mock.patch.object(
-                        PyiCloudService, "authenticate", new=mocked_authenticate
-                    ):
-                        # Pass fixed client ID via environment variable
-                        runner = CliRunner(env={
-                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                        })
-                        result = runner.invoke(
-                            main,
-                            [
-                                "--username",
-                                "jdoe@gmail.com",
-                                "--password",
-                                "password1",
-                                "--recent",
-                                "1",
-                                "--skip-videos",
-                                "--skip-live-photos",
-                                "--no-progress-bar",
-                                "--threads-num",
-                                "1",
-                                "-d",
-                                data_dir,
-                                "--cookie-directory",
-                                cookie_dir,
-                            ],
+                    # Error msg should be repeated 5 times
+                    assert (
+                        self._caplog.text.count(
+                            "Session error, re-authenticating..."
                         )
-                        print_result_exception(result)
+                        == 5
+                    )
 
-                        # Error msg should be repeated 5 times
-                        assert (
-                            self._caplog.text.count(
-                                "Session error, re-authenticating..."
-                            )
-                            == 5
-                        )
+                    self.assertIn(
+                        "ERROR    Could not download IMG_7409.JPG. Please try again later.",
+                        self._caplog.text,
+                    )
 
-                        self.assertIn(
-                            "ERROR    Could not download IMG_7409.JPG. Please try again later.",
-                            self._caplog.text,
-                        )
-
-                        # Make sure we only call sleep 4 times (skip the first retry)
-                        self.assertEqual(sleep_mock.call_count, 4)
-                        assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+                    # Make sure we only call sleep 4 times (skip the first retry)
+                    self.assertEqual(sleep_mock.call_count, 4)
+                    assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
