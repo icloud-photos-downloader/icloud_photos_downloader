@@ -2,9 +2,11 @@ import glob
 import os
 import shutil
 import traceback
-from typing import Callable, Iterable, List, Protocol, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Iterable, List, Protocol, Sequence, Tuple, TypeVar
 from click.testing import Result
-
+from icloudpd.base import main
+from click.testing import CliRunner
+import vcr
 
 def print_result_exception(result: Result) -> None:
     ex = result.exception
@@ -55,3 +57,46 @@ def assert_files(assert_func: Callable[[bool, str], None], data_dir: str, files_
             normalized_dir_name = os.path.normpath(dir_name)
             file_path = os.path.join(normalized_dir_name, file_name)
             assert_func(os.path.exists(os.path.join(data_dir, file_path)), f"File {file_path} expected, but does not exist")
+
+def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
+    with vcr.use_cassette(cassette_path):
+        # Pass fixed client ID via environment variable
+        runner = CliRunner(env={
+            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
+        })
+        result = runner.invoke(
+            main,
+            params,
+        )
+        print_result_exception(result)
+        return result
+
+def run_icloudpd_test(
+        assert_true: Callable[[bool, str], None], 
+        vcr_path:str, 
+        base_dir: str, 
+        cassette_filename: str, 
+        files_to_create: Sequence[Tuple[str, str, int]], 
+        files_to_download: List[Tuple[str, str]], 
+        params: List[str]) -> Tuple[str, Result]:
+    cookie_dir = os.path.join(base_dir, "cookie")
+    data_dir = os.path.join(base_dir, "data")
+
+    for dir in [base_dir, cookie_dir, data_dir]:
+        recreate_path(dir)
+
+    create_files(data_dir, files_to_create)
+
+    result = run_cassette(os.path.join(vcr_path, cassette_filename),
+            [
+                "-d",
+                data_dir,
+                "--cookie-directory",
+                cookie_dir,
+            ] + params,
+        )
+
+    files_to_assert = combine_file_lists(files_to_create, files_to_download)
+    assert_files(assert_true, data_dir, files_to_assert)
+    
+    return (data_dir, result)
