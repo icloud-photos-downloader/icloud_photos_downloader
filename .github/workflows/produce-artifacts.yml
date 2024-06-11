@@ -4,14 +4,31 @@
 name: Produce Artifacts
 
 on: 
+  # pull_request:
+    # branches: [ master ]
   workflow_dispatch:
     branches:
-    - '**'
+      - '**'
 
 
 jobs:
+  skip_check:
+    # continue-on-error: true # Uncomment once integration is finished
+    runs-on: ubuntu-22.04
+    # Map a step output to a job output
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'same_content_newer'
+          skip_after_successful_duplicate: 'true'
+          paths_ignore: '["**/*.md", "examples/**"]'
+          do_not_skip: '["workflow_dispatch", "schedule"]'
+
   get_version:
-    needs: skip_check
+    needs: [skip_check]
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
     steps:
@@ -36,7 +53,7 @@ jobs:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
   build_package:
-    needs: [get_version, skip_check, type_check, lint, test]
+    needs: [get_version]
     if: needs.skip_check.outputs.should_skip != 'true'
     uses: ./.github/workflows/build-package.yml
     with:
