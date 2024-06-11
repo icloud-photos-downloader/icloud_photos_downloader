@@ -136,10 +136,10 @@ def lp_size_generator(_ctx: click.Context, _param: click.Parameter, size: str) -
         raise ValueError(f"size was provided with unsupported value of '{size}'")    
 
 def file_match_policy_generator(_ctx: click.Context, _param: click.Parameter, policy: str) -> FileMatchPolicy:
-    if policy == "name-with-size-suffix":
+    if policy == "name-size-dedup-with-suffix":
         return FileMatchPolicy.NAME_WITH_SIZE_SUFFIX
     elif policy == "name-id7":
-        return FileMatchPolicy.NAME_ID7
+        return FileMatchPolicy.NAME_WITH_ID7_SUFFIX
     else:
         raise ValueError(f"policy was provided with unsupported value of '{policy}'")    
 
@@ -390,9 +390,9 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               )
 @click.option("--file-match-policy",
               "file_match_policy",
-              help="How to identify existing files. `name-with-size-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names.",
-              type=click.Choice(['name-with-size-suffix', 'name-id7'], case_sensitive=False),
-              default="name-with-size-suffix",
+              help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names and does not de-duplicate.",
+              type=click.Choice(['name-size-dedup-with-suffix', 'name-id7'], case_sensitive=False),
+              default="name-size-dedup-with-suffix",
               show_default=True,
               callback=file_match_policy_generator,
               )

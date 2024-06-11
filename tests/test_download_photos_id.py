@@ -731,7 +731,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}",
+                        f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -844,7 +844,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409_QVk2Yyt.JPG'))}",
+                f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409_QVk2Yyt.JPG')), 96)}",
                 self._caplog.text,
             )
             self.assertIn(
@@ -899,7 +899,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409_QVk2Yyt.JPG'))}",
+                f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409_QVk2Yyt.JPG')), 96)}",
                 self._caplog.text,
             )
             self.assertIn(
