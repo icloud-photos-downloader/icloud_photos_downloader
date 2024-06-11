@@ -14,6 +14,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -133,6 +134,14 @@ def lp_size_generator(_ctx: click.Context, _param: click.Parameter, size: str) -
         return LivePhotoVersionSize.THUMB
     else:
         raise ValueError(f"size was provided with unsupported value of '{size}'")    
+
+def file_match_policy_generator(_ctx: click.Context, _param: click.Parameter, policy: str) -> FileMatchPolicy:
+    if policy == "name-with-size-suffix":
+        return FileMatchPolicy.NAME_WITH_SIZE_SUFFIX
+    elif policy == "name-id7":
+        return FileMatchPolicy.NAME_ID7
+    else:
+        raise ValueError(f"policy was provided with unsupported value of '{policy}'")    
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -379,6 +388,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               multiple=True,
               callback=password_provider_generator,
               )
+@click.option("--file-match-policy",
+              "file_match_policy",
+              help="How to identify existing files. `name-with-size-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names.",
+              type=click.Choice(['name-with-size-suffix', 'name-id7'], case_sensitive=False),
+              default="name-with-size-suffix",
+              show_default=True,
+              callback=file_match_policy_generator,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.19.1")
@@ -424,6 +441,7 @@ def main(
         lp_filename_generator: Callable[[str], str],
         raw_policy:RawTreatmentPolicy,
         password_providers: Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]],
+        file_match_policy: FileMatchPolicy,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
