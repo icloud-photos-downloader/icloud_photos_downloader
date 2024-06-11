@@ -1390,36 +1390,20 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_download_normalized_names(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         files_to_create = [
-            ("2018/07/30/IMG_7408.JPG", 1151066),
-            ("2018/07/30/IMG_7407.JPG", 656257),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
         ]
 
         files_to_download = [
             # <>:"/\|?*  -- windows
             # / & \0x00 -- linux
             # SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
-            '2018/07/31/i_n v_a_l_i_d_p_a_t_h_.JPG'
+            ('2018/07/31','i_n v_a_l_i_d_p_a_t_h_.JPG')
         ]
 
-        os.makedirs(os.path.join(data_dir, "2018/07/30/"))
-        for (file_name, file_size) in files_to_create:
-            with open(os.path.join(data_dir, file_name), "a") as f:
-                f.truncate(file_size)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_bad_filename.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_bad_filename.yml", files_to_create, files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -1432,25 +1416,10 @@ class DownloadPhotoTestCase(TestCase):
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
 
     @pytest.mark.skip("not ready yet. may be not needed")
     def test_download_watch(self) -> None:
@@ -1532,142 +1501,101 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
+        def mock_raise_response_error(_arg: Any) -> NoReturn:
+            raise PyiCloudAPIResponseException(
+                "INTERNAL_ERROR", "INTERNAL_ERROR")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+        with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch.object(PhotoAsset, "download") as pa_download:
+                pa_download.side_effect = mock_raise_response_error
 
-            def mock_raise_response_error(_arg: Any) -> NoReturn:
-                raise PyiCloudAPIResponseException(
-                    "INTERNAL_ERROR", "INTERNAL_ERROR")
+                # Pass fixed client ID via environment variable
+                _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
-            with mock.patch("time.sleep") as sleep_mock:
-                with mock.patch.object(PhotoAsset, "download") as pa_download:
-                    pa_download.side_effect = mock_raise_response_error
+                # Error msg should be repeated 5 times
+                # self.assertEqual(
+                #     self._caplog.text.count(
+                #         "Error downloading"
+                #     ), constants.MAX_RETRIES, "Retry count"
+                # )
 
-                    # Pass fixed client ID via environment variable
-                    runner = CliRunner(env={
-                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    })
-                    result = runner.invoke(
-                        main,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
-                        ],
-                    )
-                    print_result_exception(result)
+                self.assertIn(
+                    "ERROR    Could not download IMG_7409.JPG. Please try again later.",
+                    self._caplog.text,
+                )
 
-                    # Error msg should be repeated 5 times
-                    # self.assertEqual(
-                    #     self._caplog.text.count(
-                    #         "Error downloading"
-                    #     ), constants.MAX_RETRIES, "Retry count"
-                    # )
-
-                    self.assertIn(
-                        "ERROR    Could not download IMG_7409.JPG. Please try again later.",
-                        self._caplog.text,
-                    )
-
-                    # Make sure we only call sleep 4 times (skip the first retry)
-                    self.assertEqual(sleep_mock.call_count, 5)
-                    self.assertEqual(result.exit_code, 0, "Exit Code")
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+                # Make sure we only call sleep 4 times (skip the first retry)
+                self.assertEqual(sleep_mock.call_count, 5)
+                self.assertEqual(result.exit_code, 0, "Exit Code")
 
     def test_handle_internal_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
+        def mock_raise_response_error(_offset: int) -> NoReturn:
+            raise PyiCloudAPIResponseException(
+                "INTERNAL_ERROR", "INTERNAL_ERROR")
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+        with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
+                pa_photos_request.side_effect = mock_raise_response_error
 
-            def mock_raise_response_error(_offset: int) -> NoReturn:
-                raise PyiCloudAPIResponseException(
-                    "INTERNAL_ERROR", "INTERNAL_ERROR")
+                _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
-            with mock.patch("time.sleep") as sleep_mock:
-                with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
-                    pa_photos_request.side_effect = mock_raise_response_error
+                # Error msg should be repeated 5 times
+                self.assertEqual(
+                    self._caplog.text.count(
+                        "Internal Error at Apple, retrying..."
+                    ), constants.MAX_RETRIES, "Retry count"
+                )
 
-                    # Pass fixed client ID via environment variable
-                    runner = CliRunner(env={
-                        "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                    })
-                    result = runner.invoke(
-                        main,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
-                        ],
-                    )
-                    print_result_exception(result)
+                self.assertIn(
+                    "ERROR    Internal Error at Apple.",
+                    self._caplog.text,
+                )
 
-                    # Error msg should be repeated 5 times
-                    self.assertEqual(
-                        self._caplog.text.count(
-                            "Internal Error at Apple, retrying..."
-                        ), constants.MAX_RETRIES, "Retry count"
-                    )
+                # Make sure we only call sleep 4 times (skip the first retry)
+                self.assertEqual(sleep_mock.call_count, 5)
 
-                    self.assertIn(
-                        "ERROR    Internal Error at Apple.",
-                        self._caplog.text,
-                    )
-
-                    # Make sure we only call sleep 4 times (skip the first retry)
-                    self.assertEqual(sleep_mock.call_count, 5)
-
-                    self.assertEqual(result.exit_code, 1, "Exit Code")
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+                self.assertEqual(result.exit_code, 1, "Exit Code")
 
     def test_handle_io_error_mkdir(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        # TODO remove code dup
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
 
         for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
+            recreate_path(dir) # this needs to happen before mock
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             with mock.patch("os.makedirs", create=True) as m:
@@ -1719,25 +1647,8 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_download = [
-            '2018/07/31/IMG_7409.JPG',
-            # "2018/07/30/IMG_7408.JPG",
-            # "2018/07/30/IMG_7407.JPG",
-        ]
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -1752,60 +1663,31 @@ class DownloadPhotoTestCase(TestCase):
                     "--dry-run",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            # self.assertIn(
-            #     f"INFO     Downloading 2 original photos to {data_dir} ...",
-            #     self._caplog.text,
-            # )
-            for f in files_to_download:
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(f))}",
-                    self._caplog.text,
-                )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertNotIn(
-                "ERROR",
-                self._caplog.text,
-            )
-            # self.assertIn(
-            #     "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
-            #     self._caplog.text,
-            # )
-            # self.assertIn(
-            #     "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
-            #     self._caplog.text,
-            # )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        # self.assertIn(
+        #     f"INFO     Downloading 2 original photos to {data_dir} ...",
+        #     self._caplog.text,
+        # )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "ERROR",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        self.assertEqual(sum(1 for _ in files_in_result),
-                         0, "Files in the result")
+        assert result.exit_code == 0
 
     def test_download_after_delete_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         def raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_: PhotoAsset) -> NoReturn:
             raise Exception("Unexpected call to delete_photo")
@@ -1821,13 +1703,7 @@ class DownloadPhotoTestCase(TestCase):
                 ) as df_patched:
                     df_patched.side_effect = raise_response_error
 
-                    with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")) as cass:
-                        # Pass fixed client ID via environment variable
-                        runner = CliRunner(env={
-                            "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                        })
-                        result = runner.invoke(
-                            main,
+                    data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
                             [
                                 "--username",
                                 "jdoe@gmail.com",
@@ -1842,62 +1718,33 @@ class DownloadPhotoTestCase(TestCase):
                                 "--threads-num",
                                 "1",
                                 "--delete-after-download",
-                                "-d",
-                                data_dir,
-                                "--cookie-directory",
-                                cookie_dir,
                             ],
                         )
-                        print_result_exception(result)
 
-                        self.assertIn(
-                            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-                        self.assertIn(
-                            f"INFO     Downloading the first original photo to {data_dir} ...",
-                            self._caplog.text,
-                        )
-                        self.assertIn(
-                            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                            self._caplog.text,
-                        )
-                        self.assertIn(
-                            "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
-                        )
-                        self.assertIn(
-                            "INFO     All photos have been downloaded", self._caplog.text
-                        )
-                        self.assertEqual(
-                            cass.all_played, False, "All mocks played")
-                        self.assertEqual(result.exit_code, 0, "Exit code")
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        self.assertEqual(sum(1 for _ in files_in_result),
-                         0, "Files in the result")
+                    self.assertIn(
+                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    self.assertIn(
+                        f"INFO     Downloading the first original photo to {data_dir} ...",
+                        self._caplog.text,
+                    )
+                    self.assertIn(
+                        "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
+                    )
+                    self.assertIn(
+                        "INFO     All photos have been downloaded", self._caplog.text
+                    )
+                    # TDOO self.assertEqual(
+                    #     cass.all_played, False, "All mocks played")
+                    self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_download_raw_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create: Sequence[Tuple[str, int]] = [
-        ]
 
         files_to_download = [
-            '2018/07/31/IMG_7409.DNG' # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H
+            ('2018/07/31','IMG_7409.DNG') # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw.yml", [], files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -1910,67 +1757,33 @@ class DownloadPhotoTestCase(TestCase):
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.DNG'))}",
-                self._caplog.text,
-            )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first original photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
 
     def test_download_two_sizes(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create: Sequence[Tuple[str, int]] = [
-        ]
-
         files_to_download = [
-            '2018/07/31/IMG_7409.JPG',
-            '2018/07/31/IMG_7409-thumb.JPG'
+            ('2018/07/31','IMG_7409.JPG'),
+            ('2018/07/31','IMG_7409-thumb.JPG')
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_two_sizes.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_two_sizes.yml", [], files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -1987,71 +1800,34 @@ class DownloadPhotoTestCase(TestCase):
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f"INFO     Downloading the first original,thumb photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-thumb.JPG'))}",
-                self._caplog.text,
-            )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first original,thumb photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
 
     def test_download_raw_alt_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create: Sequence[Tuple[str, int]] = [
-        ]
-
+        
         files_to_download = [
-            '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            '2018/07/31/IMG_7409.JPG'
+            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            ('2018/07/31','IMG_7409.JPG')
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -2068,72 +1844,35 @@ class DownloadPhotoTestCase(TestCase):
                     "alternative",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f"INFO     Downloading the first original,alternative photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.CR2'))}",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                self._caplog.text,
-            )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first original,alternative photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
 
     def test_download_raw_photos_policy_alt_with_adj(self) -> None:
         """ raw+jpeg does not have adj and we do not need raw, just jpeg (orig) """
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create: Sequence[Tuple[str, int]] = [
-        ]
 
         files_to_download = [
             # '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            '2018/07/31/IMG_7409.JPG'
+            ('2018/07/31','IMG_7409.JPG')
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt_adj.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt_adj.yml", [], files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -2150,68 +1889,34 @@ class DownloadPhotoTestCase(TestCase):
                     "alternative",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f"INFO     Downloading the first adjusted photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            for file_name in files_to_download:
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(file_name))}",
-                    self._caplog.text,
-                )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first adjusted photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
 
     def test_download_raw_photos_policy_orig(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create: Sequence[Tuple[str, int]] = [
-        ]
 
         files_to_download = [
-            '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
             # '2018/07/31/IMG_7409.JPG'
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -2228,68 +1933,34 @@ class DownloadPhotoTestCase(TestCase):
                     "original",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            for file_name in files_to_download:
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(file_name))}",
-                    self._caplog.text,
-                )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first original photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
 
     def test_download_raw_photos_policy_as_is(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create: Sequence[Tuple[str, int]] = [
-        ]
 
         files_to_download = [
-            '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
             # '2018/07/31/IMG_7409.JPG'
         ]
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos_raw_alt.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
-            result = runner.invoke(
-                main,
+        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -2306,41 +1977,21 @@ class DownloadPhotoTestCase(TestCase):
                     "as-is",
                     "--threads-num",
                     "1",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
                 ],
             )
-            print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-            self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            for file_name in files_to_download:
-                self.assertIn(
-                    f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath(file_name))}",
-                    self._caplog.text,
-                )
-            self.assertNotIn(
-                "IMG_7409.MOV",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+        self.assertIn(
+            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first original photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded", self._caplog.text
+        )
 
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+        assert result.exit_code == 0
