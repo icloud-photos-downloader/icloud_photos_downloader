@@ -509,6 +509,7 @@ def main(
                     skip_live_photos,
                     live_photo_size,
                     dry_run,
+                    file_match_policy,
                     ) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
@@ -566,7 +567,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: LivePhotoVersionSize,
-        dry_run: bool
+        dry_run: bool,
+        file_match_policy: FileMatchPolicy,
         ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
@@ -671,19 +673,20 @@ def download_builder(
                     file_exists = os.path.isfile(original_download_path)
 
                 if file_exists:
-                    # for later: this crashes if download-size medium is specified
-                    file_size = os.stat(
-                        original_download_path or download_path).st_size
-                    photo_size = version.size
-                    if file_size != photo_size:
-                        download_path = (f"-{photo_size}.").join(
-                            download_path.rsplit(".", 1)
-                        )
-                        logger.debug(
-                            "%s deduplicated",
-                            truncate_middle(download_path, 96)
-                        )
-                        file_exists = os.path.isfile(download_path)
+                    if file_match_policy == FileMatchPolicy.NAME_WITH_SIZE_SUFFIX:
+                        # for later: this crashes if download-size medium is specified
+                        file_size = os.stat(
+                            original_download_path or download_path).st_size
+                        photo_size = version.size
+                        if file_size != photo_size:
+                            download_path = (f"-{photo_size}.").join(
+                                download_path.rsplit(".", 1)
+                            )
+                            logger.debug(
+                                "%s deduplicated",
+                                truncate_middle(download_path, 96)
+                            )
+                            file_exists = os.path.isfile(download_path)
                     if file_exists:
                         counter.increment()
                         logger.debug(
@@ -749,18 +752,19 @@ def download_builder(
                         print(lp_download_path)
                     else:
                         if lp_file_exists:
-                            lp_file_size = os.stat(lp_download_path).st_size
-                            lp_photo_size = version.size
-                            if lp_file_size != lp_photo_size:
-                                lp_download_path = (f"-{lp_photo_size}.").join(
-                                    lp_download_path.rsplit(".", 1)
-                                )
-                                logger.debug(
-                                    "%s deduplicated",
-                                    truncate_middle(lp_download_path, 96)
-                                )
-                                lp_file_exists = os.path.isfile(
-                                    lp_download_path)
+                            if file_match_policy == FileMatchPolicy.NAME_WITH_SIZE_SUFFIX:
+                                lp_file_size = os.stat(lp_download_path).st_size
+                                lp_photo_size = version.size
+                                if lp_file_size != lp_photo_size:
+                                    lp_download_path = (f"-{lp_photo_size}.").join(
+                                        lp_download_path.rsplit(".", 1)
+                                    )
+                                    logger.debug(
+                                        "%s deduplicated",
+                                        truncate_middle(lp_download_path, 96)
+                                    )
+                                    lp_file_exists = os.path.isfile(
+                                        lp_download_path)
                             if lp_file_exists:
                                 logger.debug(
                                     "%s already exists",

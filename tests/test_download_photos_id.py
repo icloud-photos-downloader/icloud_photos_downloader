@@ -960,8 +960,6 @@ class DownloadPhotoNameIDTestCase(TestCase):
         ]
 
         files_to_download = [
-            ("2018/07/31", "IMG_7409_QVk2Yyt-1884695.JPG"),
-            ("2018/07/31", "IMG_7409_QVk2Yyt-3294075.MOV"),
             ("2018/07/30", "IMG_7407_QVovd0F.JPG"),
             ("2018/07/30", "IMG_7407_QVovd0F.MOV"),
         ]
@@ -999,14 +997,14 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 f"INFO     Downloading 5 original photos to {data_dir} ...",
                 self._caplog.text,
             )
-            # self.assertIn(
-            #     f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-1884695.JPG'))} deduplicated",
-            #     self._caplog.text,
-            # )
-            # self.assertIn(
-            #     f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV'))} deduplicated",
-            #     self._caplog.text,
-            # )
+            self.assertNotIn(
+                f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-1884695.JPG')), 96)} deduplicated",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV')), 96)} deduplicated",
+                self._caplog.text,
+            )
             self.assertIn(
                 "DEBUG    Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.", self._caplog.text
             )
@@ -1016,24 +1014,6 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self.assertIn(
                 "INFO     All photos have been downloaded", self._caplog.text
             )
-
-            # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt-1884695.JPG")))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(
-                photo_mtime)
-            self.assertEqual(
-                "2018-07-31 07:22:24",
-                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
-            self.assertTrue(
-                os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV"))))
-            photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV")))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(
-                photo_mtime)
-            self.assertEqual(
-                "2018-07-31 07:22:24",
-                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
 
             assert result.exit_code == 0
 
