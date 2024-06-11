@@ -151,13 +151,14 @@ def download_media(
                 )
                 time.sleep(wait_time)
 
-        except IOError:
+        except IOError as ex:
             logger.error(
                 "IOError while writing file to %s. " +
+                "Error: %s (errno: %d)."+
                 "You might have run out of disk space, or the file " +
                 "might be too large for your OS. " +
                 "Skipping this file...",
-                download_path
+                download_path, ex.strerror, ex.errno
             )
             break
     else:
