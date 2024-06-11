@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feature: customize choice and the order of checking for password with `--password-provider` parameter
+- feature: support multiple file naming and de-deplication policies with `--file-match-policy` parameter. Rel to [#346](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/346)
 
 ## 1.19.1 (2024-06-02)
 

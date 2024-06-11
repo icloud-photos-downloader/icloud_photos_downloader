@@ -953,15 +953,15 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG", 1),
-            ("2018/07/31", "IMG_7409_QVk2Yyt.MOV",1),
-            ("2018/07/30", "IMG_7408_QVI4T2l.JPG",1151066),
-            ("2018/07/30", "IMG_7408_QVI4T2l.MOV",1606512),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG",1),
+            ("2018/07/30", "IMG_7408_QVI4T2l.MOV",1),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 1),
+            ("2018/07/30", "IMG_7407_QVovd0F.MOV", 1),
         ]
 
         files_to_download = [
-            ("2018/07/30", "IMG_7407_QVovd0F.JPG"),
-            ("2018/07/30", "IMG_7407_QVovd0F.MOV"),
+            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG"),
+            ("2018/07/31", "IMG_7409_QVk2Yyt.MOV"),
         ]
 
         # Download the first photo, but mock the video download
@@ -998,11 +998,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertNotIn(
-                f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-1884695.JPG')), 96)} deduplicated",
-                self._caplog.text,
-            )
-            self.assertNotIn(
-                f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt-3294075.MOV')), 96)} deduplicated",
+                f"deduplicated",
                 self._caplog.text,
             )
             self.assertIn(
