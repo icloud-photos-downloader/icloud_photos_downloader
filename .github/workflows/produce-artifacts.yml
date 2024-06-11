@@ -1,0 +1,67 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Produce Artifacts
+
+on: 
+  pull_request:
+    # branches: [ master ]
+  workflow_dispatch:
+    # branches:
+    #   - '**'
+
+
+jobs:
+  skip_check:
+    # continue-on-error: true # Uncomment once integration is finished
+    runs-on: ubuntu-22.04
+    # Map a step output to a job output
+    outputs:
+      should_skip: ${{ steps.skip_check.outputs.should_skip }}
+    steps:
+      - id: skip_check
+        uses: fkirc/skip-duplicate-actions@v5
+        with:
+          concurrent_skipping: 'same_content_newer'
+          skip_after_successful_duplicate: 'true'
+          paths_ignore: '["**/*.md", "examples/**"]'
+          do_not_skip: '["workflow_dispatch", "schedule"]'
+
+  get_version:
+    needs: [skip_check]
+    if: needs.skip_check.outputs.should_skip != 'true'
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Retrieve version
+      id: get_version
+      run: |
+        echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+
+    - name: Log version
+      run: |
+        echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
+
+    outputs:
+      icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
+
+  extract_changelog:
+    needs: [get_version]
+    uses: ./.github/workflows/extract-changelog.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+
+  build_package:
+    needs: [get_version]
+    if: needs.skip_check.outputs.should_skip != 'true'
+    uses: ./.github/workflows/build-package.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+
+  compile_notes:
+    needs: [get_version, build_package, extract_changelog]
+    if: needs.skip_check.outputs.should_skip != 'true'
+    uses: ./.github/workflows/compile-notes.yml
+    with:
+      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
