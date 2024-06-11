@@ -112,20 +112,8 @@ jobs:
 
   extract_changelog:
     needs: [get_version]
+    if: needs.skip_check.outputs.should_skip != 'true'
     uses: ./.github/workflows/extract-changelog.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
-  build_package:
-    needs: [get_version, skip_check, type_check, lint, test]
-    if: needs.skip_check.outputs.should_skip != 'true'
-    uses: ./.github/workflows/build-package.yml
-    with:
-      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
-
-  compile_notes:
-    needs: [get_version, build_package, extract_changelog]
-    if: needs.skip_check.outputs.should_skip != 'true'
-    uses: ./.github/workflows/compile-notes.yml
-    with:
-      icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
