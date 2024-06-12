@@ -29,9 +29,19 @@ from typing import (
     cast,
 )
 
-import click
-from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from click import Option, Parameter
+from threading import Thread
+from icloudpd.counter import Counter
+from icloudpd import constants
+from icloudpd import exif_datetime
+from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
+from icloudpd.autodelete import autodelete_photos
+from icloudpd.server import serve_app
+from icloudpd.status import StatusExchange
+from icloudpd.string_helpers import truncate_middle
+from icloudpd.email_notifications import send_2sa_notification
+from icloudpd import download
+from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
@@ -547,6 +557,12 @@ def main(
         if len(password_providers) == 0:  # pragma: no cover
             print("You need to specify at least one --password-provider")
             sys.exit(2)
+
+        _status_exchange = StatusExchange()
+
+        # start web server
+        server_thread = Thread(target=serve_app, daemon=True, args=[logger, _status_exchange])
+        server_thread.start()
 
         result = core(
                 download_builder(
