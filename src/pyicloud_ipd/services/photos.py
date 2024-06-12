@@ -19,6 +19,7 @@ import pytz
 
 from urllib.parse import urlencode
 
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
@@ -239,7 +240,15 @@ class PhotosService(PhotoLibrary):
 
     This also acts as a way to access the user's primary library.
     """
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any], filename_cleaner:Callable[[str], str], lp_filename_generator: Callable[[str], str], raw_policy: RawTreatmentPolicy):
+    def __init__(
+            self, 
+            service_root: str, 
+            session: PyiCloudSession, 
+            params: Dict[str, Any], 
+            filename_cleaner:Callable[[str], str], 
+            lp_filename_generator: Callable[[str], str], 
+            raw_policy: RawTreatmentPolicy,
+            file_match_policy: FileMatchPolicy):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -252,6 +261,7 @@ class PhotosService(PhotoLibrary):
         self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy
+        self.file_match_policy = file_match_policy
 
         self.params.update({
             'remapEnums': True,
@@ -601,9 +611,14 @@ class PhotoAsset(object):
     def filename(self) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
-            return self._service.filename_cleaner(base64.b64decode(
+            _filename = self._service.filename_cleaner(base64.b64decode(
                 fields['filenameEnc']['value']
             ).decode('utf-8'))
+            if self._service.file_match_policy == FileMatchPolicy.NAME_ID7:
+                _f, _e = os.path.splitext(_filename)
+                _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]
+                _filename = f"{_f}_{_a}{_e}"
+            return _filename
 
         # Some photos don't have a filename.
         # In that case, just use the truncated fingerprint (hash),

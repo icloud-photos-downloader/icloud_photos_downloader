@@ -12,6 +12,7 @@ from click import confirm
 
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.findmyiphone import AppleDevice
 from . import utils
@@ -205,6 +206,7 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
                 utils.identity,
                 domain,
                 RawTreatmentPolicy.AS_IS,
+                FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 username.strip(),
                 password.strip(),
             )

@@ -14,6 +14,7 @@ from icloudpd.string_helpers import truncate_middle
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd import download
 from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -133,6 +134,14 @@ def lp_size_generator(_ctx: click.Context, _param: click.Parameter, size: str) -
         return LivePhotoVersionSize.THUMB
     else:
         raise ValueError(f"size was provided with unsupported value of '{size}'")    
+
+def file_match_policy_generator(_ctx: click.Context, _param: click.Parameter, policy: str) -> FileMatchPolicy:
+    if policy == "name-size-dedup-with-suffix":
+        return FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
+    elif policy == "name-id7":
+        return FileMatchPolicy.NAME_ID7
+    else:
+        raise ValueError(f"policy was provided with unsupported value of '{policy}'")    
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -379,6 +388,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
               multiple=True,
               callback=password_provider_generator,
               )
+@click.option("--file-match-policy",
+              "file_match_policy",
+              help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names and does not de-duplicate.",
+              type=click.Choice(['name-size-dedup-with-suffix', 'name-id7'], case_sensitive=False),
+              default="name-size-dedup-with-suffix",
+              show_default=True,
+              callback=file_match_policy_generator,
+              )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.19.1")
@@ -424,6 +441,7 @@ def main(
         lp_filename_generator: Callable[[str], str],
         raw_policy:RawTreatmentPolicy,
         password_providers: Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]],
+        file_match_policy: FileMatchPolicy,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -491,6 +509,7 @@ def main(
                     skip_live_photos,
                     live_photo_size,
                     dry_run,
+                    file_match_policy,
                     ) if directory is not None else (
                     lambda _s: lambda _c,
                     _p: False),
@@ -527,6 +546,7 @@ def main(
                 filename_cleaner,
                 lp_filename_generator,
                 raw_policy,
+                file_match_policy,
                 password_providers,
                 ))
 
@@ -547,7 +567,8 @@ def download_builder(
         set_exif_datetime: bool,
         skip_live_photos: bool,
         live_photo_size: LivePhotoVersionSize,
-        dry_run: bool
+        dry_run: bool,
+        file_match_policy: FileMatchPolicy,
         ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
     def state_(
@@ -652,19 +673,20 @@ def download_builder(
                     file_exists = os.path.isfile(original_download_path)
 
                 if file_exists:
-                    # for later: this crashes if download-size medium is specified
-                    file_size = os.stat(
-                        original_download_path or download_path).st_size
-                    photo_size = version.size
-                    if file_size != photo_size:
-                        download_path = (f"-{photo_size}.").join(
-                            download_path.rsplit(".", 1)
-                        )
-                        logger.debug(
-                            "%s deduplicated",
-                            truncate_middle(download_path, 96)
-                        )
-                        file_exists = os.path.isfile(download_path)
+                    if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+                        # for later: this crashes if download-size medium is specified
+                        file_size = os.stat(
+                            original_download_path or download_path).st_size
+                        photo_size = version.size
+                        if file_size != photo_size:
+                            download_path = (f"-{photo_size}.").join(
+                                download_path.rsplit(".", 1)
+                            )
+                            logger.debug(
+                                "%s deduplicated",
+                                truncate_middle(download_path, 96)
+                            )
+                            file_exists = os.path.isfile(download_path)
                     if file_exists:
                         counter.increment()
                         logger.debug(
@@ -730,18 +752,19 @@ def download_builder(
                         print(lp_download_path)
                     else:
                         if lp_file_exists:
-                            lp_file_size = os.stat(lp_download_path).st_size
-                            lp_photo_size = version.size
-                            if lp_file_size != lp_photo_size:
-                                lp_download_path = (f"-{lp_photo_size}.").join(
-                                    lp_download_path.rsplit(".", 1)
-                                )
-                                logger.debug(
-                                    "%s deduplicated",
-                                    truncate_middle(lp_download_path, 96)
-                                )
-                                lp_file_exists = os.path.isfile(
-                                    lp_download_path)
+                            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+                                lp_file_size = os.stat(lp_download_path).st_size
+                                lp_photo_size = version.size
+                                if lp_file_size != lp_photo_size:
+                                    lp_download_path = (f"-{lp_photo_size}.").join(
+                                        lp_download_path.rsplit(".", 1)
+                                    )
+                                    logger.debug(
+                                        "%s deduplicated",
+                                        truncate_middle(lp_download_path, 96)
+                                    )
+                                    lp_file_exists = os.path.isfile(
+                                        lp_download_path)
                             if lp_file_exists:
                                 logger.debug(
                                     "%s already exists",
@@ -917,6 +940,7 @@ def core(
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
         raw_policy: RawTreatmentPolicy,
+        file_match_policy: FileMatchPolicy,
         password_providers: Dict[str,Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]],
 ) -> int:
     """Download all iCloud photos to a local directory"""
@@ -927,7 +951,7 @@ def core(
         or notification_script is not None
     )
     try:
-        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy, password_providers)(
+        icloud = authenticator(logger, domain, filename_cleaner, lp_filename_generator, raw_policy, file_match_policy, password_providers)(
             username,
             cookie_directory,
             raise_error_on_2sa,
