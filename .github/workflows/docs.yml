@@ -18,7 +18,7 @@ jobs:
       with:
         path: docs/_build/html/
           
-deploy:
+  deploy:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
