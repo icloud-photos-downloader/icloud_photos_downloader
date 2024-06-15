@@ -3,7 +3,11 @@
 
 name: Refresh Docs
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - '**'
+  workflow_dispatch:
 
 jobs:
   build_docs:
