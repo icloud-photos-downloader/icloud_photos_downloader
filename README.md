@@ -16,6 +16,8 @@ There are three ways to run `icloudpd`:
 
 ## Features
 
+<!-- start features -->
+
 - Three modes of operation:
   - **Copy** - download new photos from iCloud (default mode)
   - **Sync** - download new photos from iCloud and delete local files that were removed in iCloud (`--auto-delete` option)
@@ -26,6 +28,8 @@ There are three ways to run `icloudpd`:
 - Optimizations for incremental runs (`--until-found` and `--recent` options)
 - Photo meta data (EXIF) updates (`--set-exif-datetime` option)
 - ... and many more (use `--help` option to get full list)
+
+<!-- end features -->
 
 ## Experimental Mode
 
