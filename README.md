@@ -2,17 +2,21 @@
 
 - A command-line tool to download all your iCloud photos.
 - Works on Linux, Windows, and MacOS; laptop, desktop, and NAS
-- Available as an executable for direct downloading and through package managers/ecosystems ([Docker](README_DOCKER.md), [PyPI](README_PYPI.md), [AUR](README_AUR.md), [Npm](README_NPM.md))
+- Available as an executable for direct downloading and through package managers/ecosystems ([Docker](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#docker), [PyPI](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#pypi), [AUR](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#aur), [Npm](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#npm))
 - Developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)). 
+
+See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details
 
 We aim to release new versions once a week (Friday), if there is something worth delivering.
 
 ## Install and Run
 
 There are three ways to run `icloudpd`:
-1. Download executable for your platform from the Github [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) and run it
-1. Use package manager to install, update, and, in some cases, run ([Docker](README_DOCKER.md), [PyPI](README_PYPI.md), [AUR](README_AUR.md), [Npm](README_NPM.md))
+1. Download executable for your platform from the Github [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.19.1) and run it
+1. Use package manager to install, update, and, in some cases, run ([Docker](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#docker), [PyPI](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#pypi), [AUR](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#aur), [Npm](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#npm))
 1. Build and run from the source
+
+See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html) for more details
 
 ## Features
 
