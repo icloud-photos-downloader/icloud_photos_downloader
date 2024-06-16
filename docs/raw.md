@@ -10,8 +10,9 @@ they can be downloaded by `icloudpd` as any other supported format.
 ```{versionadded} 1.19.0
 ```
 
-RAW images from thrid party cameras can be imported into Apple Photos or uploaded to iCloud.com. 
+RAW images from third party cameras can be imported into Apple Photos or uploaded to iCloud.com. 
 These type of assets can also be downloaded by `icloudpd`. The following formats are recognized:
+
 - Adobe DNG - same as Apple ProRAW
 - Canon CR2, CR3, and CRW
 - Sony ARW
@@ -28,7 +29,7 @@ These type of assets can also be downloaded by `icloudpd`. The following formats
 
 iCloud supports images with two represenations. `icloudpd` can download one or both representations.
 
-One represenation will be `original` size_ and another `alternative`.
+One represenation will be `original` [size](size) and another `alternative`.
 
 As of June 2024, icloud.com always shows assets with two representations as RAW+JPEG. Photo app on Mac
 allows choosing which representation to treat as original, but it is not clear what that setting impacts. 
