@@ -1,4 +1,4 @@
-# RAW assets
+# RAW Assets
 
 ## Apple ProRAW/ProRes
 
