@@ -41,14 +41,57 @@ Getting Docker:
 (pypi)=
 ## PyPI
 
-TBD
+Install:
+``` sh
+pip install icloudpd
+```
+
+Run:
+
+``` sh
+icloudpd --directory /data --username my@email.address --watch-with-interval 3600
+```
+
+````{note}
+
+on Windows:
+
+``` sh
+pip install icloudpd --user
+```
+
+Plus add `C:\Users\<YourUserAccountHere>\AppData\Roaming\Python\Python<YourPythonVersionHere>\Scripts` to PATH. The exact path will be given at the end of `icloudpd` installation.
+````
+
+```{note}
+
+on MacOS:
+
+Add `/Users/<YourUserAccountHere>/Library/Python/<YourPythonVersionHere>/bin` to PATH. The exact path will be given at the end of `icloudpd` installation.
+```
 
 (aur)=
 ## AUR
 
-TBD
+AUR packages can be installed on Arch Linux. Installation can be done [manually](https://wiki.archlinux.org/title/Arch_User_Repository#Installing_and_upgrading_packages) or with the use of an [AUR helper](https://wiki.archlinux.org/title/AUR_helpers).
+
+The manual process would look like this:
+
+``` sh
+git clone https://aur.archlinux.org/icloudpd-bin.git
+cd icloudpd-bin
+makepkg -sirc
+```
+
+With the use of the AUR helper e.g. [yay](https://github.com/Jguer/yay) the installation process would look like this:
+
+``` sh
+yay -S icloudpd-bin
+```
 
 (npm)=
 ## NPM
 
-TBD
+``` sh
+npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
+```
