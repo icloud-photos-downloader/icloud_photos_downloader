@@ -1,6 +1,8 @@
-# Welcome to icloudpd's documentation!
+# icloudpd documentation!
+
+`icloudpd` is a tool to all your iCloud photos to local storage
 
 ```{toctree}
-raw
 size
+raw
 ```

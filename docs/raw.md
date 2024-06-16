@@ -1,4 +1,4 @@
-# Support for RAW assets
+# RAW assets
 
 ## Apple ProRAW/ProRes
 
