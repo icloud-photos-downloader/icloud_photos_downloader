@@ -28,7 +28,7 @@ Some authentication errors may be resolved by clearing `.pycloud` subfolder in t
 
 You can store your password in the system keyring using the `icloud` command-line tool:
 
-``` plain
+```
 $ icloud --username jappleseed@apple.com
 ICloud Password for jappleseed@apple.com:
 Save password in keyring? (y/N)

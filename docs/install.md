@@ -5,6 +5,7 @@ There are three ways to run `icloudpd`:
 1. Use package manager to install, update, and, in some cases, run ([Docker](#docker), [PyPI](#pypi), [AUR](#aur), [Npm](#npm))
 1. Build and run from the source
 
+(docker)=
 ## Docker
 
 ```sh
@@ -37,14 +38,17 @@ Getting Docker:
 - Appliance (e.g. NAS) will have their own way to install Docker engines and running containers - see manufacturer's instructions.
 ```
 
+(pypi)=
 ## PyPI
 
 TBD
 
+(aur)=
 ## AUR
 
 TBD
 
+(npm)=
 ## NPM
 
 TBD

@@ -29,4 +29,10 @@ Live Photo assets have two components: still image and short video. `icloudpd` c
 - use video file name the same as still image with `original` policy; use `--file-match-policy name-id7` to avoid clashes of video file with other videos.
 - use suffix from the still image with `suffix` policy: **"IMG_1234_HEVC.MOV"** for **"IMG_1234.HEIC"** still. This is default and works for HIEC still images only
 
+## Unicode
 
+```{versionchanged} 1.18.0
+`--keep-unicode-in-filenames` parameter flag added with default `false` 
+```
+
+Unicode characters are stripted from file names for better compatibility. `icloudpd` can leave them when `--keep-unicode-in-filenames` is specified.
