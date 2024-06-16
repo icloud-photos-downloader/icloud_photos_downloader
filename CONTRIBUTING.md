@@ -146,6 +146,14 @@ docker build -t icloudpd_dev_ .
 ```
 Note: If you work with devcontainers, you most likely need to run that command on the host system inside your source folder.
 
+### Developing Documentation
+
+To compile docs and start web server with hot reloading:
+
+``` sh
+sphinx-autobuild docs docs/_build/html
+```
+
 ## How to write a unit test
 
 The unit tests are a very important asset of this project. Due to our 100% test coverage we can safely use great tools like [Dependabot](dependabot.com) and be sure that the implementation of a new feature or fixing of a bug does not lead to further issues.
