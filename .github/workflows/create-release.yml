@@ -53,10 +53,3 @@ jobs:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
       PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-
-  build_docs:
-    uses: ./.github/workflows/build-docs.yml
-
-  publish_docs:
-    needs: [build_docs]
-    uses: ./.github/workflows/publish-docs.yml
