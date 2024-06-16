@@ -1,5 +1,9 @@
 # Operation Modes
 
+```{versionchanged} 1.8.0
+Added `--delete-after-download` parameter
+```
+
 `icloudpd` works in one of three modes of operation:
 
 - **Copy** - download new photos from iCloud (default mode)

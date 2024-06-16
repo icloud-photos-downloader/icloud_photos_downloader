@@ -47,3 +47,20 @@ icloud --username jappleseed@apple.com --delete-from-keyring
 ```{note}
 Use `icloud`, not `icloudpd`
 ```
+
+## Password Providers
+
+```{versionadded} 1.20.0
+```
+
+Passwords for iCloud access can be supplied by user in three ways:
+- Using `--password` command line parameter
+- Using keyring
+- Using console
+
+It is possible to specify which of these three ways `icloudpd` should use, by specifying them with `--password-provider` parameter. More than one can be specified and the order
+of providers matches the order then will be checked for password. E.g. `--password-provider keyring --password-provider console` means that `icloudpd` will check password in keyring first and then, if no password found, ask for password in the console.
+
+Keyring password provider, if specified, saves valid password back into keyring.
+
+Default set and order of providers are: *parameter*, *keyring*, *console*

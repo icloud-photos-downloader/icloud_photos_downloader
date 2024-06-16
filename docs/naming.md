@@ -4,13 +4,17 @@ Assets on iCloud have names. When downloading assets, `icloudpd` can adjust name
 
 ## Folder Structure
 
-`icloudpd` uses asset metadata (_created date_) to build folder hierarchy and it can be adjusted with `--folder-stucture` parameter.
+```{versionchanged} 1.7.0
+Support for `none` value added
+```
+
+`icloudpd` uses asset metadata (_created date_) to build folder hierarchy, and it can be adjusted with `--folder-stucture` parameter.
 
 Specifying `--folder-structure none` will put all files into one folder.
 
 ## Duplicates
 
-```{versionchanged} 1.19.0
+```{versionchanged} 1.20.0
 `--file-match-policy` parameter added and `name-id7` policy implemented
 ```
 

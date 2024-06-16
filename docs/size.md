@@ -2,6 +2,10 @@
 
 ## Basic Sizes
 
+```{versionchanged} 1.19.0
+Multiple `--size` parameters can be specified
+```
+
 Each asset in iCloud may have multiple sizes available for downloading:
 - original
 - medium
