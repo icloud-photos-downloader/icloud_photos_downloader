@@ -2,13 +2,13 @@
 
 Goal is to try new things and get feedback from users without breaking existing behavior.
 
-Anything in this section can change without backward compatibity or even completely removed.
+Anything in this section can change without backward compatibility or even completely removed.
 
 DANGER ZONE: Code may not work as expected.
 
 ## CLI format
 
-Goal: reduce user confusion and maintanence burden by restructuring CLI interface for better matching use cases and related options
+Goal: reduce user confusion and maintenance burden by restructuring CLI interface for better matching use cases and related options
 
 ### New Structure
 
@@ -18,9 +18,9 @@ Ideas:
 
 Use Cases:
 - Maintain local copy/backup of iCloud: **COPY** command
-- Use iCloud as a transfer meduim to local storage (and clean iCloud afterwards): **MOVE** command
+- Use iCloud as a transfer medium to local storage (and clean iCloud afterwards): **MOVE** command
 
-Othrogonal Needs:
+Orthogonal Needs:
 - Scheduled sync: **WATCH** command
 - management of persistent credentials: **AUTH** command
 - monitoring/notification/alerting: TBD

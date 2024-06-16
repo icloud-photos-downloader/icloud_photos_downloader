@@ -4,7 +4,7 @@
 
 ### MFA
 
-If your Apple account has two-factor authentication (multi-factor authentication, MFA) enabled,
+If your Apple account has two-factor authentication (multifactor authentication, MFA) enabled,
 you will be prompted for a code when you run the script. Two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months. Apple requires MFA for all new accounts.
 
@@ -20,11 +20,11 @@ Authentication to iCloud with hardware keys (FIDO) is not supported.
 
 ### ADP
 
-Advanced Data Protection (ADP) for iCloud accounts is not supported because iCloudPD simulates web access, which is disabled with ADP.
+Advanced Data Protection (ADP) for iCloud accounts is not supported because `icloudpd` simulates web access, which is disabled with ADP.
 
 ### Occasional Errors
 
-Some authentication errors may be resolved by clearing `.pycloud` subfolder in the user's home dir. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
+Some authentication errors may be resolved by clearing `.pycloud` subfolder in the user's home directory. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
 
 ### System Keyring
 
@@ -60,17 +60,17 @@ If you are still seeing this message after 30 minutes, then please [open an issu
 
 ## Access from Mainland China
 
-Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with `--domain cn` parameter to support downloading iCloud phtotos from mainland China, however, people reported mixed results with that parameter.
+Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with `--domain cn` parameter to support downloading iCloud photos from mainland China, however, people reported mixed results with that parameter.
 
-## MacOS binary
+## macOS binary
 
-`icloudpd` is available as Intel 64bit binary for MacOS, but works on ARM macs too (M1, M2).
+`icloudpd` is available as Intel 64bit binary for macOS, but works on ARM macs too (M1, M2).
 
 Here are the steps to make it working:
-- download binary from Github [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into desired local folder
+- download binary from GitHub [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into desired local folder
 - add executable flag by running `chmod +x icloudpd-1.20.0-macos-amd64`
 - start it from the terminal: `icloudpd-1.20.0-macos-amd64`
-- Apple will tell you that it cannot check for malicous software and refuse to run the app; click "Ok"
+- Apple will tell you that it cannot check for malicious software and refuse to run the app; click "Ok"
 - Open "System Settings"/"Privacy & Security" and find `icloudpd-1.20.0-macos-amd64` as blocked app; Click "Allow"
 - Start `icloudpd-1.20.0-macos-amd64` from the terminal again
 - Apple will show another warning; click "Open"

@@ -1,8 +1,8 @@
 # iCloud Authentication
 
-## Multi Factor Authentication
+## Multi-Factor Authentication
 
-If your Apple account has two-factor authentication (multi-factor authentication, MFA) enabled,
+If your Apple account has two-factor authentication (multifactor authentication, MFA) enabled,
 you will be prompted for a code when you run the script. Two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months. Apple requires MFA for all new accounts.
 
@@ -18,11 +18,11 @@ Authentication to iCloud with hardware keys (FIDO) is not supported.
 
 ## ADP
 
-Advanced Data Protection (ADP) for iCloud accounts is not supported because iCloudPD simulates web access, which is disabled with ADP.
+Advanced Data Protection (ADP) for iCloud accounts is not supported because `icloudpd` simulates web access, which is disabled with ADP.
 
 ## Occasional Errors
 
-Some authentication errors may be resolved by clearing `.pycloud` subfolder in the user's home dir. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
+Some authentication errors may be resolved by clearing `.pycloud` subfolder in the user's home directory. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
 
 ## System Keyring
 

@@ -27,15 +27,15 @@ These type of assets can also be downloaded by `icloudpd`. The following formats
 ```{versionadded} 1.19.0
 ```
 
-iCloud supports images with two represenations. `icloudpd` can download one or both representations.
+iCloud supports images with two representations. `icloudpd` can download one or both representations.
 
-One represenation will be `original` [size](size) and another `alternative`.
+One representation will be `original` [size](size) and another `alternative`.
 
 As of June 2024, icloud.com always shows assets with two representations as RAW+JPEG. Photo app on Mac
 allows choosing which representation to treat as original, but it is not clear what that setting changes. 
 
-`icloudpd` diambiguates behavior with `--align-raw` parameter:
+`icloudpd` disambiguates behavior with `--align-raw` parameter:
 
-- *original*        always treat RAW as original [size](size)
-- *alternative*     always treat RAW as alternative [size](size)
-- *as-is*           treat RAW as it is in icloud data
+- *original* always treat RAW as original [size](size)
+- *alternative* always treat RAW as alternative [size](size)
+- *as-is* treat RAW as it is in iCloud data

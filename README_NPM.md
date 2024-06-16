@@ -14,9 +14,9 @@ Synchronization logic can be adjusted with command-line parameters. Run the foll
 npx --yes icloudpd --help
 ``` 
 
-## Getting Node and Npm
+## Getting Node and npm
 
-You can get NodeJS with accompanying Npm from [Official site](https://nodejs.org/en/download).
+You can get NodeJS with accompanying npm from [Official site](https://nodejs.org/en/download).
 
 ## More
 

@@ -19,8 +19,8 @@ Assets for sizes other than original will have suffix added to their name, e.g. 
 ```
 
 Image edits are represented as a special size `adjusted`. Two common use cases related to edits:
-- Download only edited version:      use `--size adjusted` parameter
-- Download edit and original:        use `--size adjusted --size original` parameters. Edits will have `-adjusted` suffix added if file extension is the same as original.
+- Download only edited version: use `--size adjusted` parameter
+- Download edit and original: use `--size adjusted --size original` parameters. Edits will have `-adjusted` suffix added if file extension is the same as original.
 
 ```{note}
 Portraits are represented in iCloud as edits.

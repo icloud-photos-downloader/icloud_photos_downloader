@@ -1,8 +1,8 @@
 # Install and Run
 
 There are three ways to run `icloudpd`:
-1. Download executable for your platform from the Github [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.20.0) and run it
-1. Use package manager to install, update, and, in some cases, run ([Docker](#docker), [PyPI](#pypi), [AUR](#aur), [Npm](#npm))
+1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.20.0) and run it
+1. Use package manager to install, update, and, in some cases, run ([Docker](#docker), [PyPI](#pypi), [AUR](#aur), [npm](#npm))
 1. Build and run from the source
 
 (docker)=
@@ -12,7 +12,7 @@ There are three ways to run `icloudpd`:
 docker run -it --rm --name icloudpd -v $(pwd)/Photos:/data -e TZ=America/Los_Angeles icloudpd/icloudpd:latest icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
-Image asset date will be convered to specified TZ and then used for creating folders (see `--folder-stucture` param)
+Image asset date will be converted to specified TZ and then used for creating folders (see `--folder-stucture` parameter)
 
 Synchronization logic can be adjusted with command-line parameters. Run the following to get full list:
 ``` sh 
@@ -90,7 +90,7 @@ yay -S icloudpd-bin
 ```
 
 (npm)=
-## NPM
+## npm
 
 ``` sh
 npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
