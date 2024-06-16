@@ -1,6 +1,6 @@
-# icloudpd documentation!
+# iCloud Photos Downloader
 
-`icloudpd` is a tool to download all your iCloud photos to local storage
+A command-line tool to download all your iCloud photos to local storage
 
 ```{toctree}
 size
