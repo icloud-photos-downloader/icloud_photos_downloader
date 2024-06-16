@@ -12,10 +12,18 @@ jobs:
       id: pages
       uses: actions/configure-pages@v5
 
-    - name: Build HTML
-      uses: ammaraskar/sphinx-action@master
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
       with:
-        docs-folder: "docs/"
+        python-version: '3.12'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip3 install --disable-pip-version-check -e .[dev]
+
+    - name: Build HTML
+      run: |
+        sphinx-build docs docs/_build/html
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
