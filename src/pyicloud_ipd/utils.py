@@ -29,11 +29,9 @@ KEYRING_SYSTEM = 'pyicloud://icloud-password'
 
 def password_exists_in_keyring(username:str) -> bool:
     try:
-        get_password_from_keyring(username)
+        return get_password_from_keyring(username) is not None
     except PyiCloudNoStoredPasswordAvailableException:
         return False
-
-    return True
 
 
 def get_password_from_keyring(username:str) -> Optional[str]:
