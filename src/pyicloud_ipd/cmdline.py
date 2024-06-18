@@ -4,6 +4,7 @@ A Command Line Wrapper to allow easy use of pyicloud for
 command line scripts, and related.
 """
 import argparse
+import getpass
 import pickle
 import sys
 from typing import NoReturn, Optional, Sequence
@@ -178,26 +179,31 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
 
     command_line = parser.parse_args(args)
 
-    username = command_line.username
-    password = command_line.password
+    username: Optional[str] = command_line.username.strip() or None
+    password: Optional[str] = command_line.password.strip() or None
     domain   = command_line.domain
 
-    if username and command_line.delete_from_keyring:
+    if username is not None and command_line.delete_from_keyring:
         utils.delete_password_in_keyring(username)
+        print("Password delete from keyring")
 
     failure_count = 0
     while True:
         # Which password we use is determined by your username, so we
         # do need to check for this first and separately.
-        if not username:
+        if username is None:
             parser.error("No username supplied")
 
-        # if not password:
-        #     password = utils.get_password(
-        #         username, interactive=command_line.interactive
-        #     )
+        got_from_keyring = False
 
-        if not password:
+        if password is None:
+            password = utils.get_password_from_keyring(username)
+            got_from_keyring = password is not None
+
+        if password is None:
+            password = getpass.getpass(f'Enter iCloud password for {username}: ').strip() or None
+
+        if password is None:
             parser.error("No password supplied")
 
         try:
@@ -207,11 +213,11 @@ def main(args:Optional[Sequence[str]]=None) -> NoReturn:
                 domain,
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
-                username.strip(),
-                password.strip(),
+                username,
+                password,
             )
             if (
-                not utils.password_exists_in_keyring(username)
+                not got_from_keyring
                 and command_line.interactive
                 and confirm("Save password in keyring?")
             ):
