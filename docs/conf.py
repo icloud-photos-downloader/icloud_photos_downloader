@@ -9,7 +9,7 @@
 project = 'icloudpd'
 copyright = '2024, Contributors'
 author = 'Contributors'
-release = '1.20.0'
+release = '1.20.1'
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -19,7 +19,7 @@ extensions = ["myst_parser"]
 templates_path = ['_templates']
 exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
 
-html_title = "icloudpd 1.20.0"
+html_title = "icloudpd 1.20.1"
 language = "en"
 # language = 'Python'
 

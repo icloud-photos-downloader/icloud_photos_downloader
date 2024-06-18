@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- fix: keyring handling in `icloud`. Rel to [#871](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/871)
+## 1.20.1 (2024-06-18)
+
+- fix: keyring handling in `icloud` [#871](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/871)
 
 ## 1.20.0 (2024-06-16)
 
