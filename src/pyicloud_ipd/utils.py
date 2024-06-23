@@ -1,7 +1,9 @@
 import copy
 import getpass
+from html.parser import HTMLParser
+import json
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, TypeVar
+from typing import Any, Callable, Dict, List, Optional, Sequence, TypeVar, Tuple
 import keyring
 import sys
 
@@ -155,3 +157,23 @@ def get_property(prop_name: str, src: Dict[str, _Tin2]) -> Optional[_Tin2]:
 
 def parse_res(filename:str, res: Dict[str, Any]) -> AssetVersion:
     raise NotImplementedError()
+
+class SMSParser(HTMLParser):
+    def __init__(self) -> None:
+        # initialize the base class
+        super(SMSParser, self).__init__()
+        self._is_boot_args = False
+        self.sms_data: Dict[str, Any] = {}
+
+    def handle_starttag(self, tag: str, attrs: List[Tuple[str, Optional[str]]]) -> None:
+        if tag == "script":
+            self._is_boot_args = ("type", "application/json") in attrs and ("class", "boot_args") in attrs
+
+    def handle_endtag(self, tag: str) -> None:
+        if tag == "script":
+            self._is_boot_args = False
+
+    def handle_data(self, data: str) -> None:
+        if self._is_boot_args:
+            self.sms_data = json.loads(data)
+        

@@ -26,7 +26,7 @@ from pyicloud_ipd.services.reminders import RemindersService
 from pyicloud_ipd.services.photos import PhotosService
 from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
-from pyicloud_ipd.utils import get_password_from_keyring
+from pyicloud_ipd.utils import SMSParser, get_password_from_keyring
 
 
 LOGGER = logging.getLogger(__name__)
@@ -338,6 +338,51 @@ class PyiCloudService:
             return devices
         return []
 
+    def get_trusted_phone_numbers(self) -> Sequence[Dict[str, Any]]:
+        """ Returns list of trusted phone number for sms 2fa """
+
+        headers = self._get_auth_headers()
+
+        scnt = self.session_data.get("scnt")
+        if scnt:
+            headers["scnt"] = scnt
+        
+        session_id = self.session_data.get("session_id")
+        if session_id:
+            headers["X-Apple-ID-Session-Id"] = session_id
+
+        response = self.session.get(
+            self.AUTH_ENDPOINT,
+            headers=headers
+        )
+        
+        parser = SMSParser()
+        parser.feed(response.text)
+        parser.close()
+        numbers: Sequence[Dict[str, Any]] = parser.sms_data.get("direct", {}).get("twoSV", {}).get("phoneNumberVerification", {}).get("trustedPhoneNumbers", [])
+        return numbers
+
+    def send_2fa_code_sms(self, device_id: int) -> bool:
+        """ Requests that a verification code is sent to the given device"""
+        data = json.dumps({"phoneNumber":{"id":device_id},"mode":"sms"})
+        headers = self._get_auth_headers()
+
+        scnt = self.session_data.get("scnt")
+        if scnt:
+            headers["scnt"] = scnt
+        
+        session_id = self.session_data.get("session_id")
+        if session_id:
+            headers["X-Apple-ID-Session-Id"] = session_id
+
+        request = self.session.put(
+            f'{self.AUTH_ENDPOINT}/verify/phone',
+            data=data,
+            headers=headers
+        )
+        return request.ok
+
+
     def send_verification_code(self, device: Dict[str, Any]) -> bool:
         """ Requests that a verification code is sent to the given device"""
         data = json.dumps(device)
@@ -371,6 +416,27 @@ class PyiCloudService:
         self._authenticate_with_token()
 
         return not self.requires_2sa
+
+    def validate_2fa_code_sms(self, device_id: int, code:str) -> bool:
+        """Verifies a verification code received via Apple's 2FA system through SMS."""
+        data = {"phoneNumber":{"id":device_id},"securityCode":{"code":code},"mode":"sms"}
+
+        headers = self._get_auth_headers({"Accept": "application/json"})
+
+        scnt = self.session_data.get("scnt")
+        if scnt:
+            headers["scnt"] = scnt
+        
+        session_id = self.session_data.get("session_id")
+        if session_id:
+            headers["X-Apple-ID-Session-Id"] = session_id
+
+        response = self.session.post(
+            "%s/verify/phone/securitycode" % self.AUTH_ENDPOINT,
+            data=json.dumps(data),
+            headers=headers,
+        )
+        return response.ok
 
     def validate_2fa_code(self, code:str) -> bool:
         """Verifies a verification code received via Apple's 2FA system (HSA2)."""

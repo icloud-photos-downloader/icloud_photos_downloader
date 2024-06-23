@@ -72,16 +72,16 @@ interactions:
       Referer: ['https://www.icloud.com/']
       User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
     method: GET
-    uri: https://setup.icloud.com/setup/ws/1/listDevices?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
+    uri: https://idmsa.apple.com/appleauth/auth
   response:
     body:
-      string: !!python/unicode '{"devices":[{"deviceType":"SMS","areaCode":"","phoneNumber":"*******03","deviceId":"1"}]}'
+      string: <script type="application/json" class="boot_args">{"direct":{"scriptSk7Url":"https://appleid.cdn-apple.com/appleauth/static/module-assets/home-45556079a0eee434f5ce.js","scriptUrl":"https://appleid.cdn-apple.com/appleauth/static/jsj/1720813638/widget/auth/hsa2.js","module":"widget/auth/components/hsa2/hsa2","isReact":true,"authUserType":"hsa2","hasTrustedDevices":true,"twoSV":{"supportedPushModes":["voice","sms"],"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}],"securityCode":{"length":6,"tooManyCodesSent":false,"tooManyCodesValidated":false,"securityCodeLocked":false,"securityCodeCooldown":false},"authenticationType":"hsa2","recoveryUrl":"https://iforgot.apple.com/phone/add?prs_account_nm=dummy%40dummy.com\u0026autoSubmitAccount=true\u0026appId=142","cantUsePhoneNumberUrl":"https://iforgot.apple.com/iforgot/phone/add?context=cantuse\u0026prs_account_nm=dummy%40dummy.com\u0026autoSubmitAccount=true\u0026appId=142","recoveryWebUrl":"https://iforgot.apple.com/password/verify/appleid?prs_account_nm=dummy%40dummy.com\u0026autoSubmitAccount=true\u0026appId=142","repairPhoneNumberUrl":"https://gsa.apple.com/appleid/account/manage/repair/verify/phone","repairPhoneNumberWebUrl":"https://appleid.apple.com/widget/account/repair?#!repair","aboutTwoFactorAuthenticationUrl":"https://support.apple.com/kb/HT204921","autoVerified":false,"showAutoVerificationUI":false,"supportsCustodianRecovery":false,"hideSendSMSCodeOption":false,"supervisedChangePasswordFlow":false,"supportsRecovery":true,"trustedPhoneNumber":{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1},"hsa2Account":true,"restrictedAccount":false,"managedAccount":false},"authFactors":["robocall","sms","generatedcode"],"source_returnurl":"https://idmsa.apple.com/","sourceAppId":1159},"referrerQuery":"","urlContext":"/appleauth","tag":"\u003Chsa2 class=\u0027auth-v1\u0027 suppress-iforgot=\"{suppressIforgot}\" skip-trust-browser-step=\"{skipTrustBrowserStep}\"\u003E\u003C/hsa2\u003E","authType":"hsa2","authInitialRoute":"auth/verify/phone","appleIDUrl":"https://appleid.apple.com"},"additional":{"canRoute2sv":true}}</script>
     headers:
       Access-Control-Allow-Credentials: ['true']
       Access-Control-Allow-Origin: ['https://www.icloud.com']
       Cache-Control: ['no-cache, no-store, private']
       Connection: ['keep-alive']
-      Content-Type: ['application/json; charset=UTF-8']
+      Content-Type: ['text/html; charset=UTF-8']
       Date: ['Fri, 15 Dec 2023 09:54:34 GMT']
       Server: ['AppleHttpServer/2f080fc0']
       Strict-Transport-Security: ['max-age=31536000; includeSubDomains']

@@ -236,7 +236,7 @@ class AuthenticationTestCase(TestCase):
                 "INFO     Two-factor authentication is required",
                 self._caplog.text,
             )
-            self.assertIn("  0: SMS to *******03", result.output)
+            self.assertIn("  0: (•••) •••-••81", result.output)
             self.assertIn(
                 "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321", result.output
             )
