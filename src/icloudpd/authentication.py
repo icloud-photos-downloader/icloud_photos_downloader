@@ -135,7 +135,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             sys.exit(1)
 
         for i, device in enumerate(devices):
-            print(f"  {i}: {device["obfuscatedNumber"]}")
+            print(f"  {i}: {device['obfuscatedNumber']}")
 
         index_str = f"..{devices_count - 1}" if devices_count > 1 else ""
         code:int = click.prompt(
