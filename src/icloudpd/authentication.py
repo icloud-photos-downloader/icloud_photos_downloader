@@ -135,7 +135,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             sys.exit(1)
 
         for i, device in enumerate(devices):
-            print(f"  {i}: {device['obfuscatedNumber']}")
+            print(f"  {i}: {device.obfuscated_number}")
 
         index_str = f"..{devices_count - 1}" if devices_count > 1 else ""
         code:int = click.prompt(
@@ -147,7 +147,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         if code < devices_count:
             # need to send code
             device = devices[code]
-            if not icloud.send_2fa_code_sms(device["id"]):
+            if not icloud.send_2fa_code_sms(device.id):
                 logger.error("Failed to send two-factor authentication code")
                 sys.exit(1)
             code = click.prompt(
@@ -155,7 +155,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 type=click.IntRange(
                     0,
                     999999))
-            if not icloud.validate_2fa_code_sms(device["id"], str(code)):
+            if not icloud.validate_2fa_code_sms(device.id, str(code)):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
         else:

@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
@@ -9,6 +9,8 @@ from os import path, mkdir
 from re import match
 import http.cookiejar as cookielib
 import getpass
+
+from requests import PreparedRequest, Request, Response
 
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
@@ -26,7 +28,7 @@ from pyicloud_ipd.services.reminders import RemindersService
 from pyicloud_ipd.services.photos import PhotosService
 from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
-from pyicloud_ipd.utils import SMSParser, get_password_from_keyring
+from pyicloud_ipd.utils import AuthenticatedSession, TrustedDevice, build_trusted_phone_numbers_request, parse_trusted_phone_numbers_response
 
 
 LOGGER = logging.getLogger(__name__)
@@ -41,6 +43,12 @@ HEADER_DATA = {
     "X-Apple-I-Ercd": "apple_ercd",
     "scnt": "scnt",
 }
+
+class TrustedPhoneContextProvider(NamedTuple):
+    domain: str
+    oauth_session: AuthenticatedSession
+
+
 
 class PyiCloudService:
     """
@@ -87,6 +95,7 @@ class PyiCloudService:
         else:
             raise NotImplementedError(f"Domain '{domain}' is not supported yet")
 
+        self.domain = domain
 
         if cookie_directory:
             self._cookie_directory = path.expanduser(
@@ -338,29 +347,23 @@ class PyiCloudService:
             return devices
         return []
 
-    def get_trusted_phone_numbers(self) -> Sequence[Dict[str, Any]]:
+    def send_request(self, request: PreparedRequest) -> Response:
+        return self.session.send(request)
+
+    def get_oauth_session(self) -> AuthenticatedSession:
+        return AuthenticatedSession(client_id = self.client_id, scnt = self.session_data["scnt"], session_id = self.session_data["session_id"])
+
+    def get_trusted_phone_numbers(self) -> Sequence[TrustedDevice]:
         """ Returns list of trusted phone number for sms 2fa """
 
-        headers = self._get_auth_headers()
+        oauth_session = self.get_oauth_session()
+        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
 
-        scnt = self.session_data.get("scnt")
-        if scnt:
-            headers["scnt"] = scnt
-        
-        session_id = self.session_data.get("session_id")
-        if session_id:
-            headers["X-Apple-ID-Session-Id"] = session_id
+        request = build_trusted_phone_numbers_request(context)
 
-        response = self.session.get(
-            self.AUTH_ENDPOINT,
-            headers=headers
-        )
+        response = self.send_request(request)
         
-        parser = SMSParser()
-        parser.feed(response.text)
-        parser.close()
-        numbers: Sequence[Dict[str, Any]] = parser.sms_data.get("direct", {}).get("twoSV", {}).get("phoneNumberVerification", {}).get("trustedPhoneNumbers", [])
-        return numbers
+        return parse_trusted_phone_numbers_response(response.text)
 
     def send_2fa_code_sms(self, device_id: int) -> bool:
         """ Requests that a verification code is sent to the given device"""
