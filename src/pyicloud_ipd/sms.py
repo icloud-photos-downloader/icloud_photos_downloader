@@ -89,11 +89,17 @@ class Request(Protocol):
     def url(self) -> str: ...
     @property
     def headers(self) -> Mapping[str, str]: ...
+    @property
+    def data(self) -> Optional[str]: ...
+    @property
+    def json(self) -> Optional[Mapping[str, Any]]: ...
 
 class _InternalRequest(NamedTuple):
     method: str
     url: str
     headers: Mapping[str, str]
+    data: Optional[str] = None
+    json: Optional[Mapping[str, Any]] = None
 
 def build_trusted_phone_numbers_request(context: _TrustedPhoneContextProvider) -> Request:
     """ Builds a request for the list of trusted phone numbers for sms 2fa """
@@ -101,12 +107,50 @@ def build_trusted_phone_numbers_request(context: _TrustedPhoneContextProvider) -
     url = _auth_url(context.domain)
 
     req = _InternalRequest(
-    method="GET",
-    url=url,
-    headers = {
-        **_oauth_const_headers(),
-        **_oauth_redirect_header(context.domain),
-        **_oauth_headers(context.oauth_session),
-    })
+        method="GET",
+        url=url,
+        headers = {
+            **_oauth_const_headers(),
+            **_oauth_redirect_header(context.domain),
+            **_oauth_headers(context.oauth_session),
+        })
     return req
 
+def build_send_sms_code_request(context: _TrustedPhoneContextProvider, device_id: int) -> Request:
+    """ Builds a request for the list of trusted phone numbers for sms 2fa """
+
+    url = _auth_url(context.domain) + "/verify/phone"
+
+    json = {"phoneNumber":{"id":device_id},"mode":"sms"}
+
+    req = _InternalRequest(
+        method="PUT",
+        url=url,
+        headers = {
+            **_oauth_const_headers(),
+            **_oauth_redirect_header(context.domain),
+            **_oauth_headers(context.oauth_session),
+            ** {"Content-type": "application/json"},
+        },
+        json = json)
+    return req
+
+def build_verify_sms_code_request(context: _TrustedPhoneContextProvider, device_id: int, code: int) -> Request:
+    """ Builds a request for the list of trusted phone numbers for sms 2fa """
+
+    url = _auth_url(context.domain) + "/verify/phone/securitycode"
+
+    json = {"phoneNumber":{"id":device_id},"securityCode":{"code":str(code)},"mode":"sms"}
+
+    req = _InternalRequest(
+        method="POST",
+        url=url,
+        headers = {
+            **_oauth_const_headers(),
+            **_oauth_redirect_header(context.domain),
+            **_oauth_headers(context.oauth_session),
+            ** {"Content-type": "application/json"},
+            # ** {"Accept": "application/json"},
+        },
+        json = json)
+    return req

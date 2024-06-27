@@ -155,7 +155,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 type=click.IntRange(
                     0,
                     999999))
-            if not icloud.validate_2fa_code_sms(device.id, str(code)):
+            if not icloud.validate_2fa_code_sms(device.id, code):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
         else:
