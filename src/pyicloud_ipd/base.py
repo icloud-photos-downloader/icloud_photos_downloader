@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
+from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
@@ -28,7 +28,7 @@ from pyicloud_ipd.services.reminders import RemindersService
 from pyicloud_ipd.services.photos import PhotosService
 from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
-from pyicloud_ipd.utils import AuthenticatedSession, TrustedDevice, build_trusted_phone_numbers_request, parse_trusted_phone_numbers_response
+from pyicloud_ipd.sms import AuthenticatedSession, TrustedDevice, build_trusted_phone_numbers_request, parse_trusted_phone_numbers_response
 
 
 LOGGER = logging.getLogger(__name__)
@@ -359,7 +359,12 @@ class PyiCloudService:
         oauth_session = self.get_oauth_session()
         context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
 
-        request = build_trusted_phone_numbers_request(context)
+        req = build_trusted_phone_numbers_request(context)
+        request = Request(
+            method = req.method,
+            url = req.url,
+            headers= req.headers
+        ).prepare()
 
         response = self.send_request(request)
         
