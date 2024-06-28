@@ -38,7 +38,19 @@ def _map_to_trusted_device(device: Mapping[str, Any]) -> Optional[TrustedDevice]
         return None
     return _InternalTrustedDevice(id=id, obfuscated_number=number)
 
-def parse_trusted_phone_numbers_response(content: str) -> Sequence[TrustedDevice]:
+class _Response(Protocol):
+    @property
+    def status_code(self) -> int: ...
+    @property
+    def text(self) -> str: ...
+
+def parse_trusted_phone_numbers_response(response: _Response) -> Sequence[TrustedDevice]:
+    """ Parses html response for the list of available trusted phone numbers"""
+    if response.status_code in [200, 204]:
+        return parse_trusted_phone_numbers_payload(response.text)
+    return []
+
+def parse_trusted_phone_numbers_payload(content: str) -> Sequence[TrustedDevice]:
     """ Parses html response for the list of available trusted phone numbers"""
     parser = _SMSParser()
     parser.feed(content)

@@ -12,7 +12,7 @@ import inspect
 
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.sms import parse_trusted_phone_numbers_response
+from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
 from pyicloud_ipd.utils import constant, identity
 from tests.helpers import path_from_project_root, recreate_path
 
@@ -252,55 +252,55 @@ class AuthenticationTestCase(TestCase):
             assert result.exit_code == 0
 
 
-    def test_parse_trusted_phone_numbers_response_valid(self) -> None:
-        html_path = os.path.join(self.data_path, "parse_trusted_phone_numbers_response_valid.html")
+    def test_parse_trusted_phone_numbers_payload_valid(self) -> None:
+        html_path = os.path.join(self.data_path, "parse_trusted_phone_numbers_payload_valid.html")
         with open(html_path, 'r') as file:
             html = file.read()    
         expected = _TrustedDevice(id=1, obfuscated_number="(•••) •••-••81")
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(1, len(result), "number of numbers parsed")
         self.assertEqual(expected, result[0], "parsed number")
 
-    def test_parse_trusted_phone_numbers_response_minimal(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_minimal(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
         expected = _TrustedDevice(id=1, obfuscated_number="(•••) •••-••81")
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(1, len(result), "number of numbers parsed")
         self.assertEqual(expected, result[0], "parsed number")
 
-    def test_parse_trusted_phone_numbers_response_missing_node0(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_missing_node0(self) -> None:
         html = '<script type="application/json" class="boot_args">{"MISSINGdirect":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
-    def test_parse_trusted_phone_numbers_response_missing_node1(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_missing_node1(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"MISSINGtwoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
-    def test_parse_trusted_phone_numbers_response_missing_node2(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_missing_node2(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"MISSINGphoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
-    def test_parse_trusted_phone_numbers_response_missing_node3(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_missing_node3(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"MISSINGtrustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
-    def test_parse_trusted_phone_numbers_response_empty_list(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_empty_list(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
-    def test_parse_trusted_phone_numbers_response_invalid_missing_id(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_invalid_missing_id(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","MISSINGid":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
-    def test_parse_trusted_phone_numbers_response_invalid_missing_number(self) -> None:
+    def test_parse_trusted_phone_numbers_payload_invalid_missing_number(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","MISSINGobfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
-        result = parse_trusted_phone_numbers_response(html)
+        result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
 class _TrustedDevice(NamedTuple):

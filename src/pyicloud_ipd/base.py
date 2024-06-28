@@ -368,7 +368,7 @@ class PyiCloudService:
 
         response = self.send_request(request)
         
-        return parse_trusted_phone_numbers_response(response.text)
+        return parse_trusted_phone_numbers_response(response)
 
     def send_2fa_code_sms(self, device_id: int) -> bool:
         """ Requests that a verification code is sent to the given device"""
