@@ -163,7 +163,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         code = click.prompt(
             "Please enter two-factor authentication code",
             type=click.IntRange(
-                0,
+                100000,
                 999999))
         if not icloud.validate_2fa_code(str(code)):
             logger.error("Failed to verify two-factor authentication code")

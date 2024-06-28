@@ -166,7 +166,7 @@ def build_verify_sms_code_request(context: _TrustedPhoneContextProvider, device_
             **_oauth_redirect_header(context.domain),
             **_oauth_headers(context.oauth_session),
             ** {"Content-type": "application/json"},
-            # ** {"Accept": "application/json"},
+            ** {"Accept": "application/json"},
         },
         json = json)
     return req
