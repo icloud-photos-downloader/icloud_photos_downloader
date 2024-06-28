@@ -31,8 +31,12 @@ class _InternalTrustedDevice(NamedTuple):
     id: int
     obfuscated_number: str
 
-def _map_to_trusted_device(device: Mapping[str, Any]) -> TrustedDevice:
-    return _InternalTrustedDevice(id=device["id"], obfuscated_number=device["obfuscatedNumber"])
+def _map_to_trusted_device(device: Mapping[str, Any]) -> Optional[TrustedDevice]:
+    id: Optional[int] = device.get("id")
+    number: Optional[str] = device.get("obfuscatedNumber")
+    if id is None or number is None:
+        return None
+    return _InternalTrustedDevice(id=id, obfuscated_number=number)
 
 def parse_trusted_phone_numbers_response(content: str) -> Sequence[TrustedDevice]:
     """ Parses html response for the list of available trusted phone numbers"""
@@ -40,7 +44,7 @@ def parse_trusted_phone_numbers_response(content: str) -> Sequence[TrustedDevice
     parser.feed(content)
     parser.close()
     numbers: Sequence[Mapping[str, Any]] = parser.sms_data.get("direct", {}).get("twoSV", {}).get("phoneNumberVerification", {}).get("trustedPhoneNumbers", [])
-    return list(map(_map_to_trusted_device, numbers))
+    return list((item for item in map(_map_to_trusted_device, numbers) if item is not None))
 
 class AuthenticatedSession(NamedTuple):
     client_id: str
