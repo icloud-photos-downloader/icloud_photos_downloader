@@ -1,13 +1,12 @@
 import inspect
 import os
-import shutil
 from unittest import TestCase
+from unittest.mock import patch
 
 import pytest
 from click.testing import CliRunner
 from freezegun import freeze_time
 from icloudpd.base import main
-from mock import patch
 from vcr import VCR
 
 from tests.helpers import path_from_project_root, recreate_path

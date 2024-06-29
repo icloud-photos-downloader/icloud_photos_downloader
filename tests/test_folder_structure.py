@@ -1,8 +1,6 @@
 import glob
 import inspect
 import os
-import shutil
-from os.path import normpath
 from typing import List
 from unittest import TestCase
 

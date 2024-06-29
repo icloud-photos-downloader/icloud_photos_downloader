@@ -5,7 +5,6 @@ import logging
 import os
 import socket
 import time
-from typing import Any, Dict
 
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
@@ -144,7 +143,7 @@ def download_media(
                 )
                 time.sleep(wait_time)
 
-        except IOError:
+        except OSError:
             logger.error(
                 "IOError while writing file to %s. "
                 + "You might have run out of disk space, or the file "

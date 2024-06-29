@@ -1,6 +1,5 @@
 """Get/set EXIF dates from photos"""
 
-import datetime
 import logging
 import typing
 

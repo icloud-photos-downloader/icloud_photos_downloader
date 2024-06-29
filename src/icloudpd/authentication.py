@@ -2,10 +2,9 @@
 
 import logging
 import sys
-from typing import Callable, Dict, Optional, Sequence, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 import click
-import pyicloud_ipd
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy

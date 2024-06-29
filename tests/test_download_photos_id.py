@@ -3,19 +3,17 @@ import glob
 import inspect
 import logging
 import os
-import shutil
 import sys
-from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Tuple
-from unittest import TestCase
+from typing import Any, NoReturn, Optional, Sequence, Tuple
+from unittest import TestCase, mock
+from unittest.mock import ANY, PropertyMock, call
 
-import mock
 import piexif
 import pytest
 from click.testing import CliRunner
 from icloudpd import constants
 from icloudpd.base import main
 from icloudpd.string_helpers import truncate_middle
-from mock import ANY, PropertyMock, call
 from piexif._exceptions import InvalidImageDataError
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
@@ -27,13 +25,9 @@ from requests.exceptions import ConnectionError
 from vcr import VCR
 
 from tests.helpers import (
-    assert_files,
-    combine_file_lists,
-    create_files,
     path_from_project_root,
     print_result_exception,
     recreate_path,
-    run_cassette,
     run_icloudpd_test,
 )
 
@@ -147,7 +141,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         def mocked_download(pa: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True) # noqa: B010
                 return response
             return mock.MagicMock()
 
@@ -459,7 +453,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 def mocked_authenticate(self: PyiCloudService) -> None:
                     if not hasattr(self, "already_authenticated"):
                         orig_authenticate(self)
-                        setattr(self, "already_authenticated", True)
+                        setattr(self, "already_authenticated", True) # noqa: B010
 
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     # Pass fixed client ID via environment variable
@@ -514,7 +508,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 def mocked_authenticate(self: PyiCloudService) -> None:
                     if not hasattr(self, "already_authenticated"):
                         orig_authenticate(self)
-                        setattr(self, "already_authenticated", True)
+                        setattr(self, "already_authenticated", True) # noqa: B010
 
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     # Pass fixed client ID via environment variable
@@ -568,7 +562,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             def mocked_authenticate(self: PyiCloudService) -> None:
                 if not hasattr(self, "already_authenticated"):
                     orig_authenticate(self)
-                    setattr(self, "already_authenticated", True)
+                    setattr(self, "already_authenticated", True) # noqa: B010
 
             with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
@@ -624,7 +618,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             def mocked_authenticate(self: PyiCloudService) -> None:
                 if not hasattr(self, "already_authenticated"):
                     orig_authenticate(self)
-                    setattr(self, "already_authenticated", True)
+                    setattr(self, "already_authenticated", True) # noqa: B010
 
             with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
@@ -1023,7 +1017,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         def mocked_download(self: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(self, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True) # noqa: B010
                 return response
             return mock.MagicMock()
 
@@ -1058,7 +1052,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertNotIn(
-                f"deduplicated",
+                "deduplicated",
                 self._caplog.text,
             )
             self.assertIn(
@@ -1191,7 +1185,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         def mocked_download(pa: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True) # noqa: B010
                 return response
             return mock.MagicMock()
 
@@ -1246,7 +1240,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         def mocked_download(pa: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True) # noqa: B010
                 return response
             return mock.MagicMock()
 

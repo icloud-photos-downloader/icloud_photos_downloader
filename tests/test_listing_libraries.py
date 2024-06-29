@@ -1,12 +1,7 @@
-import glob
 import inspect
-import json
 import os
-import shutil
 from unittest import TestCase
 
-import click
-import mock
 import pytest
 from click.testing import CliRunner
 from icloudpd.base import main

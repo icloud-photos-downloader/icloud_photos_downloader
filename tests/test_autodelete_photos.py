@@ -3,11 +3,9 @@ import glob
 import inspect
 import logging
 import os
-import shutil
 from typing import Any, NoReturn, Optional
-from unittest import TestCase
+from unittest import TestCase, mock
 
-import mock
 import pytest
 import pytz
 from click.testing import CliRunner
@@ -77,11 +75,11 @@ class AutodeletePhotosTestCase(TestCase):
                 )
                 self.assertIn(
                     #                   f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                    f"INFO     Downloading the first original photo or video",
+                    "INFO     Downloading the first original photo or video",
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
+                    "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -89,7 +87,7 @@ class AutodeletePhotosTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn(
-                    f"INFO     Deleted IMG_3589.JPG",
+                    "INFO     Deleted IMG_3589.JPG",
                     self._caplog.text,
                 )
                 self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
@@ -126,9 +124,9 @@ class AutodeletePhotosTestCase(TestCase):
                     f"INFO     Downloading 0 original photos and videos to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn(f"INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                 self.assertIn(
-                    f"INFO     Deleting any files found in 'Recently Deleted'...",
+                    "INFO     Deleting any files found in 'Recently Deleted'...",
                     self._caplog.text,
                 )
 
@@ -151,7 +149,7 @@ class AutodeletePhotosTestCase(TestCase):
             recreate_path(dir)
 
         files = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
         ]
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
@@ -180,7 +178,7 @@ class AutodeletePhotosTestCase(TestCase):
             )
             self.assertIn(
                 #                f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                f"INFO     Downloading the first original photo or video",
+                "INFO     Downloading the first original photo or video",
                 self._caplog.text,
             )
             self.assertIn(
@@ -188,7 +186,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleted IMG_3589.JPG",
+                "INFO     Deleted IMG_3589.JPG",
                 self._caplog.text,
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
@@ -224,9 +222,9 @@ class AutodeletePhotosTestCase(TestCase):
                 f"INFO     Downloading 0 original photos and videos to {data_dir} ...",
                 self._caplog.text,
             )
-            self.assertIn(f"INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             self.assertIn(
-                f"INFO     Deleting any files found in 'Recently Deleted'...",
+                "INFO     Deleting any files found in 'Recently Deleted'...",
                 self._caplog.text,
             )
 
@@ -251,28 +249,28 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7406.MOV",
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7383.PNG",
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190.JPG",
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190-medium.JPG",
+            f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7406.MOV",
+            f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7383.PNG",
+            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190.JPG",
+            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190-medium.JPG",
         ]
 
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/",
+                f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/",
+                f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/",
+                f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
             )
         )
 
@@ -359,7 +357,7 @@ class AutodeletePhotosTestCase(TestCase):
             recreate_path(dir)
 
         files = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
         ]
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
@@ -368,7 +366,7 @@ class AutodeletePhotosTestCase(TestCase):
                 a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
             ) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
-                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
+                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True) # noqa: B010
                     raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -382,7 +380,7 @@ class AutodeletePhotosTestCase(TestCase):
                     def mocked_authenticate(self: PyiCloudService) -> None:
                         if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
                             orig_authenticate(self)
-                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)
+                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True) # noqa: B010
 
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
@@ -453,7 +451,7 @@ class AutodeletePhotosTestCase(TestCase):
             recreate_path(dir)
 
         files = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
         ]
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
@@ -474,7 +472,7 @@ class AutodeletePhotosTestCase(TestCase):
                     def mocked_authenticate(self: PyiCloudService) -> None:
                         if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
                             orig_authenticate(self)
-                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)
+                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True) # noqa: B010
 
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
@@ -549,7 +547,7 @@ class AutodeletePhotosTestCase(TestCase):
             recreate_path(dir)
 
         files = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
         ]
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
@@ -558,7 +556,7 @@ class AutodeletePhotosTestCase(TestCase):
                 a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
             ) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
-                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)
+                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True) # noqa: B010
                     raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:
@@ -629,7 +627,7 @@ class AutodeletePhotosTestCase(TestCase):
             recreate_path(dir)
 
         files = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_3589.JPG"
+            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
         ]
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
@@ -713,28 +711,28 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7406.MOV",
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7383.PNG",
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190.JPG",
-            f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/IMG_7190-medium.JPG",
+            f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7406.MOV",
+            f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7383.PNG",
+            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190.JPG",
+            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190-medium.JPG",
         ]
 
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/",
+                f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/",
+                f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{'{:%Y/%m/%d}'.format(datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()))}/",
+                f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
             )
         )
 
@@ -830,10 +828,10 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["IMG_7407.JPG", "IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"IMG_7406.MOV",
-            f"IMG_7383.PNG",
-            f"IMG_7190.JPG",
-            f"IMG_7190-medium.JPG",
+            "IMG_7406.MOV",
+            "IMG_7383.PNG",
+            "IMG_7190.JPG",
+            "IMG_7190-medium.JPG",
         ]
 
         # create some empty files
@@ -923,11 +921,11 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"2018/07/30/IMG_7406.MOV",
-            f"2018/07/26/IMG_7383.PNG",
-            f"2018/07/12/IMG_7190.JPG",
-            f"2018/07/12/IMG_7190-medium.JPG",
-            f"2018/07/12/IMG_7190.MOV",  # Live Photo for JPG
+            "2018/07/30/IMG_7406.MOV",
+            "2018/07/26/IMG_7383.PNG",
+            "2018/07/12/IMG_7190.JPG",
+            "2018/07/12/IMG_7190-medium.JPG",
+            "2018/07/12/IMG_7190.MOV",  # Live Photo for JPG
         ]
 
         # create some empty files
@@ -1017,11 +1015,11 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"2018/07/30/IMG_7406.MOV",
-            f"2018/07/26/IMG_7383.PNG",
-            f"2018/07/12/IMG_7190.HEIC",  # SU1HXzcxOTAuSlBH -> SU1HXzcxOTAuSEVJQw==
-            f"2018/07/12/IMG_7190-medium.JPG",
-            f"2018/07/12/IMG_7190_HEVC.MOV",  # Live Photo for HEIC
+            "2018/07/30/IMG_7406.MOV",
+            "2018/07/26/IMG_7383.PNG",
+            "2018/07/12/IMG_7190.HEIC",  # SU1HXzcxOTAuSlBH -> SU1HXzcxOTAuSEVJQw==
+            "2018/07/12/IMG_7190-medium.JPG",
+            "2018/07/12/IMG_7190_HEVC.MOV",  # Live Photo for HEIC
         ]
 
         # create some empty files

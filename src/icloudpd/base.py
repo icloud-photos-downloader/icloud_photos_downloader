@@ -6,7 +6,6 @@ from multiprocessing import freeze_support  # fmt: skip
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
 import datetime
-import getpass
 import itertools
 import json
 import logging
@@ -21,7 +20,6 @@ from typing import (
     Callable,
     Dict,
     Iterable,
-    List,
     NoReturn,
     Optional,
     Sequence,
@@ -31,7 +29,6 @@ from typing import (
 )
 
 import click
-from click import Option, Parameter
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -725,7 +722,7 @@ def download_builder(
                     # Deprecation - We used to download files like IMG_1234-original.jpg,
                     # so we need to check for these.
                     # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
-                    original_download_path = (f"-original.").join(download_path.rsplit(".", 1))
+                    original_download_path = ("-original.").join(download_path.rsplit(".", 1))
                     file_exists = os.path.isfile(original_download_path)
 
                 if file_exists:

@@ -1,4 +1,3 @@
-# coding=utf-8
 import glob
 import inspect
 import os

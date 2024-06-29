@@ -4,7 +4,7 @@
 from multiprocessing import Lock, RawValue
 
 
-class Counter(object):
+class Counter:
     def __init__(self, value: int = 0):
         self.initial_value = value
         self.val = RawValue("i", value)

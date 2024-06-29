@@ -1,4 +1,4 @@
-from typing import Any, Dict
+from typing import Dict
 from unittest import TestCase
 
 from pyicloud_ipd.asset_version import AssetVersion
