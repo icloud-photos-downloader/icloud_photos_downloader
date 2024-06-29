@@ -91,7 +91,8 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     device_index: int = 0
     if devices_count > 0:
         for i, device in enumerate(devices):
-            alt_name = f"SMS to {device.get("phoneNumber")}"
+            number = device["phoneNumber"]
+            alt_name = f"SMS to {number}"
             name = device.get("deviceName", alt_name)
             print(f"  {i}: {name}")
 
