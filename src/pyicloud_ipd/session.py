@@ -49,7 +49,6 @@ class PyiCloudSession(Session):
 
     @override
     # type: ignore 
-    # pylint: disable=arguments-differ 
     def request(self, method: str, url, **kwargs):  
 
         # Charge logging to the right service endpoint
@@ -132,7 +131,7 @@ class PyiCloudSession(Session):
 
         try:
             data = response.json() if response.status_code != 204 else {}
-        except:  # pylint: disable=bare-except
+        except:  
             request_logger.warning("Failed to parse response with JSON mimetype")
             return response
 

@@ -117,7 +117,7 @@ class PyiCloudService:
         try:
             with open(self.session_path, encoding="utf-8") as session_f:
                 self.session_data = json.load(session_f)
-        except:  # pylint: disable=bare-except
+        except:  
             LOGGER.info("Session file does not exist")
         session_client_id: Optional[str] = self.session_data.get("client_id")
         if session_client_id:

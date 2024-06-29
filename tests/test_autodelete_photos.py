@@ -368,7 +368,7 @@ class AutodeletePhotosTestCase(TestCase):
                 a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
             ) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
-                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True) # noqa: B010
+                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)  # noqa: B010
                     raise PyiCloudAPIResponseException("Invalid global session", "100")
 
             with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
@@ -382,7 +382,7 @@ class AutodeletePhotosTestCase(TestCase):
                     def mocked_authenticate(self: PyiCloudService) -> None:
                         if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
                             orig_authenticate(self)
-                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True) # noqa: B010
+                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)  # noqa: B010
 
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
@@ -474,7 +474,7 @@ class AutodeletePhotosTestCase(TestCase):
                     def mocked_authenticate(self: PyiCloudService) -> None:
                         if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
                             orig_authenticate(self)
-                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True) # noqa: B010
+                            setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)  # noqa: B010
 
                     with mock.patch.object(
                         PyiCloudService, "authenticate", new=mocked_authenticate
@@ -558,7 +558,7 @@ class AutodeletePhotosTestCase(TestCase):
                 a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
             ) -> None:
                 if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
-                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True) # noqa: B010
+                    setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)  # noqa: B010
                     raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
             with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117

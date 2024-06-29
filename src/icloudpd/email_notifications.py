@@ -5,8 +5,6 @@ import logging
 import smtplib
 from typing import Optional, cast
 
-# pylint: disable-msg=too-many-arguments
-
 
 def send_2sa_notification(
     logger: logging.Logger,

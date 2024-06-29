@@ -12,7 +12,7 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 from requests import Response
-from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+from requests.exceptions import ConnectionError
 from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
@@ -92,9 +92,6 @@ def download_response_to_path_dry_run(
         download_path,
     )
     return True
-
-
-# pylint: disable-msg=too-many-arguments
 
 
 def download_media(

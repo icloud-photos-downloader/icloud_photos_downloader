@@ -213,7 +213,7 @@ class ListingRecentPhotosTestCase(TestCase):
             recreate_path(dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette( # noqa: SIM117
+        with vcr.use_cassette(  # noqa: SIM117
             os.path.join(self.vcr_path, "listing_photos_missing_downloadUrl.yml")
         ):
             with mock.patch("icloudpd.base.open", create=True) as mock_open:

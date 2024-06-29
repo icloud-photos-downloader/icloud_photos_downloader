@@ -458,8 +458,6 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.20.3")
-# pylint: disable-msg=too-many-arguments,too-many-statements
-# pylint: disable-msg=too-many-branches,too-many-locals
 def main(
     directory: Optional[str],
     username: str,
@@ -491,7 +489,7 @@ def main(
     log_level: str,
     no_progress_bar: bool,
     notification_script: Optional[str],
-    threads_num: int,  # pylint: disable=W0613
+    threads_num: int,
     delete_after_download: bool,
     domain: str,
     watch_with_interval: Optional[int],
@@ -607,10 +605,6 @@ def main(
         )
 
 
-# pylint: disable-msg=too-many-arguments,too-many-statements
-# pylint: disable-msg=too-many-branches,too-many-locals
-
-
 def download_builder(
     logger: logging.Logger,
     skip_videos: bool,
@@ -672,7 +666,6 @@ def download_builder(
             except KeyError as ex:
                 print(f"KeyError: {ex} attribute was not found in the photo fields.")
                 with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
-                    # pylint: disable=protected-access
                     json.dump(
                         {
                             "master_record": photo._master_record,
@@ -680,7 +673,6 @@ def download_builder(
                         },
                         outfile,
                     )
-                    # pylint: enable=protected-access
                 print("icloudpd has saved the photo record to: " "./icloudpd-photo-error.json")
                 print(
                     "Please create a Gist with the contents of this file: "
@@ -832,7 +824,6 @@ def delete_photo(
     """Delete a photo from the iCloud account."""
     clean_filename_local = photo.filename
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
-    # pylint: disable=W0212
     url = (
         f"{photo_service._service_endpoint}/records/modify?"
         f"{urllib.parse.urlencode(photo_service.params)}"
@@ -884,7 +875,6 @@ def retrier(
     while True:
         try:
             return func()
-        # pylint: disable-msg=broad-except
         except Exception as ex:
             attempts += 1
             error_handler(ex, attempts)
@@ -941,10 +931,6 @@ def compose_handlers(
             handler(ex, retries)
 
     return composed
-
-
-# pylint: disable-msg=too-many-arguments,too-many-statements
-# pylint: disable-msg=too-many-branches,too-many-locals
 
 
 def core(
@@ -1150,8 +1136,13 @@ def core(
                         break
                     item = next(photos_iterator)
                     if download_photo(consecutive_files_found, item) and delete_after_download:
-
-                        delete_local = partial(delete_photo_dry_run if dry_run else delete_photo, logger, icloud.photos, library_object, item)
+                        delete_local = partial(
+                            delete_photo_dry_run if dry_run else delete_photo,
+                            logger,
+                            icloud.photos,
+                            library_object,
+                            item,
+                        )
 
                         retrier(delete_local, error_handler)
 
