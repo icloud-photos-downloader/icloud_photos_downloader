@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.20.3 (2024-06-29)
+
 - fix: release to PyPi [#883](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/883)
 
 ## 1.20.2 (2024-06-28)
