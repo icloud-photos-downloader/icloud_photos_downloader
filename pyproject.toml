@@ -42,7 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "twine==4.0.2",
+    "twine==5.1.1",
     "pyinstaller==6.7.0",
     "wheel==0.42.0",
     "furo==2024.5.6",
