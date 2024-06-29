@@ -19,7 +19,7 @@ vcr = VCR(decode_compressed_response=True)
 
 class TwoStepAuthTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None: 
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
@@ -33,9 +33,7 @@ class TwoStepAuthTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_invalid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -46,7 +44,7 @@ class TwoStepAuthTestCase(TestCase):
                     "--no-progress-bar",
                     "--cookie-directory",
                     cookie_dir,
-                    "--auth-only"
+                    "--auth-only",
                 ],
                 input="0\n901431\n",
             )
@@ -65,9 +63,7 @@ class TwoStepAuthTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -89,9 +85,7 @@ class TwoStepAuthTestCase(TestCase):
             )
             self.assertIn("  0: SMS to *******03", result.output)
             self.assertIn("Please choose an option: [0]: 0", result.output)
-            self.assertIn(
-                "Please enter two-step authentication code: 654321", result.output
-            )
+            self.assertIn("Please enter two-step authentication code: 654321", result.output)
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
                 "user interaction until 2SA expires.",
@@ -107,13 +101,9 @@ class TwoStepAuthTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            with mock.patch.object(
-                PyiCloudService, "send_verification_code"
-            ) as svc_mocked:
+            with mock.patch.object(PyiCloudService, "send_verification_code") as svc_mocked:
                 svc_mocked.return_value = False
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -124,7 +114,7 @@ class TwoStepAuthTestCase(TestCase):
                         "--no-progress-bar",
                         "--cookie-directory",
                         cookie_dir,
-                        "--auth-only"
+                        "--auth-only",
                     ],
                     input="0\n",
                 )
@@ -149,9 +139,7 @@ class TwoStepAuthTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2fa_flow_invalid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -162,7 +150,7 @@ class TwoStepAuthTestCase(TestCase):
                     "--no-progress-bar",
                     "--cookie-directory",
                     cookie_dir,
-                    "--auth-only"
+                    "--auth-only",
                 ],
                 input="901431\n",
             )
@@ -181,9 +169,7 @@ class TwoStepAuthTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2fa_flow_valid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -204,7 +190,8 @@ class TwoStepAuthTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321", result.output
+                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321",
+                result.output,
             )
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "

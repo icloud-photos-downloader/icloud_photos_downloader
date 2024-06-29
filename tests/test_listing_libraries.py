@@ -16,8 +16,8 @@ from tests.helpers import path_from_project_root, print_result_exception, recrea
 
 vcr = VCR(decode_compressed_response=True)
 
-class ListingLibraryTestCase(TestCase):
 
+class ListingLibraryTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
@@ -34,9 +34,7 @@ class ListingLibraryTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -55,7 +53,7 @@ class ListingLibraryTestCase(TestCase):
             albums = result.output.splitlines()
 
             self.assertIn("PrimarySync", albums)
-#            self.assertIn("WhatsApp", albums)
+            #            self.assertIn("WhatsApp", albums)
 
             assert result.exit_code == 0
 
@@ -69,9 +67,7 @@ class ListingLibraryTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -95,6 +91,5 @@ class ListingLibraryTestCase(TestCase):
                 "ERROR    Unknown library: doesnotexist",
                 self._caplog.text,
             )
-
 
             assert result.exit_code == 1

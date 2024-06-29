@@ -8,7 +8,7 @@ import piexif
 from piexif._exceptions import InvalidImageDataError
 
 
-def get_photo_exif(logger: logging.Logger, path: str) -> (typing.Optional[str]):
+def get_photo_exif(logger: logging.Logger, path: str) -> typing.Optional[str]:
     """Get EXIF date for a photo, return nothing if there is an error"""
     try:
         exif_dict: piexif.ExifIFD = piexif.load(path)

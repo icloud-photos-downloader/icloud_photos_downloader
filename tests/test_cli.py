@@ -47,9 +47,7 @@ class CliTestCase(TestCase):
             recreate_path(cookie_dir)
             with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -87,10 +85,9 @@ class CliTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Force tqdm progress bar via ENV var
-            runner = CliRunner(env={
-                "FORCE_TQDM": "yes",
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(
+                env={"FORCE_TQDM": "yes", "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"}
+            )
             result = runner.invoke(
                 main,
                 [
@@ -124,9 +121,7 @@ class CliTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -169,7 +164,7 @@ class CliTestCase(TestCase):
                 "--log-level",
                 "info",
                 "-d",
-                base_dir
+                base_dir,
             ],
         )
         assert result.exit_code == 2
@@ -207,7 +202,7 @@ class CliTestCase(TestCase):
                 "-d",
                 "/tmp",
                 "--delete-after-download",
-                "--auto-delete"
+                "--auto-delete",
             ],
         )
         assert result.exit_code == 2

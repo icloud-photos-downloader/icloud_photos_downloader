@@ -19,19 +19,23 @@ class TwoStepAuthRequiredError(Exception):
 
 
 def authenticator(
-        logger: logging.Logger, 
-        domain: str, 
-        filename_cleaner: Callable[[str], str], 
-        lp_filename_generator: Callable[[str], str], 
-        raw_policy:RawTreatmentPolicy, 
-        file_match_policy: FileMatchPolicy,
-        password_providers: Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
+    logger: logging.Logger,
+    domain: str,
+    filename_cleaner: Callable[[str], str],
+    lp_filename_generator: Callable[[str], str],
+    raw_policy: RawTreatmentPolicy,
+    file_match_policy: FileMatchPolicy,
+    password_providers: Dict[
+        str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
+    ],
+) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
     """Wraping authentication with domain context"""
+
     def authenticate_(
-            username:str,
-            cookie_directory:Optional[str]=None,
-            raise_error_on_2sa:bool=False,
-            client_id:Optional[str]=None,
+        username: str,
+        cookie_directory: Optional[str] = None,
+        raise_error_on_2sa: bool = False,
+        client_id: Optional[str] = None,
     ) -> PyiCloudService:
         """Authenticate with iCloud username and password"""
         logger.debug("Authenticating...")
@@ -47,7 +51,8 @@ def authenticator(
                     domain,
                     raw_policy,
                     file_match_policy,
-                    username, _password,
+                    username,
+                    _password,
                     cookie_directory=cookie_directory,
                     client_id=client_id,
                 )
@@ -56,7 +61,7 @@ def authenticator(
 
         if not icloud:
             raise NotImplementedError("None of providers gave password")
-        
+
         if _valid_password:
             # save valid password to all providers
             for _, _pair in password_providers.items():
@@ -65,21 +70,18 @@ def authenticator(
 
         if icloud.requires_2fa:
             if raise_error_on_2sa:
-                raise TwoStepAuthRequiredError(
-                    "Two-factor authentication is required"
-                )
+                raise TwoStepAuthRequiredError("Two-factor authentication is required")
             logger.info("Two-factor authentication is required (2fa)")
             request_2fa(icloud, logger)
 
         elif icloud.requires_2sa:
             if raise_error_on_2sa:
-                raise TwoStepAuthRequiredError(
-                    "Two-step authentication is required"
-                )
+                raise TwoStepAuthRequiredError("Two-step authentication is required")
             logger.info("Two-step authentication is required (2sa)")
             request_2sa(icloud, logger)
 
         return icloud
+
     return authenticate_
 
 
@@ -92,18 +94,13 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         for i, device in enumerate(devices):
             # pylint: disable-msg=consider-using-f-string
             print(
-                "  %s: %s" %
-                (i, device.get(
-                    "deviceName", "SMS to %s" %
-                    device.get("phoneNumber"))))
+                "  %s: %s" % (i, device.get("deviceName", "SMS to %s" % device.get("phoneNumber")))
+            )
             # pylint: enable-msg=consider-using-f-string
 
         device_index = click.prompt(
-            "Please choose an option:",
-            default="0",
-            type=click.IntRange(
-                0,
-                devices_count - 1))
+            "Please choose an option:", default="0", type=click.IntRange(0, devices_count - 1)
+        )
 
     device = devices[device_index]
     if not icloud.send_verification_code(device):
@@ -136,11 +133,10 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             print(f"  {i}: {device.obfuscated_number}")
 
         index_str = f"..{devices_count - 1}" if devices_count > 1 else ""
-        code:int = click.prompt(
+        code: int = click.prompt(
             f"Please enter two-factor authentication code or device index (0{index_str}) to send SMS with a code",
-            type=click.IntRange(
-                0,
-                999999))
+            type=click.IntRange(0, 999999),
+        )
 
         if code < devices_count:
             # need to send code
@@ -150,9 +146,8 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 sys.exit(1)
             code = click.prompt(
                 "Please enter two-factor authentication code that you received over SMS",
-                type=click.IntRange(
-                    100000,
-                    999999))
+                type=click.IntRange(100000, 999999),
+            )
             if not icloud.validate_2fa_code_sms(device.id, code):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
@@ -162,10 +157,8 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 sys.exit(1)
     else:
         code = click.prompt(
-            "Please enter two-factor authentication code",
-            type=click.IntRange(
-                100000,
-                999999))
+            "Please enter two-factor authentication code", type=click.IntRange(100000, 999999)
+        )
         if not icloud.validate_2fa_code(str(code)):
             logger.error("Failed to verify two-factor authentication code")
             sys.exit(1)

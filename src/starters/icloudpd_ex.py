@@ -1,8 +1,8 @@
-""" Experimental code """
+"""Experimental code"""
 
 from multiprocessing import freeze_support  # fmt: skip
 
-freeze_support() # fmt: skip # fixing tqdm on macos
+freeze_support()  # fmt: skip # fixing tqdm on macos
 
 import sys
 
@@ -32,24 +32,16 @@ def commands() -> None:
 
 
 @commands.command()
-@click.option(
-    "--username",
-    default="",
-    help="Apple ID to Use"
-)
+@click.option("--username", default="", help="Apple ID to Use")
 @click.option(
     "--password",
     default="",
     help=(
         "Apple ID Password to Use; if unspecified, password will be "
         "fetched from the system keyring."
-    )
+    ),
 )
-@click.option(
-    "-n", "--non-interactive",
-    default=True,
-    help="Disable interactive prompts."
-)
+@click.option("-n", "--non-interactive", default=True, help="Disable interactive prompts.")
 @click.option(
     "--delete-from-keyring",
     default=False,
@@ -60,16 +52,18 @@ def commands() -> None:
     default="com",
     help="Root Domain for requests to iCloud. com or cn",
 )
-def icloud(_username:str, _password:str, _non_interactive:bool, _delete_from_keyring:bool, _domain:str) -> None:
+def icloud(
+    _username: str, _password: str, _non_interactive: bool, _delete_from_keyring: bool, _domain: str
+) -> None:
     """Legacy iCloud utils (keyring)"""
     # raise Exception("blah")
     icloud_main(sys.argv[2:])
 
 
 @commands.command()
-@click.argument('appleid')  # , help="AppleID of the account to use")
-@click.argument('target')  # , help="Target path template")
-def copy(_appleid:str, _target:str) -> None:
+@click.argument("appleid")  # , help="AppleID of the account to use")
+@click.argument("target")  # , help="Target path template")
+def copy(_appleid: str, _target: str) -> None:
     """Copy assets from iCloud to local storage"""
 
 
@@ -84,14 +78,14 @@ def auth() -> None:
 
 
 @auth.command()
-@click.argument('appleid')  # , help="AppleID of the account to use")
-def add(_appleid:str) -> None:
+@click.argument("appleid")  # , help="AppleID of the account to use")
+def add(_appleid: str) -> None:
     """Add credentials to keyring"""
 
 
 @auth.command()
-@click.argument('appleid')  # , help="AppleID of the account to use")
-def delete(_appleid:str) -> None:
+@click.argument("appleid")  # , help="AppleID of the account to use")
+def delete(_appleid: str) -> None:
     """Delete credentials from keyring"""
 
 

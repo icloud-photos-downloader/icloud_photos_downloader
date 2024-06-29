@@ -9,7 +9,7 @@ from typing import Any
 class IPDLogger(logging.Logger):
     """Custom logger class with support for tqdm progress bar"""
 
-    def __init__(self, name:str, level:int=INFO):
+    def __init__(self, name: str, level: int = INFO):
         logging.Logger.__init__(self, name, level)
         self.tqdm = None
 
@@ -18,14 +18,14 @@ class IPDLogger(logging.Logger):
         """Sets the tqdm progress bar"""
         self.tqdm = tdqm
 
-    def set_tqdm_description(self, desc: str, loglevel:int=INFO) -> None:
+    def set_tqdm_description(self, desc: str, loglevel: int = INFO) -> None:
         """Set tqdm progress bar description, fallback to logging"""
         if self.tqdm is None:
             self.log(loglevel, desc)
         else:
             self.tqdm.set_description(desc)
 
-    def tqdm_write(self, message:str, loglevel:int=INFO) -> None:
+    def tqdm_write(self, message: str, loglevel: int = INFO) -> None:
         """Write to tqdm progress bar, fallback to logging"""
         if self.tqdm is None:
             self.log(loglevel, message)
@@ -43,8 +43,8 @@ def setup_logger() -> logging.Logger:
             has_stdout_handler = True
     if not has_stdout_handler:
         formatter = logging.Formatter(
-            fmt="%(asctime)s %(levelname)-8s %(message)s",
-            datefmt="%Y-%m-%d %H:%M:%S")
+            fmt="%(asctime)s %(levelname)-8s %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
+        )
         stdout_handler = logging.StreamHandler(stream=sys.stdout)
         stdout_handler.setFormatter(formatter)
         stdout_handler.name = "stdoutLogger"

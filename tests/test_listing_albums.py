@@ -16,8 +16,8 @@ from tests.helpers import path_from_project_root, print_result_exception, recrea
 
 vcr = VCR(decode_compressed_response=True)
 
-class ListingAlbumsTestCase(TestCase):
 
+class ListingAlbumsTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
@@ -35,9 +35,7 @@ class ListingAlbumsTestCase(TestCase):
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [

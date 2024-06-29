@@ -35,9 +35,7 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -62,9 +60,7 @@ class EmailNotificationsTestCase(TestCase):
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
-            smtp_instance.login.assert_called_once_with(
-                "jdoe+smtp@gmail.com", "password1"
-            )
+            smtp_instance.login.assert_called_once_with("jdoe+smtp@gmail.com", "password1")
             smtp_instance.sendmail.assert_called_once_with(
                 "iCloud Photos Downloader <jdoe+smtp@gmail.com>",
                 "jdoe+notifications@gmail.com",
@@ -89,9 +85,7 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -138,9 +132,7 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("subprocess.call") as subprocess_patched:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -172,9 +164,7 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -201,9 +191,7 @@ class EmailNotificationsTestCase(TestCase):
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
-            smtp_instance.login.assert_called_once_with(
-                "jdoe+smtp@gmail.com", "password1"
-            )
+            smtp_instance.login.assert_called_once_with("jdoe+smtp@gmail.com", "password1")
             smtp_instance.sendmail.assert_called_once_with(
                 "JD <jdoe+notifications+from@gmail.com>",
                 "JD <jdoe+notifications@gmail.com>",
@@ -215,4 +203,3 @@ class EmailNotificationsTestCase(TestCase):
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
-

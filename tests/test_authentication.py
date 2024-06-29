@@ -37,26 +37,23 @@ class AuthenticationTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth.yml")):
-            with self.assertRaises(
-                pyicloud_ipd.exceptions.PyiCloudFailedLoginException
-            ) as context:
+            with self.assertRaises(pyicloud_ipd.exceptions.PyiCloudFailedLoginException) as context:
                 authenticator(
-                    setup_logger(), 
-                    "com", 
-                    identity, 
-                    lp_filename_concatinator, 
-                    RawTreatmentPolicy.AS_IS, 
-                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, 
-                    {"test": (constant("dummy"), dummy_password_writter)}
-                    )(
-                        "bad_username",
-                        cookie_dir,
-                        False,
-                        "EC5646DE-9423-11E8-BF21-14109FE0B321",
-                    )
+                    setup_logger(),
+                    "com",
+                    identity,
+                    lp_filename_concatinator,
+                    RawTreatmentPolicy.AS_IS,
+                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                    {"test": (constant("dummy"), dummy_password_writter)},
+                )(
+                    "bad_username",
+                    cookie_dir,
+                    False,
+                    "EC5646DE-9423-11E8-BF21-14109FE0B321",
+                )
 
-        self.assertTrue(
-            "Invalid email/password combination." in str(context.exception))
+        self.assertTrue("Invalid email/password combination." in str(context.exception))
 
     def test_2sa_required(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -72,24 +69,21 @@ class AuthenticationTestCase(TestCase):
                 # put your actual credentials in here, run the test,
                 # and then replace with dummy credentials.
                 authenticator(
-                    setup_logger(), 
-                    "com", 
-                    identity, 
-                    lp_filename_concatinator, 
-                    RawTreatmentPolicy.AS_IS, 
+                    setup_logger(),
+                    "com",
+                    identity,
+                    lp_filename_concatinator,
+                    RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
-                    {"test": (constant("dummy"), dummy_password_writter)}
-                    )(
-                        "jdoe@gmail.com",
-                        cookie_dir,
-                        True,
-                        "DE309E26-942E-11E8-92F5-14109FE0B321",
-                    )
+                    {"test": (constant("dummy"), dummy_password_writter)},
+                )(
+                    "jdoe@gmail.com",
+                    cookie_dir,
+                    True,
+                    "DE309E26-942E-11E8-92F5-14109FE0B321",
+                )
 
-            self.assertTrue(
-                "Two-step authentication is required"
-                in str(context.exception)
-            )
+            self.assertTrue("Two-step authentication is required" in str(context.exception))
 
     def test_2fa_required(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -105,24 +99,21 @@ class AuthenticationTestCase(TestCase):
                 # put your actual credentials in here, run the test,
                 # and then replace with dummy credentials.
                 authenticator(
-                    setup_logger(), 
-                    "com", 
-                    identity, 
-                    lp_filename_concatinator, 
-                    RawTreatmentPolicy.AS_IS, 
+                    setup_logger(),
+                    "com",
+                    identity,
+                    lp_filename_concatinator,
+                    RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
-                    {"test": (constant("dummy"), dummy_password_writter)}
-                    )(
-                        "jdoe@gmail.com",
-                        cookie_dir,
-                        True,
-                        "EC5646DE-9423-11E8-BF21-14109FE0B321",
-                    )
+                    {"test": (constant("dummy"), dummy_password_writter)},
+                )(
+                    "jdoe@gmail.com",
+                    cookie_dir,
+                    True,
+                    "EC5646DE-9423-11E8-BF21-14109FE0B321",
+                )
 
-            self.assertTrue(
-                "Two-factor authentication is required"
-                in str(context.exception)
-            )
+            self.assertTrue("Two-factor authentication is required" in str(context.exception))
 
     def test_successful_token_validation(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -133,9 +124,7 @@ class AuthenticationTestCase(TestCase):
 
         # We need to create a session file first before we test the auth token validation
         with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -150,12 +139,10 @@ class AuthenticationTestCase(TestCase):
                 ],
                 input="0\n654321\n",
             )
-            assert result.exit_code ==0
+            assert result.exit_code == 0
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "successful_auth.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -180,9 +167,7 @@ class AuthenticationTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -202,9 +187,7 @@ class AuthenticationTestCase(TestCase):
             )
             self.assertIn("  0: SMS to *******03", result.output)
             self.assertIn("Please choose an option: [0]: 0", result.output)
-            self.assertIn(
-                "Please enter two-step authentication code: 654321", result.output
-            )
+            self.assertIn("Please enter two-step authentication code: 654321", result.output)
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
                 "user interaction until 2SA expires.",
@@ -220,9 +203,7 @@ class AuthenticationTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "2fa_flow_valid_code.yml")):
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -242,7 +223,8 @@ class AuthenticationTestCase(TestCase):
             )
             self.assertIn("  0: (•••) •••-••81", result.output)
             self.assertIn(
-                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321", result.output
+                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321",
+                result.output,
             )
             self.assertIn(
                 "INFO     Great, you're all set up. The script can now be run without "
@@ -252,11 +234,10 @@ class AuthenticationTestCase(TestCase):
             self.assertNotIn("Failed to parse response with JSON mimetype", self._caplog.text)
             assert result.exit_code == 0
 
-
     def test_parse_trusted_phone_numbers_payload_valid(self) -> None:
         html_path = os.path.join(self.data_path, "parse_trusted_phone_numbers_payload_valid.html")
-        with open(html_path, 'r') as file:
-            html = file.read()    
+        with open(html_path, "r") as file:
+            html = file.read()
         expected = _TrustedDevice(id=1, obfuscated_number="(•••) •••-••81")
         result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(1, len(result), "number of numbers parsed")
@@ -303,6 +284,7 @@ class AuthenticationTestCase(TestCase):
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","MISSINGobfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'
         result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
+
 
 class _TrustedDevice(NamedTuple):
     id: int
