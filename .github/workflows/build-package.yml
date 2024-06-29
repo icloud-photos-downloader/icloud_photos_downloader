@@ -240,7 +240,7 @@ jobs:
 
   build_macos:
     # earliest possible mac for better compatibility
-    runs-on: macos-11
+    runs-on: macos-12
     defaults:
       run:
         shell: bash
@@ -747,10 +747,6 @@ jobs:
       matrix: 
         prop: 
           - [
-            "macos-11",  # os
-            "amd64",  # platform spec
-          ]
-          - [
             "macos-12",  # os
             "amd64",  # platform spec
           ]
@@ -1084,10 +1080,6 @@ jobs:
       fail-fast: false 
       matrix:  
         prop:  
-          - [ 
-            "macos-11", # GH os 
-            "amd64",    # platform 
-            ] 
           - [ 
             "macos-12", 
             "amd64", 
@@ -2243,10 +2235,6 @@ jobs:
       matrix: 
         prop:  
           - [ 
-            "macos-11", # GH os 
-            "amd64",    # platform 
-            ] 
-          - [ 
             "macos-12", 
             "amd64", 
             ] 
@@ -2354,10 +2342,6 @@ jobs:
       fail-fast: false 
       matrix: 
         prop:  
-          - [ 
-            "macos-11", # GH os 
-            "amd64",    # platform 
-            ] 
           - [ 
             "macos-12", 
             "amd64", 
