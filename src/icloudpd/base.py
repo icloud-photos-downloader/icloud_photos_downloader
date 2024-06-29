@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-from functools import partial
 from multiprocessing import freeze_support  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
@@ -16,7 +15,9 @@ import sys
 import time
 import typing
 import urllib
+from functools import partial
 from logging import Logger
+from threading import Thread
 from typing import (
     Callable,
     Dict,
@@ -29,19 +30,9 @@ from typing import (
     cast,
 )
 
-from click import Option, Parameter
-from threading import Thread
-from icloudpd.counter import Counter
-from icloudpd import constants
-from icloudpd import exif_datetime
-from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
-from icloudpd.autodelete import autodelete_photos
-from icloudpd.server import serve_app
-from icloudpd.status import StatusExchange
-from icloudpd.string_helpers import truncate_middle
-from icloudpd.email_notifications import send_2sa_notification
-from icloudpd import download
-from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+import click
+from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
@@ -64,6 +55,8 @@ from icloudpd.autodelete import autodelete_photos
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
+from icloudpd.server import serve_app
+from icloudpd.status import StatusExchange
 from icloudpd.string_helpers import truncate_middle
 
 
@@ -565,57 +558,57 @@ def main(
         server_thread.start()
 
         result = core(
-                download_builder(
-                    logger,
-                    skip_videos,
-                    folder_structure,
-                    directory,
-                    size,
-                    force_size,
-                    only_print_filenames,
-                    set_exif_datetime,
-                    skip_live_photos,
-                    live_photo_size,
-                    dry_run,
-                    file_match_policy,
-                )
-                if directory is not None
-                else (lambda _s: lambda _c, _p: False),
-                directory,
-                username,
-                auth_only,
-                cookie_directory,
-                size,
-                recent,
-                until_found,
-                album,
-                list_albums,
-                library,
-                list_libraries,
-                skip_videos,
-                auto_delete,
-                only_print_filenames,
-                folder_structure,
-                smtp_username,
-                smtp_password,
-                smtp_host,
-                smtp_port,
-                smtp_no_tls,
-                notification_email,
-                notification_email_from,
-                no_progress_bar,
-                notification_script,
-                delete_after_download,
-                domain,
+            download_builder(
                 logger,
-                watch_with_interval,
+                skip_videos,
+                folder_structure,
+                directory,
+                size,
+                force_size,
+                only_print_filenames,
+                set_exif_datetime,
+                skip_live_photos,
+                live_photo_size,
                 dry_run,
-                filename_cleaner,
-                lp_filename_generator,
-                raw_policy,
                 file_match_policy,
-                password_providers,
-                )
+            )
+            if directory is not None
+            else (lambda _s: lambda _c, _p: False),
+            directory,
+            username,
+            auth_only,
+            cookie_directory,
+            size,
+            recent,
+            until_found,
+            album,
+            list_albums,
+            library,
+            list_libraries,
+            skip_videos,
+            auto_delete,
+            only_print_filenames,
+            folder_structure,
+            smtp_username,
+            smtp_password,
+            smtp_host,
+            smtp_port,
+            smtp_no_tls,
+            notification_email,
+            notification_email_from,
+            no_progress_bar,
+            notification_script,
+            delete_after_download,
+            domain,
+            logger,
+            watch_with_interval,
+            dry_run,
+            filename_cleaner,
+            lp_filename_generator,
+            raw_policy,
+            file_match_policy,
+            password_providers,
+        )
         sys.exit(result)
 
 

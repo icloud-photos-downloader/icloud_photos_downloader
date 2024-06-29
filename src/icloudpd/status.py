@@ -33,7 +33,7 @@ class StatusExchange:
         with self.lock:
             if self._status != Status.WAITING_FOR_2FA:
                 return False
-            
+
             self._code = code
             self._status = Status.READY_WITH_2FA
             return True
@@ -42,5 +42,5 @@ class StatusExchange:
         with self.lock:
             if self._status != Status.READY_WITH_2FA:
                 return None
-            
+
             return self._code
