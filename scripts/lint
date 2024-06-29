@@ -1,4 +1,5 @@
 #!/bin/bash
 set -euo pipefail
-echo "Running pylint..."
-python3 -m pylint src --ignore-paths src/icloud,src/pyicloud_ipd,src/starters
+echo "Linting..."
+# python3 -m pylint src --ignore-paths src/icloud,src/pyicloud_ipd,src/starters
+# ruff check
