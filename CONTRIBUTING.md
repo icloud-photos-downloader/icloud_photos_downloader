@@ -65,8 +65,8 @@ There are some requirements for pull requests:
 * 100% test coverage also for new features is expected.
   * After running `./scripts/test`, you will see the test coverage results in the output
   * You can also open the HTML report at: `./htmlcov/index.html`
-* Code is formatted with [autopep8](https://github.com/hhatto/autopep8). Run `./scripts/format`
-* No [pylint](https://www.pylint.org/) errors. Run `./scripts/lint` (or `pylint icloudpd`)
+* Code is formatted with [ruff](https://github.com/astral-sh/ruff). Run `./scripts/format`
+* No lint errors. Run `./scripts/lint`
 * If you've added or changed any command-line options,
   please update the [Usage](README.md#usage) section in the README.md.
 * Make sure your change is documented in the

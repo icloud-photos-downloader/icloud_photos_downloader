@@ -1,30 +1,34 @@
+import datetime
+import glob
+import inspect
 import logging
-from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Tuple
-from unittest import TestCase
-from mock import PropertyMock
-from requests import Response
-from vcr import VCR
 import os
 import sys
-import shutil
-import pytest
-import mock
-import datetime
-from mock import call, ANY
-from click.testing import CliRunner
+from typing import Any, NoReturn, Optional, Sequence, Tuple
+from unittest import TestCase, mock
+from unittest.mock import ANY, PropertyMock, call
+
 import piexif
-from piexif._exceptions import InvalidImageDataError
+import pytest
+from click.testing import CliRunner
 from icloudpd import constants
+from icloudpd.base import main
+from piexif._exceptions import InvalidImageDataError
 from pyicloud_ipd.asset_version import AssetVersion
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotoLibrary
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from requests.exceptions import ConnectionError
-from icloudpd.base import main
+from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-from tests.helpers import assert_files, combine_file_lists, create_files, path_from_project_root, print_result_exception, recreate_path, run_cassette, run_icloudpd_test
-import inspect
-import glob
+from requests import Response
+from requests.exceptions import ConnectionError
+from vcr import VCR
+
+from tests.helpers import (
+    path_from_project_root,
+    print_result_exception,
+    recreate_path,
+    run_icloudpd_test,
+)
 
 vcr = VCR(decode_compressed_response=True)
 
@@ -45,37 +49,34 @@ class DownloadPhotoTestCase(TestCase):
             ("2018/07/30", "IMG_7407.JPG", 656257),
         ]
 
-        files_to_download = [
-            ("2018/07/31", "IMG_7409.JPG")
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         data_dir, result = run_icloudpd_test(
-            self.assertEqual, 
-            self.vcr_path, 
-            base_dir, 
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
             "listing_photos.yml",
             files_to_create,
             files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "5",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--set-exif-datetime",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
         assert result.exit_code == 0
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading 5 original photos to {data_dir} ...",
             self._caplog.text,
@@ -90,7 +91,9 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        for dir_name, file_name in ([(dir_name, file_name) for (dir_name, file_name, _) in files_to_create]):
+        for dir_name, file_name in [
+            (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
+        ]:
             file_path = os.path.join(dir_name, file_name)
             self.assertIn(
                 f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
@@ -105,18 +108,15 @@ class DownloadPhotoTestCase(TestCase):
             "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
-        photo_mtime = os.path.getmtime(os.path.join(
-            data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
+        photo_mtime = os.path.getmtime(
+            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
+        )
         photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
-        self.assertEqual(
-            "2018-07-31 07:22:24",
-            photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+        self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
     def test_download_photos_and_set_exif(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -127,50 +127,48 @@ class DownloadPhotoTestCase(TestCase):
         ]
 
         files_to_download = [
-            ('2018/07/30','IMG_7405.MOV'),
-            ('2018/07/30','IMG_7407.MOV'),
-            ('2018/07/30','IMG_7408.MOV'),
-            ('2018/07/31','IMG_7409.JPG'),
-            ('2018/07/31','IMG_7409.MOV'),
+            ("2018/07/30", "IMG_7405.MOV"),
+            ("2018/07/30", "IMG_7407.MOV"),
+            ("2018/07/30", "IMG_7408.MOV"),
+            ("2018/07/31", "IMG_7409.JPG"),
+            ("2018/07/31", "IMG_7409.MOV"),
         ]
 
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
+        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            with mock.patch(
-                "icloudpd.exif_datetime.get_photo_exif"
-            ) as get_exif_patched:
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
-                    self.assertEqual, 
-                    self.vcr_path, 
-                    base_dir, 
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
                     "listing_photos.yml",
                     files_to_create,
                     files_to_download,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "4",
-                            "--set-exif-datetime",
-                            # '--skip-videos',
-                            # "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "4",
+                        "--set-exif-datetime",
+                        # '--skip-videos',
+                        # "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
                 assert result.exit_code == 0
 
         self.assertIn(
@@ -186,46 +184,50 @@ class DownloadPhotoTestCase(TestCase):
             self._caplog.text,
         )
         # 2018:07:31 07:22:24 utc
-        expectedDatetime = datetime.datetime(
-            2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
+        expectedDatetime = (
+            datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+            .astimezone()
+            .strftime("%Y-%m-%d %H:%M:%S%z")
+        )
         self.assertIn(
             f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
     def test_download_photos_and_get_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [
-            ('2018/07/31', 'IMG_7409.JPG')
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         with mock.patch.object(piexif, "load") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
 
-            data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--set-exif-datetime",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
             assert result.exit_code == 0
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -242,33 +244,37 @@ class DownloadPhotoTestCase(TestCase):
             f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
     def test_skip_existing_downloads(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/31","IMG_7409.JPG", 1884695),
-            ("2018/07/31","IMG_7409.MOV", 3294075),
+            ("2018/07/31", "IMG_7409.JPG", 1884695),
+            ("2018/07/31", "IMG_7409.MOV", 3294075),
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", files_to_create, [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    # '--skip-videos',
-                    # "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos.yml",
+            files_to_create,
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                # '--skip-videos',
+                # "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
         assert result.exit_code == 0
 
         self.assertIn(
@@ -286,80 +292,84 @@ class DownloadPhotoTestCase(TestCase):
             f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
     def test_until_found(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download_ext: Sequence[Tuple[str, str, str]] = [
-            ("2018/07/31","IMG_7409.JPG", "photo"),
-            ("2018/07/31","IMG_7409-medium.MOV", "photo"),
-            ("2018/07/30","IMG_7407.JPG", "photo"),
-            ("2018/07/30","IMG_7407-medium.MOV", "photo"),
-            ("2018/07/30","IMG_7403.MOV", "video"),
-            ("2018/07/30","IMG_7402.MOV", "video"),
-            ("2018/07/30","IMG_7399-medium.MOV", "photo")
+            ("2018/07/31", "IMG_7409.JPG", "photo"),
+            ("2018/07/31", "IMG_7409-medium.MOV", "photo"),
+            ("2018/07/30", "IMG_7407.JPG", "photo"),
+            ("2018/07/30", "IMG_7407-medium.MOV", "photo"),
+            ("2018/07/30", "IMG_7403.MOV", "video"),
+            ("2018/07/30", "IMG_7402.MOV", "video"),
+            ("2018/07/30", "IMG_7399-medium.MOV", "photo"),
         ]
         files_to_create_ext: Sequence[Tuple[str, str, str, int]] = [
-            ("2018/07/30","IMG_7408.JPG", "photo", 1151066),
-            ("2018/07/30","IMG_7408-medium.MOV", "photo", 894467),
-            ("2018/07/30","IMG_7405.MOV", "video", 36491351),
-            ("2018/07/30","IMG_7404.MOV", "video", 225935003),
+            ("2018/07/30", "IMG_7408.JPG", "photo", 1151066),
+            ("2018/07/30", "IMG_7408-medium.MOV", "photo", 894467),
+            ("2018/07/30", "IMG_7405.MOV", "video", 36491351),
+            ("2018/07/30", "IMG_7404.MOV", "video", 225935003),
             # TODO large files on Windows times out
-            ("2018/07/30","IMG_7401.MOV", "photo", 565699696),
-            ("2018/07/30","IMG_7400.JPG", "photo", 2308885),
-            ("2018/07/30","IMG_7400-medium.MOV", "photo", 1238639),
-            ("2018/07/30","IMG_7399.JPG", "photo", 2251047)
+            ("2018/07/30", "IMG_7401.MOV", "photo", 565699696),
+            ("2018/07/30", "IMG_7400.JPG", "photo", 2308885),
+            ("2018/07/30", "IMG_7400-medium.MOV", "photo", 1238639),
+            ("2018/07/30", "IMG_7399.JPG", "photo", 2251047),
         ]
-        files_to_create = [(dir_name, file_name, size) for dir_name, file_name, _, size in files_to_create_ext]
-
+        files_to_create = [
+            (dir_name, file_name, size) for dir_name, file_name, _, size in files_to_create_ext
+        ]
 
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
             with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
                 data_dir, result = run_icloudpd_test(
-                    self.assertEqual, 
-                    self.vcr_path, 
-                    base_dir, 
-                    "listing_photos.yml", 
-                    files_to_create, 
-                    [], # we fake downloading
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--live-photo-size",
-                            "medium",
-                            "--until-found",
-                            "3",
-                            "--recent",
-                            "20",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    files_to_create,
+                    [],  # we fake downloading
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--live-photo-size",
+                        "medium",
+                        "--until-found",
+                        "3",
+                        "--recent",
+                        "20",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
                 expected_calls = list(
                     map(
                         lambda f: call(
-                            ANY, False, ANY, ANY, os.path.join(data_dir, 
-                                os.path.normpath(f[0]), f[1]),
-                                ANY,
-                            LivePhotoVersionSize.MEDIUM if (
-                                f[2] == 'photo' and f[1].endswith('.MOV')
-                            ) else AssetVersionSize.ORIGINAL),
+                            ANY,
+                            False,
+                            ANY,
+                            ANY,
+                            os.path.join(data_dir, os.path.normpath(f[0]), f[1]),
+                            ANY,
+                            LivePhotoVersionSize.MEDIUM
+                            if (f[2] == "photo" and f[1].endswith(".MOV"))
+                            else AssetVersionSize.ORIGINAL,
+                        ),
                         files_to_download_ext,
                     )
                 )
                 dp_patched.assert_has_calls(expected_calls)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
+                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    self._caplog.text,
                 )
                 self.assertIn(
                     f"INFO     Downloading ??? original photos and videos to {data_dir} ...",
@@ -382,17 +392,17 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        
+
         with mock.patch("icloudpd.download.open", create=True) as m:
             # Raise IOError when we try to write to the destination file
             m.side_effect = IOError
 
             data_dir, result = run_icloudpd_test(
-                self.assertEqual, 
-                self.vcr_path, 
-                base_dir, 
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
                 "listing_photos.yml",
-                [], 
+                [],
                 [],
                 [
                     "--username",
@@ -410,7 +420,8 @@ class DownloadPhotoTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+            )
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,
@@ -430,7 +441,7 @@ class DownloadPhotoTestCase(TestCase):
         def mock_raise_response_error(_arg: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAsset, "download") as pa_download:
                 pa_download.side_effect = mock_raise_response_error
 
@@ -441,18 +452,16 @@ class DownloadPhotoTestCase(TestCase):
                 def mocked_authenticate(self: PyiCloudService) -> None:
                     if not hasattr(self, "already_authenticated"):
                         orig_authenticate(self)
-                        setattr(self, "already_authenticated", True)
+                        setattr(self, "already_authenticated", True)  # noqa: B010
 
-                with mock.patch.object(
-                    PyiCloudService, "authenticate", new=mocked_authenticate
-                ):
+                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     # Pass fixed client ID via environment variable
                     _, result = run_icloudpd_test(
-                        self.assertEqual, 
-                        self.vcr_path, 
-                        base_dir, 
-                        "listing_photos.yml", 
-                        [], 
+                        self.assertEqual,
+                        self.vcr_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
                         [],
                         [
                             "--username",
@@ -470,12 +479,7 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     # Error msg should be repeated 5 times
-                    assert (
-                        self._caplog.text.count(
-                            "Session error, re-authenticating..."
-                        )
-                        == 5
-                    )
+                    assert self._caplog.text.count("Session error, re-authenticating...") == 5
 
                     self.assertIn(
                         "ERROR    Could not download IMG_7409.JPG. Please try again later.",
@@ -492,7 +496,7 @@ class DownloadPhotoTestCase(TestCase):
         def mock_raise_response_error(_offset: int) -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
@@ -503,13 +507,17 @@ class DownloadPhotoTestCase(TestCase):
                 def mocked_authenticate(self: PyiCloudService) -> None:
                     if not hasattr(self, "already_authenticated"):
                         orig_authenticate(self)
-                        setattr(self, "already_authenticated", True)
+                        setattr(self, "already_authenticated", True)  # noqa: B010
 
-                with mock.patch.object(
-                    PyiCloudService, "authenticate", new=mocked_authenticate
-                ):
+                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     # Pass fixed client ID via environment variable
-                    _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                    _, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.vcr_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -526,12 +534,7 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     # Error msg should be repeated 5 times
-                    assert (
-                        self._caplog.text.count(
-                            "Session error, re-authenticating..."
-                        )
-                        == 5
-                    )
+                    assert self._caplog.text.count("Session error, re-authenticating...") == 5
 
                     self.assertIn(
                         "ERROR    iCloud re-authentication failed. Please try again later.",
@@ -558,13 +561,17 @@ class DownloadPhotoTestCase(TestCase):
             def mocked_authenticate(self: PyiCloudService) -> None:
                 if not hasattr(self, "already_authenticated"):
                     orig_authenticate(self)
-                    setattr(self, "already_authenticated", True)
+                    setattr(self, "already_authenticated", True)  # noqa: B010
 
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
-                with mock.patch.object(
-                    PyiCloudService, "authenticate", new=mocked_authenticate
-                ):
-                    _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
+                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
+                    _, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.vcr_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -610,13 +617,17 @@ class DownloadPhotoTestCase(TestCase):
             def mocked_authenticate(self: PyiCloudService) -> None:
                 if not hasattr(self, "already_authenticated"):
                     orig_authenticate(self)
-                    setattr(self, "already_authenticated", True)
+                    setattr(self, "already_authenticated", True)  # noqa: B010
 
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
-                with mock.patch.object(
-                    PyiCloudService, "authenticate", new=mocked_authenticate
-                ):
-                    _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
+                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
+                    _, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.vcr_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -641,27 +652,28 @@ class DownloadPhotoTestCase(TestCase):
             pa_download.return_value = False
 
             data_dir, result = run_icloudpd_test(
-                self.assertEqual, 
-                self.vcr_path, 
-                base_dir, 
-                "listing_photos.yml", 
-                [], 
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
+                "listing_photos.yml",
                 [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "3",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "3",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
+                "DEBUG    Looking up all photos and videos from album All Photos...",
+                self._caplog.text,
             )
             self.assertIn(
                 f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
@@ -672,26 +684,30 @@ class DownloadPhotoTestCase(TestCase):
             for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
                 for size in ["original"]:
                     self.assertEqual(
-                        sum(1 for line in self._caplog.text.splitlines() if line ==
-                            f"ERROR    Could not find URL to download {filename} for size {size}"
+                        sum(
+                            1
+                            for line in self._caplog.text.splitlines()
+                            if line
+                            == f"ERROR    Could not find URL to download {filename} for size {size}"
                         ),
                         1,
-                        f"Errors for {filename} size {size}"
+                        f"Errors for {filename} size {size}",
                     )
 
             for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
                 for size in ["originalVideo"]:
                     self.assertEqual(
-                        sum(1 for line in self._caplog.text.splitlines() if line ==
-                            f"ERROR    Could not find URL to download {filename} for size {size}"
+                        sum(
+                            1
+                            for line in self._caplog.text.splitlines()
+                            if line
+                            == f"ERROR    Could not find URL to download {filename} for size {size}"
                         ),
                         1,
-                        f"Errors for {filename} size {size}"
+                        f"Errors for {filename} size {size}",
                     )
 
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original(self) -> None:
@@ -703,24 +719,35 @@ class DownloadPhotoTestCase(TestCase):
             with mock.patch("icloudpd.download.os.utime") as ut_patched:
                 ut_patched.return_value = None
 
-                with mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as pa:
-                    pa.return_value = {AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"), AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie")}
+                with mock.patch.object(
+                    PhotoAsset, "versions", new_callable=mock.PropertyMock
+                ) as pa:
+                    pa.return_value = {
+                        AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
+                        AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie"),
+                    }
 
-                    data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
-                            [
-                                "--username",
-                                "jdoe@gmail.com",
-                                "--password",
-                                "password1",
-                                "--recent",
-                                "1",
-                                "--size",
-                                "thumb",
-                                "--no-progress-bar",
-                                "--threads-num",
-                                "1",
-                            ],
-                        )
+                    data_dir, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.vcr_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--size",
+                            "thumb",
+                            "--no-progress-bar",
+                            "--threads-num",
+                            "1",
+                        ],
+                    )
                     self.assertIn(
                         "DEBUG    Looking up all photos and videos from album All Photos...",
                         self._caplog.text,
@@ -733,9 +760,7 @@ class DownloadPhotoTestCase(TestCase):
                         f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                         self._caplog.text,
                     )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded", self._caplog.text
-                    )
+                    self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                     dp_patched.assert_called_once_with(
                         ANY,
                         False,
@@ -755,30 +780,33 @@ class DownloadPhotoTestCase(TestCase):
             dp_patched.return_value = True
 
             with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
-                pa.return_value = {AssetVersionSize.ORIGINAL: { "filename": "IMG1.JPG"}, AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"}}
+                pa.return_value = {
+                    AssetVersionSize.ORIGINAL: {"filename": "IMG1.JPG"},
+                    AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"},
+                }
 
                 data_dir, result = run_icloudpd_test(
-                    self.assertEqual, 
-                    self.vcr_path, 
-                    base_dir, 
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
                     "listing_photos.yml",
-                    [], 
                     [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--size",
-                            "thumb",
-                            "--force-size",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--size",
+                        "thumb",
+                        "--force-size",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -792,43 +820,45 @@ class DownloadPhotoTestCase(TestCase):
                     "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
                     self._caplog.text,
                 )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
-                dp_patched.assert_not_called
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                dp_patched.assert_not_called()
 
                 assert result.exit_code == 0
 
     def test_invalid_creation_date(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [
-            ('2018/01/01', 'IMG_7409.JPG')
-        ]
+        files_to_download = [("2018/01/01", "IMG_7409.JPG")]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
-                    raise ValueError('Invalid date')
+                def astimezone(self, _tz: (Optional[Any]) = None) -> NoReturn:
+                    raise ValueError("Invalid date")
+
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)
 
             data_dir, result = run_icloudpd_test(
-                self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -846,44 +876,45 @@ class DownloadPhotoTestCase(TestCase):
                 f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
-    @pytest.mark.skipif(sys.platform == 'win32',
-                        reason="does not run on windows")
-    @pytest.mark.skipif(sys.platform == 'darwin',
-                        reason="does not run on mac")
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
+    @pytest.mark.skipif(sys.platform == "darwin", reason="does not run on mac")
     def test_invalid_creation_year(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [
-            ('5/01/01', 'IMG_7409.JPG')
-        ]
+        files_to_download = [("5/01/01", "IMG_7409.JPG")]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, _tz:(Optional[Any])=None) -> NoReturn:
-                    raise ValueError('Invalid date')
+                def astimezone(self, _tz: (Optional[Any]) = None) -> NoReturn:
+                    raise ValueError("Invalid date")
+
             dt_mock.return_value = NewDateTime(5, 1, 1, 0, 0, 0)
 
-            data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -901,9 +932,7 @@ class DownloadPhotoTestCase(TestCase):
                 f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
     def test_unknown_item_type(self) -> None:
@@ -912,22 +941,30 @@ class DownloadPhotoTestCase(TestCase):
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
-            with mock.patch.object(PhotoAsset, "item_type", new_callable=mock.PropertyMock) as it_mock:
-                it_mock.return_value = 'unknown'
+            with mock.patch.object(
+                PhotoAsset, "item_type", new_callable=mock.PropertyMock
+            ) as it_mock:
+                it_mock.return_value = "unknown"
 
-                data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -941,10 +978,8 @@ class DownloadPhotoTestCase(TestCase):
                     "DEBUG    Skipping IMG_7409.JPG, only downloading photos and videos. (Item type was: unknown)",
                     self._caplog.text,
                 )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
-                dp_patched.assert_not_called
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                dp_patched.assert_not_called()
 
                 assert result.exit_code == 0
 
@@ -953,9 +988,9 @@ class DownloadPhotoTestCase(TestCase):
 
         files_to_create = [
             ("2018/07/31", "IMG_7409.JPG", 1),
-            ("2018/07/31", "IMG_7409.MOV",1),
-            ("2018/07/30", "IMG_7408.JPG",1151066),
-            ("2018/07/30", "IMG_7408.MOV",1606512),
+            ("2018/07/31", "IMG_7409.MOV", 1),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7408.MOV", 1606512),
         ]
 
         files_to_download = [
@@ -971,29 +1006,36 @@ class DownloadPhotoTestCase(TestCase):
         def mocked_download(self: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(self, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
 
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", files_to_create,files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "5",
-                        "--skip-videos",
-                        # "--set-exif-datetime",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
+                "listing_photos.yml",
+                files_to_create,
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "5",
+                    "--skip-videos",
+                    # "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
             self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+            )
             self.assertIn(
                 f"INFO     Downloading 5 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -1012,69 +1054,76 @@ class DownloadPhotoTestCase(TestCase):
             self.assertIn(
                 "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
             )
-            self.assertIn(
-                "INFO     All photos have been downloaded", self._caplog.text
-            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
             # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG")))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(
-                photo_mtime)
+            photo_mtime = os.path.getmtime(
+                os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG"))
+            )
+            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
             self.assertEqual(
-                "2018-07-31 07:22:24",
-                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+                "2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S")
+            )
             self.assertTrue(
-                os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))))
-            photo_mtime = os.path.getmtime(os.path.join(
-                data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV")))
-            photo_modified_time = datetime.datetime.utcfromtimestamp(
-                photo_mtime)
+                os.path.exists(
+                    os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))
+                )
+            )
+            photo_mtime = os.path.getmtime(
+                os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))
+            )
+            photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
             self.assertEqual(
-                "2018-07-31 07:22:24",
-                photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+                "2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S")
+            )
 
             assert result.exit_code == 0
 
     def test_download_photos_and_set_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch(
-                "icloudpd.exif_datetime.get_photo_exif"
-            ) as get_exif_patched:
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--set-exif-datetime",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    files_to_download,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--set-exif-datetime",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+                )
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
                 )
                 # 2018:07:31 07:22:24 utc
-                expectedDatetime = datetime.datetime(
-                    2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc).astimezone().strftime("%Y-%m-%d %H:%M:%S%z")
+                expectedDatetime = (
+                    datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+                    .astimezone()
+                    .strftime("%Y-%m-%d %H:%M:%S%z")
+                )
                 self.assertIn(
                     f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
                     self._caplog.text,
@@ -1083,58 +1132,54 @@ class DownloadPhotoTestCase(TestCase):
                     f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
                     self._caplog.text,
                 )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                 assert result.exit_code == 0
 
     def test_download_chinese(self) -> None:
-        base_dir = os.path.join(
-            self.fixtures_path, inspect.stack()[0][3], "中文")
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3], "中文")
 
-        files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--set-exif-datetime",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-        self.assertIn(
-            f'INFO     Downloading the first original photo to {data_dir} ...',
+            f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         # Check that mtime was updated to the photo creation date
-        photo_mtime = os.path.getmtime(os.path.join(
-            data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG')))
-        photo_modified_time = datetime.datetime.utcfromtimestamp(
-            photo_mtime)
-        self.assertEqual(
-            "2018-07-31 07:22:24",
-            photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+        photo_mtime = os.path.getmtime(
+            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
+        )
+        photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+        self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         assert result.exit_code == 0
 
@@ -1142,41 +1187,45 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.JPG'),
-            ('2018/07/31','IMG_7409.MOV'),
+            ("2018/07/31", "IMG_7409.JPG"),
+            ("2018/07/31", "IMG_7409.MOV"),
         ]
 
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
+        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            with mock.patch(
-                "icloudpd.exif_datetime.get_photo_exif"
-            ) as get_exif_patched:
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            # "--set-exif-datetime",
-                            # '--skip-videos',
-                            # "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    files_to_download,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        # "--set-exif-datetime",
+                        # '--skip-videos',
+                        # "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -1186,52 +1235,54 @@ class DownloadPhotoTestCase(TestCase):
                     f"INFO     Downloading the first original photo or video to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                 assert result.exit_code == 0
 
     def test_download_one_recent_live_photo_chinese(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_中文_7409.JPG'),  # SU1HX+S4reaWh183NDA5LkpQRw==
-            ('2018/07/31','IMG_中文_7409.MOV'),
+            ("2018/07/31", "IMG_中文_7409.JPG"),  # SU1HX+S4reaWh183NDA5LkpQRw==
+            ("2018/07/31", "IMG_中文_7409.MOV"),
         ]
 
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url:str) -> Response:
+        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
                 response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            with mock.patch(
-                "icloudpd.exif_datetime.get_photo_exif"
-            ) as get_exif_patched:
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_chinese.yml", [], files_to_download,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            # "--set-exif-datetime",
-                            # '--skip-videos',
-                            # "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--keep-unicode-in-filenames",
-                            "true",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos_chinese.yml",
+                    [],
+                    files_to_download,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        # "--set-exif-datetime",
+                        # '--skip-videos',
+                        # "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--keep-unicode-in-filenames",
+                        "true",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -1241,88 +1292,86 @@ class DownloadPhotoTestCase(TestCase):
                     f"INFO     Downloading the first original photo or video to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                 assert result.exit_code == 0
 
     def test_download_after_delete(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch(
-                "icloudpd.exif_datetime.get_photo_exif"
-            ) as get_exif_patched:
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], files_to_download,
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                            "--delete-after-download",
-                        ],
-                    )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    files_to_download,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                        "--delete-after-download",
+                    ],
+                )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+                )
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn(
-                    "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
-                )
-                self.assertIn(
-                    "INFO     All photos have been downloaded", self._caplog.text
-                )
+                self.assertIn("INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text)
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                 # TODO assert cass.all_played
                 assert result.exit_code == 0
 
     def test_download_after_delete_fail(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_no_delete.yml", [], [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                    "--delete-after-download",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_no_delete.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+                "--delete-after-download",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
         )
-        self.assertNotIn(
-            "INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text
-        )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertNotIn("INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text)
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
         # TODO assert cass.all_played
         assert result.exit_code == 0
 
@@ -1331,32 +1380,35 @@ class DownloadPhotoTestCase(TestCase):
 
         files_to_create = [
             ("2018/07/30", "IMG_7408-original.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257)
+            ("2018/07/30", "IMG_7407.JPG", 656257),
         ]
 
-        files_to_download = [
-            ('2018/07/31','IMG_7409.JPG')
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml",files_to_create,files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "5",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--set-exif-datetime",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading 5 original photos to {data_dir} ...",
             self._caplog.text,
@@ -1373,18 +1425,14 @@ class DownloadPhotoTestCase(TestCase):
             "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         # Check that mtime was updated to the photo creation date
-        photo_mtime = os.path.getmtime(os.path.join(
-            data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")))
-        photo_modified_time = datetime.datetime.utcfromtimestamp(
-            photo_mtime)
-        self.assertEqual(
-            "2018-07-31 07:22:24",
-            photo_modified_time.strftime('%Y-%m-%d %H:%M:%S'))
+        photo_mtime = os.path.getmtime(
+            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
+        )
+        photo_modified_time = datetime.datetime.utcfromtimestamp(photo_mtime)
+        self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         assert result.exit_code == 0
 
@@ -1400,24 +1448,30 @@ class DownloadPhotoTestCase(TestCase):
             # <>:"/\|?*  -- windows
             # / & \0x00 -- linux
             # SU1HXzc0MDkuSlBH -> i/n v:a\0l*i?d\p<a>t"h|.JPG -> aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUEc=
-            ('2018/07/31','i_n v_a_l_i_d_p_a_t_h_.JPG')
+            ("2018/07/31", "i_n v_a_l_i_d_p_a_t_h_.JPG")
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_bad_filename.yml", files_to_create, files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "5",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_bad_filename.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
         assert result.exit_code == 0
 
@@ -1435,12 +1489,10 @@ class DownloadPhotoTestCase(TestCase):
             ("2018/07/30/IMG_7407.JPG", 656257),
         ]
 
-        files_to_download = [
-            '2018/07/31/IMG_7409.JPG'
-        ]
+        files_to_download = ["2018/07/31/IMG_7409.JPG"]
 
         os.makedirs(os.path.join(data_dir, "2018/07/30/"))
-        for (file_name, file_size) in files_to_create:
+        for file_name, file_size in files_to_create:
             with open(os.path.join(data_dir, file_name), "a") as f:
                 f.truncate(file_size)
 
@@ -1453,15 +1505,13 @@ class DownloadPhotoTestCase(TestCase):
         #         counter = counter + 1
         #     return sleep_
 
-        with mock.patch("time.sleep") as sleep_patched:
+        with mock.patch("time.sleep"):
             # import random
             target_duration = 1
             # sleep_patched.side_effect = my_sleep(target_duration)
             with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -1489,29 +1539,33 @@ class DownloadPhotoTestCase(TestCase):
 
                 assert result.exit_code == 0
 
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(
-            files_to_create) + len(files_to_download)
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(
-                file_name))), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(
+                os.path.join(data_dir, os.path.normpath(file_name))
+            ), f"File {file_name} expected, but does not exist"
 
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         def mock_raise_response_error(_arg: Any) -> NoReturn:
-            raise PyiCloudAPIResponseException(
-                "INTERNAL_ERROR", "INTERNAL_ERROR")
+            raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAsset, "download") as pa_download:
                 pa_download.side_effect = mock_raise_response_error
 
                 # Pass fixed client ID via environment variable
-                _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -1547,14 +1601,19 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         def mock_raise_response_error(_offset: int) -> NoReturn:
-            raise PyiCloudAPIResponseException(
-                "INTERNAL_ERROR", "INTERNAL_ERROR")
+            raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
-                _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.vcr_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
                     [
                         "--username",
                         "jdoe@gmail.com",
@@ -1572,9 +1631,9 @@ class DownloadPhotoTestCase(TestCase):
 
                 # Error msg should be repeated 5 times
                 self.assertEqual(
-                    self._caplog.text.count(
-                        "Internal Error at Apple, retrying..."
-                    ), constants.MAX_RETRIES, "Retry count"
+                    self._caplog.text.count("Internal Error at Apple, retrying..."),
+                    constants.MAX_RETRIES,
+                    "Retry count",
                 )
 
                 self.assertIn(
@@ -1595,16 +1654,14 @@ class DownloadPhotoTestCase(TestCase):
         data_dir = os.path.join(base_dir, "data")
 
         for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir) # this needs to happen before mock
+            recreate_path(dir)  # this needs to happen before mock
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):  # noqa: SIM117
             with mock.patch("os.makedirs", create=True) as m:
                 # Raise IOError when we try to write to the destination file
                 m.side_effect = IOError
 
-                runner = CliRunner(env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-                })
+                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
                 result = runner.invoke(
                     main,
                     [
@@ -1628,7 +1685,8 @@ class DownloadPhotoTestCase(TestCase):
                 print_result_exception(result)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+                )
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
@@ -1639,35 +1697,38 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 self.assertEqual(result.exit_code, 0, "Exit code")
 
-        files_in_result = glob.glob(os.path.join(
-            data_dir, "**/*.*"), recursive=True)
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        self.assertEqual(sum(1 for _ in files_in_result),
-                         0, "Files at the end")
+        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files at the end")
 
     def test_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        _, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--dry-run",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--set-exif-datetime",
+                "--no-progress-bar",
+                "--dry-run",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         # self.assertIn(
         #     f"INFO     Downloading 2 original photos to {data_dir} ...",
         #     self._caplog.text,
@@ -1680,49 +1741,52 @@ class DownloadPhotoTestCase(TestCase):
             "ERROR",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
 
     def test_download_after_delete_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def raise_response_error(a0_:logging.Logger, a1_:PyiCloudService, a2_: PhotoAsset) -> NoReturn:
+        def raise_response_error(
+            a0_: logging.Logger, a1_: PyiCloudService, a2_: PhotoAsset
+        ) -> NoReturn:
             raise Exception("Unexpected call to delete_photo")
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch(
-                "icloudpd.exif_datetime.get_photo_exif"
-            ) as get_exif_patched:
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
-                with mock.patch(
-                    "icloudpd.base.delete_photo"
-                ) as df_patched:
+                with mock.patch("icloudpd.base.delete_photo") as df_patched:
                     df_patched.side_effect = raise_response_error
 
-                    data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos.yml", [], [],
-                            [
-                                "--username",
-                                "jdoe@gmail.com",
-                                "--password",
-                                "password1",
-                                "--recent",
-                                "1",
-                                "--skip-videos",
-                                "--skip-live-photos",
-                                "--no-progress-bar",
-                                "--dry-run",
-                                "--threads-num",
-                                "1",
-                                "--delete-after-download",
-                            ],
-                        )
+                    data_dir, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.vcr_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--dry-run",
+                            "--threads-num",
+                            "1",
+                            "--delete-after-download",
+                        ],
+                    )
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+                    )
                     self.assertIn(
                         f"INFO     Downloading the first original photo to {data_dir} ...",
                         self._caplog.text,
@@ -1730,9 +1794,7 @@ class DownloadPhotoTestCase(TestCase):
                     self.assertIn(
                         "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
                     )
-                    self.assertIn(
-                        "INFO     All photos have been downloaded", self._caplog.text
-                    )
+                    self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                     # TDOO self.assertEqual(
                     #     cass.all_played, False, "All mocks played")
                     self.assertEqual(result.exit_code, 0, "Exit code")
@@ -1741,27 +1803,32 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.DNG') # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H
+            ("2018/07/31", "IMG_7409.DNG")  # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_raw.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -1770,41 +1837,41 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
 
     def test_download_two_sizes(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        files_to_download = [
-            ('2018/07/31','IMG_7409.JPG'),
-            ('2018/07/31','IMG_7409-thumb.JPG')
-        ]
+        files_to_download = [("2018/07/31", "IMG_7409.JPG"), ("2018/07/31", "IMG_7409-thumb.JPG")]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_two_sizes.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--size",
-                    "original",
-                    "--size",
-                    "thumb",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_two_sizes.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--size",
+                "original",
+                "--size",
+                "thumb",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original,thumb photo to {data_dir} ...",
             self._caplog.text,
@@ -1813,42 +1880,48 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
 
     def test_download_raw_alt_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        
+
         files_to_download = [
-            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            ('2018/07/31','IMG_7409.JPG')
+            (
+                "2018/07/31",
+                "IMG_7409.CR2",
+            ),  # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            ("2018/07/31", "IMG_7409.JPG"),
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--size",
-                    "original",
-                    "--size",
-                    "alternative",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_raw_alt.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--size",
+                "original",
+                "--size",
+                "alternative",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original,alternative photo to {data_dir} ...",
             self._caplog.text,
@@ -1857,43 +1930,46 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
 
     def test_download_raw_photos_policy_alt_with_adj(self) -> None:
-        """ raw+jpeg does not have adj and we do not need raw, just jpeg (orig) """
+        """raw+jpeg does not have adj and we do not need raw, just jpeg (orig)"""
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
             # '2018/07/31/IMG_7409.CR2', # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
-            ('2018/07/31','IMG_7409.JPG')
+            ("2018/07/31", "IMG_7409.JPG")
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt_adj.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--size",
-                    "adjusted",
-                    "--align-raw",
-                    "alternative",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_raw_alt_adj.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--size",
+                "adjusted",
+                "--align-raw",
+                "alternative",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first adjusted photo to {data_dir} ...",
             self._caplog.text,
@@ -1902,9 +1978,7 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
 
@@ -1912,32 +1986,40 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            (
+                "2018/07/31",
+                "IMG_7409.CR2",
+            ),  # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
             # '2018/07/31/IMG_7409.JPG'
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    # "--size",
-                    # "original",
-                    "--align-raw",
-                    "original",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_raw_alt.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                # "--size",
+                # "original",
+                "--align-raw",
+                "original",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -1946,9 +2028,7 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
 
@@ -1956,32 +2036,40 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [
-            ('2018/07/31','IMG_7409.CR2'), # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
+            (
+                "2018/07/31",
+                "IMG_7409.CR2",
+            ),  # SU1HXzc0MDkuSlBH -> SU1HXzc0MDkuRE5H -> SU1HXzc0MDkuQ1Iy
             # '2018/07/31/IMG_7409.JPG'
         ]
 
-        data_dir, result = run_icloudpd_test(self.assertEqual, self.vcr_path, base_dir, "listing_photos_raw_alt.yml", [], files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    # "--size",
-                    # "original",
-                    "--align-raw",
-                    "as-is",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_raw_alt.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                # "--size",
+                # "original",
+                "--align-raw",
+                "as-is",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -1990,8 +2078,6 @@ class DownloadPhotoTestCase(TestCase):
             "IMG_7409.MOV",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     All photos have been downloaded", self._caplog.text
-        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0

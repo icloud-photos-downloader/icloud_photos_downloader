@@ -61,9 +61,8 @@ test = [
     "freezegun==1.2.2",
     "vcrpy==4.4.0",
     "pytest-cov==4.1.0",
-    "pylint==2.17.5",
+    "ruff==0.5.0",
     "coveralls==3.3.1",
-    "autopep8==2.0.2",
     "pytest-timeout==2.1.0",
     "pytest-xdist==3.3.1",
     "mypy==1.10.0",
@@ -103,3 +102,31 @@ exclude = ["starters"]
 [[tool.mypy.overrides]]
 module = ['piexif.*', 'vcr.*']
 ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+extend-exclude = [ "src/pyicloud_ipd" ]
+
+[tool.ruff.format]
+docstring-code-format = true
+
+[tool.ruff.lint]
+select = [
+    # pycodestyle
+    "E",
+    # Pyflakes
+    "F",
+    # pyupgrade
+    "UP",
+    # flake8-bugbear
+    "B",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+]
+ignore = [
+    # long lines
+    "E501",
+]
+

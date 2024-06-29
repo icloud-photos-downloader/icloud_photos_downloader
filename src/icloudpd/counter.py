@@ -1,12 +1,12 @@
 """Atomic counter"""
-# pylint: skip-file
-from multiprocessing import RawValue, Lock
+
+from multiprocessing import Lock, RawValue
 
 
-class Counter(object):
-    def __init__(self, value:int=0):
+class Counter:
+    def __init__(self, value: int = 0):
         self.initial_value = value
-        self.val = RawValue('i', value)
+        self.val = RawValue("i", value)
         self.lock = Lock()
 
     def increment(self) -> None:
@@ -15,7 +15,7 @@ class Counter(object):
 
     def reset(self) -> None:
         with self.lock:
-            self.val = RawValue('i', self.initial_value)
+            self.val = RawValue("i", self.initial_value)
 
     def value(self) -> int:
         with self.lock:

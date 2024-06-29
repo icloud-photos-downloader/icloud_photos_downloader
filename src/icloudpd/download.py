@@ -1,22 +1,22 @@
 """Handles file downloads with retries and error handling"""
 
+import datetime
 import logging
 import os
 import socket
 import time
-import datetime
-from typing import Any, Dict
-from requests import Response
-from tzlocal import get_localzone
-from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+
 from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
-from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.version_size import VersionSize
+from requests import Response
+from requests.exceptions import ConnectionError
+from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
-from pyicloud_ipd.version_size import VersionSize
 
 
 def update_mtime(created: datetime.datetime, download_path: str) -> None:
@@ -24,8 +24,7 @@ def update_mtime(created: datetime.datetime, download_path: str) -> None:
     if created:
         created_date = None
         try:
-            created_date = created.astimezone(
-                get_localzone())
+            created_date = created.astimezone(get_localzone())
         except (ValueError, OSError):
             # We already show the timezone conversion error in base.py,
             # when generating the download directory.
@@ -41,7 +40,7 @@ def set_utime(download_path: str, created_date: datetime.datetime) -> None:
 
 
 def mkdirs_for_path(logger: logging.Logger, download_path: str) -> bool:
-    """ Creates hierarchy of folders for file path if it needed """
+    """Creates hierarchy of folders for file path if it needed"""
     try:
         # get back the directory for the file to be downloaded and create it if
         # not there already
@@ -56,10 +55,8 @@ def mkdirs_for_path(logger: logging.Logger, download_path: str) -> bool:
         return False
 
 
-def mkdirs_for_path_dry_run(
-        logger: logging.Logger,
-        download_path: str) -> bool:
-    """ DRY Run for Creating hierarchy of folders for file path """
+def mkdirs_for_path_dry_run(logger: logging.Logger, download_path: str) -> bool:
+    """DRY Run for Creating hierarchy of folders for file path"""
     download_dir = os.path.dirname(download_path)
     if not os.path.exists(download_dir):
         logger.debug(
@@ -70,11 +67,9 @@ def mkdirs_for_path_dry_run(
 
 
 def download_response_to_path(
-        _logger: logging.Logger,
-        response: Response,
-        download_path: str,
-        created_date: datetime.datetime) -> bool:
-    """ Saves response content into file with desired created date """
+    _logger: logging.Logger, response: Response, download_path: str, created_date: datetime.datetime
+) -> bool:
+    """Saves response content into file with desired created date"""
     temp_download_path = download_path + ".part"
     with open(temp_download_path, "wb") as file_obj:
         for chunk in response.iter_content(chunk_size=1024):
@@ -86,28 +81,28 @@ def download_response_to_path(
 
 
 def download_response_to_path_dry_run(
-        logger: logging.Logger,
-        _response: Response,
-        download_path: str,
-        _created_date: datetime.datetime) -> bool:
-    """ Pretends to save response content into a file with desired created date """
+    logger: logging.Logger,
+    _response: Response,
+    download_path: str,
+    _created_date: datetime.datetime,
+) -> bool:
+    """Pretends to save response content into a file with desired created date"""
     logger.info(
         "[DRY RUN] Would download %s",
         download_path,
     )
     return True
 
-# pylint: disable-msg=too-many-arguments
-
 
 def download_media(
-        logger: logging.Logger,
-        dry_run: bool,
-        icloud: PyiCloudService,
-        photo: PhotoAsset,
-        download_path: str,
-        version: AssetVersion,
-        size: VersionSize) -> bool:
+    logger: logging.Logger,
+    dry_run: bool,
+    icloud: PyiCloudService,
+    photo: PhotoAsset,
+    download_path: str,
+    version: AssetVersion,
+    size: VersionSize,
+) -> bool:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
@@ -120,20 +115,16 @@ def download_media(
         try:
             photo_response = photo.download(version.url)
             if photo_response:
-                return download_local(
-                    logger, photo_response, download_path, photo.created)
+                return download_local(logger, photo_response, download_path, photo.created)
 
             logger.error(
-                "Could not find URL to download %s for size %s",
-                version.filename,
-                size.value
+                "Could not find URL to download %s for size %s", version.filename, size.value
             )
             break
 
         except (ConnectionError, socket.timeout, PyiCloudAPIResponseException) as ex:
             if "Invalid global session" in str(ex):
-                logger.error(
-                    "Session error, re-authenticating...")
+                logger.error("Session error, re-authenticating...")
                 if retries > 0:
                     # If the first re-authentication attempt failed,
                     # start waiting a few seconds before retrying in case
@@ -145,19 +136,17 @@ def download_media(
                 # you end up here when p.e. throttling by Apple happens
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
                 logger.error(
-                    "Error downloading %s, retrying after %s seconds...",
-                    photo.filename,
-                    wait_time
+                    "Error downloading %s, retrying after %s seconds...", photo.filename, wait_time
                 )
                 time.sleep(wait_time)
 
-        except IOError:
+        except OSError:
             logger.error(
-                "IOError while writing file to %s. " +
-                "You might have run out of disk space, or the file " +
-                "might be too large for your OS. " +
-                "Skipping this file...",
-                download_path
+                "IOError while writing file to %s. "
+                + "You might have run out of disk space, or the file "
+                + "might be too large for your OS. "
+                + "Skipping this file...",
+                download_path,
             )
             break
     else:

@@ -1,20 +1,20 @@
+import glob
+import inspect
+import os
 from typing import List
 from unittest import TestCase
-import os
-from os.path import normpath
-import shutil
-from click.testing import CliRunner
+
 import pytest
-from vcr import VCR
+from click.testing import CliRunner
 from icloudpd.base import main
+from vcr import VCR
+
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
-import inspect
-import glob
 
 vcr = VCR(decode_compressed_response=True)
 
-class FolderStructureTestCase(TestCase):
 
+class FolderStructureTestCase(TestCase):
     @pytest.fixture(autouse=True)
     def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
         self._caplog = caplog
@@ -32,15 +32,12 @@ class FolderStructureTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        files_to_download: List[str] = [
-        ]
+        files_to_download: List[str] = []
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -94,8 +91,9 @@ class FolderStructureTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
-
+            assert os.path.exists(
+                os.path.join(data_dir, os.path.normpath(file_name))
+            ), f"File {file_name} expected, but does not exist"
 
     def test_folder_structure_none(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -110,9 +108,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Pass fixed client ID via environment variable
-            runner = CliRunner(env={
-                "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"
-            })
+            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
             result = runner.invoke(
                 main,
                 [
@@ -135,30 +131,14 @@ class FolderStructureTestCase(TestCase):
             filenames = result.output.splitlines()
 
             self.assertEqual(len(filenames), 8)
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7409.JPG")), filenames[0]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7409.MOV")), filenames[1]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7408.JPG")), filenames[2]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7408.MOV")), filenames[3]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7407.JPG")), filenames[4]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7407.MOV")), filenames[5]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7405.MOV")), filenames[6]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("IMG_7404.MOV")), filenames[7]
-            )
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7409.JPG")), filenames[0])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7409.MOV")), filenames[1])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7408.JPG")), filenames[2])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7408.MOV")), filenames[3])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7407.JPG")), filenames[4])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7407.MOV")), filenames[5])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7405.MOV")), filenames[6])
+            self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7404.MOV")), filenames[7])
 
             assert result.exit_code == 0
 
@@ -167,5 +147,6 @@ class FolderStructureTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), f"File {file_name} expected, but does not exist"
-
+            assert os.path.exists(
+                os.path.join(data_dir, os.path.normpath(file_name))
+            ), f"File {file_name} expected, but does not exist"
