@@ -1,6 +1,8 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
-from __future__ import print_function
+from multiprocessing import freeze_support # fmt: skip
+freeze_support()  # fmt: skip # fixing tqdm on macos
+
 import getpass
 import typing
 
@@ -34,11 +36,9 @@ import datetime
 import time
 import sys
 import os
-from multiprocessing import freeze_support
 
 from pyicloud_ipd.utils import compose, constant, disambiguate_filenames, get_password_from_keyring, identity, store_password_in_keyring
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-freeze_support()  # fixing tqdm on macos
 
 def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool) -> Callable[[str], str]:
     """Map keep_unicode parameter for function for cleaning filenames"""
