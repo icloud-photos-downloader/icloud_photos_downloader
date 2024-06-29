@@ -91,11 +91,9 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     device_index: int = 0
     if devices_count > 0:
         for i, device in enumerate(devices):
-            # pylint: disable-msg=consider-using-f-string
-            print(
-                "  {}: {}".format(i, device.get("deviceName", "SMS to {}".format(device.get("phoneNumber"))))
-            )
-            # pylint: enable-msg=consider-using-f-string
+            alt_name = f"SMS to {device.get("phoneNumber")}"
+            name = device.get("deviceName", alt_name)
+            print(f"  {i}: {name}")
 
         device_index = click.prompt(
             "Please choose an option:", default="0", type=click.IntRange(0, devices_count - 1)
