@@ -53,6 +53,6 @@ class LoggerTestCase(TestCase):
         logger.tqdm.set_description.assert_called_once_with("baz")  # type: ignore[attr-defined]
         logger.tqdm_write("qux")  # type: ignore[attr-defined]
         logger.tqdm.write.assert_called_once_with("qux")  # type: ignore[attr-defined]
-        logger.log.assert_not_called
+        logger.log.assert_not_called()
 
         logger.set_tqdm(None)  # type: ignore[attr-defined]

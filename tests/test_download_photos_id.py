@@ -834,7 +834,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
-                dp_patched.assert_not_called
+                dp_patched.assert_not_called()
 
                 assert result.exit_code == 0
 
@@ -992,7 +992,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     self._caplog.text,
                 )
                 self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
-                dp_patched.assert_not_called
+                dp_patched.assert_not_called()
 
                 assert result.exit_code == 0
 
