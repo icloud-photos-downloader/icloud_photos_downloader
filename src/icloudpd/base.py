@@ -458,6 +458,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     show_default=True,
     callback=file_match_policy_generator,
 )
+@click.option(
+    "--webui",
+    help="Use Web UI",
+    is_flag=True,
+)
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.20.4")
@@ -504,6 +509,7 @@ def main(
         str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
     ],
     file_match_policy: FileMatchPolicy,
+    webui: bool,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -554,8 +560,9 @@ def main(
         _status_exchange = StatusExchange()
 
         # start web server
-        server_thread = Thread(target=serve_app, daemon=True, args=[logger, _status_exchange])
-        server_thread.start()
+        if webui:
+            server_thread = Thread(target=serve_app, daemon=True, args=[logger, _status_exchange])
+            server_thread.start()
 
         result = core(
             download_builder(
