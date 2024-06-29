@@ -143,11 +143,11 @@ class ListingRecentPhotosTestCase(TestCase):
             recreate_path(dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette(
+        with vcr.use_cassette(  # noqa: SIM117
             os.path.join(self.vcr_path, "listing_photos_missing_filenameEnc.yml")
         ):
-            with mock.patch("icloudpd.base.open", create=True) as mock_open:
-                with mock.patch.object(json, "dump") as mock_json:
+            with mock.patch("icloudpd.base.open", create=True):
+                with mock.patch.object(json, "dump"):
                     # Pass fixed client ID via environment variable
                     runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
                     result = runner.invoke(
@@ -213,7 +213,7 @@ class ListingRecentPhotosTestCase(TestCase):
             recreate_path(dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette(
+        with vcr.use_cassette( # noqa: SIM117
             os.path.join(self.vcr_path, "listing_photos_missing_downloadUrl.yml")
         ):
             with mock.patch("icloudpd.base.open", create=True) as mock_open:

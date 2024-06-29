@@ -96,7 +96,7 @@ class TwoStepAuthTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):  # noqa: SIM117
             with mock.patch.object(PyiCloudService, "send_verification_code") as svc_mocked:
                 svc_mocked.return_value = False
                 runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})

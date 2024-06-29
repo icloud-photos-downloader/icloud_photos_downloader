@@ -171,6 +171,7 @@ class AutodeletePhotosTestCase(TestCase):
                     cookie_dir,
                 ],
             )
+            print_result_exception(result)
 
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -213,6 +214,7 @@ class AutodeletePhotosTestCase(TestCase):
                     cookie_dir,
                 ],
             )
+            print_result_exception(result)
 
             self.assertIn(
                 "DEBUG    Looking up all photos and videos from album All Photos...",
@@ -369,7 +371,7 @@ class AutodeletePhotosTestCase(TestCase):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True) # noqa: B010
                     raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-            with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
                     pa_delete.side_effect = mock_raise_response_error
 
@@ -461,7 +463,7 @@ class AutodeletePhotosTestCase(TestCase):
             ) -> None:
                 raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-            with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
                     pa_delete.side_effect = mock_raise_response_error
 
@@ -559,7 +561,7 @@ class AutodeletePhotosTestCase(TestCase):
                     setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True) # noqa: B010
                     raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
-            with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
                     pa_delete.side_effect = mock_raise_response_error
 
@@ -637,7 +639,7 @@ class AutodeletePhotosTestCase(TestCase):
             ) -> None:
                 raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
-            with mock.patch("time.sleep") as sleep_mock:
+            with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
                 with mock.patch("icloudpd.base.delete_photo") as pa_delete:
                     pa_delete.side_effect = mock_raise_response_error
 

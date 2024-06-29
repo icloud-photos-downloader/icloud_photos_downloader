@@ -2,7 +2,7 @@ import glob
 import os
 import shutil
 import traceback
-from typing import Any, Callable, Iterable, List, Protocol, Sequence, Tuple, TypeVar
+from typing import List, Protocol, Sequence, Tuple, TypeVar
 
 import vcr
 from click.testing import CliRunner, Result

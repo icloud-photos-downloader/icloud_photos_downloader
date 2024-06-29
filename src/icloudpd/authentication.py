@@ -93,7 +93,7 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         for i, device in enumerate(devices):
             # pylint: disable-msg=consider-using-f-string
             print(
-                "  %s: %s" % (i, device.get("deviceName", "SMS to %s" % device.get("phoneNumber")))
+                "  {}: {}".format(i, device.get("deviceName", "SMS to {}".format(device.get("phoneNumber"))))
             )
             # pylint: enable-msg=consider-using-f-string
 

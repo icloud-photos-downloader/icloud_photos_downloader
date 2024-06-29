@@ -144,7 +144,7 @@ class DownloadPhotoTestCase(TestCase):
                 return response
             return mock.MagicMock()
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
             with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
@@ -441,7 +441,7 @@ class DownloadPhotoTestCase(TestCase):
         def mock_raise_response_error(_arg: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAsset, "download") as pa_download:
                 pa_download.side_effect = mock_raise_response_error
 
@@ -496,7 +496,7 @@ class DownloadPhotoTestCase(TestCase):
         def mock_raise_response_error(_offset: int) -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
@@ -563,7 +563,7 @@ class DownloadPhotoTestCase(TestCase):
                     orig_authenticate(self)
                     setattr(self, "already_authenticated", True) # noqa: B010
 
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     _, result = run_icloudpd_test(
                         self.assertEqual,
@@ -619,7 +619,7 @@ class DownloadPhotoTestCase(TestCase):
                     orig_authenticate(self)
                     setattr(self, "already_authenticated", True) # noqa: B010
 
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):
+            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     _, result = run_icloudpd_test(
                         self.assertEqual,
@@ -1201,7 +1201,7 @@ class DownloadPhotoTestCase(TestCase):
                 return response
             return mock.MagicMock()
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
             with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
@@ -1256,7 +1256,7 @@ class DownloadPhotoTestCase(TestCase):
                 return response
             return mock.MagicMock()
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
             with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
@@ -1505,7 +1505,7 @@ class DownloadPhotoTestCase(TestCase):
         #         counter = counter + 1
         #     return sleep_
 
-        with mock.patch("time.sleep") as sleep_patched:
+        with mock.patch("time.sleep"):
             # import random
             target_duration = 1
             # sleep_patched.side_effect = my_sleep(target_duration)
@@ -1554,7 +1554,7 @@ class DownloadPhotoTestCase(TestCase):
         def mock_raise_response_error(_arg: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAsset, "download") as pa_download:
                 pa_download.side_effect = mock_raise_response_error
 
@@ -1603,7 +1603,7 @@ class DownloadPhotoTestCase(TestCase):
         def mock_raise_response_error(_offset: int) -> NoReturn:
             raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
-        with mock.patch("time.sleep") as sleep_mock:
+        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
@@ -1656,7 +1656,7 @@ class DownloadPhotoTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)  # this needs to happen before mock
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):  # noqa: SIM117
             with mock.patch("os.makedirs", create=True) as m:
                 # Raise IOError when we try to write to the destination file
                 m.side_effect = IOError
