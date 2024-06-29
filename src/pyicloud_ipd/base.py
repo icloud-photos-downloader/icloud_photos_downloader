@@ -1,5 +1,5 @@
 import sys
-from typing import Any, Callable, Dict, Optional, Sequence
+from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
@@ -9,6 +9,8 @@ from os import path, mkdir
 from re import match
 import http.cookiejar as cookielib
 import getpass
+
+from requests import PreparedRequest, Request, Response
 
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
@@ -26,7 +28,7 @@ from pyicloud_ipd.services.reminders import RemindersService
 from pyicloud_ipd.services.photos import PhotosService
 from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
-from pyicloud_ipd.utils import get_password_from_keyring
+from pyicloud_ipd.sms import AuthenticatedSession, TrustedDevice, build_send_sms_code_request, build_trusted_phone_numbers_request, build_verify_sms_code_request, parse_trusted_phone_numbers_response
 
 
 LOGGER = logging.getLogger(__name__)
@@ -41,6 +43,12 @@ HEADER_DATA = {
     "X-Apple-I-Ercd": "apple_ercd",
     "scnt": "scnt",
 }
+
+class TrustedPhoneContextProvider(NamedTuple):
+    domain: str
+    oauth_session: AuthenticatedSession
+
+
 
 class PyiCloudService:
     """
@@ -87,6 +95,7 @@ class PyiCloudService:
         else:
             raise NotImplementedError(f"Domain '{domain}' is not supported yet")
 
+        self.domain = domain
 
         if cookie_directory:
             self._cookie_directory = path.expanduser(
@@ -338,6 +347,48 @@ class PyiCloudService:
             return devices
         return []
 
+    def send_request(self, request: PreparedRequest) -> Response:
+        return self.session.send(request)
+
+    def get_oauth_session(self) -> AuthenticatedSession:
+        return AuthenticatedSession(client_id = self.client_id, scnt = self.session_data["scnt"], session_id = self.session_data["session_id"])
+
+    def get_trusted_phone_numbers(self) -> Sequence[TrustedDevice]:
+        """ Returns list of trusted phone number for sms 2fa """
+
+        oauth_session = self.get_oauth_session()
+        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
+
+        req = build_trusted_phone_numbers_request(context)
+        request = Request(
+            method = req.method,
+            url = req.url,
+            headers= req.headers
+        ).prepare()
+
+        response = self.send_request(request)
+        
+        return parse_trusted_phone_numbers_response(response)
+
+    def send_2fa_code_sms(self, device_id: int) -> bool:
+        """ Requests that a verification code is sent to the given device"""
+
+        oauth_session = self.get_oauth_session()
+        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
+
+        req = build_send_sms_code_request(context, device_id)
+        request = Request(
+            method = req.method,
+            url = req.url,
+            headers= req.headers,
+            data = req.data,
+            json = req.json,
+        ).prepare()
+
+        response = self.send_request(request)
+        
+        return response.ok
+
     def send_verification_code(self, device: Dict[str, Any]) -> bool:
         """ Requests that a verification code is sent to the given device"""
         data = json.dumps(device)
@@ -371,6 +422,24 @@ class PyiCloudService:
         self._authenticate_with_token()
 
         return not self.requires_2sa
+
+    def validate_2fa_code_sms(self, device_id: int, code:int) -> bool:
+        """Verifies a verification code received via Apple's 2FA system through SMS."""
+
+        oauth_session = self.get_oauth_session()
+        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
+
+        req = build_verify_sms_code_request(context, device_id, code)
+        request = Request(
+            method = req.method,
+            url = req.url,
+            headers= req.headers,
+            data = req.data,
+            json = req.json,
+        ).prepare()
+        response = self.send_request(request)
+        
+        return response.ok
 
     def validate_2fa_code(self, code:str) -> bool:
         """Verifies a verification code received via Apple's 2FA system (HSA2)."""

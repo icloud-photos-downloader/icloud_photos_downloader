@@ -1,9 +1,7 @@
 import copy
-import getpass
 import os
-from typing import Any, Callable, Dict, Optional, Sequence, TypeVar
+from typing import Callable, Dict, Optional, Sequence, TypeVar
 import keyring
-import sys
 
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
@@ -149,9 +147,3 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
 
     return _results
 
-_Tin2 = TypeVar("_Tin2")
-def get_property(prop_name: str, src: Dict[str, _Tin2]) -> Optional[_Tin2]:
-    return src.get(prop_name)
-
-def parse_res(filename:str, res: Dict[str, Any]) -> AssetVersion:
-    raise NotImplementedError()

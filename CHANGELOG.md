@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: match SMS MFA to icloud.com behavior [#803](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/803)
+
 ## 1.20.1 (2024-06-18)
 
 - fix: keyring handling in `icloud` [#871](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/871)
