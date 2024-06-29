@@ -1,7 +1,7 @@
 """ Experimental code """
 
-from multiprocessing import freeze_support
-freeze_support() # fixing tqdm on macos
+from multiprocessing import freeze_support # fmt: skip
+freeze_support() # fmt: skip # fixing tqdm on macos
 
 import sys
 from icloudpd.base import main as icloudpd_main
