@@ -1,12 +1,13 @@
-from unittest import TestCase
-import logging
-from io import StringIO
-import sys
-from mock import MagicMock
-from freezegun import freeze_time
-import pytest
-from icloudpd.logger import setup_logger, IPDLogger
 import datetime
+import logging
+import sys
+from io import StringIO
+from unittest import TestCase
+
+import pytest
+from freezegun import freeze_time
+from icloudpd.logger import IPDLogger, setup_logger
+from mock import MagicMock
 
 
 class LoggerTestCase(TestCase):

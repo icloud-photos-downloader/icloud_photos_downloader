@@ -1,44 +1,62 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
-from multiprocessing import freeze_support # fmt: skip
+from multiprocessing import freeze_support  # fmt: skip
+
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
+import datetime
 import getpass
+import itertools
+import json
+import logging
+import os
+import subprocess
+import sys
+import time
 import typing
+import urllib
+from logging import Logger
+from typing import (
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    NoReturn,
+    Optional,
+    Sequence,
+    Tuple,
+    TypeVar,
+    cast,
+)
 
+import click
 from click import Option, Parameter
-from icloudpd.counter import Counter
-from icloudpd import constants
-from icloudpd import exif_datetime
-from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
-from icloudpd.autodelete import autodelete_photos
-from icloudpd.string_helpers import truncate_middle
-from icloudpd.email_notifications import send_2sa_notification
-from icloudpd import download
-from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
+from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.base import PyiCloudService
-from tzlocal import get_localzone
-from tqdm.contrib.logging import logging_redirect_tqdm
-from tqdm import tqdm
-import click
-import urllib
-from typing import Callable, Dict, Iterable, List, NoReturn, Optional, Sequence, Tuple, TypeVar, cast
-import json
-import subprocess
-import itertools
-from logging import Logger
-import logging
-import datetime
-import time
-import sys
-import os
-
-from pyicloud_ipd.utils import compose, constant, disambiguate_filenames, get_password_from_keyring, identity, store_password_in_keyring
+from pyicloud_ipd.utils import (
+    compose,
+    constant,
+    disambiguate_filenames,
+    get_password_from_keyring,
+    identity,
+    store_password_in_keyring,
+)
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
+from tqdm import tqdm
+from tqdm.contrib.logging import logging_redirect_tqdm
+from tzlocal import get_localzone
+
+from icloudpd import constants, download, exif_datetime
+from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
+from icloudpd.autodelete import autodelete_photos
+from icloudpd.counter import Counter
+from icloudpd.email_notifications import send_2sa_notification
+from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
+from icloudpd.string_helpers import truncate_middle
+
 
 def build_filename_cleaner(_ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool) -> Callable[[str], str]:
     """Map keep_unicode parameter for function for cleaning filenames"""

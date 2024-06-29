@@ -1,14 +1,15 @@
 # coding=utf-8
-from typing import Sequence, Tuple
-from unittest import TestCase
+import glob
+import inspect
 import os
 import shutil
-from vcr import VCR
+from typing import Sequence, Tuple
+from unittest import TestCase
+
 import pytest
 from click.testing import CliRunner
 from icloudpd.base import main
-import inspect
-import glob
+from vcr import VCR
 
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 

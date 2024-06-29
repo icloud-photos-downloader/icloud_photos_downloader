@@ -1,6 +1,6 @@
 """Atomic counter"""
 # pylint: skip-file
-from multiprocessing import RawValue, Lock
+from multiprocessing import Lock, RawValue
 
 
 class Counter(object):

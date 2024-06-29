@@ -1,15 +1,17 @@
+import glob
+import inspect
+import os
+import shutil
+from os.path import normpath
 from typing import List
 from unittest import TestCase
-import os
-from os.path import normpath
-import shutil
-from click.testing import CliRunner
+
 import pytest
-from vcr import VCR
+from click.testing import CliRunner
 from icloudpd.base import main
+from vcr import VCR
+
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
-import inspect
-import glob
 
 vcr = VCR(decode_compressed_response=True)
 

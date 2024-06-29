@@ -1,12 +1,19 @@
-from unittest import TestCase
-from vcr import VCR
+import glob
+import inspect
 import os
+from unittest import TestCase
+
 import pytest
 from click.testing import CliRunner
-from icloudpd.base import lp_filename_original, main, lp_filename_concatinator
-from tests.helpers import path_from_project_root, print_result_exception, recreate_path, run_icloudpd_test
-import inspect
-import glob
+from icloudpd.base import lp_filename_concatinator, lp_filename_original, main
+from vcr import VCR
+
+from tests.helpers import (
+    path_from_project_root,
+    print_result_exception,
+    recreate_path,
+    run_icloudpd_test,
+)
 
 vcr = VCR(decode_compressed_response=True)
 

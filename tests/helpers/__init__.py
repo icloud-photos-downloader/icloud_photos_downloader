@@ -3,10 +3,11 @@ import os
 import shutil
 import traceback
 from typing import Any, Callable, Iterable, List, Protocol, Sequence, Tuple, TypeVar
-from click.testing import Result
-from icloudpd.base import main
-from click.testing import CliRunner
+
 import vcr
+from click.testing import CliRunner, Result
+from icloudpd.base import main
+
 
 def print_result_exception(result: Result) -> None:
     ex = result.exception

@@ -1,8 +1,8 @@
 """Send an email notification when 2SA is expired"""
 
+import datetime
 import logging
 import smtplib
-import datetime
 from typing import Optional, cast
 
 # pylint: disable-msg=too-many-arguments

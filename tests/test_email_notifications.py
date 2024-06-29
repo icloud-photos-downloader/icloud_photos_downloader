@@ -1,13 +1,14 @@
-from unittest import TestCase
-import pytest
-from vcr import VCR
-from mock import patch
-from freezegun import freeze_time
-import os
-from click.testing import CliRunner
-from icloudpd.base import main
 import inspect
+import os
 import shutil
+from unittest import TestCase
+
+import pytest
+from click.testing import CliRunner
+from freezegun import freeze_time
+from icloudpd.base import main
+from mock import patch
+from vcr import VCR
 
 from tests.helpers import path_from_project_root, recreate_path
 

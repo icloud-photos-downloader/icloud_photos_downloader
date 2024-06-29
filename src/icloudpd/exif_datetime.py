@@ -3,6 +3,7 @@
 import datetime
 import logging
 import typing
+
 import piexif
 from piexif._exceptions import InvalidImageDataError
 

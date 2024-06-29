@@ -1,19 +1,20 @@
+import inspect
+import os
 from typing import NamedTuple
 from unittest import TestCase
-import os
-from vcr import VCR
+
+import pyicloud_ipd
 import pytest
 from click.testing import CliRunner
-from icloudpd.logger import setup_logger
-import pyicloud_ipd
+from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
 from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
-from icloudpd.authentication import authenticator, TwoStepAuthRequiredError
-import inspect
-
+from icloudpd.logger import setup_logger
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
 from pyicloud_ipd.utils import constant, identity
+from vcr import VCR
+
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True)

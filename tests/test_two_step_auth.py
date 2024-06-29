@@ -1,15 +1,16 @@
+import glob
+import inspect
+import os
+import shutil
 from unittest import TestCase
-from vcr import VCR
+
+import click
 import mock
 import pytest
-import os
-import click
 from click.testing import CliRunner
 from icloudpd.base import main
 from pyicloud_ipd.base import PyiCloudService
-import inspect
-import shutil
-import glob
+from vcr import VCR
 
 from tests.helpers import path_from_project_root, recreate_path
 

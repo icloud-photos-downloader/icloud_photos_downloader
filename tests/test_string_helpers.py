@@ -1,5 +1,7 @@
 from unittest import TestCase
+
 from icloudpd.string_helpers import truncate_middle
+
 
 class TruncateMiddleTestCase(TestCase):
     def test_truncate_middle(self) -> None:

@@ -1,31 +1,41 @@
+import datetime
+import glob
+import inspect
 import logging
+import os
+import shutil
+import sys
 from typing import Any, Callable, Dict, List, NoReturn, Optional, Sequence, Tuple
 from unittest import TestCase
-from mock import PropertyMock
-from requests import Response
-from vcr import VCR
-import os
-import sys
-import shutil
-import pytest
+
 import mock
-import datetime
-from mock import call, ANY
-from click.testing import CliRunner
 import piexif
-from piexif._exceptions import InvalidImageDataError
+import pytest
+from click.testing import CliRunner
 from icloudpd import constants
+from icloudpd.base import main
 from icloudpd.string_helpers import truncate_middle
+from mock import ANY, PropertyMock, call
+from piexif._exceptions import InvalidImageDataError
 from pyicloud_ipd.asset_version import AssetVersion
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoAlbum, PhotoLibrary
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from requests.exceptions import ConnectionError
-from icloudpd.base import main
+from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-from tests.helpers import assert_files, combine_file_lists, create_files, path_from_project_root, print_result_exception, recreate_path, run_cassette, run_icloudpd_test
-import inspect
-import glob
+from requests import Response
+from requests.exceptions import ConnectionError
+from vcr import VCR
+
+from tests.helpers import (
+    assert_files,
+    combine_file_lists,
+    create_files,
+    path_from_project_root,
+    print_result_exception,
+    recreate_path,
+    run_cassette,
+    run_icloudpd_test,
+)
 
 vcr = VCR(decode_compressed_response=True)
 

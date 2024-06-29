@@ -3,6 +3,7 @@
 import logging
 import sys
 from typing import Callable, Dict, Optional, Sequence, Tuple
+
 import click
 import pyicloud_ipd
 from pyicloud_ipd.base import PyiCloudService

@@ -1,22 +1,23 @@
 """Handles file downloads with retries and error handling"""
 
+import datetime
 import logging
 import os
 import socket
 import time
-import datetime
 from typing import Any, Dict
-from requests import Response
-from tzlocal import get_localzone
-from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+
 from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
-from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.version_size import VersionSize
+from requests import Response
+from requests.exceptions import ConnectionError  # pylint: disable=redefined-builtin
+from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
-from pyicloud_ipd.version_size import VersionSize
 
 
 def update_mtime(created: datetime.datetime, download_path: str) -> None:

@@ -5,6 +5,7 @@ from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
+
 class PathsTestCase(TestCase):
     def test_disambiguate_filenames_all_diff(self) -> None:
         """ want all and they are all different (probably unreal case) """

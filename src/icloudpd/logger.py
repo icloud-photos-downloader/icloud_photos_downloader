@@ -1,7 +1,7 @@
 """Custom logging class and setup function"""
 
-import sys
 import logging
+import sys
 from logging import INFO
 from typing import Any
 

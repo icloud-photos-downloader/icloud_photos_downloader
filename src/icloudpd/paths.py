@@ -1,6 +1,7 @@
 """Path functions"""
 import os
 
+
 def remove_unicode_chars(value: str) -> str:
     """Removes unicode chars from the string"""
     result =  value.encode("utf-8").decode("ascii", "ignore")
