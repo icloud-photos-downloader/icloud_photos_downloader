@@ -125,4 +125,8 @@ select = [
     # isort
     "I",
 ]
+ignore = [
+    # long lines
+    "E501",
+]
 

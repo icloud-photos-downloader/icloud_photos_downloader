@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
+from functools import partial
 from multiprocessing import freeze_support  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
@@ -1150,11 +1151,9 @@ def core(
                     item = next(photos_iterator)
                     if download_photo(consecutive_files_found, item) and delete_after_download:
 
-                        def delete_cmd() -> None:
-                            delete_local = delete_photo_dry_run if dry_run else delete_photo
-                            delete_local(logger, icloud.photos, library_object, item)
+                        delete_local = partial(delete_photo_dry_run if dry_run else delete_photo, logger, icloud.photos, library_object, item)
 
-                        retrier(delete_cmd, error_handler)
+                        retrier(delete_local, error_handler)
 
                 except StopIteration:
                     break

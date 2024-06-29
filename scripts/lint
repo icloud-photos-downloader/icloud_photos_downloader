@@ -2,4 +2,4 @@
 set -euo pipefail
 echo "Linting..."
 # python3 -m pylint src --ignore-paths src/icloud,src/pyicloud_ipd,src/starters
-ruff check --ignore "E501" --ignore "E402"
+ruff check --ignore "E402"
