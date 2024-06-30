@@ -33,8 +33,8 @@ dependencies = [
     "typing_extensions==4.11.0",
     # from pyicloud_ipd
     "six==1.16.0",
-    "tzlocal==4.3.1",
-    "pytz==2022.7.1",
+    "tzlocal==5.1",
+    "pytz==2024.1",
     "certifi==2022.12.7",
     "keyring==25.2.1",
     "keyrings-alt==5.0.1"
@@ -66,8 +66,8 @@ test = [
     "pytest-timeout==2.1.0",
     "pytest-xdist==3.3.1",
     "mypy==1.10.0",
-    "types-pytz==2022.7.1.2",
-    "types-tzlocal==4.3.0.0",
+    "types-pytz==2024.1.0.20240417",
+    "types-tzlocal==5.1.0.1",
     "types-requests==2.31.0.2",
     "types-six==1.16.0",
     "types-urllib3==1.26.16",
