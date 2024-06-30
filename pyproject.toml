@@ -65,7 +65,7 @@ test = [
     "coveralls==3.3.1",
     "pytest-timeout==2.1.0",
     "pytest-xdist==3.3.1",
-    "mypy==1.10.0",
+    "mypy==1.10.1",
     "types-pytz==2024.1.0.20240417",
     "types-tzlocal==5.1.0.1",
     "types-requests==2.31.0.2",

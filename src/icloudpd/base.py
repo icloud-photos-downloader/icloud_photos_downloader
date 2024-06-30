@@ -1159,14 +1159,14 @@ def core(
 
             if watch_interval:  # pragma: no cover
                 logger.info(f"Waiting for {watch_interval} sec...")
-                interval = range(1, watch_interval)
-                for _ in (
-                    interval
-                    if skip_bar
-                    else tqdm(
-                        interval, desc="Waiting...", ascii=True, leave=False, dynamic_ncols=True
-                    )
-                ):
+                interval: Sequence[int] = range(1, watch_interval)
+                iterable: Sequence[int] = (
+                    interval if skip_bar
+                    else typing.cast(Sequence[int], tqdm(
+                        iterable=interval, desc="Waiting...", ascii=True, leave=False, dynamic_ncols=True
+                    ))
+                )
+                for _ in iterable:
                     time.sleep(1)
             else:
                 break  # pragma: no cover
