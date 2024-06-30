@@ -439,7 +439,10 @@ class PyiCloudService:
         ).prepare()
         response = self.send_request(request)
         
-        return response.ok
+        if response.ok:
+            return self.trust_session()
+        return False
+
 
     def validate_2fa_code(self, code:str) -> bool:
         """Verifies a verification code received via Apple's 2FA system (HSA2)."""
