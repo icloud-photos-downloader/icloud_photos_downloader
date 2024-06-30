@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
+from enum import Enum
 from multiprocessing import freeze_support  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
@@ -127,6 +128,19 @@ def size_generator(
 
     return [_map(_s) for _s in sizes]
 
+class MFAProvider(Enum):
+    CONSOLE = "console"
+    WEBUI = "webui"
+
+def mfa_provider_generator(
+    _ctx: click.Context, _param: click.Parameter, provider: str
+) -> MFAProvider:
+    if provider == "console":
+        return MFAProvider.CONSOLE
+    elif provider == "provider":
+        return MFAProvider.WEBUI
+    else:
+        raise ValueError(f"mfa provider has unsupported value of '{provider}'")
 
 def ask_password_in_console(_user: str) -> Optional[str]:
     return typing.cast(Optional[str], click.prompt("iCloud Password", hide_input=True))
@@ -459,9 +473,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     callback=file_match_policy_generator,
 )
 @click.option(
-    "--webui",
-    help="Use Web UI",
-    is_flag=True,
+    "--mfa-provider",
+    help="Specified where to get MFA code from",
+    type=click.Choice(["console", "webui"], case_sensitive=False),
+    default="console",
+    show_default=True,
+    callback=mfa_provider_generator,
 )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
@@ -509,7 +526,7 @@ def main(
         str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
     ],
     file_match_policy: FileMatchPolicy,
-    webui: bool,
+    mfa_provider: MFAProvider,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -560,7 +577,7 @@ def main(
         _status_exchange = StatusExchange()
 
         # start web server
-        if webui:
+        if mfa_provider == MFAProvider.WEBUI:
             server_thread = Thread(target=serve_app, daemon=True, args=[logger, _status_exchange])
             server_thread.start()
 
