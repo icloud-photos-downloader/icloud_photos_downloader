@@ -18,7 +18,7 @@ Please review the following guidelines before contributing.  Also, feel free to 
 * [Your first code contribution](#your-first-code-contribution)
 * [Pull request process](#pull-request-process)
 
-[Setting up the development environment](#setting_up_the_development_environment)
+[Setting up the development environment](#setting-up-the-development-environment)
 
 [How to write a unit test](#how-to-write-a-unit-test)
 
