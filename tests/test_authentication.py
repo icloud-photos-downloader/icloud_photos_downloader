@@ -3,6 +3,8 @@ import os
 from typing import NamedTuple
 from unittest import TestCase
 
+from icloudpd.mfa_provider import MFAProvider
+from icloudpd.status import StatusExchange
 import pyicloud_ipd
 import pytest
 from click.testing import CliRunner
@@ -46,6 +48,8 @@ class AuthenticationTestCase(TestCase):
                     RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)},
+                    MFAProvider.CONSOLE,
+                    StatusExchange(),
                 )(
                     "bad_username",
                     cookie_dir,
@@ -76,6 +80,8 @@ class AuthenticationTestCase(TestCase):
                     RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)},
+                    MFAProvider.CONSOLE,
+                    StatusExchange(),
                 )(
                     "jdoe@gmail.com",
                     cookie_dir,
@@ -106,6 +112,8 @@ class AuthenticationTestCase(TestCase):
                     RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)},
+                    MFAProvider.CONSOLE,
+                    StatusExchange(),
                 )(
                     "jdoe@gmail.com",
                     cookie_dir,

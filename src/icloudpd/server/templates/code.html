@@ -1,3 +1,6 @@
-<p>Enter Two-Factor Code</p><form>
-    <button>Submit</button>
+<form hx-post="/code">
+    <p>Enter Two-Factor Code</p>
+    <label for="code">Name:</label>
+    <input type="text" id="code" name="code"/>
+    <button type="submit">Submit</button>
 </form>
