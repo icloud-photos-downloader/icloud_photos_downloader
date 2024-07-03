@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: allow MFA with leading zeros [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/599)
+
 ## 1.20.4 (2024-06-30)
 
 - fix: SMS MFA [#803](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/803)
