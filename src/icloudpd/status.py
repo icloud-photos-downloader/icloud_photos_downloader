@@ -39,7 +39,7 @@ class StatusExchange:
 
     def get_code(self) -> Optional[str]:
         with self.lock:
-            if self._status not in [Status.SUPPLIED_MFA,Status.CHECKING_MFA]:
+            if self._status not in [Status.SUPPLIED_MFA, Status.CHECKING_MFA]:
                 return None
 
             return self._code

@@ -2,7 +2,7 @@ from logging import Logger
 from typing import Union
 
 import waitress
-from flask import Flask, Response, abort, make_response, render_template, request
+from flask import Flask, Response, make_response, render_template, request
 
 from icloudpd.status import Status, StatusExchange
 

@@ -6,11 +6,12 @@ import time
 from typing import Callable, Dict, Optional, Tuple
 
 import click
-from icloudpd.mfa_provider import MFAProvider
-from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+
+from icloudpd.mfa_provider import MFAProvider
+from icloudpd.status import Status, StatusExchange
 
 
 class TwoStepAuthRequiredError(Exception):
@@ -125,6 +126,7 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         "(Use --help to view information about SMTP options.)"
     )
 
+
 def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     """Request two-factor authentication."""
     devices = icloud.get_trusted_phone_numbers()
@@ -175,12 +177,15 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         "(Use --help to view information about SMTP options.)"
     )
 
-def request_2fa_web(icloud: PyiCloudService, logger: logging.Logger, status_exchange: StatusExchange) -> None:
+
+def request_2fa_web(
+    icloud: PyiCloudService, logger: logging.Logger, status_exchange: StatusExchange
+) -> None:
     """Request two-factor authentication through Webui."""
     if not status_exchange.replace_status(Status.NOT_NEED_MFA, Status.NEED_MFA):
         logger.error("Expected NOT_NEED_MFA, but got something else")
         return
-    
+
     # wait for input
     while True:
         status = status_exchange.get_status()
@@ -188,19 +193,19 @@ def request_2fa_web(icloud: PyiCloudService, logger: logging.Logger, status_exch
             time.sleep(1)
         else:
             break
-    
+
     if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
         code = status_exchange.get_code()
         if not code:
             logger.error("Internal error: did not get code for SUPPLIED_MFA status")
-            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)    # TODO Error
+            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # TODO Error
             return
-        
+
         if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
-            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)    # TODO Error
+            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # TODO Error
             return
-        status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)    # done
+        status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # done
 
         logger.info(
             "Great, you're all set up. The script can now be run without "

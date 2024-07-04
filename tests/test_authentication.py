@@ -3,14 +3,14 @@ import os
 from typing import NamedTuple
 from unittest import TestCase
 
-from icloudpd.mfa_provider import MFAProvider
-from icloudpd.status import StatusExchange
 import pyicloud_ipd
 import pytest
 from click.testing import CliRunner
 from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
 from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
 from icloudpd.logger import setup_logger
+from icloudpd.mfa_provider import MFAProvider
+from icloudpd.status import StatusExchange
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload

@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-from enum import Enum
 from multiprocessing import freeze_support
 
 from icloudpd.mfa_provider import MFAProvider  # fmt: skip
@@ -130,6 +129,7 @@ def size_generator(
 
     return [_map(_s) for _s in sizes]
 
+
 def mfa_provider_generator(
     _ctx: click.Context, _param: click.Parameter, provider: str
 ) -> MFAProvider:
@@ -139,6 +139,7 @@ def mfa_provider_generator(
         return MFAProvider.WEBUI
     else:
         raise ValueError(f"mfa provider has unsupported value of '{provider}'")
+
 
 def ask_password_in_console(_user: str) -> Optional[str]:
     return typing.cast(Optional[str], click.prompt("iCloud Password", hide_input=True))
@@ -1197,10 +1198,18 @@ def core(
                 logger.info(f"Waiting for {watch_interval} sec...")
                 interval: Sequence[int] = range(1, watch_interval)
                 iterable: Sequence[int] = (
-                    interval if skip_bar
-                    else typing.cast(Sequence[int], tqdm(
-                        iterable=interval, desc="Waiting...", ascii=True, leave=False, dynamic_ncols=True
-                    ))
+                    interval
+                    if skip_bar
+                    else typing.cast(
+                        Sequence[int],
+                        tqdm(
+                            iterable=interval,
+                            desc="Waiting...",
+                            ascii=True,
+                            leave=False,
+                            dynamic_ncols=True,
+                        ),
+                    )
                 )
                 for _ in iterable:
                     time.sleep(1)
