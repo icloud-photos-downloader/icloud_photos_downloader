@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-from functools import partial
-from multiprocessing import freeze_support  # fmt: skip
+from multiprocessing import freeze_support
+
+from icloudpd.mfa_provider import MFAProvider  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
@@ -16,7 +17,9 @@ import sys
 import time
 import typing
 import urllib
+from functools import partial
 from logging import Logger
+from threading import Thread
 from typing import (
     Callable,
     Dict,
@@ -54,6 +57,8 @@ from icloudpd.autodelete import autodelete_photos
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
+from icloudpd.server import serve_app
+from icloudpd.status import StatusExchange
 from icloudpd.string_helpers import truncate_middle
 
 
@@ -123,6 +128,17 @@ def size_generator(
             raise ValueError(f"size was provided with unsupported value of '{size}'")
 
     return [_map(_s) for _s in sizes]
+
+
+def mfa_provider_generator(
+    _ctx: click.Context, _param: click.Parameter, provider: str
+) -> MFAProvider:
+    if provider == "console":
+        return MFAProvider.CONSOLE
+    elif provider == "webui":
+        return MFAProvider.WEBUI
+    else:
+        raise ValueError(f"mfa provider has unsupported value of '{provider}'")
 
 
 def ask_password_in_console(_user: str) -> Optional[str]:
@@ -455,6 +471,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     show_default=True,
     callback=file_match_policy_generator,
 )
+@click.option(
+    "--mfa-provider",
+    help="Specified where to get MFA code from",
+    type=click.Choice(["console", "webui"], case_sensitive=False),
+    default="console",
+    show_default=True,
+    callback=mfa_provider_generator,
+)
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.20.4")
@@ -501,6 +525,7 @@ def main(
         str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
     ],
     file_match_policy: FileMatchPolicy,
+    mfa_provider: MFAProvider,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -548,60 +573,68 @@ def main(
             print("You need to specify at least one --password-provider")
             sys.exit(2)
 
-        sys.exit(
-            core(
-                download_builder(
-                    logger,
-                    skip_videos,
-                    folder_structure,
-                    directory,
-                    size,
-                    force_size,
-                    only_print_filenames,
-                    set_exif_datetime,
-                    skip_live_photos,
-                    live_photo_size,
-                    dry_run,
-                    file_match_policy,
-                )
-                if directory is not None
-                else (lambda _s: lambda _c, _p: False),
-                directory,
-                username,
-                auth_only,
-                cookie_directory,
-                size,
-                recent,
-                until_found,
-                album,
-                list_albums,
-                library,
-                list_libraries,
-                skip_videos,
-                auto_delete,
-                only_print_filenames,
-                folder_structure,
-                smtp_username,
-                smtp_password,
-                smtp_host,
-                smtp_port,
-                smtp_no_tls,
-                notification_email,
-                notification_email_from,
-                no_progress_bar,
-                notification_script,
-                delete_after_download,
-                domain,
+        status_exchange = StatusExchange()
+
+        # start web server
+        if mfa_provider == MFAProvider.WEBUI:
+            server_thread = Thread(target=serve_app, daemon=True, args=[logger, status_exchange])
+            server_thread.start()
+
+        result = core(
+            download_builder(
                 logger,
-                watch_with_interval,
+                skip_videos,
+                folder_structure,
+                directory,
+                size,
+                force_size,
+                only_print_filenames,
+                set_exif_datetime,
+                skip_live_photos,
+                live_photo_size,
                 dry_run,
-                filename_cleaner,
-                lp_filename_generator,
-                raw_policy,
                 file_match_policy,
-                password_providers,
             )
+            if directory is not None
+            else (lambda _s: lambda _c, _p: False),
+            directory,
+            username,
+            auth_only,
+            cookie_directory,
+            size,
+            recent,
+            until_found,
+            album,
+            list_albums,
+            library,
+            list_libraries,
+            skip_videos,
+            auto_delete,
+            only_print_filenames,
+            folder_structure,
+            smtp_username,
+            smtp_password,
+            smtp_host,
+            smtp_port,
+            smtp_no_tls,
+            notification_email,
+            notification_email_from,
+            no_progress_bar,
+            notification_script,
+            delete_after_download,
+            domain,
+            logger,
+            watch_with_interval,
+            dry_run,
+            filename_cleaner,
+            lp_filename_generator,
+            raw_policy,
+            file_match_policy,
+            password_providers,
+            mfa_provider,
+            status_exchange,
         )
+        sys.exit(result)
 
 
 def download_builder(
@@ -970,6 +1003,8 @@ def core(
     password_providers: Dict[
         str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
     ],
+    mfa_provider: MFAProvider,
+    status_exchange: StatusExchange,
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -987,6 +1022,8 @@ def core(
             raw_policy,
             file_match_policy,
             password_providers,
+            mfa_provider,
+            status_exchange,
         )(
             username,
             cookie_directory,
@@ -1161,10 +1198,18 @@ def core(
                 logger.info(f"Waiting for {watch_interval} sec...")
                 interval: Sequence[int] = range(1, watch_interval)
                 iterable: Sequence[int] = (
-                    interval if skip_bar
-                    else typing.cast(Sequence[int], tqdm(
-                        iterable=interval, desc="Waiting...", ascii=True, leave=False, dynamic_ncols=True
-                    ))
+                    interval
+                    if skip_bar
+                    else typing.cast(
+                        Sequence[int],
+                        tqdm(
+                            iterable=interval,
+                            desc="Waiting...",
+                            ascii=True,
+                            leave=False,
+                            dynamic_ncols=True,
+                        ),
+                    )
                 )
                 for _ in iterable:
                     time.sleep(1)

@@ -2,12 +2,16 @@
 
 import logging
 import sys
+import time
 from typing import Callable, Dict, Optional, Tuple
 
 import click
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+
+from icloudpd.mfa_provider import MFAProvider
+from icloudpd.status import Status, StatusExchange
 
 
 class TwoStepAuthRequiredError(Exception):
@@ -27,6 +31,8 @@ def authenticator(
     password_providers: Dict[
         str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
     ],
+    mfa_provider: MFAProvider,
+    status_exchange: StatusExchange,
 ) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
     """Wraping authentication with domain context"""
 
@@ -71,7 +77,10 @@ def authenticator(
             if raise_error_on_2sa:
                 raise TwoStepAuthRequiredError("Two-factor authentication is required")
             logger.info("Two-factor authentication is required (2fa)")
-            request_2fa(icloud, logger)
+            if mfa_provider == MFAProvider.WEBUI:
+                request_2fa_web(icloud, logger, status_exchange)
+            else:
+                request_2fa(icloud, logger)
 
         elif icloud.requires_2sa:
             if raise_error_on_2sa:
@@ -167,3 +176,43 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         "the two-factor authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
     )
+
+
+def request_2fa_web(
+    icloud: PyiCloudService, logger: logging.Logger, status_exchange: StatusExchange
+) -> None:
+    """Request two-factor authentication through Webui."""
+    if not status_exchange.replace_status(Status.NOT_NEED_MFA, Status.NEED_MFA):
+        logger.error("Expected NOT_NEED_MFA, but got something else")
+        return
+
+    # wait for input
+    while True:
+        status = status_exchange.get_status()
+        if status == Status.NEED_MFA:
+            time.sleep(1)
+        else:
+            break
+
+    if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
+        code = status_exchange.get_code()
+        if not code:
+            logger.error("Internal error: did not get code for SUPPLIED_MFA status")
+            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # TODO Error
+            return
+
+        if not icloud.validate_2fa_code(code):
+            logger.error("Failed to verify two-factor authentication code")
+            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # TODO Error
+            return
+        status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # done
+
+        logger.info(
+            "Great, you're all set up. The script can now be run without "
+            "user interaction until 2FA expires.\n"
+            "You can set up email notifications for when "
+            "the two-factor authentication expires.\n"
+            "(Use --help to view information about SMTP options.)"
+        )
+    else:
+        logger.error("Failed to change status")
