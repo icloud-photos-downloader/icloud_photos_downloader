@@ -21,6 +21,7 @@ COPY dist/icloudpd-ex-*.*.*-linux-arm32v6 icloudpd_ex
 FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} as runtime
 RUN apk add --no-cache tzdata
 ENV TZ=UTC
+EXPOSE 8080
 WORKDIR /app
 RUN chmod +x /app/icloudpd_ex
 ENTRYPOINT ["/app/icloudpd_ex"]
