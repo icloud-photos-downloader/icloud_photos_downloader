@@ -18,6 +18,8 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
     @app.route("/status", methods=["GET"])
     def get_status() -> Union[Response, str]:
         _status = _status_exchange.get_status()
+        if _status == Status.NOT_NEED_MFA:
+            return render_template("no_input.html")
         if _status == Status.NEED_MFA:
             return render_template("code.html")
         return render_template("status.html", status=_status)
@@ -27,10 +29,10 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         code = request.form.get("code")
         if code is not None:
             if _status_exchange.set_code(code):
-                return make_response("", 201)
+                return render_template("submitted.html")
         else:
             logger.error(f"cannot find code in request {request.form}")
-        return abort(400)  # incorrect status
+        return make_response(render_template("error.html"), 400)  # incorrect code
 
     logger.debug("Starting web server...")
     return waitress.serve(app)
