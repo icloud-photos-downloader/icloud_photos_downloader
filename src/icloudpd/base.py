@@ -58,7 +58,7 @@ from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
-from icloudpd.status import StatusExchange
+from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import truncate_middle
 
 
@@ -147,6 +147,38 @@ def ask_password_in_console(_user: str) -> Optional[str]:
     #         f'iCloud Password for {_user}:'
     #     )
 
+def get_password_from_webui(logger: Logger, status_exchange: StatusExchange) -> Callable[[str], Optional[str]]:
+    def _intern(_user: str) -> Optional[str]:
+        """Request two-factor authentication through Webui."""
+        if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_PASSWORD):
+            logger.error("Expected NO_INPUT_NEEDED, but got something else")
+            return None
+
+        # wait for input
+        while True:
+            status = status_exchange.get_status()
+            if status == Status.NEED_PASSWORD:
+                time.sleep(1)
+            else:
+                break
+        if status_exchange.replace_status(Status.SUPPLIED_PASSWORD, Status.CHECKING_PASSWORD):
+            password = status_exchange.get_payload()
+            if not password:
+                logger.error("Internal error: did not get password for SUPPLIED_PASSWORD status")
+                status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)  # TODO Error
+                return None
+            return password
+
+        return None # TODO
+    return _intern
+
+def update_password_status_in_webui(status_exchange: StatusExchange) -> Callable[[str, str], None]:
+    def _intern(_u: str, _p: str) -> None:
+        # TODO we are not handling wrong passwords...
+        status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
+        return None
+    return _intern
+
 
 # def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
 #     _with_password = [_p for _p in _params if _name in _p.name]
@@ -158,11 +190,12 @@ def ask_password_in_console(_user: str) -> Optional[str]:
 def dummy_password_writter(_u: str, _p: str) -> None:
     pass
 
-
 def password_provider_generator(
     _ctx: click.Context, _param: click.Parameter, providers: Sequence[str]
 ) -> Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]:
     def _map(provider: str) -> Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]:
+        if provider == "webui":
+            return (ask_password_in_console, dummy_password_writter)
         if provider == "console":
             return (ask_password_in_console, dummy_password_writter)
         elif provider == "keyring":
@@ -456,7 +489,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     "--password-provider",
     "password_providers",
     help="Specifies passwords provider to check in the specified order",
-    type=click.Choice(["console", "keyring", "parameter"], case_sensitive=False),
+    type=click.Choice(["console", "keyring", "parameter", "webui"], case_sensitive=False),
     default=["parameter", "keyring", "console"],
     show_default=True,
     multiple=True,
@@ -573,11 +606,25 @@ def main(
             print("You need to specify at least one --password-provider")
             sys.exit(2)
 
+        if "console" in password_providers and "webui" in password_providers:
+            print("Console and webui are not compatible in --password-provider")
+            sys.exit(2)
+
         if "console" in password_providers and list(password_providers)[-1] != "console":
             print("Console must be the last --password-provider")
             sys.exit(2)
 
+        if "webui" in password_providers and list(password_providers)[-1] != "webui":
+            print("Webui must be the last --password-provider")
+            sys.exit(2)
+
         status_exchange = StatusExchange()
+
+        # hacky way to use one param in another
+        if "webui" in password_providers:
+            # replace
+            password_providers["webui"] = (get_password_from_webui(logger, status_exchange), update_password_status_in_webui(status_exchange))
+
 
         # start web server
         if mfa_provider == MFAProvider.WEBUI:
