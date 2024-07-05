@@ -1,6 +1,6 @@
-from logging import Logger
 import os
 import sys
+from logging import Logger
 from typing import Union
 
 import waitress
@@ -13,10 +13,10 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
     app = Flask(__name__)
     app.logger = logger
     # for running in pyinstaller
-    bundle_dir = getattr(sys, '_MEIPASS', None)
+    bundle_dir = getattr(sys, "_MEIPASS", None)
     if bundle_dir is not None:
-        app.template_folder = os.path.join(bundle_dir, 'templates')
-        app.static_folder = os.path.join(bundle_dir, 'static')
+        app.template_folder = os.path.join(bundle_dir, "templates")
+        app.static_folder = os.path.join(bundle_dir, "static")
 
     @app.route("/")
     def index() -> Union[Response, str]:
