@@ -182,8 +182,8 @@ def request_2fa_web(
     icloud: PyiCloudService, logger: logging.Logger, status_exchange: StatusExchange
 ) -> None:
     """Request two-factor authentication through Webui."""
-    if not status_exchange.replace_status(Status.NOT_NEED_MFA, Status.NEED_MFA):
-        logger.error("Expected NOT_NEED_MFA, but got something else")
+    if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_MFA):
+        logger.error("Expected NO_INPUT_NEEDED, but got something else")
         return
 
     # wait for input
@@ -195,17 +195,21 @@ def request_2fa_web(
             break
 
     if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
-        code = status_exchange.get_code()
+        code = status_exchange.get_payload()
         if not code:
             logger.error("Internal error: did not get code for SUPPLIED_MFA status")
-            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # TODO Error
+            status_exchange.replace_status(
+                Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
+            )  # TODO Error
             return
 
         if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
-            status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # TODO Error
+            status_exchange.replace_status(
+                Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
+            )  # TODO Error
             return
-        status_exchange.replace_status(Status.CHECKING_MFA, Status.NOT_NEED_MFA)  # done
+        status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
 
         logger.info(
             "Great, you're all set up. The script can now be run without "
