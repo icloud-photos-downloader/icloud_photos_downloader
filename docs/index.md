@@ -15,4 +15,5 @@ naming
 mode
 size
 raw
+webui
 ```
