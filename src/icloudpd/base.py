@@ -147,7 +147,10 @@ def ask_password_in_console(_user: str) -> Optional[str]:
     #         f'iCloud Password for {_user}:'
     #     )
 
-def get_password_from_webui(logger: Logger, status_exchange: StatusExchange) -> Callable[[str], Optional[str]]:
+
+def get_password_from_webui(
+    logger: Logger, status_exchange: StatusExchange
+) -> Callable[[str], Optional[str]]:
     def _intern(_user: str) -> Optional[str]:
         """Request two-factor authentication through Webui."""
         if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_PASSWORD):
@@ -165,18 +168,23 @@ def get_password_from_webui(logger: Logger, status_exchange: StatusExchange) -> 
             password = status_exchange.get_payload()
             if not password:
                 logger.error("Internal error: did not get password for SUPPLIED_PASSWORD status")
-                status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)  # TODO Error
+                status_exchange.replace_status(
+                    Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED
+                )  # TODO Error
                 return None
             return password
 
-        return None # TODO
+        return None  # TODO
+
     return _intern
+
 
 def update_password_status_in_webui(status_exchange: StatusExchange) -> Callable[[str, str], None]:
     def _intern(_u: str, _p: str) -> None:
         # TODO we are not handling wrong passwords...
         status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
         return None
+
     return _intern
 
 
@@ -189,6 +197,7 @@ def update_password_status_in_webui(status_exchange: StatusExchange) -> Callable
 
 def dummy_password_writter(_u: str, _p: str) -> None:
     pass
+
 
 def password_provider_generator(
     _ctx: click.Context, _param: click.Parameter, providers: Sequence[str]
@@ -623,8 +632,10 @@ def main(
         # hacky way to use one param in another
         if "webui" in password_providers:
             # replace
-            password_providers["webui"] = (get_password_from_webui(logger, status_exchange), update_password_status_in_webui(status_exchange))
-
+            password_providers["webui"] = (
+                get_password_from_webui(logger, status_exchange),
+                update_password_status_in_webui(status_exchange),
+            )
 
         # start web server
         if mfa_provider == MFAProvider.WEBUI:

@@ -198,12 +198,16 @@ def request_2fa_web(
         code = status_exchange.get_payload()
         if not code:
             logger.error("Internal error: did not get code for SUPPLIED_MFA status")
-            status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # TODO Error
+            status_exchange.replace_status(
+                Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
+            )  # TODO Error
             return
 
         if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
-            status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # TODO Error
+            status_exchange.replace_status(
+                Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
+            )  # TODO Error
             return
         status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
 

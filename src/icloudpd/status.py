@@ -37,12 +37,19 @@ class StatusExchange:
                 return False
 
             self._payload = payload
-            self._status = Status.SUPPLIED_MFA if self._status == Status.NEED_MFA else Status.SUPPLIED_PASSWORD
+            self._status = (
+                Status.SUPPLIED_MFA if self._status == Status.NEED_MFA else Status.SUPPLIED_PASSWORD
+            )
             return True
 
     def get_payload(self) -> Optional[str]:
         with self.lock:
-            if self._status not in [Status.SUPPLIED_MFA,Status.CHECKING_MFA, Status.SUPPLIED_PASSWORD,Status.CHECKING_PASSWORD]:
+            if self._status not in [
+                Status.SUPPLIED_MFA,
+                Status.CHECKING_MFA,
+                Status.SUPPLIED_PASSWORD,
+                Status.CHECKING_PASSWORD,
+            ]:
                 return None
 
             return self._payload
