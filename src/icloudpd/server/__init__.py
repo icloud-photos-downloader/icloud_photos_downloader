@@ -1,4 +1,6 @@
 from logging import Logger
+import os
+import sys
 from typing import Union
 
 import waitress
@@ -10,6 +12,10 @@ from icloudpd.status import Status, StatusExchange
 def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
     app = Flask(__name__)
     app.logger = logger
+    if getattr(sys, 'frozen', False):
+        # for running in pyinstaller
+        app.template_folder = os.path.join(sys._MEIPASS, 'templates')
+        app.static_folder = os.path.join(sys._MEIPASS, 'static')
 
     @app.route("/")
     def index() -> Union[Response, str]:
