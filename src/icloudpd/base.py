@@ -573,6 +573,10 @@ def main(
             print("You need to specify at least one --password-provider")
             sys.exit(2)
 
+        if "console" in password_providers and list(password_providers)[-1] != "console":
+            print("Console must be the last --password-provider")
+            sys.exit(2)
+
         status_exchange = StatusExchange()
 
         # start web server
