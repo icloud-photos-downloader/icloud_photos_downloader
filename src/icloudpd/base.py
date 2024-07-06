@@ -523,7 +523,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
-@click.version_option(version="1.20.4")
+@click.version_option(version="1.21.0")
 def main(
     directory: Optional[str],
     username: str,
