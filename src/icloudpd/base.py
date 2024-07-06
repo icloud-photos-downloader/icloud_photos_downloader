@@ -521,6 +521,12 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     show_default=True,
     callback=mfa_provider_generator,
 )
+@click.option(
+    "--use-os-locale",
+    help="Use locale of the host OS to format dates",
+    is_flag=True,
+    default=False,
+)
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
 @click.version_option(version="1.21.0")
@@ -568,6 +574,7 @@ def main(
     ],
     file_match_policy: FileMatchPolicy,
     mfa_provider: MFAProvider,
+    use_os_locale: bool,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -636,6 +643,12 @@ def main(
                 get_password_from_webui(logger, status_exchange),
                 update_password_status_in_webui(status_exchange),
             )
+
+        # set locale
+        if use_os_locale:
+            from locale import LC_ALL, setlocale
+
+            setlocale(LC_ALL, "")
 
         # start web server
         if mfa_provider == MFAProvider.WEBUI:

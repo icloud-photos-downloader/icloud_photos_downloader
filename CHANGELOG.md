@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: support for using locale from OS with `--use-os-locale` flag [#897](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/897)
+
 ## 1.21.0 (2024-07-05)
 
 - feature: add webui for entering password with `--password-provider webui` parameter [#805](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/805)
