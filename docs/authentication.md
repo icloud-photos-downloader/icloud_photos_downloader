@@ -12,6 +12,20 @@ or you can send to a different email address with `--notification-email`.
 
 If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at <https://myaccount.google.com/apppasswords>
 
+## MFA Providers
+
+```{versionadded} 1.21.0
+```
+
+There are two ways to provide MFA code to `icloudpd`:
+- Using console
+- Using web interface
+
+The choice can be made with `--mfa-provider` parameter.
+
+Default: *console*
+
+
 ## FIDO
 
 Authentication to iCloud with hardware keys (FIDO) is not supported.
@@ -52,15 +66,21 @@ Use `icloud`, not `icloudpd`
 
 ```{versionadded} 1.20.0
 ```
+```{versionadded} 1.21.0
+WebUI support
+```
 
-Passwords for iCloud access can be supplied by user in three ways:
+Passwords for iCloud access can be supplied by user in four ways:
 - Using `--password` command line parameter
 - Using keyring
 - Using console
+- Using web interface
 
 It is possible to specify which of these three ways `icloudpd` should use, by specifying them with `--password-provider` parameter. More than one can be specified and the order
 of providers matches the order then will be checked for password. E.g. `--password-provider keyring --password-provider console` means that `icloudpd` will check password in keyring first and then, if no password found, ask for password in the console.
 
 Keyring password provider, if specified, saves valid password back into keyring.
+
+Console and Web UI are not compatible with each other. Console or WebUI providers, if specified, must be last in the list of providers because they cannot be skipped.
 
 Default set and order of providers are: *parameter*, *keyring*, *console*
