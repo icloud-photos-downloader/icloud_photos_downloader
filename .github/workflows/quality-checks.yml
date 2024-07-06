@@ -79,7 +79,7 @@ jobs:
     steps: 
     - name: Install Locales for Tests
       run: | 
-        apt-get update && apt-get -y install locales locales-all
+        sudo apt-get update && sudo apt-get -y install locales locales-all
 
     - uses: actions/checkout@v4 
 
