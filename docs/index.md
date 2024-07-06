@@ -16,4 +16,5 @@ mode
 size
 raw
 webui
+nas
 ```
