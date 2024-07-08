@@ -1345,8 +1345,8 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: >
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} --version) &&
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:latest --version)
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} icloudpd --use-os-locale --version) &&
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:latest icloudpd --use-os-locale --version)
  
       - name: Record success on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure' && steps.run_test.outcome != 'failure'
