@@ -53,7 +53,7 @@ jobs:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
   patch_version:
-    uses: ./.github/workflows/patch_version.yml
+    uses: ./.github/workflows/patch-version.yml
 
   build_package:
     needs: [get_version, patch_version]
