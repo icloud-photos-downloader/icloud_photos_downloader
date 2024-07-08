@@ -83,7 +83,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self._caplog.text,
         )
         for dir_name, file_name in files_to_download:
-            file_path = os.path.join(dir_name, file_name)
+            file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
                 f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, file_path), 96)}",
                 self._caplog.text,
@@ -95,7 +95,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         for dir_name, file_name in [
             (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
         ]:
-            file_path = os.path.join(dir_name, file_name)
+            file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
                 f"DEBUG    {truncate_middle(os.path.join(data_dir, file_path), 96)} already exists",
                 self._caplog.text,

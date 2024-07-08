@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 echo "Formatting..."
 # autopep8 -r --in-place --aggressive --aggressive src/ --exclude src/pyicloud_ipd

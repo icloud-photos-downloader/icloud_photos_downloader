@@ -19,6 +19,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
@@ -95,6 +102,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
@@ -199,6 +213,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
       uses: docker/setup-qemu-action@v3
@@ -248,6 +269,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
@@ -282,6 +310,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
@@ -551,9 +586,9 @@ jobs:
             echo "install icloudpd..." &&
             pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
-            icloud -h &&
+            icloud --version &&
             echo "test icloudpd..." &&
-            icloudpd --version &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
             echo "check if src..." &&
             (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
 
@@ -711,7 +746,7 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
           run: >
             echo "install default python..." &&
-            apk update && apk add python3 &&
+            apk update && apk add python3 musl-locales musl-locales-lang &&
             echo "create venv and active..." &&
             cd /work &&
             python3 -m venv .venv &&
@@ -719,9 +754,9 @@ jobs:
             echo "install icloudpd..." &&
             pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
             echo "test icloud..." &&
-            icloud -h &&
+            icloud --version &&
             echo "test icloudpd..." &&
-            icloudpd --version &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
             echo "check if src..." &&
             (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
           # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
@@ -789,8 +824,8 @@ jobs:
           python3 -m venv .venv &&
           . .venv/bin/activate &&
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
-          icloud --help &&
-          icloudpd --version &&
+          icloud --version &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
           touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
         # &&
@@ -839,13 +874,15 @@ jobs:
           path: |
             dist
 
+      # https://learn.microsoft.com/en-us/cpp/c-runtime-library/language-strings?view=msvc-170&redirectedfrom=MSDN
+      # languages
       - name: Run test for ${{ matrix.os }} on amd64
         id: run_test
         continue-on-error: true
         run: >
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
-          icloud --help &&
-          icloudpd --version &&
+          icloud --version &&
+          TZ=America/Los_Angeles icloudpd --use-os-locale --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
 
         # &&
@@ -1057,7 +1094,7 @@ jobs:
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --help && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1118,11 +1155,11 @@ jobs:
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
           chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
           echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --help && 
+          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --help && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -1174,11 +1211,11 @@ jobs:
         continue-on-error: true 
         run: > 
           echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --help && 
+          dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --help && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -1308,8 +1345,8 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: >
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} --help) &&
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:latest --help)
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} icloudpd --use-os-locale --version) &&
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:latest icloudpd --use-os-locale --version)
  
       - name: Record success on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure' && steps.run_test.outcome != 'failure'
@@ -1524,10 +1561,10 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
           run: > 
             echo "install npm..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm locales-all &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --help  &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1743,7 +1780,7 @@ jobs:
           run: > 
             echo "install npm..." && 
             export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
-            /work/scripts/npx_optional /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help
+            /work/scripts/npx_optional /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --version
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
@@ -1926,10 +1963,10 @@ jobs:
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
           run: > 
             echo "install npm..." && 
-            apk update && apk add npm &&
+            apk update && apk add npm musl-locales musl-locales-lang &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --help  &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2115,7 +2152,7 @@ jobs:
             echo "install npm..." && 
             apk update && apk add npm &&
             echo "test icloudpd..." && 
-            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help &&
+            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --version &&
             touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2320,7 +2357,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          icloudpd --help  &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
           touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[0] }} 
@@ -2427,7 +2464,7 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: > 
-          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --version  &&
           touch compatibility/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[0] }} 
@@ -2527,7 +2564,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          icloudpd --help &&
+          TZ=America/Los_Angeles icloudpd --use-os-locale --version &&
           touch compatibility/npm.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 
@@ -2625,7 +2662,7 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: > 
-          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --version  &&
           touch compatibility/npx.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 

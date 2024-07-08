@@ -9,8 +9,11 @@ import pickle
 import sys
 from typing import NoReturn, Optional, Sequence
 
+import click
+
 from click import confirm
 
+import foundation
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -32,8 +35,52 @@ def create_pickled_data(idevice: AppleDevice, filename: str) -> None:
     with open(filename, "wb") as pickle_file:
         pickle.dump(idevice.content, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
+def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
+    if not value:
+        return value
+    vi = foundation.version_info_formatted()
+    click.echo(vi)
+    ctx.exit()
 
-def main(args:Optional[Sequence[str]]=None) -> NoReturn:
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
+
+@click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
+@click.option("--username", default="", help="Apple ID to Use")
+@click.option(
+    "--password",
+    default="",
+    help=(
+        "Apple ID Password to Use; if unspecified, password will be "
+        "fetched from the system keyring."
+    ),
+)
+@click.option("-n", "--non-interactive", default=True, is_flag=True, help="Disable interactive prompts.")
+@click.option(
+    "--delete-from-keyring",
+    default=False,
+    is_flag=True,
+    help="Delete stored password in system keyring for this username.",
+)
+@click.option(
+    "--domain",
+    type=click.Choice(["com", "cn"]),
+    show_default=True,
+    default="com",
+    help="Root Domain for requests to iCloud (com or cn)",
+)
+@click.option(
+    "--version",
+    help="Show the version, commit hash and timestamp",
+    is_flag=True,
+    expose_value=False,
+    is_eager=True,
+    callback=report_version,
+)
+def main(username: str, password: str, non_interactive: bool, delete_from_keyring: bool, domain: str) -> None:
+    print("Running in MAIN")
+    main_aux()
+
+def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
     """Main commandline entrypoint."""
     if args is None:
         args = sys.argv[1:]

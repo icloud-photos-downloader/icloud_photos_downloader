@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 echo "Running mypy..."
 python3 -m mypy src tests --strict --python-version 3.8

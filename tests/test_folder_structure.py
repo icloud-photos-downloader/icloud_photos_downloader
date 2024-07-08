@@ -1,6 +1,7 @@
 import glob
 import inspect
 import os
+import sys
 from typing import List, Tuple
 from unittest import TestCase
 
@@ -130,7 +131,8 @@ class FolderStructureTestCase(TestCase):
         self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7405.MOV")), filenames[6])
         self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7404.MOV")), filenames[7])
 
-    def test_folder_structure_de(self) -> None:
+    @pytest.mark.skipif(sys.platform == "win32", reason="local strings are not working on windows")
+    def test_folder_structure_de_posix(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -146,7 +148,7 @@ class FolderStructureTestCase(TestCase):
             runner = CliRunner(
                 env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321",
-                    "LANG": "de_DE.UTF-8",
+                    "LC_ALL": "de_DE.UTF-8",
                 }
             )
             result = runner.invoke(

@@ -69,8 +69,12 @@ jobs:
       run: | 
         scripts/type_check 
 
+  patch_version:
+    if: needs.skip_check.outputs.should_skip != 'true'
+    uses: ./.github/workflows/patch-version.yml
+
   test: 
-    needs: skip_check
+    needs: [skip_check, patch_version]
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-20.04
     strategy: 
@@ -82,6 +86,55 @@ jobs:
         sudo apt-get update && sudo apt-get -y install locales locales-all
 
     - uses: actions/checkout@v4 
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
+    - name: Set up Python ${{ matrix.python-version }} 
+      uses: actions/setup-python@v5 
+      with: 
+        python-version: ${{ matrix.python-version }} 
+        cache: 'pip' 
+    
+    - name: Install Test dependencies 
+      run: | 
+        pip3 install --disable-pip-version-check -e .[test] 
+ 
+    - name: Test
+      run: |
+        scripts/test
+
+  test_non_linux: 
+    needs: [skip_check, patch_version]
+    if: needs.skip_check.outputs.should_skip != 'true'
+    runs-on: ${{ matrix.os }} 
+    defaults:
+      run:
+        shell: bash
+    strategy: 
+      fail-fast: false
+      matrix: 
+        python-version: [3.12]
+        os: 
+          # - "macos-12" # many are failing in keychain access
+          # - "macos-13" # many are failing in keychain access
+          # - "macos-14" # many are failing in keychain access
+          - "windows-2019"
+          - "windows-2022"
+    steps: 
+
+    - uses: actions/checkout@v4 
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v5 
