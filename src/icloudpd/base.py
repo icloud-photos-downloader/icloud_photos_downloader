@@ -3,6 +3,8 @@
 
 from multiprocessing import freeze_support
 
+import foundation
+
 from icloudpd.mfa_provider import MFAProvider  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
@@ -245,16 +247,23 @@ def file_match_policy_generator(
     else:
         raise ValueError(f"policy was provided with unsupported value of '{policy}'")
 
-def locale_setter(
-    _ctx: click.Context, _param: click.Parameter, use_os_locale: bool
-) -> bool:
-    print("SET LOCALE")
+
+def locale_setter(_ctx: click.Context, _param: click.Parameter, use_os_locale: bool) -> bool:
     # set locale
     if use_os_locale:
         from locale import LC_ALL, setlocale
 
         setlocale(LC_ALL, "")
     return use_os_locale
+
+
+def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
+    if not value:
+        return value
+    vi = foundation.version_info_formatted()
+    click.echo(vi)
+    ctx.exit()
+
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -539,9 +548,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     is_eager=True,
     callback=locale_setter,
 )
-# a hacky way to get proper version because automatic detection does not
-# work for some reason
-@click.version_option(version="1.21.0")
+@click.option(
+    "--version",
+    help="Show the version, commit hash and timestamp",
+    is_flag=True,
+    expose_value=False,
+    is_eager=True,
+    callback=report_version,
+)
 def main(
     directory: Optional[str],
     username: str,

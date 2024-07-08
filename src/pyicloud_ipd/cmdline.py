@@ -13,6 +13,7 @@ import click
 
 from click import confirm
 
+import foundation
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -33,6 +34,13 @@ def create_pickled_data(idevice: AppleDevice, filename: str) -> None:
     """
     with open(filename, "wb") as pickle_file:
         pickle.dump(idevice.content, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
+
+def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
+    if not value:
+        return value
+    vi = foundation.version_info_formatted()
+    click.echo(vi)
+    ctx.exit()
 
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
@@ -60,7 +68,14 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     default="com",
     help="Root Domain for requests to iCloud (com or cn)",
 )
-@click.version_option(version="1.21.0")
+@click.option(
+    "--version",
+    help="Show the version, commit hash and timestamp",
+    is_flag=True,
+    expose_value=False,
+    is_eager=True,
+    callback=report_version,
+)
 def main(username: str, password: str, non_interactive: bool, delete_from_keyring: bool, domain: str) -> None:
     print("Running in MAIN")
     main_aux()

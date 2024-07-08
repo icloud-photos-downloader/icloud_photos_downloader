@@ -1,6 +1,8 @@
 """Experimental code"""
 
-from multiprocessing import freeze_support  # fmt: skip
+from multiprocessing import freeze_support
+
+import foundation  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
@@ -24,7 +26,22 @@ from pyicloud_ipd.cmdline import main as icloud_main
 #     """ make_response_parser :: State (Response -> a) """
 
 
-@click.version_option(version="1.21.0")
+def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
+    if not value:
+        return value
+    vi = foundation.version_info_formatted()
+    click.echo(vi)
+    ctx.exit()
+
+
+@click.option(
+    "--version",
+    help="Show the version, commit hash and timestamp",
+    is_flag=True,
+    expose_value=False,
+    is_eager=True,
+    callback=report_version,
+)
 @click.group()
 def commands() -> None:
     pass
