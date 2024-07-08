@@ -789,7 +789,7 @@ jobs:
           python3 -m venv .venv &&
           . .venv/bin/activate &&
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
-          icloud --help &&
+          icloud --version &&
           icloudpd --version &&
           touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
@@ -844,7 +844,7 @@ jobs:
         continue-on-error: true
         run: >
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
-          icloud --help &&
+          icloud --version &&
           icloudpd --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
 
@@ -1057,7 +1057,7 @@ jobs:
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --help && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1118,11 +1118,11 @@ jobs:
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
           chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
           echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --help && 
+          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --help && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -1174,11 +1174,11 @@ jobs:
         continue-on-error: true 
         run: > 
           echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --help && 
+          dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --help && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -1308,8 +1308,8 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: >
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} --help) &&
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:latest --help)
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} --version) &&
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} 172.17.0.1:5000/icloudpd/icloudpd:latest --version)
  
       - name: Record success on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure' && steps.run_test.outcome != 'failure'
@@ -1527,7 +1527,7 @@ jobs:
             export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --help  &&
+            icloudpd --version  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1743,7 +1743,7 @@ jobs:
           run: > 
             echo "install npm..." && 
             export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
-            /work/scripts/npx_optional /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help
+            /work/scripts/npx_optional /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --version
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
@@ -1929,7 +1929,7 @@ jobs:
             apk update && apk add npm &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --help  &&
+            icloudpd --version  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2115,7 +2115,7 @@ jobs:
             echo "install npm..." && 
             apk update && apk add npm &&
             echo "test icloudpd..." && 
-            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --help &&
+            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --version &&
             touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2320,7 +2320,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          icloudpd --help  &&
+          icloudpd --version  &&
           touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[0] }} 
@@ -2427,7 +2427,7 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: > 
-          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --version  &&
           touch compatibility/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[0] }} 
@@ -2527,7 +2527,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          icloudpd --help &&
+          icloudpd --version &&
           touch compatibility/npm.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 
@@ -2625,7 +2625,7 @@ jobs:
         id: run_test 
         continue-on-error: true 
         run: > 
-          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --help  &&
+          npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --version  &&
           touch compatibility/npx.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 
