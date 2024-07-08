@@ -874,13 +874,15 @@ jobs:
           path: |
             dist
 
+      # https://learn.microsoft.com/en-us/cpp/c-runtime-library/language-strings?view=msvc-170&redirectedfrom=MSDN
+      # languages
       - name: Run test for ${{ matrix.os }} on amd64
         id: run_test
         continue-on-error: true
         run: >
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --version &&
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+          TZ=America/Los_Angeles LC_ALL=deu_deu icloudpd --use-os-locale --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
 
         # &&
