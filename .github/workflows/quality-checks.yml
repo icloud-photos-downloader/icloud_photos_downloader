@@ -105,6 +105,9 @@ jobs:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ${{ matrix.os }} 
+    defaults:
+      run:
+        shell: bash
     strategy: 
       fail-fast: false
       matrix: 
