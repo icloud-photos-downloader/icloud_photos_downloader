@@ -1,6 +1,7 @@
 import glob
 import inspect
 import os
+import sys
 from typing import List, Tuple
 from unittest import TestCase
 
@@ -130,7 +131,8 @@ class FolderStructureTestCase(TestCase):
         self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7405.MOV")), filenames[6])
         self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7404.MOV")), filenames[7])
 
-    def test_folder_structure_de(self) -> None:
+    @pytest.mark.skipif(sys.platform != "win32", reason="locale string are different on windows")
+    def test_folder_structure_de_win32(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -146,7 +148,86 @@ class FolderStructureTestCase(TestCase):
             runner = CliRunner(
                 env={
                     "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321",
-                    "LANG": "de_DE.UTF-8",
+                    "LC_ALL": "deu_deu",
+                }
+            )
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "5",
+                    "--only-print-filenames",
+                    "--folder-structure={:%Y/%B}",
+                    "--no-progress-bar",
+                    "--use-os-locale",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            print_result_exception(result)
+            filenames = result.output.splitlines()
+
+            self.assertEqual(len(filenames), 8)
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7409.JPG")), filenames[0]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7409.MOV")), filenames[1]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7408.JPG")), filenames[2]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7408.MOV")), filenames[3]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7407.JPG")), filenames[4]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7407.MOV")), filenames[5]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7405.MOV")), filenames[6]
+            )
+            self.assertEqual(
+                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7404.MOV")), filenames[7]
+            )
+
+            assert result.exit_code == 0
+
+        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == len(files_to_download)
+
+        for file_name in files_to_download:
+            assert os.path.exists(
+                os.path.join(data_dir, os.path.normpath(file_name))
+            ), f"File {file_name} expected, but does not exist"
+
+    @pytest.mark.skipif(sys.platform == "win32", reason="local strings are different on windows")
+    def test_folder_structure_de_posix(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+
+        for dir in [base_dir, cookie_dir, data_dir]:
+            recreate_path(dir)
+
+        files_to_download: List[str] = []
+
+        # Note - This test uses the same cassette as test_download_photos.py
+        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
+            # Pass fixed client ID via environment variable
+            runner = CliRunner(
+                env={
+                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321",
+                    "LC_ALL": "de_DE.UTF-8",
                 }
             )
             result = runner.invoke(
