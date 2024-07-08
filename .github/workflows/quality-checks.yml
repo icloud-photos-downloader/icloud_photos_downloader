@@ -156,11 +156,6 @@ jobs:
       run: |
         echo "icloudpd_version=${{steps.get_version.outputs.icloudpd_version}}"
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
-        cat src/foundation/__init__.py
-
     outputs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
 
