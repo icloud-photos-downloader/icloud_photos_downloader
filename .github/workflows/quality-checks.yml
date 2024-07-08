@@ -105,7 +105,7 @@ jobs:
       matrix: 
         python-version: [3.12]
         os: 
-          - "macos-14"
+          # - "macos-14" # many are failing in keychain access
           - "windows-2022"
     steps: 
     # - name: Install Locales for Tests
