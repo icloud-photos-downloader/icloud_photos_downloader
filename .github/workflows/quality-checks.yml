@@ -83,6 +83,10 @@ jobs:
 
     - uses: actions/checkout@v4 
 
+    - name: Patch version
+      run: |
+        scripts/patch_version
+
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v5 
       with: 
@@ -108,7 +112,7 @@ jobs:
         os: 
           # - "macos-12" # many are failing in keychain access
           # - "macos-13" # many are failing in keychain access
-          # - "macos-14" # many are failing in keychain access
+          - "macos-14" # many are failing in keychain access
           - "windows-2019"
           - "windows-2022"
     steps: 
@@ -117,6 +121,10 @@ jobs:
     #     sudo apt-get update && sudo apt-get -y install locales locales-all
 
     - uses: actions/checkout@v4 
+
+    - name: Patch version
+      run: |
+        scripts/patch_version
 
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v5 
