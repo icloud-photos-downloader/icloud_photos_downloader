@@ -11,8 +11,8 @@ class VersionInfo(NamedTuple):
 # will be updated by CI
 version_info = VersionInfo(
     version="0.0.1",
-    commit_sha="abcdefg",
-    commit_timestamp=1720387746,
+    commit_sha="abcdefgh",
+    commit_timestamp=1234567890,
 )
 
 
