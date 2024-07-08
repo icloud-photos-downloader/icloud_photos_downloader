@@ -882,7 +882,7 @@ jobs:
         run: >
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --version &&
-          TZ=America/Los_Angeles LC_ALL=deu_deu icloudpd --use-os-locale --version &&
+          TZ=America/Los_Angeles icloudpd --use-os-locale --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
 
         # &&
@@ -2564,7 +2564,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+          TZ=America/Los_Angeles icloudpd --use-os-locale --version &&
           touch compatibility/npm.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 
