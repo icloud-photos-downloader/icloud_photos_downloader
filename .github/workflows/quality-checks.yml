@@ -106,8 +106,8 @@ jobs:
       matrix: 
         python-version: [3.12]
         os: 
-          - "macos-12"
-          - "macos-13"
+          # - "macos-12" # many are failing in keychain access
+          # - "macos-13" # many are failing in keychain access
           # - "macos-14" # many are failing in keychain access
           - "windows-2019"
           - "windows-2022"
