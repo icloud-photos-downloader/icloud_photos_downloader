@@ -245,6 +245,16 @@ def file_match_policy_generator(
     else:
         raise ValueError(f"policy was provided with unsupported value of '{policy}'")
 
+def locale_setter(
+    _ctx: click.Context, _param: click.Parameter, use_os_locale: bool
+) -> bool:
+    print("SET LOCALE")
+    # set locale
+    if use_os_locale:
+        from locale import LC_ALL, setlocale
+
+        setlocale(LC_ALL, "")
+    return use_os_locale
 
 # Must import the constants object so that we can mock values in tests.
 
@@ -526,6 +536,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     help="Use locale of the host OS to format dates",
     is_flag=True,
     default=False,
+    is_eager=True,
+    callback=locale_setter,
 )
 # a hacky way to get proper version because automatic detection does not
 # work for some reason
@@ -643,12 +655,6 @@ def main(
                 get_password_from_webui(logger, status_exchange),
                 update_password_status_in_webui(status_exchange),
             )
-
-        # set locale
-        if use_os_locale:
-            from locale import LC_ALL, setlocale
-
-            setlocale(LC_ALL, "")
 
         # start web server
         if mfa_provider == MFAProvider.WEBUI:
