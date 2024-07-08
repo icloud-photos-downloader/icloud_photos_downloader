@@ -102,10 +102,14 @@ jobs:
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ${{ matrix.os }} 
     strategy: 
+      fail-fast: false
       matrix: 
         python-version: [3.12]
         os: 
+          - "macos-12"
+          - "macos-13"
           # - "macos-14" # many are failing in keychain access
+          - "windows-2019"
           - "windows-2022"
     steps: 
     # - name: Install Locales for Tests
