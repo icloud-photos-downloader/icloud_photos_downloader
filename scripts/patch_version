@@ -4,7 +4,7 @@ set -euo pipefail
 VERSION=$(cat pyproject.toml | grep version= | cut -d'"' -f 2)
 SHA=$(git rev-parse --short HEAD)
 TS=$(git log -1 --format=%ct HEAD)
-sed "s/0.0.1/${VERSION}/g" -i.bak src/foundation/__init__.py
-sed "s/abcdefgh/${SHA}/g" -i.bak src/foundation/__init__.py
-sed "s/1234567890/${TS}/g" -i.bak src/foundation/__init__.py
+sed -e "s/0.0.1/${VERSION}/g" -i'' src/foundation/__init__.py
+sed -e "s/abcdefgh/${SHA}/g" -i'' src/foundation/__init__.py
+sed -e "s/1234567890/${TS}/g" -i'' src/foundation/__init__.py
 cat src/foundation/__init__.py
