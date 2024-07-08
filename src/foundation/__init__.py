@@ -1,5 +1,8 @@
-import time
+import datetime
 from typing import NamedTuple
+
+import pytz
+from tzlocal import get_localzone
 
 
 class VersionInfo(NamedTuple):
@@ -18,5 +21,7 @@ version_info = VersionInfo(
 
 def version_info_formatted() -> str:
     vi = version_info
-    ts = time.strftime("%c", time.gmtime(vi.commit_timestamp))
-    return f"version:{vi.version}, commit sha:{vi.commit_sha}, commit timestamp:{ts} UTC"
+    ts = datetime.datetime.fromtimestamp(vi.commit_timestamp, tz=pytz.utc).astimezone(
+        get_localzone()
+    )
+    return f"version:{vi.version}, commit sha:{vi.commit_sha}, commit timestamp:{ts:%c %Z}"

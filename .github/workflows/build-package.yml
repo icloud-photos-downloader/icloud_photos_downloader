@@ -588,7 +588,7 @@ jobs:
             echo "test icloud..." &&
             icloud --version &&
             echo "test icloudpd..." &&
-            LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
             echo "check if src..." &&
             (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
 
@@ -756,7 +756,7 @@ jobs:
             echo "test icloud..." &&
             icloud --version &&
             echo "test icloudpd..." &&
-            LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
             echo "check if src..." &&
             (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
           # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
@@ -825,7 +825,7 @@ jobs:
           . .venv/bin/activate &&
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --version &&
-          LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
           touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
         # &&
@@ -880,7 +880,7 @@ jobs:
         run: >
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
           icloud --version &&
-          LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
 
         # &&
@@ -1562,7 +1562,7 @@ jobs:
             export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm locales-all &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1964,7 +1964,7 @@ jobs:
             apk update && apk add npm musl-locales musl-locales-lang &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
             touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
 
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2355,7 +2355,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
           touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure on ${{ matrix.prop[0] }} 
@@ -2562,7 +2562,7 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
           touch compatibility/npm.${{ matrix.os }}.amd64.pass 
  
       - name: Record failure on ${{ matrix.os }} 
