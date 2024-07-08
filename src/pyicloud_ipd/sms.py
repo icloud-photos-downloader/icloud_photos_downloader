@@ -36,7 +36,7 @@ def _map_to_trusted_device(device: Mapping[str, Any]) -> Optional[TrustedDevice]
     number: Optional[str] = device.get("obfuscatedNumber")
     if id is None or number is None:
         return None
-    return _InternalTrustedDevice(id=id, obfuscated_number=number.replace(u'•', '*'))
+    return _InternalTrustedDevice(id=id, obfuscated_number=number.replace('•', '*'))
 
 class _Response(Protocol):
     @property
@@ -146,7 +146,7 @@ def build_send_sms_code_request(context: _TrustedPhoneContextProvider, device_id
             **_oauth_const_headers(),
             **_oauth_redirect_header(context.domain),
             **_oauth_headers(context.oauth_session),
-            ** {"Content-type": "application/json"},
+            ** {"Content-type": "application/json; charset=utf-8"},
         },
         json = json)
     return req
@@ -165,8 +165,8 @@ def build_verify_sms_code_request(context: _TrustedPhoneContextProvider, device_
             **_oauth_const_headers(),
             **_oauth_redirect_header(context.domain),
             **_oauth_headers(context.oauth_session),
-            ** {"Content-type": "application/json"},
-            ** {"Accept": "application/json"},
+            ** {"Content-type": "application/json; charset=utf-8"},
+            ** {"Accept": "application/json; charset=utf-8"},
         },
         json = json)
     return req
