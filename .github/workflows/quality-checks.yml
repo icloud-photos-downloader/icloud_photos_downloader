@@ -69,8 +69,12 @@ jobs:
       run: | 
         scripts/type_check 
 
+  patch_version:
+    if: needs.skip_check.outputs.should_skip != 'true'
+    uses: ./.github/workflows/patch-version.yml
+
   test: 
-    needs: skip_check
+    needs: [skip_check, patch_version]
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-20.04
     strategy: 
@@ -83,9 +87,12 @@ jobs:
 
     - uses: actions/checkout@v4 
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v5 
@@ -102,7 +109,7 @@ jobs:
         scripts/test
 
   test_non_linux: 
-    needs: skip_check
+    needs: [skip_check, patch_version]
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ${{ matrix.os }} 
     defaults:
@@ -119,15 +126,15 @@ jobs:
           - "windows-2019"
           - "windows-2022"
     steps: 
-    # - name: Install Locales for Tests
-    #   run: | 
-    #     sudo apt-get update && sudo apt-get -y install locales locales-all
 
     - uses: actions/checkout@v4 
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python ${{ matrix.python-version }} 
       uses: actions/setup-python@v5 

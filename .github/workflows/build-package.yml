@@ -19,9 +19,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
@@ -100,9 +103,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
@@ -207,9 +213,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up QEMU
       if: matrix.BUILD_PROP[0] != 'amd64' && matrix.BUILD_PROP[0] != '386'
@@ -260,9 +269,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Patch version
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
@@ -299,10 +311,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Patch version
-      shell: bash
-      run: |
-        scripts/patch_version
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
