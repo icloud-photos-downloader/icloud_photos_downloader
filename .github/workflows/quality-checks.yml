@@ -97,6 +97,37 @@ jobs:
       run: |
         scripts/test
 
+  test_non_linux: 
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
+    runs-on: ${{ matrix.os }} 
+    strategy: 
+      matrix: 
+        python-version: [3.12]
+        os: 
+          - "macos-14"
+          - "windows-2022"
+    steps: 
+    # - name: Install Locales for Tests
+    #   run: | 
+    #     sudo apt-get update && sudo apt-get -y install locales locales-all
+
+    - uses: actions/checkout@v4 
+
+    - name: Set up Python ${{ matrix.python-version }} 
+      uses: actions/setup-python@v5 
+      with: 
+        python-version: ${{ matrix.python-version }} 
+        cache: 'pip' 
+    
+    - name: Install Test dependencies 
+      run: | 
+        pip3 install --disable-pip-version-check -e .[test] 
+ 
+    - name: Test
+      run: |
+        scripts/test
+
   get_version:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
