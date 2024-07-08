@@ -51,6 +51,9 @@ def get_password_from_keyring(username:str) -> Optional[str]:
 
 
 def store_password_in_keyring(username: str, password:str) -> None:
+    if keyring.get_password(KEYRING_SYSTEM, username) is not None:
+        # Apple can save only in empty keyring
+        delete_password_in_keyring(username)
     return keyring.set_password(
         KEYRING_SYSTEM,
         username,
