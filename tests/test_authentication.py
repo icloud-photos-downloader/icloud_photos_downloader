@@ -229,7 +229,7 @@ class AuthenticationTestCase(TestCase):
                 "INFO     Two-factor authentication is required",
                 self._caplog.text,
             )
-            self.assertIn("  0: (•••) •••-••81", result.output)
+            self.assertIn("  0: (***) ***-**81", result.output)
             self.assertIn(
                 "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321",
                 result.output,
@@ -246,14 +246,14 @@ class AuthenticationTestCase(TestCase):
         html_path = os.path.join(self.data_path, "parse_trusted_phone_numbers_payload_valid.html")
         with open(html_path) as file:
             html = file.read()
-        expected = _TrustedDevice(id=1, obfuscated_number="(•••) •••-••81")
+        expected = _TrustedDevice(id=1, obfuscated_number="(***) ***-**81")
         result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(1, len(result), "number of numbers parsed")
         self.assertEqual(expected, result[0], "parsed number")
 
     def test_parse_trusted_phone_numbers_payload_minimal(self) -> None:
         html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'  # noqa: E501
-        expected = _TrustedDevice(id=1, obfuscated_number="(•••) •••-••81")
+        expected = _TrustedDevice(id=1, obfuscated_number="(***) ***-**81")
         result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(1, len(result), "number of numbers parsed")
         self.assertEqual(expected, result[0], "parsed number")

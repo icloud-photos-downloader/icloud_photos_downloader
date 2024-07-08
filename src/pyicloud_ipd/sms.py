@@ -36,7 +36,7 @@ def _map_to_trusted_device(device: Mapping[str, Any]) -> Optional[TrustedDevice]
     number: Optional[str] = device.get("obfuscatedNumber")
     if id is None or number is None:
         return None
-    return _InternalTrustedDevice(id=id, obfuscated_number=number)
+    return _InternalTrustedDevice(id=id, obfuscated_number=number.replace('•', '*'))
 
 class _Response(Protocol):
     @property
