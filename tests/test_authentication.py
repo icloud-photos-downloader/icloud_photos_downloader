@@ -244,7 +244,7 @@ class AuthenticationTestCase(TestCase):
 
     def test_parse_trusted_phone_numbers_payload_valid(self) -> None:
         html_path = os.path.join(self.data_path, "parse_trusted_phone_numbers_payload_valid.html")
-        with open(html_path) as file:
+        with open(html_path, encoding="UTF-8") as file:
             html = file.read()
         expected = _TrustedDevice(id=1, obfuscated_number="(***) ***-**81")
         result = parse_trusted_phone_numbers_payload(html)
