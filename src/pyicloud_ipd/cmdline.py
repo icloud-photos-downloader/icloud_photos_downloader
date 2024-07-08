@@ -9,6 +9,8 @@ import pickle
 import sys
 from typing import NoReturn, Optional, Sequence
 
+import click
+
 from click import confirm
 
 from pyicloud_ipd.base import PyiCloudService
@@ -32,8 +34,38 @@ def create_pickled_data(idevice: AppleDevice, filename: str) -> None:
     with open(filename, "wb") as pickle_file:
         pickle.dump(idevice.content, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
+CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
-def main(args:Optional[Sequence[str]]=None) -> NoReturn:
+@click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
+@click.option("--username", default="", help="Apple ID to Use")
+@click.option(
+    "--password",
+    default="",
+    help=(
+        "Apple ID Password to Use; if unspecified, password will be "
+        "fetched from the system keyring."
+    ),
+)
+@click.option("-n", "--non-interactive", default=True, is_flag=True, help="Disable interactive prompts.")
+@click.option(
+    "--delete-from-keyring",
+    default=False,
+    is_flag=True,
+    help="Delete stored password in system keyring for this username.",
+)
+@click.option(
+    "--domain",
+    type=click.Choice(["com", "cn"]),
+    show_default=True,
+    default="com",
+    help="Root Domain for requests to iCloud (com or cn)",
+)
+@click.version_option(version="1.21.0")
+def main(username: str, password: str, non_interactive: bool, delete_from_keyring: bool, domain: str) -> None:
+    print("Running in MAIN")
+    main_aux()
+
+def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
     """Main commandline entrypoint."""
     if args is None:
         args = sys.argv[1:]
