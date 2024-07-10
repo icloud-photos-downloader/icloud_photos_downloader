@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """takes results of compatibility tests and compie into one file"""
 
-from scripts.compile_matrix import print_breakdowns
+from compile_matrix import print_breakdowns
 
 if __name__ == "__main__":
     print("## Minimal Effort Compatibility")
