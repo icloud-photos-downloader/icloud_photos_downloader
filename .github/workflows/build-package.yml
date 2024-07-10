@@ -190,7 +190,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}-apt
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -292,7 +292,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.BUILD_PROP[2] }}-apk
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -646,7 +646,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error
           path: |
             compatibility/*
@@ -684,7 +684,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error
           path: |
             tzlc/*
@@ -856,7 +856,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error
           path: |
             compatibility/*
@@ -893,7 +893,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error
           path: |
             tzlc/*
@@ -1057,56 +1057,12 @@ jobs:
           path: |
             compatibility/*
 
-  compatibility_linux_bin: 
-    name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform" 
+  compatibility_linux_bin_apt: 
+    name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt" 
     strategy:  
       fail-fast: false 
       matrix: 
         image:  
-          - [ 
-            "alpine_3_20", #variant name
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-          - [ 
-            "alpine_3_12", #variant name
-            "alpine:3.12", #image
-            ] 
-          - [ 
-            "alpine_3_11", #variant name
-            "alpine:3.11", #image
-            ] 
-          - [ 
-            "alpine_3_10", #variant name
-            "alpine:3.10", #image
-            ] 
           - [  
             "debian_6_squeeze", #variant name 
             "debian:squeeze", #image 
@@ -1266,7 +1222,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1281,6 +1237,8 @@ jobs:
           shell: sh 
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
           run: > 
+            echo "install tzdata and locale..." && 
+            apt-get update && apt-get install -y tzdata locales-all &&
             echo "prep test..." && 
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
@@ -1299,11 +1257,206 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
-                
+
+  compatibility_linux_bin_apk: 
+    name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        image:  
+          - [ 
+            "alpine_3_20", #variant name
+            "alpine:3.20", #image
+            ] 
+          - [ 
+            "alpine_3_19", #variant name
+            "alpine:3.19", #image
+            ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
+          - [ 
+            "alpine_3_12", #variant name
+            "alpine:3.12", #image
+            ] 
+          - [ 
+            "alpine_3_11", #variant name
+            "alpine:3.11", #image
+            ] 
+          - [ 
+            "alpine_3_10", #variant name
+            "alpine:3.10", #image
+            ] 
+        prop:  
+          - [ 
+            "amd64",  # variant name 
+            "amd64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "386",  # variant name 
+            "386",  # platform spec 
+            "i386/",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+          - [ 
+            "arm32v6",  # variant name 
+            "arm/v6",  # platform spec 
+            "arm32v6/",  # image prefix 
+          ] 
+          # - [ 
+          #   "arm32v5",  # variant name 
+          #   "arm/v5",  # platform spec 
+          #   "arm32v5/",  # image prefix 
+          # ] 
+    runs-on: ubuntu-22.04 
+    needs: [ build_linux_1, build_linux_2 ] 
+    defaults: 
+      run: 
+        shell: bash 
+  
+    steps: 
+  
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+  
+      - name: Make folder for compatibility 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir compatibility 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir tzlc 
+    
+      - name: Download artifacts
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/download-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
+          path: | 
+            dist 
+  
+      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
+      # - name: Set up QEMU 
+      #   if: matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
+      #   uses: docker/setup-qemu-action@v3 
+  
+      - name: Set up QEMU 
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64' && matrix.prop[1] != '386' 
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+  
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_test 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            echo "test icloud..." && 
+            dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd..." && 
+            dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd-ex..." && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
+            touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload compatibility result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install tzdata and locales ..." && 
+            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
+            apk update && apk add tzdata musl-locales musl-locales-lang &&
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            echo "test icloudpd..." && 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            mv .result /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+          
+            
   compatibility_macos_bin: 
     name: "Compat BIN ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
@@ -1835,7 +1988,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1866,7 +2019,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2086,7 +2239,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2114,7 +2267,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2307,7 +2460,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2339,7 +2492,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2530,7 +2683,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2561,7 +2714,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2662,7 +2815,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2675,7 +2828,7 @@ jobs:
       - name: Upload tzlc result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
           if-no-files-found: error 
           path: | 
             tzlc/* 
