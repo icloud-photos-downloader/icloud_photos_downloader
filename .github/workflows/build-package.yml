@@ -3303,7 +3303,8 @@ jobs:
       - compatibility_windows_pip
       - compatibility_linux_pip_apt
       - compatibility_linux_pip_apk
-      - compatibility_linux_bin
+      - compatibility_linux_bin_apt
+      - compatibility_linux_bin_apk
       - compatibility_macos_bin
       - compatibility_windows_bin
       - compatibility_docker
