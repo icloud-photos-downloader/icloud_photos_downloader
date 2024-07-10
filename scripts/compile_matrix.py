@@ -15,7 +15,7 @@ def _stats(files):
     print("")
 
 
-def _matrix(files):
+def _matrix(files, special):
     """Prints matrix"""
     archs = [
         k for k, _ in itertools.groupby(sorted(files, key=lambda ft: ft[3]), key=lambda ft: ft[3])
@@ -37,18 +37,18 @@ def _matrix(files):
         results = [
             "N/A"
             if len(r) == 0 or r[0][4] == "na"
-            else (r[0][4] + ("" if r[0][0] == 0 else " (src)"))
+            else (r[0][4] + ("" if r[0][0] is False else f" {special}"))
             for r in results_raw
         ]
         print("|".join([o] + results))
 
 
-def print_breakdowns():
+def print_breakdowns(folder, special_content_checker, special_pair):
     """param: folder"""
-    folder = sys.argv[1] if len(sys.argv) > 1 else "."
+    (abbr, description) = special_pair
     files = [f for f in os.listdir(folder) if not os.path.isdir(f)]
     fts = [
-        [os.path.getsize(os.path.join(folder, f))] + f.split(".")
+        [special_content_checker(os.path.join(folder, f))] + f.split(".")
         for f in files
         if len(f.split(".")) == 4
     ]
@@ -57,7 +57,7 @@ def print_breakdowns():
     print("- N/A - not applicable/available")
     print("- pass - test pass")
     print("- fail - test fail")
-    print("- pass (src) - test pass using src (for pip)")
+    print(f"- pass {abbr} - {description}")
     print("")
     groups = [
         (k, list(g))
@@ -66,4 +66,4 @@ def print_breakdowns():
     for g, f in groups:
         print(f"### {g}")
         _stats(f)
-        _matrix(f)
+        _matrix(f, abbr)
