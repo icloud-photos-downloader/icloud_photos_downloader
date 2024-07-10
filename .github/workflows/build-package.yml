@@ -95,7 +95,7 @@ jobs:
     #   TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
     #   SUFFIX: ${{ matrix.BUILD_PROP[2] }}
     
-    name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}" with Debian
+    name: Build Linux ${{ matrix.BUILD_PROP[0] }} Debian
     defaults:
       run:
         shell: bash
@@ -205,7 +205,7 @@ jobs:
     #   TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
     #   SUFFIX: ${{ matrix.BUILD_PROP[2] }}
     
-    name: Build Linux Binary for "${{ matrix.BUILD_PROP[0] }}" with Alpine
+    name: Build Linux ${{ matrix.BUILD_PROP[0] }} Alpine
     defaults:
       run:
         shell: bash
@@ -422,7 +422,7 @@ jobs:
             dist/npm/
 
   compatibility_linux_pip_apt:
-    name: "Compatibility PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT"
+    name: "Compat PIP ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APT"
     strategy: 
       fail-fast: false
       matrix:
@@ -609,7 +609,7 @@ jobs:
             compatibility/*
 
   compatibility_linux_pip_apk:
-    name: "Compatibility PIP on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK"
+    name: "Compat PIP ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APK"
     strategy: 
       fail-fast: false
       matrix:
@@ -776,7 +776,7 @@ jobs:
             compatibility/*
 
   compatibility_macos_pip:
-    name: "Compatibility PIP on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform"
+    name: "Compat PIP ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform"
     strategy: 
       fail-fast: false
       matrix: 
@@ -846,7 +846,7 @@ jobs:
             compatibility/*
 
   compatibility_windows_pip:
-    name: "Compatibility PIP on ${{ matrix.os }} on amd64 platform"
+    name: "Compat PIP ${{ matrix.os }} on amd64 platform"
     strategy: 
       fail-fast: false
       matrix: 
@@ -903,7 +903,7 @@ jobs:
             compatibility/*
 
   compatibility_linux_bin: 
-    name: "Compatibility BIN on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
+    name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1112,7 +1112,7 @@ jobs:
             compatibility/* 
  
   compatibility_macos_bin: 
-    name: "Compatibility BIN on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
+    name: "Compat BIN ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix:  
@@ -1176,7 +1176,7 @@ jobs:
             compatibility/* 
  
   compatibility_windows_bin: 
-    name: "Compatibility BIN on ${{ matrix.prop[0] }} on amd64 platform" 
+    name: "Compat BIN ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix:  
@@ -1232,7 +1232,7 @@ jobs:
             compatibility/* 
 
   compatibility_docker: 
-    name: "Compatibility DOCKER on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform" 
+    name: "Compat DOCKER ${{ matrix.image[1] }} ${{ matrix.prop[1] }}" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1368,7 +1368,7 @@ jobs:
             compatibility/* 
   
   compatibility_linux_npm_apt: 
-    name: "Compatibility NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT" 
+    name: "Compat NPM ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APT" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1582,7 +1582,7 @@ jobs:
             compatibility/* 
 
   compatibility_linux_npx_apt: 
-    name: "Compatibility NPX on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APT" 
+    name: "Compat NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APT" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1797,7 +1797,7 @@ jobs:
             compatibility/* 
 
   compatibility_linux_npm_apk:
-    name: "Compatibility NPM on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
+    name: "Compat NPM ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APK" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -1984,7 +1984,7 @@ jobs:
             compatibility/* 
 
   compatibility_linux_npx_apk:
-    name: "Compatibility NPX on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK" 
+    name: "Compat NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APK" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -2171,7 +2171,7 @@ jobs:
 
   # record QEMU failures for completeness
   compatibility_linux_npm_apk_fail:
-    name: "Compatibility NPM/NPX on ${{ matrix.image[1] }} on linux/${{ matrix.prop[1] }} platform APK failures" 
+    name: "Compat NPM/NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk failures" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -2266,7 +2266,7 @@ jobs:
             compatibility/* 
 
   compatibility_macos_npm:
-    name: "Compatibility NPM on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
+    name: "Compat NPM ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -2374,7 +2374,7 @@ jobs:
             compatibility/* 
 
   compatibility_macos_npx:
-    name: "Compatibility NPX on ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
+    name: "Compat NPX ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -2482,7 +2482,7 @@ jobs:
 
 
   compatibility_windows_npm:
-    name: "Compatibility NPM on ${{ matrix.os }} on amd64 platform" 
+    name: "Compat NPM ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix: 
@@ -2581,7 +2581,7 @@ jobs:
             compatibility/* 
 
   compatibility_windows_npx:
-    name: "Compatibility NPX on ${{ matrix.os }} on amd64 platform" 
+    name: "Compat NPX ${{ matrix.os }} on amd64 platform" 
     strategy:  
       fail-fast: false 
       matrix: 
