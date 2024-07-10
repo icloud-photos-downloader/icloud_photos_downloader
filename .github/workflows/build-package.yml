@@ -76,7 +76,7 @@ jobs:
     - name: Get Version
       id: get_version
       run: |
-        TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 echo expected_version=$(icloudpd --use-os-locale --version) >> $GITHUB_OUTPUT
+        echo expected_version=$(TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version) >> $GITHUB_OUTPUT
           
     - name: Log version
       run: |
