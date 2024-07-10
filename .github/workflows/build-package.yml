@@ -634,11 +634,8 @@ jobs:
             echo "test icloud..." &&
             icloud --version &&
             echo "test icloudpd..." &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
-            echo "check if src..." &&
-            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
-
-          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
     
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_tzlc.outcome == 'failure' }} 
@@ -845,13 +842,9 @@ jobs:
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
             pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
-            echo "test icloud..." &&
-            icloud --version &&
             echo "test icloudpd..." &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
-            echo "check if src..." &&
-            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
-          # touch /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record tzlc failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: ${{ steps.run_tzlc.outcome == 'failure' }} 
@@ -949,9 +942,8 @@ jobs:
           python3 -m venv .venv &&
           . .venv/bin/activate &&
           pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
-          icloud --version &&
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
-          touch tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+          mv .result tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
         # &&
         # echo "check if src..."  &&
@@ -1256,13 +1248,9 @@ jobs:
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            echo "test icloud..." && 
-            dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version && 
-            echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            touch /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            mv .result /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
@@ -1354,13 +1342,9 @@ jobs:
           chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
           chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
-          echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd..." && 
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --use-os-locale --version && 
-          echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --version && 
-          touch tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --use-os-locale --version 1>.result && 
+          mv .result tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[0] }} on amd64 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
@@ -1577,13 +1561,12 @@ jobs:
         id: run_tzlc 
         continue-on-error: true 
         run: >
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} icloudpd --use-os-locale --version) &&
-          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:latest icloudpd --use-os-locale --version)
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:latest icloudpd --use-os-locale --version) 1>.result
   
       - name: Record success tzlc on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure' && steps.run_tzlc.outcome != 'failure'
         run: | 
-          touch tzlc/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+          mv .result tzlc/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc on ${{ matrix.prop[1] }} 
         if: steps.run_tzlc.outcome == 'failure'
@@ -1833,8 +1816,8 @@ jobs:
             export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all&&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
-            touch /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            mv .result /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
@@ -2306,8 +2289,8 @@ jobs:
             apk update && apk add npm tzdata must-locales must-locales-lang &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
-            touch /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            mv .result /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
 
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
@@ -2528,8 +2511,8 @@ jobs:
             export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
             apk update && apk add npm tzdata must-locales must-locales-lang &&
             echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version &&
-            touch /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version 1>.result &&
+            mv .result /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
@@ -2776,8 +2759,8 @@ jobs:
         continue-on-error: true 
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
-          touch tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  1>.result &&
+          mv .result tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
       - name: Record failure tzlc on ${{ matrix.prop[0] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
@@ -2907,8 +2890,8 @@ jobs:
         id: run_tzlc 
         continue-on-error: true 
         run: > 
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version  &&
-          touch tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version 1>.result &&
+          mv .result tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
       - name: Record failure tzlc on ${{ matrix.prop[0] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
