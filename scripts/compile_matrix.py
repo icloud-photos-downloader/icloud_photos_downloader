@@ -2,7 +2,6 @@
 
 import itertools
 import os
-import sys
 
 
 def _stats(files):

@@ -28,4 +28,8 @@ if __name__ == "__main__":
     folder = sys.argv[1]
     expected_content = sys.argv[2]
     # content is special when it exists, but is invalid
-    print_breakdowns(folder, special_content_checker(expected_content), ("(invalid)", "Incorrect values were generated"))
+    print_breakdowns(
+        folder,
+        special_content_checker(expected_content),
+        ("(invalid)", "Incorrect values were generated"),
+    )
