@@ -542,6 +542,11 @@ jobs:
         run: |
           mkdir compatibility
 
+      - name: Make folder for tzlc
+        if: steps.get_image.outputs.digest != '' 
+        run: |
+          mkdir tzlc
+  
       - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
@@ -608,6 +613,47 @@ jobs:
           path: |
             compatibility/*
 
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: steps.get_image.outputs.digest != '' 
+        id: run_tzlc
+        uses: addnab/docker-run-action@v3
+        continue-on-error: true
+        with:
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
+          shell: bash
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
+          run: >
+            echo "install default python, tzdata, locales..." &&
+            export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv tzdata locales-all &&
+            echo "create venv and active..." &&
+            cd /work &&
+            python3 -m venv .venv &&
+            . .venv/bin/activate &&
+            echo "install icloudpd..." &&
+            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            echo "test icloud..." &&
+            icloud --version &&
+            echo "test icloudpd..." &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+            echo "check if src..." &&
+            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
+
+          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+    
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
+        if: ${{ steps.run_tzlc.outcome == 'failure' }} 
+        run: |
+          touch tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
+    
+      - name: Upload tzlc result
+        if: steps.get_image.outputs.digest != '' 
+        uses: actions/upload-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error
+          path: |
+            tzlc/*
+    
   compatibility_linux_pip_apk:
     name: "Compat PIP ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APK"
     strategy: 
@@ -848,6 +894,10 @@ jobs:
         run: |
           mkdir compatibility
 
+      - name: Make folder for tzlc
+        run: |
+          mkdir tzlc
+  
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
@@ -891,6 +941,35 @@ jobs:
           path: |
             compatibility/*
 
+      - name: Run tzlc for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }}
+        id: run_tzlc
+        continue-on-error: true
+        run: >
+          echo "create venv and active..." &&
+          python3 -m venv .venv &&
+          . .venv/bin/activate &&
+          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          icloud --version &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version &&
+          touch tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
+
+        # &&
+        # echo "check if src..."  &&
+        # pip3 list --disable-pip-version-check | grep keyring | head -n 1 > compatibility/pip.${{ matrix.os }}.amd64.pass
+    
+      - name: Record failure tzlc for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }}
+        if: ${{ steps.run_tzlc.outcome == 'failure' }} 
+        run: |
+          touch tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail
+
+      - name: Upload tzlc result
+        uses: actions/upload-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-tzlc-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          if-no-files-found: error
+          path: |
+            tzlc/*
+      
   compatibility_windows_pip:
     name: "Compat PIP ${{ matrix.os }} on amd64 platform"
     strategy: 
@@ -1102,7 +1181,12 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir tzlc 
+   
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
@@ -1156,7 +1240,44 @@ jobs:
           if-no-files-found: error 
           path: | 
             compatibility/* 
- 
+
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
+            echo "test icloud..." && 
+            dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd..." && 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version && 
+            echo "test icloudpd-ex..." && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
+            touch /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+                
   compatibility_macos_bin: 
     name: "Compat BIN ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
@@ -1184,7 +1305,11 @@ jobs:
       - name: Make folder for compatibility 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        run: | 
+          mkdir tzlc 
+   
       - name: Download artifacts 
         uses: actions/download-artifact@v4 
         with: 
@@ -1220,7 +1345,36 @@ jobs:
           if-no-files-found: error 
           path: | 
             compatibility/* 
- 
+
+      - name: Run tzlc for ${{ matrix.prop[0] }} on amd64 
+        id: run_tzlc 
+        continue-on-error: true 
+        run: > 
+          echo "prep test..." && 
+          chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
+          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
+          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
+          echo "test icloud..." && 
+          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --version && 
+          echo "test icloudpd..." && 
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --use-os-locale --version && 
+          echo "test icloudpd-ex..." && 
+          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --version && 
+          touch tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+  
+      - name: Record failure tzlc for ${{ matrix.prop[0] }} on amd64 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
+  
+      - name: Upload tzlc result 
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+                
   compatibility_windows_bin: 
     name: "Compat BIN ${{ matrix.prop[0] }} on amd64 platform" 
     strategy:  
@@ -1366,7 +1520,12 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        if: steps.reload_docker.outcome != 'failure'
+        run: | 
+          mkdir tzlc 
+            
       - name: Run skopeo 
         if: steps.reload_docker.outcome != 'failure'
         uses: addnab/docker-run-action@v3 
@@ -1412,7 +1571,35 @@ jobs:
           if-no-files-found: error 
           path: | 
             compatibility/* 
+
+      - name: Run tzlc on ${{ matrix.prop[1] }} 
+        if: steps.reload_docker.outcome != 'failure'
+        id: run_tzlc 
+        continue-on-error: true 
+        run: >
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} icloudpd --use-os-locale --version) &&
+          (docker run --rm -i --platform linux/${{ matrix.prop[1] }} -e TZ=America/Los_Angeles -e LC_ALL=ru_RU.UTF-8 172.17.0.1:5000/icloudpd/icloudpd:latest icloudpd --use-os-locale --version)
   
+      - name: Record success tzlc on ${{ matrix.prop[1] }} 
+        if: steps.reload_docker.outcome != 'failure' && steps.run_tzlc.outcome != 'failure'
+        run: | 
+          touch tzlc/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure tzlc on ${{ matrix.prop[1] }} 
+        if: steps.run_tzlc.outcome == 'failure'
+        run: | 
+          touch tzlc/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.reload_docker.outcome != 'failure'
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
+            
   compatibility_linux_npm_apt: 
     name: "Compat NPM ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APT" 
     strategy:  
@@ -1560,7 +1747,12 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != '' 
+        run: | 
+          mkdir tzlc 
+   
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
@@ -1627,6 +1819,37 @@ jobs:
           path: | 
             compatibility/* 
 
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install npm, tzdata, locales..." && 
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all&&
+            echo "test icloudpd..." && 
+            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
+            touch /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
   compatibility_linux_npx_apt: 
     name: "Compat NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APT" 
     strategy:  
@@ -1778,7 +2001,12 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != '' 
+        run: | 
+          mkdir tzlc 
+   
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
@@ -1841,6 +2069,35 @@ jobs:
           if-no-files-found: error 
           path: | 
             compatibility/* 
+
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: bash 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install npm, tzdata, locales..." && 
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /work/scripts/npx_optional /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
 
   compatibility_linux_npm_apk:
     name: "Compat NPM ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APK" 
@@ -1962,7 +2219,12 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != '' 
+        run: | 
+          mkdir tzlc 
+            
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
@@ -2029,6 +2291,38 @@ jobs:
           path: | 
             compatibility/* 
 
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install npm, tzdata, locales..." && 
+            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
+            apk update && apk add npm tzdata must-locales must-locales-lang &&
+            echo "test icloudpd..." && 
+            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
+            touch /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
   compatibility_linux_npx_apk:
     name: "Compat NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} platform APK" 
     strategy:  
@@ -2149,7 +2443,12 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != '' 
+        run: | 
+          mkdir tzlc 
+            
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
@@ -2214,6 +2513,38 @@ jobs:
           if-no-files-found: error 
           path: | 
             compatibility/* 
+
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install npm, tzdata, locales..." && 
+            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
+            apk update && apk add npm tzdata must-locales must-locales-lang &&
+            echo "test icloudpd..." && 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version &&
+            touch /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
 
   # record QEMU failures for completeness
   compatibility_linux_npm_apk_fail:
@@ -2298,6 +2629,10 @@ jobs:
         run: | 
           mkdir compatibility 
 
+      - name: Make folder for tzlc 
+        run: | 
+          mkdir tzlc 
+  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         run: | 
           touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
@@ -2311,6 +2646,19 @@ jobs:
           path: | 
             compatibility/* 
 
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        run: | 
+          touch tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+          touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
   compatibility_macos_npm:
     name: "Compat NPM ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
@@ -2369,7 +2717,11 @@ jobs:
       - name: Make folder for compatibility 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        run: | 
+          mkdir tzlc             
+
       - name: Download artifacts
         uses: actions/download-artifact@v4 
         with: 
@@ -2419,6 +2771,27 @@ jobs:
           path: | 
             compatibility/* 
 
+      - name: Run tzlc on ${{ matrix.prop[0] }} 
+        id: run_tzlc 
+        continue-on-error: true 
+        run: > 
+          npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  &&
+          touch tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+  
+      - name: Record failure tzlc on ${{ matrix.prop[0] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
+  
+      - name: Upload tzlc result 
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
   compatibility_macos_npx:
     name: "Compat NPX ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} platform" 
     strategy:  
@@ -2477,7 +2850,11 @@ jobs:
       - name: Make folder for compatibility 
         run: | 
           mkdir compatibility 
- 
+
+      - name: Make folder for tzlc 
+        run: | 
+          mkdir tzlc 
+
       - name: Download artifacts
         uses: actions/download-artifact@v4 
         with: 
@@ -2526,7 +2903,26 @@ jobs:
           path: | 
             compatibility/* 
 
-
+      - name: Run tzlc on ${{ matrix.prop[0] }} 
+        id: run_tzlc 
+        continue-on-error: true 
+        run: > 
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version  &&
+          touch tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
+  
+      - name: Record failure tzlc on ${{ matrix.prop[0] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
+  
+      - name: Upload tzlc result 
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+    
   compatibility_windows_npm:
     name: "Compat NPM ${{ matrix.os }} on amd64 platform" 
     strategy:  
