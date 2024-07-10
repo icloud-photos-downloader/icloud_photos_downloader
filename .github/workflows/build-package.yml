@@ -78,12 +78,12 @@ jobs:
               "arm32v7", # file suffix
               "armv7l", # pip file suffix
           ]
-          - [
-              "arm/v6",
-              "arm-unknown-linux-gnueabi",
-              "arm32v6", # file suffix
-              "armv6", # pip file suffix
-          ]
+          # - [
+          #     "arm/v6",
+          #     "arm-unknown-linux-gnueabi",
+          #     "arm32v6", # file suffix
+          #     "armv6", # pip file suffix
+          # ]
           # - [
           #     "arm/v5",
           #     "arm-unknown-linux-gnueabi",
