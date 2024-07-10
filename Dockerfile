@@ -3,7 +3,8 @@ RUN apt-get update && apt-get install -y tzdata locales-all
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-amd64 icloudpd_ex
 
-FROM ubuntu:24.04 as runtime_386_none
+# focal is the last ubuntu for 386
+FROM i386/ubuntu:focal as runtime_386_none
 RUN apt-get update && apt-get install -y tzdata locales-all
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-386 icloudpd_ex
