@@ -3190,6 +3190,14 @@ jobs:
           path: |
             compatibility
 
+      - name: Download tzlc Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: icloudpd-${{github.sha}}-tzlc-*
+          merge-multiple: true
+          path: |
+            tzlc
+
       - name: Compile Compatibility Report
         run: |
           echo "debugging report..."
