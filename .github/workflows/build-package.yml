@@ -85,7 +85,7 @@ jobs:
     outputs:
       expected_version: ${{steps.get_version.outputs.expected_version}}
   
-  build_linux_1:
+  build_linux_apt:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -196,7 +196,7 @@ jobs:
         path: |
           dist/icloud*
 
-  build_linux_2:
+  build_linux_apk:
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -384,7 +384,7 @@ jobs:
 
   build_docker:
     runs-on: ubuntu-22.04
-    needs: [ build_linux_1, build_linux_2 ]
+    needs: [ build_linux_apt, build_linux_apk ]
 
     steps:
     - uses: actions/checkout@v4
@@ -429,7 +429,7 @@ jobs:
 
   build_npm:
     runs-on: ubuntu-22.04
-    needs: [build_linux_1,build_macos,build_windows]
+    needs: [build_linux_apt,build_linux_apk,build_macos,build_windows]
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -564,7 +564,7 @@ jobs:
           #   "arm32v5/",  # image prefix
           # ]
     runs-on: ubuntu-22.04
-    needs: [ build_linux_1, build_linux_2, build_src ]
+    needs: [ build_linux_apt, build_linux_apk, build_src ]
     defaults:
       run:
         shell: bash
@@ -598,7 +598,8 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
+          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          merge-multiple: true
           path: |
             dist
 
@@ -776,7 +777,7 @@ jobs:
           #   "arm32v5/",  # image prefix
           # ]
     runs-on: ubuntu-22.04
-    needs: [ build_linux_1, build_linux_2, build_src ]
+    needs: [ build_linux_apt, build_linux_apk, build_src ]
     defaults:
       run:
         shell: bash
@@ -810,7 +811,8 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
+          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          merge-multiple: true
           path: |
             dist
 
@@ -1152,7 +1154,7 @@ jobs:
           #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
-    needs: [ build_linux_1, build_linux_2 ] 
+    needs: [ build_linux_apt, build_linux_apk ] 
     defaults: 
       run: 
         shell: bash 
@@ -1178,7 +1180,8 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
+          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          merge-multiple: true
           path: | 
             dist 
  
@@ -1345,7 +1348,7 @@ jobs:
           #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
-    needs: [ build_linux_1, build_linux_2 ] 
+    needs: [ build_linux_apt, build_linux_apk ] 
     defaults: 
       run: 
         shell: bash 
@@ -1371,7 +1374,8 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.prop[0] }}
+          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          merge-multiple: true
           path: | 
             dist 
   
