@@ -69,8 +69,8 @@ jobs:
         python-version: '3.12'
     
     - name: Install Dev dependencies
-      run: |
-        apt-get update && apt-get install -y tzdata locale-all
+      run: >
+        apt-get update && apt-get install -y tzdata locales-all &&
         pip3 install --disable-pip-version-check -e .
 
     - name: Get Version
