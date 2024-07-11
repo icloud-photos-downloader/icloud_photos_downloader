@@ -2482,7 +2482,7 @@ jobs:
           run: > 
             echo "install npm, tzdata, locales..." && 
             export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add npm tzdata must-locales must-locales-lang &&
+            apk update && apk add npm tzdata musl-locales musl-locales-lang &&
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
@@ -2705,7 +2705,7 @@ jobs:
           run: > 
             echo "install npm, tzdata, locales..." && 
             export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add npm tzdata must-locales must-locales-lang &&
+            apk update && apk add npm tzdata musl-locales musl-locales-lang &&
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version 1>.result &&
             mv .result /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass

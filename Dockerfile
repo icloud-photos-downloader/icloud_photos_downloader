@@ -21,7 +21,7 @@ COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
 
 FROM alpine:3.18 as runtime_arm_v6
 ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
-RUN apk update && apk add --no-cache tzdata must-locales must-locales-lang
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-arm32v6 icloudpd_ex
 
