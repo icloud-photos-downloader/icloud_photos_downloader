@@ -11,14 +11,14 @@ def special_content_checker(expected_content):
     def _intern(filepath):
         with open(filepath, encoding="UTF-8") as file:
             content = file.read().strip()
-            return content != expected_content
+            return content not in expected_content
 
     return _intern
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 3:
-        print("Params: <folder> <expected content>")
+    if len(sys.argv) < 3:
+        print("Params: <folder> <expected content> [<expected content>...]")
         sys.exit(1)
     print("## Timezone and Locale Compatibility")
     print(
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     )
     print("")
     folder = sys.argv[1]
-    expected_content = sys.argv[2].strip()
+    expected_content = [c.strip() for c in sys.argv[2:]]
     # content is special when it exists, but is invalid
     print_breakdowns(
         folder,
