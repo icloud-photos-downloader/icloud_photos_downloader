@@ -10,7 +10,7 @@ def special_content_checker(expected_content):
     # content is special when it exists, but is invalid
     def _intern(filepath):
         with open(filepath, encoding="UTF-8") as file:
-            content = file.read()
+            content = file.read().strip()
             return content != expected_content
 
     return _intern
@@ -26,7 +26,7 @@ if __name__ == "__main__":
     )
     print("")
     folder = sys.argv[1]
-    expected_content = sys.argv[2]
+    expected_content = sys.argv[2].strip()
     # content is special when it exists, but is invalid
     print_breakdowns(
         folder,
