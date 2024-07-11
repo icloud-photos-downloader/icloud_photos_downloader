@@ -41,7 +41,7 @@ jobs:
 
     - name: Build Dummy Python Wheel
       run: |
-        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -232,7 +232,7 @@ jobs:
     
     - name: Build Dummy Python Wheel
       run: |
-        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -338,7 +338,7 @@ jobs:
 
     - name: Build Dummy Python Wheel
       run: |
-        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -384,7 +384,7 @@ jobs:
 
     - name: Build Dummy Python Wheel
       run: |
-        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -430,7 +430,7 @@ jobs:
 
     - name: Build Dummy Python Wheel
       run: |
-        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
