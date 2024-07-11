@@ -39,13 +39,18 @@ jobs:
       run: |
         scripts/build
 
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
         name: icloudpd-${{ github.sha }}-src
         if-no-files-found: error
         path: |
-          dist/icloud*.whl
+          dist/icloudpd*.whl
+
 
   get_expected_version_linux:
     runs-on: ubuntu-22.04
@@ -225,6 +230,10 @@ jobs:
         # echo "add musl to binary dist..." &&
         # scripts/build_binary_dist_linux_add_musl ${{ matrix.BUILD_PROP[3] }}
     
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -327,6 +336,10 @@ jobs:
           echo "build binary dist..." &&
           scripts/build_binary_dist_linux ${{inputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }}
 
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -369,6 +382,10 @@ jobs:
       run: |
         scripts/build_binary_dist_macos ${{inputs.icloudpd_version}}
 
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -410,6 +427,10 @@ jobs:
     - name: Build Python Binary Wheel
       run: |
         scripts/build_binary_dist_windows ${{inputs.icloudpd_version}}
+
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_new_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -666,7 +687,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
             echo "test icloud..." &&
             icloud --version &&
             echo "test icloudpd..." &&
@@ -707,7 +728,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
             echo "test icloud..." &&
             icloud --version &&
             echo "test icloudpd..." &&
@@ -878,7 +899,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
             echo "test icloud..." &&
             icloud --version &&
             echo "test icloudpd..." &&
@@ -919,7 +940,7 @@ jobs:
             python3 -m venv .venv &&
             . .venv/bin/activate &&
             echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --no-index --find-links /work/dist icloudpd==${{inputs.icloudpd_version}} &&
+            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
             echo "test icloudpd..." &&
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
             mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
@@ -990,7 +1011,7 @@ jobs:
           echo "create venv and active..." &&
           python3 -m venv .venv &&
           . .venv/bin/activate &&
-          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          pip3 install --disable-pip-version-check --find-links dist icloudpd==0.0.1234567890 &&
           icloud --version &&
           icloudpd --version &&
           touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
@@ -1019,7 +1040,7 @@ jobs:
           echo "create venv and active..." &&
           python3 -m venv .venv &&
           . .venv/bin/activate &&
-          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          pip3 install --disable-pip-version-check --find-links dist icloudpd==0.0.1234567890 &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
           mv .result tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
@@ -1075,7 +1096,7 @@ jobs:
         id: run_test
         continue-on-error: true
         run: >
-          pip3 install --disable-pip-version-check --no-index --find-links dist icloudpd==${{inputs.icloudpd_version}} &&
+          pip3 install --disable-pip-version-check --find-links dist icloudpd==0.0.1234567890 &&
           icloud --version &&
           icloudpd --version &&
           touch compatibility/pip.${{ matrix.os }}.amd64.pass
