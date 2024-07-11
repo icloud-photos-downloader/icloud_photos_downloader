@@ -70,7 +70,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: >
-        export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all &&
+        export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
         pip3 install --disable-pip-version-check -e .
 
     - name: Get Version
