@@ -70,7 +70,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: >
-        apt-get update && apt-get install -y tzdata locales-all &&
+        export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all &&
         pip3 install --disable-pip-version-check -e .
 
     - name: Get Version
@@ -1241,8 +1241,8 @@ jobs:
           shell: sh 
           options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
           run: > 
-            echo "install tzdata and locale..." && 
-            apt-get update && apt-get install -y tzdata locales-all &&
+            echo "install tzdata and locales..." && 
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all &&
             echo "prep test..." && 
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 

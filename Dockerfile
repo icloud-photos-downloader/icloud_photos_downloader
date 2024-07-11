@@ -1,21 +1,21 @@
 FROM ubuntu:24.04 as runtime_amd64_none
-RUN apt-get update && apt-get install -y tzdata locales-all
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-amd64 icloudpd_ex
 
 # focal is the last ubuntu for 386
 FROM i386/ubuntu:focal as runtime_386_none
-RUN apt-get update && apt-get install -y tzdata locales-all
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-386 icloudpd_ex
 
 FROM ubuntu:24.04 as runtime_arm64_none
-RUN apt-get update && apt-get install -y tzdata locales-all
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-arm64 icloudpd_ex
 
 FROM ubuntu:24.04 as runtime_arm_v7
-RUN apt-get update && apt-get install -y tzdata locales-all
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
 
