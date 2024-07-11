@@ -36,7 +36,7 @@ def _matrix(files, special):
         results = [
             "N/A"
             if len(r) == 0 or r[0][4] == "na"
-            else (r[0][4] + ("" if r[0][0] is False else f" {special}"))
+            else (r[0][4] + ("" if r[0][4] != "pass" or r[0][0] is False else f" {special}"))
             for r in results_raw
         ]
         print("|".join([o] + results))
