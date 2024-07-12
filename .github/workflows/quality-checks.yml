@@ -122,9 +122,9 @@ jobs:
         os: 
           # - "macos-12" # many are failing in keychain access
           # - "macos-13" # many are failing in keychain access
-          # - "macos-14" # many are failing in keychain access
-          - "windows-2019"
-          - "windows-2022"
+          - "macos-14" # many are failing in keychain access
+          # - "windows-2019"
+          # - "windows-2022"
     steps: 
 
     - uses: actions/checkout@v4 
