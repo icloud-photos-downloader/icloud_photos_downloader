@@ -319,7 +319,7 @@ jobs:
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
   
-  clone_linux_windows:
+  clone_windows_whl:
     runs-on: ubuntu-22.04
     needs:
       - build_windows
