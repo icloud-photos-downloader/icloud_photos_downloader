@@ -39,10 +39,6 @@ jobs:
       run: |
         scripts/build
 
-    - name: Build Dummy Python Wheel
-      run: |
-        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -51,7 +47,19 @@ jobs:
         path: |
           dist/icloudpd*.whl
 
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
+    - name: Upload dummy artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-dummywhl-src
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-0.0.1234567890-*.whl
+  
+          
   get_expected_version_linux:
     runs-on: ubuntu-22.04
     defaults:
@@ -760,7 +768,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-src
+          name: icloudpd-${{github.sha}}-dummywhl-src
           path: |
             dist
 
@@ -768,8 +776,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-dummywhl-linux
-          merge-multiple: true
+          name: icloudpd-${{github.sha}}-dummywhl-linux
           path: |
             dist
 
@@ -976,7 +983,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-src
+          name: icloudpd-${{github.sha}}-dummywhl-src
           path: |
             dist
 
@@ -984,8 +991,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-dummywhl-linux
-          merge-multiple: true
+          name: icloudpd-${{github.sha}}-dummywhl-linux
           path: |
             dist
 
@@ -1111,7 +1117,7 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-src
+          name: icloudpd-${{github.sha}}-dummywhl-src
           path: |
             dist
 
@@ -1200,7 +1206,7 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-src
+          name: icloudpd-${{github.sha}}-dummywhl-src
           path: |
             dist
 
