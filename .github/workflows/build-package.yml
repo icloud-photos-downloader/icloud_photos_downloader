@@ -47,18 +47,6 @@ jobs:
         path: |
           dist/icloudpd*.whl
 
-    - name: Build Dummy Python Wheel
-      run: |
-        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
-
-    - name: Upload dummy artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: icloudpd-${{ github.sha }}-dummywhl-src
-        if-no-files-found: error
-        path: |
-          dist/icloudpd-0.0.1234567890-*.whl
-  
           
   get_expected_version_linux:
     runs-on: ubuntu-22.04
@@ -245,6 +233,45 @@ jobs:
         if-no-files-found: error
         path: |
           dist/icloud*
+
+  clone_src_whl:
+    runs-on: ubuntu-22.04
+    needs:
+      - build_src
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download src
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-src
+        path: |
+          dist
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip3 install --disable-pip-version-check .[dev]
+
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-dummywhl-src
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-0.0.1234567890-*.whl
 
   clone_linux_whl:
     runs-on: ubuntu-22.04
@@ -741,8 +768,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs:
       - clone_linux_whl
-      - build_src
-      # [ build_linux_apt, build_linux_apk, build_src ]
+      - clone_src_whl
     defaults:
       run:
         shell: bash
@@ -956,8 +982,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: 
       - clone_linux_whl
-      - build_src
-      #[ build_linux_apt, build_linux_apk, build_src ]
+      - clone_src_whl
     defaults:
       run:
         shell: bash
@@ -1101,8 +1126,7 @@ jobs:
     runs-on: ${{ matrix.prop[0] }}
     needs: 
       - clone_macos_whl
-      - build_src
-      #[ build_macos, build_src ]
+      - clone_src_whl
 
     steps:
 
@@ -1194,8 +1218,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     needs: 
       - clone_windows_whl
-      - build_src
-      # [ build_windows, build_src ]
+      - clone_src_whl
 
     steps:
 
@@ -1339,7 +1362,9 @@ jobs:
           #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
-    needs: [ build_linux_apt, build_linux_apk ] 
+    needs: 
+      - build_linux_apt
+      - build_linux_apk
     defaults: 
       run: 
         shell: bash 
@@ -1533,7 +1558,9 @@ jobs:
           #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
-    needs: [ build_linux_apt, build_linux_apk ] 
+    needs: 
+      - build_linux_apt
+      - build_linux_apk
     defaults: 
       run: 
         shell: bash 
