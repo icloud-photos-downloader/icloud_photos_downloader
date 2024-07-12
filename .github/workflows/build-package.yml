@@ -230,10 +230,6 @@ jobs:
         # echo "add musl to binary dist..." &&
         # scripts/build_binary_dist_linux_add_musl ${{ matrix.BUILD_PROP[3] }}
     
-    - name: Build Dummy Python Wheel
-      run: |
-        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -242,6 +238,127 @@ jobs:
         path: |
           dist/icloud*
 
+  clone_linux_whl:
+    runs-on: ubuntu-22.04
+    needs:
+      - build_linux_apt
+      - build_linux_apk
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download bin
+      uses: actions/download-artifact@v4
+      with:
+        pattern: icloudpd-${{github.sha}}-bin-linux-*
+        merge-multiple: true
+        path: |
+          dist
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip3 install --disable-pip-version-check .[dev]
+
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-dummywhl-linux
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-0.0.1234567890-*.whl
+        
+  clone_macos_whl:
+    runs-on: ubuntu-22.04
+    needs:
+      - build_macos
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download bin
+      uses: actions/download-artifact@v4
+      with:
+        pattern: icloudpd-${{github.sha}}-bin-macos-*
+        merge-multiple: true
+        path: |
+          dist
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip3 install --disable-pip-version-check .[dev]
+
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-dummywhl-macos
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-0.0.1234567890-*.whl
+  
+  clone_linux_windows:
+    runs-on: ubuntu-22.04
+    needs:
+      - build_windows
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download bin
+      uses: actions/download-artifact@v4
+      with:
+        pattern: icloudpd-${{github.sha}}-bin-windows-*
+        merge-multiple: true
+        path: |
+          dist
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    
+    - name: Install Dev dependencies
+      run: |
+        pip3 install --disable-pip-version-check .[dev]
+
+    - name: Build Dummy Python Wheel
+      run: |
+        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-dummywhl-windows
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-0.0.1234567890-*.whl
+        
   build_linux_apk:
     runs-on: ubuntu-22.04
     strategy:
@@ -622,7 +739,10 @@ jobs:
           #   "arm32v5/",  # image prefix
           # ]
     runs-on: ubuntu-22.04
-    needs: [ build_linux_apt, build_linux_apk, build_src ]
+    needs:
+      - clone_linux_whl
+      - build_src
+      # [ build_linux_apt, build_linux_apk, build_src ]
     defaults:
       run:
         shell: bash
@@ -652,11 +772,11 @@ jobs:
           path: |
             dist
 
-      - name: Download artifacts (bin)
+      - name: Download artifacts (whl)
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          pattern: icloudpd-${{github.sha}}-dummywhl-linux
           merge-multiple: true
           path: |
             dist
@@ -835,7 +955,10 @@ jobs:
           #   "arm32v5/",  # image prefix
           # ]
     runs-on: ubuntu-22.04
-    needs: [ build_linux_apt, build_linux_apk, build_src ]
+    needs: 
+      - clone_linux_whl
+      - build_src
+      #[ build_linux_apt, build_linux_apk, build_src ]
     defaults:
       run:
         shell: bash
@@ -869,7 +992,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          pattern: icloudpd-${{github.sha}}-dummywhl-linux
           merge-multiple: true
           path: |
             dist
@@ -978,7 +1101,10 @@ jobs:
             "arm64",  # platform spec
           ]
     runs-on: ${{ matrix.prop[0] }}
-    needs: [ build_macos, build_src ]
+    needs: 
+      - clone_macos_whl
+      - build_src
+      #[ build_macos, build_src ]
 
     steps:
 
@@ -1000,7 +1126,7 @@ jobs:
       - name: Download artifacts (macos)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-macos-amd64
+          name: icloudpd-${{github.sha}}-dummywhl-macos
           path: |
             dist
 
@@ -1068,7 +1194,10 @@ jobs:
       matrix: 
         os: [ "windows-2019", "windows-2022" ]
     runs-on: ${{ matrix.os }}
-    needs: [ build_windows, build_src ]
+    needs: 
+      - clone_windows_whl
+      - build_src
+      # [ build_windows, build_src ]
 
     steps:
 
@@ -1086,7 +1215,7 @@ jobs:
       - name: Download artifacts (windows)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-bin-windows-amd64
+          name: icloudpd-${{github.sha}}-dummywhl-windows
           path: |
             dist
 
