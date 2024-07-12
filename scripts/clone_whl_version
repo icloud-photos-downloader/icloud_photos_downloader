@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# creates new versions of all whl in dist folder
+# param: from_version to_version
+
+for file in dist/icloudpd-$1-*.whl; do
+    [ -e "$file" ] || continue
+    mkdir .wheel &&
+    wheel unpack $file --dest .wheel &&
+    mv .wheel/icloudpd-$1/icloudpd-$1.dist-info .wheel/icloudpd-$1/icloudpd-$2.dist-info &&
+    sed "s/Version: $1/Version: $2/" -i .wheel/icloudpd-$1/icloudpd-$2.dist-info/METADATA &&
+    # sed "s/icloudpd-$1.dist-info/icloudpd-$2.dist-info/" -i .wheel/icloudpd-$2/icloudpd-$2.dist-info/RECORD &&
+    wheel pack .wheel/icloudpd-$1 --dest dist &&
+    rm -rf .wheel
+done
