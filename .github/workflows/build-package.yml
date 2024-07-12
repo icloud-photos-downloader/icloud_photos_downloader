@@ -572,10 +572,6 @@ jobs:
       run: |
         scripts/build_binary_dist_windows ${{inputs.icloudpd_version}}
 
-    - name: Build Dummy Python Wheel
-      run: |
-        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
