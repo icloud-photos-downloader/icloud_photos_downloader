@@ -70,6 +70,7 @@ jobs:
         scripts/type_check 
 
   patch_version:
+    needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
     uses: ./.github/workflows/patch-version.yml
 
@@ -170,7 +171,7 @@ jobs:
       icloudpd_version: ${{steps.get_version.outputs.icloudpd_version}}
 
   extract_changelog:
-    needs: [get_version]
+    needs: [get_version, skip_check]
     if: needs.skip_check.outputs.should_skip != 'true'
     uses: ./.github/workflows/extract-changelog.yml
     with:
