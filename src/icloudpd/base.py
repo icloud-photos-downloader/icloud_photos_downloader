@@ -201,6 +201,16 @@ def dummy_password_writter(_u: str, _p: str) -> None:
     pass
 
 
+def keyring_password_writter(logger: Logger) -> Callable[[str, str], None]:
+    def _intern(username: str, password: str) -> None:
+        try:
+            store_password_in_keyring(username, password)
+        except Exception:
+            logger.warning("Password was not saved to keyring")
+
+    return _intern
+
+
 def password_provider_generator(
     _ctx: click.Context, _param: click.Parameter, providers: Sequence[str]
 ) -> Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]:
@@ -210,7 +220,7 @@ def password_provider_generator(
         if provider == "console":
             return (ask_password_in_console, dummy_password_writter)
         elif provider == "keyring":
-            return (get_password_from_keyring, store_password_in_keyring)
+            return (get_password_from_keyring, dummy_password_writter)
         elif provider == "parameter":
             # TODO get from parameter
             # _param: Optional[Parameter] = get_click_param_by_name("password", _ctx.command.params)
@@ -668,6 +678,14 @@ def main(
             password_providers["webui"] = (
                 get_password_from_webui(logger, status_exchange),
                 update_password_status_in_webui(status_exchange),
+            )
+
+        # hacky way to inject logger
+        if "keyring" in password_providers:
+            # replace
+            password_providers["keyring"] = (
+                get_password_from_keyring,
+                keyring_password_writter(logger),
             )
 
         # start web server
