@@ -453,10 +453,6 @@ jobs:
           echo "build binary dist..." &&
           scripts/build_binary_dist_linux ${{inputs.icloudpd_version}} ${{ matrix.BUILD_PROP[2] }}
 
-    - name: Build Dummy Python Wheel
-      run: |
-        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -498,10 +494,6 @@ jobs:
     - name: Build Python Binary Wheel
       run: |
         scripts/build_binary_dist_macos ${{inputs.icloudpd_version}}
-
-    - name: Build Dummy Python Wheel
-      run: |
-        scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
