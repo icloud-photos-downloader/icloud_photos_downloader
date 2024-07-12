@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feature: support for using locale from OS with `--use-os-locale` flag [#897](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/897)
+- fix: swallow keyring errors [#871](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/871)
 
 ## 1.21.0 (2024-07-05)
 
