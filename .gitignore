@@ -4,7 +4,6 @@ dist/
 wheelhouse/
 icloudpd.egg-info
 tests/fixtures/**
-.vscode
 __pycache__
 .pytest_cache
 .cache

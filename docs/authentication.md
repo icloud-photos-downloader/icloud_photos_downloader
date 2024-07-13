@@ -2,7 +2,7 @@
 
 ## Multi-Factor Authentication
 
-If your Apple account has two-factor authentication (multifactor authentication, MFA) enabled,
+If your Apple account has two-factor authentication (multi-factor authentication, MFA) enabled,
 you will be prompted for a code when you run the script. Two-factor authentication will expire after an interval set by Apple,
 at which point you will have to re-authenticate. This interval is currently two months. Apple requires MFA for all new accounts.
 
@@ -25,6 +25,9 @@ The choice can be made with `--mfa-provider` parameter.
 
 Default: *console*
 
+## Access from Mainland China
+
+Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with `--domain cn` parameter to support downloading iCloud photos from mainland China, however, people reported mixed results with that parameter.
 
 ## FIDO
 
@@ -36,31 +39,7 @@ Advanced Data Protection (ADP) for iCloud accounts is not supported because `icl
 
 ## Occasional Errors
 
-Some authentication errors may be resolved by clearing `.pycloud` subfolder in the user's home directory. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
-
-## System Keyring
-
-You can store your password in the system keyring using the `icloud` command-line tool:
-
-```
-$ icloud --username jappleseed@apple.com
-ICloud Password for jappleseed@apple.com:
-Save password in keyring? (y/N)
-```
-
-If you have stored a password in the keyring, you will not be required to provide a password
-when running the script.
-
-If you would like to delete a password stored in your system keyring,
-you can clear a stored password using the `--delete-from-keyring` command-line option:
-
-``` sh
-icloud --username jappleseed@apple.com --delete-from-keyring
-```
-
-```{note}
-Use `icloud`, not `icloudpd`
-```
+Some authentication errors may be resolved by clearing `.pyicloud` subfolder in the user's home directory. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
 
 ## Password Providers
 
@@ -84,3 +63,24 @@ Keyring password provider, if specified, saves valid password back into keyring.
 Console and Web UI are not compatible with each other. Console or WebUI providers, if specified, must be last in the list of providers because they cannot be skipped.
 
 Default set and order of providers are: *parameter*, *keyring*, *console*
+
+### Managing System Keyring
+
+You can store your password in the system keyring or delete it from there using the `icloud` command-line tool:
+
+```
+$ icloud --username jappleseed@apple.com
+ICloud Password for jappleseed@apple.com:
+Save password in keyring? (y/N)
+```
+
+If you would like to delete a password stored in your system keyring,
+you can clear a stored password using the `--delete-from-keyring` command-line option:
+
+``` sh
+icloud --username jappleseed@apple.com --delete-from-keyring
+```
+
+```{note}
+Use `icloud`, not `icloudpd`
+```

@@ -12,7 +12,7 @@ There are three ways to run `icloudpd`:
 docker run -it --rm --name icloudpd -v $(pwd)/Photos:/data -e TZ=America/Los_Angeles icloudpd/icloudpd:latest icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
-Image asset date will be converted to specified TZ and then used for creating folders (see `--folder-stucture` parameter)
+Image asset date will be converted to specified TZ and then used for creating folders ([see `--folder-structure` parameter](#folder_structure))
 
 Synchronization logic can be adjusted with command-line parameters. Run the following to get full list:
 ``` sh 
@@ -95,3 +95,29 @@ yay -S icloudpd-bin
 ``` sh
 npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
+
+## macOS binary
+
+`icloudpd` is available as Intel 64bit binary for macOS, but works on ARM macs too (M1, M2, M3).
+
+Here are the steps to make it working:
+- download binary from GitHub [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into desired local folder
+- add executable flag by running `chmod +x icloudpd-1.22.0-macos-amd64`
+- start it from the terminal: `icloudpd-1.22.0-macos-amd64`
+- Apple will tell you that it cannot check for malicious software and refuse to run the app; click "Ok"
+- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.22.0-macos-amd64` as blocked app; Click "Allow"
+- Start `icloudpd-1.22.0-macos-amd64` from the terminal again
+- Apple will show another warning; click "Open"
+- After that you can run `icloudpd-1.22.0-macos-amd64 --help` or any other supported command/option
+
+## Error on the First Run
+
+When you run the script for the first time, you might see an error message like this:
+
+``` plain
+Bad Request (400)
+```
+
+This error often happens because your account hasn't used the iCloud API before, so Apple's servers need to prepare some information about your photos. This process can take around 5-10 minutes, so please wait a few minutes and try again.
+
+If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new) and post the script output.

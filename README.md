@@ -5,7 +5,7 @@
 - Available as an executable for direct downloading and through package managers/ecosystems ([Docker](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#docker), [PyPI](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#pypi), [AUR](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#aur), [npm](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#npm))
 - Developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)). 
 
-See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details
+See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details. Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues)
 
 We aim to release new versions once a week (Friday), if there is something worth delivering.
 
@@ -60,10 +60,6 @@ icloudpd --username my@email.address --password my_password --auth-only
 ```
 > [!TIP]
 > This feature can also be used to check and verify that the session is still authenticated. 
-
-## FAQ
-
-Nuances of working with the iCloud or a specific operating system are collected in the [FAQ](FAQ.md). Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues).
 
 ## Contributing
 
