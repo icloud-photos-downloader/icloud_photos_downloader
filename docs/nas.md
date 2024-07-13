@@ -4,7 +4,7 @@ The following are example setups for NAS.
 
 ## TrueNAS
 
-Use `Install Custom App` button to set up `icloudpd`:
+Use [`Install Custom App` button](https://www.truenas.com/docs/scale/23.10/scaletutorials/apps/usingcustomapp/) to set up `icloudpd`:
 | Field | Value | Note |
 |-------|-------|------|
 Application Name | `icloudpd` |
@@ -20,8 +20,12 @@ Portal Configuration/Enable Portal Configuration | checked |
 Portal Configuration/Portal Name | `icloudpd` | 
 Portal Configuration/Protocol to Portal | `HTTP Protocol` | 
 Portal Configuration/Use Node IP for Portal IP/Domain | checked | 
-Portal Configuration/Port | `9090` | 
+Portal Configuration/Port | `9090` | Same as "Port Forwarding/Host Port" above
 
 Once the app has started, connect to the [WebUI](webui) to enter password and MFA code one of two ways:
 - Using browser from your PC to 9090 port of your NAS
-- Clicking on `icloudp` button in Detail/Application Info section of TrueNAS portal
+- Clicking on `icloudpd` button in Detail/Application Info section of TrueNAS portal
+
+## Running on Synology NAS
+
+The error `Failed to execv() /tmp/staticx-kJmNbp` has a workaround by (from an SSH terminal in my case) running `sudo mount /tmp -o remount,exec`. [#788](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/788)
