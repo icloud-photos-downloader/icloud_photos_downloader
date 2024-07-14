@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+apt-get update && apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev
