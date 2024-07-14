@@ -224,7 +224,7 @@ jobs:
 
     - name: Build Docker
       run: |
-        docker buildx build -o /tmp/builds --platform=amd64,arm64,arm/v7,386 -f Dockerfile.build .
+        docker buildx build -o /tmp/builds --platform=linux/amd64,linux/arm64,linux/arm/v7,linux/386 -f Dockerfile.build .
     
     - name: Log contents
       run: |
