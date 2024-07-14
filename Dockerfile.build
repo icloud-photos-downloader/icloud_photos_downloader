@@ -13,6 +13,8 @@ RUN \
 COPY src src/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
+COPY LICENSE.md .
+COPY README_PYPI.md .
 
 FROM base as base_amd64_none
 WORKDIR /app
