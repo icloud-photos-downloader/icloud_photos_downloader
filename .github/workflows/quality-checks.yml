@@ -228,6 +228,8 @@ jobs:
       # ,linux/arm64,linux/arm/v7,linux/386
     
     - name: Log contents
+      continue-on-error: true
       run: |
         ls -la /tmp/builds
+        ls -la /tmp/builds/linux_amd64
   
