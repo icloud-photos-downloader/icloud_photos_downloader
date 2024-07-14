@@ -180,7 +180,7 @@ jobs:
   build_docker:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
 
