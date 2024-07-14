@@ -17,24 +17,22 @@ COPY LICENSE.md .
 COPY README_PYPI.md .
 
 FROM base as base_amd64_none
+ARG TARGETARCH
+ARG TARGETVARIANT
 WORKDIR /app
 RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+    --mount=type=cache,target=/root/.cargo/registry,sharing=locked,id=rust-${TARGETARCH}-${TARGETVARIANT:-none} \
     (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host x86_64-unknown-linux-gnu) && \
-    . "$HOME/.cargo/env"
-RUN \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-amd64-none \
+    . "$HOME/.cargo/env" && \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
     pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
-    scripts/build_bin_linux 1.22.0 amd64 && \
-    scripts/build_bin_linux_static 1.22.0 amd64 && \
-    scripts/build_binary_dist_linux 1.22.0 amd64
-
-# RUN \
-#     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-amd64-none \
-#     export ICLOUDPD_VERSION=$(scripts/get_version) && \
-#     echo "Detected icloudpd version: ${ICLOUDPD_VERSION}" && \
+    export ICLOUDPD_VERSION=$(scripts/get_version) && \
+    scripts/build_bin_linux ${ICLOUDPD_VERSION} amd64 && \
+    scripts/build_bin_linux_static ${ICLOUDPD_VERSION} amd64 && \
+    scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} amd64
 
 FROM base as base_386_none
 WORKDIR /app

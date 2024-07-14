@@ -204,6 +204,12 @@ jobs:
         path: root-cache-pip
         key: root-cache-pip-${{ hashFiles('pyproject.toml') }}
   
+    - name: Cache rust-cargo
+      uses: actions/cache@v3
+      with:
+        path: root-cargo
+        key: root-cargo
+
     - name: inject var-cache-apt into docker
       uses: reproducible-containers/buildkit-cache-dance@v2.1.2
       with:
@@ -222,6 +228,12 @@ jobs:
         cache-source: root-cache-pip
         cache-target: /root/.cache/pip
 
+    - name: inject root-cargo into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2.1.2
+      with:
+        cache-source: root-cargo
+        cache-target: /root/.cargo
+
     - name: Build Docker
       run: |
         docker buildx build -o /tmp/builds --platform=linux/amd64 -f Dockerfile.build .
@@ -229,5 +241,5 @@ jobs:
     
     - name: Log contents
       run: |
-        ls -la /tmp/builds
+        ls -la /tmp/builds/app/dist
   
