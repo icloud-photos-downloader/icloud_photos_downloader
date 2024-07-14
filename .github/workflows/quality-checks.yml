@@ -224,7 +224,7 @@ jobs:
 
     - name: Build Docker
       run: |
-        docker buildx build -o /tmp/builds --platform=linux/amd64 -f Dockerfile.build --cache-to type=gha,mode=max --cache-from type=gha .
+        docker buildx build -o /tmp/builds --platform=linux/amd64 -f Dockerfile.build --cache-to type=gha,mode=max,token=${{secrets.GITHUB_TOKEN}} --cache-from type=gha,token=${{secrets.GITHUB_TOKEN}} .
       # ,linux/arm64,linux/arm/v7,linux/386
     
     - name: Log contents
