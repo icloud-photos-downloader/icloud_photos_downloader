@@ -240,5 +240,5 @@ jobs:
     
     - name: Log contents
       run: |
-        ls -la /tmp/builds/app
+        ls -la /tmp/builds
   

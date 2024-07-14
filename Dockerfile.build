@@ -106,5 +106,5 @@ RUN \
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} as builder
 
 FROM scratch
-WORKDIR /app
+WORKDIR /
 COPY --from=builder /app/dist/icloud* .
