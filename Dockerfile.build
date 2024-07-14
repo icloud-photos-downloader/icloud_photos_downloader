@@ -1,0 +1,97 @@
+# map source image to base
+FROM python:3.12 as base
+ENV DEBIAN_FRONTEND=noninteractive
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH} \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apk-lib-${TARGETARCH} \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH} \
+  apt-get update && \
+  apt-get install -y patchelf musl-tools build-essential libssl-dev libffi-dev python3-dev
+WORKDIR /app
+COPY src src/
+COPY scripts scripts/
+COPY binary_dist binary_dist/
+COPY pyproject.toml .
+
+FROM base as base_amd64_none
+WORKDIR /app
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH} \
+    (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host x86_64-unknown-linux-gnu) && \
+    . "$HOME/.cargo/env" && \
+    python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
+    pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
+    export ICLOUDPD_VERSION=$(scripts/get_version) && \
+    echo "Detected icloudpd version: ${ICLOUDPD_VERSION}" && \
+    scripts/build_bin_linux ${ICLOUDPD_VERSION} amd64 && \
+    scripts/build_bin_linux_static ${ICLOUDPD_VERSION} amd64 && \
+    scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} amd64
+  
+FROM base as base_386_none
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH} \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host i686-unknown-linux-gnu) && \
+  . "$HOME/.cargo/env" && \
+  python3 -m venv .venv && \
+  . .venv/bin/activate && \
+  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
+  pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
+  export ICLOUDPD_VERSION=$(scripts/get_version) && \
+  scripts/build_bin_linux ${ICLOUDPD_VERSION} 386 && \
+  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} 386 && \
+  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} 386
+
+FROM base as base_arm64_none
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH} \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host aarch64-unknown-linux-gnu) && \
+  . "$HOME/.cargo/env" && \
+  python3 -m venv .venv && \
+  . .venv/bin/activate && \
+  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
+  pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
+  export ICLOUDPD_VERSION=$(scripts/get_version) && \
+  scripts/build_bin_linux ${ICLOUDPD_VERSION} arm64 && \
+  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm64 && \
+  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm64
+
+FROM base as base_arm_v7
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH} \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
+  . "$HOME/.cargo/env" && \
+  python3 -m venv .venv && \
+  . .venv/bin/activate && \
+  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
+  pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
+  export ICLOUDPD_VERSION=$(scripts/get_version) && \
+  scripts/build_bin_linux ${ICLOUDPD_VERSION} arm32v7 && \
+  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v7 && \
+  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v7
+    
+FROM base as base_arm_v6
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH} \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
+  . "$HOME/.cargo/env" && \
+  python3 -m venv .venv && \
+  . .venv/bin/activate && \
+  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
+  pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
+  export ICLOUDPD_VERSION=$(scripts/get_version) && \
+  scripts/build_bin_linux ${ICLOUDPD_VERSION} arm32v6 && \
+  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v6 && \
+  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v6
+      
+  
+FROM base_${TARGETARCH}_${TARGETVARIANT:-none} as builder
+
+FROM scratch
+WORKDIR /app
+COPY --from=builder /app/dist/icloud* .
