@@ -35,6 +35,8 @@ RUN \
     scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} amd64
 
 FROM base as base_386_none
+ARG TARGETARCH
+ARG TARGETVARIANT
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
@@ -50,6 +52,8 @@ RUN \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} 386
 
 FROM base as base_arm64_none
+ARG TARGETARCH
+ARG TARGETVARIANT
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
@@ -65,6 +69,8 @@ RUN \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm64
 
 FROM base as base_arm_v7
+ARG TARGETARCH
+ARG TARGETVARIANT
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
@@ -80,6 +86,8 @@ RUN \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v7
     
 FROM base as base_arm_v6
+ARG TARGETARCH
+ARG TARGETVARIANT
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
