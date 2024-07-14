@@ -32,11 +32,13 @@ RUN \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-    pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
+    pip3 install --disable-pip-version-check staticx==0.14.1 && \
     export ICLOUDPD_VERSION=$(scripts/get_version) && \
     scripts/build_bin_linux ${ICLOUDPD_VERSION} amd64 && \
     scripts/build_bin_linux_static ${ICLOUDPD_VERSION} amd64 && \
     scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} amd64
+
+    # pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
 
 FROM base as base_386_none
 ARG TARGETARCH
