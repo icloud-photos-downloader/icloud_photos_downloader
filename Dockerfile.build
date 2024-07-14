@@ -1,3 +1,8 @@
+# Multi-arch build (local):
+#     docker buildx create --use --driver=docker-container --name container --bootstrap
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o .oci -f Dockerfile.build
+# ,linux/arm64,linux/arm/v7,linux/386
+
 # map source image to base
 FROM python:3.12 as base
 ARG TARGETARCH
@@ -5,7 +10,6 @@ ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 COPY scripts scripts/
-RUN echo "Platform: ${TARGETARCH}-${TARGETVARIANT:-none}"
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
   --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apk-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
@@ -104,6 +108,7 @@ RUN \
       
   
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} as builder
+WORKDIR /app
 
 FROM scratch
 WORKDIR /
