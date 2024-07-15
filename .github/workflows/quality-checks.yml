@@ -233,12 +233,12 @@ jobs:
       with:
         push: false
         platforms:
-          - linux/amd64
+        - linux/amd64
         cache-from: type=gha
         cache-to: type=gha,mode=max
         file: Dockerfile.build
-        outputs:
-          - type=local,dest=dist
+        outputs: 
+        - type=local,dest=dist
               
     - name: Log contents
       continue-on-error: true
