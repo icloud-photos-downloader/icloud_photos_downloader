@@ -223,14 +223,27 @@ jobs:
     #         }
     #     # skip-extraction: ${{ steps.cache.outputs.cache-hit }}
 
-    - name: Build Docker
-      run: |
-        docker buildx build -o /tmp/builds --platform=linux/amd64 -f Dockerfile.build --cache-to type=gha,mode=max,token=${{secrets.GITHUB_TOKEN}} --cache-from type=gha,token=${{secrets.GITHUB_TOKEN}} .
-      # ,linux/arm64,linux/arm/v7,linux/386
+    # - name: Build Docker
+    #   run: |
+    #     docker buildx build -o /tmp/builds --platform=linux/amd64 -f Dockerfile.build --cache-to type=gha,mode=max,token=${{secrets.GITHUB_TOKEN}} --cache-from type=gha,token=${{secrets.GITHUB_TOKEN}} .
+    #   # ,linux/arm64,linux/arm/v7,linux/386
     
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        push: false
+        platforms:
+          - linux/amd64
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        file: Dockerfile.build
+        outputs:
+          - type=local,dest=dist
+              
     - name: Log contents
       continue-on-error: true
       run: |
+        ls -la dist
         ls -la /tmp/builds
         ls -la /tmp/builds/linux_amd64
   
