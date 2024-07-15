@@ -69,14 +69,14 @@ RUN \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm64 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm64
 
-  # (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
-  # . "$HOME/.cargo/env" && \
 FROM base AS base_arm_v7
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
+  . "$HOME/.cargo/env" && \
   python3 -m venv .venv && \
   . .venv/bin/activate && \
   pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
@@ -86,14 +86,14 @@ RUN \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v7 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v7
     
-  # (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
-  # . "$HOME/.cargo/env" && \
 FROM base AS base_arm_v6
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
+  . "$HOME/.cargo/env" && \
   python3 -m venv .venv && \
   . .venv/bin/activate && \
   pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
