@@ -1,10 +1,10 @@
 # Multi-arch build (local):
 #     docker buildx create --use --driver=docker-container --name container --bootstrap
-#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o .oci -f Dockerfile.build
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build
 # ,linux/arm64,linux/arm/v7,linux/386
 
 # map source image to base
-FROM python:3.12 as base
+FROM python:3.12 AS base
 ARG TARGETARCH
 ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
@@ -20,27 +20,22 @@ COPY pyproject.toml .
 COPY LICENSE.md .
 COPY README_PYPI.md .
 
-FROM base as base_amd64_none
+FROM base AS base_amd64_none
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    --mount=type=cache,target=/root/.cargo/registry,sharing=locked,id=rust-${TARGETARCH}-${TARGETVARIANT:-none} \
-    (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host x86_64-unknown-linux-gnu) && \
-    . "$HOME/.cargo/env" && \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-    pip3 install --disable-pip-version-check staticx==0.14.1 && \
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     export ICLOUDPD_VERSION=$(scripts/get_version) && \
     scripts/build_bin_linux ${ICLOUDPD_VERSION} amd64 && \
     scripts/build_bin_linux_static ${ICLOUDPD_VERSION} amd64 && \
     scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} amd64
 
-    # pip3 install --disable-pip-version-check https://files.pythonhosted.org/packages/69/a7/993fa7a40179d36b328a212cf061a43876055ee3568e478e76aa7793ceb5/staticx-0.14.1.tar.gz && \
-
-FROM base as base_386_none
+FROM base AS base_386_none
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
@@ -57,7 +52,7 @@ RUN \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} 386 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} 386
 
-FROM base as base_arm64_none
+FROM base AS base_arm64_none
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
@@ -74,7 +69,7 @@ RUN \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm64 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm64
 
-FROM base as base_arm_v7
+FROM base AS base_arm_v7
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
@@ -91,7 +86,7 @@ RUN \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v7 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v7
     
-FROM base as base_arm_v6
+FROM base AS base_arm_v6
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
@@ -109,7 +104,7 @@ RUN \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v6
       
   
-FROM base_${TARGETARCH}_${TARGETVARIANT:-none} as builder
+FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 WORKDIR /app
 
 FROM scratch
