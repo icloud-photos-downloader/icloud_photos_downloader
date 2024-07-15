@@ -237,8 +237,7 @@ jobs:
         cache-from: type=gha
         cache-to: type=gha,mode=max
         file: Dockerfile.build
-        outputs: 
-        - type=local,dest=dist
+        outputs: type=local,dest=dist
               
     - name: Log contents
       continue-on-error: true
