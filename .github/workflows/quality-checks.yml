@@ -232,16 +232,18 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         push: false
-        platforms: linux/amd64,linux/arm64
+        platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386
         cache-from: type=gha
         cache-to: type=gha,mode=max
         file: Dockerfile.build
         outputs: type=local,dest=dist
               
-    - name: Log contents
-      continue-on-error: true
+    - name: Reorg contents
       run: |
         ls -la dist
-        ls -la /tmp/builds
-        ls -la /tmp/builds/linux_amd64
+        mv dist/linux_amd64/* dist
+        mv dist/linux_arm64/* dist
+        mv dist/linux_arm_v7/* dist
+        mv dist/linux_386/* dist
+
   
