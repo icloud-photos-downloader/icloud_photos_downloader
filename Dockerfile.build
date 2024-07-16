@@ -5,30 +5,8 @@
 
 # map source image to base
 FROM python:3.12 AS base
-
-FROM base AS base_amd64_none
-# does not need rustc
-
-FROM base AS base_386_none
-RUN \
-  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host i686-unknown-linux-gnu) && \
-  . "$HOME/.cargo/env"
-
-FROM base AS base_arm64_none
-# does not need rustc
-
-FROM base AS base_arm_v7
-RUN \
-  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
-  . "$HOME/.cargo/env"
-
-# fails  
-FROM base AS base_arm_v6
-RUN \
-  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
-  . "$HOME/.cargo/env"
-      
-FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
+ARG TARGETARCH
+ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 COPY scripts scripts/
@@ -38,6 +16,59 @@ RUN \
   scripts/build_apt_install
 RUN \
   python3 -m venv .venv && \
+  . .venv/bin/activate
+  
+FROM base AS base_amd64_none
+# does not need rustc
+
+FROM base AS base_386_none
+ARG TARGETARCH
+ARG TARGETVARIANT
+# pin cryptography to the version pre-rust to avoid compilation
+# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+WORKDIR /app
+RUN \
+  . .venv/bin/activate
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+  pip3 install cryptography==3.4.6
+
+FROM base AS base_arm64_none
+# does not need rustc
+
+FROM base AS base_arm_v7
+ARG TARGETARCH
+ARG TARGETVARIANT
+# pin cryptography to the version pre-rust to avoid compilation
+# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+WORKDIR /app
+RUN \
+  . .venv/bin/activate
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+  pip3 install cryptography==3.4.6
+
+# fails  
+FROM base AS base_arm_v6
+ARG TARGETARCH
+ARG TARGETVARIANT
+# pin cryptography to the version pre-rust to avoid compilation
+# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
+WORKDIR /app
+RUN \
+  . .venv/bin/activate
+ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
+RUN \
+  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+  pip3 install cryptography==3.4.6
+      
+FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
+ARG TARGETARCH
+ARG TARGETVARIANT
+WORKDIR /app
+RUN \
   . .venv/bin/activate
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
