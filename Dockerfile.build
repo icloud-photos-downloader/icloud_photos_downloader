@@ -14,20 +14,22 @@ RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
   --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apk-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
   scripts/build_apt_install
-COPY src src/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY LICENSE.md .
 COPY README_PYPI.md .
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+    python3 -m venv .venv && \
+    . .venv/bin/activate
 
 FROM base AS base_amd64_none
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
+COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    python3 -m venv .venv && \
-    . .venv/bin/activate && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     export ICLOUDPD_VERSION=$(scripts/get_version) && \
@@ -39,12 +41,11 @@ FROM base AS base_386_none
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
+COPY src src/
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
   (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host i686-unknown-linux-gnu) && \
   . "$HOME/.cargo/env" && \
-  python3 -m venv .venv && \
-  . .venv/bin/activate && \
   pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
   BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
   export ICLOUDPD_VERSION=$(scripts/get_version) && \
@@ -52,16 +53,16 @@ RUN \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} 386 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} 386
 
-  # (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host aarch64-unknown-linux-gnu) && \
-  # . "$HOME/.cargo/env" && \
+# does not need rustc
+# (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host aarch64-unknown-linux-gnu) && \
+# . "$HOME/.cargo/env" && \
 FROM base AS base_arm64_none
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
+COPY src src/
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  python3 -m venv .venv && \
-  . .venv/bin/activate && \
   pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
   BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
   export ICLOUDPD_VERSION=$(scripts/get_version) && \
@@ -73,29 +74,28 @@ FROM base AS base_arm_v7
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
+COPY src src/
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
   (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
   . "$HOME/.cargo/env" && \
-  python3 -m venv .venv && \
-  . .venv/bin/activate && \
   pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
   BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
   export ICLOUDPD_VERSION=$(scripts/get_version) && \
   scripts/build_bin_linux ${ICLOUDPD_VERSION} arm32v7 && \
   scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v7 && \
   scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v7
-    
+
+# fails  
 FROM base AS base_arm_v6
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
+COPY src src/
 RUN \
   --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
   (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
   . "$HOME/.cargo/env" && \
-  python3 -m venv .venv && \
-  . .venv/bin/activate && \
   pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
   BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
   export ICLOUDPD_VERSION=$(scripts/get_version) && \
