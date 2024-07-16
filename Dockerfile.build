@@ -42,9 +42,14 @@ COPY pyproject.toml .
 COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    python3 -m venv .venv && \
+    python3 -m venv .venv
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     . .venv/bin/activate && \
-    pip3 install cryptography==3.4.6 && \
+    pip3 install cryptography==3.4.8
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+    . .venv/bin/activate && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     scripts/build_bin2 icloudpd icloud  && \
