@@ -5,8 +5,30 @@
 
 # map source image to base
 FROM python:3.12 AS base
-ARG TARGETARCH
-ARG TARGETVARIANT
+
+FROM base AS base_amd64_none
+# does not need rustc
+
+FROM base AS base_386_none
+RUN \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host i686-unknown-linux-gnu) && \
+  . "$HOME/.cargo/env"
+
+FROM base AS base_arm64_none
+# does not need rustc
+
+FROM base AS base_arm_v7
+RUN \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
+  . "$HOME/.cargo/env"
+
+# fails  
+FROM base AS base_arm_v6
+RUN \
+  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
+  . "$HOME/.cargo/env"
+      
+FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 COPY scripts scripts/
@@ -14,98 +36,25 @@ RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
   --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apk-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
   scripts/build_apt_install
+RUN \
+  python3 -m venv .venv && \
+  . .venv/bin/activate
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY LICENSE.md .
 COPY README_PYPI.md .
-RUN \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    python3 -m venv .venv && \
-    . .venv/bin/activate
-
-FROM base AS base_amd64_none
-ARG TARGETARCH
-ARG TARGETVARIANT
-WORKDIR /app
 COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
-    export ICLOUDPD_VERSION=$(scripts/get_version) && \
-    scripts/build_bin_linux ${ICLOUDPD_VERSION} amd64 && \
-    scripts/build_bin_linux_static ${ICLOUDPD_VERSION} amd64 && \
-    scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} amd64
-
-FROM base AS base_386_none
-ARG TARGETARCH
-ARG TARGETVARIANT
-WORKDIR /app
-COPY src src/
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host i686-unknown-linux-gnu) && \
-  . "$HOME/.cargo/env" && \
-  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-  BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
-  export ICLOUDPD_VERSION=$(scripts/get_version) && \
-  scripts/build_bin_linux ${ICLOUDPD_VERSION} 386 && \
-  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} 386 && \
-  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} 386
-
-# does not need rustc
-# (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host aarch64-unknown-linux-gnu) && \
-# . "$HOME/.cargo/env" && \
-FROM base AS base_arm64_none
-ARG TARGETARCH
-ARG TARGETVARIANT
-WORKDIR /app
-COPY src src/
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-  BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
-  export ICLOUDPD_VERSION=$(scripts/get_version) && \
-  scripts/build_bin_linux ${ICLOUDPD_VERSION} arm64 && \
-  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm64 && \
-  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm64
-
-FROM base AS base_arm_v7
-ARG TARGETARCH
-ARG TARGETVARIANT
-WORKDIR /app
-COPY src src/
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host armv7-unknown-linux-gnueabihf) && \
-  . "$HOME/.cargo/env" && \
-  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-  BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
-  export ICLOUDPD_VERSION=$(scripts/get_version) && \
-  scripts/build_bin_linux ${ICLOUDPD_VERSION} arm32v7 && \
-  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v7 && \
-  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v7
-
-# fails  
-FROM base AS base_arm_v6
-ARG TARGETARCH
-ARG TARGETVARIANT
-WORKDIR /app
-COPY src src/
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  (curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-host arm-unknown-linux-gnueabi) && \
-  . "$HOME/.cargo/env" && \
-  pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-  BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
-  export ICLOUDPD_VERSION=$(scripts/get_version) && \
-  scripts/build_bin_linux ${ICLOUDPD_VERSION} arm32v6 && \
-  scripts/build_bin_linux_static ${ICLOUDPD_VERSION} arm32v6 && \
-  scripts/build_binary_dist_linux ${ICLOUDPD_VERSION} arm32v6
-      
-  
-FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
-WORKDIR /app
+    scripts/build_bin2 icloudpd icloud  && \
+    scripts/build_bin1 icloud && \
+    scripts/build_bin1 icloudpd_ex  && \
+    scripts/build_static icloudpd && \
+    scripts/build_static icloud && \
+    scripts/build_static icloudpd_ex && \
+    scripts/build_whl
 
 FROM scratch
 WORKDIR /

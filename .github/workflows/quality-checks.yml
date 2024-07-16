@@ -244,9 +244,13 @@ jobs:
     - name: Reorg contents
       run: |
         ls -la dist
-        mv dist/linux_amd64/* dist
-        mv dist/linux_arm64/* dist
-        mv dist/linux_arm_v7/* dist
-        mv dist/linux_386/* dist
+        la -ls dist/linux_amd64
+        la -ls dist/linux_arm64
+        la -ls dist/linux_arm_v7
+        la -ls dist/linux_386
+        # mv dist/linux_amd64/* dist
+        # mv dist/linux_arm64/* dist
+        # mv dist/linux_arm_v7/* dist
+        # mv dist/linux_386/* dist
 
   
