@@ -9,74 +9,42 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
-COPY scripts scripts/
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
   --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apk-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
-  scripts/build_apt_install
-RUN \
-  python3 -m venv .venv && \
-  . .venv/bin/activate
+  apt-get update && \
+  apt-get install -y patchelf musl-tools
   
 FROM base AS base_amd64_none
 # does not need rustc
 
 FROM base AS base_386_none
-ARG TARGETARCH
-ARG TARGETVARIANT
-# pin cryptography to the version pre-rust to avoid compilation
-# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-WORKDIR /app
-RUN \
-  . .venv/bin/activate
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  pip3 install cryptography==3.4.6
 
 FROM base AS base_arm64_none
 # does not need rustc
 
 FROM base AS base_arm_v7
-ARG TARGETARCH
-ARG TARGETVARIANT
-# pin cryptography to the version pre-rust to avoid compilation
-# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-WORKDIR /app
-RUN \
-  . .venv/bin/activate
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  pip3 install cryptography==3.4.6
 
-# fails  
 FROM base AS base_arm_v6
-ARG TARGETARCH
-ARG TARGETVARIANT
-# pin cryptography to the version pre-rust to avoid compilation
-# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
-WORKDIR /app
-RUN \
-  . .venv/bin/activate
-ENV CRYPTOGRAPHY_DONT_BUILD_RUST=1
-RUN \
-  --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-  pip3 install cryptography==3.4.6
+# fails  
       
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
+# pin cryptography to the version pre-rust to avoid compilation
+# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
-RUN \
-  . .venv/bin/activate
-COPY binary_dist binary_dist/
-COPY pyproject.toml .
 COPY LICENSE.md .
 COPY README_PYPI.md .
+COPY scripts scripts/
+COPY binary_dist binary_dist/
+COPY pyproject.toml .
 COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+    python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    pip3 install cryptography==3.4.6 && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     scripts/build_bin2 icloudpd icloud  && \
