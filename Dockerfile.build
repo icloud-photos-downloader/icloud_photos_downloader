@@ -27,7 +27,7 @@ RUN \
     --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xvf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm64_none
@@ -41,7 +41,7 @@ RUN \
     --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xvf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm_v6
@@ -52,7 +52,7 @@ RUN \
     --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xvf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
       
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
