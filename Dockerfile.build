@@ -2,6 +2,7 @@
 #     docker buildx create --use --driver=docker-container --name container --bootstrap
 #     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build
 # ,linux/arm64,linux/arm/v7,linux/386
+# rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
 
 # map source image to base
 FROM python:3.12 AS base
@@ -19,14 +20,43 @@ FROM base AS base_amd64_none
 # does not need rustc
 
 FROM base AS base_386_none
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV RUST_DISTRO_NAME=rust-1.79.0-i686-unknown-linux-gnu
+RUN \
+    --mount=type=cache,target=/root/.download,sharing=locked,id=dl-${TARGETARCH}-${TARGETVARIANT:-none} \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
+    (if [ -d "/root/.distrib/rust/" ]; then \
+    (wget --no-clobber --directory-prefix=/root/.download/ https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+    tar -xvf /root/.download/${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm64_none
 # does not need rustc
 
 FROM base AS base_arm_v7
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV RUST_DISTRO_NAME=armv7-unknown-linux-gnueabihf
+RUN \
+    --mount=type=cache,target=/root/.download,sharing=locked,id=dl-${TARGETARCH}-${TARGETVARIANT:-none} \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
+    (if [ -d "/root/.distrib/rust/" ]; then \
+    (wget --no-clobber --directory-prefix=/root/.download/ https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+    tar -xvf /root/.download/${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm_v6
-# fails  
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV RUST_DISTRO_NAME=arm-unknown-linux-gnueabi
+RUN \
+    --mount=type=cache,target=/root/.download,sharing=locked,id=dl-${TARGETARCH}-${TARGETVARIANT:-none} \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
+    (if [ -d "/root/.distrib/rust/" ]; then \
+    (wget --no-clobber --directory-prefix=/root/.download/ https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+    tar -xvf /root/.download/${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
       
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 # pin cryptography to the version pre-rust to avoid compilation
@@ -43,10 +73,10 @@ COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     python3 -m venv .venv
-RUN \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    . .venv/bin/activate && \
-    CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install cryptography==3.4.8
+# RUN \
+#     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+#     . .venv/bin/activate && \
+#     CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install cryptography==3.4.8
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     . .venv/bin/activate && \
