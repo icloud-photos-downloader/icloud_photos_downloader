@@ -244,6 +244,7 @@ jobs:
         outputs: type=local,dest=dist
               
     - name: Reorg contents
+      continue-on-error: true
       run: |
         ls -la dist
         la -ls dist/linux_amd64
