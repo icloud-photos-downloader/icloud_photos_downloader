@@ -72,6 +72,7 @@ RUN \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1
 RUN \
+    . .venv/bin/activate && \
     scripts/build_bin2 icloudpd icloud  && \
     scripts/build_bin1 icloud && \
     scripts/build_bin1 icloudpd_ex  && \
