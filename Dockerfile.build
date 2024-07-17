@@ -56,8 +56,6 @@ RUN \
     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
       
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
-# pin cryptography to the version pre-rust to avoid compilation
-# https://stackoverflow.com/questions/66118337/how-to-get-rid-of-cryptography-build-error
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
@@ -69,16 +67,11 @@ COPY pyproject.toml .
 COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    python3 -m venv .venv
-# RUN \
-#     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-#     . .venv/bin/activate && \
-#     CRYPTOGRAPHY_DONT_BUILD_RUST=1 pip3 install cryptography==3.4.8
-RUN \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+    python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip3 install --disable-pip-version-check -e .[dev,devlinux] && \
-    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1
+RUN \
     scripts/build_bin2 icloudpd icloud  && \
     scripts/build_bin1 icloud && \
     scripts/build_bin1 icloudpd_ex  && \
