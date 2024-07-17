@@ -235,9 +235,10 @@ jobs:
         platform:
           - linux/amd64
           - linux/arm64
-          - linux/arm/v7
-          - linux/386
-          - linux/arm/v6
+          # these do not have rust available and will not compile
+          # - linux/arm/v7
+          # - linux/386
+          # - linux/arm/v6
     steps:
     - uses: actions/checkout@v4
 
