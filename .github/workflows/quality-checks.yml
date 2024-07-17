@@ -215,4 +215,42 @@ jobs:
         # mv dist/linux_arm_v7/* dist
         # mv dist/linux_386/* dist
 
-  
+  build_docker_musl:
+    needs: skip_check
+    if: needs.skip_check.outputs.should_skip != 'true'
+    # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - uses: docker/setup-buildx-action@v3
+      id: setup
+    
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        push: false
+        platforms: linux/amd64,linux/arm64,linux/arm/v7,linux/386,linux/arm/v6
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+        file: Dockerfile.build_musl
+        outputs: type=local,dest=dist
+              
+    - name: Reorg contents
+      continue-on-error: true
+      run: |
+        ls -la dist
+        ls -la dist/linux_amd64
+        ls -la dist/linux_arm64
+        ls -la dist/linux_arm_v7
+        ls -la dist/linux_arm_v6
+        ls -la dist/linux_386
+        # mv dist/linux_amd64/* dist
+        # mv dist/linux_arm64/* dist
+        # mv dist/linux_arm_v7/* dist
+        # mv dist/linux_386/* dist
+
+        
