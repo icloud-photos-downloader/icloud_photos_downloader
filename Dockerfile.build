@@ -37,7 +37,7 @@ FROM base AS base_arm64_none
 FROM base AS base_arm_v7
 ARG TARGETARCH
 ARG TARGETVARIANT
-ENV RUST_DISTRO_NAME=armv7-unknown-linux-gnueabihf
+ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
 RUN \
     --mount=type=cache,target=/root/.download,sharing=locked,id=dl-${TARGETARCH}-${TARGETVARIANT:-none} \
     --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
@@ -49,7 +49,7 @@ RUN \
 FROM base AS base_arm_v6
 ARG TARGETARCH
 ARG TARGETVARIANT
-ENV RUST_DISTRO_NAME=arm-unknown-linux-gnueabi
+ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
 RUN \
     --mount=type=cache,target=/root/.download,sharing=locked,id=dl-${TARGETARCH}-${TARGETVARIANT:-none} \
     --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
