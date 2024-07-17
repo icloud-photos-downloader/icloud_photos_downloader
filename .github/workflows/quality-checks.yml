@@ -180,8 +180,8 @@ jobs:
   build_docker:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
-    # 24.02 gives futex error: https://github.com/actions/runner-images/issues/9977
-    runs-on: ubuntu-20.04
+    # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
+    runs-on: ubuntu-22.04
     steps:
     - uses: actions/checkout@v4
 
@@ -190,47 +190,6 @@ jobs:
 
     - uses: docker/setup-buildx-action@v3
       id: setup
-
-    # - name: Cache var-cache-apt
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: var-cache-apt
-    #     key: var-cache-apt-${{ hashFiles('scripts/build_apt_install') }}
-
-    # - name: Cache var-lib-apt
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: var-lib-apt
-    #     key: var-lib-apt-${{ hashFiles('scripts/build_apt_install') }}
-
-    # - name: Cache pip-cache
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: root-cache-pip
-    #     key: root-cache-pip-${{ hashFiles('pyproject.toml') }}
-  
-    # - name: Cache rust-cargo
-    #   uses: actions/cache@v4
-    #   with:
-    #     path: root-cargo
-    #     key: root-cargo
-
-    # - name: inject caches into docker
-    #   uses: reproducible-containers/buildkit-cache-dance@v3.1.2
-    #   with:
-    #     cache-map: |
-    #         {
-    #           "var-cache-apt": /var/cache/apt,
-    #           "var-lib-apt": "/var/lib/apt",
-    #           "root-cache-pip": /root/.cache/pip,
-    #           "root-cargo": /root/.cargo
-    #         }
-    #     # skip-extraction: ${{ steps.cache.outputs.cache-hit }}
-
-    # - name: Build Docker
-    #   run: |
-    #     docker buildx build -o /tmp/builds --platform=linux/amd64 -f Dockerfile.build --cache-to type=gha,mode=max,token=${{secrets.GITHUB_TOKEN}} --cache-from type=gha,token=${{secrets.GITHUB_TOKEN}} .
-    #   # ,linux/arm64,linux/arm/v7,linux/386
     
     - name: Build and push
       uses: docker/build-push-action@v6
@@ -246,10 +205,11 @@ jobs:
       continue-on-error: true
       run: |
         ls -la dist
-        la -ls dist/linux_amd64
-        la -ls dist/linux_arm64
-        la -ls dist/linux_arm_v7
-        la -ls dist/linux_386
+        ls -la dist/linux_amd64
+        ls -la dist/linux_arm64
+        ls -la dist/linux_arm_v7
+        ls -la dist/linux_arm_v6
+        ls -la dist/linux_386
         # mv dist/linux_amd64/* dist
         # mv dist/linux_arm64/* dist
         # mv dist/linux_arm_v7/* dist
