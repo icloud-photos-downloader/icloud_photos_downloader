@@ -213,8 +213,8 @@ jobs:
       with:
         push: false
         platforms: ${{ matrix.platform }}
-        cache-from: type=local,src=.cache
-        cache-to: type=local,dest=.cache,mode=max
+        # cache-from: type=local,src=.cache
+        # cache-to: type=local,dest=.cache,mode=max
         file: Dockerfile.pre_build
         outputs: type=local,dest=dist
               
