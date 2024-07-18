@@ -61,6 +61,7 @@ ARG TARGETVARIANT
 WORKDIR /app
 RUN touch README_PYPI.md && touch LICENSE.md && mkdir src
 COPY pyproject.toml .
+ENV WHEEL_DIR=/root/.cache/pip/wheels
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     --mount=type=cache,target=/root/pre-built,sharing=private,id=pip-pre-built \
@@ -69,7 +70,7 @@ RUN \
     pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     mkdir -p dist && \
-    if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -exec cp {} /app/dist \;; fi
+    if [ -d ${WHEEL_DIR}} ]; then find ${WHEEL_DIR}} -name *.whl -exec cp {} /app/dist \;; fi
 
 # save to shared cache
 WORKDIR /app/dist
