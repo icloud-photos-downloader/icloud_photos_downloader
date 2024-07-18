@@ -67,7 +67,7 @@ RUN \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux] && \
-    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx=0.14.1 && \
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     mkdir -p dist && \
     if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -exec cp {} /app/dist \;; fi
 
