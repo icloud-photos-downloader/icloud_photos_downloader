@@ -10,10 +10,10 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
-# RUN \
-#   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
-#   apt-get update && \
-#   apt-get install -y patchelf musl-tools
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
+  apt-get update && \
+  apt-get install -y patchelf musl-tools
   
 FROM base AS base_amd64_none
 # does not need rustc
@@ -66,10 +66,11 @@ RUN \
     --mount=type=cache,target=/root/pre-built,sharing=private,id=pip-pre-built \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
-    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check .[dev,devlinux] && \
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux] && \
     mkdir -p dist && \
     if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -exec cp {} /app/dist \;; fi
 
+# save to shared cache
 WORKDIR /app/dist
 RUN \
     --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
@@ -77,4 +78,5 @@ RUN \
 
 FROM scratch
 WORKDIR /
+# send to output
 COPY --from=builder /app/dist .
