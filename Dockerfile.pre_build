@@ -66,11 +66,12 @@ RUN \
     --mount=type=cache,target=/root/pre-built,sharing=private,id=pip-pre-built \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
-    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check .[dev,devlinux]
-RUN \
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check .[dev,devlinux] && \
+    mkdir -p dist && \
+    if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -print -exec cp {} /app/dist \;; fi
+
+    RUN \
     --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
-    mkdir - dist && \
-    if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -print -exec cp {} /app/dist \;; fi && \
     cp /app/dist/*.whl /root/pre-built
 
 FROM scratch
