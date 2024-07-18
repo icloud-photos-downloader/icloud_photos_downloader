@@ -13,6 +13,8 @@ WORKDIR /app
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
   --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
+  echo "DEBUG apt cache" && \
+  du -h /var/cache/apt && \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
@@ -61,15 +63,17 @@ RUN \
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
 ARG TARGETVARIANT
+ENV WHEEL_DIR=/root/.cache/pip/wheels
 WORKDIR /app
 RUN touch README_PYPI.md && touch LICENSE.md && mkdir src
 COPY pyproject.toml .
-ENV WHEEL_DIR=/root/.cache/pip/wheels
 # staticx must be installed after scons - they do not have deps that pip can handle
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
+    echo "DEBUG pip cache" && \
+    du -h /root/.cache/pip && \
     echo "Cached pre-built content from before:" && \
     if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -print; fi && \
     pip3 install --disable-pip-version-check .[dev,devlinux] && \
