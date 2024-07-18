@@ -71,14 +71,12 @@ RUN \
     pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     mkdir -p dist && \
-    echo "Newly built wheels:" && \
-    if [ -d ${WHEEL_DIR}} ]; then find ${WHEEL_DIR}} -name *.whl -exec cp {} /app/dist \;; fi
+    if [ -d ${WHEEL_DIR}} ]; then (echo "Newly built wheels:" && find ${WHEEL_DIR}} -name *.whl -exec cp {} /app/dist \;); else echo "No newly built wheels in ${WHEEL_DIR}}"; fi
 
 # save to shared cache
 WORKDIR /app/dist
 RUN \
     --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
-    pwd && \
     echo "Newly built wheels updated in cache:" && \
     find . -name *.whl -print -exec cp {} /root/pre-built \;
 
