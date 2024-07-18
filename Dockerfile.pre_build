@@ -63,7 +63,7 @@ RUN touch README_PYPI.md && touch LICENSE.md && mkdir src
 COPY pyproject.toml .
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    --mount=type=cache,target=/root/pre-built,sharing=shared,id=pip-pre-built \
+    --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check .[dev,devlinux]
