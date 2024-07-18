@@ -78,8 +78,9 @@ RUN \
     if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -print; fi && \
     pip3 install --disable-pip-version-check .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
+    mkdir -p /app/dist && \
     echo "Cached pre-built content after:" && \
-    if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -print; fi
+    if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -exec cp {} /app/dist \;; fi
 
 FROM scratch
 WORKDIR /
