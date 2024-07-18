@@ -205,32 +205,16 @@ jobs:
       id: cache
       with:
         path: |
-          var-cache-apt
-          var-lib-apt
-          root-cache-pip
-          root-distrib-rust
-          root-pre-built
+          .cache
         key: cache-${{ matrix.platform }}      
-
-    - name: inject cache into docker
-      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
-      with:
-        cache-map: |
-          {
-            "var-cache-apt": "/var/cache/apt",
-            "var-lib-apt": "/var/lib/apt",
-            "root-cache-pip": "/root/.cache/pip",
-            "root-distrib-rust": "/root/.distrib/rust",
-            "root-pre-built": "/root/pre-built"
-          }
 
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         push: false
         platforms: ${{ matrix.platform }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=local,src=.cache
+        cache-to: type=local,dest=.cache,mode=max
         file: Dockerfile.pre_build
         outputs: type=local,dest=dist
               
