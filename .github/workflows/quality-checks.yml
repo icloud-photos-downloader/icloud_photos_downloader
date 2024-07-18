@@ -206,7 +206,22 @@ jobs:
       with:
         path: |
           .cache
+          var-cache-apt
+          var-lib-apt
+          root-cache-pip
+          root-distrib-rust
         key: cache-${{ matrix.platform }}      
+    
+    - name: inject cache into docker
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            "var-cache-apt": "/var/cache/apt",
+            "var-lib-apt": "/var/lib/apt",
+            "root-cache-pip": "/root/.cache/pip",
+            "root-distrib-rust": "/root/.distrib/rust/"
+          }
 
     - name: Build and push
       uses: docker/build-push-action@v6
