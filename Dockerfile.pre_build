@@ -1,6 +1,6 @@
 # Multi-arch build (local):
 #     docker buildx create --use --driver=docker-container --name container --bootstrap
-#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.pre_build
 # ,linux/arm64,linux/arm/v7,linux/386
 # rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
 
@@ -68,17 +68,19 @@ RUN \
     --mount=type=cache,target=/root/pre-built,sharing=private,id=pip-pre-built \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
+    echo "Cached pre-built content from before:" && \
+    ls -la /root/pre-built && \
     pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
     mkdir -p dist && \
-    if [ -d ${WHEEL_DIR}} ]; then (echo "Newly built wheels:" && find ${WHEEL_DIR}} -name *.whl -exec cp {} /app/dist \;); else echo "No newly built wheels in ${WHEEL_DIR}}"; fi
+    if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -exec cp {} /app/dist \;; fi
 
 # save to shared cache
 WORKDIR /app/dist
 RUN \
     --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
     echo "Newly built wheels updated in cache:" && \
-    find . -name *.whl -print -exec cp {} /root/pre-built \;
+    find . -name '*.whl' -print -exec cp {} /root/pre-built \;
 
 FROM scratch
 WORKDIR /
