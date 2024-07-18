@@ -59,6 +59,7 @@ FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
+RUN touch README_PYPI.md && touch LICENSE.md && mkdir src
 COPY pyproject.toml .
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
