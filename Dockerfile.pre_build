@@ -69,7 +69,7 @@ RUN \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check .[dev,devlinux]
 RUN \
     --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
-    if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -exec cp {} /root/pre-built \;; fi
+    if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -print -exec cp {} /root/pre-built \;; fi
     
 
 FROM scratch
