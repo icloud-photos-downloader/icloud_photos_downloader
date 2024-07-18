@@ -68,22 +68,14 @@ ENV WHEEL_DIR=/root/.cache/pip/wheels
 # staticx must be installed after scons - they do not have deps that pip can handle
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    --mount=type=cache,target=/root/pre-built,sharing=private,id=pip-pre-built \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     echo "Cached pre-built content from before:" && \
     if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -print; fi && \
-    pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux] && \
+    pip3 install --disable-pip-version-check .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1 && \
-    mkdir -p dist && \
-    if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -exec cp {} /app/dist \;; fi
-
-# save to shared cache
-WORKDIR /app/dist
-RUN \
-    --mount=type=cache,target=/root/pre-built,sharing=locked,id=pip-pre-built \
-    echo "Newly built wheels updated in cache:" && \
-    find . -name '*.whl' -print -exec cp {} /root/pre-built \;
+    echo "Cached pre-built content after:" && \
+    if [ -d "${WHEEL_DIR}" ]; then find "${WHEEL_DIR}" -name '*.whl' -print; fi
 
 FROM scratch
 WORKDIR /
