@@ -10,10 +10,10 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
-RUN \
-  --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
-  apt-get update && \
-  apt-get install -y patchelf musl-tools
+# RUN \
+#   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
+#   apt-get update && \
+#   apt-get install -y patchelf musl-tools
   
 FROM base AS base_amd64_none
 # does not need rustc
@@ -59,28 +59,17 @@ FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
 ARG TARGETVARIANT
 WORKDIR /app
-COPY LICENSE.md .
-COPY README_PYPI.md .
-COPY scripts scripts/
-COPY binary_dist binary_dist/
 COPY pyproject.toml .
-COPY src src/
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
-    --mount=type=cache,target=/root/pre-built,sharing=private,id=pip-pre-built \
+    --mount=type=cache,target=/root/pre-built,sharing=shared,id=pip-pre-built \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
-    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check --find-link /root/pre-built .[dev,devlinux]
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check .[dev,devlinux]
 RUN \
-    . .venv/bin/activate && \
-    scripts/build_bin2 icloudpd icloud  && \
-    scripts/build_bin1 icloud && \
-    scripts/build_bin1 icloudpd_ex  && \
-    scripts/build_static icloudpd && \
-    scripts/build_static icloud && \
-    scripts/build_static icloudpd_ex && \
-    scripts/build_whl
+    if [ -d "/root/.cache/pip/wheel" ]; then find /root/.cache/pip/wheel -name *.whl -exec cp {} /root/pre-built \;; fi
+    
 
 FROM scratch
 WORKDIR /
-COPY --from=builder /app/dist/icloud* .
+COPY --from=builder /root/pre-built .

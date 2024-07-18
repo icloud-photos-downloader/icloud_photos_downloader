@@ -207,7 +207,7 @@ jobs:
         platforms: ${{ matrix.platform }}
         cache-from: type=gha
         cache-to: type=gha,mode=max
-        file: Dockerfile.build
+        file: Dockerfile.pre_build
         outputs: type=local,dest=dist
               
     - name: Reorg contents
@@ -226,7 +226,7 @@ jobs:
 
   build_docker_musl:
     needs: skip_check
-    if: needs.skip_check.outputs.should_skip != 'true'
+    if: false && needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
     strategy:
