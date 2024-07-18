@@ -12,7 +12,6 @@ ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apk-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
   apt-get update && \
   apt-get install -y patchelf musl-tools
   
@@ -45,6 +44,7 @@ RUN \
     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm_v6
+# pkg-config
 ARG TARGETARCH
 ARG TARGETVARIANT
 ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
