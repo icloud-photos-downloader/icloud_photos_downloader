@@ -199,7 +199,31 @@ jobs:
 
     - uses: docker/setup-buildx-action@v3
       id: setup
-    
+
+    - name: Cache
+      uses: actions/cache@v3
+      id: cache
+      with:
+        path: |
+          var-cache-apt
+          var-lib-apt
+          root-cache-pip
+          root-distrib-rust
+          root-pre-built
+        key: cache-${{ matrix.platform }}      
+
+    - name: inject cache into docker
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            "var-cache-apt": "/var/cache/apt",
+            "var-lib-apt": "/var/lib/apt",
+            "root-cache-pip": "/root/.cache/pip",
+            "root-distrib-rust": "/root/.distrib/rust",
+            "root-pre-built": "/root/pre-built"
+          }
+
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
