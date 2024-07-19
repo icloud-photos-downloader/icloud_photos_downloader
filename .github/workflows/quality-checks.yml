@@ -223,7 +223,7 @@ jobs:
       with:
         path: |
           .cache
-        key: cache-${{ matrix.platform[0] }}-${{ hashFiles('pyproject.toml') }}
+        key: cache-${{ matrix.platform[0] }}-${{ github.sha }}
         restore-keys: |
           cache-${{ matrix.platform[0] }}
 
