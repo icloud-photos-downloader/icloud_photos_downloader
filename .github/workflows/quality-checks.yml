@@ -178,7 +178,9 @@ jobs:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
   build_docker:
-    needs: skip_check
+    needs: 
+      - skip_check
+      - get_version
     if: needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
@@ -186,11 +188,26 @@ jobs:
       fail-fast: false
       matrix:
         platform:
-          - linux/amd64
-          - linux/arm64
-          - linux/arm/v7
-          - linux/386
-          - linux/arm/v6
+          - [
+            "linux/amd64",
+            "amd64",
+          ]
+          - [
+            "linux/arm64",
+            "arm64",
+          ]
+          - [
+            "linux/arm/v7",
+            "arm32v7",
+          ]
+          - [
+            "linux/386",
+            "386",
+          ]
+          - [
+            "linux/arm/v6",
+            "arm32v6",
+          ]
     steps:
     - uses: actions/checkout@v4
 
@@ -206,9 +223,9 @@ jobs:
       with:
         path: |
           .cache
-        key: cache-${{ matrix.platform }}-${{ hashFiles('pyproject.toml') }}
+        key: cache-${{ matrix.platform[0] }}-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
-          cache-${{ matrix.platform }}
+          cache-${{ matrix.platform[0] }}
 
       # var-cache-apt
     # var-lib-apt
@@ -230,7 +247,7 @@ jobs:
       uses: docker/build-push-action@v6
       with:
         push: false
-        platforms: ${{ matrix.platform }}
+        platforms: ${{ matrix.platform[0] }}
         cache-from: type=local,src=.cache
         cache-to: type=local,dest=.cache-new,mode=max
         file: Dockerfile.build
@@ -250,16 +267,9 @@ jobs:
     - name: Reorg contents
       continue-on-error: true
       run: |
-        ls -la dist
-        ls -la dist/linux_amd64
-        ls -la dist/linux_arm64
-        ls -la dist/linux_arm_v7
-        ls -la dist/linux_arm_v6
-        ls -la dist/linux_386
-        # mv dist/linux_amd64/* dist
-        # mv dist/linux_arm64/* dist
-        # mv dist/linux_arm_v7/* dist
-        # mv dist/linux_386/* dist
+        mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
 
   build_docker_musl:
     needs: skip_check
