@@ -206,11 +206,12 @@ jobs:
       with:
         path: |
           .cache
-          # var-cache-apt
-          # var-lib-apt
-          # root-cache-pip
-          # root-distrib-rust
         key: cache-${{ matrix.platform }}      
+
+      # var-cache-apt
+    # var-lib-apt
+    # root-cache-pip
+    # root-distrib-rust
     
     # - name: inject cache into docker
     #   uses: reproducible-containers/buildkit-cache-dance@v3.1.2
@@ -241,8 +242,8 @@ jobs:
     # https://github.com/moby/buildkit/issues/1896
     - name: Move cache
       run: |
-        rm -rf /.cache
-        mv /.cache-new /.cache
+        rm -rf .cache
+        mv .cache-new .cache
 
     - name: Reorg contents
       continue-on-error: true
