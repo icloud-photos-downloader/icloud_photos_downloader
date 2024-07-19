@@ -242,17 +242,41 @@ jobs:
           build-folders-${{ matrix.platform[0] }}-
     
     # not saving cache https://github.com/reproducible-containers/buildkit-cache-dance/issues/33
-    - name: inject cache folders into docker
-      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
-      with:
-        cache-map: |
-          {
-            "var-cache-apt": "/var/cache/apt",
-            "var-lib-apt": "/var/lib/apt",
-            "root-cache-pip": "/root/.cache/pip",
-            "root-distrib-rust": "/root/.distrib/rust/"
-          }
+    # - name: inject cache folders into docker
+    #   uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+    #   with:
+    #     cache-map: |
+    #       {
+    #         "var-cache-apt": "/var/cache/apt",
+    #         "var-lib-apt": "/var/lib/apt",
+    #         "root-cache-pip": "/root/.cache/pip",
+    #         "root-distrib-rust": "/root/.distrib/rust/"
+    #       }
 
+    - name: inject cache folders into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2
+      with:
+        cache-source: "var-cache-apt"
+        cache-target: "/var/cache/apt"
+
+    - name: inject cache folders into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2
+      with:
+        cache-source: "var-lib-apt"
+        cache-target: "/var/lib/apt"
+
+    - name: inject cache folders into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2
+      with:
+        cache-source: "root-cache-pip"
+        cache-target: "/root/.cache/pip"
+
+    - name: inject cache folders into docker
+      uses: reproducible-containers/buildkit-cache-dance@v2
+      with:
+        cache-source: "root-distrib-rust"
+        cache-target: "/root/.distrib/rust/"
+          
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
