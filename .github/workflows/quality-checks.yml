@@ -277,16 +277,20 @@ jobs:
         cache-source: "root-distrib-rust"
         cache-target: "/root/.distrib/rust/"
           
-    - name: Build and push
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        platforms: ${{ matrix.platform[0] }}
-        # do not cache layers
-        # cache-from: type=local,src=.cache
-        # cache-to: type=local,dest=.cache-new,mode=max
-        file: Dockerfile.build
-        outputs: type=local,dest=dist
+    # - name: Build and push
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     platforms: ${{ matrix.platform[0] }}
+    #     # do not cache layers
+    #     # cache-from: type=local,src=.cache
+    #     # cache-to: type=local,dest=.cache-new,mode=max
+    #     file: Dockerfile.build
+    #     outputs: type=local,dest=dist
+
+    - name: Build with docker
+      run: |
+        docker buildx build . --platform=${{ matrix.platform[0] }} --progress plain -o dist -f Dockerfile.build
 
     # from https://github.com/ArchiveBox/ArchiveBox/blob/dev/.github/workflows/docker.yml
     # This ugly bit is necessary if you don't want your cache to grow forever
