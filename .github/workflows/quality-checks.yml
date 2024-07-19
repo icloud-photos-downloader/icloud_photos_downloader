@@ -206,33 +206,44 @@ jobs:
       with:
         path: |
           .cache
-          var-cache-apt
-          var-lib-apt
-          root-cache-pip
-          root-distrib-rust
+          # var-cache-apt
+          # var-lib-apt
+          # root-cache-pip
+          # root-distrib-rust
         key: cache-${{ matrix.platform }}      
     
-    - name: inject cache into docker
-      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
-      with:
-        cache-map: |
-          {
-            "var-cache-apt": "/var/cache/apt",
-            "var-lib-apt": "/var/lib/apt",
-            "root-cache-pip": "/root/.cache/pip",
-            "root-distrib-rust": "/root/.distrib/rust/"
-          }
+    # - name: inject cache into docker
+    #   uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+    #   with:
+    #     cache-map: |
+    #       {
+    #         "var-cache-apt": "/var/cache/apt",
+    #         "var-lib-apt": "/var/lib/apt",
+    #         "root-cache-pip": "/root/.cache/pip",
+    #         "root-distrib-rust": "/root/.distrib/rust/"
+    #       }
 
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         push: false
         platforms: ${{ matrix.platform }}
-        # cache-from: type=local,src=.cache
-        # cache-to: type=local,dest=.cache,mode=max
+        cache-from: type=local,src=.cache
+        cache-to: type=local,dest=.cache-new,mode=max
         file: Dockerfile.pre_build
         outputs: type=local,dest=dist
-              
+
+    # from https://github.com/ArchiveBox/ArchiveBox/blob/dev/.github/workflows/docker.yml
+    # This ugly bit is necessary if you don't want your cache to grow forever
+    # until it hits GitHub's limit of 5GB.
+    # Temp fix
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
+    - name: Move cache
+      run: |
+        rm -rf /.cache
+        mv /.cache-new /.cache
+
     - name: Reorg contents
       continue-on-error: true
       run: |
