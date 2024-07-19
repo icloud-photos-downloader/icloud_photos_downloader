@@ -233,7 +233,7 @@ jobs:
         platforms: ${{ matrix.platform }}
         cache-from: type=local,src=.cache
         cache-to: type=local,dest=.cache-new,mode=max
-        file: Dockerfile.pre_build
+        file: Dockerfile.build
         outputs: type=local,dest=dist
 
     # from https://github.com/ArchiveBox/ArchiveBox/blob/dev/.github/workflows/docker.yml
