@@ -237,10 +237,11 @@ jobs:
           var-lib-apt
           root-cache-pip
           root-distrib-rust
-        key: build-folders-${{ matrix.platform[0] }}-${{ hashFiles('pyproject.toml') }}
+        key: build-folders-${{ matrix.platform[0] }}-${{ hashFiles('pyproject.toml','Dockerfile.build') }}
         restore-keys: |
           build-folders-${{ matrix.platform[0] }}-
     
+    # not saving cache https://github.com/reproducible-containers/buildkit-cache-dance/issues/33
     - name: inject cache folders into docker
       uses: reproducible-containers/buildkit-cache-dance@v3.1.2
       with:
