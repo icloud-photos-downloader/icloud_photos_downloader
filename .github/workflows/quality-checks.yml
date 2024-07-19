@@ -206,7 +206,9 @@ jobs:
       with:
         path: |
           .cache
-        key: cache-${{ matrix.platform }}      
+        key: cache-${{ matrix.platform }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          cache-${{ matrix.platform }}
 
       # var-cache-apt
     # var-lib-apt
