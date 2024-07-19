@@ -228,7 +228,7 @@ jobs:
     #       cache-${{ matrix.platform[0] }}
 
     - name: Cache Folders
-      uses: actions/cache@v4
+      uses: actions/cache@v3
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
