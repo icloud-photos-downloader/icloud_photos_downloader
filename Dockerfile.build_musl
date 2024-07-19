@@ -69,6 +69,7 @@ COPY scripts scripts/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY src src/
+# staticx must be installed after scons
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
     python3 -m venv .venv && \

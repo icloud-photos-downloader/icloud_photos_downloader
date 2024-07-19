@@ -263,7 +263,7 @@ jobs:
 
   build_docker_musl:
     needs: skip_check
-    if: false && needs.skip_check.outputs.should_skip != 'true'
+    if: needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
     strategy:
@@ -285,16 +285,37 @@ jobs:
     - uses: docker/setup-buildx-action@v3
       id: setup
     
+    - name: Cache
+      uses: actions/cache@v4
+      id: cache
+      with:
+        path: |
+          .cache
+        key: cache-musl-${{ matrix.platform }}-${{ hashFiles('pyproject.toml') }}
+        restore-keys: |
+          cache-musl-${{ matrix.platform }}
+
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         push: false
         platforms: ${{ matrix.platform }}
-        cache-from: type=gha
-        cache-to: type=gha,mode=max
+        cache-from: type=local,src=.cache
+        cache-to: type=local,dest=.cache-new,mode=max
         file: Dockerfile.build_musl
         outputs: type=local,dest=dist
               
+    # from https://github.com/ArchiveBox/ArchiveBox/blob/dev/.github/workflows/docker.yml
+    # This ugly bit is necessary if you don't want your cache to grow forever
+    # until it hits GitHub's limit of 5GB.
+    # Temp fix
+    # https://github.com/docker/build-push-action/issues/252
+    # https://github.com/moby/buildkit/issues/1896
+    - name: Move cache
+      run: |
+        rm -rf .cache
+        mv .cache-new .cache
+
     - name: Reorg contents
       continue-on-error: true
       run: |
