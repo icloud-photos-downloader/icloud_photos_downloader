@@ -389,19 +389,18 @@ jobs:
             "linux/arm64",
             "arm64",
           ]
-          # these do not have rust available and will not compile
-          # - [
-          #   "linux/arm/v7",
-          #   "arm32v7",
-          # ]
-          # - [
-          #   "linux/386",
-          #   "386",
-          # ]
-          # - [
-          #   "linux/arm/v6",
-          #   "arm32v6",
-          # ]
+          - [
+            "linux/arm/v7",
+            "arm32v7",
+          ]
+          - [
+            "linux/386",
+            "386",
+          ]
+          - [
+            "linux/arm/v6",
+            "arm32v6",
+          ]
     steps:
     - uses: actions/checkout@v4
 
