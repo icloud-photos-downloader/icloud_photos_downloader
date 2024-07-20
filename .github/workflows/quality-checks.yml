@@ -360,7 +360,7 @@ jobs:
         options: -v ${{ github.workspace }}/dist:/dist --platform ${{ matrix.platform[0] }}
         run: >
           export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-          apk add --update tzdata musl-locale musl-locale-lang &&
+          apk add --update tzdata musl-locales musl-locales-lang &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /dist/icloudpd --use-os-locale --version
     
     - name: Reorg contents
@@ -453,7 +453,7 @@ jobs:
         file: Dockerfile.build-musl
         outputs: type=local,dest=dist
 
-    - name: Compatibility TZLC
+    - name: Compatibility TZLC Alpine
       continue-on-error: true
       uses: addnab/docker-run-action@v3
       with:
@@ -462,7 +462,7 @@ jobs:
         options: -v ${{ github.workspace }}/dist:/dist --platform ${{ matrix.platform[0] }}
         run: >
           export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-          apk add --update tzdata musl-locale musl-locale-lang &&
+          apk add --update tzdata musl-locales musl-locales-lang &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /dist/icloudpd --use-os-locale --version
 
           
