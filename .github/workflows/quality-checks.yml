@@ -211,22 +211,32 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+    # - name: Set up QEMU
+    #   uses: docker/setup-qemu-action@v3
 
     - uses: docker/setup-buildx-action@v3
       id: setup
 
-    - name: Cache Folders
+    # - name: Cache Folders
+    #   uses: actions/cache@v4
+    #   id: cache
+    #   with:
+    #     # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
+    #     path: .cache
+    #     key: build-folders-${{ matrix.platform[0] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.cache_extract', 'Dockerfile.cache_inject') }}
+    #     restore-keys: |
+    #       build-folders-${{ matrix.platform[0] }}-
+
+    - name: Cache Folders Dummy
       uses: actions/cache@v4
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
         path: .cache
-        key: build-folders-${{ matrix.platform[0] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.cache_extract', 'Dockerfile.cache_inject') }}
+        key: dummy-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.dummy') }}
         restore-keys: |
-          build-folders-${{ matrix.platform[0] }}-
-    
+          dummy-${{ matrix.platform[0] }}-
+      
     - name: Create folders on cache miss
       run: |
         mkdir -p .cache/var/cache/apt
@@ -238,93 +248,104 @@ jobs:
       run: |
         du -h -d 1 .cache
         
-    - name: Inject /var/cache/apt into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_inject
-        context: .cache/var/cache/apt
-        build-args: TARGET=/var/cache/apt
+    # - name: Inject /var/cache/apt into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_inject
+    #     context: .cache/var/cache/apt
+    #     build-args: TARGET=/var/cache/apt
 
-    - name: Inject /var/lib/apt into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_inject
-        context: .cache/var/lib/apt
-        build-args: TARGET=/var/lib/apt
+    # - name: Inject /var/lib/apt into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_inject
+    #     context: .cache/var/lib/apt
+    #     build-args: TARGET=/var/lib/apt
 
-    - name: Inject /root/.cache/pip into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_inject
-        context: .cache/root/.cache/pip
-        build-args: TARGET=/root/.cache/pip
+    # - name: Inject /root/.cache/pip into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_inject
+    #     context: .cache/root/.cache/pip
+    #     build-args: TARGET=/root/.cache/pip
           
-    - name: Inject /root/.distrib/rust into docker cache
-      uses: docker/build-push-action@v6
+    # - name: Inject /root/.distrib/rust into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_inject
+    #     context: .cache/root/.distrib/rust
+    #     build-args: TARGET=/root/.distrib/rust
+
+    - name: Inject docker cache
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
       with:
-        push: false
-        file: Dockerfile.cache_inject
-        context: .cache/root/.distrib/rust
-        build-args: TARGET=/root/.distrib/rust
-  
+        cache-map: |
+          {
+            ".cache/var/cache/apt": "/var/cache/apt",
+            ".cache/var/lib/apt": "/var/lib/apt",
+            ".cache/root/.cache/pip": "/root/.cache/pip",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust",
+          }
+    
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         push: false
         platforms: ${{ matrix.platform[0] }}
         # do not cache layers
-        file: Dockerfile.build
+        file: Dockerfile.dummy
         outputs: type=local,dest=dist
 
-    - name: Extract /var/cache/apt into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_extract
-        outputs: type=local,dest=.cache/var/cache/apt
-        provenance: false
-        build-args: TARGET=/var/cache/apt
+    # - name: Extract /var/cache/apt into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_extract
+    #     outputs: type=local,dest=.cache/var/cache/apt
+    #     provenance: false
+    #     build-args: TARGET=/var/cache/apt
 
-    - name: Extract /var/lib/apt into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_extract
-        outputs: type=local,dest=.cache/var/lib/apt
-        provenance: false
-        build-args: TARGET=/var/lib/apt
+    # - name: Extract /var/lib/apt into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_extract
+    #     outputs: type=local,dest=.cache/var/lib/apt
+    #     provenance: false
+    #     build-args: TARGET=/var/lib/apt
 
-    - name: Extract /root/.cache/pip into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_extract
-        outputs: type=local,dest=.cache/root/.cache/pip
-        provenance: false
-        build-args: TARGET=/root/.cache/pip
+    # - name: Extract /root/.cache/pip into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_extract
+    #     outputs: type=local,dest=.cache/root/.cache/pip
+    #     provenance: false
+    #     build-args: TARGET=/root/.cache/pip
           
-    - name: Extract /root/.distrib/rust into docker cache
-      uses: docker/build-push-action@v6
-      with:
-        push: false
-        file: Dockerfile.cache_extract
-        outputs: type=local,dest=.cache/root/.distrib/rust
-        provenance: false
-        build-args: TARGET=/root/.distrib/rust
+    # - name: Extract /root/.distrib/rust into docker cache
+    #   uses: docker/build-push-action@v6
+    #   with:
+    #     push: false
+    #     file: Dockerfile.cache_extract
+    #     outputs: type=local,dest=.cache/root/.distrib/rust
+    #     provenance: false
+    #     build-args: TARGET=/root/.distrib/rust
 
     - name: DEBUG Cache size on save
       run: |
         du -h -d 1 .cache
 
-    - name: Reorg contents
-      continue-on-error: true
-      run: |
-        mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
-        mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
-        mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+    # - name: Reorg contents
+    #   continue-on-error: true
+    #   run: |
+    #     mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+    #     mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+    #     mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
 
   build_docker_musl:
     needs: skip_check
