@@ -227,15 +227,15 @@ jobs:
     #     restore-keys: |
     #       build-folders-${{ matrix.platform[0] }}-
 
-    - name: Cache Folders Dummy
+    - name: Cache Folders Build
       uses: actions/cache@v4
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
         path: .cache
-        key: dummy-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.dummy') }}
+        key: build-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.dummy') }}
         restore-keys: |
-          dummy-${{ matrix.platform[0] }}-
+          build-${{ matrix.platform[0] }}-
       
     - name: Create folders on cache miss
       run: |
@@ -297,7 +297,7 @@ jobs:
         push: false
         platforms: ${{ matrix.platform[0] }}
         # do not cache layers
-        file: Dockerfile.dummy
+        file: Dockerfile.build
         outputs: type=local,dest=dist
 
     # - name: Extract /var/cache/apt into docker cache
