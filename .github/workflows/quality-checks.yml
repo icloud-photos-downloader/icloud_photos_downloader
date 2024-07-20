@@ -347,7 +347,7 @@ jobs:
       with:
         image: busybox
         shell: sh
-        options: -v ${{ github.workspace }}/dist:/dist --platform linux/${{ matrix.platform[0] }}
+        options: -v ${{ github.workspace }}/dist:/dist --platform ${{ matrix.platform[0] }}
         run: >
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /dist/icloudpd --use-os-locale --version
 
