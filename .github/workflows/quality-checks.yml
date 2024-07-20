@@ -349,47 +349,86 @@ jobs:
         mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
 
   build_docker_musl:
-    needs: skip_check
-    if: false && needs.skip_check.outputs.should_skip != 'true'
+    needs: 
+      - skip_check
+      - get_version
+    if: needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
       matrix:
         platform:
-          - linux/amd64
-          - linux/arm64
+          - [
+            "linux/amd64",
+            "amd64",
+          ]
+          - [
+            "linux/arm64",
+            "arm64",
+          ]
           # these do not have rust available and will not compile
-          # - linux/arm/v7
-          # - linux/386
-          # - linux/arm/v6
+          # - [
+          #   "linux/arm/v7",
+          #   "arm32v7",
+          # ]
+          # - [
+          #   "linux/386",
+          #   "386",
+          # ]
+          # - [
+          #   "linux/arm/v6",
+          #   "arm32v6",
+          # ]
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up QEMU
+      if: matrix.platform[1] != 'amd64' && matrix.platform[1] != '386'
       uses: docker/setup-qemu-action@v3
 
     - uses: docker/setup-buildx-action@v3
       id: setup
     
-    - name: Cache
+    - name: Cache Folders Build
       uses: actions/cache@v4
       id: cache
       with:
-        path: |
-          .cache
-        key: cache-musl-${{ matrix.platform }}-${{ hashFiles('pyproject.toml') }}
+        # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
+        path: .cache
+        key: build-musl-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build-musl') }}
         restore-keys: |
-          cache-musl-${{ matrix.platform }}
+          build-musl-${{ matrix.platform[1] }}-
 
+    - name: Create folders on cache miss
+      run: |
+        mkdir -p .cache/var/cache/apk
+        mkdir -p .cache/root/.cache/pip
+        mkdir -p .cache/root/.distrib/rust
+      
+    - name: DEBUG Cache size on restore
+      run: |
+        du -h -d 1 .cache
+
+    - name: Inject docker cache
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            ".cache/var/cache/apk": "/var/cache/apk",
+            ".cache/root/.cache/pip": "/root/.cache/pip",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust"
+          }
+              
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         push: false
-        platforms: ${{ matrix.platform }}
+        platforms: ${{ matrix.platform[0] }}
+        # do not cache layers
         # cache-from: type=local,src=cache
         # cache-to: type=local,dest=cache-new,mode=max
-        file: Dockerfile.build_musl
+        file: Dockerfile.build-musl
         outputs: type=local,dest=dist
               
     # from https://github.com/ArchiveBox/ArchiveBox/blob/dev/.github/workflows/docker.yml
