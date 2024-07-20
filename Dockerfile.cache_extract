@@ -1,0 +1,10 @@
+FROM busybox AS injector
+ARG TARGET
+RUN \
+    --mount=type=cache,target="${TARGET}" \
+    mkdir -p /root/cache-injector && \
+    cp -R -p "${TARGET}"/. /root/cache-injector
+
+FROM scratch
+WORKDIR /
+COPY --from=injector /root/cache-injector .
