@@ -341,6 +341,16 @@ jobs:
       run: |
         du -h -d 1 .cache
 
+    - name: Compatibility TZLC
+      uses: addnab/docker-run-action@v3
+      with:
+        image: alpine3.18
+        shell: sh
+        options: -v ${{ github.workspace }}/dist:/dist --platform linux/${{ matrix.platform[0] }}
+        run: >
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /dist/icloudpd --use-os-locale --version
+
+
     - name: Reorg contents
       continue-on-error: true
       run: |
