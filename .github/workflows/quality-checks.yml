@@ -288,7 +288,7 @@ jobs:
             ".cache/var/cache/apt": "/var/cache/apt",
             ".cache/var/lib/apt": "/var/lib/apt",
             ".cache/root/.cache/pip": "/root/.cache/pip",
-            ".cache/root/.distrib/rust": "/root/.distrib/rust",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust"
           }
     
     - name: Build and push
