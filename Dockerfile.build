@@ -11,8 +11,8 @@ ARG TARGETVARIANT
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 RUN \
-  --mount=type=cache,target=/var/cache/apt,sharing=locked,id=apt-${TARGETARCH}-${TARGETVARIANT:-none} \
-  --mount=type=cache,target=/var/lib/apt,sharing=locked,id=apt-lib-${TARGETARCH}-${TARGETVARIANT:-none} \
+  --mount=type=cache,target=/var/cache/apt,sharing=locked \
+  --mount=type=cache,target=/var/lib/apt,sharing=locked \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
@@ -26,7 +26,7 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ENV RUST_DISTRO_NAME=rust-1.79.0-i686-unknown-linux-gnu
 RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=locked \
     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
@@ -40,7 +40,7 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
 RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=locked \
     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
@@ -52,7 +52,7 @@ ARG TARGETARCH
 ARG TARGETVARIANT
 ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
 RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=locked,id=${RUST_DISTRO_NAME} \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=locked \
     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
@@ -71,7 +71,7 @@ COPY pyproject.toml .
 COPY src src/
 # staticx must be installed after scons - they do not have deps that pip can handle
 RUN \
-    --mount=type=cache,target=/root/.cache/pip,sharing=locked,id=pip-${TARGETARCH}-${TARGETVARIANT:-none} \
+    --mount=type=cache,target=/root/.cache/pip,sharing=locked \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     pip3 install --disable-pip-version-check .[dev,devlinux] && \
