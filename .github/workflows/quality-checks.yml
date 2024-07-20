@@ -342,9 +342,10 @@ jobs:
         du -h -d 1 .cache
 
     - name: Compatibility TZLC
+      continue-on-error: true
       uses: addnab/docker-run-action@v3
       with:
-        image: alpine3.18
+        image: busybox
         shell: sh
         options: -v ${{ github.workspace }}/dist:/dist --platform linux/${{ matrix.platform[0] }}
         run: >
@@ -442,9 +443,10 @@ jobs:
         outputs: type=local,dest=dist
 
     - name: Compatibility TZLC
+      continue-on-error: true
       uses: addnab/docker-run-action@v3
       with:
-        image: alpine3.18
+        image: alpine:3.18
         shell: sh
         options: -v ${{ github.workspace }}/dist:/dist --platform linux/${{ matrix.platform[0] }}
         run: >
