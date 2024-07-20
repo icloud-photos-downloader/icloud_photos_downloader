@@ -262,13 +262,13 @@ jobs:
         context: .cache/root/.cache/pip
         build-args: TARGET=/root/.cache/pip
           
-    - name: Inject /root/.distrib/rust/ into docker cache
+    - name: Inject /root/.distrib/rust into docker cache
       uses: docker/build-push-action@v6
       with:
         push: false
         file: Dockerfile.cache_inject
-        context: .cache/root/.distrib/rust/
-        build-args: TARGET=/root/.distrib/rust/
+        context: .cache/root/.distrib/rust
+        build-args: TARGET=/root/.distrib/rust
   
     - name: Build and push
       uses: docker/build-push-action@v6
@@ -306,14 +306,14 @@ jobs:
         provenance: false
         build-args: TARGET=/root/.cache/pip
           
-    - name: Extract /root/.distrib/rust/ into docker cache
+    - name: Extract /root/.distrib/rust into docker cache
       uses: docker/build-push-action@v6
       with:
         push: false
         file: Dockerfile.cache_extract
-        outputs: type=local,dest=.cache/root/.distrib/rust/
+        outputs: type=local,dest=.cache/root/.distrib/rust
         provenance: false
-        build-args: TARGET=/root/.distrib/rust/
+        build-args: TARGET=/root/.distrib/rust
 
     - name: DEBUG Cache size on save
       run: |
