@@ -469,6 +469,6 @@ jobs:
       run: |
         mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
-        mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-musl- ${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
 
         
