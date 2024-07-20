@@ -234,6 +234,10 @@ jobs:
         mkdir -p .cache/root/.cache/pip
         mkdir -p .cache/root/.distrib/rust
       
+    - name: DEBUG Cache size on restore
+      run: |
+        du -h -d 1 .cache
+        
     - name: Inject /var/cache/apt into docker cache
       uses: docker/build-push-action@v6
       with:
@@ -310,6 +314,10 @@ jobs:
         outputs: type=local,dest=.cache/root/.distrib/rust/
         provenance: false
         build-args: TARGET=/root/.distrib/rust/
+
+    - name: DEBUG Cache size on save
+      run: |
+        du -h -d 1 .cache
 
     - name: Reorg contents
       continue-on-error: true
