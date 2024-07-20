@@ -232,21 +232,21 @@ jobs:
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
-        path: .cache
+        path: cache
         key: dummy-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.dummy') }}
         restore-keys: |
           dummy-${{ matrix.platform[0] }}-
       
     - name: Create folders on cache miss
       run: |
-        mkdir -p .cache/var/cache/apt
-        mkdir -p .cache/var/lib/apt
-        mkdir -p .cache/root/.cache/pip
-        mkdir -p .cache/root/.distrib/rust
+        mkdir -p cache/var/cache/apt
+        mkdir -p cache/var/lib/apt
+        mkdir -p cache/root/.cache/pip
+        mkdir -p cache/root/.distrib/rust
       
     - name: DEBUG Cache size on restore
       run: |
-        du -h -d 1 .cache
+        du -h -d 1 cache
         
     # - name: Inject /var/cache/apt into docker cache
     #   uses: docker/build-push-action@v6
@@ -285,10 +285,10 @@ jobs:
       with:
         cache-map: |
           {
-            ".cache/var/cache/apt": "/var/cache/apt",
-            ".cache/var/lib/apt": "/var/lib/apt",
-            ".cache/root/.cache/pip": "/root/.cache/pip",
-            ".cache/root/.distrib/rust": "/root/.distrib/rust",
+            "cache/var/cache/apt": "/var/cache/apt",
+            "cache/var/lib/apt": "/var/lib/apt",
+            "cache/root/.cache/pip": "/root/.cache/pip",
+            "cache/root/.distrib/rust": "/root/.distrib/rust",
           }
     
     - name: Build and push
@@ -338,7 +338,7 @@ jobs:
 
     - name: DEBUG Cache size on save
       run: |
-        du -h -d 1 .cache
+        du -h -d 1 cache
 
     # - name: Reorg contents
     #   continue-on-error: true
@@ -376,7 +376,7 @@ jobs:
       id: cache
       with:
         path: |
-          .cache
+          cache
         key: cache-musl-${{ matrix.platform }}-${{ hashFiles('pyproject.toml') }}
         restore-keys: |
           cache-musl-${{ matrix.platform }}
@@ -386,8 +386,8 @@ jobs:
       with:
         push: false
         platforms: ${{ matrix.platform }}
-        cache-from: type=local,src=.cache
-        cache-to: type=local,dest=.cache-new,mode=max
+        # cache-from: type=local,src=cache
+        # cache-to: type=local,dest=cache-new,mode=max
         file: Dockerfile.build_musl
         outputs: type=local,dest=dist
               
@@ -397,10 +397,10 @@ jobs:
     # Temp fix
     # https://github.com/docker/build-push-action/issues/252
     # https://github.com/moby/buildkit/issues/1896
-    - name: Move cache
-      run: |
-        rm -rf .cache
-        mv .cache-new .cache
+    # - name: Move cache
+    #   run: |
+    #     rm -rf .cache
+    #     mv .cache-new .cache
 
     - name: Reorg contents
       continue-on-error: true
