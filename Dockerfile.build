@@ -74,6 +74,8 @@ RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=shared \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
+    echo "List pip cache..." && \
+    pip3 cache list && \
     pip3 install --disable-pip-version-check .[dev,devlinux] && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1
 RUN \
