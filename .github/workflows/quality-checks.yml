@@ -235,7 +235,7 @@ jobs:
         path: .cache
         key: build-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build') }}
         restore-keys: |
-          build-${{ matrix.platform[0] }}-
+          build-${{ matrix.platform[1] }}-
       
     - name: Create folders on cache miss
       run: |
