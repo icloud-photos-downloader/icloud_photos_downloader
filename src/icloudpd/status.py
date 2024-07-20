@@ -2,6 +2,9 @@ from enum import Enum
 from threading import Lock
 from typing import Optional
 
+from icloudpd.config import Config
+from icloudpd.progress import Progress
+
 
 class Status(Enum):
     NO_INPUT_NEEDED = "no_input_needed"
@@ -12,12 +15,17 @@ class Status(Enum):
     SUPPLIED_PASSWORD = "supplied_password"
     CHECKING_PASSWORD = "checking_password"
 
+    def __str__(self) -> str:
+        return self.name
+
 
 class StatusExchange:
     def __init__(self) -> None:
         self.lock = Lock()
         self._status = Status.NO_INPUT_NEEDED
         self._payload: Optional[str] = None
+        self._config: Optional[Config] = None
+        self._progress = Progress()
 
     def get_status(self) -> Status:
         with self.lock:
@@ -53,3 +61,15 @@ class StatusExchange:
                 return None
 
             return self._payload
+
+    def set_config(self, config: Config) -> None:
+        with self.lock:
+            self._config = config
+
+    def get_config(self) -> Optional[Config]:
+        with self.lock:
+            return self._config
+
+    def get_progress(self) -> Progress:
+        with self.lock:
+            return self._progress

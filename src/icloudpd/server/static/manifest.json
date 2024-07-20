@@ -1,0 +1,13 @@
+{
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "name": "iCloud Photos Downloader",
+    "short_name": "icloudpd",
+    "description": "Download your photos the awesome way",
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#0d6efd",
+    "background_color": "#212529",
+    "icons": [
+    ]
+}
