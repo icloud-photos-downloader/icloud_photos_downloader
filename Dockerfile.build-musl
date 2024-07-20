@@ -1,6 +1,6 @@
 # Multi-arch build (local):
 #     docker buildx create --use --driver=docker-container --name container --bootstrap
-#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build_musl
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build-musl
 # ,linux/arm64,linux/arm/v7,linux/386
 # rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
 
@@ -12,7 +12,7 @@ WORKDIR /app
 RUN \
   --mount=type=cache,target=/var/cache/apk,sharing=shared \
   apk update && \
-  apk add git curl binutils gcc libc-dev libffi-dev zlib-dev openssl-dev tzdata bash patchelf python3-dev musl-dev pkgconfig       
+  apk add git curl binutils gcc libc-dev libffi-dev zlib-dev openssl-dev tzdata bash patchelf python3-dev musl-dev pkgconfig cargo
 # from https://cryptography.io/en/latest/installation/#building-cryptography-on-linux
 # If you get an error with openssl-dev you may have to use libressl-dev.
 # cargo 
@@ -22,42 +22,42 @@ FROM base AS base_amd64_none
 
 FROM base AS base_386_none
 # does not have musl https://github.com/rust-lang/rustup/issues/2984
-ARG TARGETARCH
-ARG TARGETVARIANT
-ENV RUST_DISTRO_NAME=rust-1.79.0-i686-unknown-linux-gnu
-RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
-    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
-    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
-    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
+# ARG TARGETARCH
+# ARG TARGETVARIANT
+# ENV RUST_DISTRO_NAME=rust-1.79.0-i686-unknown-linux-gnu
+# RUN \
+#     --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
+#     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
+#     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+#     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+#     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm64_none
 # does not need rustc
 
 FROM base AS base_arm_v7
 # does not have musl
-ARG TARGETARCH
-ARG TARGETVARIANT
-ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
-RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
-    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
-    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
-    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
+# ARG TARGETARCH
+# ARG TARGETVARIANT
+# ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
+# RUN \
+#     --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
+#     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
+#     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+#     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+#     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base AS base_arm_v6
 # does not have musl
-ARG TARGETARCH
-ARG TARGETVARIANT
-ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
-RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
-    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
-    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
-    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
+# ARG TARGETARCH
+# ARG TARGETVARIANT
+# ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
+# RUN \
+#     --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
+#     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
+#     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+#     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+#     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
       
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
@@ -74,12 +74,16 @@ RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=shared \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
-    pip3 install --disable-pip-version-check .[dev,devlinux]
+    pip3 install --disable-pip-version-check .[dev,devlinux] && \
+    pip3 install --disable-pip-version-check staticx==0.14.1
 RUN \
     . .venv/bin/activate && \
     scripts/build_bin2 icloudpd icloud  && \
     scripts/build_bin1 icloud && \
     scripts/build_bin1 icloudpd_ex  && \
+    scripts/build_static icloudpd && \
+    scripts/build_static icloud && \
+    scripts/build_static icloudpd_ex && \
     scripts/build_whl
 
 FROM scratch
