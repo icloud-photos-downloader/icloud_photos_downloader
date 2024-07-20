@@ -450,6 +450,8 @@ jobs:
         shell: sh
         options: -v ${{ github.workspace }}/dist:/dist --platform ${{ matrix.platform[0] }}
         run: >
+          export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
+          apk add --update tzdata musl-locale musl-locale-lang &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /dist/icloudpd --use-os-locale --version
 
           
