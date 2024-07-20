@@ -181,7 +181,7 @@ jobs:
     needs: 
       - skip_check
       - get_version
-    if: false && needs.skip_check.outputs.should_skip != 'true'
+    if: needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
     strategy:
@@ -192,22 +192,22 @@ jobs:
             "linux/amd64",
             "amd64",
           ]
-          - [
-            "linux/arm64",
-            "arm64",
-          ]
-          - [
-            "linux/arm/v7",
-            "arm32v7",
-          ]
-          - [
-            "linux/386",
-            "386",
-          ]
-          - [
-            "linux/arm/v6",
-            "arm32v6",
-          ]
+          # - [
+          #   "linux/arm64",
+          #   "arm64",
+          # ]
+          # - [
+          #   "linux/arm/v7",
+          #   "arm32v7",
+          # ]
+          # - [
+          #   "linux/386",
+          #   "386",
+          # ]
+          # - [
+          #   "linux/arm/v6",
+          #   "arm32v6",
+          # ]
     steps:
     - uses: actions/checkout@v4
 
