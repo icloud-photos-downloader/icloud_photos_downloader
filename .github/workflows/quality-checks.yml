@@ -192,22 +192,22 @@ jobs:
             "linux/amd64",
             "amd64",
           ]
-          # - [
-          #   "linux/arm64",
-          #   "arm64",
-          # ]
-          # - [
-          #   "linux/arm/v7",
-          #   "arm32v7",
-          # ]
-          # - [
-          #   "linux/386",
-          #   "386",
-          # ]
-          # - [
-          #   "linux/arm/v6",
-          #   "arm32v6",
-          # ]
+          - [
+            "linux/arm64",
+            "arm64",
+          ]
+          - [
+            "linux/arm/v7",
+            "arm32v7",
+          ]
+          - [
+            "linux/386",
+            "386",
+          ]
+          - [
+            "linux/arm/v6",
+            "arm32v6",
+          ]
     steps:
     - uses: actions/checkout@v4
 
@@ -233,7 +233,7 @@ jobs:
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
         path: .cache
-        key: build-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build', 'Dockerfile.dummy') }}
+        key: build-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build') }}
         restore-keys: |
           build-${{ matrix.platform[0] }}-
       
@@ -340,12 +340,12 @@ jobs:
       run: |
         du -h -d 1 .cache
 
-    # - name: Reorg contents
-    #   continue-on-error: true
-    #   run: |
-    #     mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
-    #     mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
-    #     mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+    - name: Reorg contents
+      continue-on-error: true
+      run: |
+        mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
 
   build_docker_musl:
     needs: skip_check
