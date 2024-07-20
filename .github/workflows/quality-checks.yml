@@ -465,15 +465,8 @@ jobs:
     - name: Reorg contents
       continue-on-error: true
       run: |
-        ls -la dist
-        ls -la dist/linux_amd64
-        ls -la dist/linux_arm64
-        ls -la dist/linux_arm_v7
-        ls -la dist/linux_arm_v6
-        ls -la dist/linux_386
-        # mv dist/linux_amd64/* dist
-        # mv dist/linux_arm64/* dist
-        # mv dist/linux_arm_v7/* dist
-        # mv dist/linux_386/* dist
+        mv dist/icloud dist/icloud-${{needs.get_version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        mv dist/icloudpd dist/icloudpd-${{needs.get_version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd_ex-${{needs.get_version.outputs.icloudpd_version}}-linux-musl- ${{ matrix.platform[1] }}
 
         
