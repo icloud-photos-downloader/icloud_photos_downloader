@@ -123,7 +123,8 @@ jobs:
     outputs:
       expected_version: ${{steps.get_version.outputs.expected_version}}
   
-  build_linux_apt:
+  build_linux_apt_old:
+    if: false
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -234,6 +235,99 @@ jobs:
         path: |
           dist/icloud*
 
+  build_linux_apt:
+    # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - [
+            "linux/amd64",
+            "amd64",
+          ]
+          - [
+            "linux/arm64",
+            "arm64",
+          ]
+          - [
+            "linux/arm/v7",
+            "arm32v7",
+          ]
+          - [
+            "linux/386",
+            "386",
+          ]
+          - [
+            "linux/arm/v6",
+            "arm32v6",
+          ]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      if: matrix.platform[1] != 'amd64' && matrix.platform[1] != '386'
+      uses: docker/setup-qemu-action@v3
+
+    - uses: docker/setup-buildx-action@v3
+      id: setup
+
+    - name: Cache Build
+      uses: actions/cache@v4
+      id: cache
+      with:
+        # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
+        path: .cache
+        key: build-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build') }}
+        restore-keys: |
+          build-${{ matrix.platform[1] }}-
+      
+    - name: Create folders on cache miss
+      run: |
+        mkdir -p .cache/var/cache/apt
+        mkdir -p .cache/var/lib/apt
+        mkdir -p .cache/root/.cache/pip
+        mkdir -p .cache/root/.distrib/rust
+      
+    - name: DEBUG Cache size on restore
+      run: |
+        du -h -d 1 .cache
+        
+    - name: Inject docker cache
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            ".cache/var/cache/apt": "/var/cache/apt",
+            ".cache/var/lib/apt": "/var/lib/apt",
+            ".cache/root/.cache/pip": "/root/.cache/pip",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust"
+          }
+    
+    - name: Build
+      uses: docker/build-push-action@v6
+      with:
+        push: false
+        platforms: ${{ matrix.platform[0] }}
+        # do not cache layers
+        file: Dockerfile.build
+        outputs: type=local,dest=dist
+
+    - name: Reorg contents
+      continue-on-error: true
+      run: |
+        mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd_ex-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.platform[1] }}-apt
+        if-no-files-found: error
+        path: |
+          dist/icloud*
+  
   clone_src_whl:
     runs-on: ubuntu-22.04
     needs:
@@ -394,7 +488,8 @@ jobs:
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
         
-  build_linux_apk:
+  build_linux_apk_old:
+    if: false
     runs-on: ubuntu-22.04
     strategy:
       fail-fast: false
@@ -496,6 +591,97 @@ jobs:
         path: |
           dist/icloud*
 
+  build_linux_apk:
+    # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - [
+            "linux/amd64",
+            "amd64",
+          ]
+          - [
+            "linux/arm64",
+            "arm64",
+          ]
+          - [
+            "linux/arm/v7",
+            "arm32v7",
+          ]
+          - [
+            "linux/386",
+            "386",
+          ]
+          - [
+            "linux/arm/v6",
+            "arm32v6",
+          ]
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up QEMU
+      if: matrix.platform[1] != 'amd64' && matrix.platform[1] != '386'
+      uses: docker/setup-qemu-action@v3
+
+    - uses: docker/setup-buildx-action@v3
+      id: setup
+    
+    - name: Cache Folders Build
+      uses: actions/cache@v4
+      id: cache
+      with:
+        # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
+        path: .cache
+        key: build-musl-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build-musl') }}
+        restore-keys: |
+          build-musl-${{ matrix.platform[1] }}-
+
+    - name: Create folders on cache miss
+      run: |
+        mkdir -p .cache/var/cache/apk
+        mkdir -p .cache/root/.cache/pip
+        mkdir -p .cache/root/.distrib/rust
+      
+    - name: DEBUG Cache size on restore
+      run: |
+        du -h -d 1 .cache
+
+    - name: Inject docker cache
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            ".cache/var/cache/apk": "/var/cache/apk",
+            ".cache/root/.cache/pip": "/root/.cache/pip",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust"
+          }
+              
+    - name: Build
+      uses: docker/build-push-action@v6
+      with:
+        push: false
+        platforms: ${{ matrix.platform[0] }}
+        # do not cache layers
+        file: Dockerfile.build-musl
+        outputs: type=local,dest=dist
+
+    - name: Reorg contents
+      continue-on-error: true
+      run: |
+        mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd_ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.platform[1] }}-apk
+        if-no-files-found: error
+        path: |
+          dist/icloud*
+  
   build_macos:
     # earliest possible mac for better compatibility
     runs-on: macos-12
@@ -582,7 +768,9 @@ jobs:
 
   build_docker:
     runs-on: ubuntu-22.04
-    needs: [ build_linux_apt, build_linux_apk ]
+    needs: 
+      # - build_linux_apt
+      - build_linux_apk # docker is musl only
 
     steps:
     - uses: actions/checkout@v4
@@ -627,7 +815,11 @@ jobs:
 
   build_npm:
     runs-on: ubuntu-22.04
-    needs: [build_linux_apt,build_linux_apk,build_macos,build_windows]
+    needs: 
+      - build_linux_apt
+      # - build_linux_apk npm is glibc only
+      - build_macos
+      - build_windows
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -1360,7 +1552,7 @@ jobs:
     runs-on: ubuntu-22.04 
     needs: 
       - build_linux_apt
-      - build_linux_apk
+      # - build_linux_apk
     defaults: 
       run: 
         shell: bash 
@@ -1556,7 +1748,7 @@ jobs:
     runs-on: ubuntu-22.04 
     needs: 
       - build_linux_apt
-      - build_linux_apk
+      # - build_linux_apk
     defaults: 
       run: 
         shell: bash 
