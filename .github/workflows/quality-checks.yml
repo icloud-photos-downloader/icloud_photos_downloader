@@ -204,10 +204,6 @@ jobs:
           #   "linux/386",
           #   "386",
           # ]
-          # - [
-          #   "linux/arm/v6",
-          #   "arm32v6",
-          # ]
     steps:
     - uses: actions/checkout@v4
 
@@ -396,10 +392,6 @@ jobs:
           - [
             "linux/386",
             "386",
-          ]
-          - [
-            "linux/arm/v6",
-            "arm32v6",
           ]
     steps:
     - uses: actions/checkout@v4

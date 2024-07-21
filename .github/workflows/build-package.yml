@@ -156,12 +156,6 @@ jobs:
               "armv7l", # pip file suffix
           ]
           # - [
-          #     "arm/v6",
-          #     "arm-unknown-linux-gnueabi",
-          #     "arm32v6", # file suffix
-          #     "armv6", # pip file suffix
-          # ]
-          # - [
           #     "arm/v5",
           #     "arm-unknown-linux-gnueabi",
           #     "arm32v5", # file suffix
@@ -259,10 +253,6 @@ jobs:
             "linux/386",
             "386",
           ]
-          - [
-            "linux/arm/v6",
-            "arm32v6",
-          ]
     steps:
     - uses: actions/checkout@v4
 
@@ -313,7 +303,6 @@ jobs:
         # do not cache layers
         file: Dockerfile.build
         outputs: type=local,dest=dist
-        build-args: ${{ matrix.platform[1] == 'arm32v6' && 'QEMU_CPU=arm1176' || '' }}
 
     - name: Reorg contents
       continue-on-error: true
@@ -498,12 +487,12 @@ jobs:
       matrix:
         BUILD_PROP:
         # https://doc.rust-lang.org/nightly/rustc/platform-support.html
-          # - [
-          #     "amd64", # docker plat
-          #     "x86_64-unknown-linux-gnu", # rust triplet
-          #     "amd64", # internal file suffix
-          #     "x86_64", # pip file suffix
-          # ]
+          - [
+              "amd64", # docker plat
+              "x86_64-unknown-linux-gnu", # rust triplet
+              "amd64", # internal file suffix
+              "x86_64", # pip file suffix
+          ]
           # - [
           #     "arm64",
           #     "aarch64-unknown-linux-gnu",
@@ -522,12 +511,6 @@ jobs:
           #     "arm32v7", # file suffix
           #     "armv7l", # pip file suffix
           # ]
-          - [
-              "arm/v6",
-              "arm-unknown-linux-gnueabi",
-              "arm32v6", # file suffix
-              "armv6", # pip file suffix
-          ]
           # - [
           #     "arm/v5",
           #     "arm-unknown-linux-gnueabi",
@@ -617,10 +600,6 @@ jobs:
             "linux/386",
             "386",
           ]
-          - [
-            "linux/arm/v6",
-            "arm32v6",
-          ]
     steps:
     - uses: actions/checkout@v4
 
@@ -669,7 +648,6 @@ jobs:
         # do not cache layers
         file: Dockerfile.build-musl
         outputs: type=local,dest=dist
-        build-args: ${{ matrix.platform[1] == 'arm32v6' && 'QEMU_CPU=arm1176' || '' }}
 
     - name: Reorg contents
       continue-on-error: true
@@ -800,7 +778,7 @@ jobs:
       with:
         context: .
         file: ./Dockerfile
-        platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7,linux/arm/v6 #,linux/arm/v5
+        platforms: linux/amd64,linux/arm64,linux/386,linux/arm/v7 #,linux/arm/v5
         push: false
         outputs: type=oci,dest=dist/icloudpd-${{inputs.icloudpd_version}}-oci.tar
         load: false  # load into docker 
@@ -946,11 +924,6 @@ jobs:
             "arm32v7",  # variant name
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
-          ]
-          - [
-            "arm32v6",  # variant name
-            "arm/v6",  # platform spec
-            "arm32v6/",  # image prefix
           ]
           # - [
           #   "arm32v5",  # variant name
@@ -1160,11 +1133,6 @@ jobs:
             "arm32v7",  # variant name
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
-          ]
-          - [
-            "arm32v6",  # variant name
-            "arm/v6",  # platform spec
-            "arm32v6/",  # image prefix
           ]
           # - [
           #   "arm32v5",  # variant name
@@ -1543,11 +1511,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
@@ -1738,11 +1701,6 @@ jobs:
             "arm32v7",  # variant name 
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
-          ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
           ] 
           # - [ 
           #   "arm32v5",  # variant name 
@@ -2046,11 +2004,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
@@ -2269,11 +2222,6 @@ jobs:
             "arm32v7",  # variant name 
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
-          ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
           ] 
           # - [ 
           #   "arm32v5",  # variant name 
@@ -2520,11 +2468,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
@@ -2741,11 +2684,6 @@ jobs:
           #   "arm32v7",  # variant name 
           #   "arm/v7",  # platform spec 
           #   "arm32v7/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v6",  # variant name 
-          #   "arm/v6",  # platform spec 
-          #   "arm32v6/",  # image prefix 
           # ] 
           # - [ 
           #   "arm32v5",  # variant name 
@@ -2967,11 +2905,6 @@ jobs:
           #   "arm32v7/",  # image prefix 
           # ] 
           # - [ 
-          #   "arm32v6",  # variant name 
-          #   "arm/v6",  # platform spec 
-          #   "arm32v6/",  # image prefix 
-          # ] 
-          # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 
           #   "arm32v5/",  # image prefix 
@@ -3191,11 +3124,6 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
           # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
-          - [ 
-            "arm32v6",  # variant name 
-            "arm/v6",  # platform spec 
-            "arm32v6/",  # image prefix 
-          ] 
           # - [ 
           #   "arm32v5",  # variant name 
           #   "arm/v5",  # platform spec 

@@ -9,7 +9,6 @@
 FROM python:3.12 AS base
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG QEMU_CPU
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 RUN \
@@ -48,23 +47,9 @@ RUN \
     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
-FROM base AS base_arm_v6
-# pkg-config
-ARG TARGETARCH
-ARG TARGETVARIANT
-ARG QEMU_CPU
-ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
-RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
-    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
-    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
-    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
-      
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
 ARG TARGETVARIANT
-ARG QEMU_CPU
 WORKDIR /app
 COPY LICENSE.md .
 COPY README_PYPI.md .
