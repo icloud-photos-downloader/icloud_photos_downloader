@@ -271,10 +271,6 @@ jobs:
         mkdir -p .cache/root/.cache/pip
         mkdir -p .cache/root/.distrib/rust
       
-    - name: DEBUG Cache size on restore
-      run: |
-        du -h -d 1 .cache
-        
     - name: Inject docker cache
       uses: reproducible-containers/buildkit-cache-dance@v3.1.2
       with:
@@ -610,10 +606,6 @@ jobs:
         mkdir -p .cache/root/.cache/pip
         mkdir -p .cache/root/.distrib/rust
       
-    - name: DEBUG Cache size on restore
-      run: |
-        du -h -d 1 .cache
-
     - name: Inject docker cache
       uses: reproducible-containers/buildkit-cache-dance@v3.1.2
       with:
