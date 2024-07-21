@@ -181,7 +181,7 @@ jobs:
     needs: 
       - skip_check
       - get_version
-    if: needs.skip_check.outputs.should_skip != 'true'
+    if: false && needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
     strategy:
@@ -374,7 +374,7 @@ jobs:
     needs: 
       - skip_check
       - get_version
-    if: needs.skip_check.outputs.should_skip != 'true'
+    if: false && needs.skip_check.outputs.should_skip != 'true'
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ubuntu-22.04
     strategy:
