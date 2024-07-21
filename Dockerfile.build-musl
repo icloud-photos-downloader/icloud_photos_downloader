@@ -8,6 +8,7 @@
 FROM python:3.12-alpine3.18 AS base
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG QEMU_CPU
 WORKDIR /app
 RUN \
   --mount=type=cache,target=/var/cache/apk,sharing=shared \
@@ -62,6 +63,7 @@ FROM base AS base_arm_v6
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG QEMU_CPU
 WORKDIR /app
 COPY LICENSE.md .
 COPY README_PYPI.md .
