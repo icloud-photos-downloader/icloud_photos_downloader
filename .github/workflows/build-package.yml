@@ -240,6 +240,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
     - name: Set up QEMU
       if: matrix.platform[1] != 'amd64'
       uses: docker/setup-qemu-action@v3
@@ -570,6 +577,13 @@ jobs:
           ]
     steps:
     - uses: actions/checkout@v4
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
 
     - name: Set up QEMU
       if: matrix.platform[1] != 'amd64'
