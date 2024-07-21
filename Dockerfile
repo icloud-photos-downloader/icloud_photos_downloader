@@ -19,6 +19,7 @@ RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -
 WORKDIR /app
 COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
 
+# debian does not support arm32v6 https://github.com/docker-library/python/issues/481#issuecomment-626828617
 FROM alpine:3.18 as runtime_arm_v6
 ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
 RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
