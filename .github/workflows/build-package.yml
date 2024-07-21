@@ -149,12 +149,6 @@ jobs:
               "arm32v7", # file suffix
               "armv7l", # pip file suffix
           ]
-          # - [
-          #     "arm/v5",
-          #     "arm-unknown-linux-gnueabi",
-          #     "arm32v5", # file suffix
-              # "armv5", # pip file suffix
-          # ]
     # env:
     #   PLATFORM: ${{ matrix.BUILD_PROP[0] }}
     #   TOOLCHAIN_NAME: ${{ matrix.BUILD_PROP[1] }}
@@ -494,12 +488,6 @@ jobs:
           #     "armv7-unknown-linux-gnueabihf",
           #     "arm32v7", # file suffix
           #     "armv7l", # pip file suffix
-          # ]
-          # - [
-          #     "arm/v5",
-          #     "arm-unknown-linux-gnueabi",
-          #     "arm32v5", # file suffix
-          #     "armv5", # pip file suffix
           # ]
     # env:
     #   PLATFORM: ${{ matrix.BUILD_PROP[0] }}
@@ -900,11 +888,6 @@ jobs:
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
           ]
-          # - [
-          #   "arm32v5",  # variant name
-          #   "arm/v5",  # platform spec
-          #   "arm32v5/",  # image prefix
-          # ]
     runs-on: ubuntu-22.04
     needs:
       - clone_linux_whl
@@ -1104,11 +1087,6 @@ jobs:
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
           ]
-          # - [
-          #   "arm32v5",  # variant name
-          #   "arm/v5",  # platform spec
-          #   "arm32v5/",  # image prefix
-          # ]
     runs-on: ubuntu-22.04
     needs: 
       - clone_linux_whl
@@ -1476,11 +1454,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     needs: 
       - build_linux_apt
@@ -1662,11 +1635,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     needs: 
       - build_linux_apt
@@ -1959,11 +1927,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     needs: [ build_docker ] 
     defaults: 
@@ -2173,11 +2136,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     needs: [ build_npm ] 
     defaults: 
@@ -2412,11 +2370,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     needs: [ build_npm ] 
     defaults: 
@@ -2622,11 +2575,6 @@ jobs:
           #   "arm32v7",  # variant name 
           #   "arm/v7",  # platform spec 
           #   "arm32v7/",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
     needs: [ build_npm ] 
@@ -2836,11 +2784,6 @@ jobs:
           #   "arm/v7",  # platform spec 
           #   "arm32v7/",  # image prefix 
           # ] 
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     needs: [ build_npm ] 
     defaults: 
@@ -3049,12 +2992,6 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
-          # - [ 
-          #   "arm32v5",  # variant name 
-          #   "arm/v5",  # platform spec 
-          #   "arm32v5/",  # image prefix 
-          # ] 
     runs-on: ubuntu-22.04 
     defaults: 
       run: 
