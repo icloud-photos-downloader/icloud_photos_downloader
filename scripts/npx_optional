@@ -3,7 +3,8 @@ set -euo pipefail
 
 if [ `which npx` ]; then
     echo "test icloudpd..." &&
-    npx ${@:3} 1>$1
+    npx ${@:3} 1>$1 &&
+    cat $1
 else
     echo "No npx available"
     touch $2

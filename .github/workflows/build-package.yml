@@ -1015,6 +1015,7 @@ jobs:
             icloud --version &&
             echo "test icloudpd..." &&
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            cat .result &&
             mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
     
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
@@ -1211,6 +1212,7 @@ jobs:
             pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
             echo "test icloudpd..." &&
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            cat .result &&
             mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
 
       - name: Record tzlc failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
@@ -1312,6 +1314,7 @@ jobs:
           . .venv/bin/activate &&
           pip3 install --disable-pip-version-check --find-links dist icloudpd==0.0.1234567890 &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+          cat .result &&
           mv .result tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass
 
         # &&
@@ -1567,6 +1570,7 @@ jobs:
             chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            cat .result &&
             mv .result /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1760,6 +1764,7 @@ jobs:
             chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            cat .result &&
             mv .result /work/tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1943,6 +1948,7 @@ jobs:
             chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            cat .result &&
             mv .result /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2126,6 +2132,7 @@ jobs:
             chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            cat .result &&
             mv .result /work/tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2220,6 +2227,7 @@ jobs:
           chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
           echo "test icloudpd..." && 
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --use-os-locale --version 1>.result && 
+          cat .result &&
           mv .result tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[0] }} on amd64 
@@ -2426,7 +2434,8 @@ jobs:
   
       - name: Record success tzlc on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure' && steps.run_tzlc.outcome != 'failure'
-        run: | 
+        run: > 
+          cat .result &&
           mv .result tzlc/docker.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc on ${{ matrix.prop[1] }} 
@@ -2662,6 +2671,7 @@ jobs:
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            cat .result &&
             mv .result /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -3103,6 +3113,7 @@ jobs:
             echo "test icloudpd..." && 
             npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
+            cat .result &&
             mv .result /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
 
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -3309,6 +3320,7 @@ jobs:
             apk update && apk add npm tzdata musl-locales musl-locales-lang &&
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version 1>.result &&
+            cat .result &&
             mv .result /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
   
       - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -3540,6 +3552,7 @@ jobs:
         run: > 
           npm install -g --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version  1>.result &&
+          cat .result &&
           mv .result tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
       - name: Record failure tzlc on ${{ matrix.prop[0] }} 
@@ -3670,6 +3683,7 @@ jobs:
         continue-on-error: true 
         run: > 
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://localhost:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version 1>.result &&
+          cat .result &&
           mv .result tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
       - name: Record failure tzlc on ${{ matrix.prop[0] }} 
