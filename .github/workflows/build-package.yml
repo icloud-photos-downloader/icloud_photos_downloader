@@ -1583,6 +1583,200 @@ jobs:
           path: | 
             tzlc/* 
 
+  compatibility_linux_bin_musl_apt: 
+    name: "Compat BIN-M ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        image:  
+          - [  
+            "debian_6_squeeze", #variant name 
+            "debian:squeeze", #image 
+            ]  
+          - [  
+            "debian_7_wheezy", #variant name 
+            "debian:wheezy", #image 
+            ]  
+          - [  
+            "debian_8_jessie", #variant name 
+            "debian:jessie", #image 
+            ]  
+          - [  
+            "debian_9_stretch", #variant name 
+            "debian:stretch", #image 
+            ]  
+          - [  
+            "debian_10_buster", #variant name 
+            "debian:buster", #image 
+            ]  
+          - [  
+            "debian_11_bullseye", #variant name 
+            "debian:bullseye", #image 
+            ]  
+          - [  
+            "debian_12_bookworm", #variant name 
+            "debian:bookworm", #image 
+            ]  
+          - [  
+            "ubuntu_12_precise", #variant name 
+            "ubuntu:precise", #image 
+            ]  
+          - [  
+            "ubuntu_14_trusty", #variant name 
+            "ubuntu:trusty", #image 
+            ]  
+          - [  
+            "ubuntu_16_xenial", #variant name 
+            "ubuntu:xenial", #image 
+            ]  
+          - [  
+            "ubuntu_18_bionic", #variant name 
+            "ubuntu:bionic", #image 
+            ]  
+          - [  
+            "ubuntu_20_focal", #variant name 
+            "ubuntu:focal", #image 
+            ]  
+          - [  
+            "ubuntu_22_jammy", #variant name 
+            "ubuntu:jammy", #image 
+            ]  
+          - [  
+            "ubuntu_24_noble", #variant name 
+            "ubuntu:noble", #image 
+            ]  
+        prop:  
+          - [ 
+            "amd64",  # variant name 
+            "amd64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+    runs-on: ubuntu-22.04 
+    needs: 
+      # - build_linux_apt
+      - build_linux_apk
+    defaults: 
+      run: 
+        shell: bash 
+ 
+    steps: 
+ 
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+  
+      - name: Make folder for compatibility 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir compatibility 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir tzlc 
+   
+      - name: Download artifacts
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/download-artifact@v4 
+        with: 
+          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          merge-multiple: true
+          path: | 
+            dist 
+ 
+      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
+      # - name: Set up QEMU 
+      #   if: matrix.prop[1] != 'amd64'
+      #   uses: docker/setup-qemu-action@v3 
+ 
+      - name: Set up QEMU 
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+ 
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_test 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            echo "test icloud..." && 
+            dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd..." && 
+            dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd-ex..." && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
+            touch /work/compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+ 
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+ 
+      - name: Upload compatibility result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install tzdata and locales..." && 
+            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all &&
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            echo "test icloudpd..." && 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            mv .result /work/tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+
+
   compatibility_linux_bin_apk: 
     name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
     strategy:  
@@ -1765,7 +1959,189 @@ jobs:
           path: | 
             tzlc/* 
           
-            
+
+  compatibility_linux_bin_musl_apk: 
+    name: "Compat BIN-M ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
+    strategy:  
+      fail-fast: false 
+      matrix: 
+        image:  
+          - [ 
+            "alpine_3_20", #variant name
+            "alpine:3.20", #image
+            ] 
+          - [ 
+            "alpine_3_19", #variant name
+            "alpine:3.19", #image
+            ] 
+          - [ 
+            "alpine_3_18", #variant name
+            "alpine:3.18", #image
+            ] 
+          - [ 
+            "alpine_3_17", #variant name
+            "alpine:3.17", #image
+            ] 
+          - [ 
+            "alpine_3_16", #variant name
+            "alpine:3.16", #image
+            ] 
+          - [ 
+            "alpine_3_15", #variant name
+            "alpine:3.15", #image
+            ] 
+          - [ 
+            "alpine_3_14", #variant name
+            "alpine:3.14", #image
+            ] 
+          - [ 
+            "alpine_3_13", #variant name
+            "alpine:3.13", #image
+            ] 
+          - [ 
+            "alpine_3_12", #variant name
+            "alpine:3.12", #image
+            ] 
+          - [ 
+            "alpine_3_11", #variant name
+            "alpine:3.11", #image
+            ] 
+          - [ 
+            "alpine_3_10", #variant name
+            "alpine:3.10", #image
+            ] 
+        prop:  
+          - [ 
+            "amd64",  # variant name 
+            "amd64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm64",  # variant name 
+            "arm64",  # platform spec 
+            "",  # image prefix 
+          ] 
+          - [ 
+            "arm32v7",  # variant name 
+            "arm/v7",  # platform spec 
+            "arm32v7/",  # image prefix 
+          ] 
+    runs-on: ubuntu-22.04 
+    needs: 
+      # - build_linux_apt
+      - build_linux_apk
+    defaults: 
+      run: 
+        shell: bash 
+  
+    steps: 
+  
+      - name: Get image 
+        id: get_image  
+        run: |  
+          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+  
+      - name: Make folder for compatibility 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir compatibility 
+
+      - name: Make folder for tzlc 
+        if: steps.get_image.outputs.digest != ''  
+        run: | 
+          mkdir tzlc 
+    
+      - name: Download artifacts
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/download-artifact@v4 
+        with: 
+          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          merge-multiple: true
+          path: | 
+            dist 
+  
+      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
+      # - name: Set up QEMU 
+      #   if: matrix.prop[1] != 'amd64'
+      #   uses: docker/setup-qemu-action@v3 
+  
+      - name: Set up QEMU 
+        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
+        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+  
+      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_test 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            echo "test icloud..." && 
+            dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd..." && 
+            dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
+            echo "test icloudpd-ex..." && 
+            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
+            touch /work/compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_test.outcome == 'failure' }}  
+        run: | 
+          touch compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload compatibility result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          if-no-files-found: error 
+          path: | 
+            compatibility/* 
+
+      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: steps.get_image.outputs.digest != ''  
+        id: run_tzlc 
+        uses: addnab/docker-run-action@v3 
+        continue-on-error: true 
+        with: 
+          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
+          shell: sh 
+          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
+          run: > 
+            echo "install tzdata and locales ..." && 
+            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
+            apk update && apk add tzdata musl-locales musl-locales-lang &&
+            echo "prep test..." && 
+            cd /work && 
+            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
+            echo "test icloudpd..." && 
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
+            mv .result /work/tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
+  
+      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
+        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
+        run: | 
+          touch tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
+  
+      - name: Upload tzlc result 
+        if: steps.get_image.outputs.digest != ''  
+        uses: actions/upload-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          if-no-files-found: error 
+          path: | 
+            tzlc/* 
+
   compatibility_macos_bin: 
     name: "Compat BIN ${{ matrix.prop[0] }} ${{ matrix.prop[1] }}" 
     strategy:  
@@ -3515,6 +3891,8 @@ jobs:
       - compatibility_linux_pip_apk
       - compatibility_linux_bin_apt
       - compatibility_linux_bin_apk
+      - compatibility_linux_bin_musl_apt
+      - compatibility_linux_bin_musl_apk
       - compatibility_macos_bin
       - compatibility_windows_bin
       - compatibility_docker
