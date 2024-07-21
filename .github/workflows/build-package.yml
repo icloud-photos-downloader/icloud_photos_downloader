@@ -240,6 +240,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
     - name: Set up QEMU
       if: matrix.platform[1] != 'amd64'
       uses: docker/setup-qemu-action@v3
@@ -279,23 +286,6 @@ jobs:
             ".cache/root/.distrib/rust": "/root/.distrib/rust"
           }
 
-    - name: DEBUG Version info BEFORE patch
-      run: |
-        ls -la src/foundation
-        cat src/foundation/__init__.py
-
-    - name: Download version info
-      uses: actions/download-artifact@v4
-      with:
-        name: icloudpd-${{github.sha}}-version-info
-        path: |
-          src/foundation
-
-    - name: DEBUG Version info AFTER patch
-      run: |
-        ls -la src/foundation
-        cat src/foundation/__init__.py
-
     - name: Build
       uses: docker/build-push-action@v6
       with:
@@ -304,6 +294,8 @@ jobs:
         # do not cache layers
         file: Dockerfile.build
         outputs: type=local,dest=dist
+        provenance: false
+        context: .
 
     - name: Reorg contents
       continue-on-error: true
@@ -588,22 +580,12 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    - name: DEBUG Version info BEFORE patch
-      run: |
-        ls -la src/foundation
-        cat src/foundation/__init__.py
-
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
         name: icloudpd-${{github.sha}}-version-info
         path: |
           src/foundation
-
-    - name: DEBUG Version info AFTER patch
-      run: |
-        ls -la src/foundation
-        cat src/foundation/__init__.py
 
     - name: Set up QEMU
       if: matrix.platform[1] != 'amd64'
@@ -650,6 +632,8 @@ jobs:
         # do not cache layers
         file: Dockerfile.build-musl
         outputs: type=local,dest=dist
+        provenance: false
+        context: .
 
     - name: Reorg contents
       continue-on-error: true
