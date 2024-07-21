@@ -3,11 +3,13 @@
 #     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build
 # ,linux/arm64,linux/arm/v7,linux/386
 # rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
+# arm7l instead of v6 issue: https://stackoverflow.com/questions/78535054/how-do-you-docker-buildx-build-for-arm-v6-on-qemu-emulated-platforms-that-pres
 
 # map source image to base
 FROM python:3.12 AS base
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG QEMU_CPU
 ENV DEBIAN_FRONTEND=noninteractive
 WORKDIR /app
 RUN \
@@ -50,6 +52,7 @@ FROM base AS base_arm_v6
 # pkg-config
 ARG TARGETARCH
 ARG TARGETVARIANT
+ARG QEMU_CPU
 ENV RUST_DISTRO_NAME=rust-1.79.0-arm-unknown-linux-gnueabi
 RUN \
     --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
@@ -61,7 +64,7 @@ RUN \
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
 ARG TARGETVARIANT
-ENV WHEEL_DIR=/root/.cache/pip/wheels
+ARG QEMU_CPU
 WORKDIR /app
 COPY LICENSE.md .
 COPY README_PYPI.md .

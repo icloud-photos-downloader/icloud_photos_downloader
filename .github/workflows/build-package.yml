@@ -313,6 +313,7 @@ jobs:
         # do not cache layers
         file: Dockerfile.build
         outputs: type=local,dest=dist
+        build-args: ${{ matrix.platform[1] == 'arm32v6' && 'QEMU_CPU=arm1176' || '' }}
 
     - name: Reorg contents
       continue-on-error: true
@@ -668,6 +669,7 @@ jobs:
         # do not cache layers
         file: Dockerfile.build-musl
         outputs: type=local,dest=dist
+        build-args: ${{ matrix.platform[1] == 'arm32v6' && 'QEMU_CPU=arm1176' || '' }}
 
     - name: Reorg contents
       continue-on-error: true
