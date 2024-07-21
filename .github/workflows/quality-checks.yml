@@ -200,15 +200,11 @@ jobs:
           #   "linux/arm/v7",
           #   "arm32v7",
           # ]
-          # - [
-          #   "linux/386",
-          #   "386",
-          # ]
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up QEMU
-      if: matrix.platform[1] != 'amd64' && matrix.platform[1] != '386'
+      if: matrix.platform[1] != 'amd64'
       uses: docker/setup-qemu-action@v3
 
     - uses: docker/setup-buildx-action@v3
@@ -389,15 +385,11 @@ jobs:
             "linux/arm/v7",
             "arm32v7",
           ]
-          - [
-            "linux/386",
-            "386",
-          ]
     steps:
     - uses: actions/checkout@v4
 
     - name: Set up QEMU
-      if: matrix.platform[1] != 'amd64' && matrix.platform[1] != '386'
+      if: matrix.platform[1] != 'amd64'
       uses: docker/setup-qemu-action@v3
 
     - uses: docker/setup-buildx-action@v3
