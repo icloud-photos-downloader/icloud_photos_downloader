@@ -44,7 +44,7 @@ Marvell Armada 388 88F6828 | arm32v7 | DS416j
 STM STiH412 | arm32v7 | DS216play
 Marvell Armada 370 88F6707 | arm32v7 | DS216se
 
-x15 and before:
+Sample from x15 and before:
 | CPU | Arch | Models |
 |-------|-------|------|
 Marvell Armada XP MV78230 | arm32v7 | RS815
