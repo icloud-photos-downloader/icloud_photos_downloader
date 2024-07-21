@@ -319,7 +319,7 @@ jobs:
       run: |
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
-        mv dist/icloudpd_ex dist/icloudpd_ex-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -674,7 +674,7 @@ jobs:
       run: |
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
-        mv dist/icloudpd_ex dist/icloudpd_ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        mv dist/icloudpd_ex dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
