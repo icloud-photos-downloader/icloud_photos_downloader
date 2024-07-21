@@ -46,9 +46,6 @@ COPY scripts scripts/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY src src/
-RUN \
-    echo "DEBUG version info" && \
-    cat src/foundation/__init__.py
 # staticx must be installed after scons
 # staticx gives error: Error relocating /tmp/staticx-pyi-9b5nvfi_/_cffi_backend.cpython-312-x86_64-linux-musl.so: PyNumber_Long: symbol not found
 RUN \

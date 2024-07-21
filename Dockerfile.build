@@ -46,9 +46,6 @@ COPY scripts scripts/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY src src/
-RUN \
-    echo "DEBUG version info" && \
-    cat src/foundation/__init__.py
 # staticx must be installed after scons - they do not have deps that pip can handle
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=shared \
