@@ -112,7 +112,7 @@ scripts/test
 
 ### Building packages
 
-Building Python wheel (with python files):
+Building Python wheel (with python source files):
 
 ``` sh
 scripts/build
@@ -121,16 +121,26 @@ scripts/build
 Building platform executables:
 
 ``` sh
-scripts/build_bin_linux 1.22.0 amd64
+scripts/build_bin2 icloudpd icloud
+scripts/build_bin1 icloud
+scripts/build_bin1 icloudpd_ex
 ```
 Note: that command is for Linux, including devcontainers. Windows & macOS scripts must be executed on respective platforms.
 
-Building Python wheels (with single executables):
+Building Linux static executables:
+
+``` sh
+scripts/build_static icloudpd
+scripts/build_static icloud
+scripts/build_static icloudpd_ex
+```
+
+Building Python wheels (with executable):
 
 ``` sh
 scripts/build_whl
 ```
-Note: that the step expects executables to be already prepared by previous step
+Note: that the step expects executables to be already prepared by previous steps
 
 Building NPM packages (with single executables; platform-specific):
 
@@ -139,12 +149,23 @@ scripts/build_npm 1.22.0
 ```
 Note: that the step expects executables to be already prepared by previous steps
 
-### Building the Docker image
+### Building packages (alternative for Linux)
+
+``` sh
+docker buildx create --use --driver=docker-container --name container --bootstrap
+docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build
+```
+
+Note: command will produce binaries and .whl for selected platform in dist folder
+
+For `musl` binaries, use `Dockerfile.build-musl`
+
+### Building the Docker
 
 ``` sh
 docker build -t icloudpd_dev_ .
 ```
-Note: If you work with devcontainers, you most likely need to run that command on the host system inside your source folder.
+Note: command packs existing musl binaries from dist folder
 
 ### Developing Documentation
 
