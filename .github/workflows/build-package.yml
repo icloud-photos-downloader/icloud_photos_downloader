@@ -469,7 +469,6 @@ jobs:
       run: |
         mkdir -p .cache/var/cache/apk
         mkdir -p .cache/root/.cache/pip
-        mkdir -p .cache/root/.distrib/rust
       
     - name: Inject docker cache
       uses: reproducible-containers/buildkit-cache-dance@v3.1.2
@@ -477,8 +476,7 @@ jobs:
         cache-map: |
           {
             ".cache/var/cache/apk": "/var/cache/apk",
-            ".cache/root/.cache/pip": "/root/.cache/pip",
-            ".cache/root/.distrib/rust": "/root/.distrib/rust"
+            ".cache/root/.cache/pip": "/root/.cache/pip"
           }
               
     - name: Build
