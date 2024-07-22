@@ -17,7 +17,7 @@ RUN \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
-  apt-get install -y patchelf musl-tools
+  apt-get install -y patchelf musl-tools cargo
   
 FROM base AS base_amd64_none
 # does not need rustc
@@ -26,15 +26,15 @@ FROM base AS base_arm64_none
 # does not need rustc
 
 FROM base AS base_arm_v7
-ARG TARGETARCH
-ARG TARGETVARIANT
-ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
-RUN \
-    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
-    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
-    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
-    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
+# ARG TARGETARCH
+# ARG TARGETVARIANT
+# ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
+# RUN \
+#     --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
+#     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
+#     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+#     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+#     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
