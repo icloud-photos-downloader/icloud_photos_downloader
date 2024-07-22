@@ -47,8 +47,12 @@ COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY src src/
 # staticx must be installed after scons - they do not have deps that pip can handle
+# building on arm32v7 cause error in rust: https://github.com/rust-lang/cargo/issues/8719
+#   workaround is to have /root/.cargo https://github.com/crazy-max/ghaction-docker-buildx/issues/172
+#   caching registry as a wa https://stackoverflow.com/a/60590697
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=shared \
+    --mount=type=cache,target=/root/.cargo/registry,sharing=shared \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     echo "List pip cache..." && \
