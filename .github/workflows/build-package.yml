@@ -103,16 +103,16 @@ jobs:
           src/foundation
 
     - name: Run version
-        uses: addnab/docker-run-action@v3
-        with:
-          image: python:3.12-alpine3.18
-          shell: sh
-          options: -v ${{ github.workspace }}:/work 
-          run: >
-            apk add --update tzdata musl-locales musl-locales-lang &&
-            cd /work &&
-            pip3 install . &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result
+      uses: addnab/docker-run-action@v3
+      with:
+        image: python:3.12-alpine3.18
+        shell: sh
+        options: -v ${{ github.workspace }}:/work 
+        run: >
+          apk add --update tzdata musl-locales musl-locales-lang &&
+          cd /work &&
+          pip3 install . &&
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result
 
     - name: Get Version
       id: get_version
