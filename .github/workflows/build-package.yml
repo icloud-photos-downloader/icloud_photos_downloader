@@ -48,7 +48,7 @@ jobs:
           dist/icloudpd*.whl
 
           
-  get_expected_version_linux:
+  get_expected_version_linux_apt:
     runs-on: ubuntu-22.04
     defaults:
       run:
@@ -85,7 +85,48 @@ jobs:
 
     outputs:
       expected_version: ${{steps.get_version.outputs.expected_version}}
-  
+
+  get_expected_version_linux_apk:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-version-info
+        path: |
+          src/foundation
+
+    - name: Run version
+        uses: addnab/docker-run-action@v3
+        with:
+          image: python:3.12-alpine3.18
+          shell: sh
+          options: -v ${{ github.workspace }}:/work 
+          run: >
+            apk add --update tzdata musl-locales musl-locales-lang &&
+            cd /work &&
+            pip3 install . &&
+            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result
+
+    - name: Get Version
+      id: get_version
+      run: |
+        echo expected_version=$(cat .result) >> $GITHUB_OUTPUT
+          
+    - name: Log version
+      run: |
+        echo "expected_version=${{steps.get_version.outputs.expected_version}}"
+
+    outputs:
+      expected_version: ${{steps.get_version.outputs.expected_version}}
+
+
   get_expected_version_macos:
     runs-on: macos-14
     defaults:
@@ -3736,7 +3777,8 @@ jobs:
       - compatibility_macos_npx
       - compatibility_windows_npm
       - compatibility_windows_npx
-      - get_expected_version_linux
+      - get_expected_version_linux_apt
+      - get_expected_version_linux_apk
       - get_expected_version_macos
     defaults:
       run:
@@ -3789,10 +3831,10 @@ jobs:
 
       - name: Compile tzlc Report
         run: |
-          echo "debugging report..."
-          scripts/compile_tzlc.py tzlc "${{needs.get_expected_version_linux.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}"
           echo "save report..."
-          scripts/compile_tzlc.py tzlc "${{needs.get_expected_version_linux.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}"> dist/tzlc-${{inputs.icloudpd_version}}.md
+          scripts/compile_tzlc.py tzlc "${{needs.get_expected_version_linux_apt.outputs.expected_version}}" "${{needs.get_expected_version_linux_apk.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}"> dist/tzlc-${{inputs.icloudpd_version}}.md
+          echo "debugging report..."
+          cat dist/tzlc-${{inputs.icloudpd_version}}.md
 
       - name: Upload tzlc report
         uses: actions/upload-artifact@v4
