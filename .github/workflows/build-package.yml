@@ -218,6 +218,7 @@ jobs:
         mkdir -p .cache/var/lib/apt
         mkdir -p .cache/root/.cache/pip
         mkdir -p .cache/root/.distrib/rust
+        mkdir -p .cache/root/.cargo/registry
       
     - name: Inject docker cache
       uses: reproducible-containers/buildkit-cache-dance@v3.1.2
@@ -226,10 +227,10 @@ jobs:
           {
             ".cache/var/cache/apt": "/var/cache/apt",
             ".cache/var/lib/apt": "/var/lib/apt",
-            ".cache/root/.cache/pip": "/root/.cache/pip"
+            ".cache/root/.cache/pip": "/root/.cache/pip",
+            ".cache/root/.cargo/registry": "/root/.cargo/registry",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust"
           }
-      # ".cache/root/.cargo/registry": "/root/.cargo/registry"
-      # ".cache/root/.distrib/rust": "/root/.distrib/rust"
 
     - name: Build
       uses: docker/build-push-action@v6

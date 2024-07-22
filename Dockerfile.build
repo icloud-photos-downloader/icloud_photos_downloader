@@ -17,7 +17,7 @@ RUN \
   rm -f /etc/apt/apt.conf.d/docker-clean && \
   echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
   apt-get update && \
-  apt-get install -y patchelf musl-tools cargo
+  apt-get install -y patchelf musl-tools
   
 FROM base AS base_amd64_none
 # does not need rustc
@@ -26,15 +26,17 @@ FROM base AS base_arm64_none
 # does not need rustc
 
 FROM base AS base_arm_v7
-# ARG TARGETARCH
-# ARG TARGETVARIANT
-# ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
-# RUN \
-#     --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
-#     (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
-#     (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
-#     tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
-#     /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
+# rust from apt is 1.63.0, but min required for cryptography is 1.65.0, so we have to install rust outside of apt
+# use downloading of prepackaged rust and caching it seems to provide better experience than recommended rustup
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
+RUN \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
+    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
+    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
 
 FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
 ARG TARGETARCH
@@ -47,7 +49,7 @@ COPY binary_dist binary_dist/
 COPY pyproject.toml .
 COPY src src/
 # staticx must be installed after scons - they do not have deps that pip can handle
-# building on arm32v7 cause error in rust: https://github.com/rust-lang/cargo/issues/8719
+# building on arm32v7 cause error in rust from apt (1.63.0): https://github.com/rust-lang/cargo/issues/8719
 #   workaround is to have /root/.cargo in tmpfs https://github.com/crazy-max/ghaction-docker-buildx/issues/172
 #   https://github.com/rust-lang/cargo/issues/9545#issuecomment-855282576
 #   https://github.com/rust-lang/cargo/issues/8719#issuecomment-1207488994   
@@ -55,7 +57,7 @@ COPY src src/
 #--mount=type=cache,target=/root/.cargo/registry,sharing=shared \
 RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=shared \
-    --mount=type=tmpfs,target=/root/.cargo \
+    --mount=type=cache,target=/root/.cargo/registry,sharing=shared \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
     echo "List pip cache..." && \
