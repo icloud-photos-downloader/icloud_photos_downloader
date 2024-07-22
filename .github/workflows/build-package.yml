@@ -109,6 +109,7 @@ jobs:
         shell: sh
         options: -v ${{ github.workspace }}:/work 
         run: >
+          export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
           apk add --update tzdata musl-locales musl-locales-lang &&
           cd /work &&
           pip3 install . &&
