@@ -125,10 +125,10 @@ scripts/build_bin_linux 1.22.0 amd64
 ```
 Note: that command is for Linux, including devcontainers. Windows & macOS scripts must be executed on respective platforms.
 
-Building Python wheels (with single executables; platform-specific):
+Building Python wheels (with single executables):
 
 ``` sh
-scripts/build_binary_dist_linux 1.22.0
+scripts/build_whl
 ```
 Note: that the step expects executables to be already prepared by previous step
 
