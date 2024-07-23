@@ -56,6 +56,7 @@ from tzlocal import get_localzone
 from icloudpd import constants, download, exif_datetime
 from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
 from icloudpd.autodelete import autodelete_photos
+from icloudpd.config import Config
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
@@ -671,6 +672,47 @@ def main(
             sys.exit(2)
 
         status_exchange = StatusExchange()
+        config = Config(
+            directory=directory,
+            username=username,
+            auth_only=auth_only,
+            cookie_directory=cookie_directory,
+            size=size,
+            live_photo_size=live_photo_size,
+            recent=recent,
+            until_found=until_found,
+            album=album,
+            list_albums=list_albums,
+            library=library,
+            list_libraries=list_libraries,
+            skip_videos=skip_videos,
+            skip_live_photos=skip_live_photos,
+            force_size=force_size,
+            auto_delete=auto_delete,
+            only_print_filenames=only_print_filenames,
+            folder_structure=folder_structure,
+            set_exif_datetime=set_exif_datetime,
+            smtp_username=smtp_username,
+            smtp_host=smtp_host,
+            smtp_port=smtp_port,
+            smtp_no_tls=smtp_no_tls,
+            notification_email=notification_email,
+            notification_email_from=notification_email_from,
+            log_level=log_level,
+            no_progress_bar=no_progress_bar,
+            notification_script=notification_script,
+            threads_num=threads_num,
+            delete_after_download=delete_after_download,
+            domain=domain,
+            watch_with_interval=watch_with_interval,
+            dry_run=dry_run,
+            raw_policy=raw_policy,
+            password_providers=password_providers,
+            file_match_policy=file_match_policy,
+            mfa_provider=mfa_provider,
+            use_os_locale=use_os_locale,
+        )
+        status_exchange.set_config(config)
 
         # hacky way to use one param in another
         if "webui" in password_providers:
@@ -1273,6 +1315,11 @@ def core(
                 """Exit if until_found condition is reached"""
                 return until_found is not None and counter.value() >= until_found
 
+            status_exchange.get_progress().photos_count = (
+                0 if photos_count is None else photos_count
+            )
+            photos_counter = 0
+
             photos_iterator = iter(photos_enumerator)
             while True:
                 try:
@@ -1294,13 +1341,27 @@ def core(
 
                         retrier(delete_local, error_handler)
 
+                    photos_counter += 1
+                    status_exchange.get_progress().photos_counter = photos_counter
+
+                    if status_exchange.get_progress().cancel:
+                        break
+
                 except StopIteration:
                     break
 
             if only_print_filenames:
                 return 0
 
-            logger.info("All photos have been downloaded")
+            if status_exchange.get_progress().cancel:
+                logger.info("Iteration was cancelled")
+                status_exchange.get_progress().photos_last_message = "Iteration was cancelled"
+            else:
+                logger.info("All photos have been downloaded")
+                status_exchange.get_progress().photos_last_message = (
+                    "All photos have been downloaded"
+                )
+            status_exchange.get_progress().reset()
 
             if auto_delete:
                 autodelete_photos(
@@ -1324,7 +1385,11 @@ def core(
                         ),
                     )
                 )
-                for _ in iterable:
+                for counter in iterable:
+                    status_exchange.get_progress().waiting = watch_interval - counter
+                    if status_exchange.get_progress().resume:
+                        status_exchange.get_progress().reset()
+                        break
                     time.sleep(1)
             else:
                 break  # pragma: no cover

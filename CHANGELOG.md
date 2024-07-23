@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: update webui and allow to cancel and resume sync 
+
 ## 1.22.0 (2024-07-12)
 
 - feature: support for using locale from OS with `--use-os-locale` flag [#897](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/897)
