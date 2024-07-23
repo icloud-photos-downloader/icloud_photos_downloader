@@ -1,0 +1,80 @@
+# Multi-arch build (local):
+#     docker buildx create --use --driver=docker-container --name container --bootstrap
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build
+# ,linux/arm64,linux/arm/v7
+# rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
+# arm7l instead of v6 issue: https://stackoverflow.com/questions/78535054/how-do-you-docker-buildx-build-for-arm-v6-on-qemu-emulated-platforms-that-pres
+
+# map source image to base
+FROM python:3.12 AS base
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=shared \
+  --mount=type=cache,target=/var/lib/apt,sharing=shared \
+  rm -f /etc/apt/apt.conf.d/docker-clean && \
+  echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
+  apt-get update && \
+  apt-get install -y patchelf musl-tools
+  
+FROM base AS base_amd64_none
+# does not need rustc
+
+FROM base AS base_arm64_none
+# does not need rustc
+
+FROM base AS base_arm_v7
+# rust from apt is 1.63.0, but min required for cryptography is 1.65.0, so we have to install rust outside of apt
+# use downloading of prepackaged rust and caching it seems to provide better experience than recommended rustup
+ARG TARGETARCH
+ARG TARGETVARIANT
+ENV RUST_DISTRO_NAME=rust-1.79.0-armv7-unknown-linux-gnueabihf
+RUN \
+    --mount=type=cache,target=/root/.distrib/rust,sharing=shared \
+    (if [ ! -d "/root/.distrib/rust/${RUST_DISTRO_NAME}" ]; then \
+    (wget --no-verbose --no-clobber https://static.rust-lang.org/dist/${RUST_DISTRO_NAME}.tar.xz && \
+    tar -xf ${RUST_DISTRO_NAME}.tar.xz -C /root/.distrib/rust/); fi) && \
+    /root/.distrib/rust/${RUST_DISTRO_NAME}/install.sh
+
+FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
+ARG TARGETARCH
+ARG TARGETVARIANT
+WORKDIR /app
+COPY LICENSE.md .
+COPY README_PYPI.md .
+COPY scripts scripts/
+COPY binary_dist binary_dist/
+COPY pyproject.toml .
+COPY src src/
+# staticx must be installed after scons - they do not have deps that pip can handle
+# building on arm32v7 cause error in rust from apt (1.63.0): https://github.com/rust-lang/cargo/issues/8719
+#   workaround is to have /root/.cargo in tmpfs https://github.com/crazy-max/ghaction-docker-buildx/issues/172
+#   https://github.com/rust-lang/cargo/issues/9545#issuecomment-855282576
+#   https://github.com/rust-lang/cargo/issues/8719#issuecomment-1207488994   
+# caching registry as a wa https://stackoverflow.com/a/60590697
+#--mount=type=cache,target=/root/.cargo/registry,sharing=shared \
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=shared \
+    --mount=type=cache,target=/root/.cargo/registry,sharing=shared \
+    python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    echo "List pip cache..." && \
+    pip3 cache list && \
+    pip3 install --disable-pip-version-check .[dev,devlinux] && \
+    BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1
+RUN \
+    . .venv/bin/activate && \
+    echo "Building binaries..." && \
+    scripts/build_bin2 icloudpd icloud  && \
+    scripts/build_bin1 icloud && \
+    scripts/build_bin1 icloudpd_ex  && \
+    scripts/build_static icloudpd && \
+    scripts/build_static icloud && \
+    scripts/build_static icloudpd_ex && \
+    scripts/build_whl
+
+FROM scratch
+WORKDIR /
+COPY --from=builder /app/dist/icloud* .

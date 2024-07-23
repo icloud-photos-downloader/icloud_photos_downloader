@@ -1,31 +1,22 @@
-FROM ubuntu:24.04 as runtime_amd64_none
-RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
-WORKDIR /app
-COPY dist/icloudpd-ex-*.*.*-linux-amd64 icloudpd_ex
-
-# focal is the last ubuntu for 386
-FROM i386/ubuntu:focal as runtime_386_none
-RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
-WORKDIR /app
-COPY dist/icloudpd-ex-*.*.*-linux-386 icloudpd_ex
-
-FROM ubuntu:24.04 as runtime_arm64_none
-RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
-WORKDIR /app
-COPY dist/icloudpd-ex-*.*.*-linux-arm64 icloudpd_ex
-
-FROM ubuntu:24.04 as runtime_arm_v7
-RUN export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all
-WORKDIR /app
-COPY dist/icloudpd-ex-*.*.*-linux-arm32v7 icloudpd_ex
-
-FROM alpine:3.18 as runtime_arm_v6
+FROM alpine:3.18 AS runtime_amd64_none
 ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
 RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
 WORKDIR /app
-COPY dist/icloudpd-ex-*.*.*-linux-arm32v6 icloudpd_ex
+COPY dist/icloudpd-ex-*.*.*-linux-musl-amd64 icloudpd_ex
 
-FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} as runtime
+FROM alpine:3.18 AS runtime_arm64_none
+ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-musl-arm64 icloudpd_ex
+
+FROM alpine:3.18 AS runtime_arm_v7
+ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-musl-arm32v7 icloudpd_ex
+
+FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} AS runtime
 ENV TZ=UTC
 EXPOSE 8080
 WORKDIR /app

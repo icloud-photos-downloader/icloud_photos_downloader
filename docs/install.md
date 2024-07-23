@@ -114,7 +114,7 @@ Here are the steps to make it working:
 
 When you run the script for the first time, you might see an error message like this:
 
-``` plain
+``` 
 Bad Request (400)
 ```
 

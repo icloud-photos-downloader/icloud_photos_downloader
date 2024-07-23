@@ -1,0 +1,56 @@
+# Multi-arch build (local):
+#     docker buildx create --use --driver=docker-container --name container --bootstrap
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build-musl
+# ,linux/arm64,linux/arm/v7
+# rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
+
+# map source image to base
+FROM python:3.12-alpine3.18 AS base
+ARG TARGETARCH
+ARG TARGETVARIANT
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/var/cache/apk,sharing=shared \
+  apk update && \
+  apk add git curl binutils gcc libc-dev libffi-dev zlib-dev openssl-dev tzdata bash patchelf python3-dev musl-dev pkgconfig cargo
+# from https://cryptography.io/en/latest/installation/#building-cryptography-on-linux
+# If you get an error with openssl-dev you may have to use libressl-dev.
+# cargo 
+
+FROM base AS base_amd64_none
+# does not need rustc
+
+FROM base AS base_arm64_none
+# does not need rustc
+
+FROM base AS base_arm_v7
+# does not have musl variant prepackaged but the one from apk works
+    
+FROM base_${TARGETARCH}_${TARGETVARIANT:-none} AS builder
+ARG TARGETARCH
+ARG TARGETVARIANT
+ARG QEMU_CPU
+WORKDIR /app
+COPY LICENSE.md .
+COPY README_PYPI.md .
+COPY scripts scripts/
+COPY binary_dist binary_dist/
+COPY pyproject.toml .
+COPY src src/
+# staticx must be installed after scons
+# staticx gives error: Error relocating /tmp/staticx-pyi-9b5nvfi_/_cffi_backend.cpython-312-x86_64-linux-musl.so: PyNumber_Long: symbol not found, so not using for musl
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=shared \
+    python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    pip3 install --disable-pip-version-check .[dev,devlinux]
+RUN \
+    . .venv/bin/activate && \
+    scripts/build_bin2 icloudpd icloud  && \
+    scripts/build_bin1 icloud && \
+    scripts/build_bin1 icloudpd_ex  && \
+    scripts/build_whl
+
+FROM scratch
+WORKDIR /
+COPY --from=builder /app/dist/icloud* .
