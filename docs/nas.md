@@ -30,27 +30,29 @@ Once the app has started, connect to the [WebUI](webui) to enter password and MF
 
 The error `Failed to execv() /tmp/staticx-kJmNbp` has a workaround by (from an SSH terminal in my case) running `sudo mount /tmp -o remount,exec`. [#788](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/788)
 
-CPU/Arch [used](https://kb.synology.com/en-me/DSM/tutorial/What_kind_of_CPU_does_my_NAS_have) other than amd64 (pre x15):
-| CPU | Arch | Models |
+CPU/Arch [used by Synology](https://kb.synology.com/en-me/DSM/tutorial/What_kind_of_CPU_does_my_NAS_have) other than amd64 (after x12):
+| Models | CPU | Arch | 
 |-------|-------|------|
-Realtek RTD1619B | arm64 | DS124, DS423, DS223j, DS223
-Realtek RTD1296 | arm64 | DS220j, RS819, DS418, DS218, DS218play, DS118
-Realtek RTD1293 | arm64 | DS418j
-Marvell A3720 | arm64 | DS120j, DS119j
-Marvell Armada 385 88F6820 | arm32v7 | DS419slim, DS218j, RS217, RS816, DS416slim, DS216, DS216j, DS116
-Annapurna Labs Alpine AL-314 | arm32v7 | DS1817, DS1517
-Annapurna Labs Alpine AL-212 | arm32v7 | DS416
-Marvell Armada 388 88F6828 | arm32v7 | DS416j
-STM STiH412 | arm32v7 | DS216play
-Marvell Armada 370 88F6707 | arm32v7 | DS216se
+DS124, DS423, DS223j, DS223 | Realtek RTD1619B | arm64 | 
+DS220j, RS819, DS418, DS218, DS218play, DS118 | Realtek RTD1296 | arm64 | 
+DS418j | Realtek RTD1293 | arm64 | 
+DS120j, DS119j | Marvell A3720 | arm64 | 
+DS419slim, DS218j, RS217, RS816, DS416slim, DS216, DS216j, DS116 | Marvell Armada 385 88F6820 | arm32v7 | 
+DS1817, DS1517 | Annapurna Labs Alpine AL-314 | arm32v7 | 
+DS416 | Annapurna Labs Alpine AL-212 | arm32v7 | 
+DS416j | Marvell Armada 388 88F6828 | arm32v7 | 
+DS216play | STM STiH412 | arm32v7 | 
+DS216se | Marvell Armada 370 88F6707 | arm32v7 | 
+RS815, RS814, DS414, DS214, DS214+ | Marvell Armada XP MV78230 | arm32v7 | 
+DS2015xs | Annapurna Labs Alpine AL-514 | arm32v7 | 
+DS1515 | Annapurna Labs Alpine AL-314 | arm32v7 | 
+DS215+ | Annapurna Labs Alpine AL-212 | arm32v7 | 
+DS215j, D115j, D115 | Marvell Armada 370 88F6720 | arm32v7 | 
+DS214, DS414slim, DS214se, DS114, DS213j | Marvell Armada 370 88F6707 | arm32v7 | 
+DS414j | Mindspeed Comcerto C200 | arm32v7
+DS413, DS213+ | Freescale P1022 | power (Unsupported) | 
+DS413j, DS213, DS213air | Marvell Kirkwood 88F6282 | arm32v5 (Unsupported) | 
 
-Sample from x15 and before:
-| CPU | Arch | Models |
-|-------|-------|------|
-Marvell Armada XP MV78230 | arm32v7 | RS815
-Annapurna Labs Alpine AL-514 | arm32v7 | DS2015xs
-Annapurna Labs Alpine AL-314 | arm32v7 | DS1515
-Freescale P1022 | power | DS413
-Marvell Kirkwood 88F6282 | arm32v5 | DS413j, DS213
+Non x86 64bit models from x12 and before are not supported
 
-[info on Marvel](https://www.kernel.org/doc/html/v6.1/arm/marvell.html)
+[Additional info on Marvel](https://www.kernel.org/doc/html/v6.1/arm/marvell.html)

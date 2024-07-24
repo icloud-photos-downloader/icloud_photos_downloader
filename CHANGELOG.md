@@ -3,6 +3,8 @@
 ## Unreleased
 
 - feature: update webui and allow to cancel and resume sync 
+- deprecate linux 386 and arm v6 support
+- add linux musl builds
 
 ## 1.22.0 (2024-07-12)
 
