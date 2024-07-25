@@ -13,7 +13,7 @@ Container Images/Image repository | `icloudpd/icloudpd` |
 Container Images/Image tag | `latest` |
 Container Entrypoint/Container Args | `icloudpd` `-u` `your@email.address` `-d` `/data` `--password-provider` `webui` `--mfa-provider` `webui` `--watch-with-interval` `3600` | each as a separate arg (param name and param value become two separate args)
 Port Forwarding/Container Port | `8080` |
-Port Forwarding/Host Port | `9090` | or other available port on your host
+Port Forwarding/Node Port | `9090` | or other available port on your host
 Storage/Host Path Volumes/Host Path | /mnt/my_pool/photos | or another location on your host
 Storage/Host Path Volumes/Mount Path | /data | 
 Portal Configuration/Enable Portal Configuration | checked | 
