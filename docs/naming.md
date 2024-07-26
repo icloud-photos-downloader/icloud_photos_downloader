@@ -24,6 +24,9 @@ Default format is: `{:%Y/%m/%d}`
 
 ### Language-specific formatting
 
+```{versionadded} 1.22.0
+```
+
 Some formatting codes, e.g. `%B` for printing full month, are specific to the language. By default `icloudpd` uses English regardless of the locale of the OS. With `--use-os-locale` the behavior can be changed.
 
 Example of running `icloudpd` with  specific locale under Linux or MacOS:
