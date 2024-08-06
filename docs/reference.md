@@ -25,3 +25,60 @@ This is a list of all options available for command line interface (CLI) of the 
     ```{note}
     Photos are checked by the date they were added to iCloud, not by the date they were taken/created.
     ```
+
+(album-parameter)=
+`--album X`
+    
+:   Specifies what Album to download. 
+
+    Default: "All Photos" - Special album where all photos are automatically added.
+
+    ```{note}
+    Only one album can be downloaded by `icloudpd`
+    ```    
+
+(list-albums-parameter)=
+`--list-albums`
+    
+:   Lists all available albums 
+
+(library-parameter)=
+`--library X`
+    
+:   Specifies what Libarary to use. 
+
+    Default: "Personal Library".
+
+    ```{note}
+    Only one library can be used by `icloudpd`
+    ```    
+
+(list-libraries-parameter)=
+`--list-libraries`
+    
+:   Lists all libraries available for account 
+
+(watch-with-interval-parameter)=
+`--watch-with-interval X`
+    
+:   Runs `icloudpd` forever, periodically re-checking iCloud for changes ("watch"). Interval is specified in seconds, e.g. 3600 will be 1hr interval.
+
+    Too short interval may trigger throttling on Apple side, although no evidence has been reported.
+
+(version-parameter)=
+`--version`
+    
+:   Reports current version and commit hash & date that version was build from.
+
+    ```{note}
+    If `--use-os-locale` was specified before `--version`, then date is formatted according to OS locale.
+    ```    
+
+(use-os-locale-parameter)=
+`--use-os-locale`
+    
+:   Instructs `icloudpd` to use OS locale. If not specified (and by default), US English is used.
+
+    ```{seealso}
+    [File Naming](naming) section discusses affected behavior
+    ```    
