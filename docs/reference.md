@@ -82,3 +82,19 @@ This is a list of all options available for command line interface (CLI) of the 
     ```{seealso}
     [File Naming](naming) section discusses affected behavior
     ```    
+
+(dry-run-parameter)=
+`--dry-run`
+    
+:   If specified, no changes to local storage or iCloud remote storage is made.
+
+    Authentication will be performed and remote files will be chacked against local storage. Any difference will be reported instead of performing download.
+
+    This paramter is useful for experimenting with new parameters
+
+(domain-parameter)=
+`--domain X`
+    
+:   Access to Apple servers is blocked from mainland China. As an alternative, iCloud service is available on internal .cn domain, which can be specified for `icloudpd` to work from mainland China.
+
+    Default is ".com". ".cn" is the only other option available.
