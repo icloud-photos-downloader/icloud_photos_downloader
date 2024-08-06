@@ -28,3 +28,6 @@ language = "en"
 
 html_theme = "furo"
 # html_static_path = ['_static']
+
+# myst config
+myst_enable_extensions = ["deflist"]
