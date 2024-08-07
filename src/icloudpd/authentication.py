@@ -131,27 +131,33 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     """Request two-factor authentication."""
     devices = icloud.get_trusted_phone_numbers()
     devices_count = len(devices)
+    device_index_alphabet = "abcdefghijklmnopqrstuvwxyz"
     if devices_count > 0:
-        if devices_count > 99:
+        if devices_count > len(device_index_alphabet):
             logger.error("Too many trusted devices for authentication")
             sys.exit(1)
 
         for i, device in enumerate(devices):
-            print(f"  {i}: {device.obfuscated_number}")
+            print(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
 
-        index_str = f"..{devices_count - 1}" if devices_count > 1 else ""
-        code: int = click.prompt(
-            f"Please enter two-factor authentication code or device index (0{index_str}) to send SMS with a code",
-            type=click.IntRange(0, 999999),
-        )
+        index_str = f"..{device_index_alphabet[devices_count - 1]}" if devices_count > 1 else ""
+        index_or_code: str = ""
+        while index_or_code == "":
+            index_or_code = click.prompt(
+                f"Please enter two-factor authentication code or device index ({device_index_alphabet[0]}{index_str}) to send SMS with a code",
+                # TODO specify alphabet and lower case
+            ).lower()
+            if index_or_code == "":  # TODO better check for valid
+                click.echo("Empty string. Try again")
 
-        if code < devices_count:
+        if index_or_code in device_index_alphabet:
             # need to send code
-            device = devices[code]
+            device_index = device_index_alphabet.index(index_or_code)
+            device = devices[device_index]
             if not icloud.send_2fa_code_sms(device.id):
                 logger.error("Failed to send two-factor authentication code")
                 sys.exit(1)
-            code = click.prompt(
+            code: int = click.prompt(
                 "Please enter two-factor authentication code that you received over SMS",
                 type=click.IntRange(0, 999999),
             )
@@ -159,7 +165,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
         else:
-            if not icloud.validate_2fa_code(str(code)):
+            if not icloud.validate_2fa_code(index_or_code):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
     else:
