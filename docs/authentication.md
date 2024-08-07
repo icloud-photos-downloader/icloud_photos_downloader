@@ -27,7 +27,7 @@ Default: *console*
 
 ## Access from Mainland China
 
-Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with `--domain cn` parameter to support downloading iCloud photos from mainland China, however, people reported mixed results with that parameter.
+Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with `--domain cn` parameter to support downloading iCloud Photos from mainland China, however, people reported mixed results with that parameter.
 
 ## FIDO
 
