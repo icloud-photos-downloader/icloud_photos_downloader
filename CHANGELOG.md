@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: use a-z for sms mfa index to disambiguate with mfa code with leading zeros [#925](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/925)
+
 ## 1.23.0 (2024-07-25)
 
 - feature: update webui and allow to cancel and resume sync 
