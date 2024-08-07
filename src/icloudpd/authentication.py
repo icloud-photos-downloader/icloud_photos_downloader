@@ -142,13 +142,44 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
 
         index_str = f"..{device_index_alphabet[devices_count - 1]}" if devices_count > 1 else ""
         index_or_code: str = ""
-        while index_or_code == "":
-            index_or_code = click.prompt(
-                f"Please enter two-factor authentication code or device index ({device_index_alphabet[0]}{index_str}) to send SMS with a code",
-                # TODO specify alphabet and lower case
-            ).lower()
-            if index_or_code == "":  # TODO better check for valid
+        while True:
+            index_or_code = (
+                click.prompt(
+                    f"Please enter two-factor authentication code or device index ({device_index_alphabet[0]}{index_str}) to send SMS with a code",
+                )
+                .strip()
+                .lower()
+            )
+
+            if index_or_code == "":
                 click.echo("Empty string. Try again")
+                continue
+
+            if len(index_or_code) == 1:
+                if index_or_code in device_index_alphabet:
+                    if device_index_alphabet.index(index_or_code) > devices_count - 1:
+                        click.echo(
+                            f"Invalid index, should be {device_index_alphabet[0]}{index_str}. Try again"
+                        )
+                        continue
+                    else:
+                        break
+                else:
+                    click.echo(
+                        f"Invalid index, should be {device_index_alphabet[0]}{index_str}. Try again"
+                    )
+                    continue
+
+            if len(index_or_code) == 6:
+                if index_or_code.isdigit():
+                    break
+                else:
+                    click.echo("Invalid code, should be six digits. Try again")
+                    continue
+
+            click.echo(
+                f"Should be index {device_index_alphabet[0]}{index_str} or six-digit code. Try again"
+            )
 
         if index_or_code in device_index_alphabet:
             # need to send code
