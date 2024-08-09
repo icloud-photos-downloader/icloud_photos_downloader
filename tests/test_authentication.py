@@ -181,12 +181,14 @@ class AuthenticationTestCase(TestCase):
                 [
                     "--username",
                     "jdoe@gmail.com",
+                    "--password",
+                    "password1",
                     "--no-progress-bar",
                     "--cookie-directory",
                     cookie_dir,
                     "--auth-only",
                 ],
-                input="password1\n0\n654321\n",
+                input="0\n654321\n",
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
@@ -217,21 +219,23 @@ class AuthenticationTestCase(TestCase):
                 [
                     "--username",
                     "jdoe@gmail.com",
+                    "--password",
+                    "password1",
                     "--no-progress-bar",
                     "--cookie-directory",
                     cookie_dir,
                     "--auth-only",
                 ],
-                input="password1\n654321\n",
+                input="654321\n",
             )
             self.assertIn("DEBUG    Authenticating...", self._caplog.text)
             self.assertIn(
                 "INFO     Two-factor authentication is required",
                 self._caplog.text,
             )
-            self.assertIn("  0: (***) ***-**81", result.output)
+            self.assertIn("  a: (***) ***-**81", result.output)
             self.assertIn(
-                "Please enter two-factor authentication code or device index (0) to send SMS with a code: 654321",
+                "Please enter two-factor authentication code or device index (a) to send SMS with a code: 654321",
                 result.output,
             )
             self.assertIn(
