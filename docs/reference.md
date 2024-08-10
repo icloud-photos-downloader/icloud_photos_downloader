@@ -1,4 +1,4 @@
-# CLI Reference
+# Reference
 
 This is a list of all options available for command line interface (CLI) of the `icloudpd`
 
@@ -122,3 +122,137 @@ This is a list of all options available for command line interface (CLI) of the 
     Discussion on [File Naming and Deduplication](naming)
     ``` 
 
+(username-parameter)=
+`--username X`
+    
+:   Specifies AppleID (email address) used for authenticating to iCloud.
+
+(auth-only-parameter)=
+`--auth-only`
+    
+:   Performs authentication, persists auth results (tokens/cookies), and exists without processing assets
+
+(cookie-directory-parameter)=
+`--cookie-directory X`
+    
+:   Customizes folder used for persisting authentication results (cookies/tokens). If not specified, `~/.pyicloud` is used.
+
+(size-parameter)=
+`--size X`
+    
+:   Customizes size of the asset to download.
+
+    ```{seealso}
+    Details on [Assets sizes](size)
+    ```
+
+(force-size-parameter)=
+`--force-size`
+    
+:   If specified, only requested size will be downloaded. Otherwise, `original` size will be downloaded instead of missing size.
+
+    ```{seealso}
+    [`--size` parameter](size-parameter)
+    ```
+
+(live-photo-size-parameter)=
+`--live-photo-size X`
+    
+:   Customizes size of the live photo assets to download.
+
+(skip-videos-parameter)=
+`--skip-videos`
+    
+:   If specified, video assets will not be processed
+
+(skip-live-photos-parameter)=
+`--skip-live-photos`
+    
+:   If specified, live photo assets will not be processed
+
+(auto-delete-parameter)=
+`--auto-delete`
+    
+:   If specified, assets deleted in iCloud (actually moved to Recently Deleted album), will also be deleted locally.
+
+    ```{seealso}
+    [Modes of operation](mode)
+    ```
+
+(delete-after-download-parameter)=
+`--delete-after-download`
+    
+:   If specified, assets downloaded locally will be deleted in iCloud (actually moved to Recently Deleted album).
+
+    ```{seealso}
+    [Modes of operation](mode)
+    ```
+(only-print-filenames-parameter)=
+`--only-print-filenames`
+    
+:   If specified, no downloading will occur, but only file paths printed in the output (no other info goes into output either).
+
+    ```{seealso}
+    [`--dry-run` parameter](dry-run-parameter)
+    ```
+(folder-structure-parameter)=
+`--folder-structure X`
+    
+:   Specifies sub folder naming scheme. 
+
+    ```{seealso}
+    Details in [Folder structure](naming) section.
+    ```
+
+(set-exif-datetime-parameter)=
+`--set-exif-datetime`
+    
+:   If specified, EXIF data for the image will be updated with date/time of the assets take/created. Only if EXIF does not exist already in the asset.
+
+(no-progress-bar-parameter)=
+`--no-progress-bar`
+    
+:   If specified, progress bar is suppressed. Valuable when streaming output to file
+
+(keep-unicode-in-filenames-parameter)=
+`--keep-unicode-in-filenames`
+    
+:   If specified, unicode chars will be preserved in filenames. Otherwise they are removed (default).
+
+(live-photo-mov-filename-policy-parameter)=
+`--live-photo-mov-filename-policy X`
+    
+:   Customizes naming of the video portion of the live photos.
+
+    ```{seealso}
+    Details in [Live Photo](naming) section.
+    ```
+
+(align-raw-parameter)=
+`--align-raw X`
+    
+:   Customizes treating of the RAW+JPEG assets.
+
+    ```{seealso}
+    Details in [RAW+JPEG](raw) section.
+    ```
+
+(password-provider-parameter)=
+`--password-provider X`
+    
+:   Customizes intake of the password for iCloud authentication.
+
+    ```{seealso}
+    Details in [Password providers](authentication) section.
+    ```
+(mfa-provider-parameter)=
+`--mfa-provider X`
+    
+:   Customizes intake of the multi-factor authentication (MFA) code for iCloud authentication.
+
+    ```{seealso}
+    Details in [MFA providers](authentication) section.
+    ```
+
+
+TODO: SMTP & Notification params
