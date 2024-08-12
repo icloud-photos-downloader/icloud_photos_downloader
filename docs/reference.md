@@ -254,5 +254,21 @@ This is a list of all options available for command line interface (CLI) of the 
     Details in [MFA providers](authentication) section.
     ```
 
+(smtp-parameter)=
+`--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
+    
+:   Settings for SMTP notification for expired/needed authentication.
+
+(notification-email-parameter)=
+`--notification-email X`, `--notification-email-from X`
+    
+:   Settings for email notification addressing
+
+(notification-script-parameter)=
+`--notification-script X`
+    
+:   Script to be executed for notification on expired MFA
+
+=======
 
 TODO: SMTP & Notification params
