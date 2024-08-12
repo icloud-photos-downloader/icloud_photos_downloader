@@ -269,3 +269,6 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   Script to be executed for notification on expired MFA
 
+=======
+
+TODO: SMTP & Notification params
