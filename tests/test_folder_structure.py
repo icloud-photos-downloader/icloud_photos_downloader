@@ -209,3 +209,38 @@ class FolderStructureTestCase(TestCase):
             assert os.path.exists(
                 os.path.join(data_dir, os.path.normpath(file_name))
             ), f"File {file_name} expected, but does not exist"
+
+    def test_folder_structure_bad_format(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create: List[Tuple[str, str, int]] = []
+        files_to_download: List[Tuple[str, str]] = []
+
+        # Note - This test uses the same cassette as test_download_photos.py
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--only-print-filenames",
+                "--folder-structure={%Y}{%Y}",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
+
+        assert result.exit_code == 2
+
+        messages = result.output.splitlines()
+
+        self.assertTrue("Format specified in --folder-structure is incorrect" in messages)

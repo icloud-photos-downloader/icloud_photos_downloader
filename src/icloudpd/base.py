@@ -671,6 +671,13 @@ def main(
             print("Webui must be the last --password-provider")
             sys.exit(2)
 
+        if folder_structure != "none":
+            try:
+                folder_structure.format(datetime.datetime.now())
+            except:  # noqa E722
+                print("Format specified in --folder-structure is incorrect")
+                sys.exit(2)
+
         status_exchange = StatusExchange()
         config = Config(
             directory=directory,
