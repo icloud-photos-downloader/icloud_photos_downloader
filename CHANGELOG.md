@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: use a-z for sms mfa index to disambiguate with mfa code with leading zeros [#925](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/925)
+- fix: report proper error on bad `--folder-structure` value [#937](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/937)
 
 ## 1.23.0 (2024-07-25)
 
