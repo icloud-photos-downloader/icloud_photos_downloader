@@ -26,7 +26,6 @@ dependencies = [
     "requests==2.31.0",
     "schema==0.7.5",
     "click==8.1.6",
-    "python-dateutil==2.8.2",
     "tqdm==4.66.4",
     "piexif==1.1.3",
     "urllib3==1.26.16",
@@ -60,7 +59,7 @@ devlinux = [
 test = [
     "pytest==7.4.3",
     "mock==5.1.0",
-    "freezegun==1.2.2",
+    "freezegun==1.5.1",
     "vcrpy==4.4.0",
     "pytest-cov==4.1.0",
     "ruff==0.5.0",
