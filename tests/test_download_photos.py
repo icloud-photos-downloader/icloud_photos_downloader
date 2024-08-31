@@ -2086,7 +2086,7 @@ class DownloadPhotoTestCase(TestCase):
 
         assert result.exit_code == 0
 
-    def test_download_bad_filename_encoding(self) -> None:
+    def test_download_bad_filename_base64_encoding(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
@@ -2105,7 +2105,7 @@ class DownloadPhotoTestCase(TestCase):
             self.assertEqual,
             self.vcr_path,
             base_dir,
-            "listing_photos_bad_filename_encoding.yml",
+            "listing_photos_bad_filename_base64_encoding.yml",
             files_to_create,
             files_to_download,
             [
@@ -2124,4 +2124,44 @@ class DownloadPhotoTestCase(TestCase):
         )
 
         self.assertIsInstance(result.exception, ValueError)
-        # ValueError("Invalid Input: 'aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUE'")
+        # self.assertEqual(result.exception, ValueError("Invalid Input: 'aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUE'"))
+
+    def test_download_bad_filename_utf8_encoding(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
+        ]
+
+        files_to_download: List[Tuple[str, str]] = [
+            # <>:"/\|?*  -- windows
+            # / & \0x00 -- linux
+            # aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUE -> abcdefgh
+            # ("2018/07/31", "i_n v_a_l_i_d_p_a_t_h_.JPG")
+        ]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_bad_filename_utf8_encoding.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
+
+        self.assertIsInstance(result.exception, ValueError)
+        # self.assertEqual(result.exception, ValueError("Invalid Input: b'i\\xb7\\x1dy\\xf8!'"))

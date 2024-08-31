@@ -11,7 +11,7 @@ from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, Ty
 import typing
 
 from requests import Response
-from foundation import _capture_param_in_exception, bytes_decode
+from foundation import wrap_param_in_exception, bytes_decode
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -613,8 +613,8 @@ class PhotoAsset(object):
     def filename(self) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
-            _decode_base64 = _capture_param_in_exception(base64.b64decode)
-            _decode_bytes = _capture_param_in_exception(bytes_decode('utf-8'))
+            _decode_base64 = wrap_param_in_exception(base64.b64decode)
+            _decode_bytes = wrap_param_in_exception(bytes_decode('utf-8'))
             _filename = compose(
                 self._service.filename_cleaner,
                 compose(
