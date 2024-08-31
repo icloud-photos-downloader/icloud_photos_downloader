@@ -4,7 +4,7 @@ import inspect
 import logging
 import os
 import sys
-from typing import Any, NoReturn, Optional, Sequence, Tuple
+from typing import Any, List, NoReturn, Optional, Sequence, Tuple
 from unittest import TestCase, mock
 from unittest.mock import ANY, PropertyMock, call
 
@@ -2085,3 +2085,43 @@ class DownloadPhotoTestCase(TestCase):
         self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         assert result.exit_code == 0
+
+    def test_download_bad_filename_encoding(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
+        ]
+
+        files_to_download: List[Tuple[str, str]] = [
+            # <>:"/\|?*  -- windows
+            # / & \0x00 -- linux
+            # aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUE
+            # ("2018/07/31", "i_n v_a_l_i_d_p_a_t_h_.JPG")
+        ]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_bad_filename_encoding.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
+
+        self.assertIsInstance(result.exception, ValueError)
+        # ValueError("Invalid Input: 'aS9uIHY6YQBsKmk/ZFxwPGE+dCJofC5KUE'")

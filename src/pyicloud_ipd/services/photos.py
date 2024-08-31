@@ -7,10 +7,11 @@ import base64
 import re
 
 from datetime import datetime
-from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, TypeVar, Union
 import typing
 
 from requests import Response
+from foundation import _capture_param_in_exception, bytes_decode
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -22,6 +23,7 @@ from urllib.parse import urlencode
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
+from pyicloud_ipd.utils import compose
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
@@ -611,9 +613,20 @@ class PhotoAsset(object):
     def filename(self) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
-            _filename = self._service.filename_cleaner(base64.b64decode(
-                fields['filenameEnc']['value']
-            ).decode('utf-8'))
+            _decode_base64 = _capture_param_in_exception(base64.b64decode)
+            _decode_bytes = _capture_param_in_exception(bytes_decode('utf-8'))
+            _filename = compose(
+                self._service.filename_cleaner,
+                compose(
+                    _decode_bytes, 
+                    _decode_base64
+                    )
+                )(fields['filenameEnc']['value'])
+
+            # _filename = self._service.filename_cleaner(base64.b64decode(
+            #     fields['filenameEnc']['value']
+            # ).decode('utf-8'))
+            
             if self._service.file_match_policy == FileMatchPolicy.NAME_ID7:
                 _f, _e = os.path.splitext(_filename)
                 _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- dump encoded filename in exception where there is an error in decoding it [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/641)
+
 ## 1.23.1 (2024-08-22)
 
 - fix: use a-z for sms mfa index to disambiguate with mfa code with leading zeros [#925](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/925)

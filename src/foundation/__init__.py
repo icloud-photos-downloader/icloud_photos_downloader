@@ -1,5 +1,5 @@
 import datetime
-from typing import NamedTuple
+from typing import Callable, NamedTuple, TypeVar
 
 import pytz
 from tzlocal import get_localzone
@@ -25,3 +25,24 @@ def version_info_formatted() -> str:
         get_localzone()
     )
     return f"version:{vi.version}, commit sha:{vi.commit_sha}, commit timestamp:{ts:%c %Z}"
+
+
+def bytes_decode(encoding: str) -> Callable[[bytes], str]:
+    def _internal(inp: bytes) -> str:
+        return inp.decode(encoding)
+
+    return _internal
+
+
+T_in = TypeVar("T_in")
+T_out = TypeVar("T_out")
+
+
+def _capture_param_in_exception(func: Callable[[T_in], T_out]) -> Callable[[T_in], T_out]:
+    def _internal(input: T_in) -> T_out:
+        try:
+            return func(input)
+        except Exception as err:
+            raise ValueError(f"Invalid Input: {input!r}") from err
+
+    return _internal
