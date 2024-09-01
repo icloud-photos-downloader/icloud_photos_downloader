@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.23.2 (2024-08-31)
+
 - dump encoded filename in exception when there is an error in decoding it [#935](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/935) and [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/641)
 
 ## 1.23.1 (2024-08-22)
