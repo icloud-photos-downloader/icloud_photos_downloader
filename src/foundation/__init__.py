@@ -38,13 +38,13 @@ T_in = TypeVar("T_in")
 T_out = TypeVar("T_out")
 
 
-def wrap_param_in_exception(func: Callable[[T_in], T_out]) -> Callable[[T_in], T_out]:
+def wrap_param_in_exception(caption: str, func: Callable[[T_in], T_out]) -> Callable[[T_in], T_out]:
     """Decorator to wrap excpetion into ValueError with the dump of the input parameter"""
 
     def _internal(input: T_in) -> T_out:
         try:
             return func(input)
         except Exception as err:
-            raise ValueError(f"Invalid Input: {input!r}") from err
+            raise ValueError(f"Invalid Input ({caption}): {input!r}") from err
 
     return _internal

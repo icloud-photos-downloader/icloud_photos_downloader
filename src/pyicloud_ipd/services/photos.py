@@ -612,16 +612,26 @@ class PhotoAsset(object):
     @property
     def filename(self) -> str:
         fields = self._master_record['fields']
-        if 'filenameEnc' in fields and 'value' in fields['filenameEnc']:
-            _decode_base64 = wrap_param_in_exception(base64.b64decode)
-            _decode_bytes = wrap_param_in_exception(bytes_decode('utf-8'))
-            _filename = compose(
+        if 'filenameEnc' in fields:
+            filename_enc: Dict[str, Any] = fields['filenameEnc']
+            def _get_value(input: Dict[str, Any]) -> Any:
+                return input['value']
+            parse_base64_value = compose(
+                bytes_decode('utf-8'), 
+                base64.b64decode,
+            )
+            parse_and_clean = compose(
                 self._service.filename_cleaner,
-                compose(
-                    _decode_bytes, 
-                    _decode_base64
-                    )
-                )(fields['filenameEnc']['value'])
+                parse_base64_value
+            )
+
+            extract_value_and_parse = compose(
+                parse_and_clean,
+                _get_value,
+            )
+            parser = wrap_param_in_exception("Parsing filenameEnc", extract_value_and_parse)
+
+            _filename = parser(filename_enc)
 
             # _filename = self._service.filename_cleaner(base64.b64decode(
             #     fields['filenameEnc']['value']
