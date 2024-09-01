@@ -19,7 +19,7 @@ from vcr import VCR
 
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 
-vcr = VCR(decode_compressed_response=True, record_mode="new_episodes")
+vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 class AutodeletePhotosTestCase(TestCase):
@@ -68,6 +68,7 @@ class AutodeletePhotosTestCase(TestCase):
                         cookie_dir,
                     ],
                 )
+                print_result_exception(result)
 
                 self.assertIn(
                     "DEBUG    Looking up all photos and videos from album All Photos...",

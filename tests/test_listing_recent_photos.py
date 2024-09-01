@@ -11,7 +11,7 @@ from vcr import VCR
 
 from tests.helpers import path_from_project_root, print_result_exception, recreate_path
 
-vcr = VCR(decode_compressed_response=True)
+vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 class ListingRecentPhotosTestCase(TestCase):

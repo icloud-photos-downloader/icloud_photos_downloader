@@ -31,7 +31,7 @@ from tests.helpers import (
     run_icloudpd_test,
 )
 
-vcr = VCR(decode_compressed_response=True)
+vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 class DownloadPhotoNameIDTestCase(TestCase):
