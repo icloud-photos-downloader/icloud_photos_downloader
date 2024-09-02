@@ -2153,3 +2153,41 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         self.assertIsInstance(result.exception, ValueError)
         # self.assertEqual(result.exception, ValueError("Invalid Input: b'i\\xb7\\x1dy\\xf8!'"))
+
+    def test_download_filename_string_encoding_name_id7(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1151066),
+            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257),
+        ]
+
+        files_to_download: List[Tuple[str, str]] = [
+            # SU1HXzc0MDkuSlBH -> IMG_7409.JPG
+            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG")
+        ]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.vcr_path,
+            base_dir,
+            "listing_photos_filename_string_encoding.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
+        print_result_exception(result)
+
+        self.assertEqual(result.exit_code, 0)
