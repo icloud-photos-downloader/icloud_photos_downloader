@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: support plain text encoding for filename in addition to base64 [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/641)
+
 ## 1.23.3 (2024-09-01)
 
 - more debug added for parsing filenameEnc [#935](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/935) and [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/641)

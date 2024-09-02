@@ -7,7 +7,7 @@ import base64
 import re
 
 from datetime import datetime
-from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, TypeVar, Union
+from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, TypeVar, Union, cast
 import typing
 
 from requests import Response
@@ -23,7 +23,7 @@ from urllib.parse import urlencode
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import compose
+from pyicloud_ipd.utils import compose, identity
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
@@ -614,15 +614,38 @@ class PhotoAsset(object):
         fields = self._master_record['fields']
         if 'filenameEnc' in fields:
             filename_enc: Dict[str, Any] = fields['filenameEnc']
-            def _get_value(input: Dict[str, Any]) -> Any:
-                return input['value']
+            def _get_value(input: Dict[str, Any]) -> str:
+                return cast(str,input['value'])
+            def _get_type(input: Dict[str, Any]) -> str:
+                return cast(str, input['type'])
+            
+            def _match_type(string_parser: Callable[[str], str], base64_parser: Callable[[str], str]) -> Callable[[str], Callable[[str], str]]:
+                def _internal(type:str) -> Callable[[str], str]:
+                    if type == "STRING":
+                        return string_parser
+                    elif type == "ENCRYPTED_BYTES":
+                        return base64_parser
+                    else:
+                        raise ValueError(f"Unsupported filenam encoding {type}")
+                return _internal
+
             parse_base64_value = compose(
                 bytes_decode('utf-8'), 
                 base64.b64decode,
             )
+            
+            parser_selector = compose(
+                _match_type(identity, parse_base64_value),
+                _get_type
+            )
+
+            type_parser = wrap_param_in_exception("Parsing filenameEnc type", parser_selector)
+
+            _value_parser = type_parser(filename_enc)
+
             parse_and_clean = compose(
                 self._service.filename_cleaner,
-                parse_base64_value
+                _value_parser
             )
 
             extract_value_and_parse = compose(
