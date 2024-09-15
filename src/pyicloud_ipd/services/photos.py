@@ -601,8 +601,8 @@ class PhotoAsset(object):
     VERSION_FILENAME_SUFFIX_LOOKUP: Dict[VersionSize, str] = {
         AssetVersionSize.MEDIUM: u"medium",
         AssetVersionSize.THUMB: u"thumb",
-        LivePhotoVersionSize.MEDIUM: u"medium",
-        LivePhotoVersionSize.THUMB: u"thumb",
+        # LivePhotoVersionSize.MEDIUM: u"medium",
+        # LivePhotoVersionSize.THUMB: u"thumb",
     }
 
     @property

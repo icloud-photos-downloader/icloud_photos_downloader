@@ -41,6 +41,7 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.utils import (
+    add_suffix_to_filename,
     compose,
     constant,
     disambiguate_filenames,
@@ -965,11 +966,13 @@ def download_builder(
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
                     lp_filename = version.filename
-                    # if live_photo_size != "original":
-                    #     # Add size to filename if not original
-                    #     lp_filename = lp_filename.replace(
-                    #         ".MOV", f"-{live_photo_size}.MOV"
-                    #     )
+                    if live_photo_size != LivePhotoVersionSize.ORIGINAL:
+                        # Add size to filename if not original
+                        lp_filename = add_suffix_to_filename(
+                            f"-{live_photo_size}".lower(), lp_filename
+                        )
+                    else:
+                        pass
                     lp_download_path = os.path.join(download_dir, lp_filename)
 
                     lp_file_exists = os.path.isfile(lp_download_path)
