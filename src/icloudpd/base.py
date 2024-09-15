@@ -4,8 +4,9 @@
 from multiprocessing import freeze_support
 
 import foundation
+from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
-from icloudpd.mfa_provider import MFAProvider  # fmt: skip
+from icloudpd.mfa_provider import MFAProvider
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
@@ -821,20 +822,21 @@ def download_builder(
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
 
-            if skip_videos and photo.item_type != "image":
+            if skip_videos and photo.item_type != AssetItemType.IMAGE:
                 logger.debug(
                     "Skipping %s, only downloading photos." + "(Item type was: %s)",
                     photo.filename,
                     photo.item_type,
                 )
                 return False
-            if photo.item_type not in ("image", "movie"):
-                logger.debug(
-                    "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
-                    photo.filename,
-                    photo.item_type,
-                )
-                return False
+            # Throwing error now
+            # if not photo.item_type:
+            #     logger.debug(
+            #         "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
+            #         photo.filename,
+            #         photo.item_type,
+            #     )
+            #     return False
             try:
                 created_date = photo.created.astimezone(get_localzone())
             except (ValueError, OSError):
