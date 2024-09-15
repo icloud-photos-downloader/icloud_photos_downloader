@@ -47,6 +47,7 @@ from pyicloud_ipd.utils import (
     disambiguate_filenames,
     get_password_from_keyring,
     identity,
+    size_to_suffix,
     store_password_in_keyring,
 )
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
@@ -910,7 +911,7 @@ def download_builder(
                     # Deprecation - We used to download files like IMG_1234-original.jpg,
                     # so we need to check for these.
                     # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
-                    original_download_path = ("-original.").join(download_path.rsplit(".", 1))
+                    original_download_path = add_suffix_to_filename("-original", download_path)
                     file_exists = os.path.isfile(original_download_path)
 
                 if file_exists:
@@ -969,7 +970,8 @@ def download_builder(
                     if live_photo_size != LivePhotoVersionSize.ORIGINAL:
                         # Add size to filename if not original
                         lp_filename = add_suffix_to_filename(
-                            f"-{live_photo_size}".lower(), lp_filename
+                            size_to_suffix(live_photo_size),
+                            lp_filename,
                         )
                     else:
                         pass

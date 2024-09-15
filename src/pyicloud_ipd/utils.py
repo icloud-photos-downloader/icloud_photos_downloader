@@ -106,6 +106,9 @@ def constant(value: _Tout) -> Callable[[_Tin], _Tout]:
 #         return filename
 #     return (f"-{size}.").join(filename.rsplit(".", 1))
 
+def size_to_suffix(size: VersionSize) -> str:
+    return f"-{size}".lower()
+
 def add_suffix_to_filename(suffix: str, filename: str) -> str:
     _n, _e = os.path.splitext(filename)
     return _n + suffix + _e
