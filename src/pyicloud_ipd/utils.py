@@ -106,6 +106,10 @@ def constant(value: _Tout) -> Callable[[_Tin], _Tout]:
 #         return filename
 #     return (f"-{size}.").join(filename.rsplit(".", 1))
 
+def add_suffix_to_filename(suffix: str, filename: str) -> str:
+    _n, _e = os.path.splitext(filename)
+    return _n + suffix + _e
+
 def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize]) -> Dict[AssetVersionSize, AssetVersion]:
     _results: Dict[AssetVersionSize, AssetVersion] = {}
     # add those that were requested
@@ -122,8 +126,7 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
                 _results[AssetVersionSize.ADJUSTED] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
         else:
             if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ADJUSTED].filename:
-                _n, _e = os.path.splitext(_results[AssetVersionSize.ADJUSTED].filename)
-                _results[AssetVersionSize.ADJUSTED].filename = _n + "-adjusted" + _e
+                _results[AssetVersionSize.ADJUSTED].filename = add_suffix_to_filename("-adjusted", _results[AssetVersionSize.ADJUSTED].filename)
 
     # alternative
     if AssetVersionSize.ALTERNATIVE in _sizes:
@@ -134,8 +137,7 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
         else:
             if AssetVersionSize.ALTERNATIVE in _results:
                 if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ADJUSTED].filename == _results[AssetVersionSize.ALTERNATIVE].filename or AssetVersionSize.ORIGINAL in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ALTERNATIVE].filename:
-                    _n, _e = os.path.splitext(_results[AssetVersionSize.ALTERNATIVE].filename)
-                    _results[AssetVersionSize.ALTERNATIVE].filename = _n + "-alternative" + _e
+                    _results[AssetVersionSize.ALTERNATIVE].filename = add_suffix_to_filename("-alternative", _results[AssetVersionSize.ALTERNATIVE].filename)
 
     for _size in _sizes:
         if _size not in [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE]:

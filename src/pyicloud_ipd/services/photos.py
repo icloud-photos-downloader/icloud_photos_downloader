@@ -23,7 +23,7 @@ from urllib.parse import urlencode
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import compose, identity
+from pyicloud_ipd.utils import add_suffix_to_filename, compose, identity
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
@@ -661,9 +661,8 @@ class PhotoAsset(object):
             # ).decode('utf-8'))
             
             if self._service.file_match_policy == FileMatchPolicy.NAME_ID7:
-                _f, _e = os.path.splitext(_filename)
                 _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]
-                _filename = f"{_f}_{_a}{_e}"
+                _filename = add_suffix_to_filename(f"_{_a}", _filename)
             return _filename
 
         # Some photos don't have a filename.
@@ -784,8 +783,7 @@ class PhotoAsset(object):
                     # add size suffix
                     if key in self.VERSION_FILENAME_SUFFIX_LOOKUP:
                         _size_suffix = self.VERSION_FILENAME_SUFFIX_LOOKUP[key]
-                        _f, _e = os.path.splitext(version["filename"])
-                        version["filename"] = _f + f"-{_size_suffix}" + _e
+                        version["filename"] = add_suffix_to_filename(f"-{_size_suffix}", version["filename"])
 
                     _versions[key] = AssetVersion(version["filename"], version['size'], version['url'], version['type'])
 
