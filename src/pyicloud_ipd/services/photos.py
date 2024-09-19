@@ -12,6 +12,7 @@ import typing
 
 from requests import Response
 from foundation import wrap_param_in_exception, bytes_decode
+from foundation.core import compose, identity
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -24,7 +25,7 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import add_suffix_to_filename, compose, identity
+from pyicloud_ipd.utils import add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)

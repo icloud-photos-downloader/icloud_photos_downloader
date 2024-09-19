@@ -14,6 +14,7 @@ import click
 from click import confirm
 
 import foundation
+from foundation.core import identity
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -255,8 +256,8 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
 
         try:
             api = PyiCloudService(
-                utils.identity,
-                utils.identity,
+                identity,
+                identity,
                 domain,
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,

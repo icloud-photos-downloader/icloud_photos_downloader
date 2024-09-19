@@ -4,6 +4,7 @@
 from multiprocessing import freeze_support
 
 import foundation
+from foundation.core import compose, constant, identity
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
 from icloudpd.mfa_provider import MFAProvider
@@ -43,11 +44,8 @@ from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.utils import (
     add_suffix_to_filename,
-    compose,
-    constant,
     disambiguate_filenames,
     get_password_from_keyring,
-    identity,
     size_to_suffix,
     store_password_in_keyring,
 )

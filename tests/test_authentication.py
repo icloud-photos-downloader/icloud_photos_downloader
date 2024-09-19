@@ -6,6 +6,7 @@ from unittest import TestCase
 import pyicloud_ipd
 import pytest
 from click.testing import CliRunner
+from foundation.core import constant, identity
 from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
 from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
 from icloudpd.logger import setup_logger
@@ -14,7 +15,6 @@ from icloudpd.status import StatusExchange
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
-from pyicloud_ipd.utils import constant, identity
 from vcr import VCR
 
 from tests.helpers import path_from_project_root, recreate_path

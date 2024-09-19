@@ -1,6 +1,7 @@
 import copy
 import os
-from typing import Callable, Dict, Optional, Sequence, TypeVar
+from typing import Dict, Optional, Sequence
+import typing
 import keyring
 
 from pyicloud_ipd.asset_version import AssetVersion
@@ -75,26 +76,6 @@ def underscore_to_camelcase(word:str , initial_capital: bool=False) -> str:
 
     return ''.join(words)
 
-_Tin = TypeVar('_Tin')
-_Tout = TypeVar('_Tout')
-_Tinter = TypeVar('_Tinter')
-def compose(f:Callable[[_Tinter], _Tout], g: Callable[[_Tin], _Tinter]) -> Callable[[_Tin], _Tout]:
-    """f after g composition of functions"""
-    def inter_(value: _Tin) -> _Tout:
-        return f(g(value))
-    return inter_
-
-def identity(value: _Tin) -> _Tin:
-    """identity function"""
-    return value
-
-def constant(value: _Tout) -> Callable[[_Tin], _Tout]:
-    """constant function"""
-    def _intern(_:_Tin) -> _Tout:
-        return value
-    return _intern
-
-
 
 # def filename_with_size(filename: str, size: str, original: Optional[Dict[str, Any]]) -> str:
 #     """Returns the filename with size, e.g. IMG1234.jpg, IMG1234-small.jpg"""
@@ -154,4 +135,3 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
 
 
     return _results
-
