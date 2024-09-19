@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: force_size should not skip subsequent sizes [ref](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/955)
+
 ## 1.23.4 (2024-09-02)
 
 - fix: support plain text encoding for filename in addition to base64 [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/641)
