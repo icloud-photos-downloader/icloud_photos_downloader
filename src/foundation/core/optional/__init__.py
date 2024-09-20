@@ -13,18 +13,31 @@ def bind(
     Monadic bind for Optional.
 
     Example usage:
-        def div8(divider: int) -> Optional[float]:
-            if divider == 0:
-                return None
-            return 8 / divider
+        >>> def div8(divider: int) -> Optional[float]:
+        ...     if divider == 0:
+        ...         return None
+        ...     return 8 / divider
+        >>> b = bind(div8)
 
-        b = bind_optional(div8)
+        Basic operation on div8:
+        >>> div8(2) == 4
+        True
+        >>> div8(0) == None
+        True
 
-        assert div8(2) == 4
-        assert div8(0) == None
-        assert b(2) == 4
-        assert b(0) == None
-        assert b(None) == None
+        Passing None throws:
+        >>> div8(None)
+        Traceback (most recent call last):
+            ...
+        TypeError: unsupported operand type(s) for /: 'int' and 'NoneType'
+
+        Binding works for basic and None:
+        >>> b(2) == 4
+        True
+        >>> b(0) == None
+        True
+        >>> b(None) == None
+        True
 
     """
 
@@ -44,11 +57,21 @@ def lift2(
     (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
 
     Example usage:
-        def dbl(x: int) -> int:
-            return x * 2
-        l = lift2_optional(dbl)
-        assert l(2) == 4
-        assert l(None) == None
+        >>> def _mul(input: int, input2: int) -> int:
+        ...     return input * input2
+        >>> l = lift2(_mul)
+
+        Works for numbers:
+        >>> l(2, 3) == 6
+        True
+
+        Works for None in any and/or all parameter:
+        >>> l(2, None) == None
+        True
+        >>> l(None, 3) == None
+        True
+        >>> l(None, None) == None
+        True
 
     """
 
@@ -63,6 +86,11 @@ def lift2(
 def lift3(
     func: Callable[[_Tin, _Tin2, _Tin3], _Tout],
 ) -> Callable[[Optional[_Tin], Optional[_Tin2], Optional[_Tin3]], Optional[_Tout]]:
+    """
+    Lifts regular function into Optional. see lift2 for Optional Applicative Functor
+    (a -> b -> c) -> Maybe a -> Maybe b -> Maybe c
+    """
+
     def _intern(
         input: Optional[_Tin], input2: Optional[_Tin2], input3: Optional[_Tin3]
     ) -> Optional[_Tout]:

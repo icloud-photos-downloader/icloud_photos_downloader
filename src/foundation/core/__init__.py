@@ -50,11 +50,43 @@ def apply(input: _Tin) -> Callable[[Callable[[_Tin], _Tout]], _Tout]:
     Applying a function. Equiv curried `($)` in Haskel
     a -> (a -> b) -> b
 
-    Example usage: map(apply(3), [f1,f2,f3]) == [f1(3), f2(3), f3(3)]
+    Example usage:
+
+        >>> def _mul(a: int, b: int) -> int:
+        ...     return a * b
+        >>> def _add(a: int, b: int) -> int:
+        ...     return a + b
+        >>> list(map(apply(3), [curry2(_mul)(2), curry2(_add)(5)])) == [6, 8]
+        True
+
     """
 
     def _intern(func: Callable[[_Tin], _Tout]) -> _Tout:
         return func(input)
+
+    return _intern
+
+
+def curry2(
+    func: Callable[[_Tin, _Tin2], _Tout],
+) -> Callable[[_Tin], Callable[[_Tin2], _Tout]]:
+    """
+    Transforms 2-param function into two nested 1-param functions
+
+    >>> def _mul(a: int, b: int) -> int:
+    ...     return a * b
+    >>> _mul(2, 3) == 6
+    True
+    >>> curry2(_mul)(2)(3) == 6
+    True
+
+    """
+
+    def _intern(input: _Tin) -> Callable[[_Tin2], _Tout]:
+        def _intern2(input2: _Tin2) -> _Tout:
+            return func(input, input2)
+
+        return _intern2
 
     return _intern
 
