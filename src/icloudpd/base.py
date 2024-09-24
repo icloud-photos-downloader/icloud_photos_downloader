@@ -893,7 +893,7 @@ def download_builder(
                             download_size.value,
                             photo.filename,
                         )
-                        return False
+                        continue
                     if AssetVersionSize.ORIGINAL in size:
                         continue  # that should avoid double download for original
                     download_size = AssetVersionSize.ORIGINAL
