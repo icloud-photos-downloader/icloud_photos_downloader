@@ -684,7 +684,7 @@ def main(
             username=username,
             auth_only=auth_only,
             cookie_directory=cookie_directory,
-            size=size,
+            primary_sizes=size,
             live_photo_size=live_photo_size,
             recent=recent,
             until_found=until_found,
@@ -804,7 +804,7 @@ def download_builder(
     skip_videos: bool,
     folder_structure: str,
     directory: str,
-    size: Sequence[AssetVersionSize],
+    primary_sizes: Sequence[AssetVersionSize],
     force_size: bool,
     only_print_filenames: bool,
     set_exif_datetime: bool,
@@ -856,7 +856,7 @@ def download_builder(
                     date_path = folder_structure.format(created_date)
 
             try:
-                versions = disambiguate_filenames(photo.versions, size)
+                versions = disambiguate_filenames(photo.versions, primary_sizes)
             except KeyError as ex:
                 print(f"KeyError: {ex} attribute was not found in the photo fields.")
                 with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
@@ -885,7 +885,7 @@ def download_builder(
             download_dir = os.path.normpath(os.path.join(directory, date_path))
             success = False
 
-            for download_size in size:
+            for download_size in primary_sizes:
                 if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
                     if force_size:
                         logger.error(
@@ -894,7 +894,7 @@ def download_builder(
                             photo.filename,
                         )
                         continue
-                    if AssetVersionSize.ORIGINAL in size:
+                    if AssetVersionSize.ORIGINAL in primary_sizes:
                         continue  # that should avoid double download for original
                     download_size = AssetVersionSize.ORIGINAL
 
@@ -1133,7 +1133,7 @@ def core(
     username: str,
     auth_only: bool,
     cookie_directory: str,
-    size: Sequence[AssetVersionSize],
+    primary_sizes: Sequence[AssetVersionSize],
     recent: Optional[int],
     until_found: Optional[int],
     album: str,
@@ -1310,7 +1310,7 @@ def core(
             logger.info(
                 ("Downloading %s %s" + " photo%s%s to %s ..."),
                 photos_count_str,
-                ",".join([_s.value for _s in size]),
+                ",".join([_s.value for _s in primary_sizes]),
                 plural_suffix,
                 video_suffix,
                 directory,
@@ -1372,7 +1372,7 @@ def core(
 
             if auto_delete:
                 autodelete_photos(
-                    logger, dry_run, library_object, folder_structure, directory, size
+                    logger, dry_run, library_object, folder_structure, directory, primary_sizes
                 )
 
             if watch_interval:  # pragma: no cover
