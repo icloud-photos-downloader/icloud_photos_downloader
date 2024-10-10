@@ -1,6 +1,8 @@
 from typing import Callable, TypeVar
 
 _Tin = TypeVar("_Tin")
+_Tin2 = TypeVar("_Tin2")
+_Tin3 = TypeVar("_Tin3")
 _Tout = TypeVar("_Tout")
 _Tinter = TypeVar("_Tinter")
 
@@ -53,5 +55,20 @@ def apply(input: _Tin) -> Callable[[Callable[[_Tin], _Tout]], _Tout]:
 
     def _intern(func: Callable[[_Tin], _Tout]) -> _Tout:
         return func(input)
+
+    return _intern
+
+
+def curry3(
+    func: Callable[[_Tin, _Tin2, _Tin3], _Tout],
+) -> Callable[[_Tin], Callable[[_Tin2], Callable[[_Tin3], _Tout]]]:
+    def _intern(input: _Tin) -> Callable[[_Tin2], Callable[[_Tin3], _Tout]]:
+        def _intern2(input2: _Tin2) -> Callable[[_Tin3], _Tout]:
+            def _intern3(input3: _Tin3) -> _Tout:
+                return func(input, input2, input3)
+
+            return _intern3
+
+        return _intern2
 
     return _intern
