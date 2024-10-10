@@ -1,4 +1,4 @@
-from typing import Callable, TypeVar
+from typing import Callable, Tuple, TypeVar
 
 _Tin = TypeVar("_Tin")
 _Tin2 = TypeVar("_Tin2")
@@ -128,3 +128,19 @@ def curry3(
         return _intern2
 
     return _intern
+
+
+def fst(t: Tuple[_Tin, _Tin2]) -> _Tin:
+    """get first of tuple
+    >>> fst((1, 2)) == 1
+    True
+    """
+    return t[0]
+
+
+def snd(t: Tuple[_Tin, _Tin2]) -> _Tin2:
+    """get second of tuple
+    >>> snd((1, 2)) == 2
+    True
+    """
+    return t[1]
