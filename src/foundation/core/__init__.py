@@ -45,9 +45,9 @@ def pipe(f: Callable[[_Tin], _Tinter], g: Callable[[_Tinter], _Tout]) -> Callabl
     return compose(g, f)
 
 
-def apply(input: _Tin) -> Callable[[Callable[[_Tin], _Tout]], _Tout]:
+def apply_reverse(input: _Tin) -> Callable[[Callable[[_Tin], _Tout]], _Tout]:
     """
-    Applying a function. Equiv curried `($)` in Haskel
+    Applying a function. Equiv curried `(&)` in Haskel
     a -> (a -> b) -> b
 
     Example usage:
@@ -56,7 +56,7 @@ def apply(input: _Tin) -> Callable[[Callable[[_Tin], _Tout]], _Tout]:
         ...     return a * b
         >>> def _add(a: int, b: int) -> int:
         ...     return a + b
-        >>> list(map(apply(3), [curry2(_mul)(2), curry2(_add)(5)])) == [6, 8]
+        >>> list(map(apply_reverse(3), [curry2(_mul)(2), curry2(_add)(5)])) == [6, 8]
         True
 
     """
