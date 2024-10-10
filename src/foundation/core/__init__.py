@@ -144,3 +144,50 @@ def snd(t: Tuple[_Tin, _Tin2]) -> _Tin2:
     True
     """
     return t[1]
+
+
+def flip(func: Callable[[_Tin, _Tin2], _Tout]) -> Callable[[_Tin2, _Tin], _Tout]:
+    """flips params
+    >>> def minus(a: int, b: int) -> int:
+    ...     return a - b
+    >>> minus(5, 3) == 2
+    True
+    >>> flip(minus)(5, 3) == -2
+    True
+    """
+
+    def _intern(input2: _Tin2, input: _Tin) -> _Tout:
+        return func(input, input2)
+
+    return _intern
+
+
+def compact2(func: Callable[[_Tin, _Tin2], _Tout]) -> Callable[[Tuple[_Tin, _Tin2]], _Tout]:
+    """Compacts two parameters into one tuple"""
+
+    def _intern(input: Tuple[_Tin, _Tin2]) -> _Tout:
+        return func(fst(input), snd(input))
+
+    return _intern
+
+
+def expand2(func: Callable[[Tuple[_Tin, _Tin2]], _Tout]) -> Callable[[_Tin, _Tin2], _Tout]:
+    def _intern(input: _Tin, input2: _Tin2) -> _Tout:
+        return func((input, input2))
+
+    return _intern
+
+
+def pipe2(
+    f: Callable[[_Tin, _Tin2], _Tinter], g: Callable[[_Tinter], _Tout]
+) -> Callable[[_Tin, _Tin2], _Tout]:
+    """
+    `g after f` composition of functions (reverse of compose). f takes 2 params
+    >>> def mul(a: int, b: int) -> int:
+    ...     return a * b
+    >>> def add5(a: int) -> int:
+    ...     return a + 5
+    >>> pipe2(mul, add5)(2, 3) == 11
+    True
+    """
+    return expand2(pipe(compact2(f), g))
