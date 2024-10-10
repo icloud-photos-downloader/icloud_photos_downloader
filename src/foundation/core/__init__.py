@@ -91,6 +91,30 @@ def curry2(
     return _intern
 
 
+def uncurry2(
+    func: Callable[[_Tin], Callable[[_Tin2], _Tout]],
+) -> Callable[[_Tin, _Tin2], _Tout]:
+    """
+    Transforms two nested 1-param functions into one 2-param function
+
+    >>> def _mul_c(a: int):
+    ...     def _intern(b: int) -> int:
+    ...         return a * b
+    ...
+    ...     return _intern
+    >>> _mul_c(2)(3) == 6
+    True
+    >>> uncurry2(_mul_c)(2, 3) == 6
+    True
+
+    """
+
+    def _intern(input: _Tin, input2: _Tin2) -> _Tout:
+        return func(input)(input2)
+
+    return _intern
+
+
 def curry3(
     func: Callable[[_Tin, _Tin2, _Tin3], _Tout],
 ) -> Callable[[_Tin], Callable[[_Tin2], Callable[[_Tin3], _Tout]]]:
