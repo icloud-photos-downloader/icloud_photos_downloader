@@ -10,7 +10,7 @@ version="1.23.4"
 name = "icloudpd"
 description = "icloudpd is a command-line tool to download photos and videos from iCloud."
 readme = "README_PYPI.md"
-requires-python = ">=3.8,<3.13"
+requires-python = ">=3.8,<3.14"
 keywords = ["icloud", "photo"]
 license = {file="LICENSE.md"}
 authors=[
@@ -90,7 +90,7 @@ log_date_format = "%Y-%m-%d %H:%M:%S"
 timeout = 300
 testpaths = [
     "tests",
-    "src" # needed for doctests    
+    "src" # needed for doctests
 ]
 pythonpath = [
     "src"
@@ -131,4 +131,3 @@ ignore = [
     # long lines
     "E501",
 ]
-
