@@ -4,8 +4,10 @@
 from multiprocessing import freeze_support
 
 import foundation
+from foundation.core import compose, constant, identity
+from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
-from icloudpd.mfa_provider import MFAProvider  # fmt: skip
+from icloudpd.mfa_provider import MFAProvider
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
@@ -41,11 +43,10 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from pyicloud_ipd.utils import (
-    compose,
-    constant,
+    add_suffix_to_filename,
     disambiguate_filenames,
     get_password_from_keyring,
-    identity,
+    size_to_suffix,
     store_password_in_keyring,
 )
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
@@ -684,7 +685,7 @@ def main(
             username=username,
             auth_only=auth_only,
             cookie_directory=cookie_directory,
-            size=size,
+            primary_sizes=size,
             live_photo_size=live_photo_size,
             recent=recent,
             until_found=until_found,
@@ -804,7 +805,7 @@ def download_builder(
     skip_videos: bool,
     folder_structure: str,
     directory: str,
-    size: Sequence[AssetVersionSize],
+    primary_sizes: Sequence[AssetVersionSize],
     force_size: bool,
     only_print_filenames: bool,
     set_exif_datetime: bool,
@@ -819,20 +820,21 @@ def download_builder(
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
 
-            if skip_videos and photo.item_type != "image":
+            if skip_videos and photo.item_type != AssetItemType.IMAGE:
                 logger.debug(
                     "Skipping %s, only downloading photos." + "(Item type was: %s)",
                     photo.filename,
                     photo.item_type,
                 )
                 return False
-            if photo.item_type not in ("image", "movie"):
-                logger.debug(
-                    "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
-                    photo.filename,
-                    photo.item_type,
-                )
-                return False
+            # Throwing error now
+            # if not photo.item_type:
+            #     logger.debug(
+            #         "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
+            #         photo.filename,
+            #         photo.item_type,
+            #     )
+            #     return False
             try:
                 created_date = photo.created.astimezone(get_localzone())
             except (ValueError, OSError):
@@ -856,7 +858,7 @@ def download_builder(
                     date_path = folder_structure.format(created_date)
 
             try:
-                versions = disambiguate_filenames(photo.versions, size)
+                versions = disambiguate_filenames(photo.versions, primary_sizes)
             except KeyError as ex:
                 print(f"KeyError: {ex} attribute was not found in the photo fields.")
                 with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
@@ -885,7 +887,7 @@ def download_builder(
             download_dir = os.path.normpath(os.path.join(directory, date_path))
             success = False
 
-            for download_size in size:
+            for download_size in primary_sizes:
                 if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
                     if force_size:
                         logger.error(
@@ -894,7 +896,7 @@ def download_builder(
                             photo.filename,
                         )
                         continue
-                    if AssetVersionSize.ORIGINAL in size:
+                    if AssetVersionSize.ORIGINAL in primary_sizes:
                         continue  # that should avoid double download for original
                     download_size = AssetVersionSize.ORIGINAL
 
@@ -909,7 +911,7 @@ def download_builder(
                     # Deprecation - We used to download files like IMG_1234-original.jpg,
                     # so we need to check for these.
                     # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
-                    original_download_path = ("-original.").join(download_path.rsplit(".", 1))
+                    original_download_path = add_suffix_to_filename("-original", download_path)
                     file_exists = os.path.isfile(original_download_path)
 
                 if file_exists:
@@ -965,11 +967,14 @@ def download_builder(
                 if lp_size in photo.versions:
                     version = photo.versions[lp_size]
                     lp_filename = version.filename
-                    # if live_photo_size != "original":
-                    #     # Add size to filename if not original
-                    #     lp_filename = lp_filename.replace(
-                    #         ".MOV", f"-{live_photo_size}.MOV"
-                    #     )
+                    if live_photo_size != LivePhotoVersionSize.ORIGINAL:
+                        # Add size to filename if not original
+                        lp_filename = add_suffix_to_filename(
+                            size_to_suffix(live_photo_size),
+                            lp_filename,
+                        )
+                    else:
+                        pass
                     lp_download_path = os.path.join(download_dir, lp_filename)
 
                     lp_file_exists = os.path.isfile(lp_download_path)
@@ -1133,7 +1138,7 @@ def core(
     username: str,
     auth_only: bool,
     cookie_directory: str,
-    size: Sequence[AssetVersionSize],
+    primary_sizes: Sequence[AssetVersionSize],
     recent: Optional[int],
     until_found: Optional[int],
     album: str,
@@ -1310,7 +1315,7 @@ def core(
             logger.info(
                 ("Downloading %s %s" + " photo%s%s to %s ..."),
                 photos_count_str,
-                ",".join([_s.value for _s in size]),
+                ",".join([_s.value for _s in primary_sizes]),
                 plural_suffix,
                 video_suffix,
                 directory,
@@ -1372,7 +1377,7 @@ def core(
 
             if auto_delete:
                 autodelete_photos(
-                    logger, dry_run, library_object, folder_structure, directory, size
+                    logger, dry_run, library_object, folder_structure, directory, primary_sizes
                 )
 
             if watch_interval:  # pragma: no cover

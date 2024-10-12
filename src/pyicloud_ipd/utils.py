@@ -1,6 +1,7 @@
 import copy
 import os
-from typing import Callable, Dict, Optional, Sequence, TypeVar
+from typing import Dict, Optional, Sequence
+import typing
 import keyring
 
 from pyicloud_ipd.asset_version import AssetVersion
@@ -75,26 +76,6 @@ def underscore_to_camelcase(word:str , initial_capital: bool=False) -> str:
 
     return ''.join(words)
 
-_Tin = TypeVar('_Tin')
-_Tout = TypeVar('_Tout')
-_Tinter = TypeVar('_Tinter')
-def compose(f:Callable[[_Tinter], _Tout], g: Callable[[_Tin], _Tinter]) -> Callable[[_Tin], _Tout]:
-    """f after g composition of functions"""
-    def inter_(value: _Tin) -> _Tout:
-        return f(g(value))
-    return inter_
-
-def identity(value: _Tin) -> _Tin:
-    """identity function"""
-    return value
-
-def constant(value: _Tout) -> Callable[[_Tin], _Tout]:
-    """constant function"""
-    def _intern(_:_Tin) -> _Tout:
-        return value
-    return _intern
-
-
 
 # def filename_with_size(filename: str, size: str, original: Optional[Dict[str, Any]]) -> str:
 #     """Returns the filename with size, e.g. IMG1234.jpg, IMG1234-small.jpg"""
@@ -105,6 +86,13 @@ def constant(value: _Tout) -> Callable[[_Tin], _Tout]:
 #     if size == "adjusted" and original != None and original["filename"] != filename:
 #         return filename
 #     return (f"-{size}.").join(filename.rsplit(".", 1))
+
+def size_to_suffix(size: VersionSize) -> str:
+    return f"-{size}".lower()
+
+def add_suffix_to_filename(suffix: str, filename: str) -> str:
+    _n, _e = os.path.splitext(filename)
+    return _n + suffix + _e
 
 def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize]) -> Dict[AssetVersionSize, AssetVersion]:
     _results: Dict[AssetVersionSize, AssetVersion] = {}
@@ -122,8 +110,7 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
                 _results[AssetVersionSize.ADJUSTED] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
         else:
             if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ADJUSTED].filename:
-                _n, _e = os.path.splitext(_results[AssetVersionSize.ADJUSTED].filename)
-                _results[AssetVersionSize.ADJUSTED].filename = _n + "-adjusted" + _e
+                _results[AssetVersionSize.ADJUSTED].filename = add_suffix_to_filename("-adjusted", _results[AssetVersionSize.ADJUSTED].filename)
 
     # alternative
     if AssetVersionSize.ALTERNATIVE in _sizes:
@@ -134,8 +121,7 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
         else:
             if AssetVersionSize.ALTERNATIVE in _results:
                 if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ADJUSTED].filename == _results[AssetVersionSize.ALTERNATIVE].filename or AssetVersionSize.ORIGINAL in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ALTERNATIVE].filename:
-                    _n, _e = os.path.splitext(_results[AssetVersionSize.ALTERNATIVE].filename)
-                    _results[AssetVersionSize.ALTERNATIVE].filename = _n + "-alternative" + _e
+                    _results[AssetVersionSize.ALTERNATIVE].filename = add_suffix_to_filename("-alternative", _results[AssetVersionSize.ALTERNATIVE].filename)
 
     for _size in _sizes:
         if _size not in [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE]:
@@ -149,4 +135,3 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
 
 
     return _results
-

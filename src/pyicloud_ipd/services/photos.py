@@ -12,6 +12,7 @@ import typing
 
 from requests import Response
 from foundation import wrap_param_in_exception, bytes_decode
+from foundation.core import compose, identity
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -21,9 +22,10 @@ import pytz
 from urllib.parse import urlencode
 
 from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import compose, identity
+from pyicloud_ipd.utils import add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
@@ -544,22 +546,22 @@ class PhotoAsset(object):
         self._versions: Optional[Dict[VersionSize, AssetVersion]] = None
 
     ITEM_TYPES = {
-        u"public.heic": u"image",
-        u"public.jpeg": u"image",
-        u"public.png": u"image",
-        u"com.apple.quicktime-movie": u"movie",
-        u"com.adobe.raw-image": u"image",
-        u"com.canon.cr2-raw-image": u"image",
-        u'com.canon.crw-raw-image': u"image",
-        u'com.sony.arw-raw-image': u"image",
-        u'com.fuji.raw-image': u"image",
-        u'com.panasonic.rw2-raw-image': u"image",
-        u'com.nikon.nrw-raw-image': u"image",
-        u'com.pentax.raw-image': u"image",
-        u'com.nikon.raw-image': u"image",
-        u'com.olympus.raw-image': u"image",
-        u'com.canon.cr3-raw-image': u"image",
-        u'com.olympus.or-raw-image': u"image",
+        u"public.heic": AssetItemType.IMAGE,
+        u"public.jpeg": AssetItemType.IMAGE,
+        u"public.png": AssetItemType.IMAGE,
+        u"com.apple.quicktime-movie": AssetItemType.MOVIE,
+        u"com.adobe.raw-image": AssetItemType.IMAGE,
+        u"com.canon.cr2-raw-image": AssetItemType.IMAGE,
+        u'com.canon.crw-raw-image': AssetItemType.IMAGE,
+        u'com.sony.arw-raw-image': AssetItemType.IMAGE,
+        u'com.fuji.raw-image': AssetItemType.IMAGE,
+        u'com.panasonic.rw2-raw-image': AssetItemType.IMAGE,
+        u'com.nikon.nrw-raw-image': AssetItemType.IMAGE,
+        u'com.pentax.raw-image': AssetItemType.IMAGE,
+        u'com.nikon.raw-image': AssetItemType.IMAGE,
+        u'com.olympus.raw-image': AssetItemType.IMAGE,
+        u'com.canon.cr3-raw-image': AssetItemType.IMAGE,
+        u'com.olympus.or-raw-image': AssetItemType.IMAGE,
     }
 
     ITEM_TYPE_EXTENSIONS = {
@@ -601,8 +603,8 @@ class PhotoAsset(object):
     VERSION_FILENAME_SUFFIX_LOOKUP: Dict[VersionSize, str] = {
         AssetVersionSize.MEDIUM: u"medium",
         AssetVersionSize.THUMB: u"thumb",
-        LivePhotoVersionSize.MEDIUM: u"medium",
-        LivePhotoVersionSize.THUMB: u"thumb",
+        # LivePhotoVersionSize.MEDIUM: u"medium",
+        # LivePhotoVersionSize.THUMB: u"thumb",
     }
 
     @property
@@ -626,7 +628,7 @@ class PhotoAsset(object):
                     elif type == "ENCRYPTED_BYTES":
                         return base64_parser
                     else:
-                        raise ValueError(f"Unsupported filenam encoding {type}")
+                        raise ValueError(f"Unsupported filename encoding {type}")
                 return _internal
 
             parse_base64_value = compose(
@@ -661,9 +663,8 @@ class PhotoAsset(object):
             # ).decode('utf-8'))
             
             if self._service.file_match_policy == FileMatchPolicy.NAME_ID7:
-                _f, _e = os.path.splitext(_filename)
                 _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]
-                _filename = f"{_f}_{_a}{_e}"
+                _filename = add_suffix_to_filename(f"_{_a}", _filename)
             return _filename
 
         # Some photos don't have a filename.
@@ -703,16 +704,18 @@ class PhotoAsset(object):
                 self._master_record['fields']['resOriginalHeight']['value'])
 
     @property
-    def item_type(self) -> str:
+    def item_type(self) -> AssetItemType:
         fields = self._master_record['fields']
+        # TODO add wrapper for debugging
         if 'itemType' not in fields or 'value' not in fields['itemType']:
-            return 'unknown'
+            raise ValueError("Unknown ItemType")
+            # return 'unknown'
         item_type = self._master_record['fields']['itemType']['value']
         if item_type in self.ITEM_TYPES:
             return self.ITEM_TYPES[item_type]
         if self.filename.lower().endswith(('.heic', '.png', '.jpg', '.jpeg')):
-            return 'image'
-        return 'movie'
+            return AssetItemType.IMAGE
+        return AssetItemType.MOVIE
 
     @property
     def item_type_extension(self) -> str:
@@ -728,7 +731,7 @@ class PhotoAsset(object):
     def versions(self) -> Dict[VersionSize, AssetVersion]:
         if not self._versions:
             _versions: Dict[VersionSize, AssetVersion] = {}
-            if self.item_type == "movie":
+            if self.item_type == AssetItemType.MOVIE:
                 typed_version_lookup: Dict[VersionSize, str] = self.VIDEO_VERSION_LOOKUP
             else:
                 typed_version_lookup = self.PHOTO_VERSION_LOOKUP
@@ -773,7 +776,7 @@ class PhotoAsset(object):
                         # version['type'] = None
 
                     # Change live photo movie file extension to .MOV
-                    if (self.item_type == "image" and
+                    if (self.item_type == AssetItemType.IMAGE and
                         version['type'] == "com.apple.quicktime-movie"):
                         version['filename'] = self._service.lp_filename_generator(self.filename) # without size
                     else:
@@ -784,8 +787,7 @@ class PhotoAsset(object):
                     # add size suffix
                     if key in self.VERSION_FILENAME_SUFFIX_LOOKUP:
                         _size_suffix = self.VERSION_FILENAME_SUFFIX_LOOKUP[key]
-                        _f, _e = os.path.splitext(version["filename"])
-                        version["filename"] = _f + f"-{_size_suffix}" + _e
+                        version["filename"] = add_suffix_to_filename(f"-{_size_suffix}", version["filename"])
 
                     _versions[key] = AssetVersion(version["filename"], version['size'], version['url'], version['type'])
 

@@ -14,7 +14,7 @@ class Config:
         username: str,
         auth_only: bool,
         cookie_directory: str,
-        size: Sequence[AssetVersionSize],
+        primary_sizes: Sequence[AssetVersionSize],
         live_photo_size: LivePhotoVersionSize,
         recent: Optional[int],
         until_found: Optional[int],
@@ -55,7 +55,7 @@ class Config:
         self.username = username
         self.auth_only = auth_only
         self.cookie_directory = cookie_directory
-        self.size = " ".join(str(e) for e in size)
+        self.size = " ".join(str(e) for e in primary_sizes)
         self.live_photo_size = live_photo_size
         self.recent = recent
         self.until_found = until_found

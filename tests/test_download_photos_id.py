@@ -954,47 +954,29 @@ class DownloadPhotoNameIDTestCase(TestCase):
         with mock.patch("icloudpd.download.download_media") as dp_patched:
             dp_patched.return_value = True
 
-            with mock.patch.object(
-                PhotoAsset, "item_type", new_callable=mock.PropertyMock
-            ) as it_mock:
-                it_mock.return_value = "unknown"
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.vcr_path,
+                base_dir,
+                "listing_photos_bad_item_type.yml",
+                [],
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--no-progress-bar",
+                    "--file-match-policy",
+                    "name-id7",
+                ],
+            )
 
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.vcr_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--no-progress-bar",
-                        "--file-match-policy",
-                        "name-id7",
-                    ],
-                )
+            dp_patched.assert_not_called()
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "DEBUG    Skipping IMG_7409_QVk2Yyt.JPG, only downloading photos and videos. (Item type was: unknown)",
-                    self._caplog.text,
-                )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
-                dp_patched.assert_not_called()
-
-                assert result.exit_code == 0
+            self.assertIsInstance(result.exception, ValueError)
 
     def test_download_and_dedupe_existing_photos_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
