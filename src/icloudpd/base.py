@@ -282,8 +282,7 @@ def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> 
 CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 
 
-@click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
-# @click.argument(
+@click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>", no_args_is_help=True)
 @click.option(
     "-d",
     "--directory",
