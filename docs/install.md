@@ -1,7 +1,12 @@
 # Install and Run
 
 There are three ways to run `icloudpd`:
-1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.23.4) and run it
+1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.23.4) and run it, e.g.:
+
+    ```sh
+    icloudpd --username your@email.address --directory photos --watch-with-interval 3600
+    ```
+
 1. Use package manager to install, update, and, in some cases, run ([Docker](#docker), [PyPI](#pypi), [AUR](#aur), [npm](#npm))
 1. Build and run from the source
 
