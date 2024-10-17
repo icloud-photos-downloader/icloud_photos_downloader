@@ -24,6 +24,7 @@ There are two ways to provide MFA code to `icloudpd`:
 The choice can be made with `--mfa-provider` parameter.
 
 Default: *console*
+Other options: *webui*
 
 ## Access from Mainland China
 
