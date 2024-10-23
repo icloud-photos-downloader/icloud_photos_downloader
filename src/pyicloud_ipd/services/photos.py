@@ -505,7 +505,7 @@ class PhotoAlbum(object):
                 u'addedDate', u'isFavorite', u'isHidden', u'orientation',
                 u'duration', u'assetSubtype', u'assetSubtypeV2',
                 u'assetHDRType', u'burstFlags', u'burstFlagsExt', u'burstId',
-                u'captionEnc', u'locationEnc', u'locationV2Enc',
+                u'captionEnc', u'extendedDescEnc', u'keywordsEnc', u'locationEnc', u'locationV2Enc',
                 u'locationLatitude', u'locationLongitude', u'adjustmentType',
                 u'timeZoneOffset', u'vidComplDurValue', u'vidComplDurScale',
                 u'vidComplDispValue', u'vidComplDispScale',
