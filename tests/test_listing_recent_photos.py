@@ -2,6 +2,7 @@ import glob
 import inspect
 import json
 import os
+import shutil
 from unittest import TestCase, mock
 
 import pytest
@@ -26,9 +27,12 @@ class ListingRecentPhotosTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
@@ -92,9 +96,12 @@ class ListingRecentPhotosTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         # make sure the directory does not exist yet.
         # Should only be created after download, not after just --print-filenames
@@ -138,9 +145,12 @@ class ListingRecentPhotosTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette(  # noqa: SIM117
@@ -208,9 +218,12 @@ class ListingRecentPhotosTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         # Note - This test uses the same cassette as test_download_photos.py
         with vcr.use_cassette(  # noqa: SIM117
@@ -259,7 +272,7 @@ Include a link to the Gist in your issue, so that we can see what went wrong.
                     # Multiple JSON "dumps" occur with the new pyicloud 1.0.0 implementation
                     # mock_json.assert_called_once()
                     # Check a few keys in the dict
-                    first_arg = mock_json.call_args_list[8][0][0]
+                    first_arg = mock_json.call_args_list[7][0][0]
                     self.assertEqual(
                         first_arg["master_record"]["recordName"], "AY6c+BsE0jjaXx9tmVGJM1D2VcEO"
                     )

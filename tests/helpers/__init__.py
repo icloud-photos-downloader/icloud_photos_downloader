@@ -105,9 +105,12 @@ def run_icloudpd_test(
     cookie_dir = os.path.join(base_dir, "cookie")
     data_dir = os.path.join(base_dir, "data")
     vcr_path = os.path.join(root_path, "vcr_cassettes")
+    cookie_master_path = os.path.join(root_path, "cookie")
 
-    for dir in [base_dir, cookie_dir, data_dir]:
+    for dir in [base_dir, data_dir]:
         recreate_path(dir)
+
+    shutil.copytree(cookie_master_path, cookie_dir)
 
     create_files(data_dir, files_to_create)
 

@@ -3,6 +3,7 @@ import glob
 import inspect
 import logging
 import os
+import shutil
 import sys
 from typing import Any, List, NoReturn, Optional, Sequence, Tuple
 from unittest import TestCase, mock
@@ -1622,9 +1623,12 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # TODO remove code dup
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)  # this needs to happen before mock
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):  # noqa: SIM117
             with mock.patch("os.makedirs", create=True) as m:
