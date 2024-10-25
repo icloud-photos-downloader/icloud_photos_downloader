@@ -1,5 +1,6 @@
 import inspect
 import os
+import shutil
 from unittest import TestCase
 
 import pytest
@@ -23,9 +24,12 @@ class ListingLibraryTestCase(TestCase):
     def test_listing_library(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir]:
+        for dir in [base_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
@@ -56,9 +60,12 @@ class ListingLibraryTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_albums.yml")):
             # Pass fixed client ID via environment variable
