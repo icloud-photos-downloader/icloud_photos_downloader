@@ -19,7 +19,6 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
-        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_skip_existing_downloads_for_live_photos_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -34,7 +33,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
 
         _, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "download_live_photos.yml",
             [],
@@ -71,7 +70,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "download_live_photos.yml",
             files_to_create,
@@ -115,7 +114,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "download_live_photos.yml",
             files_to_create,

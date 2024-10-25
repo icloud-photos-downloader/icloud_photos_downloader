@@ -54,7 +54,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -150,7 +150,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     files_to_create,
@@ -206,7 +206,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos.yml",
                 [],
@@ -257,7 +257,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -328,7 +328,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 ut_patched.return_value = None
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     files_to_create,
@@ -400,7 +400,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos.yml",
                 [],
@@ -459,7 +459,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     # Pass fixed client ID via environment variable
                     _, result = run_icloudpd_test(
                         self.assertEqual,
-                        self.vcr_path,
+                        self.root_path,
                         base_dir,
                         "listing_photos.yml",
                         [],
@@ -514,7 +514,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     # Pass fixed client ID via environment variable
                     _, result = run_icloudpd_test(
                         self.assertEqual,
-                        self.vcr_path,
+                        self.root_path,
                         base_dir,
                         "listing_photos.yml",
                         [],
@@ -568,7 +568,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     _, result = run_icloudpd_test(
                         self.assertEqual,
-                        self.vcr_path,
+                        self.root_path,
                         base_dir,
                         "listing_photos.yml",
                         [],
@@ -624,7 +624,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     _, result = run_icloudpd_test(
                         self.assertEqual,
-                        self.vcr_path,
+                        self.root_path,
                         base_dir,
                         "listing_photos.yml",
                         [],
@@ -654,7 +654,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos.yml",
                 [],
@@ -742,7 +742,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     data_dir, result = run_icloudpd_test(
                         self.assertEqual,
-                        self.vcr_path,
+                        self.root_path,
                         base_dir,
                         "listing_photos.yml",
                         [],
@@ -800,7 +800,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     [],
@@ -854,7 +854,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos.yml",
                 [],
@@ -910,7 +910,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos.yml",
                 [],
@@ -956,7 +956,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos_bad_item_type.yml",
                 [],
@@ -1006,7 +1006,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         with mock.patch.object(PhotoAsset, "download", new=mocked_download):
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
-                self.vcr_path,
+                self.root_path,
                 base_dir,
                 "listing_photos.yml",
                 files_to_create,
@@ -1060,7 +1060,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     [],
@@ -1112,7 +1112,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             [],
@@ -1176,7 +1176,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     [],
@@ -1231,7 +1231,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos_chinese.yml",
                     [],
@@ -1276,7 +1276,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     [],
@@ -1314,7 +1314,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_no_delete.yml",
             [],
@@ -1357,7 +1357,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -1423,7 +1423,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_bad_filename.yml",
             files_to_create,
@@ -1531,7 +1531,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 # Pass fixed client ID via environment variable
                 _, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     [],
@@ -1579,7 +1579,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                 _, result = run_icloudpd_test(
                     self.assertEqual,
-                    self.vcr_path,
+                    self.root_path,
                     base_dir,
                     "listing_photos.yml",
                     [],
@@ -1676,7 +1676,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         _, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             [],
@@ -1732,7 +1732,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     data_dir, result = run_icloudpd_test(
                         self.assertEqual,
-                        self.vcr_path,
+                        self.root_path,
                         base_dir,
                         "listing_photos.yml",
                         [],
@@ -1779,7 +1779,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_raw.yml",
             [],
@@ -1821,7 +1821,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_two_sizes.yml",
             [],
@@ -1871,7 +1871,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_raw_alt.yml",
             [],
@@ -1919,7 +1919,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_raw_alt_adj.yml",
             [],
@@ -1969,7 +1969,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_raw_alt.yml",
             [],
@@ -2019,7 +2019,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_raw_alt.yml",
             [],
@@ -2073,7 +2073,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_bad_filename_base64_encoding.yml",
             files_to_create,
@@ -2113,7 +2113,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_bad_filename_utf8_encoding.yml",
             files_to_create,
@@ -2151,7 +2151,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos_filename_string_encoding.yml",
             files_to_create,

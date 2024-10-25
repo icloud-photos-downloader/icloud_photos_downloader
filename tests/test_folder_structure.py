@@ -39,7 +39,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -97,7 +97,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -219,7 +219,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
