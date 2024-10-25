@@ -1,5 +1,6 @@
 import inspect
 import os
+import shutil
 from typing import NamedTuple
 from unittest import TestCase
 
@@ -126,28 +127,11 @@ class AuthenticationTestCase(TestCase):
     def test_successful_token_validation(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir]:
-            recreate_path(dir)
+        recreate_path(base_dir)
 
-        # We need to create a session file first before we test the auth token validation
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-                input="0\n654321\n",
-            )
-            assert result.exit_code == 0
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "successful_auth.yml")):
             runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})

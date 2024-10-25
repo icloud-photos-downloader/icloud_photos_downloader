@@ -1,12 +1,11 @@
 interactions:
 - request:
-    body: !!python/unicode '{"accountName": "jdoe@gmail.com", "password": "password1",
-      "rememberMe": true, "trustTokens": []}'
+    body: !!python/unicode '{"accountName": "jdoe@gmail.com", "protocols": ["s2k", "s2k_fo"]}'
     headers:
       Accept: ['*/*']
       Accept-Encoding: ['gzip, deflate']
       Connection: ['keep-alive']
-      Content-Length: ['111']
+      Content-Length: ['98']
       Content-Type: ['application/json']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
@@ -20,16 +19,62 @@ interactions:
       X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
       X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
     method: POST
-    uri: https://idmsa.apple.com/appleauth/auth/signin?isRememberMeEnabled=true
+    uri: https://idmsa.apple.com/appleauth/auth/signin/init
   response:
-    body:
-      string: !!python/unicode '{}'
+    body: {string: '{"iteration":20064,"salt":"UUN/abcdefghijklmnopqr==","protocol":"s2k","version":1,"b":"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcd==","c":"d-123-456789ab-cdef-0123-4567-89abcdef0123:MSA"}'}
     headers:
       Cache-Control:
       - 'no-cache'
       - 'no-store'
       Connection: ['keep-alive']
       Content-Type: ['text/html;charset=UTF-8']
+      Date: ['Fri, 15 Dec 2023 17:28:03 GMT']
+      Pragma: ['no-cache']
+      Referrer-Policy: ['origin']
+      Server: ['Apple']
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains; preload']
+      Transfer-Encoding: ['chunked']
+      X-Apple-I-Request-ID: ['12345678-1234-1234-1234-123456789012']
+      X-BuildVersion: ['R4_1']
+      X-Content-Type-Options: ['nosniff']
+      X-FRAME-OPTIONS: ['DENY']
+      X-XSS-Protection: ['1; mode=block']
+      content-length: ['23705']
+      scnt: ['scnt-1234567890']
+      vary: ['accept-encoding']
+    status:
+      code: 200
+      message: ''
+- request:
+    body: !!python/unicode '{"accountName": "jdoe@gmail.com", "rememberMe": true, "trustTokens": []}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['98']
+      Content-Type: ['application/json']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
+      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
+      X-Apple-OAuth-Require-Grant-Code: ['true']
+      X-Apple-OAuth-Response-Mode: ['web_message']
+      X-Apple-OAuth-Response-Type: ['code']
+      X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
+      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+    method: POST
+    uri: https://idmsa.apple.com/appleauth/auth/signin/complete?isRememberMeEnabled=true
+  response:
+    body:
+      string: !!python/unicode '{"auth_type":"hsa2"}'
+    headers:
+      Cache-Control:
+      - 'no-cache'
+      - 'no-store'
+      Connection: ['keep-alive']
+      Content-Type: ['application/json;charset=UTF-8']
       Date: ['Wed, 13 Dec 2023 05:06:31 GMT']
       Location: ['/auth']
       Pragma: ['no-cache']
@@ -39,12 +84,11 @@ interactions:
       Transfer-Encoding: ['chunked']
       X-Apple-Auth-Attributes: ['123456789abcdefg']
       X-Apple-I-Request-ID: ['12345678-1234-1234-1234-123456789012']
-      X-Apple-I-Rscd: ['409']
       X-Apple-ID-Account-Country: ['USA']
       X-Apple-ID-Session-Id: ['sess-1234567890']
       X-Apple-Session-Token: ['token-1234567890']
       X-Apple-TwoSV-Trust-Eligible: ['true']
-      X-BuildVersion: ['R3_2']
+      X-BuildVersion: ['R4_1']
       content-length: ['23705']
       scnt: ['scnt-1234567890']
       vary: ['accept-encoding']
