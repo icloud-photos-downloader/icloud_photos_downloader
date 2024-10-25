@@ -1,6 +1,7 @@
 import glob
 import inspect
 import os
+import shutil
 import sys
 from typing import List, Tuple
 from unittest import TestCase
@@ -39,7 +40,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -97,7 +98,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,
@@ -136,9 +137,12 @@ class FolderStructureTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         files_to_download: List[str] = []
 
@@ -219,7 +223,7 @@ class FolderStructureTestCase(TestCase):
         # Note - This test uses the same cassette as test_download_photos.py
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
-            self.vcr_path,
+            self.root_path,
             base_dir,
             "listing_photos.yml",
             files_to_create,

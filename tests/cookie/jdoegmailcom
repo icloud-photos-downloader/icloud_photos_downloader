@@ -1,0 +1,5 @@
+#LWP-Cookies-2.0
+Set-Cookie3: X-APPLE-UNIQUE-CLIENT-ID="\"Cw==\""; path="/"; domain=".icloud.com"; path_spec; domain_dot; secure; discard; version=0
+Set-Cookie3: X-APPLE-WEBAUTH-LOGIN="\"v=1:t=Cw==BST_IAAAAAAABLw1234~~\""; path="/"; domain=".icloud.com"; path_spec; domain_dot; secure; discard; HttpOnly=None; version=0
+Set-Cookie3: X-APPLE-WEBAUTH-VALIDATE="\"v=1:t=Cw==BST_IAAAAAAABLw5678~~\""; path="/"; domain=".icloud.com"; path_spec; domain_dot; secure; discard; version=0
+Set-Cookie3: X-APPLE-WEBAUTH-HSA-LOGIN="\"v=2:t=Cw==BST_IAAAAAAABLw9012~~\""; path="/"; domain=".icloud.com"; path_spec; domain_dot; secure; discard; HttpOnly=None; version=0

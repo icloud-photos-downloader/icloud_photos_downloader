@@ -10,7 +10,12 @@ from click.testing import CliRunner
 from icloudpd.base import main
 from vcr import VCR
 
-from tests.helpers import path_from_project_root, print_result_exception, recreate_path
+from tests.helpers import (
+    path_from_project_root,
+    print_result_exception,
+    recreate_path,
+    run_icloudpd_test,
+)
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
 
@@ -30,11 +35,6 @@ class CliTestCase(TestCase):
 
     def test_log_levels(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
 
         parameters: Sequence[Tuple[str, Sequence[str], Sequence[str]]] = [
             ("debug", ["DEBUG", "INFO"], []),
@@ -43,44 +43,40 @@ class CliTestCase(TestCase):
         ]
         for log_level, expected, not_expected in parameters:
             self._caplog.clear()
-            recreate_path(cookie_dir)
-            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "0",
-                        "--log-level",
-                        log_level,
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                assert result.exit_code == 0
+            _, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--log-level",
+                    log_level,
+                ],
+            )
+            assert result.exit_code == 0
             for text in expected:
                 self.assertIn(text, self._caplog.text)
             for text in not_expected:
                 self.assertNotIn(text, self._caplog.text)
 
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
-
     def test_tqdm(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
+        for dir in [base_dir, data_dir]:
             recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
             # Force tqdm progress bar via ENV var
@@ -112,37 +108,26 @@ class CliTestCase(TestCase):
 
     def test_unicode_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
 
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "0",
-                    "--log-level",
-                    "info",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
-                ],
-            )
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 0
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "0",
+                "--log-level",
+                "info",
+            ],
+        )
+        assert result.exit_code == 0
 
     def test_missing_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
