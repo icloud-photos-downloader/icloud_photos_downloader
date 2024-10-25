@@ -1029,7 +1029,7 @@ def delete_photo(
     post_data = json.dumps(
         {
             "atomic": True,
-            "desiredKeys": ["isDeleted"],
+            #"desiredKeys": ["isDeleted"],#this is not needed,2024-07-29
             "operations": [
                 {
                     "operationType": "update",
@@ -1342,8 +1342,9 @@ def core(
                         break
                     item = next(photos_iterator)
                     if download_photo(consecutive_files_found, item) and delete_after_download:
+                        del_photo=expunge_photo if album == "Recently Deleted" else delete_photo
                         delete_local = partial(
-                            delete_photo_dry_run if dry_run else delete_photo,
+                            delete_photo_dry_run if dry_run else del_photo,
                             logger,
                             icloud.photos,
                             library_object,
@@ -1406,3 +1407,37 @@ def core(
                 break  # pragma: no cover
 
     return 0
+
+
+def expunge_photo(
+    logger: logging.Logger,
+    photo_service: PhotosService,
+    library_object: PhotoLibrary,
+    photo: PhotoAsset,
+) -> None:
+    """Expunge a photo from the Recently Deleted."""
+    clean_filename_local = photo.filename
+    logger.debug("Expunging %s in Recently Deleted...", clean_filename_local)
+    url = (
+        f"{photo_service._service_endpoint}/records/modify?"
+        f"{urllib.parse.urlencode(photo_service.params)}"
+    )
+    post_data = json.dumps(
+        {
+            "atomic": True,
+            "operations": [
+                {
+                    "operationType": "update",
+                    "record": {
+                        "fields": {"isExpunged": {"value": 1}},
+                        "recordChangeTag": photo._asset_record["recordChangeTag"],
+                        "recordName": photo._asset_record["recordName"],
+                        "recordType": "CPLAsset",
+                    },
+                }
+            ],
+            "zoneID": library_object.zone_id,
+        }
+    )
+    photo_service.session.post(url, data=post_data, headers={"Content-type": "application/json"})
+    logger.info("Expunged %s in Recently Deleted", clean_filename_local)
