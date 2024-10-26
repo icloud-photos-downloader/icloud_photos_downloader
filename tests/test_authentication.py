@@ -281,6 +281,37 @@ class AuthenticationTestCase(TestCase):
         result = parse_trusted_phone_numbers_payload(html)
         self.assertEqual(0, len(result), "number of numbers parsed")
 
+    def test_non_2fa(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_non_2fa.yml")) as cass:
+            # To re-record this HTTP request,
+            # delete ./tests/vcr_cassettes/auth_requires_2fa.yml,
+            # put your actual credentials in here, run the test,
+            # and then replace with dummy credentials.
+            authenticator(
+                setup_logger(),
+                "com",
+                identity,
+                lp_filename_concatinator,
+                RawTreatmentPolicy.AS_IS,
+                FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                {"test": (constant("dummy"), dummy_password_writter)},
+                MFAProvider.CONSOLE,
+                StatusExchange(),
+            )(
+                "jdoe@gmail.com",
+                cookie_dir,
+                True,
+                "EC5646DE-9423-11E8-BF21-14109FE0B321",
+            )
+
+            self.assertTrue(cass.all_played)
+
 
 class _TrustedDevice(NamedTuple):
     id: int

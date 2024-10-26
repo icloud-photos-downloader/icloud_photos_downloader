@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: accounts without 2fa are supported [#959](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/959)
+
 ## 1.24.0 (2024-10-25)
 
 - fix: new AppleID auth with srp [#970](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/970)
