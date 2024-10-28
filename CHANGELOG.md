@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.24.1 (2024-10-28)
+
 - fix: accounts without 2fa are supported [#959](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/959)
 
 ## 1.24.0 (2024-10-25)
