@@ -706,11 +706,12 @@ class PhotoAsset(object):
     @property
     def item_type(self) -> AssetItemType:
         fields = self._master_record['fields']
-        # TODO add wrapper for debugging
-        if 'itemType' not in fields or 'value' not in fields['itemType']:
-            raise ValueError("Unknown ItemType")
-            # return 'unknown'
-        item_type = self._master_record['fields']['itemType']['value']
+        if 'itemType' not in fields:
+            raise ValueError(f"Cannot find itemType in {fields!r}")
+        item_type_field = fields['itemType']
+        if 'value' not in item_type_field:
+            raise ValueError(f"Cannot find value in itemType {item_type_field!r}")
+        item_type = item_type_field['value']
         if item_type in self.ITEM_TYPES:
             return self.ITEM_TYPES[item_type]
         if self.filename.lower().endswith(('.heic', '.png', '.jpg', '.jpeg')):
