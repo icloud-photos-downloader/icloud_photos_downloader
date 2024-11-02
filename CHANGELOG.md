@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.24.2 (2024-11-02)
+
 - fix: errors for accounts with salt started with zero byte [#975](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/975)
 
 ## 1.24.1 (2024-10-28)
