@@ -1003,62 +1003,58 @@ class DownloadPhotoTestCase(TestCase):
     def test_missing_item_type(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
+        files_to_download = [
+            ("2018/07/31", "IMG_7409.JPG"),
+        ]
 
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos_bad_item_type.yml",
-                [],
-                [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_missing_item_type.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--no-progress-bar",
+                "--skip-live-photos",
+            ],
+        )
 
-            dp_patched.assert_not_called()
-
-            self.assertIsInstance(result.exception, ValueError)
+        assert result.exit_code == 0
 
     def test_missing_item_type_value(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
+        files_to_download = [
+            ("2018/07/31", "IMG_7409.JPG"),
+        ]
 
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos_missing_item_type_value.yml",
-                [],
-                [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_missing_item_type_value.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--no-progress-bar",
+                "--skip-live-photos",
+            ],
+        )
 
-            dp_patched.assert_not_called()
-
-            self.assertIsInstance(result.exception, ValueError)
+        assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
