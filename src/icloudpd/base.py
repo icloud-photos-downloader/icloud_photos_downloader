@@ -819,7 +819,7 @@ def download_builder(
         def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
             """internal function for actually downloading the photos"""
 
-            if skip_videos and photo.item_type != AssetItemType.IMAGE:
+            if skip_videos and photo.item_type == AssetItemType.MOVIE:
                 logger.debug(
                     "Skipping %s, only downloading photos." + "(Item type was: %s)",
                     photo.filename,

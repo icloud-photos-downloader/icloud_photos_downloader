@@ -704,13 +704,15 @@ class PhotoAsset(object):
                 self._master_record['fields']['resOriginalHeight']['value'])
 
     @property
-    def item_type(self) -> AssetItemType:
+    def item_type(self) -> Optional[AssetItemType]:
         fields = self._master_record['fields']
         if 'itemType' not in fields:
-            raise ValueError(f"Cannot find itemType in {fields!r}")
+            # raise ValueError(f"Cannot find itemType in {fields!r}")
+            return None
         item_type_field = fields['itemType']
         if 'value' not in item_type_field:
-            raise ValueError(f"Cannot find value in itemType {item_type_field!r}")
+            # raise ValueError(f"Cannot find value in itemType {item_type_field!r}")
+            return None
         item_type = item_type_field['value']
         if item_type in self.ITEM_TYPES:
             return self.ITEM_TYPES[item_type]
@@ -777,7 +779,7 @@ class PhotoAsset(object):
                         # version['type'] = None
 
                     # Change live photo movie file extension to .MOV
-                    if (self.item_type == AssetItemType.IMAGE and
+                    if ((self.item_type or AssetItemType.IMAGE) == AssetItemType.IMAGE and
                         version['type'] == "com.apple.quicktime-movie"):
                         version['filename'] = self._service.lp_filename_generator(self.filename) # without size
                     else:

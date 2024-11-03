@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: crashes when no imagetype sent by Apple [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/680)
+
 ## 1.24.2 (2024-11-02)
 
 - fix: errors for accounts with salt started with zero byte [#975](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/975)
