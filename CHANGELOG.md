@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.24.3 (2024-11-03)
+
 - fix: crashes when no imagetype sent by Apple [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/680)
 
 ## 1.24.2 (2024-11-02)
