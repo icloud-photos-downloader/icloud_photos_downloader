@@ -188,10 +188,16 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             if not icloud.send_2fa_code_sms(device.id):
                 logger.error("Failed to send two-factor authentication code")
                 sys.exit(1)
-            code: int = click.prompt(
-                "Please enter two-factor authentication code that you received over SMS",
-                type=click.IntRange(0, 999999),
-            )
+            while True:
+                code: str = click.prompt(
+                    "Please enter two-factor authentication code that you received over SMS",
+                ).strip()
+                if len(code) == 6:
+                    if code.isdigit():
+                        break
+                    else:
+                        click.echo("Invalid code, should be six digits. Try again")
+                        continue
             if not icloud.validate_2fa_code_sms(device.id, code):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
@@ -200,10 +206,17 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
     else:
-        code = click.prompt(
-            "Please enter two-factor authentication code", type=click.IntRange(0, 999999)
-        )
-        if not icloud.validate_2fa_code(str(code)):
+        while True:
+            code = click.prompt(
+                "Please enter two-factor authentication code",
+            ).strip()
+            if len(code) == 6:
+                if code.isdigit():
+                    break
+                else:
+                    click.echo("Invalid code, should be six digits. Try again")
+                    continue
+        if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
             sys.exit(1)
     logger.info(
