@@ -151,12 +151,12 @@ def build_send_sms_code_request(context: _TrustedPhoneContextProvider, device_id
         json = json)
     return req
 
-def build_verify_sms_code_request(context: _TrustedPhoneContextProvider, device_id: int, code: int) -> Request:
+def build_verify_sms_code_request(context: _TrustedPhoneContextProvider, device_id: int, code: str) -> Request:
     """ Builds a request for the list of trusted phone numbers for sms 2fa """
 
     url = _auth_url(context.domain) + "/verify/phone/securitycode"
 
-    json = {"phoneNumber":{"id":device_id},"securityCode":{"code":str(code)},"mode":"sms"}
+    json = {"phoneNumber":{"id":device_id},"securityCode":{"code":code},"mode":"sms"}
 
     req = _InternalRequest(
         method="POST",

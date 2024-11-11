@@ -484,7 +484,7 @@ class PyiCloudService:
 
         return not self.requires_2sa
 
-    def validate_2fa_code_sms(self, device_id: int, code:int) -> bool:
+    def validate_2fa_code_sms(self, device_id: int, code:str) -> bool:
         """Verifies a verification code received via Apple's 2FA system through SMS."""
 
         oauth_session = self.get_oauth_session()

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: sms MFA dropping leading zeros [#993](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/993)
+
 ## 1.24.3 (2024-11-03)
 
 - fix: crashes when no imagetype sent by Apple [ref](https://github.com/boredazfcuk/docker-icloudpd/issues/680)

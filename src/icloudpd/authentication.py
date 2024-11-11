@@ -103,7 +103,7 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             number = device["phoneNumber"]
             alt_name = f"SMS to {number}"
             name = device.get("deviceName", alt_name)
-            print(f"  {i}: {name}")
+            click.echo(f"  {i}: {name}")
 
         device_index = click.prompt(
             "Please choose an option:", default="0", type=click.IntRange(0, devices_count - 1)
@@ -138,7 +138,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             sys.exit(1)
 
         for i, device in enumerate(devices):
-            print(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
+            click.echo(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
 
         index_str = f"..{device_index_alphabet[devices_count - 1]}" if devices_count > 1 else ""
         index_or_code: str = ""
@@ -159,14 +159,14 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 if index_or_code in device_index_alphabet:
                     if device_index_alphabet.index(index_or_code) > devices_count - 1:
                         click.echo(
-                            f"Invalid index, should be {device_index_alphabet[0]}{index_str}. Try again"
+                            f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again",
                         )
                         continue
                     else:
                         break
                 else:
                     click.echo(
-                        f"Invalid index, should be {device_index_alphabet[0]}{index_str}. Try again"
+                        f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again",
                     )
                     continue
 
@@ -178,7 +178,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                     continue
 
             click.echo(
-                f"Should be index {device_index_alphabet[0]}{index_str} or six-digit code. Try again"
+                f"Should be index ({device_index_alphabet[0]}{index_str}) or six-digit code. Try again",
             )
 
         if index_or_code in device_index_alphabet:
@@ -188,10 +188,14 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             if not icloud.send_2fa_code_sms(device.id):
                 logger.error("Failed to send two-factor authentication code")
                 sys.exit(1)
-            code: int = click.prompt(
-                "Please enter two-factor authentication code that you received over SMS",
-                type=click.IntRange(0, 999999),
-            )
+            while True:
+                code: str = click.prompt(
+                    "Please enter two-factor authentication code that you received over SMS",
+                ).strip()
+                if len(code) == 6 and code.isdigit():
+                    break
+                click.echo("Invalid code, should be six digits. Try again")
+
             if not icloud.validate_2fa_code_sms(device.id, code):
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
@@ -200,10 +204,14 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 logger.error("Failed to verify two-factor authentication code")
                 sys.exit(1)
     else:
-        code = click.prompt(
-            "Please enter two-factor authentication code", type=click.IntRange(0, 999999)
-        )
-        if not icloud.validate_2fa_code(str(code)):
+        while True:
+            code = click.prompt(
+                "Please enter two-factor authentication code",
+            ).strip()
+            if len(code) == 6 and code.isdigit():
+                break
+            click.echo("Invalid code, should be six digits. Try again")
+        if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
             sys.exit(1)
     logger.info(
