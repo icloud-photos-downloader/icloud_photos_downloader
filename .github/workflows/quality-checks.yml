@@ -121,7 +121,6 @@ jobs:
       matrix: 
         python-version: [3.12]
         os: 
-          - "macos-12"
           - "macos-13"
           - "macos-14"
           - "windows-2019"
