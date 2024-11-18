@@ -4,6 +4,7 @@
 
 ## 1.24.4 (2024-11-18)
 
+- fix: deprecate macos-12 [#1000](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1000)
 - fix: sms MFA dropping leading zeros [#993](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/993)
 
 ## 1.24.3 (2024-11-03)
