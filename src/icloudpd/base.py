@@ -62,7 +62,7 @@ from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import Config
 from icloudpd.counter import Counter
-from icloudpd.email_notifications import EmailNotifier, send_2sa_notification
+from icloudpd.email_notifications import EmailNotifier
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
