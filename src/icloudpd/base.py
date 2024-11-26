@@ -2,7 +2,6 @@
 """Main script that uses Click to parse command-line arguments"""
 
 from multiprocessing import freeze_support
-from tkinter import N
 
 import foundation
 from foundation.core import compose, constant, identity
