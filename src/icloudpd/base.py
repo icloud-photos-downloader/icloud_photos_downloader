@@ -621,6 +621,7 @@ def main(
         stream=sys.stdout,
     )
     logger = logging.getLogger("icloudpd")
+    pyicloud_logger = logging.getLogger("pyicloud_ipd")
     if only_print_filenames:
         logger.disabled = True
     else:
@@ -629,10 +630,13 @@ def main(
         logger.disabled = False
         if log_level == "debug":
             logger.setLevel(logging.DEBUG)
+            pyicloud_logger.setLevel(logging.DEBUG)
         elif log_level == "info":
             logger.setLevel(logging.INFO)
+            pyicloud_logger.setLevel(logging.INFO)
         elif log_level == "error":
             logger.setLevel(logging.ERROR)
+            pyicloud_logger.setLevel(logging.ERROR)
 
     with logging_redirect_tqdm():
         # check required directory param only if not list albums
