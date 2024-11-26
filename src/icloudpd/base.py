@@ -1189,23 +1189,22 @@ def core(
                 notification_email_from,
             )
 
-    try:
-        icloud = authenticator(
-            logger,
-            domain,
-            filename_cleaner,
-            lp_filename_generator,
-            raw_policy,
-            file_match_policy,
-            password_providers,
-            mfa_provider,
-            status_exchange,
-        )(
-            username,
-            cookie_directory,
-            _notify_mfa_error,
-            os.environ.get("CLIENT_ID"),
-        )
+    icloud = authenticator(
+        logger,
+        domain,
+        filename_cleaner,
+        lp_filename_generator,
+        raw_policy,
+        file_match_policy,
+        password_providers,
+        mfa_provider,
+        status_exchange,
+    )(
+        username,
+        cookie_directory,
+        _notify_mfa_error,
+        os.environ.get("CLIENT_ID"),
+    )
 
     if auth_only:
         logger.info("Authentication completed successfully")
