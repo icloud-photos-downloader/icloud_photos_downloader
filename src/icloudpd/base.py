@@ -55,7 +55,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
 from icloudpd import constants, download, exif_datetime
-from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
+from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import Config
 from icloudpd.counter import Counter
@@ -1174,11 +1174,21 @@ def core(
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
-    raise_error_on_2sa = (
-        smtp_username is not None
-        or notification_email is not None
-        or notification_script is not None
-    )
+    def _notify_mfa_error():
+        if notification_script is not None:
+            subprocess.call([notification_script])
+        if smtp_username is not None or notification_email is not None:
+            send_2sa_notification(
+                logger,
+                smtp_username,
+                smtp_password,
+                smtp_host,
+                smtp_port,
+                smtp_no_tls,
+                notification_email,
+                notification_email_from,
+            )
+
     try:
         icloud = authenticator(
             logger,
@@ -1193,24 +1203,9 @@ def core(
         )(
             username,
             cookie_directory,
-            raise_error_on_2sa,
+            _notify_mfa_error,
             os.environ.get("CLIENT_ID"),
         )
-    except TwoStepAuthRequiredError:
-        if notification_script is not None:
-            subprocess.call([notification_script])
-        if smtp_username is not None or notification_email is not None:
-            send_2sa_notification(
-                logger,
-                smtp_username,
-                smtp_password,
-                smtp_host,
-                smtp_port,
-                smtp_no_tls,
-                notification_email,
-                notification_email_from,
-            )
-        return 1
 
     if auth_only:
         logger.info("Authentication completed successfully")
