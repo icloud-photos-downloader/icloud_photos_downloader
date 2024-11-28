@@ -509,6 +509,7 @@ class PhotoAlbum(object):
                 u'locationLatitude', u'locationLongitude', u'adjustmentType',
                 u'timeZoneOffset', u'vidComplDurValue', u'vidComplDurScale',
                 u'vidComplDispValue', u'vidComplDispScale',
+                u'keywordsEnc',u'extendedDescEnc',u'adjustedMediaMetaDataEnc',u'adjustmentSimpleDataEnc',
                 u'vidComplVisibilityState', u'customRenderedValue',
                 u'containerId', u'itemId', u'position', u'isKeyAsset'
             ],

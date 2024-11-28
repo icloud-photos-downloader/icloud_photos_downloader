@@ -73,9 +73,11 @@ def autodelete_photos(
         for _size, _version in disambiguate_filenames(media.versions, _sizes).items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 paths.add(os.path.normpath(local_download_path(_version.filename, download_dir)))
+                paths.add(os.path.normpath(local_download_path(_version.filename, download_dir)) + ".xmp")
         for _size, _version in media.versions.items():
             if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 paths.add(os.path.normpath(local_download_path(_version.filename, download_dir)))
+                paths.add(os.path.normpath(local_download_path(_version.filename, download_dir)) + ".xmp")
         for path in paths:
             if os.path.exists(path):
                 logger.debug("Deleting %s...", path)
