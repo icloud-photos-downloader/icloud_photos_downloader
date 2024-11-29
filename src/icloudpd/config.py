@@ -24,6 +24,7 @@ class Config:
         list_libraries: bool,
         skip_videos: bool,
         skip_live_photos: bool,
+        xmp_sidecar: bool,
         force_size: bool,
         auto_delete: bool,
         only_print_filenames: bool,

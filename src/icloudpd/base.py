@@ -64,6 +64,7 @@ from icloudpd.paths import clean_filename, local_download_path, remove_unicode_c
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import truncate_middle
+from icloudpd.xmp_sidecar import generate_xmp_file
 
 
 def build_filename_cleaner(
@@ -378,6 +379,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     is_flag=True,
 )
 @click.option(
+    "--xmp-sidecar",
+    help="Export additional data as XMP sidecar files (default: don't export)",
+    is_flag=True,
+)
+@click.option(
     "--force-size",
     help="Only download the requested size (`adjusted` and `alternate` will not be forced)"
     + "(default: download original if size is not available)",
@@ -583,6 +589,7 @@ def main(
     list_libraries: bool,
     skip_videos: bool,
     skip_live_photos: bool,
+    xmp_sidecar: bool,
     force_size: bool,
     auto_delete: bool,
     only_print_filenames: bool,
@@ -694,6 +701,7 @@ def main(
             list_libraries=list_libraries,
             skip_videos=skip_videos,
             skip_live_photos=skip_live_photos,
+            xmp_sidecar=xmp_sidecar,
             force_size=force_size,
             auto_delete=auto_delete,
             only_print_filenames=only_print_filenames,
@@ -756,6 +764,7 @@ def main(
                 live_photo_size,
                 dry_run,
                 file_match_policy,
+                xmp_sidecar,
             )
             if directory is not None
             else (lambda _s: lambda _c, _p: False),
@@ -812,6 +821,7 @@ def download_builder(
     live_photo_size: LivePhotoVersionSize,
     dry_run: bool,
     file_match_policy: FileMatchPolicy,
+    xmp_sidecar: bool,
 ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
 
@@ -959,6 +969,9 @@ def download_builder(
                             if not dry_run:
                                 download.set_utime(download_path, created_date)
                             logger.info("Downloaded %s", truncated_path)
+
+                if xmp_sidecar:
+                    generate_xmp_file(logger, download_path, photo._asset_record)
 
             # Also download the live photo if present
             if not skip_live_photos:
