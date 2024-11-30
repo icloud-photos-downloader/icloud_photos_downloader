@@ -1,6 +1,7 @@
 # Change log
 
 ## Unreleased
+- Fix: crash when downloading files with `--xmp-sidecar` caused by files having non-JSON adjustment data. [#1056](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1056)
 
 ## 1.26.0 (2025-01-13)
 
