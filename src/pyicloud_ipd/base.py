@@ -266,15 +266,18 @@ class PyiCloudService:
                     data=json.dumps(data),
                     headers=headers,
                 )
-                if response.status_code == 401:
-                    raise PyiCloudAPIResponseException(response.text, str(response.status_code))
-                if response.status_code == 412:
+                if response.status_code == 409:
+                    # requires 2FA
+                    pass
+                elif response.status_code == 412:
                     # non 2FA account returns 412 "precondition no met"
                     response = self.session.post(
                         "%s/repair/complete" % self.AUTH_ENDPOINT,
                         data=json.dumps({}),
                         headers=headers,
                     )
+                elif response.status_code >= 400 and response.status_code < 600:
+                    raise PyiCloudAPIResponseException(response.text, str(response.status_code))
             except PyiCloudAPIResponseException as error:
                 msg = "Invalid email/password combination."
                 raise PyiCloudFailedLoginException(msg, error) from error
