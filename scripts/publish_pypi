@@ -11,4 +11,4 @@ set -euo pipefail
 # cleint use: pip install --index http://192.168.1.20:4880 --trusted-host 192.168.1.20 icloudpd
 
 # linux
-twine upload --repository-url $1 --non-interactive -u bogus -p bogus dist/icloudpd-1.24.4-py2.py3-none-manylinux*.whl dist/icloudpd-1.24.4-py2.py3-none-macos*.whl dist/icloudpd-1.24.4-py2.py3-none-win*.whl dist/icloudpd-1.24.4-py3-none-any.whl
+twine upload --repository-url $1 --non-interactive -u bogus -p bogus dist/icloudpd-1.25.0-py2.py3-none-manylinux*.whl dist/icloudpd-1.25.0-py2.py3-none-macos*.whl dist/icloudpd-1.25.0-py2.py3-none-win*.whl dist/icloudpd-1.25.0-py3-none-any.whl
