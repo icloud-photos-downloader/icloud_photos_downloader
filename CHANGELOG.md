@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: failed to login non-2FA account for the first attempt [#1012](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1012)
 - fix: log more information for authentication error [#1010](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1010)
 - feature: add support for XMP files with `--xmp-sidecar` parameter [#448](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/448), [#102](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/102), [#789](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/789)
 

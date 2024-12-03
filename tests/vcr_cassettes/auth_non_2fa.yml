@@ -114,6 +114,8 @@ interactions:
       X-Apple-OAuth-Response-Type: ['code']
       X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
       X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
+      scnt: ['scnt-1234567890']
+      X-Apple-ID-Session-Id: ['sess-1234567890']
     method: POST
     uri: https://idmsa.apple.com/appleauth/auth/repair/complete
   response:

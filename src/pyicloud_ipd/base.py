@@ -194,13 +194,6 @@ class PyiCloudService:
             LOGGER.debug("Authenticating as %s", self.user["accountName"])
 
             headers = self._get_auth_headers()
-            scnt = self.session_data.get("scnt")
-            if scnt:
-                headers["scnt"] = scnt
-
-            session_id = self.session_data.get("session_id")
-            if session_id:
-                headers["X-Apple-ID-Session-Id"] = session_id
 
             class SrpPassword():
                 # srp uses the encoded password at process_challenge(), thus set_encrypt_info() should be called before that
@@ -271,6 +264,7 @@ class PyiCloudService:
                     pass
                 elif response.status_code == 412:
                     # non 2FA account returns 412 "precondition no met"
+                    headers = self._get_auth_headers()
                     response = self.session.post(
                         "%s/repair/complete" % self.AUTH_ENDPOINT,
                         data=json.dumps({}),
@@ -359,6 +353,14 @@ class PyiCloudService:
             "X-Apple-OAuth-State": self.client_id,
             "X-Apple-Widget-Key": "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
         }
+        scnt = self.session_data.get("scnt")
+        if scnt:
+            headers["scnt"] = scnt
+
+        session_id = self.session_data.get("session_id")
+        if session_id:
+            headers["X-Apple-ID-Session-Id"] = session_id
+
         if overrides:
             headers.update(overrides)
         return headers
@@ -514,14 +516,6 @@ class PyiCloudService:
 
         headers = self._get_auth_headers({"Accept": "application/json"})
 
-        scnt = self.session_data.get("scnt")
-        if scnt:
-            headers["scnt"] = scnt
-        
-        session_id = self.session_data.get("session_id")
-        if session_id:
-            headers["X-Apple-ID-Session-Id"] = session_id
-
         try:
             self.session.post(
                 "%s/verify/trusteddevice/securitycode" % self.AUTH_ENDPOINT,
@@ -543,14 +537,6 @@ class PyiCloudService:
     def trust_session(self) -> bool:
         """Request session trust to avoid user log in going forward."""
         headers = self._get_auth_headers()
-
-        scnt = self.session_data.get("scnt")
-        if scnt:
-            headers["scnt"] = scnt
-        
-        session_id = self.session_data.get("session_id")
-        if session_id:
-            headers["X-Apple-ID-Session-Id"] = session_id
 
         try:
             self.session.get(
