@@ -200,19 +200,22 @@ class PyiCloudService:
                 def __init__(self, password: str):
                     self.pwd = password
 
-                def set_encrypt_info(self, salt: bytes, iterations: int) -> None:
+                def set_encrypt_info(self, protocol: str, salt: bytes, iterations: int) -> None:
+                    self.protocol = protocol
                     self.salt = salt
                     self.iterations = iterations
 
                 def encode(self) -> bytes:
+                    password_hash = hashlib.sha256(self.pwd.encode())
+                    password_digest = password_hash.hexdigest().encode() if self.protocol == 's2k_fo' else password_hash.digest()
                     key_length = 32
-                    return hashlib.pbkdf2_hmac('sha256', hashlib.sha256(self.pwd.encode()).digest(), self.salt, self.iterations, key_length)
+                    return hashlib.pbkdf2_hmac('sha256', password_digest, salt, iterations, key_length)
 
             # Step 1: client generates private key a (stored in srp.User) and public key A, sends to server
             srp_password = SrpPassword(self.user["password"])
             srp.rfc5054_enable()
             srp.no_username_in_x()
-            usr = srp.User(self.user["accountName"], srp_password, hash_alg=srp.SHA256)
+            usr = srp.User(self.user["accountName"], srp_password, hash_alg=srp.SHA256, ng_type=srp.NG_2048)
             uname, A = usr.start_authentication()
             data = {
                 'a': base64.b64encode(A).decode(),
@@ -234,9 +237,10 @@ class PyiCloudService:
             b = base64.b64decode(body['b'])
             c = body['c']
             iterations = body['iteration']
+            protocol = body['protocol']
 
             # Step 3: client generates session key M1 and M2 with salt and b, sends to server
-            srp_password.set_encrypt_info(salt, iterations)
+            srp_password.set_encrypt_info(protocol, salt, iterations)
             m1 = usr.process_challenge( salt, b )
             m2 = usr.H_AMK
 
