@@ -970,7 +970,7 @@ def download_builder(
                                 download.set_utime(download_path, created_date)
                             logger.info("Downloaded %s", truncated_path)
 
-                if xmp_sidecar:
+                if xmp_sidecar and download_size != AssetVersionSize.ADJUSTED:
                     generate_xmp_file(logger, download_path, photo._asset_record)
 
             # Also download the live photo if present
