@@ -1,5 +1,6 @@
 from typing import Callable, Dict, Optional, Sequence, Tuple
 
+from icloudpd.notifier import Notifier
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
@@ -51,6 +52,7 @@ class Config:
         file_match_policy: FileMatchPolicy,
         mfa_provider: MFAProvider,
         use_os_locale: bool,
+        notifiers: list[Notifier] = []
     ):
         self.directory = directory
         self.username = username
@@ -90,3 +92,4 @@ class Config:
         self.file_match_policy = file_match_policy
         self.mfa_provider = mfa_provider
         self.use_os_locale = use_os_locale
+        self.notifiers = notifiers
