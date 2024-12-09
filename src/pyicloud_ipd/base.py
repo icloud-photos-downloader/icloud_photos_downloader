@@ -192,93 +192,15 @@ class PyiCloudService:
 
         if not login_successful:
             LOGGER.debug("Authenticating as %s", self.user["accountName"])
-
-            headers = self._get_auth_headers()
-
-            class SrpPassword():
-                # srp uses the encoded password at process_challenge(), thus set_encrypt_info() should be called before that
-                def __init__(self, password: str):
-                    self.pwd = password
-
-                def set_encrypt_info(self, protocol: str, salt: bytes, iterations: int) -> None:
-                    self.protocol = protocol
-                    self.salt = salt
-                    self.iterations = iterations
-
-                def encode(self) -> bytes:
-                    password_hash = hashlib.sha256(self.pwd.encode())
-                    password_digest = password_hash.hexdigest().encode() if self.protocol == 's2k_fo' else password_hash.digest()
-                    key_length = 32
-                    return hashlib.pbkdf2_hmac('sha256', password_digest, salt, iterations, key_length)
-
-            # Step 1: client generates private key a (stored in srp.User) and public key A, sends to server
-            srp_password = SrpPassword(self.user["password"])
-            srp.rfc5054_enable()
-            srp.no_username_in_x()
-            usr = srp.User(self.user["accountName"], srp_password, hash_alg=srp.SHA256, ng_type=srp.NG_2048)
-            uname, A = usr.start_authentication()
-            data = {
-                'a': base64.b64encode(A).decode(),
-                'accountName': uname,
-                'protocols': ['s2k', 's2k_fo']
-            }
-
             try:
-                response = self.session.post("%s/signin/init" % self.AUTH_ENDPOINT, data=json.dumps(data), headers=headers)
-                if response.status_code == 401:
-                    raise PyiCloudAPIResponseException(response.text, str(response.status_code))
-            except PyiCloudAPIResponseException as error:
-                msg = "Failed to initiate srp authentication."
-                raise PyiCloudFailedLoginException(msg, error) from error
-
-            # Step 2: server sends public key B, salt, and c to client
-            body = response.json()
-            salt = base64.b64decode(body['salt'])
-            b = base64.b64decode(body['b'])
-            c = body['c']
-            iterations = body['iteration']
-            protocol = body['protocol']
-
-            # Step 3: client generates session key M1 and M2 with salt and b, sends to server
-            srp_password.set_encrypt_info(protocol, salt, iterations)
-            m1 = usr.process_challenge( salt, b )
-            m2 = usr.H_AMK
-
-            data = {
-                "accountName": uname,
-                "c": c,
-                "m1": base64.b64encode(m1).decode(),
-                "m2": base64.b64encode(m2).decode(),
-                "rememberMe": True,
-                "trustTokens": [],
-            }
-
-            if self.session_data.get("trust_token"):
-                data["trustTokens"] = [self.session_data.get("trust_token")]
-
-            try:
-                response = self.session.post(
-                    "%s/signin/complete" % self.AUTH_ENDPOINT,
-                    params={"isRememberMeEnabled": "true"},
-                    data=json.dumps(data),
-                    headers=headers,
-                )
-                if response.status_code == 409:
-                    # requires 2FA
-                    pass
-                elif response.status_code == 412:
-                    # non 2FA account returns 412 "precondition no met"
-                    headers = self._get_auth_headers()
-                    response = self.session.post(
-                        "%s/repair/complete" % self.AUTH_ENDPOINT,
-                        data=json.dumps({}),
-                        headers=headers,
-                    )
-                elif response.status_code >= 400 and response.status_code < 600:
-                    raise PyiCloudAPIResponseException(response.text, str(response.status_code))
-            except PyiCloudAPIResponseException as error:
-                msg = "Invalid email/password combination."
-                raise PyiCloudFailedLoginException(msg, error) from error
+                self._authenticate_srp()
+            except PyiCloudFailedLoginException as error:
+                LOGGER.error("Failed to login with srp, falling back to old raw password authentication. Error: %s", error)
+                try:
+                    self._authenticate_raw_password()
+                except PyiCloudFailedLoginException as error:
+                    LOGGER.error("Failed to login with raw password. Error: %s", error)
+                    raise error
 
             self._authenticate_with_token()
 
@@ -328,6 +250,113 @@ class PyiCloudService:
             )
 
             self.data = self._validate_token()
+        except PyiCloudAPIResponseException as error:
+            msg = "Invalid email/password combination."
+            raise PyiCloudFailedLoginException(msg, error) from error
+
+    def _authenticate_srp(self) -> None:
+        class SrpPassword():
+            # srp uses the encoded password at process_challenge(), thus set_encrypt_info() should be called before that
+            def __init__(self, password: str):
+                self.pwd = password
+
+            def set_encrypt_info(self, protocol: str, salt: bytes, iterations: int) -> None:
+                self.protocol = protocol
+                self.salt = salt
+                self.iterations = iterations
+
+            def encode(self) -> bytes:
+                password_hash = hashlib.sha256(self.pwd.encode())
+                password_digest = password_hash.hexdigest().encode() if self.protocol == 's2k_fo' else password_hash.digest()
+                key_length = 32
+                return hashlib.pbkdf2_hmac('sha256', password_digest, self.salt, self.iterations, key_length)
+
+        # Step 1: client generates private key a (stored in srp.User) and public key A, sends to server
+        srp_password = SrpPassword(self.user["password"])
+        srp.rfc5054_enable()
+        srp.no_username_in_x()
+        usr = srp.User(self.user["accountName"], srp_password, hash_alg=srp.SHA256, ng_type=srp.NG_2048)
+        uname, A = usr.start_authentication()
+        data = {
+            'a': base64.b64encode(A).decode(),
+            'accountName': uname,
+            'protocols': ['s2k', 's2k_fo']
+        }
+
+        headers = self._get_auth_headers()
+        try:
+            response = self.session.post("%s/signin/init" % self.AUTH_ENDPOINT, data=json.dumps(data), headers=headers)
+            if response.status_code == 401:
+                raise PyiCloudAPIResponseException(response.text, str(response.status_code))
+        except PyiCloudAPIResponseException as error:
+            msg = "Failed to initiate srp authentication."
+            raise PyiCloudFailedLoginException(msg, error) from error
+
+        # Step 2: server sends public key B, salt, and c to client
+        body = response.json()
+        salt = base64.b64decode(body['salt'])
+        b = base64.b64decode(body['b'])
+        c = body['c']
+        iterations = body['iteration']
+        protocol = body['protocol']
+
+        # Step 3: client generates session key M1 and M2 with salt and b, sends to server
+        srp_password.set_encrypt_info(protocol, salt, iterations)
+        m1 = usr.process_challenge( salt, b )
+        m2 = usr.H_AMK
+
+        data = {
+            "accountName": uname,
+            "c": c,
+            "m1": base64.b64encode(m1).decode(),
+            "m2": base64.b64encode(m2).decode(),
+            "rememberMe": True,
+            "trustTokens": [],
+        }
+
+        if self.session_data.get("trust_token"):
+            data["trustTokens"] = [self.session_data.get("trust_token")]
+
+        try:
+            response = self.session.post(
+                "%s/signin/complete" % self.AUTH_ENDPOINT,
+                params={"isRememberMeEnabled": "true"},
+                data=json.dumps(data),
+                headers=headers,
+            )
+            if response.status_code == 409:
+                # requires 2FA
+                pass
+            elif response.status_code == 412:
+                # non 2FA account returns 412 "precondition no met"
+                headers = self._get_auth_headers()
+                response = self.session.post(
+                    "%s/repair/complete" % self.AUTH_ENDPOINT,
+                    data=json.dumps({}),
+                    headers=headers,
+                )
+            elif response.status_code >= 400 and response.status_code < 600:
+                raise PyiCloudAPIResponseException(response.text, str(response.status_code))
+        except PyiCloudAPIResponseException as error:
+            msg = "Invalid email/password combination."
+            raise PyiCloudFailedLoginException(msg, error) from error
+
+    def _authenticate_raw_password(self) -> None:
+        data = dict(self.user)
+
+        data["rememberMe"] = True
+        data["trustTokens"] = []
+        if self.session_data.get("trust_token"):
+            data["trustTokens"] = [self.session_data.get("trust_token")]
+
+        headers = self._get_auth_headers()
+        try:
+            self.session.post(
+                "%s/signin" % self.AUTH_ENDPOINT,
+                params={"isRememberMeEnabled": "true"},
+                data=json.dumps(data),
+                headers=headers,
+            )
         except PyiCloudAPIResponseException as error:
             msg = "Invalid email/password combination."
             raise PyiCloudFailedLoginException(msg, error) from error
