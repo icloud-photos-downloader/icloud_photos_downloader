@@ -58,7 +58,40 @@ class AuthenticationTestCase(TestCase):
                     "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
+        self.assertIn(
+            "ERROR    Failed to login with srp, falling back to old raw password authentication.",
+            self._caplog.text,
+        )
         self.assertTrue("Invalid email/password combination." in str(context.exception))
+
+    def test_fallback_raw_password(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "fallback_raw_password.yml")):  # noqa: SIM117
+            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--no-progress-bar",
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--auth-only",
+                ],
+            )
+            self.assertIn(
+                "ERROR    Failed to login with srp, falling back to old raw password authentication.",
+                self._caplog.text,
+            )
+            self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
+            assert result.exit_code == 0
 
     def test_2sa_required(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
