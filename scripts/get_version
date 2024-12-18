@@ -1,0 +1,4 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo $(cat pyproject.toml | grep version= | cut -d'"' -f 2)

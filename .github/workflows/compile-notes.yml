@@ -1,0 +1,42 @@
+
+name: Compile Release Notes
+
+on:
+  workflow_call:
+    inputs:
+      icloudpd_version:
+        required: true
+        type: string
+
+jobs:
+
+  build_notes:
+    runs-on: ubuntu-22.04
+    steps:
+
+    - name: Download artifacts (compatibility)
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-compatibility
+        path: |
+          dist
+
+    - name: Download artifacts (changelog)
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-${{github.sha}}-changelog
+        path: |
+          dist
+
+    - name: Merge Release Notes
+      run: |
+        cat dist/changelog-*.md > dist/notes-${{inputs.icloudpd_version}}.md
+        cat dist/compatibility-*.md >> dist/notes-${{inputs.icloudpd_version}}.md
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-notes
+        if-no-files-found: error
+        path: |
+          dist/notes-${{inputs.icloudpd_version}}.md

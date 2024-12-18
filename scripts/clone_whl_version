@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# creates new versions of all whl in dist folder
+# param: from_version to_version
+
+# sed "s/icloudpd-$1.dist-info/icloudpd-$2.dist-info/" -i .wheel/icloudpd-$2/icloudpd-$2.dist-info/RECORD &&
+
+
+for file in dist/icloudpd-$1-*.whl; do
+    [ -e "$file" ] || continue
+    echo $file
+    echo "mk dir .wheel..."
+    mkdir .wheel 
+    echo "unpack there..."
+    wheel unpack $file --dest .wheel
+    echo "rename folder..."
+    mv .wheel/icloudpd-$1/icloudpd-$1.dist-info .wheel/icloudpd-$1/icloudpd-$2.dist-info
+    echo "change version..."
+    sed "s/Version: $1/Version: $2/" -i .wheel/icloudpd-$1/icloudpd-$2.dist-info/METADATA
+    echo "pack back..."
+    wheel pack .wheel/icloudpd-$1 --dest dist
+    echo "clean up..."
+    rm -rf .wheel/
+done

@@ -1,0 +1,12 @@
+<form hx-post="/code" hx-swap="outerHTML" class="row align-items-center" hx-target-error="#toast-content">
+    <fieldset>
+        <legend>Authentication</legend>
+        <div class="col-12 mb-3">
+          <label for="code" class="form-label">Two-Factor code of the user {{ config.username }}</label>
+          <input type="text" class="form-control" id="code" name="code" placeholder="Enter Two-Factor Code">
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </div>
+    </fieldset>
+</form>

@@ -1,0 +1,173 @@
+on:
+  workflow_call:
+    inputs:
+      icloudpd_version:
+        required: true
+        type: string
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: false
+      DOCKERHUB_PASSWORD:
+        required: false
+      NPM_TOKEN:
+        required: false
+      PYPI_USERNAME:
+        required: false
+      PYPI_PASSWORD:
+        required: false
+
+name: Publish Release
+
+jobs:
+
+  docker:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download artifacts 
+        uses: actions/download-artifact@v4 
+        with: 
+          name: icloudpd-${{github.sha}}-oci
+          path: | 
+            dist 
+ 
+      - name: Run skopeo 
+        uses: addnab/docker-run-action@v3 
+        with: 
+          image: quay.io/skopeo/stable:v1.14.0 
+          shell: sh 
+          options: -v ${{ github.workspace }}/dist:/dist 
+          run: > 
+            (skopeo copy --preserve-digests --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all oci-archive:/dist/icloudpd-${{inputs.icloudpd_version}}-oci.tar docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}}) &&
+            (skopeo copy --preserve-digests --src-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}} docker://docker.io/icloudpd/icloudpd:latest)
+  
+      - name: Update repo description
+        uses: peter-evans/dockerhub-description@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
+          repository: icloudpd/icloudpd
+          readme-filepath: ./README_DOCKER.md
+          short-description: ${{ github.event.repository.description }}
+
+  npm:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-npm
+          path: |
+            dist/npm
+
+      - name: Publish NPM
+        run: |
+          npm publish dist/npm/@icloudpd/linux-arm --access public
+          npm publish dist/npm/@icloudpd/linux-arm64 --access public
+          npm publish dist/npm/@icloudpd/linux-x64 --access public
+          npm publish dist/npm/@icloudpd/win32-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-x64 --access public
+          npm publish dist/npm/@icloudpd/darwin-arm64 --access public
+          npm publish dist/npm/icloudpd --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  pypi:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      
+      - name: Install Dev dependencies
+        run: |
+          pip3 install -e .[dev]
+
+      - name: Download artifacts (src)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (bin)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: icloudpd-${{github.sha}}-bin-*
+          merge-multiple: true
+          path: |
+            dist
+
+      - name: Publish PyPI
+        env:
+          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+        run: |
+          python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
+
+  gh_release:
+    runs-on: ubuntu-22.04
+    steps:
+
+      - name: Download artifacts (src)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-src
+          path: |
+            dist
+
+      - name: Download artifacts (bin)
+        uses: actions/download-artifact@v4
+        with:
+          pattern: icloudpd-${{github.sha}}-bin-*
+          merge-multiple: true
+          path: |
+            dist
+
+      - name: Download artifacts (docker)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-oci
+          path: |
+            dist
+
+      - name: Download artifacts (compatibility)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-compatibility
+          path: |
+            dist
+
+      - name: Download artifacts (tzlc compatibility)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-tzlc
+          path: |
+            dist
+
+      - name: Download artifacts (notes)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-${{github.sha}}-notes
+          path: |
+            dist
+
+      - name: Create Release
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: "dist/*"
+          bodyFile: dist/notes-${{inputs.icloudpd_version}}.md
+

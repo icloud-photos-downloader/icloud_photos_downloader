@@ -12,7 +12,7 @@ assignees: ''
 
 
 ## Steps to Reproduce
-[NOTE]: # ( Provide a simple set of steps to reproduce this bug. )
+[NOTE]: # ( Provide a simple set of steps to reproduce this bug. Version of the app, OS/System, and minimum command line to reproduce. )
 1. 
 2. 
 3. 
@@ -27,4 +27,6 @@ assignees: ''
 
 
 ## Context
+[NOTE]: # ( Tell us why expected behvior is valuable )
+
 [NOTE]: # ( Give us any additional information you may have. )

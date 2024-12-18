@@ -16,7 +16,7 @@ pip install icloudpd --user
 
 Plus add `C:\Users\<YourUserAccountHere>\AppData\Roaming\Python\Python<YourPythonVersionHere>\Scripts` to PATH. The exact path will be given at the end of `icloudpd` installation.
 
-### MacOS
+### macOS
 
 Add `/Users/<YourUserAccountHere>/Library/Python/<YourPythonVersionHere>/bin` to PATH. The exact path will be given at the end of `icloudpd` installation.
 
@@ -40,7 +40,7 @@ You can get Python with accompanying Pip from [Official site](https://www.python
 
 #### Command Line Tools from Apple
 
-Apple provices Python & Pip as part of the Command Line Tools for XCode. They can be downloaded from Apple Developer portal or installed with 
+Apple provides Python & Pip as part of the Command Line Tools for Xcode. They can be downloaded from Apple Developer portal or installed with 
 
 ``` sh
 xcode-select --install
@@ -54,7 +54,7 @@ pip3 install icloudpd
 
 #### Homebrew package manager
 
-Homebrew is open source package manager for MacOS. Install [Homebrew](https://brew.sh/) (if not already installed):
+Homebrew is open source package manager for macOS. Install [Homebrew](https://brew.sh/) (if not already installed):
 
 ``` sh
 which brew > /dev/null 2>&1 || /usr/bin/ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"

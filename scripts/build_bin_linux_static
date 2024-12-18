@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# prepare static bin packages in dist
+# expects staticx installed dependencies
+# required params: version plat
+
+# using plain names because they will be embedded in static binaries
+cp dist/icloudpd-$1-linux-$2 icloudpd
+cp dist/icloud-$1-linux-$2 icloud
+cp dist/icloudpd-ex-$1-linux-$2 icloudpd-ex
+
+staticx --loglevel INFO icloudpd dist/icloudpd-$1-linux-$2
+staticx --loglevel INFO icloud dist/icloud-$1-linux-$2
+staticx --loglevel INFO icloudpd-ex dist/icloudpd-ex-$1-linux-$2
+
+# fix permissions
+chmod 755 dist/icloudpd-$1-linux-$2
+chmod 755 dist/icloud-$1-linux-$2
+chmod 755 dist/icloudpd-ex-$1-linux-$2

@@ -1,0 +1,42 @@
+<!doctype html>
+<head>
+    <title>iCloud Photos Downloader</title>
+    <link rel="manifest" href="/static/manifest.json">
+</head>
+<body data-bs-theme="dark" hx-ext="response-targets">
+    <script src="/static/htmx/v2.0.0/htmx.min.js"></script>
+    <script src="/static/htmx/extensions/response-targets.min.js"></script>
+    <link href="/static/style/style.css" rel="stylesheet">
+    <link href="/static/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+    <script src="/static/bootstrap/5.3.3/js/bootstrap.min.js"></script>
+    <script src="/static/js/toast.js"></script>
+    <nav class="navbar bg-body-tertiary">
+        <div class="container-fluid">
+            <a class="navbar-brand"
+               target="_blank"
+               href="https://icloud-photos-downloader.github.io/icloud_photos_downloader/index.html"
+            >iCloud Photos Downloader</a>
+        </div>
+    </nav>
+    <div class="container-fluid py-4 px-4">
+        <div hx-get="/status" hx-trigger="load delay:500ms" hx-swap="outerHTML" class="d-flex align-items-center" hx-target-error="#toast-content">
+            <div class="spinner-border" role="status"></div>
+            <span class="ms-3">Loading...</span>
+        </div>
+    </div>
+
+    <div class="toast-container p-3 top-0 end-0" data-original-class="toast-container p-3">
+        <div id="toasts" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="toast-header">
+                <svg width="20" height="20" class="rounded me-2">
+                    <rect width="100%" height="100%" fill="#840000"></rect>
+                </svg>
+                <strong class="me-auto">iCloud Photos Downloader</strong>
+                <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+            <div class="toast-body">
+                <div id="toast-content"></div>
+            </div>
+        </div>
+    </div>
+</body>

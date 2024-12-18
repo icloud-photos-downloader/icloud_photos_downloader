@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# prepare static bin package in dist
+# expects staticx installed dependencies
+# required params: file
+
+# make static
+staticx --loglevel INFO dist/$1 dist/$1-static
+
+# replace
+rm dist/$1
+mv dist/$1-static dist/$1
+
+# fix permissions
+chmod 755 dist/$1

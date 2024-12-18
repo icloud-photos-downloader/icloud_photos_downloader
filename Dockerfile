@@ -1,32 +1,24 @@
-FROM python:3.11-alpine3.17 as build
-
+FROM alpine:3.18 AS runtime_amd64_none
+ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
 WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-musl-amd64 icloudpd_ex
 
-ENV TZ="America/Los_Angeles"
-
-ENV CARGO_NET_GIT_FETCH_WITH_CLI=true
-
-RUN set -xe \
-  && apk update \
-  && apk add git curl binutils gcc libc-dev libffi-dev cargo zlib-dev openssl-dev
-
-COPY pyproject.toml .
-COPY src src
-
-RUN pip3 install -e .[dev]
-
-RUN pyinstaller -y --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata src/starters/exec.py
-
-FROM alpine:3.17 as runtime
-
+FROM alpine:3.18 AS runtime_arm64_none
+ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
 WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-musl-arm64 icloudpd_ex
 
-ENV TZ="America/Los_Angeles"
+FROM alpine:3.18 AS runtime_arm_v7
+ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
+WORKDIR /app
+COPY dist/icloudpd-ex-*.*.*-linux-musl-arm32v7 icloudpd_ex
 
-COPY --from=build /app/dist/exec .
-
-ENTRYPOINT ["/app/exec"]
-
-# RUN set -xe \
-#   && ln -s /app/icloudpd /usr/local/bin/icloudpd \
-#   && ln -s /app/icloud /usr/local/bin/icloud 
+FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} AS runtime
+ENV TZ=UTC
+EXPOSE 8080
+WORKDIR /app
+RUN chmod +x /app/icloudpd_ex
+ENTRYPOINT ["/app/icloudpd_ex"]

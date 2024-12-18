@@ -1,10 +1,10 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -euo pipefail
 
-# prepare npm packages in dist
-# expects dist to have comipled binary versions
-# required param: version
+# prepare bin packages in dist
+# expects python with installed dependencies
+# required params: version arch
 
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-macos-$2
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/icloud.py --name icloud-$1-macos-$2
-pyinstaller --collect-all keyrings.alt --hidden-import pkgutil --collect-all tzdata --onefile src/starters/exec.py --name icloudpd-ex-$1-macos-$2
+PYTHONHASHSEED=42 pyinstaller --collect-all keyrings.alt --copy-metadata keyrings.alt --hidden-import pkg_resources.extern --hidden-import pkgutil --collect-all tzdata --add-data "src/icloudpd/server/static:static" --add-data "src/icloudpd/server/templates:templates" --onefile src/starters/icloudpd.py src/starters/icloud.py --name icloudpd-$1-macos-$2
+PYTHONHASHSEED=42 pyinstaller --collect-all keyrings.alt --copy-metadata keyrings.alt --hidden-import pkg_resources.extern --hidden-import pkgutil --collect-all tzdata --add-data "src/icloudpd/server/static:static" --add-data "src/icloudpd/server/templates:templates" --onefile src/starters/icloud.py --name icloud-$1-macos-$2
+PYTHONHASHSEED=42 pyinstaller --collect-all keyrings.alt --copy-metadata keyrings.alt --hidden-import pkg_resources.extern --hidden-import pkgutil --collect-all tzdata --add-data "src/icloudpd/server/static:static" --add-data "src/icloudpd/server/templates:templates" --onefile src/starters/icloudpd_ex.py --name icloudpd-ex-$1-macos-$2

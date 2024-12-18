@@ -8,6 +8,8 @@ A command-line tool to download all your iCloud photos.
 docker run -it --rm --name icloudpd -v $(pwd)/Photos:/data -e TZ=America/Los_Angeles icloudpd/icloudpd:latest icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
+Image asset date will be converted to specified TZ and then used for creating folders (see `--folder-stucture` parameter)
+
 On Windows:
 
 - use `%cd%` instead of `$(pwd)`

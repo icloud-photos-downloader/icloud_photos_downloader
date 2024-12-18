@@ -2,10 +2,13 @@
     "name": "@icloudpd/darwin-x64",
     "version": "0.0.1",
     "description": "The macOS 64-bit binary for icloudpd, a iCloud Photo Downloader.",
-    "repository": "https://github.com/icloud_photo_downloader/icloud_photo_downloader",
+    "repository": {
+      "type": "git",
+      "url": "git+https://github.com/icloud_photos_downloader/icloud_photos_downloader.git"
+    },
     "license": "MIT",
     "engines": {
-      "node": ">=12"
+      "node": ">=6"
     },
     "preferUnplugged": true,
     "os": [

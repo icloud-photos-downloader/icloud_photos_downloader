@@ -1,0 +1,71 @@
+<div hx-get="/status" hx-trigger="every 5s" hx-swap="outerHTML">
+
+    <div class="container-fluid">
+        <div class="row mb-3">
+            <div class="col-sm-6 col-xxl-4 mb-3 mb-sm-0">
+                <div class="card">
+                    <div class="card-header text-bg-primary">
+                        Status
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <div class="fw-bold">No input is needed</div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            <div class="col-sm-6 col-xxl-4">
+                <div class="card">
+                    <div class="card-header text-bg-primary">
+                        Photos Download
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% if progress._photos_count != 0 %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <div class="progress flex-grow-1 me-2" role="progressbar" aria-label="Basic example" aria-valuenow="{{ progress.photos_percent }}" aria-valuemin="0" aria-valuemax="100">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated" style="width: {{ progress.photos_percent }}%">{{ progress.photos_percent }} %</div>
+                                    </div>
+                                    <div>{{ progress._photos_counter }} / {{ progress._photos_count }}</div>
+                                </div>
+                                <button hx-post="/cancel" class="btn btn-primary mb-2">Cancel</button>
+                            </li>
+                        {% endif %}
+                        {% if progress.photos_last_message != None and progress._photos_count == 0 %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="fw-bold">Last Message</div>
+                                <span>{{ progress.photos_last_message }}</span>
+                            </li>
+                        {% endif %}
+                        {% if progress._waiting != 0 %}
+                            <li class="list-group-item">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div class="fw-bold">Waiting for next iteration</div>
+                                    <span>{{ progress.waiting_readable }}</span>
+                                </div>
+                                <button hx-post="/resume" class="btn btn-primary mb-2">Resume</button>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-sm-12 col-xxl-8 mb-3 mb-sm-0">
+                <div class="card">
+                    <div class="card-header text-bg-primary">
+                        Config
+                    </div>
+                    <ul class="list-group list-group-flush">
+                        {% for record in config %}
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                <div class="fw-bold">{{ record }}</div>
+                                <span>{{ config[record] }}</span>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

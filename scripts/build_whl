@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# prepare binary wheels in dist
+# expects dist to have comipled binary versions
+# required param: version plat_int
+
+# clean start
+rm -rf dist/binary_dist
+
+# basic
+cp -r binary_dist dist/binary_dist
+cp LICENSE.md dist/binary_dist/
+cp README_PYPI.md dist/binary_dist/
+
+cp dist/icloudpd dist/binary_dist/src/icloudpd/icloudpd
+cp dist/icloud dist/binary_dist/src/icloud/icloud
+python3 -m pip wheel --disable-pip-version-check dist/binary_dist/ -w dist/binary_dist --no-deps --no-build-isolation
+
+python3 -m auditwheel --verbose repair dist/binary_dist/*.whl
+
+# move to artifacts
+mv -f wheelhouse/*.whl dist/

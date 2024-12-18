@@ -1,0 +1,25 @@
+
+name: Patch Version
+
+on:
+  workflow_call:
+
+jobs:
+
+  patch_version:
+    runs-on: ubuntu-22.04
+    steps:
+
+    - uses: actions/checkout@v4 
+
+    - name: Patch Version
+      run: |
+        scripts/patch_version
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-${{ github.sha }}-version-info
+        if-no-files-found: error
+        path: |
+          src/foundation/__init__.py

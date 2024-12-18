@@ -1,0 +1,18 @@
+# This workflow will install Python dependencies, run tests and lint with a single version of Python
+# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
+
+name: Refresh Docs
+
+on:
+  push:
+    tags:
+      - 'v*' # Push events to matching v*, i.e. v1.0, v20.15.10
+  workflow_dispatch:
+
+jobs:
+  build_docs:
+    uses: ./.github/workflows/build-docs.yml
+
+  publish_docs:
+    needs: [build_docs]
+    uses: ./.github/workflows/publish-docs.yml
