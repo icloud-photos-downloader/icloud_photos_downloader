@@ -1301,9 +1301,9 @@ def core(
             # Optional: Only download the x oldest photos.
             if oldest is not None:
                 photos_count = oldest
-                total_photos = len(photos)
+                total_photos = len(photos_enumerator)
                 start = total_photos - oldest
-                photos_enumerator = itertools.islice(photos, start, total_photos)
+                photos_enumerator = itertools.islice(photos_enumerator, start, total_photos)
 
             if until_found is not None:
                 photos_count = None
