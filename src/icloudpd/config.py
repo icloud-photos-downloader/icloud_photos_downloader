@@ -17,6 +17,7 @@ class Config:
         primary_sizes: Sequence[AssetVersionSize],
         live_photo_size: LivePhotoVersionSize,
         recent: Optional[int],
+        oldest: Optional[int],
         until_found: Optional[int],
         album: str,
         list_albums: bool,
@@ -59,6 +60,7 @@ class Config:
         self.size = " ".join(str(e) for e in primary_sizes)
         self.live_photo_size = live_photo_size
         self.recent = recent
+        self.oldest = oldest
         self.until_found = until_found
         self.album = album
         self.list_albums = list_albums
