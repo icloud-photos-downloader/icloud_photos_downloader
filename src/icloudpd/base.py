@@ -339,6 +339,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     type=click.IntRange(0),
 )
 @click.option(
+    "--oldest",
+    help="Number of oldest photos to download (default: download all photos)",
+    type=click.IntRange(0),
+)
+@click.option(
     "--until-found",
     help="Download most recently added photos until we find x number of "
     "previously downloaded consecutive photos (default: download all photos)",
@@ -582,6 +587,7 @@ def main(
     size: Sequence[AssetVersionSize],
     live_photo_size: LivePhotoVersionSize,
     recent: Optional[int],
+    oldest: Optional[int],
     until_found: Optional[int],
     album: str,
     list_albums: bool,
@@ -694,6 +700,7 @@ def main(
             primary_sizes=size,
             live_photo_size=live_photo_size,
             recent=recent,
+            oldest=oldest,
             until_found=until_found,
             album=album,
             list_albums=list_albums,
@@ -774,6 +781,7 @@ def main(
             cookie_directory,
             size,
             recent,
+            oldest,
             until_found,
             album,
             list_albums,
@@ -1152,6 +1160,7 @@ def core(
     cookie_directory: str,
     primary_sizes: Sequence[AssetVersionSize],
     recent: Optional[int],
+    oldest: Optional[int],
     until_found: Optional[int],
     album: str,
     list_albums: bool,
@@ -1288,6 +1297,13 @@ def core(
             if recent is not None:
                 photos_count = recent
                 photos_enumerator = itertools.islice(photos_enumerator, recent)
+
+            # Optional: Only download the x oldest photos.
+            if oldest is not None:
+                photos_count = oldest
+                total_photos = len(photos)
+                start = total_photos - oldest
+                photos_enumerator = itertools.islice(photos, start, total_photos)
 
             if until_found is not None:
                 photos_count = None
