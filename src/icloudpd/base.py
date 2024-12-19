@@ -943,6 +943,7 @@ def download_builder(
                     if file_exists:
                         counter.increment()
                         logger.debug("%s already exists", truncate_middle(download_path, 96))
+                        success = True
 
                 if not file_exists:
                     counter.reset()
