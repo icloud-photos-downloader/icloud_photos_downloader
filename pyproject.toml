@@ -49,9 +49,9 @@ dev = [
     "pyinstaller==6.11.1",
     "wheel==0.45.1",
     "furo==2024.8.6",
-    "Sphinx==8.1.3",
+    "Sphinx==7.4.7",
     "sphinx-autobuild==2024.10.3",
-    "myst-parser==4.0.0"
+    "myst-parser==3.0.1"
 ]
 devlinux = [
     "auditwheel==6.1.0",
@@ -133,5 +133,9 @@ select = [
 ignore = [
     # long lines
     "E501",
+    # lower case types
+    "UP006",
+    # deprecated typing namespace
+    "UP035",
 ]
 
