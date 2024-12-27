@@ -14,13 +14,6 @@ from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 
 
-class TwoStepAuthRequiredError(Exception):
-    """
-    Raised when 2SA is required. base.py catches this exception
-    and sends an email notification.
-    """
-
-
 def authenticator(
     logger: logging.Logger,
     domain: str,
@@ -33,13 +26,13 @@ def authenticator(
     ],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
-) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
+) -> Callable[[str, Optional[str], Optional[Callable[[], None]], Optional[str]], PyiCloudService]:
     """Wraping authentication with domain context"""
 
     def authenticate_(
         username: str,
         cookie_directory: Optional[str] = None,
-        raise_error_on_2sa: bool = False,
+        mfa_error_callable: Optional[Callable[[], None]] = None,
         client_id: Optional[str] = None,
     ) -> PyiCloudService:
         """Authenticate with iCloud username and password"""
@@ -74,8 +67,8 @@ def authenticator(
                 _writer(username, _valid_password)
 
         if icloud.requires_2fa:
-            if raise_error_on_2sa:
-                raise TwoStepAuthRequiredError("Two-factor authentication is required")
+            if mfa_error_callable:
+                mfa_error_callable()
             logger.info("Two-factor authentication is required (2fa)")
             if mfa_provider == MFAProvider.WEBUI:
                 request_2fa_web(icloud, logger, status_exchange)
@@ -83,8 +76,8 @@ def authenticator(
                 request_2fa(icloud, logger)
 
         elif icloud.requires_2sa:
-            if raise_error_on_2sa:
-                raise TwoStepAuthRequiredError("Two-step authentication is required")
+            if mfa_error_callable:
+                mfa_error_callable()
             logger.info("Two-step authentication is required (2sa)")
             request_2sa(icloud, logger)
 

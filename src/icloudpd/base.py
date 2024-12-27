@@ -5,6 +5,9 @@ from multiprocessing import freeze_support
 
 import foundation
 from foundation.core import compose, constant, identity
+from icloudpd.notifier import Notifier
+from icloudpd.ntfy import NtfySender
+from icloudpd.script_notifier import ScriptNotifier
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
 from icloudpd.mfa_provider import MFAProvider
@@ -55,11 +58,11 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
 from icloudpd import constants, download, exif_datetime
-from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
+from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import Config
 from icloudpd.counter import Counter
-from icloudpd.email_notifications import send_2sa_notification
+from icloudpd.email_notifications import EmailNotifier
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
@@ -464,6 +467,57 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     "(path required: /path/to/my/script.sh)",
 )
 @click.option(
+    "--ntfy-server",
+    help="Ntfy server URL for notifications",
+    metavar="<ntfy_server>",
+)
+@click.option(
+    "--ntfy-topic",
+    help="Ntfy topic for notifications",
+    metavar="<ntfy_topic>",
+)
+@click.option(
+    "--ntfy-protocol",
+    help="Ntfy protocol for notifications. Default is HTTPS.",
+    metavar="<ntfy_protocol>",
+)
+@click.option(
+    "--ntfy-username",
+    help="Ntfy username for notifications",
+    metavar="<ntfy_username>",
+)
+@click.option(
+    "--ntfy-password",
+    help="Ntfy password for notifications",
+    metavar="<ntfy_password>",
+)
+@click.option(
+    "--ntfy-token",
+    help="Ntfy token for notifications",
+    metavar="<ntfy_token>",
+)
+@click.option(
+    "--ntfy-priority",
+    help="Ntfy priority for notifications",
+    metavar="<ntfy_priority>",
+)
+@click.option(
+    "--ntfy-tag",
+    help="Ntfy tags for notifications",
+    metavar="<ntfy_tags>",
+    multiple=True,
+)
+@click.option(
+    "--ntfy-click",
+    help="Ntfy click action for notifications",
+    metavar="<ntfy_click>",
+)
+@click.option(
+    "--ntfy-email",
+    help="Ntfy email for notifications",
+    metavar="<ntfy_email>",
+)
+@click.option(
     "--log-level",
     help="Log level (default: debug)",
     type=click.Choice(["debug", "info", "error"]),
@@ -605,6 +659,16 @@ def main(
     log_level: str,
     no_progress_bar: bool,
     notification_script: Optional[str],
+    ntfy_server: Optional[str],
+    ntfy_topic: Optional[str],
+    ntfy_protocol: Optional[str],
+    ntfy_username: Optional[str],
+    ntfy_password: Optional[str],
+    ntfy_token: Optional[str],
+    ntfy_priority: Optional[str],
+    ntfy_tags: Optional[list[str]],
+    ntfy_click: Optional[str],
+    ntfy_email: Optional[str],
     threads_num: int,
     delete_after_download: bool,
     domain: str,
@@ -686,6 +750,38 @@ def main(
                 sys.exit(2)
 
         status_exchange = StatusExchange()
+        notifiers = []
+
+        if smtp_username or notification_email:
+            notifiers.append(
+                EmailNotifier(
+                    smtp_host,
+                    smtp_port,
+                    smtp_no_tls,
+                    smtp_username,
+                    smtp_password,
+                    notification_email,
+                    notification_email_from,
+                )
+            )
+        
+        if notification_script:
+            notifiers.append(ScriptNotifier(notification_script))
+        
+        if ntfy_server:
+            notifiers.append(NtfySender(
+                ntfy_server,
+                ntfy_topic,
+                ntfy_protocol,
+                ntfy_username,
+                ntfy_password,
+                ntfy_token,
+                ntfy_priority,
+                ntfy_tags,
+                ntfy_click,
+                ntfy_email
+                ))
+
         config = Config(
             directory=directory,
             username=username,
@@ -726,6 +822,7 @@ def main(
             file_match_policy=file_match_policy,
             mfa_provider=mfa_provider,
             use_os_locale=use_os_locale,
+            notifiers=notifiers
         )
         status_exchange.set_config(config)
 
@@ -783,15 +880,7 @@ def main(
             auto_delete,
             only_print_filenames,
             folder_structure,
-            smtp_username,
-            smtp_password,
-            smtp_host,
-            smtp_port,
-            smtp_no_tls,
-            notification_email,
-            notification_email_from,
             no_progress_bar,
-            notification_script,
             delete_after_download,
             domain,
             logger,
@@ -804,6 +893,7 @@ def main(
             password_providers,
             mfa_provider,
             status_exchange,
+            notifiers
         )
         sys.exit(result)
 
@@ -1161,15 +1251,7 @@ def core(
     auto_delete: bool,
     only_print_filenames: bool,
     folder_structure: str,
-    smtp_username: Optional[str],
-    smtp_password: Optional[str],
-    smtp_host: str,
-    smtp_port: int,
-    smtp_no_tls: bool,
-    notification_email: Optional[str],
-    notification_email_from: Optional[str],
     no_progress_bar: bool,
-    notification_script: Optional[str],
     delete_after_download: bool,
     domain: str,
     logger: logging.Logger,
@@ -1184,46 +1266,37 @@ def core(
     ],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
+    notifiers: list[Notifier] = [],
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
-    raise_error_on_2sa = (
-        smtp_username is not None
-        or notification_email is not None
-        or notification_script is not None
+    def _notify_mfa_error():
+        title = "iCloud Photos Downloader: MFA"
+        msg = """Multi-factor authentication has expired.
+Please log in to your server and update MFA."""
+
+        for notifier in notifiers:
+            try:
+                notifier.send_notification(title=title, message=msg)
+            except Exception as ex:
+                logger.error("Notifier %s failed with %s", notifier.__class__.__name__, ex)
+
+    icloud = authenticator(
+        logger,
+        domain,
+        filename_cleaner,
+        lp_filename_generator,
+        raw_policy,
+        file_match_policy,
+        password_providers,
+        mfa_provider,
+        status_exchange,
+    )(
+        username,
+        cookie_directory,
+        _notify_mfa_error if len(notifiers) > 0 else None,
+        os.environ.get("CLIENT_ID"),
     )
-    try:
-        icloud = authenticator(
-            logger,
-            domain,
-            filename_cleaner,
-            lp_filename_generator,
-            raw_policy,
-            file_match_policy,
-            password_providers,
-            mfa_provider,
-            status_exchange,
-        )(
-            username,
-            cookie_directory,
-            raise_error_on_2sa,
-            os.environ.get("CLIENT_ID"),
-        )
-    except TwoStepAuthRequiredError:
-        if notification_script is not None:
-            subprocess.call([notification_script])
-        if smtp_username is not None or notification_email is not None:
-            send_2sa_notification(
-                logger,
-                smtp_username,
-                smtp_password,
-                smtp_host,
-                smtp_port,
-                smtp_no_tls,
-                notification_email,
-                notification_email_from,
-            )
-        return 1
 
     if auth_only:
         logger.info("Authentication completed successfully")
