@@ -12,19 +12,19 @@ from unittest.mock import ANY, PropertyMock, call
 import piexif
 import pytest
 from click.testing import CliRunner
+from piexif._exceptions import InvalidImageDataError
+from requests import Response
+from requests.exceptions import ConnectionError
+from vcr import VCR
+
 from icloudpd import constants
 from icloudpd.base import main
 from icloudpd.string_helpers import truncate_middle
-from piexif._exceptions import InvalidImageDataError
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-from requests import Response
-from requests.exceptions import ConnectionError
-from vcr import VCR
-
 from tests.helpers import (
     path_from_project_root,
     print_result_exception,

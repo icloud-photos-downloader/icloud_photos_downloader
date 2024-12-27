@@ -13,6 +13,7 @@ from typing import Any, NamedTuple
 from xml.etree import ElementTree
 
 import dateutil.tz
+
 from foundation import version_info
 
 exif_tool = None

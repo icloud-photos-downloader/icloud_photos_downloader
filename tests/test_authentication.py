@@ -4,9 +4,11 @@ import shutil
 from typing import NamedTuple
 from unittest import TestCase
 
-import pyicloud_ipd
 import pytest
 from click.testing import CliRunner
+from vcr import VCR
+
+import pyicloud_ipd
 from foundation.core import constant, identity
 from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
 from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
@@ -16,8 +18,6 @@ from icloudpd.status import StatusExchange
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
-from vcr import VCR
-
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")

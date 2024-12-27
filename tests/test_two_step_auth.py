@@ -4,10 +4,10 @@ from unittest import TestCase, mock
 
 import pytest
 from click.testing import CliRunner
-from icloudpd.base import main
-from pyicloud_ipd.base import PyiCloudService
 from vcr import VCR
 
+from icloudpd.base import main
+from pyicloud_ipd.base import PyiCloudService
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")

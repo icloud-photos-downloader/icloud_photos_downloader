@@ -7,9 +7,9 @@ from unittest import TestCase
 
 import pytest
 from click.testing import CliRunner
-from icloudpd.base import main
 from vcr import VCR
 
+from icloudpd.base import main
 from tests.helpers import (
     path_from_project_root,
     print_result_exception,

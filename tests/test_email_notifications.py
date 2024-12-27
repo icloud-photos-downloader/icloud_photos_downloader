@@ -6,9 +6,9 @@ from unittest.mock import patch
 import pytest
 from click.testing import CliRunner
 from freezegun import freeze_time
-from icloudpd.base import main
 from vcr import VCR
 
+from icloudpd.base import main
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
