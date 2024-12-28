@@ -26,10 +26,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -64,10 +64,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: >
@@ -105,7 +105,7 @@ jobs:
     - name: Run version
       uses: addnab/docker-run-action@v3
       with:
-        image: python:3.12-alpine3.18
+        image: python:3.13-alpine3.19
         shell: sh
         options: -v ${{ github.workspace }}:/work 
         run: >
@@ -144,10 +144,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -276,10 +276,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -317,10 +317,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -357,10 +357,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -397,10 +397,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -522,10 +522,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -564,10 +564,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.12
+    - name: Set up Python 3.13
       uses: actions/setup-python@v5
       with:
-        python-version: '3.12'
+        python-version: '3.13'
     
     - name: Install Dev dependencies
       run: |
@@ -680,8 +680,8 @@ jobs:
       matrix:
         image: 
           - [ 
-            "python3_12", #variant name
-            "python:3.12", #image
+            "python3_13", #variant name
+            "python:3.13", #image
             ] 
           # apt-get does not work for debian 6 anymore
           # - [ 
@@ -898,8 +898,8 @@ jobs:
       matrix:
         image: 
           - [ 
-            "python3_12_alpine3_18", #variant name
-            "python:3.12-alpine3.18", #image
+            "python3_13_alpine3_19", #variant name
+            "python:3.13-alpine3.19", #image
             ] 
           - [ 
             "alpine_3_20", #variant name
@@ -3774,10 +3774,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.12
+      - name: Set up Python 3.13
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: '3.13'
     
       - name: Make folder for artifacts
         run: |

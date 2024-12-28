@@ -6,12 +6,12 @@ import time
 from typing import Callable, Dict, Optional, Tuple
 
 import click
-from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
+from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 
 class TwoStepAuthRequiredError(Exception):

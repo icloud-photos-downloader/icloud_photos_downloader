@@ -5,9 +5,8 @@ from multiprocessing import freeze_support
 
 import foundation
 from foundation.core import compose, constant, identity
-from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
-
 from icloudpd.mfa_provider import MFAProvider
+from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
@@ -37,19 +36,6 @@ from typing import (
 )
 
 import click
-from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
-from pyicloud_ipd.utils import (
-    add_suffix_to_filename,
-    disambiguate_filenames,
-    get_password_from_keyring,
-    size_to_suffix,
-    store_password_in_keyring,
-)
-from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
@@ -65,6 +51,19 @@ from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import truncate_middle
 from icloudpd.xmp_sidecar import generate_xmp_file
+from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
+from pyicloud_ipd.utils import (
+    add_suffix_to_filename,
+    disambiguate_filenames,
+    get_password_from_keyring,
+    size_to_suffix,
+    store_password_in_keyring,
+)
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
 
 def build_filename_cleaner(

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
 set -euo pipefail
 echo "Running mypy..."
-python3 -m mypy src tests --strict --python-version 3.8
+python3 -m mypy src tests --strict --python-version 3.9
 # --strict-equality --warn-return-any --disallow-any-generics --disallow-untyped-defs --disallow-untyped-calls --check-untyped-defs

@@ -5,6 +5,7 @@ from unittest import TestCase
 from unittest.mock import MagicMock
 
 from freezegun import freeze_time
+
 from icloudpd.logger import IPDLogger, setup_logger
 
 
