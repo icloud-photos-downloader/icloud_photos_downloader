@@ -4,9 +4,11 @@ import shutil
 from typing import NamedTuple
 from unittest import TestCase
 
-import pyicloud_ipd
 import pytest
 from click.testing import CliRunner
+from vcr import VCR
+
+import pyicloud_ipd
 from foundation.core import constant, identity
 from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
 from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
@@ -16,8 +18,6 @@ from icloudpd.status import StatusExchange
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
-from vcr import VCR
-
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
@@ -58,7 +58,40 @@ class AuthenticationTestCase(TestCase):
                     "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
+        self.assertIn(
+            "ERROR    Failed to login with srp, falling back to old raw password authentication.",
+            self._caplog.text,
+        )
         self.assertTrue("Invalid email/password combination." in str(context.exception))
+
+    def test_fallback_raw_password(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "fallback_raw_password.yml")):  # noqa: SIM117
+            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--no-progress-bar",
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--auth-only",
+                ],
+            )
+            self.assertIn(
+                "ERROR    Failed to login with srp, falling back to old raw password authentication.",
+                self._caplog.text,
+            )
+            self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
+            assert result.exit_code == 0
 
     def test_2sa_required(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

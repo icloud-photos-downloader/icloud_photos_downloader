@@ -1,12 +1,12 @@
 [build-system]
 requires = [
-    "setuptools>=68.0.0,<69",
-    "wheel>=0.40.0,<0.41",
+    "setuptools>=75.6.0,<76",
+    "wheel>=0.45.1,<0.46",
 ]
 build-backend = "setuptools.build_meta"
 
 [project]
-version="1.25.0"
+version="1.25.1"
 name = "icloudpd"
 description = "icloudpd is a command-line tool to download photos and videos from iCloud."
 readme = "README_PYPI.md"

@@ -6,6 +6,7 @@ from typing import List, Protocol, Sequence, Tuple, TypeVar
 
 import vcr
 from click.testing import CliRunner, Result
+
 from icloudpd.base import main
 
 

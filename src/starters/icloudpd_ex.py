@@ -7,6 +7,7 @@ import foundation  # fmt: skip
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
 import click
+
 from icloudpd.base import main as icloudpd_main
 from pyicloud_ipd.cmdline import main as icloud_main
 

@@ -1,10 +1,9 @@
 from typing import Callable, Dict, Optional, Sequence, Tuple
 
+from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-
-from icloudpd.mfa_provider import MFAProvider
 
 
 class Config:

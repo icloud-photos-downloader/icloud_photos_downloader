@@ -3,9 +3,9 @@ import os
 from unittest import TestCase
 
 import pytest
-from icloudpd.base import lp_filename_concatinator, lp_filename_original
 from vcr import VCR
 
+from icloudpd.base import lp_filename_concatinator, lp_filename_original
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,

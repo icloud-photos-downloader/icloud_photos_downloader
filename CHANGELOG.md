@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## 1.25.1 (2024-12-28)
+
+- chore: bump max/default python version 3.12->3.13
+- chore: bump min python version 3.8->3.9
+- fix: fallback to old raw password auth if srp auth fails [#975](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/975)
+
 ## 1.25.0 (2024-12-03)
 
 - fix: failed to authenticate for accounts with srp s2k_fo auth protocol [#975](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/975)
