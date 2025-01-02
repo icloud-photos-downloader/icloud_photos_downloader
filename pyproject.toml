@@ -62,7 +62,7 @@ test = [
     "pytest==8.3.4",
     "mock==5.1.0",
     "freezegun==1.5.1",
-    "vcrpy==6.0.2",
+    "vcrpy==7.0.0",
     "pytest-cov==5.0.0",
     "ruff==0.8.4",
     "coveralls==3.3.1",
