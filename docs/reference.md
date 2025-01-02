@@ -187,6 +187,12 @@ This is a list of all options available for command line interface (CLI) of the 
     ```{seealso}
     [Modes of operation](mode)
     ```
+
+(keep-recent-days-parameter)=
+`--keep-recent-days X`
+    
+:   If specified along with `--delete-after-download`, assets downloaded locally will not be deleted in iCloud if they were created within the specified number of days.
+
 (only-print-filenames-parameter)=
 `--only-print-filenames`
     
