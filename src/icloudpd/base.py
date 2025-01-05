@@ -1370,6 +1370,7 @@ def core(
                             try:
                                 now = datetime.datetime.now(get_localzone())
                                 created_date = item.created.astimezone(get_localzone())
+                                print(f"created_date: {created_date}")
                                 age_days = (now - created_date).days
                                 if age_days <= keep_recent_days:
                                     logger.debug(
