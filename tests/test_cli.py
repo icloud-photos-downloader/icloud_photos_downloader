@@ -190,3 +190,21 @@ class CliTestCase(TestCase):
             ],
         )
         assert result.exit_code == 2
+
+    def test_conflict_options_delete_after_download_and_keep_icloud_recent_days(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--delete-after-download",
+                "--keep-icloud-recent-days",
+                "1",
+            ],
+        )
+        assert result.exit_code == 2
