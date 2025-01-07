@@ -489,7 +489,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 @click.option(
     "--keep-icloud-recent-days",
-    help="Keep photos newer than this many days in iCloud. Deletes the rest.",
+    help="Keep photos newer than this many days in iCloud. Deletes the rest. "
+    + "If set to 0, all photos will be deleted from iCloud.",
     type=click.IntRange(0),
     default=None,
 )
