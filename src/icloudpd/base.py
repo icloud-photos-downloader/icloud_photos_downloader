@@ -1368,37 +1368,15 @@ def core(
                         break
                     item = next(photos_iterator)
                     if download_photo(consecutive_files_found, item) and delete_after_download:
-                        # Check if the photo is within the keep_icloud_recent_days period
-                        should_skip_delete = False
-                        if keep_icloud_recent_days is not None:
-                            try:
-                                now = datetime.datetime.now(get_localzone())
-                                created_date = item.created.astimezone(get_localzone())
-                                print(f"created_date: {created_date}")
-                                age_days = (now - created_date).days
-                                if age_days <= keep_icloud_recent_days:
-                                    logger.debug(
-                                        "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
-                                        item.filename,
-                                        age_days,
-                                    )
-                                    should_skip_delete = True
-                            except (ValueError, OSError):
-                                logger.error(
-                                    "Could not convert photo created date to local timezone (%s)",
-                                    item.created,
-                                )
+                        delete_local = partial(
+                            delete_photo_dry_run if dry_run else delete_photo,
+                            logger,
+                            icloud.photos,
+                            library_object,
+                            item,
+                        )
 
-                        if not should_skip_delete:
-                            delete_local = partial(
-                                delete_photo_dry_run if dry_run else delete_photo,
-                                logger,
-                                icloud.photos,
-                                library_object,
-                                item,
-                            )
-
-                            retrier(delete_local, error_handler)
+                        retrier(delete_local, error_handler)
 
                     photos_counter += 1
                     status_exchange.get_progress().photos_counter = photos_counter
@@ -1426,6 +1404,40 @@ def core(
                 autodelete_photos(
                     logger, dry_run, library_object, folder_structure, directory, primary_sizes
                 )
+
+            if keep_icloud_recent_days is not None:
+                try:
+                    now = datetime.datetime.now(get_localzone())
+                    created_date = item.created.astimezone(get_localzone())
+                    age_days = (now - created_date).days
+                    if age_days <= keep_icloud_recent_days:
+                        logger.debug(
+                            "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
+                            item.filename,
+                            age_days,
+                        )
+                    else:
+                        delete_local = partial(
+                            delete_photo_dry_run if dry_run else delete_photo,
+                            logger,
+                            icloud.photos,
+                            library_object,
+                            item,
+                        )
+
+                        retrier(delete_local, error_handler)
+                        logger.debug(
+                            "Deleted %s as it is older than the keep_icloud_recent_days period (%d days old)",
+                            item.filename,
+                            age_days,
+                        )
+                except (ValueError, OSError):
+                    logger.error(
+                        "Could not convert photo created date to local timezone (%s)",
+                        item.created,
+                    )
+                except Exception as e:
+                    logger.error(f"Error deleting photo: {e}")
 
             if watch_interval:  # pragma: no cover
                 logger.info(f"Waiting for {watch_interval} sec...")
