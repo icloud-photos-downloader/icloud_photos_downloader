@@ -488,7 +488,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     is_flag=True,
 )
 @click.option(
-    "--keep-recent-days",
+    "--keep-icloud-recent-days",
     help="When using --delete-after-download, do not delete photos newer than this many days",
     type=click.IntRange(0),
     default=0,
@@ -612,7 +612,7 @@ def main(
     notification_script: Optional[str],
     threads_num: int,
     delete_after_download: bool,
-    keep_recent_days: Optional[int],
+    keep_icloud_recent_days: Optional[int],
     domain: str,
     watch_with_interval: Optional[int],
     dry_run: bool,
@@ -724,7 +724,7 @@ def main(
             notification_script=notification_script,
             threads_num=threads_num,
             delete_after_download=delete_after_download,
-            keep_recent_days=keep_recent_days,
+            keep_icloud_recent_days=keep_icloud_recent_days,
             domain=domain,
             watch_with_interval=watch_with_interval,
             dry_run=dry_run,
@@ -800,7 +800,7 @@ def main(
             no_progress_bar,
             notification_script,
             delete_after_download,
-            keep_recent_days,
+            keep_icloud_recent_days,
             domain,
             logger,
             watch_with_interval,
@@ -1179,7 +1179,7 @@ def core(
     no_progress_bar: bool,
     notification_script: Optional[str],
     delete_after_download: bool,
-    keep_recent_days: Optional[int],
+    keep_icloud_recent_days: Optional[int],
     domain: str,
     logger: logging.Logger,
     watch_interval: Optional[int],
@@ -1364,17 +1364,17 @@ def core(
                         break
                     item = next(photos_iterator)
                     if download_photo(consecutive_files_found, item) and delete_after_download:
-                        # Check if the photo is within the keep_recent_days period
+                        # Check if the photo is within the keep_icloud_recent_days period
                         should_skip_delete = False
-                        if keep_recent_days is not None:
+                        if keep_icloud_recent_days is not None:
                             try:
                                 now = datetime.datetime.now(get_localzone())
                                 created_date = item.created.astimezone(get_localzone())
                                 print(f"created_date: {created_date}")
                                 age_days = (now - created_date).days
-                                if age_days <= keep_recent_days:
+                                if age_days <= keep_icloud_recent_days:
                                     logger.debug(
-                                        "Skipping deletion of %s as it is within the keep_recent_days period (%d days old)",
+                                        "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
                                         item.filename,
                                         age_days,
                                     )

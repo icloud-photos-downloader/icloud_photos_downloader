@@ -15,7 +15,6 @@ from click.testing import CliRunner
 from piexif._exceptions import InvalidImageDataError
 from requests import Response
 from requests.exceptions import ConnectionError
-from tzlocal import get_localzone
 from vcr import VCR
 
 from icloudpd import constants
@@ -1453,7 +1452,7 @@ class DownloadPhotoTestCase(TestCase):
         # TODO assert cass.all_played
         assert result.exit_code == 0
 
-    def test_delete_after_download_keep_recent_days(self) -> None:
+    def test_delete_after_download_keep_icloud_recent_days(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [("2018/07/31", "IMG_7409.JPG")]
@@ -1469,7 +1468,7 @@ class DownloadPhotoTestCase(TestCase):
                         self.assertEqual,
                         self.root_path,
                         base_dir,
-                        "listing_photos_keep_recent_days.yml",
+                        "listing_photos_keep_icloud_recent_days.yml",
                         [],
                         files_to_download,
                         [
@@ -1485,7 +1484,7 @@ class DownloadPhotoTestCase(TestCase):
                             "--threads-num",
                             "1",
                             "--delete-after-download",
-                            "--keep-recent-days",
+                            "--keep-icloud-recent-days",
                             "5",
                         ],
                     )
@@ -1498,7 +1497,7 @@ class DownloadPhotoTestCase(TestCase):
                         self._caplog.text,
                     )
                     self.assertIn(
-                        "DEBUG    Skipping deletion of IMG_7409.JPG as it is within the keep_recent_days period (1 days old)",
+                        "DEBUG    Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (1 days old)",
                         self._caplog.text,
                     )
                     self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
