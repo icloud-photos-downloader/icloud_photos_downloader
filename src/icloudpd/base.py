@@ -1412,7 +1412,7 @@ def core(
                     now = datetime.datetime.now(get_localzone())
                     created_date = item.created.astimezone(get_localzone())
                     age_days = (now - created_date).days
-                    if age_days <= keep_icloud_recent_days:
+                    if keep_icloud_recent_days != 0 and age_days <= keep_icloud_recent_days:
                         logger.debug(
                             "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
                             item.filename,
