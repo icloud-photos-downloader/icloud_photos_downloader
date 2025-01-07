@@ -658,7 +658,9 @@ def main(
             sys.exit(2)
 
         if keep_icloud_recent_days and delete_after_download:
-            print("--keep-icloud-recent-days and --delete-after-download should not be used together.")
+            print(
+                "--keep-icloud-recent-days and --delete-after-download should not be used together."
+            )
             sys.exit(2)
 
         if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
