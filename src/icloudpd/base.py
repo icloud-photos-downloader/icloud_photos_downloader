@@ -489,9 +489,9 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 @click.option(
     "--keep-icloud-recent-days",
-    help="When using --delete-after-download, do not delete photos newer than this many days",
+    help="Keep photos newer than this many days in iCloud. Deletes the rest.",
     type=click.IntRange(0),
-    default=0,
+    default=None,
 )
 @click.option(
     "--domain",
