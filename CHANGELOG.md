@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 1.25.2 (2025-01-07)
+
+- feature: add `--keep-icloud-recent-days` parameter to keep photos newer than this many days in iCloud. Deletes the rest.
+
 ## 1.25.1 (2024-12-28)
 
 - chore: bump max/default python version 3.12->3.13
