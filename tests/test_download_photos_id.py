@@ -1296,7 +1296,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
                 assert result.exit_code == 0
 
-    def test_download_after_delete_name_id7(self) -> None:
+    def test_download_and_delete_after_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")]
@@ -1340,7 +1340,55 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 # TODO assert cass.all_played
                 assert result.exit_code == 0
 
-    def test_download_after_delete_fail_name_id7(self) -> None:
+    def test_download_and_not_delete_after_when_exists_name_id7(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [("2018/07/31", "IMG_7409_QVk2Yyt.JPG", 1884695)]
+
+        with mock.patch.object(piexif, "insert") as piexif_patched:
+            piexif_patched.side_effect = InvalidImageDataError
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+                get_exif_patched.return_value = False
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    files_to_create,
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--skip-videos",
+                        "--skip-live-photos",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                        "--file-match-policy",
+                        "name-id7",
+                        "--delete-after-download",
+                    ],
+                )
+
+                self.assertIn(
+                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+                )
+                self.assertIn(
+                    f"INFO     Downloading the first original photo to {data_dir} ...",
+                    self._caplog.text,
+                )
+                self.assertNotIn(
+                    "INFO     Deleted IMG_7409_QVk2Yyt.JPG in iCloud", self._caplog.text
+                )
+                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                # TODO assert cass.all_played
+                assert result.exit_code == 0
+
+    def test_download_and_delete_after_fail_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         data_dir, result = run_icloudpd_test(
