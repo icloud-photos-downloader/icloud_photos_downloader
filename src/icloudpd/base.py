@@ -1414,7 +1414,6 @@ def core(
                         )
                     elif keep_icloud_recent_days is not None:
                         created_date = item.created.astimezone(get_localzone())
-                        logger.debug(f"Created date: {created_date}")
                         age_days = (now - created_date).days
                         if age_days < keep_icloud_recent_days:
                             logger.debug(
