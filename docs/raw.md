@@ -34,7 +34,7 @@ One representation will be `original` [size](size) and another `alternative`.
 As of June 2024, icloud.com always shows assets with two representations as RAW+JPEG. Photo app on Mac
 allows choosing which representation to treat as original, but it is not clear what that setting changes. 
 
-`icloudpd` disambiguates the behavior with `--align-raw` parameter:
+`icloudpd` disambiguates the behavior with [`--align-raw`](align-raw-parameter) parameter:
 
 - *original* always treat RAW as original [size](size)
 - *alternative* always treat RAW as alternative [size](size)

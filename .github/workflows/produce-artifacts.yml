@@ -24,7 +24,7 @@ jobs:
         with:
           concurrent_skipping: 'same_content_newer'
           skip_after_successful_duplicate: 'true'
-          paths_ignore: '["**/*.md", "examples/**", "tests/**"]'
+          paths_ignore: '["**/*.md", "examples/**", "tests/**", "docs/**"]'
           do_not_skip: '["workflow_dispatch", "schedule"]'
 
   get_version:

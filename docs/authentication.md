@@ -21,14 +21,14 @@ There are two ways to provide MFA code to `icloudpd`:
 - Using console
 - Using web interface
 
-The choice can be made with `--mfa-provider` parameter.
+The choice can be made with [`--mfa-provider`](mfa-provider-parameter) parameter.
 
 Default: *console*
 Other options: *webui*
 
 ## Access from Mainland China
 
-Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with `--domain cn` parameter to support downloading iCloud Photos from mainland China, however, people reported mixed results with that parameter.
+Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with [`--domain cn`](domain-parameter) parameter to support downloading iCloud Photos from mainland China, however, people reported mixed results with that parameter.
 
 ## FIDO
 
@@ -51,12 +51,12 @@ WebUI support
 ```
 
 Passwords for iCloud access can be supplied by user in four ways:
-- Using `--password` command line parameter
+- Using [`--password`](password-parameter) command line parameter
 - Using keyring
 - Using console
 - Using web interface
 
-It is possible to specify which of these three ways `icloudpd` should use, by specifying them with `--password-provider` parameter. More than one can be specified and the order
+It is possible to specify which of these three ways `icloudpd` should use, by specifying them with [`--password-provider`](password-provider-parameter) parameter. More than one can be specified and the order
 of providers matches the order then will be checked for password. E.g. `--password-provider keyring --password-provider console` means that `icloudpd` will check password in keyring first and then, if no password found, ask for password in the console.
 
 Keyring password provider, if specified, saves valid password back into keyring.
