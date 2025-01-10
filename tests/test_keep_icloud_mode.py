@@ -246,7 +246,7 @@ class KeepICloudModeTestCases(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"INFO     Deleted IMG_7409.JPG in iCloud",
+                "INFO     Deleted IMG_7409.JPG in iCloud",
                 self._caplog.text,
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
@@ -283,9 +283,7 @@ class KeepICloudModeTestCases(TestCase):
             ],
         )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-        )
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             "DEBUG    Keep iCloud album: All Photos",
             self._caplog.text,
@@ -331,9 +329,7 @@ class KeepICloudModeTestCases(TestCase):
             ],
         )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-        )
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
             "DEBUG    Keep iCloud album: Non-existent Album",
             self._caplog.text,
