@@ -495,6 +495,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     default=None,
 )
 @click.option(
+    "--keep-icloud-album",
+    help="Keep photos in the specified iCloud album. Deletes the rest.",
+    default=None,
+)
+@click.option(
     "--domain",
     help="What iCloud root domain to use. Use 'cn' for mainland China (default: 'com')",
     type=click.Choice(["com", "cn"]),
@@ -614,6 +619,7 @@ def main(
     threads_num: int,
     delete_after_download: bool,
     keep_icloud_recent_days: Optional[int],
+    keep_icloud_album: Optional[str],
     domain: str,
     watch_with_interval: Optional[int],
     dry_run: bool,
@@ -661,6 +667,12 @@ def main(
         if keep_icloud_recent_days and delete_after_download:
             print(
                 "--keep-icloud-recent-days and --delete-after-download should not be used together."
+            )
+            sys.exit(2)
+
+        if keep_icloud_album and delete_after_download:
+            print(
+                "--keep-icloud-album and --delete-after-download should not be used together."
             )
             sys.exit(2)
 
@@ -732,6 +744,7 @@ def main(
             threads_num=threads_num,
             delete_after_download=delete_after_download,
             keep_icloud_recent_days=keep_icloud_recent_days,
+            keep_icloud_album=keep_icloud_album,
             domain=domain,
             watch_with_interval=watch_with_interval,
             dry_run=dry_run,
@@ -808,6 +821,7 @@ def main(
             notification_script,
             delete_after_download,
             keep_icloud_recent_days,
+            keep_icloud_album,
             domain,
             logger,
             watch_with_interval,
@@ -1187,6 +1201,7 @@ def core(
     notification_script: Optional[str],
     delete_after_download: bool,
     keep_icloud_recent_days: Optional[int],
+    keep_icloud_album: Optional[str],
     domain: str,
     logger: logging.Logger,
     watch_interval: Optional[int],
