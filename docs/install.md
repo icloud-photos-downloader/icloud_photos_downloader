@@ -17,7 +17,7 @@ There are three ways to run `icloudpd`:
 docker run -it --rm --name icloudpd -v $(pwd)/Photos:/data -e TZ=America/Los_Angeles icloudpd/icloudpd:latest icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
-Image asset date will be converted to specified TZ and then used for creating folders ([see `--folder-structure` parameter](#folder_structure))
+Image asset date will be converted to specified TZ and then used for creating folders (see [`--folder-structure`](folder-structure-parameter) parameter)
 
 Synchronization logic can be adjusted with command-line parameters. Run the following to get full list:
 ``` sh 

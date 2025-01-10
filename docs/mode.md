@@ -14,13 +14,9 @@ Copy
 Sync
 :   Download assets from iCloud that are are not in the local storage (same as Copy). In addition, delete local files that were removed in iCloud (moved into "Recently Deleted" album)
 
-    This mode is selected with `--auto-delete` parameter
+    This mode is selected with [`--auto-delete`](auto-delete-parameter) parameter
 
 Move
-:   Download assets from iCloud that are are not in the local storage (same as Copy). Then delete assets in iCloud that were just downloaded 
+:   Download assets from iCloud that are are not in the local storage (same as Copy). Then delete assets in iCloud that are in local storage, optionally leaving recent ones in iCloud
 
-    This mode is selected with `--delete-after-download` parameter
-
-    ```{note}
-    If remote assets were not downloaded, e.g. because they were already in local storage, they will NOT be deleted in iCloud.
-    ```
+    This mode is selected with [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) parameter

@@ -182,16 +182,32 @@ This is a list of all options available for command line interface (CLI) of the 
 (delete-after-download-parameter)=
 `--delete-after-download`
     
-:   If specified, assets downloaded locally will be deleted in iCloud (actually moved to Recently Deleted album).
+:   If specified, assets downloaded locally will be deleted in iCloud (actually moved to Recently Deleted album). Deprecated, use [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) instead
 
-    ```{seealso}
-    [Modes of operation](mode)
+    ```{note}
+    If remote assets were not downloaded, e.g. because they were already in local storage, they will NOT be deleted in iCloud.
+    ```
+
+    ```{versionadded} 1.21.0
+    ```
+
+    ```{deprecated} 1.26.0
     ```
 
 (keep-icloud-recent-days-parameter)=
 `--keep-icloud-recent-days X`
     
-:   If specified along with `--delete-after-download`, assets downloaded locally will not be deleted in iCloud if they were created within the specified number of days.
+:   Deletes assets in iCloud after they were downloaded or confirmed present locally, except the ones taken within the specified number of days. If set to 0, all photos will be deleted from iCloud.
+
+:   If any filters are used, e.g. [`--skip-videos`](skip-videos-parameter), then assets excluded from processing by filters are not subject to deletion from iCloud. For example, running icloudpd with [`--skip-videos`](skip-videos-parameter) on a huge iCloud collection of videos will download and delete nothing.
+
+:   Timestamp when the assets was taken (aka "created date") as reported by iCloud is used for calculating age of the asset. For example, asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. Same timestamp is used for the folder structure in the current system.
+
+    ```{seealso}
+    [Modes of operation](mode)
+
+    [Folder Structure](folder_structure)
+    ```
 
 (only-print-filenames-parameter)=
 `--only-print-filenames`
