@@ -226,3 +226,39 @@ class CliTestCase(TestCase):
             ],
         )
         assert result.exit_code == 2
+
+    def test_conflict_options_keep_icloud_album_and_auto_delete(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--auto-delete",
+                "--keep-icloud-album",
+                "Favorites",
+            ],
+        )
+        assert result.exit_code == 2
+
+    def test_conflict_options_keep_icloud_recent_days_and_auto_delete(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(
+            main,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--keep-icloud-recent-days",
+                "1",
+                "--auto-delete",
+            ],
+        )
+        assert result.exit_code == 2

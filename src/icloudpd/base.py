@@ -490,13 +490,13 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "--keep-icloud-recent-days",
     help="Keep photos newer than this many days in iCloud. Deletes the rest. "
-    + "If set to 0, all photos will be deleted from iCloud.",
+    + "If set to 0, all photos will be deleted from iCloud. Should not be used with --delete-after-download or --auto-delete.",
     type=click.IntRange(0),
     default=None,
 )
 @click.option(
     "--keep-icloud-album",
-    help="Keep photos in the specified iCloud album. Deletes the rest.",
+    help="Keep photos in the specified iCloud album. Deletes the rest. Should not be used with --delete-after-download or --auto-delete.",
     default=None,
 )
 @click.option(
@@ -672,6 +672,14 @@ def main(
 
         if keep_icloud_album and delete_after_download:
             print("--keep-icloud-album and --delete-after-download should not be used together.")
+            sys.exit(2)
+
+        if keep_icloud_album and auto_delete:
+            print("--keep-icloud-album and --auto-delete should not be used together.")
+            sys.exit(2)
+
+        if keep_icloud_recent_days and auto_delete:
+            print("--keep-icloud-recent-days and --auto-delete should not be used together.")
             sys.exit(2)
 
         if watch_with_interval and (list_albums or only_print_filenames):  # pragma: no cover
