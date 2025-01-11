@@ -5,8 +5,10 @@ from unittest import TestCase, mock
 
 import pytest
 from vcr import VCR
+from requests import Response
 
 from tests.helpers import path_from_project_root, run_icloudpd_test
+from pyicloud_ipd.services.photos import PhotoAsset
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
 
@@ -153,7 +155,7 @@ class KeepICloudModeTestCases(TestCase):
                 self._caplog.text,
             )
             self.assertIn(
-                f"DEBUG    Deleted IMG_7409.JPG as it is older than the keep_icloud_recent_days period ({days_old - 1} days old)",
+                "INFO     Deleted IMG_7409.JPG in iCloud",
                 self._caplog.text,
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
@@ -208,46 +210,68 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_delete_existing(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
+        files_to_create = [
+            ("2018/07/31", "IMG_7409.JPG", 1884695),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
+        ]
 
-        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
-            days_old = 10
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
-            dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos_keep_icloud_recent_days.yml",
-                files_to_create,
-                [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                    "--keep-icloud-recent-days",
-                    "0",
-                ],
-            )
+        orig_download = PhotoAsset.download
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
-            self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"DEBUG    Deleted IMG_7409.JPG as it is older than the keep_icloud_recent_days period ({days_old - 1} days old)",
-                self._caplog.text,
-            )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
-            assert result.exit_code == 0
+        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
+            if not hasattr(PhotoAsset, "already_downloaded"):
+                response = orig_download(pa, _url)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
+                return response
+            return mock.MagicMock()
+
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
+          with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+              days_old = 10
+              mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+              dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
+              data_dir, result = run_icloudpd_test(
+                  self.assertEqual,
+                  self.root_path,
+                  base_dir,
+                  "listing_photos_keep_icloud_recent_days.yml",
+                  files_to_create,
+                  [],
+                  [
+                      "--username",
+                      "jdoe@gmail.com",
+                      "--password",
+                      "password1",
+                      "--recent",
+                      "3",
+                      "--skip-videos",
+                      "--skip-live-photos",
+                      "--no-progress-bar",
+                      "--threads-num",
+                      "1",
+                      "--keep-icloud-recent-days",
+                      "0",
+                  ],
+              )
+
+              self.assertIn(
+                  "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+              )
+              self.assertIn(
+                  f"INFO     Downloading 3 original photos to {data_dir} ...",
+                  self._caplog.text,
+              )
+              self.assertIn(
+                  "INFO     Deleted IMG_7409.JPG in iCloud",
+                  self._caplog.text,
+              )
+              self.assertIn(
+                  "INFO     Deleted IMG_7408.JPG in iCloud",
+                  self._caplog.text,
+              )
+              self.assertIn(
+                  "INFO     Deleted IMG_7407.JPG in iCloud",
+                  self._caplog.text,
+              )
+              self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+              assert result.exit_code == 0

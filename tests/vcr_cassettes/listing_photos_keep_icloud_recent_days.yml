@@ -44747,4 +44747,64 @@ interactions:
     headers:
       Content-type: application/json
     status: {code: 200, message: OK}
+- request:
+    body: '{"atomic": true, "desiredKeys": ["isDeleted"], "operations": [{"operationType":
+      "update", "record": {"fields": {"isDeleted": {"value": 1}}, "recordChangeTag":
+      "49lh", "recordName": "577DE5DB-44CF-470B-9791-11F4A5C4A99C", "recordType":
+      "CPLAsset"}}], "zoneID": {"zoneName": "PrimarySync"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '288'
+      Content-type:
+      - application/json
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body:
+      string: "{}"
+    headers:
+      Content-type: application/json
+    status: {code: 200, message: OK}
+- request:
+    body: '{"atomic": true, "desiredKeys": ["isDeleted"], "operations": [{"operationType":
+      "update", "record": {"fields": {"isDeleted": {"value": 1}}, "recordChangeTag":
+      "49lh", "recordName": "135B4CE4-050D-41CE-ABD2-7AE6E5FA1E25", "recordType":
+      "CPLAsset"}}], "zoneID": {"zoneName": "PrimarySync"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '288'
+      Content-type:
+      - application/json
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body:
+      string: "{}"
+    headers:
+      Content-type: application/json
+    status: {code: 200, message: OK}
 version: 1
