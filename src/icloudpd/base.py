@@ -498,6 +498,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     "--keep-icloud-album",
     help="Keep photos in the specified iCloud album. Deletes the rest. Should not be used with --delete-after-download or --auto-delete.",
     default=None,
+    multiple=True,
 )
 @click.option(
     "--domain",
@@ -1381,24 +1382,24 @@ def core(
             )
             photos_counter = 0
 
-            logger.debug(f"Keep iCloud album: {keep_icloud_album}")
+            logger.debug(f"Keep iCloud albums: {keep_icloud_album}")
             try:
-                keep_icloud_album_obj = (
-                    library_object.albums[keep_icloud_album] if keep_icloud_album else None
-                )
-                keep_icloud_album_photo_ids = (
-                    {photo.id for photo in keep_icloud_album_obj.photos}
-                    if keep_icloud_album_obj
-                    else set()
-                )
-            except KeyError:
-                if keep_icloud_album:
-                    logger.warning(
-                        "Could not find iCloud album '%s' set with --keep-icloud-album.",
-                        keep_icloud_album,
-                    )
-                    return 1
+                # Create a set of photo IDs from all specified albums
                 keep_icloud_album_photo_ids = set()
+                for album_name in keep_icloud_album:
+                    try:
+                        album_obj = library_object.albums[album_name]
+                        keep_icloud_album_photo_ids.update(photo.id for photo in album_obj.photos)
+                        logger.debug(f"Added photos from album: {album_name}")
+                    except KeyError:
+                        logger.warning(
+                            "Could not find iCloud album '%s' set with --keep-icloud-album.",
+                            album_name,
+                        )
+                        return 1
+            except Exception as ex:
+                logger.error(f"Error processing albums: {ex}")
+                return 1
 
             now = datetime.datetime.now(get_localzone())
             photos_iterator = iter(photos_enumerator)
