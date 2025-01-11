@@ -1389,6 +1389,7 @@ def core(
                         "Could not find iCloud album '%s' set with --keep-icloud-album.",
                         keep_icloud_album,
                     )
+                    return 1
                 keep_icloud_album_photo_ids = set()
 
             now = datetime.datetime.now(get_localzone())

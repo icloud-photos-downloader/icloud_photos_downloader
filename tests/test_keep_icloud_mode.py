@@ -338,12 +338,5 @@ class KeepICloudModeTestCases(TestCase):
             "WARNING  Could not find iCloud album 'Non-existent Album' set with --keep-icloud-album.",
             self._caplog.text,
         )
-        self.assertIn(
-            "INFO     Deleted IMG_7409.JPG in iCloud",
-            self._caplog.text,
-        )
-        self.assertIn(
-            "INFO     All photos have been downloaded",
-            self._caplog.text,
-        )
-        assert result.exit_code == 0
+        self.assertNotIn("INFO     All photos have been downloaded", self._caplog.text)
+        assert result.exit_code == 1
