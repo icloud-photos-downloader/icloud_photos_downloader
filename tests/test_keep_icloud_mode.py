@@ -154,7 +154,6 @@ class KeepICloudModeTestCases(TestCase):
             )
             self.assertIn(
                 "INFO     Deleted IMG_7409.JPG in iCloud",
-                "INFO     Deleted IMG_7409.JPG in iCloud",
                 self._caplog.text,
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
