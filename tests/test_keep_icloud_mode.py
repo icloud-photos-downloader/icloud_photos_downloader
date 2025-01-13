@@ -320,3 +320,51 @@ class KeepICloudModeTestCases(TestCase):
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
+
+    def test_keep_icloud_recent_days_delete_existing_dry_run(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            days_old = 10
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "0",
+                    "--dry-run",
+                ],
+            )
+
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+            )
+            self.assertIn(
+                f"INFO     Downloading the first original photo to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud library PrimarySync",
+                self._caplog.text,
+            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            assert result.exit_code == 0
