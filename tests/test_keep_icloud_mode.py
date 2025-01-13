@@ -320,3 +320,92 @@ class KeepICloudModeTestCases(TestCase):
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
+
+    def test_keep_icloud_album_exists(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_keep_icloud_album_exists.yml",
+            files_to_create,
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+                "--keep-icloud-recent-days",
+                "0",
+                "--keep-icloud-album",
+                "All Photos",
+            ],
+        )
+
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            "DEBUG    Keep iCloud albums: ('All Photos',)",
+            self._caplog.text,
+        )
+        self.assertNotIn(
+            "INFO     Deleted IMG_7409.JPG in iCloud",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "INFO     All photos have been downloaded",
+            self._caplog.text,
+        )
+        assert result.exit_code == 0
+
+    def test_keep_icloud_album_nonexistent(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_keep_icloud_album_nonexistent.yml",
+            files_to_create,
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+                "--keep-icloud-recent-days",
+                "0",
+                "--keep-icloud-album",
+                "Non-existent Album",
+            ],
+        )
+
+        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn(
+            "DEBUG    Keep iCloud albums: ('Non-existent Album',)",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "WARNING  Could not find iCloud album 'Non-existent Album' set with --keep-icloud-album.",
+            self._caplog.text,
+        )
+        self.assertNotIn("INFO     All photos have been downloaded", self._caplog.text)
+        assert result.exit_code == 1

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feature: add `--keep-icloud-album` parameter to keep photos in a specific iCloud album. Deletes the rest.
 - feature: add `--keep-icloud-recent-days` parameter to keep photos newer than this many days in iCloud. Deletes the rest.
 
 ## 1.25.1 (2024-12-28)
