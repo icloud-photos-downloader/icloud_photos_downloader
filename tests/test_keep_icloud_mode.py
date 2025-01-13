@@ -4,10 +4,8 @@ import os
 from unittest import TestCase, mock
 
 import pytest
-from requests import Response
 from vcr import VCR
 
-from pyicloud_ipd.services.photos import PhotoAsset
 from tests.helpers import path_from_project_root, run_icloudpd_test
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
@@ -265,14 +263,13 @@ class KeepICloudModeTestCases(TestCase):
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
-
     def test_keep_icloud_recent_days_keeps_some(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/31", "IMG_7409.JPG", 1884695), # 0 days old, should be kept
-            ("2018/07/30", "IMG_7408.JPG", 1151066), # 1 days old, should be deleted
-            ("2018/07/30", "IMG_7407.JPG", 656257), # 1 days old, should be deleted
+            ("2018/07/31", "IMG_7409.JPG", 1884695),  # 0 days old, should be kept
+            ("2018/07/30", "IMG_7408.JPG", 1151066),  # 1 days old, should be deleted
+            ("2018/07/30", "IMG_7407.JPG", 656257),  # 1 days old, should be deleted
         ]
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 1
