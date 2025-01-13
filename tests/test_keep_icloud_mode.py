@@ -354,7 +354,7 @@ class KeepICloudModeTestCases(TestCase):
 
         self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
-            "DEBUG    Keep iCloud album: All Photos",
+            "DEBUG    Keep iCloud albums: ('All Photos',)",
             self._caplog.text,
         )
         self.assertNotIn(
@@ -400,7 +400,7 @@ class KeepICloudModeTestCases(TestCase):
 
         self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
         self.assertIn(
-            "DEBUG    Keep iCloud album: Non-existent Album",
+            "DEBUG    Keep iCloud albums: ('Non-existent Album',)",
             self._caplog.text,
         )
         self.assertIn(
