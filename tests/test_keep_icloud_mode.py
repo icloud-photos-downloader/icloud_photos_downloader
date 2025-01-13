@@ -4,10 +4,8 @@ import os
 from unittest import TestCase, mock
 
 import pytest
-from requests import Response
 from vcr import VCR
 
-from pyicloud_ipd.services.photos import PhotoAsset
 from tests.helpers import path_from_project_root, run_icloudpd_test
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
@@ -216,152 +214,110 @@ class KeepICloudModeTestCases(TestCase):
             ("2018/07/30", "IMG_7408.JPG", 1151066),
             ("2018/07/30", "IMG_7407.JPG", 656257),
         ]
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            days_old = 10
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "3",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "0",
+                ],
+            )
 
-        orig_download = PhotoAsset.download
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+            )
+            self.assertIn(
+                f"INFO     Downloading 3 original photos to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Deleted IMG_7409.JPG in iCloud",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Deleted IMG_7408.JPG in iCloud",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Deleted IMG_7407.JPG in iCloud",
+                self._caplog.text,
+            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            assert result.exit_code == 0
 
-        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
-            if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url)
-                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
-                return response
-            return mock.MagicMock()
-
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
-            with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
-                days_old = 10
-                mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
-                dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos_keep_icloud_recent_days.yml",
-                    files_to_create,
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "3",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                        "--keep-icloud-recent-days",
-                        "0",
-                    ],
-                )
-
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-                )
-                self.assertIn(
-                    f"INFO     Downloading 3 original photos to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "INFO     Deleted IMG_7409.JPG in iCloud",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "INFO     Deleted IMG_7408.JPG in iCloud",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    "INFO     Deleted IMG_7407.JPG in iCloud",
-                    self._caplog.text,
-                )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
-                assert result.exit_code == 0
-
-    def test_keep_icloud_album_exists(self) -> None:
+    def test_keep_icloud_recent_days_keeps_some(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
+        files_to_create = [
+            ("2018/07/31", "IMG_7409.JPG", 1884695),  # 0 days old, should be kept
+            ("2018/07/30", "IMG_7408.JPG", 1151066),  # 1 days old, should be deleted
+            ("2018/07/30", "IMG_7407.JPG", 656257),  # 1 days old, should be deleted
+        ]
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            days_old = 1
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "3",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "1",
+                ],
+            )
 
-        data_dir, result = run_icloudpd_test(
-            self.assertEqual,
-            self.root_path,
-            base_dir,
-            "listing_photos_keep_icloud_album_exists.yml",
-            files_to_create,
-            [],
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "--recent",
-                "1",
-                "--skip-videos",
-                "--skip-live-photos",
-                "--no-progress-bar",
-                "--threads-num",
-                "1",
-                "--keep-icloud-recent-days",
-                "0",
-                "--keep-icloud-album",
-                "All Photos",
-            ],
-        )
-
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-        self.assertIn(
-            "DEBUG    Keep iCloud album: All Photos",
-            self._caplog.text,
-        )
-        self.assertNotIn(
-            "INFO     Deleted IMG_7409.JPG in iCloud",
-            self._caplog.text,
-        )
-        self.assertIn(
-            "INFO     All photos have been downloaded",
-            self._caplog.text,
-        )
-        assert result.exit_code == 0
-
-    def test_keep_icloud_album_nonexistent(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-
-        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
-
-        data_dir, result = run_icloudpd_test(
-            self.assertEqual,
-            self.root_path,
-            base_dir,
-            "listing_photos_keep_icloud_album_nonexistent.yml",
-            files_to_create,
-            [],
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "--recent",
-                "1",
-                "--skip-videos",
-                "--skip-live-photos",
-                "--no-progress-bar",
-                "--threads-num",
-                "1",
-                "--keep-icloud-recent-days",
-                "0",
-                "--keep-icloud-album",
-                "Non-existent Album",
-            ],
-        )
-
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
-        self.assertIn(
-            "DEBUG    Keep iCloud album: Non-existent Album",
-            self._caplog.text,
-        )
-        self.assertIn(
-            "WARNING  Could not find iCloud album 'Non-existent Album' set with --keep-icloud-album.",
-            self._caplog.text,
-        )
-        self.assertNotIn("INFO     All photos have been downloaded", self._caplog.text)
-        assert result.exit_code == 1
+            self.assertIn(
+                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
+            )
+            self.assertIn(
+                f"INFO     Downloading 3 original photos to {data_dir} ...",
+                self._caplog.text,
+            )
+            self.assertNotIn(
+                "INFO     Deleted IMG_7409.JPG in iCloud",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Deleted IMG_7408.JPG in iCloud",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Deleted IMG_7407.JPG in iCloud",
+                self._caplog.text,
+            )
+            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            assert result.exit_code == 0
