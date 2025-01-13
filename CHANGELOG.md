@@ -2,7 +2,9 @@
 
 ## Unreleased
 
-- feature: add `--keep-icloud-recent-days` parameter to keep photos newer than this many days in iCloud. Deletes the rest.
+## 1.26.0 (2025-01-13)
+
+- feature: add `--keep-icloud-recent-days` parameter to keep photos newer than this many days in iCloud. Deletes the rest. [#1046](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1046)
 
 ## 1.25.1 (2024-12-28)
 
