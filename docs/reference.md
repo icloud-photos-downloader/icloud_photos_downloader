@@ -203,6 +203,11 @@ This is a list of all options available for command line interface (CLI) of the 
 
 :   Timestamp when the assets was taken (aka "created date") as reported by iCloud is used for calculating age of the asset. For example, asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. Same timestamp is used for the folder structure in the current system.
 
+:   If parameter is not specified, then nothing is deleted from iCloud.
+
+    ```{versionadded} 1.26.0
+    ```
+
     ```{seealso}
     [Modes of operation](mode)
 
