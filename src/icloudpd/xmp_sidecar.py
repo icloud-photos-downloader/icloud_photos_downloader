@@ -37,7 +37,7 @@ class XMPMetadata(NamedTuple):
 
 
 def generate_xmp_file(
-    logger: logging.Logger, download_path: str, asset_record: dict[str, Any]
+    logger: logging.Logger, download_path: str, asset_record: dict[str, Any], dry_run: bool
 ) -> None:
     sidecar_path: str = download_path + ".xmp"
     can_write_file: bool = True
@@ -68,9 +68,10 @@ def generate_xmp_file(
     if can_write_file:
         xmp_metadata: XMPMetadata = build_metadata(asset_record)
         xml_doc: ElementTree.Element = generate_xml(xmp_metadata)
-        # Write the XML to the file
-        with open(sidecar_path, "wb") as f:
-            f.write(ElementTree.tostring(xml_doc, encoding="utf-8", xml_declaration=True))
+        if not dry_run:
+            # Write the XML to the file
+            with open(sidecar_path, "wb") as f:
+                f.write(ElementTree.tostring(xml_doc, encoding="utf-8", xml_declaration=True))
 
 
 def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
