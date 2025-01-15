@@ -986,7 +986,7 @@ def download_builder(
                             logger.info("Downloaded %s", truncated_path)
 
                 if xmp_sidecar:
-                    generate_xmp_file(logger, download_path, photo._asset_record)
+                    generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
 
             # Also download the live photo if present
             if not skip_live_photos:
