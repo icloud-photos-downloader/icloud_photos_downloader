@@ -81,6 +81,11 @@ class BuildXMPMetadata(TestCase):
         metadata = build_metadata(assetRecordStub)
         assert metadata.Rating == 5
 
+        # Test favorites not present
+        del assetRecordStub["fields"]["isFavorite"]
+        metadata = build_metadata(assetRecordStub)
+        assert metadata.Rating is None
+
         # Test Deleted
         assetRecordStub["fields"]["isDeleted"]["value"] = 1
         metadata = build_metadata(assetRecordStub)
