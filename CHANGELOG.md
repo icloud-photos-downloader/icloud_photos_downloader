@@ -2,9 +2,11 @@
 
 ## Unreleased
 
+## 1.26.1 (2025-01-23)
+
 - fix: XMP metadata with plist in XML format causes crash [#1059](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1059)
 - fix: missing 'isFavorite' in XMP metadata causes crash [#1058](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1058)
-- Fix: crash when downloading files with `--xmp-sidecar` caused by files having non-JSON adjustment data. [#1056](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1056)
+- fix: crash when downloading files with `--xmp-sidecar` caused by files having non-JSON adjustment data. [#1056](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1056)
 
 ## 1.26.0 (2025-01-13)
 
