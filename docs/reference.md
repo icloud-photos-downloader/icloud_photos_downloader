@@ -281,6 +281,11 @@ This is a list of all options available for command line interface (CLI) of the 
     Details in [MFA providers](authentication) section.
     ```
 
+(xmp-sidecar-parameter)=
+`--xmp-sidecar`
+
+:   Export additional data as XMP sidecar files (default: don't export)
+
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
     
@@ -296,6 +301,3 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   Script to be executed for notification on expired MFA
 
-=======
-
-TODO: SMTP & Notification params
