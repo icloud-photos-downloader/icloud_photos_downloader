@@ -30,7 +30,7 @@ jobs:
   lint:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy:
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
@@ -51,7 +51,7 @@ jobs:
   type_check: 
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy: 
       matrix: 
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
@@ -77,7 +77,7 @@ jobs:
   test: 
     needs: [skip_check, patch_version]
     if: needs.skip_check.outputs.should_skip != 'true'
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     strategy: 
       matrix: 
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
