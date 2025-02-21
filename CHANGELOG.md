@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: list and download from shared libraries for invitee [#947](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/947)
+
 ## 1.26.1 (2025-01-23)
 
 - fix: XMP metadata with plist in XML format causes crash [#1059](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1059)
