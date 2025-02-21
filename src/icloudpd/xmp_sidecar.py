@@ -162,7 +162,10 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
     ):
         rating = -1  # -1 means rejected: https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata#image-rating
     # only mark photo as favorite if not hidden or deleted
-    elif "isFavorite" in asset_record["fields"] and asset_record["fields"]["isFavorite"]["value"] == 1:
+    elif (
+        "isFavorite" in asset_record["fields"]
+        and asset_record["fields"]["isFavorite"]["value"] == 1
+    ):
         rating = 5
 
     return XMPMetadata(

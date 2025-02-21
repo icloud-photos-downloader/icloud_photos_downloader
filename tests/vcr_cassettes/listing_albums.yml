@@ -138,6 +138,51 @@ interactions:
       content-length: ['804']
       via: ['xrail:nk11p00ic-ztdj17111401.me.com:8301:18H44:grp31', 'icloudedge:si03p01ic-ztde010302:7401:18RC341:Singapore']
     status: {code: 200, message: OK}
+- request:
+    body: '{"query":{"recordType":"CheckIndexingState"},"zoneID":{"zoneName":"SharedSync-00000000-1111-2222-3333-444444444444"}}'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Content-Length: ['81']
+      Content-type: [text/plain]
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+    method: POST
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/shared/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_ac333066-5d55-4c42-b033-f05bb9d2873c\",\n
+        \   \"recordType\" : \"CheckIndexingState\",\n    \"fields\" : {\n      \"progress\"
+        : {\n        \"value\" : 100,\n        \"type\" : \"INT64\"\n      },\n      \"state\"
+        : {\n        \"value\" : \"FINISHED\",\n        \"type\" : \"STRING\"\n      }\n
+        \   },\n    \"pluginFields\" : { },\n    \"recordChangeTag\" : \"0\",\n    \"created\"
+        : {\n      \"timestamp\" : 1533040623320,\n      \"userRecordName\" : \"_10\",\n
+        \     \"deviceID\" : \"1\"\n    },\n    \"modified\" : {\n      \"timestamp\"
+        : 1533040623320,\n      \"userRecordName\" : \"_10\",\n      \"deviceID\"
+        : \"1\"\n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"
+        : \"PrimarySync\",\n      \"ownerRecordName\" : \"_bfc6dbbcc77b03e6cebefd28a28f7e2f\"\n
+        \   }\n  } ],\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\"\n}"}
+    headers:
+      Access-Control-Allow-Credentials: ['true']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Access-Control-Expose-Headers: ['X-Apple-Request-UUID, X-Responding-Instance',
+        Via]
+      Apple-Originating-System: [UnknownOriginatingSystem]
+      Connection: [keep-alive]
+      Content-Type: [application/json; charset=UTF-8]
+      Date: ['Tue, 31 Jul 2018 12:37:03 GMT']
+      Server: [AppleHttpServer/2f080fc0]
+      Strict-Transport-Security: [max-age=31536000; includeSubDomains;]
+      Transfer-Encoding: [chunked]
+      X-Apple-CloudKit-Version: ['1.0']
+      X-Apple-Request-UUID: [4bdf08db-dcb1-421b-96be-648eb85521b6]
+      X-Responding-Instance: ['ckdatabasews:21000301:nk11p10me-ztbu22062301:8201:1813B216:nocommit']
+      apple-seq: ['0']
+      apple-tk: ['false']
+      content-length: ['804']
+      via: ['xrail:nk11p00ic-ztdj17111401.me.com:8301:18H44:grp31', 'icloudedge:si03p01ic-ztde010302:7401:18RC341:Singapore']
+    status: {code: 200, message: OK}
 
 - request:
     body: '{}'
@@ -164,6 +209,70 @@ interactions:
     body:
       string: "{\n  \"moreComing\" : false,\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\",\n
         \ \"zones\" : [ {\n    \"zoneID\" : {\n      \"zoneName\" : \"PrimarySync\",\n
+        \     \"ownerRecordName\" : \"_bfc6dbbcc77b03e6cebefd28a28f7e2f\",\n      \"zoneType\"
+        : \"REGULAR_CUSTOM_ZONE\"\n    }\n  } ]\n}"
+    headers:
+      Access-Control-Allow-Credentials:
+      - 'true'
+      Access-Control-Allow-Origin:
+      - https://www.icloud.com
+      Connection:
+      - keep-alive
+      Content-Type:
+      - application/json; charset=UTF-8
+      Date:
+      - Tue, 29 Aug 2023 19:47:27 GMT
+      Server:
+      - AppleHttpServer/3faf4ee9434b
+      Strict-Transport-Security:
+      - max-age=31536000; includeSubDomains;
+      Transfer-Encoding:
+      - chunked
+      X-Apple-CloudKit-Version:
+      - '1.0'
+      X-Apple-Edge-Response-Time:
+      - '195'
+      X-Apple-Request-UUID:
+      - 34046027-8226-46f7-9960-4b0839c08b82
+      X-Responding-Instance:
+      - ckdatabasews:966835083:prod-p121-ckdatabasews-100percent-79bfc6b95d-klrcc:8080:2322B333:13811c3d707a78576fcc7f8962567af12bdfeeb4
+      access-control-expose-headers:
+      - X-Apple-Request-UUID,X-Responding-Instance,Via
+      content-length:
+      - '242'
+      via:
+      - xrail:icloud-xrail-group53-ext-84bc6d9cdc-z45hs:8301:23R321:grp53,631194250daa17e24277dea86cf30319:b99b663029a8c732254c763aa20830be:nlhfd1
+      x-apple-user-partition:
+      - '121'
+    status:
+      code: 200
+      message: OK
+
+- request:
+    body: '{}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '2'
+      Content-type:
+      - text/plain
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Opera/9.52 (X11; Linux i686; U; en)
+    method: POST
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/shared/zones/list
+  response:
+    body:
+      string: "{\n  \"moreComing\" : false,\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\",\n
+        \ \"zones\" : [ {\n    \"zoneID\" : {\n      \"zoneName\" : \"SharedSync-00000000-1111-2222-3333-444444444444\",\n
         \     \"ownerRecordName\" : \"_bfc6dbbcc77b03e6cebefd28a28f7e2f\",\n      \"zoneType\"
         : \"REGULAR_CUSTOM_ZONE\"\n    }\n  } ]\n}"
     headers:

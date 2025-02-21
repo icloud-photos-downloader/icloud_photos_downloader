@@ -52,6 +52,7 @@ class ListingLibraryTestCase(TestCase):
             albums = result.output.splitlines()
 
             self.assertIn("PrimarySync", albums)
+            self.assertIn("SharedSync-00000000-1111-2222-3333-444444444444", albums)
             #            self.assertIn("WhatsApp", albums)
 
             assert result.exit_code == 0

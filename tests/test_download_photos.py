@@ -2323,3 +2323,36 @@ class DownloadPhotoTestCase(TestCase):
         print_result_exception(result)
 
         self.assertEqual(result.exit_code, 0)
+
+    def test_download_from_shared_library(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--library",
+                "SharedSync-00000000-1111-2222-3333-444444444444",
+                "--dry-run",
+                "--no-progress-bar",
+            ],
+        )
+        
+        self.assertEqual(result.exit_code, 0)
+
+        self.assertIn(
+            "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
+        )
+        self.assertIn(
+            f"INFO     Downloading the first original photo or video to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
