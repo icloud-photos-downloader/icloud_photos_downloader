@@ -1051,7 +1051,7 @@ def delete_photo(
     clean_filename_local = photo.filename
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
-        f"{photo_service._service_endpoint}/records/modify?"
+        f"{library_object.service_endpoint}/records/modify?"
         f"{urllib.parse.urlencode(photo_service.params)}"
     )
     post_data = json.dumps(
@@ -1251,8 +1251,9 @@ def core(
     library_object: PhotoLibrary = icloud.photos
 
     if list_libraries:
-        libraries_dict = icloud.photos.libraries
-        library_names = libraries_dict.keys()
+        library_names = (
+            icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
+        )
         print(*library_names, sep="\n")
 
     else:
@@ -1263,9 +1264,11 @@ def core(
             # case exit.
             try:
                 if library:
-                    try:
-                        library_object = icloud.photos.libraries[library]
-                    except KeyError:
+                    if library in icloud.photos.private_libraries:
+                        library_object = icloud.photos.private_libraries[library]
+                    elif library in icloud.photos.shared_libraries:
+                        library_object = icloud.photos.shared_libraries[library]
+                    else:
                         logger.error("Unknown library: %s", library)
                         return 1
                 photos = library_object.albums[album]
