@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.27.0 (2025-02-22)
+
 - feature: list and download from shared libraries for invitee [#947](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/947)
 
 ## 1.26.1 (2025-01-23)
