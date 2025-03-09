@@ -54,6 +54,7 @@ jobs:
 
   patch_version:
     uses: ./.github/workflows/patch-version.yml
+    if: needs.skip_check.outputs.should_skip != 'true'
 
   build_package:
     needs: [get_version, patch_version]
