@@ -28,7 +28,7 @@ jobs:
           do_not_skip: '["workflow_dispatch", "schedule"]'
 
   get_version:
-    needs: [skip_check]
+    needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
     steps:
@@ -53,8 +53,9 @@ jobs:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
 
   patch_version:
-    uses: ./.github/workflows/patch-version.yml
+    needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
+    uses: ./.github/workflows/patch-version.yml
 
   build_package:
     needs: [get_version, patch_version]
