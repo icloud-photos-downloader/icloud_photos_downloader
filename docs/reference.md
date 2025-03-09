@@ -31,7 +31,7 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   Specifies what Album to download. 
 
-    Default: "All Photos" - Special album where all assets are automatically added.
+    When not specified, the whole asset collection is considered.
 
     ```{note}
     Only one album can be downloaded by `icloudpd`

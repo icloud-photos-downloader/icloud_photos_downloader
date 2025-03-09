@@ -53,7 +53,6 @@ class ListingAlbumsTestCase(TestCase):
             print_result_exception(result)
             albums = result.output.splitlines()
 
-            self.assertIn("All Photos", albums)
             self.assertIn("WhatsApp", albums)
             self.assertIn("Time-lapse", albums)
             self.assertIn("Recently Deleted", albums)

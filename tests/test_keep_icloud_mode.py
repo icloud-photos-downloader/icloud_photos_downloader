@@ -52,9 +52,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,
@@ -98,9 +96,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,
@@ -145,9 +141,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,
@@ -191,9 +185,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,
@@ -241,9 +233,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 3 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -299,9 +289,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 3 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -355,9 +343,7 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,

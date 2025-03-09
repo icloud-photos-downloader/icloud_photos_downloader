@@ -78,7 +78,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading 5 original photos to {data_dir} ...",
             self._caplog.text,
@@ -174,7 +174,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 assert result.exit_code == 0
 
         self.assertIn(
-            "DEBUG    Looking up all photos and videos from album All Photos...",
+            "DEBUG    Looking up all photos and videos...",
             self._caplog.text,
         )
         self.assertIn(
@@ -229,7 +229,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -279,9 +279,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         )
         assert result.exit_code == 0
 
-        self.assertIn(
-            "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-        )
+        self.assertIn("DEBUG    Looking up all photos and videos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo or video to {data_dir} ...",
             self._caplog.text,
@@ -370,7 +368,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 dp_patched.assert_has_calls(expected_calls)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    "DEBUG    Looking up all photos and videos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -421,9 +419,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading the first original photo to {data_dir} ...",
                 self._caplog.text,
@@ -674,7 +670,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...",
+                "DEBUG    Looking up all photos and videos...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -763,7 +759,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         ],
                     )
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...",
+                        "DEBUG    Looking up all photos and videos...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -823,7 +819,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    "DEBUG    Looking up all photos and videos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -875,7 +871,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...",
+                "DEBUG    Looking up all photos and videos...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -931,7 +927,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...",
+                "DEBUG    Looking up all photos and videos...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -1057,9 +1053,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 ],
             )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 5 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -1112,9 +1106,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-                )
+                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
@@ -1164,7 +1156,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -1229,7 +1221,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    "DEBUG    Looking up all photos and videos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1286,7 +1278,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    "DEBUG    Looking up all photos and videos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -1328,9 +1320,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-                )
+                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
@@ -1374,9 +1364,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-                )
+                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
@@ -1414,7 +1402,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -1457,7 +1445,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading 5 original photos to {data_dir} ...",
             self._caplog.text,
@@ -1736,9 +1724,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
                 print_result_exception(result)
 
-                self.assertIn(
-                    "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-                )
+                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                 self.assertIn(
                     f"INFO     Downloading the first original photo to {data_dir} ...",
                     self._caplog.text,
@@ -1780,7 +1766,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         # self.assertIn(
         #     f"INFO     Downloading 2 original photos to {data_dir} ...",
         #     self._caplog.text,
@@ -1836,9 +1822,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         ],
                     )
 
-                    self.assertIn(
-                        "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-                    )
+                    self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
                     self.assertIn(
                         f"INFO     Downloading the first original photo to {data_dir} ...",
                         self._caplog.text,
@@ -1881,7 +1865,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -1927,7 +1911,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original,thumb photo to {data_dir} ...",
             self._caplog.text,
@@ -1977,7 +1961,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original,alternative photo to {data_dir} ...",
             self._caplog.text,
@@ -2025,7 +2009,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first adjusted photo to {data_dir} ...",
             self._caplog.text,
@@ -2075,7 +2059,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
@@ -2125,7 +2109,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos from album All Photos...", self._caplog.text)
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,

@@ -36,13 +36,13 @@ class PhotoLibrary(object):
 
     This provides access to all the albums as well as the photos.
     """
-    SMART_FOLDERS = {
-        "All Photos": {
+    WHOLE_COLLECTION = {
             "obj_type": "CPLAssetByAssetDateWithoutHiddenOrDeleted",
             "list_type": "CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
             "direction": "ASCENDING",
             "query_filter": None
-        },
+        }
+    SMART_FOLDERS = {
         "Time-lapse": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Timelapse",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
@@ -161,6 +161,7 @@ class PhotoLibrary(object):
         self.service_endpoint = self.service.get_service_endpoint(library_type)
 
         self._albums: Optional[Dict[str, PhotoAlbum]] = None
+        self._all: Optional[PhotoAlbum] = None
 
         url = ('%s/records/query?%s' %
                (self.service_endpoint, urlencode(self.service.params)))
@@ -240,7 +241,11 @@ class PhotoLibrary(object):
 
     @property
     def all(self) -> "PhotoAlbum":
-        return self.albums['All Photos']
+        if not self._all:
+            self._all = PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.WHOLE_COLLECTION) # type: ignore[arg-type] # dynamically builing params
+            # need to pull all albums because existing recorded tests expect all albums to be pulled...
+            self.albums 
+        return self._all
 
 
 class PhotosService(PhotoLibrary):
