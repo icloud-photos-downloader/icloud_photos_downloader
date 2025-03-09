@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: disambiguate whole photo collection from the album with `All Photos` name [#1077](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1077)
+
 ## 1.27.0 (2025-02-22)
 
 - feature: list and download from shared libraries for invitee [#947](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/947)

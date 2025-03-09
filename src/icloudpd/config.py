@@ -17,7 +17,7 @@ class Config:
         live_photo_size: LivePhotoVersionSize,
         recent: Optional[int],
         until_found: Optional[int],
-        album: str,
+        album: Optional[str],
         list_albums: bool,
         library: str,
         list_libraries: bool,

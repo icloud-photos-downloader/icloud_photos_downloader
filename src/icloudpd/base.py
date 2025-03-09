@@ -346,9 +346,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "-a",
     "--album",
-    help="Album to download (default: All Photos)",
+    help="Album to download or whole collection if not specified",
     metavar="<album>",
-    default="All Photos",
 )
 @click.option(
     "-l",
@@ -589,7 +588,7 @@ def main(
     live_photo_size: LivePhotoVersionSize,
     recent: Optional[int],
     until_found: Optional[int],
-    album: str,
+    album: Optional[str],
     list_albums: bool,
     library: str,
     list_libraries: bool,
@@ -1168,7 +1167,7 @@ def core(
     primary_sizes: Sequence[AssetVersionSize],
     recent: Optional[int],
     until_found: Optional[int],
-    album: str,
+    album: Optional[str],
     list_albums: bool,
     library: str,
     list_libraries: bool,
@@ -1258,8 +1257,6 @@ def core(
 
     else:
         while True:
-            # Default album is "All Photos", so this is the same as
-            # calling `icloud.photos.all`.
             # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
             # case exit.
             try:
@@ -1271,7 +1268,7 @@ def core(
                     else:
                         logger.error("Unknown library: %s", library)
                         return 1
-                photos = library_object.albums[album]
+                photos = library_object.albums[album] if album else library_object.all
             except PyiCloudAPIResponseException as err:
                 # For later: come up with a nicer message to the user. For now take the
                 # exception text
@@ -1290,7 +1287,8 @@ def core(
             directory = os.path.normpath(cast(str, directory))
 
             videos_phrase = "" if skip_videos else " and videos"
-            logger.debug("Looking up all photos%s from album %s...", videos_phrase, album)
+            album_phrase = f" from album {album}" if album else ""
+            logger.debug(f"Looking up all photos{videos_phrase}{album_phrase}...")
 
             session_exception_handler = session_error_handle_builder(logger, icloud)
             internal_error_handler = internal_error_handle_builder(logger)

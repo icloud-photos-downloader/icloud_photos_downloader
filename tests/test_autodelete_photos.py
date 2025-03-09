@@ -75,7 +75,7 @@ class AutodeletePhotosTestCase(TestCase):
                 print_result_exception(result)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    "DEBUG    Looking up all photos and videos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -122,7 +122,7 @@ class AutodeletePhotosTestCase(TestCase):
                 print_result_exception(result)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos from album All Photos...",
+                    "DEBUG    Looking up all photos and videos...",
                     self._caplog.text,
                 )
                 self.assertIn(
@@ -182,7 +182,7 @@ class AutodeletePhotosTestCase(TestCase):
             print_result_exception(result)
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...",
+                "DEBUG    Looking up all photos and videos...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -225,7 +225,7 @@ class AutodeletePhotosTestCase(TestCase):
             print_result_exception(result)
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos from album All Photos...",
+                "DEBUG    Looking up all photos and videos...",
                 self._caplog.text,
             )
             self.assertIn(
@@ -311,9 +311,7 @@ class AutodeletePhotosTestCase(TestCase):
                     cookie_dir,
                 ],
             )
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -424,7 +422,7 @@ class AutodeletePhotosTestCase(TestCase):
                         print_result_exception(result)
 
                         self.assertIn(
-                            "DEBUG    Looking up all photos and videos from album All Photos...",
+                            "DEBUG    Looking up all photos and videos...",
                             self._caplog.text,
                         )
                         self.assertIn(
@@ -519,7 +517,7 @@ class AutodeletePhotosTestCase(TestCase):
                         print_result_exception(result)
 
                         self.assertIn(
-                            "DEBUG    Looking up all photos and videos from album All Photos...",
+                            "DEBUG    Looking up all photos and videos...",
                             self._caplog.text,
                         )
                         self.assertIn(
@@ -606,7 +604,7 @@ class AutodeletePhotosTestCase(TestCase):
                     print_result_exception(result)
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...",
+                        "DEBUG    Looking up all photos and videos...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -687,7 +685,7 @@ class AutodeletePhotosTestCase(TestCase):
                     print_result_exception(result)
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos from album All Photos...",
+                        "DEBUG    Looking up all photos and videos...",
                         self._caplog.text,
                     )
                     self.assertIn(
@@ -791,9 +789,7 @@ class AutodeletePhotosTestCase(TestCase):
             )
             print_result_exception(result)
 
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -891,9 +887,7 @@ class AutodeletePhotosTestCase(TestCase):
                     cookie_dir,
                 ],
             )
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -988,9 +982,7 @@ class AutodeletePhotosTestCase(TestCase):
                     cookie_dir,
                 ],
             )
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,
@@ -1085,9 +1077,7 @@ class AutodeletePhotosTestCase(TestCase):
                     cookie_dir,
                 ],
             )
-            self.assertIn(
-                "DEBUG    Looking up all photos from album All Photos...", self._caplog.text
-            )
+            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
             self.assertIn(
                 f"INFO     Downloading 0 original photos to {data_dir} ...",
                 self._caplog.text,

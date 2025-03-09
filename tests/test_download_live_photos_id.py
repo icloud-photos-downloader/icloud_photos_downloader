@@ -88,9 +88,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn(
-            "DEBUG    Looking up all photos and videos from album All Photos...", self._caplog.text
-        )
+        self.assertIn("DEBUG    Looking up all photos and videos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
             self._caplog.text,
