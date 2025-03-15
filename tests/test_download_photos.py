@@ -622,7 +622,7 @@ class DownloadPhotoTestCase(TestCase):
                         self.assertEqual,
                         self.root_path,
                         base_dir,
-                        "listing_photos.yml",
+                        "listing_albums.yml",
                         [],
                         [],
                         [
