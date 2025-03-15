@@ -43,7 +43,7 @@ def autodelete_photos(
     """
     logger.info("Deleting any files found in 'Recently Deleted'...")
 
-    recently_deleted = library_object.albums["Recently Deleted"]
+    recently_deleted = library_object.recently_deleted
 
     for media in recently_deleted:
         try:

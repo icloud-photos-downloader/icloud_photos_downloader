@@ -269,10 +269,10 @@ Include a link to the Gist in your issue, so that we can see what went wrong.
                     mock_open.assert_called_once_with(
                         file="icloudpd-photo-error.json", mode="w", encoding="utf8"
                     )
-                    # Multiple JSON "dumps" occur with the new pyicloud 1.0.0 implementation
-                    # mock_json.assert_called_once()
+                    mock_json.assert_called()
+                    self.assertEqual(len(mock_json.call_args_list), 7)
                     # Check a few keys in the dict
-                    first_arg = mock_json.call_args_list[7][0][0]
+                    first_arg = mock_json.call_args_list[6][0][0]
                     self.assertEqual(
                         first_arg["master_record"]["recordName"], "AY6c+BsE0jjaXx9tmVGJM1D2VcEO"
                     )

@@ -42,6 +42,12 @@ class PhotoLibrary(object):
             "direction": "ASCENDING",
             "query_filter": None
         }
+    RECENTLY_DELETED = {
+            "obj_type": "CPLAssetDeletedByExpungedDate",
+            "list_type": "CPLAssetAndMasterDeletedByExpungedDate",
+            "direction": "ASCENDING",
+            "query_filter": None
+        }
     SMART_FOLDERS = {
         "Time-lapse": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Timelapse",
@@ -140,12 +146,7 @@ class PhotoLibrary(object):
                 }
             }]
         },
-        "Recently Deleted": {
-            "obj_type": "CPLAssetDeletedByExpungedDate",
-            "list_type": "CPLAssetAndMasterDeletedByExpungedDate",
-            "direction": "ASCENDING",
-            "query_filter": None
-        },
+        "Recently Deleted": RECENTLY_DELETED,
         "Hidden": {
             "obj_type": "CPLAssetHiddenByAssetDate",
             "list_type": "CPLAssetAndMasterHiddenByAssetDate",
@@ -162,6 +163,7 @@ class PhotoLibrary(object):
 
         self._albums: Optional[Dict[str, PhotoAlbum]] = None
         self._all: Optional[PhotoAlbum] = None
+        self._recently_deleted: Optional[PhotoAlbum] = None
 
         url = ('%s/records/query?%s' %
                (self.service_endpoint, urlencode(self.service.params)))
@@ -243,10 +245,13 @@ class PhotoLibrary(object):
     def all(self) -> "PhotoAlbum":
         if not self._all:
             self._all = PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.WHOLE_COLLECTION) # type: ignore[arg-type] # dynamically builing params
-            # need to pull all albums because existing recorded tests expect all albums to be pulled...
-            self.albums 
         return self._all
 
+    @property
+    def recently_deleted(self) -> "PhotoAlbum":
+        if not self._recently_deleted:
+            self._recently_deleted = PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.RECENTLY_DELETED) # type: ignore[arg-type] # dynamically builing params
+        return self._recently_deleted
 
 class PhotosService(PhotoLibrary):
     """The 'Photos' iCloud service.
