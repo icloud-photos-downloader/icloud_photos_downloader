@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: the obfuscated icloud email username is now included in the email about 2sa authentication failing, for when an installation is configured for multiple icloud accounts.
+
 ## 1.27.1 (2025-03-16)
 
 - fix: disambiguate whole photo collection from the album with `All Photos` name [#1077](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1077)

@@ -9,6 +9,7 @@ from freezegun import freeze_time
 from vcr import VCR
 
 from icloudpd.base import main
+from icloudpd.email_notifications import obfuscate_email
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
@@ -67,7 +68,7 @@ class EmailNotificationsTestCase(TestCase):
                 "To: jdoe+notifications@gmail.com\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
                 "Date: 01/01/2018 00:00\n\nHello,\n\n"
-                "Two-step authentication has expired for the icloud_photos_downloader script.\n"
+                "j***e@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
@@ -114,7 +115,7 @@ class EmailNotificationsTestCase(TestCase):
                 "To: jdoe+notifications@gmail.com\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
                 "Date: 01/01/2018 00:00\n\nHello,\n\n"
-                "Two-step authentication has expired for the icloud_photos_downloader script.\n"
+                "j***e@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
@@ -198,7 +199,23 @@ class EmailNotificationsTestCase(TestCase):
                 "To: JD <jdoe+notifications@gmail.com>\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
                 "Date: 01/01/2018 00:00\n\nHello,\n\n"
-                "Two-step authentication has expired for the icloud_photos_downloader script.\n"
+                "j***e@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
+
+    def test_obsfucate_email(self) -> None:
+        # Test cases for valid email addresses
+        assert obfuscate_email("jdoe@gmail.com") == "j***e@gmail.com"
+        assert obfuscate_email("ab@gmail.com") == "a***@gmail.com"
+        assert obfuscate_email("a@gmail.com") == "a***@gmail.com"
+        assert obfuscate_email("john.doe@example.com") == "j***e@example.com"
+
+        # Test cases for invalid email addresses
+        assert obfuscate_email("not-an-email") == "not-an-email"
+        assert obfuscate_email("") == ""
+        assert obfuscate_email("plainaddress") == "plainaddress"
+
+        # Test cases for edge cases
+        assert obfuscate_email("a@b.com") == "a***@b.com"
+        assert obfuscate_email("ab@b.com") == "a***@b.com"
