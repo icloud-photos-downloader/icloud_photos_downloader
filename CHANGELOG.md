@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: fix ignored photos with --delete-after-download or --keep-icloud-recent-days [#616](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/616)
+
 ## 1.27.4 (2025-04-15)
 
 - fix: broken pypi publishing [#1105](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1105)
