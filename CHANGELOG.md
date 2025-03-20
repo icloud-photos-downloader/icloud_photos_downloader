@@ -77,7 +77,7 @@
 
 ## 1.23.0 (2024-07-25)
 
-- feature: update webui and allow to cancel and resume sync
+- feature: update webui and allow to cancel and resume sync 
 - deprecate linux 386 and arm v6 support
 - add linux musl builds
 
@@ -265,7 +265,7 @@
 
 ## 1.9.0 (2023-02-10)
 
-- fix: replace invalid chars in filenames with '\_' [#378](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/378)
+- fix: replace invalid chars in filenames with '_' [#378](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/378)
 - feature: add `--domain` parameter to support mainland China [#572](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/572), [#545](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/545)
 - feature: add `linux/arm/v7` and `linux/arm/v6` docker image [#434](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/434)
 
@@ -290,7 +290,7 @@
 
 - fix: smtp server_hostname cannot be an empty [#227](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/227)
 - fix: Warning for missing `tzinfo` in Docker image removed by adding `tzinfo`-package.
-  [#286](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/286)
+[#286](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/286)
 
 ## 1.7.1 (2020-11-15)
 
@@ -305,11 +305,11 @@
 
 - fix: --log-level option [#194](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/194)
 - feature: Folder structure can be set to 'none' instead of a date pattern,
-  so all photos will be placed directly into the download directory.
+so all photos will be placed directly into the download directory.
 - fix: Empty directory structure being created #185
 - feature: removed multi-threaded downloading and added deprecation notice to --threads-num parameter #180, #188
 - fix: documentation issues, first addressed in #141 and separated contribution
-  info from README.md into CONTRIBUTING.md
+info from README.md into CONTRIBUTING.md
 
 ## 1.6.2 (2020-10-23)
 
@@ -318,7 +318,7 @@
 - fix: reduce chances of errors due to missing required parameters #175
 - fix: missing downloading process by upgrading tqdm dependency #167
 
----
+--------------------------------------------
 
 ## Earlier Versions
 
