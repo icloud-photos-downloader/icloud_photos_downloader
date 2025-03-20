@@ -349,6 +349,10 @@ class PhotoAlbum(object):
         self.list_type = list_type
         self.obj_type = obj_type
         self.direction = direction
+        if self.direction == "DESCENDING":
+            self.offset = len(self) - 1
+        else:
+            self.offset = 0
         self.query_filter = query_filter
         self.page_size = page_size
         self.exception_handler: Optional[Callable[[Exception, int], None]] = None
@@ -386,13 +390,13 @@ class PhotoAlbum(object):
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
-    def photos_request(self, offset: int) -> Response:
+    def photos_request(self) -> Response:
         url = ('%s/records/query?' % self.service_endpoint) + \
             urlencode(self.service.params)
         return self.service.session.post(
             url,
             data=json.dumps(self._list_query_gen(
-                offset, self.list_type, self.direction,
+                self.offset, self.list_type, self.direction,
                 self.query_filter)),
             headers={'Content-type': 'text/plain'}
         )
@@ -400,16 +404,11 @@ class PhotoAlbum(object):
 
     @property
     def photos(self) -> Generator["PhotoAsset", Any, None]:
-        if self.direction == "DESCENDING":
-            offset = len(self) - 1
-        else:
-            offset = 0
-
         exception_retries = 0
 
         while(True):
             try:
-                request = self.photos_request(offset)
+                request = self.photos_request()
             except PyiCloudAPIResponseException as ex:
                 if self.exception_handler:
                     exception_retries += 1
@@ -446,17 +445,19 @@ class PhotoAlbum(object):
 
             master_records_len = len(master_records)
             if master_records_len:
-                if self.direction == "DESCENDING":
-                    offset = offset - master_records_len
-                else:
-                    offset = offset + master_records_len
-
                 for master_record in master_records:
                     record_name = master_record['recordName']
                     yield PhotoAsset(self.service, master_record,
                                      asset_records[record_name])
+                    self.increment_offset(1)
             else:
                 break
+
+    def increment_offset(self, value: int) -> None:
+        if self.direction == "DESCENDING":
+            self.offset -= value
+        else:
+            self.offset += value
 
     def _count_query_gen(self, obj_type: str) -> Dict[str, Any]:
         query = {

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: fix ignored photos with --delete-after-download or --keep-icloud-recent-days [#616](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/616)
+
 ## 1.27.1 (2025-03-16)
 
 - fix: disambiguate whole photo collection from the album with `All Photos` name [#1077](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1077)
