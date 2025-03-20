@@ -9,7 +9,6 @@ from freezegun import freeze_time
 from vcr import VCR
 
 from icloudpd.base import main
-from icloudpd.email_notifications import obfuscate_email
 from tests.helpers import path_from_project_root, recreate_path
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
@@ -35,7 +34,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+                runner = CliRunner(
+                    env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"}
+                )
                 result = runner.invoke(
                     main,
                     [
@@ -60,7 +61,9 @@ class EmailNotificationsTestCase(TestCase):
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
-            smtp_instance.login.assert_called_once_with("jdoe+smtp@gmail.com", "password1")
+            smtp_instance.login.assert_called_once_with(
+                "jdoe+smtp@gmail.com", "password1"
+            )
             smtp_instance.sendmail.assert_called_once_with(
                 "iCloud Photos Downloader <jdoe+smtp@gmail.com>",
                 "jdoe+notifications@gmail.com",
@@ -68,7 +71,7 @@ class EmailNotificationsTestCase(TestCase):
                 "To: jdoe+notifications@gmail.com\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
                 "Date: 01/01/2018 00:00\n\nHello,\n\n"
-                "j***e@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
+                "jdoe@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
@@ -85,7 +88,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+                runner = CliRunner(
+                    env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"}
+                )
                 result = runner.invoke(
                     main,
                     [
@@ -115,7 +120,7 @@ class EmailNotificationsTestCase(TestCase):
                 "To: jdoe+notifications@gmail.com\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
                 "Date: 01/01/2018 00:00\n\nHello,\n\n"
-                "j***e@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
+                "jdoe@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
@@ -132,7 +137,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("subprocess.call") as subprocess_patched:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+                runner = CliRunner(
+                    env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"}
+                )
                 result = runner.invoke(
                     main,
                     [
@@ -164,7 +171,9 @@ class EmailNotificationsTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
             with patch("smtplib.SMTP") as smtp:
                 # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+                runner = CliRunner(
+                    env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"}
+                )
                 result = runner.invoke(
                     main,
                     [
@@ -191,7 +200,9 @@ class EmailNotificationsTestCase(TestCase):
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
-            smtp_instance.login.assert_called_once_with("jdoe+smtp@gmail.com", "password1")
+            smtp_instance.login.assert_called_once_with(
+                "jdoe+smtp@gmail.com", "password1"
+            )
             smtp_instance.sendmail.assert_called_once_with(
                 "JD <jdoe+notifications+from@gmail.com>",
                 "JD <jdoe+notifications@gmail.com>",
@@ -199,23 +210,7 @@ class EmailNotificationsTestCase(TestCase):
                 "To: JD <jdoe+notifications@gmail.com>\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
                 "Date: 01/01/2018 00:00\n\nHello,\n\n"
-                "j***e@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
+                "jdoe@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
             )
-
-    def test_obsfucate_email(self) -> None:
-        # Test cases for valid email addresses
-        assert obfuscate_email("jdoe@gmail.com") == "j***e@gmail.com"
-        assert obfuscate_email("ab@gmail.com") == "a***@gmail.com"
-        assert obfuscate_email("a@gmail.com") == "a***@gmail.com"
-        assert obfuscate_email("john.doe@example.com") == "j***e@example.com"
-
-        # Test cases for invalid email addresses
-        assert obfuscate_email("not-an-email") == "not-an-email"
-        assert obfuscate_email("") == ""
-        assert obfuscate_email("plainaddress") == "plainaddress"
-
-        # Test cases for edge cases
-        assert obfuscate_email("a@b.com") == "a***@b.com"
-        assert obfuscate_email("ab@b.com") == "a***@b.com"

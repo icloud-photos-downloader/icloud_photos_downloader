@@ -6,16 +6,6 @@ import smtplib
 from typing import Optional, cast
 
 
-def obfuscate_email(email: str) -> str:
-    """Obfuscate the username bit of an email address, ie e***l@gmail.com"""
-    if "@" not in email:
-        return email  # Return as is if it's not a valid email
-    local_part, domain = email.split("@")
-    if len(local_part) <= 2:
-        return f"{local_part[0]}***@{domain}"
-    return f"{local_part[0]}***{local_part[-1]}@{domain}"
-
-
 def send_2sa_notification(
     logger: logging.Logger,
     username: str,
@@ -51,10 +41,13 @@ def send_2sa_notification(
 
     message_text = f"""Hello,
 
-{obfuscate_email(username)}'s two-step authentication has expired for the icloud_photos_downloader script.
+{username}'s two-step authentication has expired for the icloud_photos_downloader script.
 Please log in to your server and run the script manually to update two-step authentication."""
 
-    msg = f"From: {from_addr}\n" + f"To: {to_addr}\nSubject: {subj}\nDate: {date}\n\n{message_text}"
+    msg = (
+        f"From: {from_addr}\n"
+        + f"To: {to_addr}\nSubject: {subj}\nDate: {date}\n\n{message_text}"
+    )
 
     smtp.sendmail(from_addr, to_addr, msg)
     smtp.quit()
