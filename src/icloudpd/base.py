@@ -1230,6 +1230,7 @@ def core(
         if smtp_username is not None or notification_email is not None:
             send_2sa_notification(
                 logger,
+                username,
                 smtp_username,
                 smtp_password,
                 smtp_host,
