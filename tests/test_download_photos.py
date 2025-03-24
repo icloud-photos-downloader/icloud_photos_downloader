@@ -1026,8 +1026,6 @@ class DownloadPhotoTestCase(TestCase):
                     "1",
                     "--skip-live-photos",
                     "--no-progress-bar",
-                    "--threads-num",
-                    "1",
                 ],
             )
 
