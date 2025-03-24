@@ -941,9 +941,7 @@ class DownloadPhotoTestCase(TestCase):
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
-    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
-    @pytest.mark.skipif(sys.platform == "darwin", reason="does not run on mac")
-    def test_creation_date_without_century_linux(self) -> None:
+    def test_creation_date_without_century(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [("5/01/01", "IMG_7409.JPG")]
@@ -994,63 +992,6 @@ class DownloadPhotoTestCase(TestCase):
             # )
             self.assertIn(
                 f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
-                self._caplog.text,
-            )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
-            assert result.exit_code == 0
-
-    @pytest.mark.skipif(sys.platform == "linux", reason="linux works without overriding")
-    def test_creation_date_without_century_non_linux(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-
-        files_to_download = [("1970/01/01", "IMG_7409.JPG")]
-
-        with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
-            # Can't mock `astimezone` because it's a readonly property, so have to
-            # create a new class that inherits from datetime.datetime
-            # class NewDateTime(datetime.datetime):
-            #     def astimezone(self, _tz: (Optional[Any]) = None) -> NoReturn:
-            #         raise ValueError("Invalid date")
-
-            dt_mock.return_value = datetime.datetime(
-                5, 1, 1, 0, 0, 0, tzinfo=pytz.timezone("America/Los_Angeles")
-            )
-
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos.yml",
-                [],
-                files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
-
-            self.assertIn(
-                "DEBUG    Looking up all photos and videos...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                self._caplog.text,
-            )
-            # self.assertIn(
-            #     "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
-            #     self._caplog.text,
-            # )
-            self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('1970/01/01/IMG_7409.JPG'))}",
                 self._caplog.text,
             )
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
