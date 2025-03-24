@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: dates prior 1970 do not work on non linux [#1045](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1045)
+
 ## 1.27.1 (2025-03-16)
 
 - fix: disambiguate whole photo collection from the album with `All Photos` name [#1077](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1077)
