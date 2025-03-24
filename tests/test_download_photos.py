@@ -941,6 +941,8 @@ class DownloadPhotoTestCase(TestCase):
             self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
+    @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
+    @pytest.mark.skipif(sys.platform == "darwin", reason="does not run on mac")
     def test_creation_date_without_century(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
