@@ -891,7 +891,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
     @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
     @pytest.mark.skipif(sys.platform == "darwin", reason="does not run on mac")
-    def test_invalid_creation_year_name_id7(self) -> None:
+    def test_creation_date_without_century_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_download = [("5/01/01", "IMG_7409_QVk2Yyt.JPG")]
