@@ -35,7 +35,10 @@ def update_mtime(created: datetime.datetime, download_path: str) -> None:
 
 def set_utime(download_path: str, created_date: datetime.datetime) -> None:
     """Set date & time of the file"""
-    ctime = time.mktime(created_date.timetuple())
+    try:
+        ctime = time.mktime(created_date.timetuple())
+    except OverflowError:
+        ctime = time.mktime(datetime.datetime(1970, 1, 1, 0, 0, 0).timetuple())
     os.utime(download_path, (ctime, ctime))
 
 

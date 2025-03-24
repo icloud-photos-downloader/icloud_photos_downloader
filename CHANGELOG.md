@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feature: the icloud email username is now included in the email about 2sa authentication failing, for when an installation is configured for multiple icloud accounts.
+- fix: dates prior 1970 do not work on non linux [#1045](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1045)
 
 ## 1.27.1 (2025-03-16)
 
