@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.27.2 (2025-03-29)
+
 - fix: dates prior 1970 do not work on non linux [#1045](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1045)
 
 ## 1.27.1 (2025-03-16)
