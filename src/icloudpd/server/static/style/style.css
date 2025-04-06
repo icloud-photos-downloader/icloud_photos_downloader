@@ -1,3 +1,8 @@
 input {
     max-width: 350px;
 }
+
+.navbar-brand {
+    display: flex;
+    align-items: center;
+}
