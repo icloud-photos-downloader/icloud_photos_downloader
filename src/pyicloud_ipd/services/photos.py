@@ -834,7 +834,8 @@ class PhotoAsset(object):
     def download(self, url: str) -> Response:
         return self._service.session.get(
             url,
-            stream=True
+            stream=True,
+            timeout=10.0
         )
 
     def __repr__(self) -> str:
