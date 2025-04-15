@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.27.4 (2025-04-15)
+
 - fix: broken pypi publishing [#1105](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1105)
 
 ## 1.27.3 (2025-04-14)
