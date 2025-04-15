@@ -50,6 +50,7 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+      PYPI_REPOSITORY: ${{ vars.PYPI_REPOSITORY }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}

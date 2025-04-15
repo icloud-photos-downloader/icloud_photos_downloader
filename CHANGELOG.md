@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: broken pypi publishing [#1105](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1105)
+
 ## 1.27.3 (2025-04-14)
 
 - feature: the icloud email username is now included in the email about 2sa authentication failing, for when an installation is configured for multiple icloud accounts.
