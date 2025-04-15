@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.27.3 (2025-04-14)
+
 - feature: the icloud email username is now included in the email about 2sa authentication failing, for when an installation is configured for multiple icloud accounts.
 
 ## 1.27.2 (2025-03-29)
