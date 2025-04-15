@@ -4,6 +4,9 @@ on:
       icloudpd_version:
         required: true
         type: string
+      PYPI_REPOSITORY:
+        required: false
+        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -113,6 +116,7 @@ jobs:
 
       - name: Publish PyPI
         env:
+          TWINE_REPOSITORY: ${{ inputs.PYPI_REPOSITORY }}
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
