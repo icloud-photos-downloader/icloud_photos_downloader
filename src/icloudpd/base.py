@@ -1403,6 +1403,8 @@ def core(
                         )
 
                         retrier(delete_local, error_handler)
+                        if photos.direction != "DESCENDING":
+                            photos.increment_offset(-1)
 
                     photos_counter += 1
                     status_exchange.get_progress().photos_counter = photos_counter
