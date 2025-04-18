@@ -9,6 +9,7 @@ import click
 
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
+import keyring
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -46,9 +47,12 @@ def authenticator(
         logger.debug("Authenticating...")
         icloud: Optional[PyiCloudService] = None
         _valid_password: Optional[str] = None
-        for _, _pair in password_providers.items():
+        for provider, _pair in password_providers.items():
             _reader, _ = _pair
-            _password = _reader(username)
+            try:
+                _password = _reader(username)
+            except keyring.errors.KeyringLocked as e:
+                logger.debug(f"Authenticating failed for {provider}... {e}")
             if _password:
                 icloud = PyiCloudService(
                     filename_cleaner,
