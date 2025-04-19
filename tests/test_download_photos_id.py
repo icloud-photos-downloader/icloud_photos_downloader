@@ -13,7 +13,7 @@ import piexif
 import pytest
 from click.testing import CliRunner
 from piexif._exceptions import InvalidImageDataError
-from requests import Response
+from requests import Response, Timeout
 from requests.exceptions import ConnectionError
 from vcr import VCR
 
@@ -543,11 +543,11 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     assert result.exit_code == 1
 
-    def test_handle_connection_error_name_id7(self) -> None:
+    def test_timeout_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         def mock_raise_response_error(_arg: Any) -> NoReturn:
-            raise ConnectionError("Connection Error")
+            raise Timeout("Connection Error")
 
         with mock.patch.object(PhotoAsset, "download") as pa_download:
             pa_download.side_effect = mock_raise_response_error
@@ -598,6 +598,63 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self._caplog.text,
                     )
                     assert result.exit_code == 0
+
+    def test_handle_connection_error_name_id7(self) -> None:
+            base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+            def mock_raise_response_error(_arg: Any) -> NoReturn:
+                raise ConnectionError("Connection Error")
+
+            with mock.patch.object(PhotoAsset, "download") as pa_download:
+                pa_download.side_effect = mock_raise_response_error
+
+                # Let the initial authenticate() call succeed,
+                # but do nothing on the second try.
+                orig_authenticate = PyiCloudService.authenticate
+
+                def mocked_authenticate(self: PyiCloudService) -> None:
+                    if not hasattr(self, "already_authenticated"):
+                        orig_authenticate(self)
+                        setattr(self, "already_authenticated", True)  # noqa: B010
+
+                with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
+                    with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
+                        _, result = run_icloudpd_test(
+                            self.assertEqual,
+                            self.root_path,
+                            base_dir,
+                            "listing_photos.yml",
+                            [],
+                            [],
+                            [
+                                "--username",
+                                "jdoe@gmail.com",
+                                "--password",
+                                "password1",
+                                "--recent",
+                                "1",
+                                "--skip-videos",
+                                "--skip-live-photos",
+                                "--no-progress-bar",
+                                "--file-match-policy",
+                                "name-id7",
+                            ],
+                        )
+
+                        # Error msg should be repeated 5 times
+                        assert (
+                            self._caplog.text.count(
+                                "Error downloading IMG_7409_QVk2Yyt.JPG, retrying after 0 seconds..."
+                            )
+                            == 5
+                        )
+
+                        self.assertIn(
+                            "ERROR    Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
+                            self._caplog.text,
+                        )
+                        assert result.exit_code == 0
+
 
     def test_handle_albums_error_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

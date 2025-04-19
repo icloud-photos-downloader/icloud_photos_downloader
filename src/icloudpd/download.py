@@ -6,7 +6,7 @@ import os
 import socket
 import time
 
-from requests import Response
+from requests import Response, Timeout
 from requests.exceptions import ConnectionError
 from tzlocal import get_localzone
 
@@ -125,7 +125,7 @@ def download_media(
             )
             break
 
-        except (ConnectionError, socket.timeout, PyiCloudAPIResponseException) as ex:
+        except (ConnectionError, socket.timeout, PyiCloudAPIResponseException, Timeout) as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
                 if retries > 0:

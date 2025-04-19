@@ -65,24 +65,25 @@ class PyiCloudService:
     """
 
     def __init__(
-        self, 
+        self,
         filename_cleaner: Callable[[str], str],
         lp_filename_generator: Callable[[str], str],
-        domain:str, 
+        domain:str,
         raw_policy: RawTreatmentPolicy,
         file_match_policy: FileMatchPolicy,
         apple_id: str, password:str, cookie_directory:Optional[str]=None, verify:bool=True,
-        client_id:Optional[str]=None, with_family:bool=True,
+        client_id:Optional[str]=None, with_family:bool=True, http_timeout:float=30.0
     ):
         self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy
         self.file_match_policy = file_match_policy
         self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
-        self.data: Dict[str, Any] = {} 
+        self.data: Dict[str, Any] = {}
         self.params: Dict[str, Any] = {}
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
+        self.http_timeout = http_timeout
 
         self.password_filter = PyiCloudPasswordFilter(password)
         LOGGER.addFilter(self.password_filter)
@@ -120,7 +121,7 @@ class PyiCloudService:
         try:
             with open(self.session_path, encoding="utf-8") as session_f:
                 self.session_data = json.load(session_f)
-        except:  
+        except:
             LOGGER.info("Session file does not exist")
         session_client_id: Optional[str] = self.session_data.get("client_id")
         if session_client_id:
@@ -466,7 +467,7 @@ class PyiCloudService:
         ).prepare()
 
         response = self.send_request(request)
-        
+
         return parse_trusted_phone_numbers_response(response)
 
     def send_2fa_code_sms(self, device_id: int) -> bool:
@@ -485,7 +486,7 @@ class PyiCloudService:
         ).prepare()
 
         response = self.send_request(request)
-        
+
         return response.ok
 
     def send_verification_code(self, device: Dict[str, Any]) -> bool:
@@ -537,7 +538,7 @@ class PyiCloudService:
             json = req.json,
         ).prepare()
         response = self.send_request(request)
-        
+
         if response.ok:
             return self.trust_session()
         return False
@@ -591,7 +592,7 @@ class PyiCloudService:
         return typing.cast(str, self._webservices[ws_key]["url"])
 
     @property
-    def devices(self) -> Sequence[AppleDevice]: 
+    def devices(self) -> Sequence[AppleDevice]:
         """ Return all devices."""
         service_root = self._get_webservice_url("findme")
         return typing.cast(Sequence[AppleDevice], FindMyiPhoneServiceManager(
@@ -630,11 +631,11 @@ class PyiCloudService:
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
             self._photos = PhotosService(
-                service_root, 
-                self.session, 
-                self.params, 
-                self.filename_cleaner, 
-                self.lp_filename_generator, 
+                service_root,
+                self.session,
+                self.params,
+                self.filename_cleaner,
+                self.lp_filename_generator,
                 self.raw_policy,
                 self.file_match_policy
                 )
