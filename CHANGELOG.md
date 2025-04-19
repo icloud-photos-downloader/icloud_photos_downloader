@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: timeout set to 30 seconds for HTTP requests [#793](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/793)
+
 ## 1.27.4 (2025-04-15)
 
 - fix: broken pypi publishing [#1105](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1105)
@@ -87,7 +89,7 @@
 
 ## 1.23.0 (2024-07-25)
 
-- feature: update webui and allow to cancel and resume sync 
+- feature: update webui and allow to cancel and resume sync
 - deprecate linux 386 and arm v6 support
 - add linux musl builds
 
