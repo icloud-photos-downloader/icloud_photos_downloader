@@ -410,7 +410,7 @@ class PhotoAlbum(object):
         while(True):
             try:
                 request = self.photos_request(offset)
-            except PyiCloudAPIResponseException as ex:
+            except (ConnectionError, ConnectionResetError, PyiCloudAPIResponseException) as ex:
                 if self.exception_handler:
                     exception_retries += 1
                     self.exception_handler(ex, exception_retries)
