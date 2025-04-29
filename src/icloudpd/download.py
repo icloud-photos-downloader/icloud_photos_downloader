@@ -125,7 +125,7 @@ def download_media(
             )
             break
 
-        except (ConnectionError, socket.timeout, PyiCloudAPIResponseException, Timeout) as ex:
+        except (ConnectionError, ConnectionResetError, socket.timeout, PyiCloudAPIResponseException, Timeout) as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
                 if retries > 0:
