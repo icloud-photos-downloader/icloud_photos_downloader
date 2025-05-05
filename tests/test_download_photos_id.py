@@ -491,7 +491,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_handle_session_error_during_photo_iteration_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_offset: int) -> NoReturn:
+        def mock_raise_response_error() -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
@@ -1744,7 +1744,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_handle_internal_error_during_photo_iteration_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_offset: int) -> NoReturn:
+        def mock_raise_response_error() -> NoReturn:
             raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
