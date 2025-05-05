@@ -35,7 +35,7 @@ class PyiCloudPasswordFilter(logging.Filter):
         message = record.getMessage()
         if self.name in message:
             record.msg = message.replace(self.name, "********")
-            record.args = [] # type: ignore[assignment] 
+            record.args = [] # type: ignore[assignment]
 
         return True
 
@@ -48,8 +48,8 @@ class PyiCloudSession(Session):
         super().__init__()
 
     @override
-    # type: ignore 
-    def request(self, method: str, url, **kwargs):  
+    # type: ignore
+    def request(self, method: str, url, **kwargs):
 
         # Charge logging to the right service endpoint
         callee = inspect.stack()[2]
@@ -62,6 +62,8 @@ class PyiCloudSession(Session):
 
         has_retried = kwargs.get("retried")
         kwargs.pop("retried", None)
+        if "timeout" not in kwargs and self.service.http_timeout is not None:
+            kwargs["timeout"] = self.service.http_timeout
         response = super().request(method, url, **kwargs)
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
@@ -131,7 +133,7 @@ class PyiCloudSession(Session):
 
         try:
             data = response.json() if response.status_code != 204 else {}
-        except:  
+        except:
             request_logger.warning("Failed to parse response with JSON mimetype")
             return response
 
