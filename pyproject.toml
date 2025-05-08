@@ -72,7 +72,7 @@ test = [
     "types-python-dateutil==2.9.0.20241206",
     "types-pytz==2024.2.0.20241221",
     "types-tzlocal==5.1.0.1",
-    "types-requests==2.31.0.2",
+    "types-requests==2.32.0.20250328",
     "types-six==1.17.0.20241205",
     "types-urllib3==1.26.25.14",
     "types-tqdm==4.67.0.20241221",
