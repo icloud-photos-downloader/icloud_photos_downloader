@@ -574,6 +574,7 @@ class PhotoAsset(object):
 
     ITEM_TYPES = {
         u"public.heic": AssetItemType.IMAGE,
+        u"public.heif": AssetItemType.IMAGE,
         u"public.jpeg": AssetItemType.IMAGE,
         u"public.png": AssetItemType.IMAGE,
         u"com.apple.quicktime-movie": AssetItemType.MOVIE,
@@ -593,6 +594,7 @@ class PhotoAsset(object):
 
     ITEM_TYPE_EXTENSIONS = {
         u"public.heic": u"HEIC",
+        u"public.heif": u"HEIF",
         u"public.jpeg": u"JPG",
         u"public.png": u"PNG",
         u"com.apple.quicktime-movie": u"MOV",

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: HEIF file extension [#1133](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1133)
 - fix: fix ignored photos with --delete-after-download or --keep-icloud-recent-days [#616](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/616)
 - fix: timeout set to 30 seconds for HTTP requests [#793](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/793)
 
