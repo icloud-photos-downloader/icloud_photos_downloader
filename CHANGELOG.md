@@ -3,6 +3,7 @@
 ## Unreleased
 
 - fix: timeout set to 30 seconds for HTTP requests [#793](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/793)
+- fix: added support for continuationMarker in list albums
 
 ## 1.27.4 (2025-04-15)
 
