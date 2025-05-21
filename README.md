@@ -9,6 +9,14 @@ See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_dow
 
 We aim to release new versions once a week (Friday), if there is something worth delivering.
 
+## iCloud Prerequisites
+
+In order to make iCloud Photo Downloader work, the iCloud account needs to be set up with the following settings. Otherwise the Apple Servers will return an `ACCESS_DENIED` error.
+
+- **Access iCloud Data on the Web:** On your iPhone / iPad, enable `Settings > Apple ID > iCloud > Access iCloud Data on the Web`
+- **Disable Advanced Data Protection:** On your iPhone /iPad disable `Settings > Apple ID > iCloud > Advanced Data Protection`
+
+
 ## Install and Run
 
 There are three ways to run `icloudpd`:
