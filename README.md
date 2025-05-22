@@ -11,9 +11,9 @@ We aim to release new versions once a week (Friday), if there is something worth
 
 ## iCloud Prerequisites
 
-In order to make iCloud Photo Downloader work, the iCloud account needs to be set up with the following settings. Otherwise the Apple Servers will return an `ACCESS_DENIED` error.
+To make iCloud Photo Downloader work, ensure the iCloud account is configured with the following settings, otherwise Apple Servers will return an ACCESS_DENIED error:
 
-- **Access iCloud Data on the Web:** On your iPhone / iPad, enable `Settings > Apple ID > iCloud > Access iCloud Data on the Web`
+- **Enable Access iCloud Data on the Web:** On your iPhone / iPad, enable `Settings > Apple ID > iCloud > Access iCloud Data on the Web`
 - **Disable Advanced Data Protection:** On your iPhone /iPad disable `Settings > Apple ID > iCloud > Advanced Data Protection`
 
 
