@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-import re
 from multiprocessing import freeze_support
 
 import foundation
@@ -51,7 +50,7 @@ from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
-from icloudpd.string_helpers import truncate_middle
+from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -267,21 +266,12 @@ def skip_created_before_generator(
 ) -> Optional[Union[datetime.datetime, datetime.timedelta]]:
     if formatted is None:
         return None
-    # can be timestamp or timedelta
-    m = re.match(r"(\d+)([dD]{1})", formatted)
-    if m is not None and m.lastindex is not None and m.lastindex == 2:
-        return datetime.timedelta(days=float(m.group(1)))
-
-    # try timestamp
-    try:
-        dt = datetime.datetime.fromisoformat(formatted)
-        if dt.tzinfo is None:
-            dt = dt.astimezone(get_localzone())
-        return dt
-    except Exception as e:
-        raise ValueError(
-            f"Timestamp {formatted} for --skip-created-before parameter did not parse from ISO format successfully: {e}"
-        ) from e
+    result = parse_timestamp_or_timedelta(formatted)
+    if isinstance(result, ValueError):
+        raise ValueError(f"--skip-created-before parameter: {result}")
+    if isinstance(result, datetime.datetime) and result.tzinfo is None:
+        result = result.astimezone(get_localzone())
+    return result
 
 
 def locale_setter(_ctx: click.Context, _param: click.Parameter, use_os_locale: bool) -> bool:
