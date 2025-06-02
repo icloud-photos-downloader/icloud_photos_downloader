@@ -1294,11 +1294,6 @@ def core(
         logger.info("Authentication completed successfully")
         return 0
 
-    download_photo = downloader(icloud)
-
-    # Access to the selected library. Defaults to the primary photos object.
-    library_object: PhotoLibrary = icloud.photos
-
     if list_libraries:
         library_names = (
             icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
@@ -1306,24 +1301,29 @@ def core(
         print(*library_names, sep="\n")
 
     else:
+        download_photo = downloader(icloud)
+
+        # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
+        # case exit.
+        try:
+            # Access to the selected library. Defaults to the primary photos object.
+            library_object: PhotoLibrary = icloud.photos
+            if library:
+                if library in icloud.photos.private_libraries:
+                    library_object = icloud.photos.private_libraries[library]
+                elif library in icloud.photos.shared_libraries:
+                    library_object = icloud.photos.shared_libraries[library]
+                else:
+                    logger.error("Unknown library: %s", library)
+                    return 1
+        except PyiCloudAPIResponseException as err:
+            # For later: come up with a nicer message to the user. For now take the
+            # exception text
+            logger.error("error?? %s", err)
+            return 1
+
         while True:
-            # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
-            # case exit.
-            try:
-                if library:
-                    if library in icloud.photos.private_libraries:
-                        library_object = icloud.photos.private_libraries[library]
-                    elif library in icloud.photos.shared_libraries:
-                        library_object = icloud.photos.shared_libraries[library]
-                    else:
-                        logger.error("Unknown library: %s", library)
-                        return 1
-                photos = library_object.albums[album] if album else library_object.all
-            except PyiCloudAPIResponseException as err:
-                # For later: come up with a nicer message to the user. For now take the
-                # exception text
-                logger.error("error?? %s", err)
-                return 1
+            photos = library_object.albums[album] if album else library_object.all
 
             if list_albums:
                 print("Albums:")

@@ -161,10 +161,6 @@ class PhotoLibrary(object):
         self.library_type = library_type
         self.service_endpoint = self.service.get_service_endpoint(library_type)
 
-        self._albums: Optional[Dict[str, PhotoAlbum]] = None
-        self._all: Optional[PhotoAlbum] = None
-        self._recently_deleted: Optional[PhotoAlbum] = None
-
         url = ('%s/records/query?%s' %
                (self.service_endpoint, urlencode(self.service.params)))
         json_data = json.dumps({
@@ -186,41 +182,40 @@ class PhotoLibrary(object):
 
     @property
     def albums(self) -> Dict[str, "PhotoAlbum"]:
-        if not self._albums:
-            self._albums = {
+        albums = {
                 name: PhotoAlbum(self.service, self.service_endpoint, name, zone_id=self.zone_id, **props) # type: ignore[arg-type] # dynamically builing params
                 for (name, props) in self.SMART_FOLDERS.items()
             }
 
-            for folder in self._fetch_folders():
-                # FIXME: Handle subfolders
-                if folder['recordName'] in ('----Root-Folder----',
-                    '----Project-Root-Folder----') or \
-                    (folder['fields'].get('isDeleted') and
-                     folder['fields']['isDeleted']['value']):
-                    continue
+        for folder in self._fetch_folders():
+            # FIXME: Handle subfolders
+            if folder['recordName'] in ('----Root-Folder----',
+                '----Project-Root-Folder----') or \
+                (folder['fields'].get('isDeleted') and
+                    folder['fields']['isDeleted']['value']):
+                continue
 
-                folder_id = folder['recordName']
-                folder_obj_type = \
-                    "CPLContainerRelationNotDeletedByAssetDate:%s" % folder_id
-                folder_name = base64.b64decode(
-                    folder['fields']['albumNameEnc']['value']).decode('utf-8')
-                query_filter = [{
-                    "fieldName": "parentId",
-                    "comparator": "EQUALS",
-                    "fieldValue": {
-                        "type": "STRING",
-                        "value": folder_id
-                    }
-                }]
+            folder_id = folder['recordName']
+            folder_obj_type = \
+                "CPLContainerRelationNotDeletedByAssetDate:%s" % folder_id
+            folder_name = base64.b64decode(
+                folder['fields']['albumNameEnc']['value']).decode('utf-8')
+            query_filter = [{
+                "fieldName": "parentId",
+                "comparator": "EQUALS",
+                "fieldValue": {
+                    "type": "STRING",
+                    "value": folder_id
+                }
+            }]
 
-                album = PhotoAlbum(self.service, self.service_endpoint, folder_name,
-                                   'CPLContainerRelationLiveByAssetDate',
-                                   folder_obj_type, 'ASCENDING', query_filter,
-                                   zone_id=self.zone_id)
-                self._albums[folder_name] = album
+            album = PhotoAlbum(self.service, self.service_endpoint, folder_name,
+                                'CPLContainerRelationLiveByAssetDate',
+                                folder_obj_type, 'ASCENDING', query_filter,
+                                zone_id=self.zone_id)
+            albums[folder_name] = album
 
-        return self._albums
+        return albums
 
     def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
         if self.library_type == "shared":
@@ -243,15 +238,11 @@ class PhotoLibrary(object):
 
     @property
     def all(self) -> "PhotoAlbum":
-        if not self._all:
-            self._all = PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.WHOLE_COLLECTION) # type: ignore[arg-type] # dynamically builing params
-        return self._all
+        return PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.WHOLE_COLLECTION) # type: ignore[arg-type] # dynamically builing params
 
     @property
     def recently_deleted(self) -> "PhotoAlbum":
-        if not self._recently_deleted:
-            self._recently_deleted = PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.RECENTLY_DELETED) # type: ignore[arg-type] # dynamically builing params
-        return self._recently_deleted
+        return PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.RECENTLY_DELETED) # type: ignore[arg-type] # dynamically builing params
 
 class PhotosService(PhotoLibrary):
     """The 'Photos' iCloud service.
@@ -357,8 +348,6 @@ class PhotoAlbum(object):
         self.page_size = page_size
         self.exception_handler: Optional[Callable[[Exception, int], None]] = None
 
-        self._len: Optional[int] = None
-
         if zone_id:
             self._zone_id: Dict[str, Any] = zone_id
         else:
@@ -372,21 +361,18 @@ class PhotoAlbum(object):
         return self.photos
 
     def __len__(self) -> int:
-        if self._len is None:
-            url = ('%s/internal/records/query/batch?%s' %
-                   (self.service_endpoint,
-                    urlencode(self.service.params)))
-            request = self.service.session.post(
-                url,
-                data=json.dumps(self._count_query_gen(self.obj_type)),
-                headers={'Content-type': 'text/plain'}
-            )
-            response = request.json()
+        url = ('%s/internal/records/query/batch?%s' %
+                (self.service_endpoint,
+                urlencode(self.service.params)))
+        request = self.service.session.post(
+            url,
+            data=json.dumps(self._count_query_gen(self.obj_type)),
+            headers={'Content-type': 'text/plain'}
+        )
+        response = request.json()
 
-            self._len = (response["batch"][0]["records"][0]["fields"]
-                         ["itemCount"]["value"])
-
-        return self._len
+        return int(response["batch"][0]["records"][0]["fields"]
+                        ["itemCount"]["value"])
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.

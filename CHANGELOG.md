@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: `--skip-created-before` to limit assets by creation date [#466](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/466) [#1111](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1111)
+- bug: `--watch-with-interval` does not process updates from iCloud [#1144](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1144) [#1142](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1142)
 
 ## 1.27.5 (2025-05-08)
 
