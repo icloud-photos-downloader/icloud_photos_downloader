@@ -600,61 +600,60 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     assert result.exit_code == 0
 
     def test_handle_connection_error_name_id7(self) -> None:
-            base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-            def mock_raise_response_error(_arg: Any) -> NoReturn:
-                raise ConnectionError("Connection Error")
+        def mock_raise_response_error(_arg: Any) -> NoReturn:
+            raise ConnectionError("Connection Error")
 
-            with mock.patch.object(PhotoAsset, "download") as pa_download:
-                pa_download.side_effect = mock_raise_response_error
+        with mock.patch.object(PhotoAsset, "download") as pa_download:
+            pa_download.side_effect = mock_raise_response_error
 
-                # Let the initial authenticate() call succeed,
-                # but do nothing on the second try.
-                orig_authenticate = PyiCloudService.authenticate
+            # Let the initial authenticate() call succeed,
+            # but do nothing on the second try.
+            orig_authenticate = PyiCloudService.authenticate
 
-                def mocked_authenticate(self: PyiCloudService) -> None:
-                    if not hasattr(self, "already_authenticated"):
-                        orig_authenticate(self)
-                        setattr(self, "already_authenticated", True)  # noqa: B010
+            def mocked_authenticate(self: PyiCloudService) -> None:
+                if not hasattr(self, "already_authenticated"):
+                    orig_authenticate(self)
+                    setattr(self, "already_authenticated", True)  # noqa: B010
 
-                with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
-                    with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
-                        _, result = run_icloudpd_test(
-                            self.assertEqual,
-                            self.root_path,
-                            base_dir,
-                            "listing_photos.yml",
-                            [],
-                            [],
-                            [
-                                "--username",
-                                "jdoe@gmail.com",
-                                "--password",
-                                "password1",
-                                "--recent",
-                                "1",
-                                "--skip-videos",
-                                "--skip-live-photos",
-                                "--no-progress-bar",
-                                "--file-match-policy",
-                                "name-id7",
-                            ],
+            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
+                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
+                    _, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.root_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--file-match-policy",
+                            "name-id7",
+                        ],
+                    )
+
+                    # Error msg should be repeated 5 times
+                    assert (
+                        self._caplog.text.count(
+                            "Error downloading IMG_7409_QVk2Yyt.JPG, retrying after 0 seconds..."
                         )
+                        == 5
+                    )
 
-                        # Error msg should be repeated 5 times
-                        assert (
-                            self._caplog.text.count(
-                                "Error downloading IMG_7409_QVk2Yyt.JPG, retrying after 0 seconds..."
-                            )
-                            == 5
-                        )
-
-                        self.assertIn(
-                            "ERROR    Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
-                            self._caplog.text,
-                        )
-                        assert result.exit_code == 0
-
+                    self.assertIn(
+                        "ERROR    Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
+                        self._caplog.text,
+                    )
+                    assert result.exit_code == 0
 
     def test_handle_albums_error_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -2346,3 +2345,90 @@ class DownloadPhotoNameIDTestCase(TestCase):
         print_result_exception(result)
 
         self.assertEqual(result.exit_code, 0)
+
+    def test_download_and_skip_old_name_id7(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create: List[Tuple[str, str, int]] = [
+            # ("2018/07/30", "IMG_7408.JPG", 1151066),
+            # ("2018/07/30", "IMG_7407.JPG", 656257),
+        ]
+
+        files_to_download = [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--set-exif-datetime",
+                "--no-progress-bar",
+                "--file-match-policy",
+                "name-id7",
+                "--skip-created-before",
+                "2018-07-31",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading 5 original photos to {data_dir} ...",
+            self._caplog.text,
+        )
+        for dir_name, file_name in files_to_download:
+            file_path = os.path.normpath(os.path.join(dir_name, file_name))
+            self.assertIn(
+                f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
+                self._caplog.text,
+            )
+        self.assertNotIn(
+            "IMG_7409.MOV",
+            self._caplog.text,
+        )
+        for dir_name, file_name in [
+            (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
+        ]:
+            file_path = os.path.normpath(os.path.join(dir_name, file_name))
+            self.assertIn(
+                f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
+                self._caplog.text,
+            )
+
+        self.assertIn(
+            "DEBUG    Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "DEBUG    Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "DEBUG    Skipping IMG_7407_QVovd0F.JPG, as it was created 2018-07-30 11:44:05.108000+00:00, before 2018-07-31 00:00:00+00:00.",
+            self._caplog.text,
+        )
+        self.assertIn(
+            "DEBUG    Skipping IMG_7408_QVI4T2l.JPG, as it was created 2018-07-30 11:44:10.176000+00:00, before 2018-07-31 00:00:00+00:00.",
+            self._caplog.text,
+        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+
+        # Check that file was downloaded
+        # Check that mtime was updated to the photo creation date
+        photo_mtime = os.path.getmtime(
+            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG"))
+        )
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))

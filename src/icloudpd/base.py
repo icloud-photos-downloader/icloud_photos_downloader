@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
+import re
 from multiprocessing import freeze_support
 
 import foundation
@@ -32,6 +33,7 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
+    Union,
     cast,
 )
 
@@ -258,6 +260,28 @@ def file_match_policy_generator(
         return FileMatchPolicy.NAME_ID7
     else:
         raise ValueError(f"policy was provided with unsupported value of '{policy}'")
+
+
+def skip_created_before_generator(
+    _ctx: click.Context, _param: click.Parameter, formatted: str
+) -> Optional[Union[datetime.datetime, datetime.timedelta]]:
+    if formatted is None:
+        return None
+    # can be timestamp or timedelta
+    m = re.match(r"(\d+)([dD]{1})", formatted)
+    if m is not None and m.lastindex is not None and m.lastindex == 2:
+        return datetime.timedelta(days=float(m.group(1)))
+
+    # try timestamp
+    try:
+        dt = datetime.datetime.fromisoformat(formatted)
+        if dt.tzinfo is None:
+            dt = dt.astimezone(get_localzone())
+        return dt
+    except Exception as e:
+        raise ValueError(
+            f"Timestamp {formatted} for --skip-created-before parameter did not parse from ISO format successfully: {e}"
+        ) from e
 
 
 def locale_setter(_ctx: click.Context, _param: click.Parameter, use_os_locale: bool) -> bool:
@@ -571,6 +595,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     callback=locale_setter,
 )
 @click.option(
+    "--skip-created-before",
+    help="Do not process assets created before specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
+    callback=skip_created_before_generator,
+)
+@click.option(
     "--version",
     help="Show the version, commit hash and timestamp",
     is_flag=True,
@@ -625,6 +654,7 @@ def main(
     file_match_policy: FileMatchPolicy,
     mfa_provider: MFAProvider,
     use_os_locale: bool,
+    skip_created_before: Optional[Union[datetime.datetime, datetime.timedelta]],
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -778,6 +808,7 @@ def main(
                 dry_run,
                 file_match_policy,
                 xmp_sidecar,
+                skip_created_before,
             )
             if directory is not None
             else (lambda _s: lambda _c, _p: False),
@@ -836,6 +867,7 @@ def download_builder(
     dry_run: bool,
     file_match_policy: FileMatchPolicy,
     xmp_sidecar: bool,
+    skip_created_before: Optional[Union[datetime.datetime, datetime.timedelta]],
 ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
 
@@ -865,6 +897,23 @@ def download_builder(
                     "Could not convert photo created date to local timezone (%s)", photo.created
                 )
                 created_date = photo.created
+
+            if skip_created_before is not None:
+                if isinstance(skip_created_before, datetime.timedelta):
+                    temp_created_before = (
+                        datetime.datetime.now(get_localzone()) - skip_created_before
+                    )
+                elif isinstance(skip_created_before, datetime.datetime):
+                    temp_created_before = skip_created_before
+                else:
+                    raise ValueError(
+                        f"skip-created-before is of unsupported type {type(skip_created_before)}"
+                    )
+                if created_date < temp_created_before:
+                    logger.debug(
+                        f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
+                    )
+                    return False
 
             if folder_structure.lower() == "none":
                 date_path = ""
