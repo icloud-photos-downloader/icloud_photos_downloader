@@ -1,7 +1,10 @@
 import datetime
 import random
 import string
+import sys
 from unittest import TestCase
+
+import pytest
 
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 
@@ -32,17 +35,44 @@ class ParseTimestampeOrTimeDeltaTestCase(TestCase):
             #  not throwing is okay
 
     def test_naive(self) -> None:
+        assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.000600") == datetime.datetime(
+            2025, 1, 2, 3, 4, 5, 600
+        )
+        assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.006") == datetime.datetime(
+            2025, 1, 2, 3, 4, 5, 6000
+        )
+        assert parse_timestamp_or_timedelta("2025-01-02") == datetime.datetime(
+            2025, 1, 2, 0, 0, 0, 0
+        )
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11), reason="Requires Python 3.11 or higher for full parsing support"
+    )
+    def test_naive_311plus(self) -> None:
+        #  short
         assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.0006") == datetime.datetime(
             2025, 1, 2, 3, 4, 5, 600
         )
 
     def test_aware(self) -> None:
+        assert parse_timestamp_or_timedelta(
+            "2025-01-02T03:04:05.000600+08:00"
+        ) == datetime.datetime(
+            2025, 1, 2, 3, 4, 5, 600, datetime.timezone(datetime.timedelta(hours=8))
+        )
+        assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.006+08:00") == datetime.datetime(
+            2025, 1, 2, 3, 4, 5, 6000, datetime.timezone(datetime.timedelta(hours=8))
+        )
+
+    @pytest.mark.skipif(
+        sys.version_info < (3, 11), reason="Requires Python 3.11 or higher for full parsing support"
+    )
+    def test_aware_311plus(self) -> None:
+        #  short
         assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.0006Z") == datetime.datetime(
             2025, 1, 2, 3, 4, 5, 600, datetime.timezone.utc
         )
-
-    def test_aware_8(self) -> None:
-        assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.0006+0800") == datetime.datetime(
+        assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.0006+08:00") == datetime.datetime(
             2025, 1, 2, 3, 4, 5, 600, datetime.timezone(datetime.timedelta(hours=8))
         )
 
