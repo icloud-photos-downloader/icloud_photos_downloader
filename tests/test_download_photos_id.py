@@ -2349,7 +2349,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_download_and_skip_old_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [
+        files_to_create: List[Tuple[str, str, int]] = [
             # ("2018/07/30", "IMG_7408.JPG", 1151066),
             # ("2018/07/30", "IMG_7407.JPG", 656257),
         ]
