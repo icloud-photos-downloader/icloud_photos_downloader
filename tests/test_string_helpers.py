@@ -77,7 +77,8 @@ class ParseTimestampeOrTimeDeltaTestCase(TestCase):
         )
 
     def test_timestamp_invalid(self) -> None:
-        assert isinstance(parse_timestamp_or_timedelta("2025-01"), ValueError)
+        assert parse_timestamp_or_timedelta("2025-01") is None
+        assert parse_timestamp_or_timedelta("") is None
 
     def test_delta_totality(self) -> None:
         digits = string.digits
@@ -95,4 +96,5 @@ class ParseTimestampeOrTimeDeltaTestCase(TestCase):
         assert parse_timestamp_or_timedelta("0d") == datetime.timedelta(days=0)
 
     def test_delta_invalid(self) -> None:
-        assert isinstance(parse_timestamp_or_timedelta("-1d"), ValueError)
+        assert parse_timestamp_or_timedelta("-1d") is None
+        assert parse_timestamp_or_timedelta("") is None

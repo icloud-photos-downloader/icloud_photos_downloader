@@ -267,11 +267,19 @@ def skip_created_before_generator(
     if formatted is None:
         return None
     result = parse_timestamp_or_timedelta(formatted)
-    if isinstance(result, ValueError):
-        raise ValueError(f"--skip-created-before parameter: {result}")
-    if isinstance(result, datetime.datetime) and result.tzinfo is None:
-        result = result.astimezone(get_localzone())
+    if result is None:
+        raise ValueError(
+            "--skip-created-before parameter did not parse ISO timestamp or interval successfully"
+        )
+    if isinstance(result, datetime.datetime):
+        return ensure_tzinfo(get_localzone(), result)
     return result
+
+
+def ensure_tzinfo(tz: datetime.tzinfo, input: datetime.datetime) -> datetime.datetime:
+    if input.tzinfo is None:
+        return input.astimezone(tz)
+    return input
 
 
 def locale_setter(_ctx: click.Context, _param: click.Parameter, use_os_locale: bool) -> bool:
