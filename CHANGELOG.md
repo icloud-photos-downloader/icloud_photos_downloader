@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: `--skip-created-before` to limit assets by creation date [#466](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/466) [#1111](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1111)
+
 ## 1.27.5 (2025-05-08)
 
 - fix: HEIF file extension [#1133](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1133)
