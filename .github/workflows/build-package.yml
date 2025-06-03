@@ -2192,7 +2192,7 @@ jobs:
         run: >
           sudo mkdir -p /etc/docker &&
           sudo touch /etc/docker/daemon.json &&
-          (cat /etc/docker/daemon.json | jq --arg registry 172.17.0.1:5000 '."insecure-registries" += [$registry]' | sudo tee /etc/docker/daemon.json)
+          (cat /etc/docker/daemon.json | jq --arg registry http://172.17.0.1:5000 '."insecure-registries" += [$registry]' | sudo tee /etc/docker/daemon.json)
 
       - name: Reload Docker 
         id: reload_docker
