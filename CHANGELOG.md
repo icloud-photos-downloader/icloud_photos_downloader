@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: UserWarning about obsoleted code [#1148](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1144) [#1142](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1148)
+
 ## 1.28.0 (2025-06-02)
 
 - feat: `--skip-created-before` to limit assets by creation date [#466](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/466) [#1111](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1111)
