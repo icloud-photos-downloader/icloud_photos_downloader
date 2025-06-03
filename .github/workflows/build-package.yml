@@ -2241,6 +2241,10 @@ jobs:
             (skopeo copy --preserve-digests --dest-tls-verify=false --all oci-archive:/dist/icloudpd-${{inputs.icloudpd_version}}-oci.tar docker://172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }}) &&
             (skopeo copy --preserve-digests --src-tls-verify=false --dest-tls-verify=false --all docker://172.17.0.1:5000/icloudpd/icloudpd:commit-${{ github.sha }} docker://172.17.0.1:5000/icloudpd/icloudpd:latest)
   
+      - name: List Docker Images on ${{ matrix.prop[1] }} 
+        run: >
+          (docker images)
+
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3 
