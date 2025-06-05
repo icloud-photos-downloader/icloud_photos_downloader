@@ -5,7 +5,7 @@ from uuid import uuid1
 import json
 import logging
 from tempfile import gettempdir
-from os import path, mkdir
+from os import path, mkdir, getenv
 from re import match
 import http.cookiejar as cookielib
 import getpass
@@ -134,7 +134,7 @@ class PyiCloudService:
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
             'Referer': '%s/' % self.HOME_ENDPOINT,
-            'User-Agent': 'Opera/9.52 (X11; Linux i686; U; en)'
+            'User-Agent': getenv('USER-AGENT', 'Opera/9.52 (X11; Linux i686; U; en)')
         })
 
         cookiejar_path = self.cookiejar_path
