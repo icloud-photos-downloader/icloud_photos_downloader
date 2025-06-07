@@ -6,4 +6,4 @@ set -euo pipefail
 # required params: <starter name1>
 # output: <starter name1>
 
-PYTHONHASHSEED=42 pyinstaller --collect-all keyrings.alt --copy-metadata keyrings.alt --hidden-import pkg_resources.extern --exclude-module pkg_resources --hidden-import pkgutil --collect-all tzdata --add-data "src/icloudpd/server/static:static" --add-data "src/icloudpd/server/templates:templates" --onefile src/starters/$1.py --name $1
+PYTHONHASHSEED=42 pyinstaller --collect-all keyrings.alt --copy-metadata keyrings.alt --hidden-import pkgutil --collect-all tzdata --add-data "src/icloudpd/server/static:static" --add-data "src/icloudpd/server/templates:templates" --onefile src/starters/$1.py --name $1

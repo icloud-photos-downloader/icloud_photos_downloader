@@ -1,7 +1,7 @@
 # Multi-arch build (local):
 #     docker buildx create --use --driver=docker-container --name container --bootstrap
-#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/amd64 --builder=container --progress plain -o dist -f Dockerfile.build-musl
-# ,linux/arm64,linux/arm/v7
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/arm64 --builder=container --progress plain -o dist -f Dockerfile.build-musl
+# ,linux/amd64,linux/arm/v7
 # rust links from https://forge.rust-lang.org/infra/other-installation-methods.html#standalone-installers
 
 # map source image to base
