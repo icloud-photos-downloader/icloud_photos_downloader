@@ -99,9 +99,9 @@ class AutodeletePhotosTestCase(TestCase):
 
                 # check files
                 for file_name in files:
-                    assert os.path.exists(
-                        os.path.join(data_dir, file_name)
-                    ), f"{file_name} expected, but missing"
+                    assert os.path.exists(os.path.join(data_dir, file_name)), (
+                        f"{file_name} expected, but missing"
+                    )
 
                 result = runner.invoke(
                     main,
@@ -141,9 +141,9 @@ class AutodeletePhotosTestCase(TestCase):
                 )
 
                 for file_name in files:
-                    assert not os.path.exists(
-                        os.path.join(data_dir, file_name)
-                    ), f"{file_name} not expected, but present"
+                    assert not os.path.exists(os.path.join(data_dir, file_name)), (
+                        f"{file_name} not expected, but present"
+                    )
 
     def test_download_autodelete_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -202,9 +202,9 @@ class AutodeletePhotosTestCase(TestCase):
 
             # check files
             for file_name in files:
-                assert os.path.exists(
-                    os.path.join(data_dir, file_name)
-                ), f"{file_name} expected, but missing"
+                assert os.path.exists(os.path.join(data_dir, file_name)), (
+                    f"{file_name} expected, but missing"
+                )
 
             result = runner.invoke(
                 main,
@@ -244,9 +244,9 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
             for file_name in files:
-                assert not os.path.exists(
-                    os.path.join(data_dir, file_name)
-                ), f"{file_name} not expected, but present"
+                assert not os.path.exists(os.path.join(data_dir, file_name)), (
+                    f"{file_name} not expected, but present"
+                )
 
     def test_autodelete_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -350,14 +350,14 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files_to_create:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} not expected, but present"
+            assert not os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} not expected, but present"
+            )
 
     def test_retry_delete_after_download_session_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -448,9 +448,9 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
@@ -547,9 +547,9 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
@@ -630,9 +630,9 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
@@ -715,9 +715,9 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
@@ -832,14 +832,14 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files_to_create:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         for file_name in files_to_delete:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected to stay, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected to stay, but missing"
+            )
 
     def test_autodelete_photos_folder_none(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -926,14 +926,14 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files_to_create:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} not expected, but present"
+            assert not os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} not expected, but present"
+            )
 
     def test_autodelete_photos_lp(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -1021,14 +1021,14 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files_to_create:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} not expected, but present"
+            assert not os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} not expected, but present"
+            )
 
     def test_autodelete_photos_lp_heic(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -1116,11 +1116,11 @@ class AutodeletePhotosTestCase(TestCase):
 
         # check files
         for file_name in files_to_create:
-            assert os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} expected, but missing"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} expected, but missing"
+            )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(
-                os.path.join(data_dir, file_name)
-            ), f"{file_name} not expected, but present"
+            assert not os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} not expected, but present"
+            )

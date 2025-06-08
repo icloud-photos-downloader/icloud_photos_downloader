@@ -24,7 +24,9 @@ def version_info_formatted() -> str:
     ts = datetime.datetime.fromtimestamp(vi.commit_timestamp, tz=pytz.utc).astimezone(
         get_localzone()
     )
-    return f"version:{vi.version}, commit sha:{vi.commit_sha}, commit timestamp:{ts:%c %Z}".replace("  ", " ")
+    return f"version:{vi.version}, commit sha:{vi.commit_sha}, commit timestamp:{ts:%c %Z}".replace(
+        "  ", " "
+    )
 
 
 def bytes_decode(encoding: str) -> Callable[[bytes], str]:
