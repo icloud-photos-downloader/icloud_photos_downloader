@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.28.1 (2025-06-08)
+
 - fix: UserWarning about obsoleted code [#1148](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1144) [#1142](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1148)
 
 ## 1.28.0 (2025-06-02)
