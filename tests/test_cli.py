@@ -3,7 +3,7 @@ import inspect
 import os
 import shutil
 from typing import Sequence, Tuple
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import pytest
 from click.testing import CliRunner
@@ -207,4 +207,112 @@ class CliTestCase(TestCase):
                 "1",
             ],
         )
+        assert result.exit_code == 2
+
+
+class EnvironmentVariablesTestCase(TestCase):
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
+        self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
+
+    def test_cli(self) -> None:
+        runner = CliRunner()
+        result = runner.invoke(main, ["--help"])
+        assert result.exit_code == 0
+
+    def test_log_levels(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        parameters: Sequence[Tuple[str, Sequence[str], Sequence[str]]] = [
+            ("debug", ["DEBUG", "INFO"], []),
+            ("info", ["INFO"], ["DEBUG"]),
+            ("error", [], ["DEBUG", "INFO"]),
+        ]
+        for log_level, expected, not_expected in parameters:
+            self._caplog.clear()
+            with mock.patch.dict(
+                "os.environ",
+                {
+                    "ICLOUDPD_USERNAME": "jdoe@gmail.com",
+                    "ICLOUDPD_PASSWORD": "password1",
+                    "ICLOUDPD_RECENT": "0",
+                    "ICLOUDPD_LOG_LEVEL": log_level,
+                },
+            ):
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
+                    [],
+                )
+            assert result.exit_code == 0
+            for text in expected:
+                self.assertIn(text, self._caplog.text)
+            for text in not_expected:
+                self.assertNotIn(text, self._caplog.text)
+
+    def test_missing_directory(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        # need path removed
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        runner = CliRunner(
+            env={
+                "ICLOUDPD_USERNAME": "jdoe@gmail.com",
+                "ICLOUDPD_PASSWORD": "password1",
+                "ICLOUDPD_RECENT": "0",
+                "ICLOUDPD_LOG_LEVEL": "info",
+                "ICLOUDPD_DIRECTORY": base_dir,
+            }
+        )
+        result = runner.invoke(main)
+        assert result.exit_code == 2
+
+        files_in_result = glob.glob(os.path.join(base_dir, "**/*.*"), recursive=True)
+
+        assert sum(1 for _ in files_in_result) == 0
+
+    def test_missing_directory_param(self) -> None:
+        runner = CliRunner(
+            env={
+                "ICLOUDPD_USERNAME": "jdoe@gmail.com",
+                "ICLOUDPD_PASSWORD": "password1",
+                "ICLOUDPD_RECENT": "0",
+                "ICLOUDPD_LOG_LEVEL": "info",
+            }
+        )
+        result = runner.invoke(main)
+        assert result.exit_code == 2
+
+    def test_conflict_options_delete_after_download_and_auto_delete(self) -> None:
+        runner = CliRunner(
+            env={
+                "ICLOUDPD_USERNAME": "jdoe@gmail.com",
+                "ICLOUDPD_PASSWORD": "password1",
+                "ICLOUDPD_DIRECTORY": "/tmp",
+                "ICLOUDPD_DELETE_AFTER_DOWNLOAD": "true",
+                "ICLOUDPD_AUTO_DELETE": "true",
+            }
+        )
+        result = runner.invoke(main)
+        assert result.exit_code == 2
+
+    def test_conflict_options_delete_after_download_and_keep_icloud_recent_days(self) -> None:
+        runner = CliRunner(
+            env={
+                "ICLOUDPD_USERNAME": "jdoe@gmail.com",
+                "ICLOUDPD_PASSWORD": "password1",
+                "ICLOUDPD_DIRECTORY": "/tmp",
+                "ICLOUDPD_DELETE_AFTER_DOWNLOAD": "true",
+                "ICLOUDPD_KEEP_ICLOUD_RECENT_DAYS": "1",
+            }
+        )
+        result = runner.invoke(main)
         assert result.exit_code == 2
