@@ -210,9 +210,9 @@ class FolderStructureTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == len(files_to_download)
 
         for file_name in files_to_download:
-            assert os.path.exists(
-                os.path.join(data_dir, os.path.normpath(file_name))
-            ), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), (
+                f"File {file_name} expected, but does not exist"
+            )
 
     def test_folder_structure_bad_format(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

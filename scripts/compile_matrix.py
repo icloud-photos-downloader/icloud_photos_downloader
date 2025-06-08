@@ -9,7 +9,7 @@ def _stats(files):
     total = len([f for f in files if f[4] != "na"])
     passed = len([f for f in files if f[4] == "pass"])
     print(
-        f"Compatibility rate: {round(100*passed/total,1) if total > 0 else 0}% ({passed} passed out of {total})"
+        f"Compatibility rate: {round(100 * passed / total, 1) if total > 0 else 0}% ({passed} passed out of {total})"
     )
     print("")
 

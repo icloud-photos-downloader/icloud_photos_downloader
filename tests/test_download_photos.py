@@ -1704,9 +1704,9 @@ class DownloadPhotoTestCase(TestCase):
         assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
 
         for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(
-                os.path.join(data_dir, os.path.normpath(file_name))
-            ), f"File {file_name} expected, but does not exist"
+            assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), (
+                f"File {file_name} expected, but does not exist"
+            )
 
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

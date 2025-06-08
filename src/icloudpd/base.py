@@ -322,7 +322,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "-p",
     "--password",
-    help="Your iCloud password " "(default: use PyiCloud keyring or prompt for password)",
+    help="Your iCloud password (default: use PyiCloud keyring or prompt for password)",
     metavar="<password>",
     # is_eager=True,
 )
@@ -333,7 +333,7 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 )
 @click.option(
     "--cookie-directory",
-    help="Directory to store cookies for authentication " "(default: ~/.pyicloud)",
+    help="Directory to store cookies for authentication (default: ~/.pyicloud)",
     metavar="</cookie/directory>",
     default="~/.pyicloud",
 )
@@ -939,10 +939,9 @@ def download_builder(
                         },
                         outfile,
                     )
-                print("icloudpd has saved the photo record to: " "./icloudpd-photo-error.json")
+                print("icloudpd has saved the photo record to: ./icloudpd-photo-error.json")
                 print(
-                    "Please create a Gist with the contents of this file: "
-                    "https://gist.github.com"
+                    "Please create a Gist with the contents of this file: https://gist.github.com"
                 )
                 print(
                     "Then create an issue on GitHub: "

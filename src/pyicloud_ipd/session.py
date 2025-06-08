@@ -48,8 +48,7 @@ class PyiCloudSession(Session):
         super().__init__()
 
     @override
-    # type: ignore
-    def request(self, method: str, url, **kwargs):
+    def request(self, method: str, url, **kwargs): # type: ignore
 
         # Charge logging to the right service endpoint
         callee = inspect.stack()[2]
