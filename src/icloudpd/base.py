@@ -42,7 +42,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
 from icloudpd import constants, download, exif_datetime
-from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
+from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import Config
 from icloudpd.counter import Counter
@@ -1248,29 +1248,7 @@ def core(
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
-    raise_error_on_2sa = (
-        smtp_username is not None
-        or notification_email is not None
-        or notification_script is not None
-    )
-    try:
-        icloud = authenticator(
-            logger,
-            domain,
-            filename_cleaner,
-            lp_filename_generator,
-            raw_policy,
-            file_match_policy,
-            password_providers,
-            mfa_provider,
-            status_exchange,
-        )(
-            username,
-            cookie_directory,
-            raise_error_on_2sa,
-            os.environ.get("CLIENT_ID"),
-        )
-    except TwoStepAuthRequiredError:
+    def _notify_mfa_error():
         if notification_script is not None:
             subprocess.call([notification_script])
         if smtp_username is not None or notification_email is not None:
@@ -1285,7 +1263,23 @@ def core(
                 notification_email,
                 notification_email_from,
             )
-        return 1
+
+    icloud = authenticator(
+        logger,
+        domain,
+        filename_cleaner,
+        lp_filename_generator,
+        raw_policy,
+        file_match_policy,
+        password_providers,
+        mfa_provider,
+        status_exchange,
+    )(
+        username,
+        cookie_directory,
+        _notify_mfa_error,
+        os.environ.get("CLIENT_ID"),
+    )
 
     if auth_only:
         logger.info("Authentication completed successfully")
