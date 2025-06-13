@@ -1249,7 +1249,7 @@ def core(
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
-    summary_tracker = SummaryTracker()
+    summary_tracker = SummaryTracker(logger)
 
     raise_error_on_2sa = (
         smtp_username is not None
