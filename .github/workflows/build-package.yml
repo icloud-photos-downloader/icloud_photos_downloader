@@ -43,7 +43,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-src
+        name: icloudpd-src
         if-no-files-found: error
         path: |
           dist/icloudpd*.whl
@@ -296,7 +296,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-src
+        name: icloudpd-dummywhl-src
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -338,7 +338,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-linux
+        name: icloudpd-dummywhl-linux
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -379,7 +379,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-macos
+        name: icloudpd-dummywhl-macos
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -420,7 +420,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-windows
+        name: icloudpd-dummywhl-windows
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl

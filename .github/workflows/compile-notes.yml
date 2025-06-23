@@ -36,7 +36,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-notes
+        name: icloudpd-notes
         if-no-files-found: error
         path: |
           dist/notes-${{inputs.icloudpd_version}}.md
