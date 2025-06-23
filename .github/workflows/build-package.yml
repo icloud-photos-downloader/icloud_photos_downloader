@@ -48,6 +48,46 @@ jobs:
         path: |
           dist/icloudpd*.whl
 
+  get_version_thumbprint:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download version info
+      uses: actions/download-artifact@v4
+      with:
+        name: icloudpd-version-info
+        path: |
+          src/foundation
+
+    - name: Set up Python 3.13
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.13'
+    
+    - name: Install
+      run: >
+        export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check -e .
+
+    - name: Get Version
+      id: get_version
+      run: >
+        mkdir -p dist &&
+        icloudpd --version | tee dist/icloudpd-version-thumbprint.txt
+          
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-version-thumbprint
+        if-no-files-found: error
+        path: |
+          dist/icloudpd-version-thumbprint.txt
           
   get_expected_version_linux_apt:
     runs-on: ubuntu-22.04
@@ -3832,6 +3872,7 @@ jobs:
       - get_expected_version_linux_apt
       - get_expected_version_linux_apk
       - get_expected_version_macos
+      - get_version_thumbprint
     defaults:
       run:
         shell: bash
@@ -3866,12 +3907,18 @@ jobs:
           path: |
             tzlc
 
+      - name: Download Version
+        uses: actions/download-artifact@v4
+        with:
+          pattern: icloudpd-version-thumbprint
+          merge-multiple: true
+          path: |
+            dist
+
       - name: Compile Compatibility Report
         run: |
-          echo "debugging report..."
-          scripts/compile_compatibility.py compatibility
           echo "save report..."
-          scripts/compile_compatibility.py compatibility > dist/compatibility-${{inputs.icloudpd_version}}.md
+          scripts/compile_compatibility.py dist/icloudpd-version-thumbprint.txt compatibility | tee dist/compatibility-${{inputs.icloudpd_version}}.md
 
       - name: Upload compatibility report
         uses: actions/upload-artifact@v4
@@ -3884,9 +3931,7 @@ jobs:
       - name: Compile tzlc Report
         run: |
           echo "save report..."
-          scripts/compile_tzlc.py tzlc "${{needs.get_expected_version_linux_apt.outputs.expected_version}}" "${{needs.get_expected_version_linux_apk.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}"> dist/tzlc-${{inputs.icloudpd_version}}.md
-          echo "debugging report..."
-          cat dist/tzlc-${{inputs.icloudpd_version}}.md
+          scripts/compile_tzlc.py dist/icloudpd-version-thumbprint.txt tzlc "${{needs.get_expected_version_linux_apt.outputs.expected_version}}" "${{needs.get_expected_version_linux_apk.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}" | tee dist/tzlc-${{inputs.icloudpd_version}}.md
 
       - name: Upload tzlc report
         uses: actions/upload-artifact@v4
