@@ -33,7 +33,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-oci
+          name: icloudpd-oci
           path: | 
             dist 
  
@@ -68,7 +68,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: |
             dist/npm
 
@@ -102,14 +102,14 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-src
+          name: icloudpd-src
           path: |
             dist
 
       - name: Download artifacts (bin)
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-*
+          pattern: icloudpd-bin-*
           merge-multiple: true
           path: |
             dist
@@ -129,14 +129,14 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-src
+          name: icloudpd-src
           path: |
             dist
 
       - name: Download artifacts (bin)
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-*
+          pattern: icloudpd-bin-*
           merge-multiple: true
           path: |
             dist
@@ -144,28 +144,28 @@ jobs:
       - name: Download artifacts (docker)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-oci
+          name: icloudpd-oci
           path: |
             dist
 
       - name: Download artifacts (compatibility)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility
+          name: icloudpd-compatibility
           path: |
             dist
 
       - name: Download artifacts (tzlc compatibility)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc
+          name: icloudpd-tzlc
           path: |
             dist
 
       - name: Download artifacts (notes)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-notes
+          name: icloudpd-notes
           path: |
             dist
 

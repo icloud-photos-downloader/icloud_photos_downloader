@@ -19,7 +19,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-version-info
+        name: icloudpd-version-info
         if-no-files-found: error
         path: |
           src/foundation/__init__.py

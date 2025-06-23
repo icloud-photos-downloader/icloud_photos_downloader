@@ -22,7 +22,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -43,7 +43,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-src
+        name: icloudpd-src
         if-no-files-found: error
         path: |
           dist/icloudpd*.whl
@@ -61,7 +61,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -100,7 +100,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -143,7 +143,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -194,7 +194,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -256,7 +256,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.platform[1] }}-apt
+        name: icloudpd-bin-linux-${{ matrix.platform[1] }}-apt
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -275,7 +275,7 @@ jobs:
     - name: Download src
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-src
+        name: icloudpd-src
         path: |
           dist
 
@@ -296,7 +296,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-src
+        name: icloudpd-dummywhl-src
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -316,7 +316,7 @@ jobs:
     - name: Download bin
       uses: actions/download-artifact@v4
       with:
-        pattern: icloudpd-${{github.sha}}-bin-linux-*
+        pattern: icloudpd-bin-linux-*
         merge-multiple: true
         path: |
           dist
@@ -338,7 +338,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-linux
+        name: icloudpd-dummywhl-linux
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -357,7 +357,7 @@ jobs:
     - name: Download bin
       uses: actions/download-artifact@v4
       with:
-        pattern: icloudpd-${{github.sha}}-bin-macos-*
+        pattern: icloudpd-bin-macos-*
         merge-multiple: true
         path: |
           dist
@@ -379,7 +379,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-macos
+        name: icloudpd-dummywhl-macos
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -398,7 +398,7 @@ jobs:
     - name: Download bin
       uses: actions/download-artifact@v4
       with:
-        pattern: icloudpd-${{github.sha}}-bin-windows-*
+        pattern: icloudpd-bin-windows-*
         merge-multiple: true
         path: |
           dist
@@ -420,7 +420,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{ github.sha }}-dummywhl-windows
+        name: icloudpd-dummywhl-windows
         if-no-files-found: error
         path: |
           dist/icloudpd-0.0.1234567890-*.whl
@@ -451,7 +451,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -507,7 +507,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-linux-${{ matrix.platform[1] }}-apk
+        name: icloudpd-bin-linux-${{ matrix.platform[1] }}-apk
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -525,7 +525,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -555,7 +555,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-macos-amd64
+        name: icloudpd-bin-macos-amd64
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -573,7 +573,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -603,7 +603,7 @@ jobs:
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-bin-windows-amd64
+        name: icloudpd-bin-windows-amd64
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -620,7 +620,7 @@ jobs:
     - name: Download artifacts
       uses: actions/download-artifact@v4
       with: 
-        pattern: icloudpd-${{github.sha}}-bin-linux-*
+        pattern: icloudpd-bin-linux-*
         merge-multiple: true
         path: | 
           dist 
@@ -650,7 +650,7 @@ jobs:
     - name: Upload artifacts 
       uses: actions/upload-artifact@v4 
       with: 
-        name: icloudpd-${{github.sha}}-oci 
+        name: icloudpd-oci 
         if-no-files-found: error 
         path: | 
           dist/icloud*.tar
@@ -675,7 +675,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-bin-*
+          pattern: icloudpd-bin-*
           merge-multiple: true
           path: |
             dist
@@ -687,7 +687,7 @@ jobs:
       - name: Upload artifacts 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           if-no-files-found: error 
           path: | 
             dist/npm/
@@ -809,7 +809,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-src
+          name: icloudpd-dummywhl-src
           path: |
             dist
 
@@ -817,7 +817,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-linux
+          name: icloudpd-dummywhl-linux
           path: |
             dist
 
@@ -866,7 +866,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error
           path: |
             compatibility/*
@@ -905,7 +905,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error
           path: |
             tzlc/*
@@ -1009,7 +1009,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-src
+          name: icloudpd-dummywhl-src
           path: |
             dist
 
@@ -1017,7 +1017,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-linux
+          name: icloudpd-dummywhl-linux
           path: |
             dist
 
@@ -1064,7 +1064,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error
           path: |
             compatibility/*
@@ -1102,7 +1102,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error
           path: |
             tzlc/*
@@ -1139,14 +1139,14 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-src
+          name: icloudpd-dummywhl-src
           path: |
             dist
 
       - name: Download artifacts (macos)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-macos
+          name: icloudpd-dummywhl-macos
           path: |
             dist
 
@@ -1174,7 +1174,7 @@ jobs:
       - name: Upload compatibility result
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-compatibility-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
           path: |
             compatibility/*
@@ -1203,7 +1203,7 @@ jobs:
       - name: Upload tzlc result
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-tzlc-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
           path: |
             tzlc/*
@@ -1228,14 +1228,14 @@ jobs:
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-src
+          name: icloudpd-dummywhl-src
           path: |
             dist
 
       - name: Download artifacts (windows)
         uses: actions/download-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-dummywhl-windows
+          name: icloudpd-dummywhl-windows
           path: |
             dist
 
@@ -1262,7 +1262,7 @@ jobs:
       - name: Upload compatibility result
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility-windows-pip-${{ matrix.os }}-amd64
+          name: icloudpd-compatibility-windows-pip-${{ matrix.os }}-amd64
           if-no-files-found: error
           path: |
             compatibility/*
@@ -1374,7 +1374,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          pattern: icloudpd-bin-linux-*
           merge-multiple: true
           path: | 
             dist 
@@ -1420,7 +1420,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1456,7 +1456,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -1568,7 +1568,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          pattern: icloudpd-bin-linux-*
           merge-multiple: true
           path: | 
             dist 
@@ -1614,7 +1614,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1650,7 +1650,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -1751,7 +1751,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          pattern: icloudpd-bin-linux-*
           merge-multiple: true
           path: | 
             dist 
@@ -1797,7 +1797,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -1834,7 +1834,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -1935,7 +1935,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/download-artifact@v4 
         with: 
-          pattern: icloudpd-${{github.sha}}-bin-linux-*
+          pattern: icloudpd-bin-linux-*
           merge-multiple: true
           path: | 
             dist 
@@ -1981,7 +1981,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2018,7 +2018,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2054,7 +2054,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-macos-amd64
+          name: icloudpd-bin-macos-amd64
           path: | 
             dist 
  
@@ -2082,7 +2082,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-compatibility-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2108,7 +2108,7 @@ jobs:
       - name: Upload tzlc result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-tzlc-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2140,7 +2140,7 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-bin-windows-amd64 
+          name: icloudpd-bin-windows-amd64 
           path: | 
             dist 
  
@@ -2164,7 +2164,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-windows-bin-${{ matrix.prop[0] }}-amd64
+          name: icloudpd-compatibility-windows-bin-${{ matrix.prop[0] }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2235,7 +2235,7 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-oci
+          name: icloudpd-oci
           path: | 
             dist 
  
@@ -2290,7 +2290,7 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-compatibility-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2317,7 +2317,7 @@ jobs:
         if: steps.reload_docker.outcome != 'failure'
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
+          name: icloudpd-tzlc-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2465,7 +2465,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -2521,7 +2521,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2553,7 +2553,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2704,7 +2704,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -2757,7 +2757,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2785,7 +2785,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -2906,7 +2906,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -2962,7 +2962,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -2995,7 +2995,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
+          name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -3115,7 +3115,7 @@ jobs:
         if: steps.get_image.outputs.digest != '' 
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -3170,7 +3170,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -3202,7 +3202,7 @@ jobs:
         if: steps.get_image.outputs.digest != ''  
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
+          name: icloudpd-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -3287,7 +3287,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
+          name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -3300,7 +3300,7 @@ jobs:
       - name: Upload tzlc result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
+          name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -3367,7 +3367,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -3407,7 +3407,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-compatibility-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -3429,7 +3429,7 @@ jobs:
       - name: Upload tzlc result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-tzlc-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -3496,7 +3496,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -3535,7 +3535,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-compatibility-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -3556,7 +3556,7 @@ jobs:
       - name: Upload tzlc result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-tzlc-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
+          name: icloudpd-tzlc-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
           path: | 
             tzlc/* 
@@ -3613,7 +3613,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -3654,7 +3654,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-windows-npm-${{ matrix.os }}-amd64
+          name: icloudpd-compatibility-windows-npm-${{ matrix.os }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -3711,7 +3711,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-npm
+          name: icloudpd-npm
           path: | 
             dist/npm
 
@@ -3751,7 +3751,7 @@ jobs:
       - name: Upload compatibility result 
         uses: actions/upload-artifact@v4 
         with: 
-          name: icloudpd-${{github.sha}}-compatibility-windows-npx-${{ matrix.os }}-amd64
+          name: icloudpd-compatibility-windows-npx-${{ matrix.os }}-amd64
           if-no-files-found: error 
           path: | 
             compatibility/* 
@@ -3805,7 +3805,7 @@ jobs:
       - name: Download Compatibility Results
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-compatibility-*
+          pattern: icloudpd-compatibility-*
           merge-multiple: true
           path: |
             compatibility
@@ -3813,7 +3813,7 @@ jobs:
       - name: Download tzlc Results
         uses: actions/download-artifact@v4
         with:
-          pattern: icloudpd-${{github.sha}}-tzlc-*
+          pattern: icloudpd-tzlc-*
           merge-multiple: true
           path: |
             tzlc
@@ -3828,7 +3828,7 @@ jobs:
       - name: Upload compatibility report
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-compatibility
+          name: icloudpd-compatibility
           if-no-files-found: error
           path: |
             dist/compatibility-${{inputs.icloudpd_version}}.md
@@ -3843,7 +3843,7 @@ jobs:
       - name: Upload tzlc report
         uses: actions/upload-artifact@v4
         with:
-          name: icloudpd-${{github.sha}}-tzlc
+          name: icloudpd-tzlc
           if-no-files-found: error
           path: |
             dist/tzlc-${{inputs.icloudpd_version}}.md

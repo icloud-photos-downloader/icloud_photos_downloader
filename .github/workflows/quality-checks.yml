@@ -93,7 +93,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
@@ -135,7 +135,7 @@ jobs:
     - name: Download version info
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-version-info
+        name: icloudpd-version-info
         path: |
           src/foundation
 
