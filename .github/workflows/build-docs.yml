@@ -19,7 +19,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: |
-        pip3 install --disable-pip-version-check -e .[dev]
+        pip3 install --disable-pip-version-check -e .[doc]
 
     - name: Build HTML
       run: |

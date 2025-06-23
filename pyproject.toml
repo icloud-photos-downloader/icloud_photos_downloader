@@ -48,6 +48,8 @@ dev = [
     "twine==6.1.0",
     "pyinstaller==6.14.0",
     "wheel==0.45.1",
+]
+doc = [
     "furo==2024.8.6",
     "Sphinx==7.4.7",
     "sphinx-autobuild==2024.10.3",
