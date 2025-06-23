@@ -44,6 +44,7 @@ ARG TARGETVARIANT
 WORKDIR /app
 COPY LICENSE.md .
 COPY README_PYPI.md .
+COPY requirements-pip.txt .
 COPY scripts scripts/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
@@ -62,7 +63,8 @@ RUN \
     . .venv/bin/activate && \
     echo "List pip cache..." && \
     pip3 cache list && \
-    pip3 install --disable-pip-version-check .[dev,devlinux] && \
+    python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && \
+    pip3 install --disable-pip-version-check . --group dev --group devlinux && \
     BOOTLOADER_CC=musl-gcc pip3 install --disable-pip-version-check staticx==0.14.1
 RUN \
     . .venv/bin/activate && \

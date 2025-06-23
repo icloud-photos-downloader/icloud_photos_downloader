@@ -33,6 +33,7 @@ ARG QEMU_CPU
 WORKDIR /app
 COPY LICENSE.md .
 COPY README_PYPI.md .
+COPY requirements-pip.txt .
 COPY scripts scripts/
 COPY binary_dist binary_dist/
 COPY pyproject.toml .
@@ -43,7 +44,8 @@ RUN \
     --mount=type=cache,target=/root/.cache/pip,sharing=shared \
     python3 -m venv .venv && \
     . .venv/bin/activate && \
-    pip3 install --disable-pip-version-check .[dev,devlinux]
+    python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && \
+    pip3 install --disable-pip-version-check . --group dev --group devlinux
 RUN \
     . .venv/bin/activate && \
     scripts/build_bin2 icloudpd icloud  && \

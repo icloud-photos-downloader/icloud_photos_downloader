@@ -18,8 +18,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check -e .[doc]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check --group doc
 
     - name: Build HTML
       run: |
