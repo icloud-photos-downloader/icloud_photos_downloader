@@ -1,0 +1,41 @@
+# build (local):
+#     docker buildx create --use --driver=docker-container --name container --bootstrap
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/arm64 --builder=container --progress plain -o docs/_build/html -f Dockerfile.build-doc
+
+# map source image to base
+FROM python:3.13 AS base
+ENV DEBIAN_FRONTEND=noninteractive
+WORKDIR /app
+RUN \
+  --mount=type=cache,target=/var/cache/apt,sharing=shared \
+  --mount=type=cache,target=/var/lib/apt,sharing=shared \
+  rm -f /etc/apt/apt.conf.d/docker-clean && \
+  echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' >/etc/apt/apt.conf.d/keep-cache && \
+  apt-get update && \
+  apt-get install -y patchelf musl-tools
+  
+FROM base AS builder
+WORKDIR /app
+COPY LICENSE.md .
+COPY README_PYPI.md .
+COPY requirements-pip.txt .
+COPY scripts scripts/
+COPY pyproject.toml .
+COPY docs docs/
+RUN mkdir /app/src
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=shared \
+    python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    echo "List pip cache..." && \
+    pip3 cache list && \
+    python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && \
+    pip3 install --disable-pip-version-check --group doc
+RUN \
+    . .venv/bin/activate && \
+    echo "Building binaries..." && \
+    sphinx-build docs docs/_build/html
+
+FROM scratch
+WORKDIR /
+COPY --from=builder /app/docs/_build/html/* .

@@ -8,23 +8,53 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    - uses: docker/setup-buildx-action@v3
+      id: setup
+
+    - name: Cache Build
+      uses: actions/cache@v4
+      id: cache
+      with:
+        # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
+        path: .cache
+        key: build-doc-${{ hashFiles('pyproject.toml','Dockerfile.build-doc') }}
+        restore-keys: |
+          build-doc-
+      
+    - name: Create folders on cache miss
+      run: |
+        mkdir -p .cache/var/cache/apt
+        mkdir -p .cache/var/lib/apt
+        mkdir -p .cache/root/.cache/pip
+        mkdir -p .cache/root/.distrib/rust
+        mkdir -p .cache/root/.cargo/registry
+      
+    - name: Inject docker cache
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            ".cache/var/cache/apt": "/var/cache/apt",
+            ".cache/var/lib/apt": "/var/lib/apt",
+            ".cache/root/.cache/pip": "/root/.cache/pip",
+            ".cache/root/.cargo/registry": "/root/.cargo/registry",
+            ".cache/root/.distrib/rust": "/root/.distrib/rust"
+          }
+
+    - name: Build Doc
+      uses: docker/build-push-action@v6
+      with:
+        push: false
+        platforms: linux/arm64
+        # do not cache layers
+        file: Dockerfile.build
+        outputs: type=local,dest=docs/_build/html
+        provenance: false
+        context: .
+
     - name: Setup Pages
       id: pages
       uses: actions/configure-pages@v5
-
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
-      with:
-        python-version: '3.13'
-    
-    - name: Install Dev dependencies
-      run: >
-        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
-        pip3 install --disable-pip-version-check --group doc
-
-    - name: Build HTML
-      run: |
-        sphinx-build docs docs/_build/html
 
     - name: Upload artifact
       uses: actions/upload-pages-artifact@v3
