@@ -18,7 +18,9 @@ def special_content_checker(expected_content):
 
 if __name__ == "__main__":
     if len(sys.argv) < 4:
-        print("Params: <version-thumbprint-file> <folder> <expected content> [<expected content>...]")
+        print(
+            "Params: <version-thumbprint-file> <folder> <expected content> [<expected content>...]"
+        )
         sys.exit(1)
     print("## Timezone and Locale Compatibility")
     print(
@@ -26,7 +28,7 @@ if __name__ == "__main__":
     )
     print("")
     version_thumbprint_file = sys.argv[1]
-    with open(version_thumbprint_file, "r") as file:
+    with open(version_thumbprint_file) as file:
         version_thumbprint = file.read()
         print(f"Version: {version_thumbprint}")
         print("")
