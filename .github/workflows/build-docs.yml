@@ -47,7 +47,7 @@ jobs:
         push: false
         platforms: linux/arm64
         # do not cache layers
-        file: Dockerfile.build
+        file: Dockerfile.build-doc
         outputs: type=local,dest=docs/_build/html
         provenance: false
         context: .
