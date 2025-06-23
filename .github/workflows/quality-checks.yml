@@ -64,7 +64,7 @@ jobs:
         python-version: ${{ matrix.python-version }} 
         cache: 'pip' 
     - name: Install Test dependencies 
-      run: |> 
+      run: > 
         python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
         pip3 install --disable-pip-version-check . --group test
     - name: Type Check 
