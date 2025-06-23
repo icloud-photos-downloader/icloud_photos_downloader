@@ -17,14 +17,14 @@ jobs:
     - name: Download artifacts (compatibility)
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-compatibility
+        name: icloudpd-compatibility
         path: |
           dist
 
     - name: Download artifacts (changelog)
       uses: actions/download-artifact@v4
       with:
-        name: icloudpd-${{github.sha}}-changelog
+        name: icloudpd-changelog
         path: |
           dist
 
