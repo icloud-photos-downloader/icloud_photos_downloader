@@ -1,0 +1,25 @@
+# build (local):
+#     docker buildx create --use --driver=docker-container --name container --bootstrap
+#     docker buildx build . --cache-to type=local,dest=.cache,mode=max --cache-from type=local,src=.cache --platform=linux/arm64 --builder=container --progress plain -o docs/_build/html -f Dockerfile.build-doc
+
+FROM python:3.13 AS builder
+WORKDIR /app
+COPY LICENSE.md .
+COPY README.md .
+COPY requirements-pip.txt .
+COPY pyproject.toml .
+COPY docs docs/
+RUN \
+    --mount=type=cache,target=/root/.cache/pip,sharing=shared \
+    python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && \
+    pip3 install --disable-pip-version-check --group doc
+RUN \
+    . .venv/bin/activate && \
+    echo "Building docs..." && \
+    sphinx-build docs docs/_build/html
+
+FROM scratch
+WORKDIR /
+COPY --from=builder /app/docs/_build/html .
