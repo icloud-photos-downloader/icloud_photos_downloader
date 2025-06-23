@@ -537,7 +537,7 @@ jobs:
     - name: Install Dev dependencies
       run: >
         python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
-        pip3 install --disable-pip-version-check -e --group dev
+        pip3 install --disable-pip-version-check -e . --group dev
 
     - name: Build Release Executables
       run: |

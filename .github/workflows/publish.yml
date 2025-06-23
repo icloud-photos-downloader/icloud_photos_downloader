@@ -97,7 +97,7 @@ jobs:
       
       - name: Install Dev dependencies
         run: |
-          pip3 install -e --group dev
+          pip3 install --group dev
 
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
