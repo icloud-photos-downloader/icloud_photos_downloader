@@ -17,16 +17,21 @@ def special_content_checker(expected_content):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 3:
-        print("Params: <folder> <expected content> [<expected content>...]")
+    if len(sys.argv) < 4:
+        print("Params: <version-thumbprint-file> <folder> <expected content> [<expected content>...]")
         sys.exit(1)
     print("## Timezone and Locale Compatibility")
     print(
         "Checks if `icloudpd` can be installed using minimal effort and ran bare minimum functionality of displaying version and commit timestamp in local timezone and RU locale. Minimal effort may require installing default version of package manager, timezone data, and locales using OS tools"
     )
     print("")
-    folder = sys.argv[1]
-    expected_content = [c.strip() for c in sys.argv[2:]]
+    version_thumbprint_file = sys.argv[1]
+    with open(version_thumbprint_file, "r") as file:
+        version_thumbprint = file.read()
+        print(f"Version: {version_thumbprint}")
+        print("")
+    folder = sys.argv[2]
+    expected_content = [c.strip() for c in sys.argv[3:]]
     # content is special when it exists, but is invalid
     print_breakdowns(
         folder,
