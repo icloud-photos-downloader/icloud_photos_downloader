@@ -921,6 +921,14 @@ jobs:
             "python:3.13-alpine3.19", #image
             ] 
           - [ 
+            "alpine_3_22", #variant name
+            "alpine:3.22", #image
+            ] 
+          - [ 
+            "alpine_3_21", #variant name
+            "alpine:3.21", #image
+            ] 
+          - [ 
             "alpine_3_20", #variant name
             "alpine:3.20", #image
             ] 
@@ -1663,6 +1671,14 @@ jobs:
       matrix: 
         image:  
           - [ 
+            "alpine_3_22", #variant name
+            "alpine:3.22", #image
+            ] 
+          - [ 
+            "alpine_3_21", #variant name
+            "alpine:3.21", #image
+            ] 
+          - [ 
             "alpine_3_20", #variant name
             "alpine:3.20", #image
             ] 
@@ -1846,6 +1862,14 @@ jobs:
       fail-fast: false 
       matrix: 
         image:  
+          - [ 
+            "alpine_3_22", #variant name
+            "alpine:3.22", #image
+            ] 
+          - [ 
+            "alpine_3_21", #variant name
+            "alpine:3.21", #image
+            ] 
           - [ 
             "alpine_3_20", #variant name
             "alpine:3.20", #image
@@ -2798,6 +2822,14 @@ jobs:
       matrix: 
         image:  
           - [ 
+            "alpine_3_22", #variant name
+            "alpine:3.22", #image
+            ] 
+          - [ 
+            "alpine_3_21", #variant name
+            "alpine:3.21", #image
+            ] 
+          - [ 
             "alpine_3_20", #variant name
             "alpine:3.20", #image
             ] 
@@ -3007,6 +3039,14 @@ jobs:
       matrix: 
         image:  
           - [ 
+            "alpine_3_22", #variant name
+            "alpine:3.22", #image
+            ] 
+          - [ 
+            "alpine_3_21", #variant name
+            "alpine:3.21", #image
+            ] 
+          - [ 
             "alpine_3_20", #variant name
             "alpine:3.20", #image
             ] 
@@ -3215,6 +3255,14 @@ jobs:
       fail-fast: false 
       matrix: 
         image:  
+          - [ 
+            "alpine_3_22", #variant name
+            "alpine:3.22", #image
+            ] 
+          - [ 
+            "alpine_3_21", #variant name
+            "alpine:3.21", #image
+            ] 
           - [ 
             "alpine_3_20", #variant name - TODO Test
             "alpine:3.20", #image
