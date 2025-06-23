@@ -41,8 +41,9 @@ jobs:
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Test dependencies
-      run: |
-        pip3 install --disable-pip-version-check .[test]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check . --group test
 
     - name: Lint
       run: |
@@ -63,8 +64,9 @@ jobs:
         python-version: ${{ matrix.python-version }} 
         cache: 'pip' 
     - name: Install Test dependencies 
-      run: | 
-        pip3 install --disable-pip-version-check .[test] 
+      run: |> 
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check . --group test
     - name: Type Check 
       run: | 
         scripts/type_check 
@@ -102,8 +104,9 @@ jobs:
         cache: 'pip' 
     
     - name: Install Test dependencies 
-      run: | 
-        pip3 install --disable-pip-version-check .[test] 
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && 
+        pip3 install --disable-pip-version-check . --group test
  
     - name: Test
       run: |
@@ -143,8 +146,9 @@ jobs:
         cache: 'pip' 
     
     - name: Install Test dependencies 
-      run: | 
-        pip3 install --disable-pip-version-check .[test] 
+      run: > 
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check . --group test
  
     - name: Test
       run: |

@@ -32,8 +32,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check -e .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check -e . --group dev
 
     - name: Build Python Wheel
       run: |
@@ -72,6 +73,7 @@ jobs:
     - name: Install Dev dependencies
       run: >
         export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
         pip3 install --disable-pip-version-check -e .
 
     - name: Get Version
@@ -112,6 +114,7 @@ jobs:
           export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
           apk add --update tzdata musl-locales musl-locales-lang &&
           cd /work &&
+          python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
           pip3 install . &&
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result
 
@@ -282,8 +285,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check --group dev
 
     - name: Build Dummy Python Wheel
       run: |
@@ -323,8 +327,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check --group dev
 
     - name: Build Dummy Python Wheel
       run: |
@@ -363,8 +368,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check --group dev
 
     - name: Build Dummy Python Wheel
       run: |
@@ -403,8 +409,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check --group dev
 
     - name: Build Dummy Python Wheel
       run: |
@@ -528,8 +535,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check -e .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check -e --group dev
 
     - name: Build Release Executables
       run: |
@@ -575,8 +583,9 @@ jobs:
         python-version: '3.13'
     
     - name: Install Dev dependencies
-      run: |
-        pip3 install --disable-pip-version-check -e .[dev]
+      run: >
+        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
+        pip3 install --disable-pip-version-check -e . --group dev
 
     - name: Build Release Executables
       run: |

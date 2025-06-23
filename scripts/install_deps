@@ -2,4 +2,4 @@
 # this is used to setup development env (all required dependencies for all cases)
 set -euo pipefail
 python3 -m pip install --disable-pip-version-check -r requirements-pip.txt
-pip3 install --disable-pip-version-check -e .[test,dev]
+pip3 install --disable-pip-version-check -e . --group test --group dev
