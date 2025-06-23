@@ -77,13 +77,10 @@ jobs:
 
     - name: Get Version
       id: get_version
-      run: |
-        icloudpd --version > dist/icloudpd-version-thumbprint.txt
+      run: >
+        mkdir -p dist &&
+        icloudpd --version > tee dist/icloudpd-version-thumbprint.txt
           
-    - name: Log version
-      run: |
-        cat dist/icloudpd-version-thumbprint.txt
-
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
