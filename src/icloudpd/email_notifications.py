@@ -3,19 +3,19 @@
 import datetime
 import logging
 import smtplib
-from typing import Optional, cast
+from typing import cast
 
 
 def send_2sa_notification(
     logger: logging.Logger,
     username: str,
-    smtp_email: Optional[str],
-    smtp_password: Optional[str],
+    smtp_email: str | None,
+    smtp_password: str | None,
     smtp_host: str,
     smtp_port: int,
     smtp_no_tls: bool,
-    to_addr: Optional[str],
-    from_addr: Optional[str] = None,
+    to_addr: str | None,
+    from_addr: str | None = None,
 ) -> None:
     """Send an email notification when 2SA is expired"""
     to_addr = cast(str, to_addr if to_addr is not None else smtp_email)

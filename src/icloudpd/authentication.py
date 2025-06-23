@@ -3,7 +3,7 @@
 import logging
 import sys
 import time
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, Tuple
 
 import click
 
@@ -28,24 +28,22 @@ def authenticator(
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
     file_match_policy: FileMatchPolicy,
-    password_providers: Dict[
-        str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
-    ],
+    password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
-) -> Callable[[str, Optional[str], bool, Optional[str]], PyiCloudService]:
+) -> Callable[[str, str | None, bool, str | None], PyiCloudService]:
     """Wraping authentication with domain context"""
 
     def authenticate_(
         username: str,
-        cookie_directory: Optional[str] = None,
+        cookie_directory: str | None = None,
         raise_error_on_2sa: bool = False,
-        client_id: Optional[str] = None,
+        client_id: str | None = None,
     ) -> PyiCloudService:
         """Authenticate with iCloud username and password"""
         logger.debug("Authenticating...")
-        icloud: Optional[PyiCloudService] = None
-        _valid_password: Optional[str] = None
+        icloud: PyiCloudService | None = None
+        _valid_password: str | None = None
         for _, _pair in password_providers.items():
             _reader, _ = _pair
             _password = _reader(username)

@@ -1,6 +1,5 @@
 from enum import Enum
 from threading import Lock
-from typing import Optional
 
 from icloudpd.config import Config
 from icloudpd.progress import Progress
@@ -23,8 +22,8 @@ class StatusExchange:
     def __init__(self) -> None:
         self.lock = Lock()
         self._status = Status.NO_INPUT_NEEDED
-        self._payload: Optional[str] = None
-        self._config: Optional[Config] = None
+        self._payload: str | None = None
+        self._config: Config | None = None
         self._progress = Progress()
 
     def get_status(self) -> Status:
@@ -50,7 +49,7 @@ class StatusExchange:
             )
             return True
 
-    def get_payload(self) -> Optional[str]:
+    def get_payload(self) -> str | None:
         with self.lock:
             if self._status not in [
                 Status.SUPPLIED_MFA,
@@ -66,7 +65,7 @@ class StatusExchange:
         with self.lock:
             self._config = config
 
-    def get_config(self) -> Optional[Config]:
+    def get_config(self) -> Config | None:
         with self.lock:
             return self._config
 

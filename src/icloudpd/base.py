@@ -28,11 +28,9 @@ from typing import (
     Dict,
     Iterable,
     NoReturn,
-    Optional,
     Sequence,
     Tuple,
     TypeVar,
-    Union,
     cast,
 )
 
@@ -146,8 +144,8 @@ def mfa_provider_generator(
         raise ValueError(f"mfa provider has unsupported value of '{provider}'")
 
 
-def ask_password_in_console(_user: str) -> Optional[str]:
-    return typing.cast(Optional[str], click.prompt("iCloud Password", hide_input=True))
+def ask_password_in_console(_user: str) -> str | None:
+    return typing.cast(str | None, click.prompt("iCloud Password", hide_input=True))
     # return getpass.getpass(
     #         f'iCloud Password for {_user}:'
     #     )
@@ -155,8 +153,8 @@ def ask_password_in_console(_user: str) -> Optional[str]:
 
 def get_password_from_webui(
     logger: Logger, status_exchange: StatusExchange
-) -> Callable[[str], Optional[str]]:
-    def _intern(_user: str) -> Optional[str]:
+) -> Callable[[str], str | None]:
+    def _intern(_user: str) -> str | None:
         """Request two-factor authentication through Webui."""
         if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_PASSWORD):
             logger.error("Expected NO_INPUT_NEEDED, but got something else")
@@ -216,8 +214,8 @@ def keyring_password_writter(logger: Logger) -> Callable[[str, str], None]:
 
 def password_provider_generator(
     _ctx: click.Context, _param: click.Parameter, providers: Sequence[str]
-) -> Dict[str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]]:
-    def _map(provider: str) -> Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]:
+) -> Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]]:
+    def _map(provider: str) -> Tuple[Callable[[str], str | None], Callable[[str, str], None]]:
         if provider == "webui":
             return (ask_password_in_console, dummy_password_writter)
         if provider == "console":
@@ -263,7 +261,7 @@ def file_match_policy_generator(
 
 def skip_created_before_generator(
     _ctx: click.Context, _param: click.Parameter, formatted: str
-) -> Optional[Union[datetime.datetime, datetime.timedelta]]:
+) -> datetime.datetime | datetime.timedelta | None:
     if formatted is None:
         return None
     result = parse_timestamp_or_timedelta(formatted)
@@ -606,16 +604,16 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     callback=report_version,
 )
 def main(
-    directory: Optional[str],
+    directory: str | None,
     username: str,
-    password: Optional[str],
+    password: str | None,
     auth_only: bool,
     cookie_directory: str,
     size: Sequence[AssetVersionSize],
     live_photo_size: LivePhotoVersionSize,
-    recent: Optional[int],
-    until_found: Optional[int],
-    album: Optional[str],
+    recent: int | None,
+    until_found: int | None,
+    album: str | None,
     list_albums: bool,
     library: str,
     list_libraries: bool,
@@ -627,32 +625,30 @@ def main(
     only_print_filenames: bool,
     folder_structure: str,
     set_exif_datetime: bool,
-    smtp_username: Optional[str],
-    smtp_password: Optional[str],
+    smtp_username: str | None,
+    smtp_password: str | None,
     smtp_host: str,
     smtp_port: int,
     smtp_no_tls: bool,
-    notification_email: Optional[str],
-    notification_email_from: Optional[str],
+    notification_email: str | None,
+    notification_email_from: str | None,
     log_level: str,
     no_progress_bar: bool,
-    notification_script: Optional[str],
+    notification_script: str | None,
     threads_num: int,
     delete_after_download: bool,
-    keep_icloud_recent_days: Optional[int],
+    keep_icloud_recent_days: int | None,
     domain: str,
-    watch_with_interval: Optional[int],
+    watch_with_interval: int | None,
     dry_run: bool,
     filename_cleaner: Callable[[str], str],
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
-    password_providers: Dict[
-        str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
-    ],
+    password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     file_match_policy: FileMatchPolicy,
     mfa_provider: MFAProvider,
     use_os_locale: bool,
-    skip_created_before: Optional[Union[datetime.datetime, datetime.timedelta]],
+    skip_created_before: datetime.datetime | datetime.timedelta | None,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -865,7 +861,7 @@ def download_builder(
     dry_run: bool,
     file_match_policy: FileMatchPolicy,
     xmp_sidecar: bool,
-    skip_created_before: Optional[Union[datetime.datetime, datetime.timedelta]],
+    skip_created_before: datetime.datetime | datetime.timedelta | None,
 ) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
     """factory for downloader"""
 
@@ -1206,14 +1202,14 @@ def compose_handlers(
 
 def core(
     downloader: Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]],
-    directory: Optional[str],
+    directory: str | None,
     username: str,
     auth_only: bool,
     cookie_directory: str,
     primary_sizes: Sequence[AssetVersionSize],
-    recent: Optional[int],
-    until_found: Optional[int],
-    album: Optional[str],
+    recent: int | None,
+    until_found: int | None,
+    album: str | None,
     list_albums: bool,
     library: str,
     list_libraries: bool,
@@ -1221,28 +1217,26 @@ def core(
     auto_delete: bool,
     only_print_filenames: bool,
     folder_structure: str,
-    smtp_username: Optional[str],
-    smtp_password: Optional[str],
+    smtp_username: str | None,
+    smtp_password: str | None,
     smtp_host: str,
     smtp_port: int,
     smtp_no_tls: bool,
-    notification_email: Optional[str],
-    notification_email_from: Optional[str],
+    notification_email: str | None,
+    notification_email_from: str | None,
     no_progress_bar: bool,
-    notification_script: Optional[str],
+    notification_script: str | None,
     delete_after_download: bool,
-    keep_icloud_recent_days: Optional[int],
+    keep_icloud_recent_days: int | None,
     domain: str,
     logger: logging.Logger,
-    watch_interval: Optional[int],
+    watch_interval: int | None,
     dry_run: bool,
     filename_cleaner: Callable[[str], str],
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
     file_match_policy: FileMatchPolicy,
-    password_providers: Dict[
-        str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
-    ],
+    password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
 ) -> int:
@@ -1344,7 +1338,7 @@ def core(
 
             photos.exception_handler = error_handler
 
-            photos_count: Optional[int] = len(photos)
+            photos_count: int | None = len(photos)
 
             photos_enumerator: Iterable[PhotoAsset] = photos
 

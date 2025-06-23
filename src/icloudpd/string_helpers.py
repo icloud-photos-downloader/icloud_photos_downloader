@@ -2,7 +2,6 @@
 
 import datetime
 import re
-from typing import Optional, Union
 
 
 def truncate_middle(string: str, length: int) -> str:
@@ -21,7 +20,7 @@ def truncate_middle(string: str, length: int) -> str:
 
 def parse_timedelta(
     formatted: str,
-) -> Optional[datetime.timedelta]:
+) -> datetime.timedelta | None:
     m = re.match(r"(\d+)([dD]{1})", formatted)
     if m is not None and m.lastindex is not None and m.lastindex == 2:
         return datetime.timedelta(days=float(m.group(1)))
@@ -30,7 +29,7 @@ def parse_timedelta(
 
 def parse_timestamp(
     formatted: str,
-) -> Optional[datetime.datetime]:
+) -> datetime.datetime | None:
     try:
         dt = datetime.datetime.fromisoformat(formatted)
         return dt
@@ -40,7 +39,7 @@ def parse_timestamp(
 
 def parse_timestamp_or_timedelta(
     formatted: str,
-) -> Optional[Union[datetime.datetime, datetime.timedelta]]:
+) -> datetime.datetime | datetime.timedelta | None:
     p1 = parse_timedelta(formatted)
     if p1 is None:
         return parse_timestamp(formatted)

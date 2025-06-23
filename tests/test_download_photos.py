@@ -5,7 +5,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, List, NoReturn, Optional, Sequence, Tuple
+from typing import Any, List, NoReturn, Sequence, Tuple
 from unittest import TestCase, mock
 from unittest.mock import ANY, PropertyMock, call
 
@@ -896,7 +896,7 @@ class DownloadPhotoTestCase(TestCase):
             # Can't mock `astimezone` because it's a readonly property, so have to
             # create a new class that inherits from datetime.datetime
             class NewDateTime(datetime.datetime):
-                def astimezone(self, _tz: (Optional[Any]) = None) -> NoReturn:
+                def astimezone(self, _tz: (Any | None) = None) -> NoReturn:
                     raise ValueError("Invalid date")
 
             dt_mock.return_value = NewDateTime(2018, 1, 1, 0, 0, 0)

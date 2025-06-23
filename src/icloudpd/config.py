@@ -1,4 +1,4 @@
-from typing import Callable, Dict, Optional, Sequence, Tuple
+from typing import Callable, Dict, Sequence, Tuple
 
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -9,15 +9,15 @@ from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 class Config:
     def __init__(
         self,
-        directory: Optional[str],
+        directory: str | None,
         username: str,
         auth_only: bool,
         cookie_directory: str,
         primary_sizes: Sequence[AssetVersionSize],
         live_photo_size: LivePhotoVersionSize,
-        recent: Optional[int],
-        until_found: Optional[int],
-        album: Optional[str],
+        recent: int | None,
+        until_found: int | None,
+        album: str | None,
         list_albums: bool,
         library: str,
         list_libraries: bool,
@@ -29,24 +29,24 @@ class Config:
         only_print_filenames: bool,
         folder_structure: str,
         set_exif_datetime: bool,
-        smtp_username: Optional[str],
+        smtp_username: str | None,
         smtp_host: str,
         smtp_port: int,
         smtp_no_tls: bool,
-        notification_email: Optional[str],
-        notification_email_from: Optional[str],
+        notification_email: str | None,
+        notification_email_from: str | None,
         log_level: str,
         no_progress_bar: bool,
-        notification_script: Optional[str],
+        notification_script: str | None,
         threads_num: int,
         delete_after_download: bool,
-        keep_icloud_recent_days: Optional[int],
+        keep_icloud_recent_days: int | None,
         domain: str,
-        watch_with_interval: Optional[int],
+        watch_with_interval: int | None,
         dry_run: bool,
         raw_policy: RawTreatmentPolicy,
         password_providers: Dict[
-            str, Tuple[Callable[[str], Optional[str]], Callable[[str, str], None]]
+            str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
         ],
         file_match_policy: FileMatchPolicy,
         mfa_provider: MFAProvider,

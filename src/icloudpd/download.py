@@ -3,7 +3,6 @@
 import datetime
 import logging
 import os
-import socket
 import time
 
 from requests import Response, Timeout
@@ -125,7 +124,7 @@ def download_media(
             )
             break
 
-        except (ConnectionError, socket.timeout, PyiCloudAPIResponseException, Timeout) as ex:
+        except (TimeoutError, ConnectionError, PyiCloudAPIResponseException, Timeout) as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
                 if retries > 0:

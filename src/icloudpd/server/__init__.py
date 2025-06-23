@@ -1,7 +1,6 @@
 import os
 import sys
 from logging import Logger
-from typing import Union
 
 import waitress
 from flask import Flask, Response, make_response, render_template, request
@@ -19,11 +18,11 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         app.static_folder = os.path.join(bundle_dir, "static")
 
     @app.route("/")
-    def index() -> Union[Response, str]:
+    def index() -> Response | str:
         return render_template("index.html")
 
     @app.route("/status", methods=["GET"])
-    def get_status() -> Union[Response, str]:
+    def get_status() -> Response | str:
         _status = _status_exchange.get_status()
         _config = _status_exchange.get_config()
         _progress = _status_exchange.get_progress()
@@ -38,7 +37,7 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         return render_template("status.html", status=_status)
 
     @app.route("/code", methods=["POST"])
-    def set_code() -> Union[Response, str]:
+    def set_code() -> Response | str:
         _config = _status_exchange.get_config()
         code = request.form.get("code")
         if code is not None:
@@ -51,7 +50,7 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         )  # incorrect code
 
     @app.route("/password", methods=["POST"])
-    def set_password() -> Union[Response, str]:
+    def set_password() -> Response | str:
         _config = _status_exchange.get_config()
         password = request.form.get("password")
         if password is not None:
@@ -64,12 +63,12 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         )  # incorrect code
 
     @app.route("/resume", methods=["POST"])
-    def resume() -> Union[Response, str]:
+    def resume() -> Response | str:
         _status_exchange.get_progress().resume = True
         return make_response("Ok", 200)
 
     @app.route("/cancel", methods=["POST"])
-    def cancel() -> Union[Response, str]:
+    def cancel() -> Response | str:
         _status_exchange.get_progress().cancel = True
         return make_response("Ok", 200)
 
