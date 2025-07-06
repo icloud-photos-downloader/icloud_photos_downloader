@@ -70,6 +70,11 @@ class PyiCloudSession(Session):
 
         request_logger.debug(response.headers)
 
+        if response.status_code == 503:
+            api_error = PyiCloudAPIResponseException(response.reason, str(response.status_code))
+            LOGGER.error(api_error)
+            raise api_error
+
         for header, value in HEADER_DATA.items():
             if response.headers.get(header):
                 session_arg = value
