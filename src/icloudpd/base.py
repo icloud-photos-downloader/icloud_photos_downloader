@@ -49,6 +49,7 @@ from icloudpd.paths import clean_filename, local_download_path, remove_unicode_c
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
+from icloudpd.summary import SummaryTracker
 from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -1237,6 +1238,8 @@ def core(
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
+    summary_tracker = SummaryTracker(logger)
+
     raise_error_on_2sa = (
         smtp_username is not None
         or notification_email is not None
@@ -1278,6 +1281,8 @@ def core(
     if auth_only:
         logger.info("Authentication completed successfully")
         return 0
+
+    summary_tracker.start_timer()
 
     if list_libraries:
         library_names = (
@@ -1497,4 +1502,6 @@ def core(
             else:
                 break  # pragma: no cover
 
+    summary_tracker.stop_timer()
+    summary_tracker.print_summary()
     return 0
