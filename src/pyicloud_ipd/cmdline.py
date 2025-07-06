@@ -262,7 +262,7 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 username,
-                password,
+                lambda : password,
             )
             if (
                 not got_from_keyring

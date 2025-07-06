@@ -71,22 +71,28 @@ class PyiCloudService:
         domain:str,
         raw_policy: RawTreatmentPolicy,
         file_match_policy: FileMatchPolicy,
-        apple_id: str, password:str, cookie_directory:Optional[str]=None, verify:bool=True,
-        client_id:Optional[str]=None, with_family:bool=True, http_timeout:float=30.0
+        apple_id: str,
+        password_provider: Callable[[], str | None], 
+        cookie_directory:Optional[str]=None, 
+        verify:bool=True,
+        client_id:Optional[str]=None, 
+        with_family:bool=True, 
+        http_timeout:float=30.0
     ):
         self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy
         self.file_match_policy = file_match_policy
-        self.user: Dict[str, Any] = {"accountName": apple_id, "password": password}
+        self.apple_id = apple_id
+        self.password_provider: Callable[[], str|None] = password_provider
         self.data: Dict[str, Any] = {}
         self.params: Dict[str, Any] = {}
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
         self.http_timeout = http_timeout
 
-        self.password_filter = PyiCloudPasswordFilter(password)
-        LOGGER.addFilter(self.password_filter)
+        # set it when we get password
+        self.password_filter: PyiCloudPasswordFilter|None = None
 
         if (domain == 'com'):
             self.AUTH_ENDPOINT = "https://idmsa.apple.com/appleauth/auth"
@@ -162,7 +168,7 @@ class PyiCloudService:
 
         self._photos: Optional[PhotosService] = None
 
-    def authenticate(self, force_refresh:bool=False, service:Optional[Any]=None) -> None:
+    def authenticate(self, force_refresh:bool=False) -> None:
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.
@@ -177,28 +183,22 @@ class PyiCloudService:
             except PyiCloudAPIResponseException:
                 LOGGER.debug("Invalid authentication token, will log in from scratch.")
 
-        if not login_successful and service is not None:
-            app = self.data["apps"][service]
-            if "canLaunchWithOneFactor" in app and app["canLaunchWithOneFactor"]:
-                LOGGER.debug(
-                    "Authenticating as %s for %s", self.user["accountName"], service
-                )
-                try:
-                    self._authenticate_with_credentials_service(service)
-                    login_successful = True
-                except Exception:
-                    LOGGER.debug(
-                        "Could not log into service. Attempting brand new login."
-                    )
-
         if not login_successful:
-            LOGGER.debug("Authenticating as %s", self.user["accountName"])
+            password = self.password_provider()
+            if not password:
+                LOGGER.debug("Password Provider did not give any data")
+                return None                
+            # set logging filter
+            self.password_filter = PyiCloudPasswordFilter(password)
+            LOGGER.addFilter(self.password_filter)
+
+            LOGGER.debug(f"Authenticating as {self.apple_id}")
             try:
-                self._authenticate_srp()
+                self._authenticate_srp(password)
             except PyiCloudFailedLoginException as error:
                 LOGGER.error("Failed to login with srp, falling back to old raw password authentication. Error: %s", error)
                 try:
-                    self._authenticate_raw_password()
+                    self._authenticate_raw_password(password)
                 except PyiCloudFailedLoginException as error:
                     LOGGER.error("Failed to login with raw password. Error: %s", error)
                     raise error
@@ -237,25 +237,7 @@ class PyiCloudService:
             msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
             raise PyiCloudConnectionException(msg)
 
-    def _authenticate_with_credentials_service(self, service: str) -> None:
-        """Authenticate to a specific service using credentials."""
-        data = {
-            "appName": service,
-            "apple_id": self.user["accountName"],
-            "password": self.user["password"],
-        }
-
-        try:
-            self.session.post(
-                "%s/accountLogin" % self.SETUP_ENDPOINT, data=json.dumps(data)
-            )
-
-            self.data = self._validate_token()
-        except PyiCloudAPIResponseException as error:
-            msg = "Invalid email/password combination."
-            raise PyiCloudFailedLoginException(msg, error) from error
-
-    def _authenticate_srp(self) -> None:
+    def _authenticate_srp(self, password:str) -> None:
         class SrpPassword():
             # srp uses the encoded password at process_challenge(), thus set_encrypt_info() should be called before that
             def __init__(self, password: str):
@@ -273,10 +255,10 @@ class PyiCloudService:
                 return hashlib.pbkdf2_hmac('sha256', password_digest, self.salt, self.iterations, key_length)
 
         # Step 1: client generates private key a (stored in srp.User) and public key A, sends to server
-        srp_password = SrpPassword(self.user["password"])
+        srp_password = SrpPassword(password)
         srp.rfc5054_enable()
         srp.no_username_in_x()
-        usr = srp.User(self.user["accountName"], srp_password, hash_alg=srp.SHA256, ng_type=srp.NG_2048)
+        usr = srp.User(self.apple_id, srp_password, hash_alg=srp.SHA256, ng_type=srp.NG_2048)
         uname, A = usr.start_authentication()
         data = {
             'a': base64.b64encode(A).decode(),
@@ -290,7 +272,7 @@ class PyiCloudService:
             if response.status_code == 401:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
         except PyiCloudAPIResponseException as error:
-            if response.status_code == 503:
+            if error.code == "503":
                 raise
             msg = "Failed to initiate srp authentication."
             raise PyiCloudFailedLoginException(msg, error) from error
@@ -344,11 +326,12 @@ class PyiCloudService:
             msg = "Invalid email/password combination."
             raise PyiCloudFailedLoginException(msg, error) from error
 
-    def _authenticate_raw_password(self) -> None:
-        data = dict(self.user)
-
-        data["rememberMe"] = True
-        data["trustTokens"] = []
+    def _authenticate_raw_password(self, password: str) -> None:
+        data = {
+            "accountName": self.apple_id, "password": password,
+            "rememberMe": True,
+            "trustTokens": [],
+        }
         if self.session_data.get("trust_token"):
             data["trustTokens"] = [self.session_data.get("trust_token")]
 
@@ -406,7 +389,7 @@ class PyiCloudService:
         """Get path for cookiejar file."""
         return path.join(
             self._cookie_directory,
-            "".join([c for c in self.user.get("accountName") if match(r"\w", c)]), # type: ignore[union-attr]
+            "".join([c for c in self.apple_id if match(r"\w", c)]), 
         )
 
     @property
@@ -414,7 +397,7 @@ class PyiCloudService:
         """Get path for session data file."""
         return path.join(
             self._cookie_directory,
-            "".join([c for c in self.user.get("accountName") if match(r"\w", c)]) # type: ignore[union-attr]
+            "".join([c for c in self.apple_id if match(r"\w", c)]) 
             + ".session",
         )
 
@@ -659,7 +642,7 @@ class PyiCloudService:
         return RemindersService(service_root, self.session, self.params)# type: ignore
 
     def __unicode__(self) -> str:
-        return 'iCloud API: %s' % self.user.get('accountName')
+        return 'iCloud API: %s' % self.apple_id
 
     def __str__(self) -> str:
         as_unicode = self.__unicode__()

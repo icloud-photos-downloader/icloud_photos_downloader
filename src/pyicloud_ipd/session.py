@@ -54,7 +54,7 @@ class PyiCloudSession(Session):
         callee = inspect.stack()[2]
         module = inspect.getmodule(callee[0])
         request_logger = logging.getLogger(module.__name__).getChild("http") #type: ignore[union-attr]
-        if self.service.password_filter not in request_logger.filters:
+        if self.service.password_filter and self.service.password_filter not in request_logger.filters:
             request_logger.addFilter(self.service.password_filter)
 
         request_logger.debug("%s %s %s", method, url, kwargs.get("data", ""))
