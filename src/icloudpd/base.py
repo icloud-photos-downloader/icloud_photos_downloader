@@ -787,11 +787,16 @@ def main(
             server_thread = Thread(target=serve_app, daemon=True, args=[logger, status_exchange])
             server_thread.start()
 
+        passer = partial(
+            where_builder,
+            logger,
+            skip_videos,
+            skip_created_before,
+        )
         downloader = (
             partial(
                 download_builder,
                 logger,
-                skip_videos,
                 folder_structure,
                 directory,
                 size,
@@ -803,12 +808,12 @@ def main(
                 dry_run,
                 file_match_policy,
                 xmp_sidecar,
-                skip_created_before,
             )
             if directory is not None
             else (lambda _s, _c, _p: False)
         )
         result = core(
+            passer,
             downloader,
             directory,
             username,
@@ -851,27 +856,12 @@ def main(
         sys.exit(result)
 
 
-def download_builder(
+def where_builder(
     logger: logging.Logger,
     skip_videos: bool,
-    folder_structure: str,
-    directory: str,
-    primary_sizes: Sequence[AssetVersionSize],
-    force_size: bool,
-    only_print_filenames: bool,
-    set_exif_datetime: bool,
-    skip_live_photos: bool,
-    live_photo_size: LivePhotoVersionSize,
-    dry_run: bool,
-    file_match_policy: FileMatchPolicy,
-    xmp_sidecar: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
-    icloud: PyiCloudService,
-    counter: Counter,
     photo: PhotoAsset,
 ) -> bool:
-    """function for actually downloading the photos"""
-
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
         logger.debug(
             "Skipping %s, only downloading photos." + "(Item type was: %s)",
@@ -879,14 +869,7 @@ def download_builder(
             photo.item_type,
         )
         return False
-    # Throwing error now
-    # if not photo.item_type:
-    #     logger.debug(
-    #         "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
-    #         photo.filename,
-    #         photo.item_type,
-    #     )
-    #     return False
+
     try:
         created_date = photo.created.astimezone(get_localzone())
     except (ValueError, OSError):
@@ -907,6 +890,33 @@ def download_builder(
                 f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
             )
             return False
+    return True
+
+
+def download_builder(
+    logger: logging.Logger,
+    folder_structure: str,
+    directory: str,
+    primary_sizes: Sequence[AssetVersionSize],
+    force_size: bool,
+    only_print_filenames: bool,
+    set_exif_datetime: bool,
+    skip_live_photos: bool,
+    live_photo_size: LivePhotoVersionSize,
+    dry_run: bool,
+    file_match_policy: FileMatchPolicy,
+    xmp_sidecar: bool,
+    icloud: PyiCloudService,
+    counter: Counter,
+    photo: PhotoAsset,
+) -> bool:
+    """function for actually downloading the photos"""
+
+    try:
+        created_date = photo.created.astimezone(get_localzone())
+    except (ValueError, OSError):
+        logger.error("Could not convert photo created date to local timezone (%s)", photo.created)
+        created_date = photo.created
 
     if folder_structure.lower() == "none":
         date_path = ""
@@ -1185,6 +1195,7 @@ def compose_handlers(
 
 
 def core(
+    passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     directory: str | None,
     username: str,
@@ -1398,11 +1409,14 @@ def core(
                     item = next(photos_iterator)
                     should_delete = False
 
-                    download_result = download_photo(consecutive_files_found, item)
+                    passer_result = passer(item)
+                    download_result = passer_result and download_photo(
+                        consecutive_files_found, item
+                    )
                     if download_result and delete_after_download:
                         should_delete = True
 
-                    if keep_icloud_recent_days is not None:
+                    if passer_result and keep_icloud_recent_days is not None:
                         created_date = item.created.astimezone(get_localzone())
                         age_days = (now - created_date).days
                         logger.debug(f"Created date: {created_date}")
