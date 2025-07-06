@@ -601,8 +601,8 @@ jobs:
           dist/icloud*
 
   build_windows:
-    # earliest possible mac for better compatibility
-    runs-on: windows-2025
+    # earliest possible win for better compatibility
+    runs-on: windows-2022
     defaults:
       run:
         shell: bash
