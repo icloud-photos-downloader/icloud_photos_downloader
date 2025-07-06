@@ -787,8 +787,9 @@ def main(
             server_thread = Thread(target=serve_app, daemon=True, args=[logger, status_exchange])
             server_thread.start()
 
-        result = core(
-            download_builder(
+        downloader = (
+            partial(
+                download_builder,
                 logger,
                 skip_videos,
                 folder_structure,
@@ -805,7 +806,10 @@ def main(
                 skip_created_before,
             )
             if directory is not None
-            else (lambda _s: lambda _c, _p: False),
+            else (lambda _s, _c, _p: False)
+        )
+        result = core(
+            downloader,
             directory,
             username,
             auth_only,
@@ -862,224 +866,204 @@ def download_builder(
     file_match_policy: FileMatchPolicy,
     xmp_sidecar: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
-) -> Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]]:
-    """factory for downloader"""
+    icloud: PyiCloudService,
+    counter: Counter,
+    photo: PhotoAsset,
+) -> bool:
+    """function for actually downloading the photos"""
 
-    def state_(icloud: PyiCloudService) -> Callable[[Counter, PhotoAsset], bool]:
-        def download_photo_(counter: Counter, photo: PhotoAsset) -> bool:
-            """internal function for actually downloading the photos"""
+    if skip_videos and photo.item_type == AssetItemType.MOVIE:
+        logger.debug(
+            "Skipping %s, only downloading photos." + "(Item type was: %s)",
+            photo.filename,
+            photo.item_type,
+        )
+        return False
+    # Throwing error now
+    # if not photo.item_type:
+    #     logger.debug(
+    #         "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
+    #         photo.filename,
+    #         photo.item_type,
+    #     )
+    #     return False
+    try:
+        created_date = photo.created.astimezone(get_localzone())
+    except (ValueError, OSError):
+        logger.error("Could not convert photo created date to local timezone (%s)", photo.created)
+        created_date = photo.created
 
-            if skip_videos and photo.item_type == AssetItemType.MOVIE:
-                logger.debug(
-                    "Skipping %s, only downloading photos." + "(Item type was: %s)",
-                    photo.filename,
-                    photo.item_type,
-                )
-                return False
-            # Throwing error now
-            # if not photo.item_type:
-            #     logger.debug(
-            #         "Skipping %s, only downloading photos and videos. " + "(Item type was: %s)",
-            #         photo.filename,
-            #         photo.item_type,
-            #     )
-            #     return False
-            try:
-                created_date = photo.created.astimezone(get_localzone())
-            except (ValueError, OSError):
+    if skip_created_before is not None:
+        if isinstance(skip_created_before, datetime.timedelta):
+            temp_created_before = datetime.datetime.now(get_localzone()) - skip_created_before
+        elif isinstance(skip_created_before, datetime.datetime):
+            temp_created_before = skip_created_before
+        else:
+            raise ValueError(
+                f"skip-created-before is of unsupported type {type(skip_created_before)}"
+            )
+        if created_date < temp_created_before:
+            logger.debug(
+                f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
+            )
+            return False
+
+    if folder_structure.lower() == "none":
+        date_path = ""
+    else:
+        try:
+            date_path = folder_structure.format(created_date)
+        except ValueError:  # pragma: no cover
+            # This error only seems to happen in Python 2
+            logger.error("Photo created date was not valid (%s)", photo.created)
+            # e.g. ValueError: year=5 is before 1900
+            # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
+            # Just use the Unix epoch
+            created_date = datetime.datetime.fromtimestamp(0)
+            date_path = folder_structure.format(created_date)
+
+    try:
+        versions = disambiguate_filenames(photo.versions, primary_sizes)
+    except KeyError as ex:
+        print(f"KeyError: {ex} attribute was not found in the photo fields.")
+        with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
+            json.dump(
+                {
+                    "master_record": photo._master_record,
+                    "asset_record": photo._asset_record,
+                },
+                outfile,
+            )
+        print("icloudpd has saved the photo record to: ./icloudpd-photo-error.json")
+        print("Please create a Gist with the contents of this file: https://gist.github.com")
+        print(
+            "Then create an issue on GitHub: "
+            "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues"
+        )
+        print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
+        return False
+
+    download_dir = os.path.normpath(os.path.join(directory, date_path))
+    success = False
+
+    for download_size in primary_sizes:
+        if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
+            if force_size:
                 logger.error(
-                    "Could not convert photo created date to local timezone (%s)", photo.created
+                    "%s size does not exist for %s. Skipping...",
+                    download_size.value,
+                    photo.filename,
                 )
-                created_date = photo.created
+                continue
+            if AssetVersionSize.ORIGINAL in primary_sizes:
+                continue  # that should avoid double download for original
+            download_size = AssetVersionSize.ORIGINAL
 
-            if skip_created_before is not None:
-                if isinstance(skip_created_before, datetime.timedelta):
-                    temp_created_before = (
-                        datetime.datetime.now(get_localzone()) - skip_created_before
-                    )
-                elif isinstance(skip_created_before, datetime.datetime):
-                    temp_created_before = skip_created_before
-                else:
-                    raise ValueError(
-                        f"skip-created-before is of unsupported type {type(skip_created_before)}"
-                    )
-                if created_date < temp_created_before:
-                    logger.debug(
-                        f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
-                    )
-                    return False
+        version = versions[download_size]
+        filename = version.filename
 
-            if folder_structure.lower() == "none":
-                date_path = ""
+        download_path = local_download_path(filename, download_dir)
+
+        original_download_path = None
+        file_exists = os.path.isfile(download_path)
+        if not file_exists and download_size == AssetVersionSize.ORIGINAL:
+            # Deprecation - We used to download files like IMG_1234-original.jpg,
+            # so we need to check for these.
+            # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
+            original_download_path = add_suffix_to_filename("-original", download_path)
+            file_exists = os.path.isfile(original_download_path)
+
+        if file_exists:
+            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+                # for later: this crashes if download-size medium is specified
+                file_size = os.stat(original_download_path or download_path).st_size
+                photo_size = version.size
+                if file_size != photo_size:
+                    download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
+                    logger.debug("%s deduplicated", truncate_middle(download_path, 96))
+                    file_exists = os.path.isfile(download_path)
+            if file_exists:
+                counter.increment()
+                logger.debug("%s already exists", truncate_middle(download_path, 96))
+
+        if not file_exists:
+            counter.reset()
+            if only_print_filenames:
+                print(download_path)
             else:
-                try:
-                    date_path = folder_structure.format(created_date)
-                except ValueError:  # pragma: no cover
-                    # This error only seems to happen in Python 2
-                    logger.error("Photo created date was not valid (%s)", photo.created)
-                    # e.g. ValueError: year=5 is before 1900
-                    # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
-                    # Just use the Unix epoch
-                    created_date = datetime.datetime.fromtimestamp(0)
-                    date_path = folder_structure.format(created_date)
+                truncated_path = truncate_middle(download_path, 96)
+                logger.debug("Downloading %s...", truncated_path)
 
-            try:
-                versions = disambiguate_filenames(photo.versions, primary_sizes)
-            except KeyError as ex:
-                print(f"KeyError: {ex} attribute was not found in the photo fields.")
-                with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
-                    json.dump(
-                        {
-                            "master_record": photo._master_record,
-                            "asset_record": photo._asset_record,
-                        },
-                        outfile,
-                    )
-                print("icloudpd has saved the photo record to: ./icloudpd-photo-error.json")
-                print(
-                    "Please create a Gist with the contents of this file: https://gist.github.com"
+                download_result = download.download_media(
+                    logger, dry_run, icloud, photo, download_path, version, download_size
                 )
-                print(
-                    "Then create an issue on GitHub: "
-                    "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues"
-                )
-                print(
-                    "Include a link to the Gist in your issue, so that we can "
-                    "see what went wrong.\n"
-                )
-                return False
+                success = download_result
 
-            download_dir = os.path.normpath(os.path.join(directory, date_path))
-            success = False
-
-            for download_size in primary_sizes:
-                if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
-                    if force_size:
-                        logger.error(
-                            "%s size does not exist for %s. Skipping...",
-                            download_size.value,
-                            photo.filename,
+                if download_result:
+                    if (
+                        not dry_run
+                        and set_exif_datetime
+                        and filename.lower().endswith((".jpg", ".jpeg"))
+                        and not exif_datetime.get_photo_exif(logger, download_path)
+                    ):
+                        # %Y:%m:%d looks wrong, but it's the correct format
+                        date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
+                        logger.debug("Setting EXIF timestamp for %s: %s", download_path, date_str)
+                        exif_datetime.set_photo_exif(
+                            logger,
+                            download_path,
+                            created_date.strftime("%Y:%m:%d %H:%M:%S"),
                         )
-                        continue
-                    if AssetVersionSize.ORIGINAL in primary_sizes:
-                        continue  # that should avoid double download for original
-                    download_size = AssetVersionSize.ORIGINAL
+                    if not dry_run:
+                        download.set_utime(download_path, created_date)
+                    logger.info("Downloaded %s", truncated_path)
 
-                version = versions[download_size]
-                filename = version.filename
+        if xmp_sidecar:
+            generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
 
-                download_path = local_download_path(filename, download_dir)
+    # Also download the live photo if present
+    if not skip_live_photos:
+        lp_size = live_photo_size
+        if lp_size in photo.versions:
+            version = photo.versions[lp_size]
+            lp_filename = version.filename
+            if live_photo_size != LivePhotoVersionSize.ORIGINAL:
+                # Add size to filename if not original
+                lp_filename = add_suffix_to_filename(
+                    size_to_suffix(live_photo_size),
+                    lp_filename,
+                )
+            else:
+                pass
+            lp_download_path = os.path.join(download_dir, lp_filename)
 
-                original_download_path = None
-                file_exists = os.path.isfile(download_path)
-                if not file_exists and download_size == AssetVersionSize.ORIGINAL:
-                    # Deprecation - We used to download files like IMG_1234-original.jpg,
-                    # so we need to check for these.
-                    # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
-                    original_download_path = add_suffix_to_filename("-original", download_path)
-                    file_exists = os.path.isfile(original_download_path)
+            lp_file_exists = os.path.isfile(lp_download_path)
 
-                if file_exists:
+            if only_print_filenames and not lp_file_exists:
+                print(lp_download_path)
+            else:
+                if lp_file_exists:
                     if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
-                        # for later: this crashes if download-size medium is specified
-                        file_size = os.stat(original_download_path or download_path).st_size
-                        photo_size = version.size
-                        if file_size != photo_size:
-                            download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
-                            logger.debug("%s deduplicated", truncate_middle(download_path, 96))
-                            file_exists = os.path.isfile(download_path)
-                    if file_exists:
-                        counter.increment()
-                        logger.debug("%s already exists", truncate_middle(download_path, 96))
-
-                if not file_exists:
-                    counter.reset()
-                    if only_print_filenames:
-                        print(download_path)
-                    else:
-                        truncated_path = truncate_middle(download_path, 96)
-                        logger.debug("Downloading %s...", truncated_path)
-
-                        download_result = download.download_media(
-                            logger, dry_run, icloud, photo, download_path, version, download_size
-                        )
-                        success = download_result
-
-                        if download_result:
-                            if (
-                                not dry_run
-                                and set_exif_datetime
-                                and filename.lower().endswith((".jpg", ".jpeg"))
-                                and not exif_datetime.get_photo_exif(logger, download_path)
-                            ):
-                                # %Y:%m:%d looks wrong, but it's the correct format
-                                date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
-                                logger.debug(
-                                    "Setting EXIF timestamp for %s: %s", download_path, date_str
-                                )
-                                exif_datetime.set_photo_exif(
-                                    logger,
-                                    download_path,
-                                    created_date.strftime("%Y:%m:%d %H:%M:%S"),
-                                )
-                            if not dry_run:
-                                download.set_utime(download_path, created_date)
-                            logger.info("Downloaded %s", truncated_path)
-
-                if xmp_sidecar:
-                    generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
-
-            # Also download the live photo if present
-            if not skip_live_photos:
-                lp_size = live_photo_size
-                if lp_size in photo.versions:
-                    version = photo.versions[lp_size]
-                    lp_filename = version.filename
-                    if live_photo_size != LivePhotoVersionSize.ORIGINAL:
-                        # Add size to filename if not original
-                        lp_filename = add_suffix_to_filename(
-                            size_to_suffix(live_photo_size),
-                            lp_filename,
-                        )
-                    else:
-                        pass
-                    lp_download_path = os.path.join(download_dir, lp_filename)
-
-                    lp_file_exists = os.path.isfile(lp_download_path)
-
-                    if only_print_filenames and not lp_file_exists:
-                        print(lp_download_path)
-                    else:
-                        if lp_file_exists:
-                            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
-                                lp_file_size = os.stat(lp_download_path).st_size
-                                lp_photo_size = version.size
-                                if lp_file_size != lp_photo_size:
-                                    lp_download_path = (f"-{lp_photo_size}.").join(
-                                        lp_download_path.rsplit(".", 1)
-                                    )
-                                    logger.debug(
-                                        "%s deduplicated", truncate_middle(lp_download_path, 96)
-                                    )
-                                    lp_file_exists = os.path.isfile(lp_download_path)
-                            if lp_file_exists:
-                                logger.debug(
-                                    "%s already exists", truncate_middle(lp_download_path, 96)
-                                )
-                        if not lp_file_exists:
-                            truncated_path = truncate_middle(lp_download_path, 96)
-                            logger.debug("Downloading %s...", truncated_path)
-                            download_result = download.download_media(
-                                logger, dry_run, icloud, photo, lp_download_path, version, lp_size
+                        lp_file_size = os.stat(lp_download_path).st_size
+                        lp_photo_size = version.size
+                        if lp_file_size != lp_photo_size:
+                            lp_download_path = (f"-{lp_photo_size}.").join(
+                                lp_download_path.rsplit(".", 1)
                             )
-                            success = download_result and success
-                            if download_result:
-                                logger.info("Downloaded %s", truncated_path)
-            return success
-
-        return download_photo_
-
-    return state_
+                            logger.debug("%s deduplicated", truncate_middle(lp_download_path, 96))
+                            lp_file_exists = os.path.isfile(lp_download_path)
+                    if lp_file_exists:
+                        logger.debug("%s already exists", truncate_middle(lp_download_path, 96))
+                if not lp_file_exists:
+                    truncated_path = truncate_middle(lp_download_path, 96)
+                    logger.debug("Downloading %s...", truncated_path)
+                    download_result = download.download_media(
+                        logger, dry_run, icloud, photo, lp_download_path, version, lp_size
+                    )
+                    success = download_result and success
+                    if download_result:
+                        logger.info("Downloaded %s", truncated_path)
+    return success
 
 
 def delete_photo(
@@ -1201,7 +1185,7 @@ def compose_handlers(
 
 
 def core(
-    downloader: Callable[[PyiCloudService], Callable[[Counter, PhotoAsset], bool]],
+    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     directory: str | None,
     username: str,
     auth_only: bool,
@@ -1258,7 +1242,6 @@ def core(
             password_providers,
             mfa_provider,
             status_exchange,
-        )(
             username,
             cookie_directory,
             raise_error_on_2sa,
@@ -1292,7 +1275,7 @@ def core(
         print(*library_names, sep="\n")
 
     else:
-        download_photo = downloader(icloud)
+        download_photo = partial(downloader, icloud)
 
         # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
         # case exit.
@@ -1415,7 +1398,8 @@ def core(
                     item = next(photos_iterator)
                     should_delete = False
 
-                    if download_photo(consecutive_files_found, item) and delete_after_download:
+                    download_result = download_photo(consecutive_files_found, item)
+                    if download_result and delete_after_download:
                         should_delete = True
 
                     if keep_icloud_recent_days is not None:

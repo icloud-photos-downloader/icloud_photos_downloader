@@ -51,7 +51,6 @@ class AuthenticationTestCase(TestCase):
                     {"test": (constant("dummy"), dummy_password_writter)},
                     MFAProvider.CONSOLE,
                     StatusExchange(),
-                )(
                     "bad_username",
                     cookie_dir,
                     False,
@@ -116,7 +115,6 @@ class AuthenticationTestCase(TestCase):
                     {"test": (constant("dummy"), dummy_password_writter)},
                     MFAProvider.CONSOLE,
                     StatusExchange(),
-                )(
                     "jdoe@gmail.com",
                     cookie_dir,
                     True,
@@ -148,7 +146,6 @@ class AuthenticationTestCase(TestCase):
                     {"test": (constant("dummy"), dummy_password_writter)},
                     MFAProvider.CONSOLE,
                     StatusExchange(),
-                )(
                     "jdoe@gmail.com",
                     cookie_dir,
                     True,
@@ -336,7 +333,6 @@ class AuthenticationTestCase(TestCase):
                 {"test": (constant("dummy"), dummy_password_writter)},
                 MFAProvider.CONSOLE,
                 StatusExchange(),
-            )(
                 "jdoe@gmail.com",
                 cookie_dir,
                 True,
