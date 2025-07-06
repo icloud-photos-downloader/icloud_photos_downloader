@@ -3,6 +3,7 @@
 ## Unreleased
 
 - chore: bump min python version 3.9->3.10
+- chore: replace build & test platform from retired windows-2019 to windows-2025
 
 ## 1.28.1 (2025-06-08)
 

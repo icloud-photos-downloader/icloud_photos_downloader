@@ -602,7 +602,7 @@ jobs:
 
   build_windows:
     # earliest possible mac for better compatibility
-    runs-on: windows-2019
+    runs-on: windows-2025
     defaults:
       run:
         shell: bash
@@ -1261,7 +1261,7 @@ jobs:
     strategy: 
       fail-fast: false
       matrix: 
-        os: [ "windows-2019", "windows-2022" ]
+        os: [ "windows-2025", "windows-2022" ]
     runs-on: ${{ matrix.os }}
     needs: 
       - clone_windows_whl
@@ -2184,7 +2184,7 @@ jobs:
       matrix:  
         prop:  
           - [ 
-            "windows-2019", # GH os 
+            "windows-2025", # GH os 
             "windows", # file suffix 
             ] 
           - [ 
@@ -3655,7 +3655,7 @@ jobs:
       fail-fast: false 
       matrix: 
         os: 
-          - "windows-2019"
+          - "windows-2025"
           - "windows-2022"
     runs-on: ${{ matrix.os }} 
     needs: [ build_npm ] 
@@ -3753,7 +3753,7 @@ jobs:
       fail-fast: false 
       matrix: 
         os: 
-          - "windows-2019"
+          - "windows-2025"
           - "windows-2022"
     runs-on: ${{ matrix.os }} 
     needs: [ build_npm ] 
