@@ -31,64 +31,58 @@ def authenticator(
     password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
-) -> Callable[[str, str | None, bool, str | None], PyiCloudService]:
-    """Wraping authentication with domain context"""
+    username: str,
+    cookie_directory: str | None = None,
+    raise_error_on_2sa: bool = False,
+    client_id: str | None = None,
+) -> PyiCloudService:
+    """Authenticate with iCloud username and password"""
+    logger.debug("Authenticating...")
+    icloud: PyiCloudService | None = None
+    _valid_password: str | None = None
+    for _, _pair in password_providers.items():
+        _reader, _ = _pair
+        _password = _reader(username)
+        if _password:
+            icloud = PyiCloudService(
+                filename_cleaner,
+                lp_filename_generator,
+                domain,
+                raw_policy,
+                file_match_policy,
+                username,
+                _password,
+                cookie_directory=cookie_directory,
+                client_id=client_id,
+            )
+            _valid_password = _password
+            break
 
-    def authenticate_(
-        username: str,
-        cookie_directory: str | None = None,
-        raise_error_on_2sa: bool = False,
-        client_id: str | None = None,
-    ) -> PyiCloudService:
-        """Authenticate with iCloud username and password"""
-        logger.debug("Authenticating...")
-        icloud: PyiCloudService | None = None
-        _valid_password: str | None = None
+    if not icloud:
+        raise NotImplementedError("None of providers gave password")
+
+    if _valid_password:
+        # save valid password to all providers
         for _, _pair in password_providers.items():
-            _reader, _ = _pair
-            _password = _reader(username)
-            if _password:
-                icloud = PyiCloudService(
-                    filename_cleaner,
-                    lp_filename_generator,
-                    domain,
-                    raw_policy,
-                    file_match_policy,
-                    username,
-                    _password,
-                    cookie_directory=cookie_directory,
-                    client_id=client_id,
-                )
-                _valid_password = _password
-                break
+            _, _writer = _pair
+            _writer(username, _valid_password)
 
-        if not icloud:
-            raise NotImplementedError("None of providers gave password")
+    if icloud.requires_2fa:
+        if raise_error_on_2sa:
+            raise TwoStepAuthRequiredError("Two-factor authentication is required")
+        logger.info("Two-factor authentication is required (2fa)")
+        if mfa_provider == MFAProvider.WEBUI:
+            request_2fa_web(icloud, logger, status_exchange)
+        else:
+            request_2fa(icloud, logger)
 
-        if _valid_password:
-            # save valid password to all providers
-            for _, _pair in password_providers.items():
-                _, _writer = _pair
-                _writer(username, _valid_password)
+    elif icloud.requires_2sa:
+        if raise_error_on_2sa:
+            raise TwoStepAuthRequiredError("Two-step authentication is required")
+        logger.info("Two-step authentication is required (2sa)")
+        request_2sa(icloud, logger)
 
-        if icloud.requires_2fa:
-            if raise_error_on_2sa:
-                raise TwoStepAuthRequiredError("Two-factor authentication is required")
-            logger.info("Two-factor authentication is required (2fa)")
-            if mfa_provider == MFAProvider.WEBUI:
-                request_2fa_web(icloud, logger, status_exchange)
-            else:
-                request_2fa(icloud, logger)
-
-        elif icloud.requires_2sa:
-            if raise_error_on_2sa:
-                raise TwoStepAuthRequiredError("Two-step authentication is required")
-            logger.info("Two-step authentication is required (2sa)")
-            request_2sa(icloud, logger)
-
-        return icloud
-
-    return authenticate_
+    return icloud
 
 
 def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:

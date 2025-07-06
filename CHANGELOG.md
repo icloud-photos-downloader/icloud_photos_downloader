@@ -3,6 +3,7 @@
 ## Unreleased
 
 - chore: bump min python version 3.9->3.10
+- fix: iCloud clean up with `--keep-icloud-recent-days` does not respect `--skip-*` params [#1180](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1180) 
 - chore: replace build & test platform from retired windows-2019 to windows-2025
 
 ## 1.28.1 (2025-06-08)
