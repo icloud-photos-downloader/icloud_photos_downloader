@@ -6,6 +6,8 @@
 - fix: iCloud clean up with `--keep-icloud-recent-days` does not respect `--skip-*` params [#1180](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1180) 
 - chore: replace build & test platform from retired windows-2019 to windows-2025
 - Service Temporary Unavailable responses are less ambiguous [#1078](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1078)
+- feat: re-authenticate on errors when using `--watch-with-interval` [#1078](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1078)
+- feat: use stored cookies before attempting to authenticate with credentials
 
 ## 1.28.1 (2025-06-08)
 

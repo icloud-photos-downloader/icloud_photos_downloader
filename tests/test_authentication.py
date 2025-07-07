@@ -8,6 +8,7 @@ import pytest
 from click.testing import CliRunner
 from vcr import VCR
 
+# import vcr
 import pyicloud_ipd
 from foundation.core import constant, identity
 from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
@@ -369,6 +370,44 @@ class AuthenticationTestCase(TestCase):
             )
             self.assertIn("ERROR    Service Temporary Unavailable (503)", self._caplog.text)
             assert result.exit_code == 1
+
+    def test_failed_auth_503_watch(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")):  # noqa: SIM117
+            # errors.CannotOverwriteExistingCassetteException
+            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--no-progress-bar",
+                    "--directory",
+                    base_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--watch-with-interval",
+                    "1",
+                ],
+            )
+            self.assertNotIn(
+                "ERROR    Failed to login with srp, falling back to old raw password authentication.",
+                self._caplog.text,
+            )
+            self.assertEqual(
+                2, self._caplog.text.count("ERROR    Service Temporary Unavailable (503)")
+            )
+            self.assertEqual(2, self._caplog.text.count("INFO     Waiting for 1 sec..."))
+            # self.assertTrue("Can't overwrite existing cassette" in str(context.exception))
+            assert result.exit_code == 1  # should error for vcr
+
 
 class _TrustedDevice(NamedTuple):
     id: int

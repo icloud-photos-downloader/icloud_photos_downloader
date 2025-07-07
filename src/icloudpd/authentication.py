@@ -3,7 +3,8 @@
 import logging
 import sys
 import time
-from typing import Callable, Dict, Tuple
+from functools import partial
+from typing import Callable, Dict, List, Tuple
 
 import click
 
@@ -38,34 +39,37 @@ def authenticator(
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
-    icloud: PyiCloudService | None = None
-    _valid_password: str | None = None
-    for _, _pair in password_providers.items():
-        _reader, _ = _pair
-        _password = _reader(username)
-        if _password:
-            icloud = PyiCloudService(
-                filename_cleaner,
-                lp_filename_generator,
-                domain,
-                raw_policy,
-                file_match_policy,
-                username,
-                _password,
-                cookie_directory=cookie_directory,
-                client_id=client_id,
-            )
-            _valid_password = _password
-            break
+    valid_password: List[str] = []
+
+    def password_provider(username: str, valid_password: List[str]) -> str | None:
+        for _, _pair in password_providers.items():
+            reader, _ = _pair
+            password = reader(username)
+            if password:
+                valid_password.append(password)
+                return password
+        return None
+
+    icloud = PyiCloudService(
+        filename_cleaner,
+        lp_filename_generator,
+        domain,
+        raw_policy,
+        file_match_policy,
+        username,
+        partial(password_provider, username, valid_password),
+        cookie_directory=cookie_directory,
+        client_id=client_id,
+    )
 
     if not icloud:
         raise NotImplementedError("None of providers gave password")
 
-    if _valid_password:
+    if valid_password:
         # save valid password to all providers
         for _, _pair in password_providers.items():
-            _, _writer = _pair
-            _writer(username, _valid_password)
+            _, writer = _pair
+            writer(username, valid_password[0])
 
     if icloud.requires_2fa:
         if raise_error_on_2sa:
