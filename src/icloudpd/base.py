@@ -1465,7 +1465,7 @@ def core(
                     pass
         except PyiCloudAPIResponseException as error:
             if error.code == "503":
-                logger.info("Apple iCloud is temporary unavailable")
+                logger.info("Apple iCloud is temporary refusing to serve icloudpd")
                 # it not watching then return error
                 if not watch_interval:
                     return 1
