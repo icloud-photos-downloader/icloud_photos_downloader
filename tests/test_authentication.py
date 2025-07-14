@@ -368,7 +368,7 @@ class AuthenticationTestCase(TestCase):
                 "ERROR    Failed to login with srp, falling back to old raw password authentication.",
                 self._caplog.text,
             )
-            self.assertIn("ERROR    Service Temporary Unavailable (503)", self._caplog.text)
+            self.assertIn("INFO     Apple iCloud is temporary refusing to serve icloudpd", self._caplog.text)
             assert result.exit_code == 1
 
     def test_failed_auth_503_watch(self) -> None:
@@ -402,7 +402,7 @@ class AuthenticationTestCase(TestCase):
                 self._caplog.text,
             )
             self.assertEqual(
-                2, self._caplog.text.count("ERROR    Service Temporary Unavailable (503)")
+                2, self._caplog.text.count("INFO     Apple iCloud is temporary refusing to serve icloudpd")
             )
             self.assertEqual(2, self._caplog.text.count("INFO     Waiting for 1 sec..."))
             # self.assertTrue("Can't overwrite existing cassette" in str(context.exception))

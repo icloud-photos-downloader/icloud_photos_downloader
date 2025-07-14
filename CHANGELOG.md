@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: 503 response reported as an error [#1188](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1188)
+
 ## 1.28.2 (2025-07-06)
 
 - chore: bump min python version 3.9->3.10

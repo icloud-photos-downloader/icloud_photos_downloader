@@ -1264,34 +1264,11 @@ def core(
                 raise_error_on_2sa,
                 os.environ.get("CLIENT_ID"),
             )
-        except PyiCloudAPIResponseException as error:
-            # for 503 with watching, we just continue waiting
-            if error.code == "503" and watch_interval:
-                icloud = None
-            else:
-                raise
-        except TwoStepAuthRequiredError:
-            if notification_script is not None:
-                subprocess.call([notification_script])
-            if smtp_username is not None or notification_email is not None:
-                send_2sa_notification(
-                    logger,
-                    username,
-                    smtp_username,
-                    smtp_password,
-                    smtp_host,
-                    smtp_port,
-                    smtp_no_tls,
-                    notification_email,
-                    notification_email_from,
-                )
-            return 1
 
-        if auth_only:
-            logger.info("Authentication completed successfully")
-            return 0
+            if auth_only:
+                logger.info("Authentication completed successfully")
+                return 0
 
-        if icloud:  # it can be None for 503 errors
             if list_libraries:
                 library_names = (
                     icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
@@ -1302,22 +1279,16 @@ def core(
             else:
                 # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
                 # case exit.
-                try:
-                    # Access to the selected library. Defaults to the primary photos object.
-                    library_object: PhotoLibrary = icloud.photos
-                    if library:
-                        if library in icloud.photos.private_libraries:
-                            library_object = icloud.photos.private_libraries[library]
-                        elif library in icloud.photos.shared_libraries:
-                            library_object = icloud.photos.shared_libraries[library]
-                        else:
-                            logger.error("Unknown library: %s", library)
-                            return 1
-                except PyiCloudAPIResponseException as err:
-                    # For later: come up with a nicer message to the user. For now take the
-                    # exception text
-                    logger.error("error?? %s", err)
-                    return 1
+                # Access to the selected library. Defaults to the primary photos object.
+                library_object: PhotoLibrary = icloud.photos
+                if library:
+                    if library in icloud.photos.private_libraries:
+                        library_object = icloud.photos.private_libraries[library]
+                    elif library in icloud.photos.shared_libraries:
+                        library_object = icloud.photos.shared_libraries[library]
+                    else:
+                        logger.error("Unknown library: %s", library)
+                        return 1
 
                 photos = library_object.albums[album] if album else library_object.all
 
@@ -1468,6 +1439,8 @@ def core(
 
                 if only_print_filenames:
                     return 0
+                else:
+                    pass
 
                 if status_exchange.get_progress().cancel:
                     logger.info("Iteration was cancelled")
@@ -1481,8 +1454,45 @@ def core(
 
                 if auto_delete:
                     autodelete_photos(
-                        logger, dry_run, library_object, folder_structure, directory, primary_sizes
+                        logger,
+                        dry_run,
+                        library_object,
+                        folder_structure,
+                        directory,
+                        primary_sizes,
                     )
+                else:
+                    pass
+        except PyiCloudAPIResponseException as error:
+            if error.code == "503":
+                logger.info("Apple iCloud is temporary refusing to serve icloudpd")
+                # it not watching then return error
+                if not watch_interval:
+                    return 1
+                else:
+                    pass
+            else:
+                raise
+        except TwoStepAuthRequiredError:
+            if notification_script is not None:
+                subprocess.call([notification_script])
+            else:
+                pass
+            if smtp_username is not None or notification_email is not None:
+                send_2sa_notification(
+                    logger,
+                    username,
+                    smtp_username,
+                    smtp_password,
+                    smtp_host,
+                    smtp_port,
+                    smtp_no_tls,
+                    notification_email,
+                    notification_email_from,
+                )
+            else:
+                pass
+            return 1
 
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
