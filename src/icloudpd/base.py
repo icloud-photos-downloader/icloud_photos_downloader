@@ -265,13 +265,23 @@ def file_match_policy_generator(
 def skip_created_before_generator(
     _ctx: click.Context, _param: click.Parameter, formatted: str
 ) -> datetime.datetime | datetime.timedelta | None:
+    return skip_created_generator("--skip-created-before", formatted)
+
+
+def skip_created_after_generator(
+    _ctx: click.Context, _param: click.Parameter, formatted: str
+) -> datetime.datetime | datetime.timedelta | None:
+    return skip_created_generator("--skip-created-after", formatted)
+
+
+def skip_created_generator(
+    name: str, formatted: str
+) -> datetime.datetime | datetime.timedelta | None:
     if formatted is None:
         return None
     result = parse_timestamp_or_timedelta(formatted)
     if result is None:
-        raise ValueError(
-            "--skip-created-before parameter did not parse ISO timestamp or interval successfully"
-        )
+        raise ValueError(f"{name} parameter did not parse ISO timestamp or interval successfully")
     if isinstance(result, datetime.datetime):
         return ensure_tzinfo(get_localzone(), result)
     return result
@@ -599,6 +609,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     callback=skip_created_before_generator,
 )
 @click.option(
+    "--skip-created-after",
+    help="Do not process assets created after specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
+    callback=skip_created_after_generator,
+)
+@click.option(
     "--version",
     help="Show the version, commit hash and timestamp",
     is_flag=True,
@@ -652,6 +667,7 @@ def main(
     mfa_provider: MFAProvider,
     use_os_locale: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
+    skip_created_after: datetime.datetime | datetime.timedelta | None,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -797,6 +813,7 @@ def main(
             logger,
             skip_videos,
             skip_created_before,
+            skip_created_after,
         )
         downloader = (
             partial(
@@ -865,6 +882,7 @@ def where_builder(
     logger: logging.Logger,
     skip_videos: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
+    skip_created_after: datetime.datetime | datetime.timedelta | None,
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
@@ -895,6 +913,22 @@ def where_builder(
                 f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
             )
             return False
+
+    if skip_created_after is not None:
+        if isinstance(skip_created_after, datetime.timedelta):
+            temp_created_after = datetime.datetime.now(get_localzone()) - skip_created_after
+        elif isinstance(skip_created_after, datetime.datetime):
+            temp_created_after = skip_created_after
+        else:
+            raise ValueError(
+                f"skip-created-after is of unsupported type {type(skip_created_after)}"
+            )
+        if created_date > temp_created_after:
+            logger.debug(
+                f"Skipping {photo.filename}, as it was created {created_date}, after {skip_created_after}."
+            )
+            return False
+
     return True
 
 
