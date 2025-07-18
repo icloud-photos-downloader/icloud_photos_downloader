@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: connecting to a non-activated iCloud service reported as an error
 - fix: 503 response reported as an error [#1188](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1188)
 
 ## 1.28.2 (2025-07-06)

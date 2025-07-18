@@ -181,7 +181,7 @@ class PyiCloudSession(Session):
             raise PyiCloud2SARequiredException(self.service.user["accountName"])
         if code in ("ZONE_NOT_FOUND", "AUTHENTICATION_FAILED"):
             reason = (
-                "Please log into https://icloud.com/ to manually "
+                "Apple iCloud setup is not complete. Please log into https://icloud.com/ to manually "
                 "finish setting up your iCloud service"
             )
             api_error: Exception = PyiCloudServiceNotActivatedException(reason, code)
