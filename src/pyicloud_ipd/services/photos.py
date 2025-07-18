@@ -177,8 +177,7 @@ class PhotoLibrary(object):
         indexing_state = response['records'][0]['fields']['state']['value']
         if indexing_state != 'FINISHED':
             raise PyiCloudServiceNotActivatedException(
-                ('iCloud Photo Library not finished indexing.  Please try '
-                 'again in a few minutes'), None)
+                ('Apple iCloud Photo Library has not finished indexing yet'), None)
 
     @property
     def albums(self) -> Dict[str, "PhotoAlbum"]:

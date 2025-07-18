@@ -51,7 +51,10 @@ from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.exceptions import (
+    PyiCloudAPIResponseException,
+    PyiCloudServiceNotActivatedException,
+)
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
@@ -1473,6 +1476,13 @@ def core(
                     pass
             else:
                 raise
+        except PyiCloudServiceNotActivatedException as error:
+            logger.info(error.reason)
+            # it not watching then return error
+            if not watch_interval:
+                return 1
+            else:
+                pass
         except TwoStepAuthRequiredError:
             if notification_script is not None:
                 subprocess.call([notification_script])
