@@ -310,5 +310,17 @@ This is a list of all options available for command line interface (CLI) of the 
     ```
 
     ```{note}
-    The date is when asset was created, not added to the iCloud.
+    The date is when the asset was created, not added to the iCloud.
+    ```
+
+(skip-created-after-parameter)=
+`--skip-created-after`
+
+:   Does not process assets created after specified timestamp. Timestamp is in ISO format, e.g 2025-06-01, or as interval from now, e.g. 5d. If timezone is not specified for ISO format, then local timezone is used.
+
+    ```{versionadded} 1.29.0
+    ```
+
+    ```{note}
+    The date is when the asset was created, not added to the iCloud.
     ```
