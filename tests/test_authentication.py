@@ -1,11 +1,13 @@
 import inspect
 import os
 import shutil
-from typing import NamedTuple
-from unittest import TestCase
+from typing import Any, NamedTuple, NoReturn
+from unittest import TestCase, mock
 
 import pytest
 from click.testing import CliRunner
+from requests import Timeout
+from requests.exceptions import ConnectionError
 from vcr import VCR
 
 # import vcr
@@ -18,6 +20,7 @@ from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
 from tests.helpers import path_from_project_root, recreate_path
 
@@ -411,6 +414,141 @@ class AuthenticationTestCase(TestCase):
             )
             self.assertEqual(2, self._caplog.text.count("INFO     Waiting for 1 sec..."))
             # self.assertTrue("Can't overwrite existing cassette" in str(context.exception))
+            assert result.exit_code == 1  # should error for vcr
+
+    def test_connection_error(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
+            raise ConnectionError("Simulated Connection Error")
+
+        with (
+            mock.patch.object(
+                PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+            ) as pa_request,
+            vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")),
+        ):  # noqa: SIM117
+            # errors.CannotOverwriteExistingCassetteException
+            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--no-progress-bar",
+                    "--directory",
+                    base_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    # "--watch-with-interval",
+                    # "1",
+                ],
+            )
+            pa_request.assert_called_once()
+            self.assertIn(
+                "Authenticating...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Cannot connect to Apple iCloud service",
+                self._caplog.text,
+            )
+            assert result.exit_code == 1  # should error for vcr
+
+    def test_timeout_error(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
+            raise TimeoutError("Simulated TimeoutError")
+
+        with (
+            mock.patch.object(
+                PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+            ) as pa_request,
+            vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")),
+        ):  # noqa: SIM117
+            # errors.CannotOverwriteExistingCassetteException
+            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--no-progress-bar",
+                    "--directory",
+                    base_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    # "--watch-with-interval",
+                    # "1",
+                ],
+            )
+            pa_request.assert_called_once()
+            self.assertIn(
+                "Authenticating...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Cannot connect to Apple iCloud service",
+                self._caplog.text,
+            )
+            assert result.exit_code == 1  # should error for vcr
+
+    def test_timeout(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
+            raise Timeout("Simulated Timeout")
+
+        with (
+            mock.patch.object(
+                PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+            ) as pa_request,
+            vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")),
+        ):  # noqa: SIM117
+            # errors.CannotOverwriteExistingCassetteException
+            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
+            result = runner.invoke(
+                main,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--no-progress-bar",
+                    "--directory",
+                    base_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                    # "--watch-with-interval",
+                    # "1",
+                ],
+            )
+            pa_request.assert_called_once()
+            self.assertIn(
+                "Authenticating...",
+                self._caplog.text,
+            )
+            self.assertIn(
+                "INFO     Cannot connect to Apple iCloud service",
+                self._caplog.text,
+            )
             assert result.exit_code == 1  # should error for vcr
 
 

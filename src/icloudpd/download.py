@@ -5,8 +5,7 @@ import logging
 import os
 import time
 
-from requests import Response, Timeout
-from requests.exceptions import ConnectionError
+from requests import Response
 from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
@@ -124,7 +123,7 @@ def download_media(
             )
             break
 
-        except (TimeoutError, ConnectionError, PyiCloudAPIResponseException, Timeout) as ex:
+        except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
                 if retries > 0:
