@@ -3,11 +3,12 @@ import os
 from typing import Dict, Optional, Sequence
 import typing
 import keyring
+from requests import Response
 
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
-from .exceptions import PyiCloudNoStoredPasswordAvailableException
+from .exceptions import PyiCloudNoStoredPasswordAvailableException, PyiCloudServiceUnavailableException
 
 KEYRING_SYSTEM = 'pyicloud://icloud-password'
 
@@ -135,3 +136,9 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
 
 
     return _results
+
+def throw_on_503(response: Response) -> Response:
+    if response.status_code == 503:
+        raise PyiCloudServiceUnavailableException("Apple iCloud is temporary refusing to serve icloudpd")
+    else:
+        return response

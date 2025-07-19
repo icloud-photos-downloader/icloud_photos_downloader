@@ -55,8 +55,8 @@ from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middl
 from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
-    PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
+    PyiCloudServiceUnavailableException,
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -1503,18 +1503,8 @@ def core(
                     )
                 else:
                     pass
-        except PyiCloudAPIResponseException as error:
-            if error.code == "503":
-                logger.info("Apple iCloud is temporary refusing to serve icloudpd")
-                # it not watching then return error
-                if not watch_interval:
-                    return 1
-                else:
-                    pass
-            else:
-                raise
-        except PyiCloudServiceNotActivatedException as error:
-            logger.info(error.reason)
+        except (PyiCloudServiceNotActivatedException, PyiCloudServiceUnavailableException) as error:
+            logger.info(error)
             # it not watching then return error
             if not watch_interval:
                 return 1
