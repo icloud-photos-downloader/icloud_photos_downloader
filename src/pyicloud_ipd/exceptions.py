@@ -26,6 +26,9 @@ class PyiCloudServiceNotActivatedException(PyiCloudAPIResponseException):
     """iCloud service not activated exception."""
     pass
 
+class PyiCloudServiceUnavailableException(PyiCloudException):
+    """iCloud service not available (503)"""
+    pass
 
 # Login
 class PyiCloudFailedLoginException(PyiCloudException):
