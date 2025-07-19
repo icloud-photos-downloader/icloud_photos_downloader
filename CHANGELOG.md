@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: connection errors reported with stack trace [#1187](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1187)
 - feat: `--skip-created-after` to limit assets by creation date [#466](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/466) [#1111](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1111)
 - fix: connecting to a non-activated iCloud service reported as an error
 - fix: 503 response reported as an error [#1188](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1188)

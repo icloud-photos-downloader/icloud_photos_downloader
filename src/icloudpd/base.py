@@ -3,6 +3,9 @@
 
 from multiprocessing import freeze_support
 
+from requests import Timeout
+from requests.exceptions import ConnectionError
+
 import foundation
 from foundation.core import compose, constant, identity
 from icloudpd.mfa_provider import MFAProvider
@@ -1517,6 +1520,14 @@ def core(
                 return 1
             else:
                 pass
+        except (ConnectionError, TimeoutError, Timeout) as _error:
+            logger.info("Cannot connect to Apple iCloud service")
+            # logger.debug(error)
+            # it not watching then return error
+            if not watch_interval:
+                return 1
+            else:
+                pass
         except TwoStepAuthRequiredError:
             if notification_script is not None:
                 subprocess.call([notification_script])
@@ -1537,7 +1548,6 @@ def core(
             else:
                 pass
             return 1
-
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval: Sequence[int] = range(1, watch_interval)
