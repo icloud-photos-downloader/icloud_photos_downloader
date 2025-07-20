@@ -476,7 +476,11 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     # Error msg should be repeated 5 times
-                    assert self._caplog.text.count("Session error, re-authenticating...") == 5
+                    self.assertEqual(
+                        self._caplog.text.count("Session error, re-authenticating..."),
+                        max(1, constants.MAX_RETRIES),
+                        "retry count",
+                    )
 
                     self.assertIn(
                         "ERROR    Could not download IMG_7409.JPG. Please try again later.",
@@ -484,7 +488,9 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     # Make sure we only call sleep 4 times (skip the first retry)
-                    self.assertEqual(sleep_mock.call_count, 4)
+                    self.assertEqual(
+                        sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
+                    )
                     assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self) -> None:
@@ -531,14 +537,20 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     # Error msg should be repeated 5 times
-                    assert self._caplog.text.count("Session error, re-authenticating...") == 5
+                    self.assertEqual(
+                        self._caplog.text.count("Session error, re-authenticating..."),
+                        max(1, constants.MAX_RETRIES),
+                        "retry count",
+                    )
 
                     self.assertIn(
                         "ERROR    iCloud re-authentication failed. Please try again later.",
                         self._caplog.text,
                     )
                     # Make sure we only call sleep 4 times (skip the first retry)
-                    self.assertEqual(sleep_mock.call_count, 4)
+                    self.assertEqual(
+                        sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
+                    )
 
                     assert result.exit_code == 1
 
@@ -1685,11 +1697,11 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 # Error msg should be repeated 5 times
-                # self.assertEqual(
-                #     self._caplog.text.count(
-                #         "Error downloading"
-                #     ), constants.MAX_RETRIES, "Retry count"
-                # )
+                self.assertEqual(
+                    self._caplog.text.count("Error downloading"),
+                    constants.MAX_RETRIES,
+                    "retry count",
+                )
 
                 self.assertIn(
                     "ERROR    Could not download IMG_7409.JPG. Please try again later.",
@@ -1697,7 +1709,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
-                self.assertEqual(sleep_mock.call_count, 5)
+                self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
                 self.assertEqual(result.exit_code, 0, "Exit Code")
 
     def test_handle_internal_error_during_photo_iteration(self) -> None:
@@ -1736,7 +1748,7 @@ class DownloadPhotoTestCase(TestCase):
                 self.assertEqual(
                     self._caplog.text.count("Internal Error at Apple, retrying..."),
                     constants.MAX_RETRIES,
-                    "Retry count",
+                    "retry count",
                 )
 
                 self.assertIn(
@@ -1745,7 +1757,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
-                self.assertEqual(sleep_mock.call_count, 5)
+                self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
 
                 self.assertEqual(result.exit_code, 1, "Exit Code")
 
