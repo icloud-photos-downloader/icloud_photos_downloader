@@ -15,13 +15,6 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 
-class TwoStepAuthRequiredError(Exception):
-    """
-    Raised when 2SA is required. base.py catches this exception
-    and sends an email notification.
-    """
-
-
 def authenticator(
     logger: logging.Logger,
     domain: str,
@@ -33,8 +26,8 @@ def authenticator(
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
     username: str,
+    notificator: Callable[[], None],
     cookie_directory: str | None = None,
-    raise_error_on_2sa: bool = False,
     client_id: str | None = None,
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
@@ -72,18 +65,16 @@ def authenticator(
             writer(username, valid_password[0])
 
     if icloud.requires_2fa:
-        if raise_error_on_2sa:
-            raise TwoStepAuthRequiredError("Two-factor authentication is required")
         logger.info("Two-factor authentication is required (2fa)")
+        notificator()
         if mfa_provider == MFAProvider.WEBUI:
             request_2fa_web(icloud, logger, status_exchange)
         else:
             request_2fa(icloud, logger)
 
     elif icloud.requires_2sa:
-        if raise_error_on_2sa:
-            raise TwoStepAuthRequiredError("Two-step authentication is required")
         logger.info("Two-step authentication is required (2sa)")
+        notificator()
         request_2sa(icloud, logger)
 
     return icloud

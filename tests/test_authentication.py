@@ -13,7 +13,7 @@ from vcr import VCR
 # import vcr
 import pyicloud_ipd
 from foundation.core import constant, identity
-from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
+from icloudpd.authentication import authenticator
 from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
@@ -56,8 +56,8 @@ class AuthenticationTestCase(TestCase):
                     MFAProvider.CONSOLE,
                     StatusExchange(),
                     "bad_username",
+                    lambda: None,
                     cookie_dir,
-                    False,
                     "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
@@ -95,68 +95,6 @@ class AuthenticationTestCase(TestCase):
             )
             self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
             assert result.exit_code == 0
-
-    def test_2sa_required(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-
-        for dir in [base_dir, cookie_dir]:
-            recreate_path(dir)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            with self.assertRaises(TwoStepAuthRequiredError) as context:
-                # To re-record this HTTP request,
-                # delete ./tests/vcr_cassettes/auth_requires_2sa.yml,
-                # put your actual credentials in here, run the test,
-                # and then replace with dummy credentials.
-                authenticator(
-                    setup_logger(),
-                    "com",
-                    identity,
-                    lp_filename_concatinator,
-                    RawTreatmentPolicy.AS_IS,
-                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
-                    {"test": (constant("dummy"), dummy_password_writter)},
-                    MFAProvider.CONSOLE,
-                    StatusExchange(),
-                    "jdoe@gmail.com",
-                    cookie_dir,
-                    True,
-                    "DE309E26-942E-11E8-92F5-14109FE0B321",
-                )
-
-            self.assertTrue("Two-step authentication is required" in str(context.exception))
-
-    def test_2fa_required(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-
-        for dir in [base_dir, cookie_dir]:
-            recreate_path(dir)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
-            with self.assertRaises(TwoStepAuthRequiredError) as context:
-                # To re-record this HTTP request,
-                # delete ./tests/vcr_cassettes/auth_requires_2fa.yml,
-                # put your actual credentials in here, run the test,
-                # and then replace with dummy credentials.
-                authenticator(
-                    setup_logger(),
-                    "com",
-                    identity,
-                    lp_filename_concatinator,
-                    RawTreatmentPolicy.AS_IS,
-                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
-                    {"test": (constant("dummy"), dummy_password_writter)},
-                    MFAProvider.CONSOLE,
-                    StatusExchange(),
-                    "jdoe@gmail.com",
-                    cookie_dir,
-                    True,
-                    "EC5646DE-9423-11E8-BF21-14109FE0B321",
-                )
-
-            self.assertTrue("Two-factor authentication is required" in str(context.exception))
 
     def test_successful_token_validation(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -338,8 +276,8 @@ class AuthenticationTestCase(TestCase):
                 MFAProvider.CONSOLE,
                 StatusExchange(),
                 "jdoe@gmail.com",
+                lambda: None,
                 cookie_dir,
-                True,
                 "EC5646DE-9423-11E8-BF21-14109FE0B321",
             )
 

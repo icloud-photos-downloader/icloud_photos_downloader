@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: smtp & script notifications terminate the program [#898](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/898)
+
 ## 1.29.0 (2025-07-19)
 
 - fix: connection errors reported with stack trace [#1187](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1187)
