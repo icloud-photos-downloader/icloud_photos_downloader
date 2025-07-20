@@ -1229,42 +1229,32 @@ def retrier(
 
 
 def session_error_handle_builder(
-    logger: Logger, icloud: PyiCloudService
-) -> Callable[[Exception, int], None]:
-    """Build handler for session error"""
-
-    def session_error_handler(ex: Exception, attempt: int) -> None:
-        """Handles session errors in the PhotoAlbum photos iterator"""
-        if "Invalid global session" in str(ex):
-            if attempt > constants.MAX_RETRIES:
-                logger.error("iCloud re-authentication failed. Please try again later.")
-                raise ex
-            logger.error("Session error, re-authenticating...")
-            if attempt > 1:
-                # If the first re-authentication attempt failed,
-                # start waiting a few seconds before retrying in case
-                # there are some issues with the Apple servers
-                time.sleep(constants.WAIT_SECONDS * attempt)
-            icloud.authenticate()
-
-    return session_error_handler
-
-
-def internal_error_handle_builder(logger: logging.Logger) -> Callable[[Exception, int], None]:
-    """Build handler for internal error"""
-
-    def internal_error_handler(ex: Exception, attempt: int) -> None:
-        """Handles session errors in the PhotoAlbum photos iterator"""
-        if "INTERNAL_ERROR" in str(ex):
-            if attempt > constants.MAX_RETRIES:
-                logger.error("Internal Error at Apple.")
-                raise ex
-            logger.error("Internal Error at Apple, retrying...")
+    logger: Logger, icloud: PyiCloudService, ex: Exception, attempt: int
+) -> None:
+    """Handles session errors in the PhotoAlbum photos iterator"""
+    if "Invalid global session" in str(ex):
+        if attempt > constants.MAX_RETRIES:
+            logger.error("iCloud re-authentication failed. Please try again later.")
+            raise ex
+        logger.error("Session error, re-authenticating...")
+        if attempt > 1:
+            # If the first re-authentication attempt failed,
             # start waiting a few seconds before retrying in case
             # there are some issues with the Apple servers
             time.sleep(constants.WAIT_SECONDS * attempt)
+        icloud.authenticate()
 
-    return internal_error_handler
+
+def internal_error_handle_builder(logger: logging.Logger, ex: Exception, attempt: int) -> None:
+    """Handles session errors in the PhotoAlbum photos iterator"""
+    if "INTERNAL_ERROR" in str(ex):
+        if attempt > constants.MAX_RETRIES:
+            logger.error("Internal Error at Apple.")
+            raise ex
+        logger.error("Internal Error at Apple, retrying...")
+        # start waiting a few seconds before retrying in case
+        # there are some issues with the Apple servers
+        time.sleep(constants.WAIT_SECONDS * attempt)
 
 
 def compose_handlers(
@@ -1378,8 +1368,8 @@ def core(
                 album_phrase = f" from album {album}" if album else ""
                 logger.debug(f"Looking up all photos{videos_phrase}{album_phrase}...")
 
-                session_exception_handler = session_error_handle_builder(logger, icloud)
-                internal_error_handler = internal_error_handle_builder(logger)
+                session_exception_handler = partial(session_error_handle_builder, logger, icloud)
+                internal_error_handler = partial(internal_error_handle_builder, logger)
 
                 error_handler = compose_handlers(
                     [session_exception_handler, internal_error_handler]
