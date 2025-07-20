@@ -43,7 +43,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
 from icloudpd import constants, download, exif_datetime
-from icloudpd.authentication import TwoStepAuthRequiredError, authenticator
+from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import Config
 from icloudpd.counter import Counter
@@ -837,9 +837,23 @@ def main(
             if directory is not None
             else (lambda _s, _c, _p: False)
         )
+        notificator = partial(
+            notificator_builder,
+            logger,
+            username,
+            smtp_username,
+            smtp_password,
+            smtp_host,
+            smtp_port,
+            smtp_no_tls,
+            notification_email,
+            notification_email_from,
+            notification_script,
+        )
         result = core(
             passer,
             downloader,
+            notificator,
             directory,
             username,
             auth_only,
@@ -855,15 +869,7 @@ def main(
             auto_delete,
             only_print_filenames,
             folder_structure,
-            smtp_username,
-            smtp_password,
-            smtp_host,
-            smtp_port,
-            smtp_no_tls,
-            notification_email,
-            notification_email_from,
             no_progress_bar,
-            notification_script,
             delete_after_download,
             keep_icloud_recent_days,
             domain,
@@ -879,6 +885,43 @@ def main(
             status_exchange,
         )
         sys.exit(result)
+
+
+def notificator_builder(
+    logger: logging.Logger,
+    username: str,
+    smtp_username: str | None,
+    smtp_password: str | None,
+    smtp_host: str,
+    smtp_port: int,
+    smtp_no_tls: bool,
+    notification_email: str | None,
+    notification_email_from: str | None,
+    notification_script: str | None,
+) -> None:
+    try:
+        if notification_script is not None:
+            logger.debug("Executing notification script...")
+            subprocess.call([notification_script])
+        else:
+            pass
+        if smtp_username is not None or notification_email is not None:
+            send_2sa_notification(
+                logger,
+                username,
+                smtp_username,
+                smtp_password,
+                smtp_host,
+                smtp_port,
+                smtp_no_tls,
+                notification_email,
+                notification_email_from,
+            )
+        else:
+            pass
+    except Exception as error:
+        logger.error("Notification of the required MFA failed")
+        logger.debug(error)
 
 
 def where_builder(
@@ -1239,6 +1282,7 @@ def compose_handlers(
 def core(
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    notificator: Callable[[], None],
     directory: str | None,
     username: str,
     auth_only: bool,
@@ -1254,15 +1298,7 @@ def core(
     auto_delete: bool,
     only_print_filenames: bool,
     folder_structure: str,
-    smtp_username: str | None,
-    smtp_password: str | None,
-    smtp_host: str,
-    smtp_port: int,
-    smtp_no_tls: bool,
-    notification_email: str | None,
-    notification_email_from: str | None,
     no_progress_bar: bool,
-    notification_script: str | None,
     delete_after_download: bool,
     keep_icloud_recent_days: int | None,
     domain: str,
@@ -1282,11 +1318,6 @@ def core(
     skip_bar = not os.environ.get("FORCE_TQDM") and (
         only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     )
-    raise_error_on_2sa = (
-        smtp_username is not None
-        or notification_email is not None
-        or notification_script is not None
-    )
     while True:  # watch with interval
         try:
             icloud = authenticator(
@@ -1300,8 +1331,8 @@ def core(
                 mfa_provider,
                 status_exchange,
                 username,
+                notificator,
                 cookie_directory,
-                raise_error_on_2sa,
                 os.environ.get("CLIENT_ID"),
             )
 
@@ -1518,26 +1549,6 @@ def core(
                 return 1
             else:
                 pass
-        except TwoStepAuthRequiredError:
-            if notification_script is not None:
-                subprocess.call([notification_script])
-            else:
-                pass
-            if smtp_username is not None or notification_email is not None:
-                send_2sa_notification(
-                    logger,
-                    username,
-                    smtp_username,
-                    smtp_password,
-                    smtp_host,
-                    smtp_port,
-                    smtp_no_tls,
-                    notification_email,
-                    notification_email_from,
-                )
-            else:
-                pass
-            return 1
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval: Sequence[int] = range(1, watch_interval)
