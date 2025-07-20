@@ -359,6 +359,7 @@ class AutodeletePhotosTestCase(TestCase):
                 f"{file_name} not expected, but present"
             )
 
+    @pytest.mark.skipif(constants.MAX_RETRIES == 0, reason="Disabled when MAX_RETRIES set to 0")
     def test_retry_delete_after_download_session_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
@@ -434,16 +435,24 @@ class AutodeletePhotosTestCase(TestCase):
                             self._caplog.text,
                         )
 
-                        # Error msg should be repeated 5 times
+                        # Error msg should be repeated always 1 time
                         self.assertEqual(
                             self._caplog.text.count("Session error, re-authenticating..."),
                             1,
-                            "Re-auth message count",
+                            "retry count",
                         )
 
-                        self.assertEqual(pa_delete.call_count, 2, "delete call count")
-                        # Make sure we only call sleep 4 times (skip the first retry)
-                        self.assertEqual(sleep_mock.call_count, 0, "Sleep call count")
+                        self.assertEqual(
+                            pa_delete.call_count,
+                            1 + min(1, constants.MAX_RETRIES),
+                            "delete call count",
+                        )
+                        # Make sure we only call sleep 0 times (skip the first retry)
+                        self.assertEqual(
+                            sleep_mock.call_count,
+                            0,
+                            "sleep count",
+                        )
                         self.assertEqual(result.exit_code, 0, "Exit code")
 
         # check files
@@ -529,19 +538,21 @@ class AutodeletePhotosTestCase(TestCase):
                             self._caplog.text,
                         )
 
-                        # Error msg should be repeated 5 times
+                        # Error msg should be repeated MAX_RETRIES times
                         self.assertEqual(
                             self._caplog.text.count("Session error, re-authenticating..."),
-                            constants.MAX_RETRIES,
-                            "Re-auth message count",
+                            max(1, constants.MAX_RETRIES),
+                            "retry count",
                         )
 
                         self.assertEqual(
                             pa_delete.call_count, constants.MAX_RETRIES + 1, "delete call count"
                         )
-                        # Make sure we only call sleep 4 times (skip the first retry)
+                        # Make sure we only call sleep MAX_RETRIES-1 times (skip the first retry)
                         self.assertEqual(
-                            sleep_mock.call_count, constants.MAX_RETRIES - 1, "Sleep call count"
+                            sleep_mock.call_count,
+                            max(0, constants.MAX_RETRIES - 1),
+                            "sleep count",
                         )
                         self.assertEqual(result.exit_code, 1, "Exit code")
 
@@ -555,6 +566,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
+    @pytest.mark.skipif(constants.MAX_RETRIES == 0, reason="Disabled when MAX_RETRIES set to 0")
     def test_retry_delete_after_download_internal_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
@@ -616,16 +628,20 @@ class AutodeletePhotosTestCase(TestCase):
                         self._caplog.text,
                     )
 
-                    # Error msg should be repeated 5 times
+                    # Error msg should be repeated MAX_RETRIES times
                     self.assertEqual(
                         self._caplog.text.count("Internal Error at Apple, retrying..."),
-                        1,
-                        "Retry message count",
+                        min(1, constants.MAX_RETRIES),
+                        "retry count",
                     )
 
-                    self.assertEqual(pa_delete.call_count, 2, "delete call count")
+                    self.assertEqual(
+                        pa_delete.call_count, 1 + min(1, constants.MAX_RETRIES), "delete count"
+                    )
                     # Make sure we only call sleep 4 times (skip the first retry)
-                    self.assertEqual(sleep_mock.call_count, 1, "Sleep call count")
+                    self.assertEqual(
+                        sleep_mock.call_count, min(1, constants.MAX_RETRIES), "sleep count"
+                    )
                     self.assertEqual(result.exit_code, 0, "Exit code")
 
         # check files
@@ -701,16 +717,14 @@ class AutodeletePhotosTestCase(TestCase):
                     self.assertEqual(
                         self._caplog.text.count("Internal Error at Apple, retrying..."),
                         constants.MAX_RETRIES,
-                        "Retry message count",
+                        "retry count",
                     )
 
                     self.assertEqual(
-                        pa_delete.call_count, constants.MAX_RETRIES + 1, "delete call count"
+                        pa_delete.call_count, constants.MAX_RETRIES + 1, "delete count"
                     )
                     # Make sure we only call sleep N times (skip the first retry)
-                    self.assertEqual(
-                        sleep_mock.call_count, constants.MAX_RETRIES, "Sleep call count"
-                    )
+                    self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
                     self.assertEqual(result.exit_code, 1, "Exit code")
 
         # check files

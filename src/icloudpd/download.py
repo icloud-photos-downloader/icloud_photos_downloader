@@ -112,7 +112,8 @@ def download_media(
     if not mkdirs_local(logger, download_path):
         return False
 
-    for retries in range(constants.MAX_RETRIES):
+    retries = 0
+    while True:
         try:
             photo_response = photo.download(version.url)
             if photo_response:
@@ -134,6 +135,9 @@ def download_media(
 
                 icloud.authenticate()
             else:
+                # short circuiting 0 retries
+                if retries == constants.MAX_RETRIES:
+                    break
                 # you end up here when p.e. throttling by Apple happens
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
                 logger.error(
@@ -150,7 +154,10 @@ def download_media(
                 download_path,
             )
             break
-    else:
+        retries = retries + 1
+        if retries >= constants.MAX_RETRIES:
+            break
+    if retries >= constants.MAX_RETRIES:
         logger.error(
             "Could not download %s. Please try again later.",
             photo.filename,
