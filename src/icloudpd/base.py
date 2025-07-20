@@ -1233,6 +1233,8 @@ def session_error_handle_builder(
 ) -> None:
     """Handles session errors in the PhotoAlbum photos iterator"""
     if "Invalid global session" in str(ex):
+        if constants.MAX_RETRIES == 0:
+            logger.error("Session error, re-authenticating...")
         if attempt > constants.MAX_RETRIES:
             logger.error("iCloud re-authentication failed. Please try again later.")
             raise ex
