@@ -5,6 +5,7 @@ from multiprocessing import freeze_support
 
 from requests import Timeout
 from requests.exceptions import ConnectionError
+from urllib3.exceptions import NewConnectionError
 
 import foundation
 from foundation.core import compose, constant, identity
@@ -1533,7 +1534,7 @@ def core(
                 return 1
             else:
                 pass
-        except (ConnectionError, TimeoutError, Timeout) as _error:
+        except (ConnectionError, TimeoutError, Timeout, NewConnectionError) as _error:
             logger.info("Cannot connect to Apple iCloud service")
             # logger.debug(error)
             # it not watching then return error
