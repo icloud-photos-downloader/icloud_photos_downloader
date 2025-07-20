@@ -10,14 +10,12 @@ class PyiCloudException(Exception):
 #API
 class PyiCloudAPIResponseException(PyiCloudException):
     """iCloud response exception."""
-    def __init__(self, reason:str, code:Optional[str]=None, retry:bool=False):
+    def __init__(self, reason:str, code:Optional[str]=None):
         self.reason = reason
         self.code = code
         message = reason or ""
         if code:
             message += " (%s)" % code
-        if retry:
-            message += ". Retrying ..."
 
         super().__init__(message)
 

@@ -60,8 +60,6 @@ class PyiCloudSession(Session):
 
         request_logger.debug("%s %s %s", method, url, kwargs.get("data", ""))
 
-        has_retried = kwargs.get("retried")
-        kwargs.pop("retried", None)
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
         response = throw_on_503(super().request(method, url, **kwargs))
@@ -91,35 +89,6 @@ class PyiCloudSession(Session):
             content_type not in json_mimetypes
             or response.status_code in [421, 450, 500]
         ):
-            try:
-                # pylint: disable=protected-access
-                fmip_url = self.service._get_webservice_url("findme")
-                if (
-                    has_retried is None
-                    and response.status_code in [421, 450, 500]
-                    and fmip_url in url
-                ):
-                    # Handle re-authentication for Find My iPhone
-                    LOGGER.debug("Re-authenticating Find My iPhone service")
-                    try:
-                        # If 450, authentication requires a full sign in to the account
-                        service = None if response.status_code == 450 else "find"
-                        self.service.authenticate(True, service)
-
-                    except PyiCloudAPIResponseException:
-                        LOGGER.debug("Re-authentication failed")
-                    kwargs["retried"] = True
-                    return self.request(method, url, **kwargs)
-            except Exception:
-                pass
-
-            if has_retried is None and response.status_code in [421, 450, 500]:
-                api_error = PyiCloudAPIResponseException(
-                    response.reason, str(response.status_code), True
-                )
-                request_logger.debug(api_error)
-                kwargs["retried"] = True
-                return self.request(method, url, **kwargs)
 
             self._raise_error(str(response.status_code), response.reason)
 
