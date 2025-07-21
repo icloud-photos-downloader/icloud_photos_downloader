@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.29.1 (2025-07-20)
+
 - fix: retries trigger rate limiting [#1195](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1195)
 - fix: smtp & script notifications terminate the program [#898](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/898)
 
