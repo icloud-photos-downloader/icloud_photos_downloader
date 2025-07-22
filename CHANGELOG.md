@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.29.2 (2025-07-21)
+
 - fix: emulating old browser and client version fails authentication [#1073](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1073)
 
 ## 1.29.1 (2025-07-20)
