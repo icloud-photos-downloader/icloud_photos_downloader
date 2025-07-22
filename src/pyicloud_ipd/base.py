@@ -140,7 +140,7 @@ class PyiCloudService:
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
             'Referer': '%s/' % self.HOME_ENDPOINT,
-            'User-Agent': 'Opera/9.52 (X11; Linux i686; U; en)'
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
         })
 
         cookiejar_path = self.cookiejar_path
@@ -157,10 +157,8 @@ class PyiCloudService:
 
         # Unsure if this is still needed
         self.params = {
-            'clientBuildNumber': '17DHotfix5',
-            'clientMasteringNumber': '17DHotfix5',
-            'ckjsBuildVersion': '17DProjectDev77',
-            'ckjsVersion': '2.0.5',
+            'clientBuildNumber': '2522Project44',
+            'clientMasteringNumber': '2522B2',
             'clientId': self.client_id,
         }
 
