@@ -18,7 +18,7 @@ interactions:
         X-APPLE-WEBAUTH-PCS-Sharing="pcssharing-1234567890=";
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: ['Opera/9.52 (X11; Linux i686; U; en)']
+      User-Agent: ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36']
     method: POST
     uri: https://setup.icloud.com/setup/ws/1/validate
   response:
@@ -103,9 +103,9 @@ interactions:
       Content-type: [text/plain]
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
     method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_ac333066-5d55-4c42-b033-f05bb9d2873c\",\n
         \   \"recordType\" : \"CheckIndexingState\",\n    \"fields\" : {\n      \"progress\"
@@ -156,7 +156,7 @@ interactions:
       Referer:
       - https://www.icloud.com/
       User-Agent:
-      - Opera/9.52 (X11; Linux i686; U; en)
+      - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
     method: POST
     uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/zones/list
   response:
@@ -211,9 +211,9 @@ interactions:
       Content-type: [text/plain]
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
     method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_e53446cf-3885-4cd3-8f12-648289d79769\",\n
         \   \"recordType\" : \"CheckIndexingState\",\n    \"fields\" : {\n      \"progress\"
@@ -258,9 +258,9 @@ interactions:
       Content-type: [text/plain]
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
     method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/internal/records/query/batch?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/internal/records/query/batch?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body: {string: "{\n  \"batch\" : [ {\n    \"records\" : [ {\n      \"recordName\"
         : \"CPLAssetByAddedDate\",\n      \"recordType\" : \"IndexCountResult\",\n
@@ -330,9 +330,9 @@ interactions:
       Content-type: [text/plain]
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
     method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"AY6c+BsE0jjaXx9tmVGJM1D2VcEO\",\n
         \   \"recordType\" : \"CPLMaster\",\n    \"fields\" : {\n      \"resVidSmallHeight\"
@@ -11032,7 +11032,7 @@ interactions:
       Connection: [keep-alive]
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
-      User-Agent: [Opera/9.52 (X11; Linux i686; U; en)]
+      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
     method: GET
     uri: https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/$%7Bf%7D?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ
   response:
@@ -11080,9 +11080,9 @@ interactions:
       Referer:
       - https://www.icloud.com/
       User-Agent:
-      - Opera/9.52 (X11; Linux i686; U; en)
+      - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
     method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=17DHotfix5&clientMasteringNumber=17DHotfix5&ckjsBuildVersion=17DProjectDev77&ckjsVersion=2.0.5&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body:
       string: "{}"
