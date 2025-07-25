@@ -24,3 +24,4 @@ node_modules/
 /package-lock.json
 # used for local troubleshooting
 .photos
+.cookies/

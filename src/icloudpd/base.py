@@ -4,7 +4,13 @@
 from multiprocessing import freeze_support
 
 from requests import Timeout
-from requests.exceptions import ConnectionError
+from requests.exceptions import (
+    ChunkedEncodingError,
+    ConnectionError,
+    ContentDecodingError,
+    StreamConsumedError,
+    UnrewindableBodyError,
+)
 from urllib3.exceptions import NewConnectionError
 
 import foundation
@@ -1311,7 +1317,7 @@ def core(
     skip_bar = not os.environ.get("FORCE_TQDM") and (
         only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     )
-    while True:  # watch with interval
+    while True:  # watch with interval & retry
         try:
             icloud = authenticator(
                 logger,
@@ -1542,6 +1548,16 @@ def core(
                 return 1
             else:
                 pass
+        except (
+            ChunkedEncodingError,
+            ContentDecodingError,
+            StreamConsumedError,
+            UnrewindableBodyError,
+        ) as error:
+            logger.debug(error)
+            logger.debug("Retrying...")
+            # these errors we can safely retry
+            continue
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval: Sequence[int] = range(1, watch_interval)

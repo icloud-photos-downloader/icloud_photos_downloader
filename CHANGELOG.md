@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: transfer chunk issues terminate with error [#1202](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1202)
+
 ## 1.29.2 (2025-07-21)
 
 - fix: emulating old browser and client version fails authentication [#1073](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1073)
