@@ -3,7 +3,7 @@
 
 from multiprocessing import freeze_support
 
-from requests import Timeout
+from requests import Response, Timeout
 from requests.exceptions import (
     ChunkedEncodingError,
     ConnectionError,
@@ -37,6 +37,7 @@ from typing import (
     Callable,
     Dict,
     Iterable,
+    List,
     NoReturn,
     Sequence,
     Tuple,
@@ -1318,6 +1319,12 @@ def core(
         only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     )
     while True:  # watch with interval & retry
+        captured_responses: List[Response] = []
+
+        def append_response(captured: List[Response], response: Response) -> Response:
+            captured.append(response)
+            return response
+
         try:
             icloud = authenticator(
                 logger,
@@ -1331,9 +1338,16 @@ def core(
                 status_exchange,
                 username,
                 notificator,
+                partial(append_response, captured_responses),
                 cookie_directory,
                 os.environ.get("CLIENT_ID"),
             )
+
+            # dump captured responses - TODO should be done on exceptions only
+            logger.debug(captured_responses)
+
+            # turn off response capture
+            icloud.response_capture = identity
 
             if auth_only:
                 logger.info("Authentication completed successfully")

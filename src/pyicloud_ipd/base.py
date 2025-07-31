@@ -73,6 +73,7 @@ class PyiCloudService:
         file_match_policy: FileMatchPolicy,
         apple_id: str,
         password_provider: Callable[[], str | None], 
+        response_capture: Callable[[Response], Response],
         cookie_directory:Optional[str]=None, 
         verify:bool=True,
         client_id:Optional[str]=None, 
@@ -90,6 +91,7 @@ class PyiCloudService:
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
         self.http_timeout = http_timeout
+        self.response_capture = response_capture
 
         # set it when we get password
         self.password_filter: PyiCloudPasswordFilter|None = None
@@ -135,7 +137,7 @@ class PyiCloudService:
         else:
             self.session_data.update({"client_id": self.client_id})
 
-        self.session:PyiCloudSession = PyiCloudSession(self)
+        self.session:PyiCloudSession = PyiCloudSession(self, response_capture)
         self.session.verify = verify
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
