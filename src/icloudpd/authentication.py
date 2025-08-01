@@ -28,7 +28,7 @@ def authenticator(
     status_exchange: StatusExchange,
     username: str,
     notificator: Callable[[], None],
-    response_capture: Callable[[Response], Response],
+    response_post_processor: Callable[[Response], Response],
     cookie_directory: str | None = None,
     client_id: str | None = None,
 ) -> PyiCloudService:
@@ -53,7 +53,7 @@ def authenticator(
         file_match_policy,
         username,
         partial(password_provider, username, valid_password),
-        response_capture,
+        response_post_processor,
         cookie_directory=cookie_directory,
         client_id=client_id,
     )

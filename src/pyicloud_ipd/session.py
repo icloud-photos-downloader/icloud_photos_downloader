@@ -45,9 +45,9 @@ class PyiCloudPasswordFilter(logging.Filter):
 class PyiCloudSession(Session):
     """iCloud session."""
 
-    def __init__(self, service: Any, response_capture:Callable[[Response], Response]):
+    def __init__(self, service: Any, response_post_processor:Callable[[Response], Response]):
         self.service = service
-        self.response_capture = response_capture
+        self.response_post_processor = response_post_processor
         super().__init__()
 
     @override
@@ -64,7 +64,7 @@ class PyiCloudSession(Session):
         
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
-        response = throw_on_503(self.response_capture(super().request(method, url, **kwargs)))
+        response = throw_on_503(self.response_post_processor(super().request(method, url, **kwargs)))
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
         json_mimetypes = ["application/json", "text/json"]

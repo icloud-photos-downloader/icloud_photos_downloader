@@ -3,7 +3,7 @@
 
 from multiprocessing import freeze_support
 
-from requests import Response, Timeout
+from requests import PreparedRequest, Response, Timeout
 from requests.exceptions import (
     ChunkedEncodingError,
     ConnectionError,
@@ -34,6 +34,7 @@ from functools import partial
 from logging import Logger
 from threading import Thread
 from typing import (
+    Any,
     Callable,
     Dict,
     Iterable,
@@ -1343,11 +1344,24 @@ def core(
                 os.environ.get("CLIENT_ID"),
             )
 
-            # dump captured responses - TODO should be done on exceptions only
-            logger.debug(captured_responses)
+            def dump_request(dumper: Callable[[Any], None], input: PreparedRequest) -> None:
+                dumper(f"Request: {input.method} {input.url}")
+                dumper(f"Headers: {input.headers}")
+                # dumper(f"Payload: {input.body}")
+
+            def dump_response(dumper: Callable[[Any], None], input: Response) -> None:
+                dumper(f"Response: {input.status_code}")
+                dumper(f"Headers: {input.headers}")
+                dumper(f"Cookies: {input.cookies}")
+                # dumper(f"Payload: {input.content}")
+
+            # dump captured responses
+            for response in captured_responses:
+                dump_request(logger.debug, response.request)
+                dump_response(logger.debug, response)
 
             # turn off response capture
-            icloud.response_capture = identity
+            icloud.response_post_processor = identity
 
             if auth_only:
                 logger.info("Authentication completed successfully")
