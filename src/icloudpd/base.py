@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
+import http
 from multiprocessing import freeze_support
 
 from requests import PreparedRequest, Response, Timeout
@@ -39,6 +40,7 @@ from typing import (
     Dict,
     Iterable,
     List,
+    Mapping,
     NoReturn,
     Sequence,
     Tuple,
@@ -1344,15 +1346,31 @@ def core(
                 os.environ.get("CLIENT_ID"),
             )
 
+
+            def map_cookie_to_dict(cookie_header: str) -> Mapping[str, str]:
+                """replace cookie header with dict object"""
+                simple_cookie=http.cookies.SimpleCookie()
+                simple_cookie.load(cookie_header)
+                cookies = {k: v.value for k, v in simple_cookie.items()}
+                return cookies
+
+
             def dump_request(dumper: Callable[[Any], None], input: PreparedRequest) -> None:
                 dumper(f"Request: {input.method} {input.url}")
                 dumper(f"Headers: {input.headers}")
+
+                cookies = map_cookie_to_dict(input.headers['Cookie'])
+
+                dumper(f"Cookies: {cookies}")
                 # dumper(f"Payload: {input.body}")
 
             def dump_response(dumper: Callable[[Any], None], input: Response) -> None:
                 dumper(f"Response: {input.status_code}")
                 dumper(f"Headers: {input.headers}")
-                dumper(f"Cookies: {input.cookies}")
+                cookies = map_cookie_to_dict(input.headers['Set-Cookie'])
+                dumper(f"Cookies: {cookies}")
+                cookies_response = {k: v for k, v in input.cookies.items()}
+                dumper(f"Cookies-response: {cookies_response}")
                 # dumper(f"Payload: {input.content}")
 
             # dump captured responses
