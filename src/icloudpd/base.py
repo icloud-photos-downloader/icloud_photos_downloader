@@ -1365,7 +1365,8 @@ def core(
 
             # dump captured responses
             for response in captured_responses:
-                compose(logger.debug, response_to_har)(response)
+                # compose(logger.debug, compose(json.dumps, response_to_har))(response)
+                logger.debug(json.dumps(response_to_har(response), indent=2))
                 # dump_request(logger.debug, response.request)
                 # dump_response(logger.debug, response)
 
