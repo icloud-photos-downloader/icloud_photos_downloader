@@ -4,10 +4,9 @@ import logging
 import sys
 import time
 from functools import partial
-from typing import Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict, List, Mapping, Tuple
 
 import click
-from requests import Response
 
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
@@ -28,7 +27,7 @@ def authenticator(
     status_exchange: StatusExchange,
     username: str,
     notificator: Callable[[], None],
-    response_observer: Callable[[Response], None],
+    response_observer: Callable[[Mapping[str, Any]], None] | None = None,
     cookie_directory: str | None = None,
     client_id: str | None = None,
 ) -> PyiCloudService:

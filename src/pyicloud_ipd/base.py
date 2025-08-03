@@ -2,7 +2,7 @@ from collections import ChainMap
 from functools import partial
 from operator import is_
 import sys
-from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Dict, Iterable, List, Mapping, NamedTuple, Optional, Sequence, Tuple, TypeVar
 import typing
 from uuid import uuid1
 import json
@@ -100,7 +100,7 @@ class PyiCloudService:
         file_match_policy: FileMatchPolicy,
         apple_id: str,
         password_provider: Callable[[], str | None], 
-        response_observer: Callable[[Response], None],
+        response_observer: Callable[[Mapping[str, Any]], None] | None=None,
         cookie_directory:Optional[str]=None, 
         verify:bool=True,
         client_id:Optional[str]=None, 

@@ -124,7 +124,7 @@ def request_body(request: PreparedRequest) -> Any:
     return request.body
 
 
-def response_to_har(response: Response) -> Mapping[str, Any]:
+def response_to_har_entry(response: Response) -> Mapping[str, Any]:
     # headers
     # converted_pairs = map(xxx)
 

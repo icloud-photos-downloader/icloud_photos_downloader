@@ -1,4 +1,4 @@
-from typing import Any, Callable, Dict, NoReturn, Optional, Sequence
+from typing import Any, Callable, Dict, Mapping, NoReturn, Optional, Sequence
 from typing_extensions import override
 import typing
 import inspect
@@ -6,6 +6,7 @@ import json
 import logging
 from requests import Response, Session
 
+from foundation import response_to_har_entry
 from foundation.core import identity
 from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
@@ -45,13 +46,14 @@ class PyiCloudPasswordFilter(logging.Filter):
 class PyiCloudSession(Session):
     """iCloud session."""
 
-    def __init__(self, service: Any, response_observer:Callable[[Response], None]):
+    def __init__(self, service: Any, response_observer:Callable[[Mapping[str, Any]], None] | None = None):
         self.service = service
         self.response_observer = response_observer
         super().__init__()
 
     def observe(self, response: Response) -> Response:
-        self.response_observer(response) 
+        if self.response_observer:
+            self.response_observer(response_to_har_entry(response)) 
         return response
 
     @override

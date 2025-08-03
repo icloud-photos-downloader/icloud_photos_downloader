@@ -14,7 +14,7 @@ from requests.exceptions import (
 from urllib3.exceptions import NewConnectionError
 
 import foundation
-from foundation import cookie_str_to_dict, jar_to_pairs, response_to_har
+from foundation import cookie_str_to_dict, jar_to_pairs
 from foundation.core import compose, constant, identity
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
@@ -1322,9 +1322,9 @@ def core(
         only_print_filenames or no_progress_bar or not sys.stdout.isatty()
     )
     while True:  # watch with interval & retry
-        captured_responses: List[Response] = []
+        captured_responses: List[Mapping[str, Any]] = []
 
-        def append_response(captured: List[Response], response: Response) -> None:
+        def append_response(captured: List[Mapping[str, Any]], response: Mapping[str, Any]) -> None:
             captured.append(response)
 
         try:
@@ -1364,14 +1364,14 @@ def core(
                 # dumper(f"Payload: {input.content}")
 
             # dump captured responses
-            for response in captured_responses:
+            for entry in captured_responses:
                 # compose(logger.debug, compose(json.dumps, response_to_har))(response)
-                logger.debug(json.dumps(response_to_har(response), indent=2))
+                logger.debug(json.dumps(entry, indent=2))
                 # dump_request(logger.debug, response.request)
                 # dump_response(logger.debug, response)
 
             # turn off response capture
-            icloud.response_observer = lambda _: None
+            icloud.response_observer = None
 
             if auth_only:
                 logger.info("Authentication completed successfully")
