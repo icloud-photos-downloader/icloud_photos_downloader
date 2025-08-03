@@ -150,15 +150,16 @@ def response_to_har(response: Response) -> Mapping[str, Any]:
 
     return {
         "request": {
+            "method": response.request.method,
             "url": response.request.url,
             "headers": dict(not_request_cookie_headers(response.request.headers.items())),
             "cookies": extract_response_request_cookies(response.request.headers.items()),
-            "body": request_body(response.request),
+            "content": request_body(response.request),
         },
         "response": {
             "status_code": response.status_code,
             "headers": dict(not_response_cookie_headers(response.headers.items())),
             "cookies": dict(jar_to_pairs(response.cookies)),
-            "body": response_body(response),
+            "content": response_body(response),
         },
     }
