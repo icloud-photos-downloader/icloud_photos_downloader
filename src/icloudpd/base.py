@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-import http
 from multiprocessing import freeze_support
 
 from requests import PreparedRequest, Response, Timeout
@@ -15,6 +14,7 @@ from requests.exceptions import (
 from urllib3.exceptions import NewConnectionError
 
 import foundation
+from foundation import cookie_str_to_dict, jar_to_pairs, response_to_har
 from foundation.core import compose, constant, identity
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
@@ -1324,9 +1324,8 @@ def core(
     while True:  # watch with interval & retry
         captured_responses: List[Response] = []
 
-        def append_response(captured: List[Response], response: Response) -> Response:
+        def append_response(captured: List[Response], response: Response) -> None:
             captured.append(response)
-            return response
 
         try:
             icloud = authenticator(
@@ -1346,20 +1345,11 @@ def core(
                 os.environ.get("CLIENT_ID"),
             )
 
-
-            def map_cookie_to_dict(cookie_header: str) -> Mapping[str, str]:
-                """replace cookie header with dict object"""
-                simple_cookie=http.cookies.SimpleCookie()
-                simple_cookie.load(cookie_header)
-                cookies = {k: v.value for k, v in simple_cookie.items()}
-                return cookies
-
-
             def dump_request(dumper: Callable[[Any], None], input: PreparedRequest) -> None:
                 dumper(f"Request: {input.method} {input.url}")
                 dumper(f"Headers: {input.headers}")
 
-                cookies = map_cookie_to_dict(input.headers['Cookie'])
+                cookies = cookie_str_to_dict(input.headers["Cookie"])
 
                 dumper(f"Cookies: {cookies}")
                 # dumper(f"Payload: {input.body}")
@@ -1367,19 +1357,20 @@ def core(
             def dump_response(dumper: Callable[[Any], None], input: Response) -> None:
                 dumper(f"Response: {input.status_code}")
                 dumper(f"Headers: {input.headers}")
-                cookies = map_cookie_to_dict(input.headers['Set-Cookie'])
+                cookies = cookie_str_to_dict(input.headers["Set-Cookie"])
                 dumper(f"Cookies: {cookies}")
-                cookies_response = {k: v for k, v in input.cookies.items()}
+                cookies_response: Mapping[str, str] = dict(jar_to_pairs(input.cookies))
                 dumper(f"Cookies-response: {cookies_response}")
                 # dumper(f"Payload: {input.content}")
 
             # dump captured responses
             for response in captured_responses:
-                dump_request(logger.debug, response.request)
-                dump_response(logger.debug, response)
+                compose(logger.debug, response_to_har)(response)
+                # dump_request(logger.debug, response.request)
+                # dump_response(logger.debug, response)
 
             # turn off response capture
-            icloud.response_post_processor = identity
+            icloud.response_observer = lambda _: None
 
             if auth_only:
                 logger.info("Authentication completed successfully")

@@ -1,5 +1,8 @@
+from collections import ChainMap
+from functools import partial
+from operator import is_
 import sys
-from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence
+from typing import Any, Callable, Dict, Iterable, List, NamedTuple, Optional, Sequence, Tuple, TypeVar
 import typing
 from uuid import uuid1
 import json
@@ -15,6 +18,8 @@ import hashlib
 
 from requests import PreparedRequest, Request, Response
 
+from foundation import cookie_str_to_dict, flat_dict
+from foundation.core import compose, fst, snd
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
@@ -51,6 +56,28 @@ class TrustedPhoneContextProvider(NamedTuple):
     domain: str
     oauth_session: AuthenticatedSession
 
+T1 = TypeVar('T1')
+T2 = TypeVar('T2')
+def extract_context(context: List[T1], pair: Tuple[T1, T2]) -> Tuple[List[T1], T2]:
+    return (context + [pair[0]], pair[1])
+
+
+
+def pass_through(response: Response) -> Response:
+    # headers
+    # converted_pairs = map(xxx)
+
+    # cookies from request header
+    is_cookie = partial(is_, "Cookie")
+    cookie_headers: Callable[[Iterable[Tuple[str, str]]], Iterable[Tuple[str, str]]] = partial(filter, compose(is_cookie, fst))
+    cookie_header_strings: Callable[[Iterable[Tuple[str, str]]], Iterable[str]] = compose(partial(map,snd), cookie_headers)
+    cookie_maps = compose(partial(map,cookie_str_to_dict),cookie_header_strings)
+    cookies = flat_dict(cookie_maps(response.request.headers.items()))
+
+    # drop null
+
+    return response
+
 
 
 class PyiCloudService:
@@ -73,7 +100,7 @@ class PyiCloudService:
         file_match_policy: FileMatchPolicy,
         apple_id: str,
         password_provider: Callable[[], str | None], 
-        response_post_processor: Callable[[Response], Response],
+        response_observer: Callable[[Response], None],
         cookie_directory:Optional[str]=None, 
         verify:bool=True,
         client_id:Optional[str]=None, 
@@ -91,7 +118,7 @@ class PyiCloudService:
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
         self.http_timeout = http_timeout
-        self.response_post_processor = response_post_processor
+        self.response_observer = response_observer
 
         # set it when we get password
         self.password_filter: PyiCloudPasswordFilter|None = None
@@ -137,7 +164,7 @@ class PyiCloudService:
         else:
             self.session_data.update({"client_id": self.client_id})
 
-        self.session:PyiCloudSession = PyiCloudSession(self, response_post_processor)
+        self.session:PyiCloudSession = PyiCloudSession(self, response_observer)
         self.session.verify = verify
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
@@ -349,9 +376,11 @@ class PyiCloudService:
         """Checks if the current access token is still valid."""
         LOGGER.debug("Checking session token validity")
         try:
-            req = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
+            # set observer with obfuscator
+            # self.response_post_processor = 
+            response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
             LOGGER.debug("Session token is still valid")
-            result: Dict[str, Any] = req.json()
+            result: Dict[str, Any] = response.json()
             return result
         except PyiCloudAPIResponseException as err:
             LOGGER.debug("Invalid authentication token")
