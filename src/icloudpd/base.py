@@ -14,8 +14,8 @@ from requests.exceptions import (
 from urllib3.exceptions import NewConnectionError
 
 import foundation
-from foundation import cookie_str_to_dict, jar_to_pairs
 from foundation.core import compose, constant, identity
+from foundation.http import cookie_str_to_dict, jar_to_pairs
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 

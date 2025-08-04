@@ -6,8 +6,7 @@ import json
 import logging
 from requests import Response, Session
 
-from foundation import response_to_har_entry
-from foundation.core import identity
+from foundation.http import response_to_har_entry
 from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
     PyiCloud2SARequiredException,

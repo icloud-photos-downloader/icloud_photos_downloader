@@ -1,8 +1,5 @@
-from collections import ChainMap
-from functools import partial
-from operator import is_
 import sys
-from typing import Any, Callable, Dict, Iterable, List, Mapping, NamedTuple, Optional, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
@@ -18,8 +15,6 @@ import hashlib
 
 from requests import PreparedRequest, Request, Response
 
-from foundation import cookie_str_to_dict, flat_dict
-from foundation.core import compose, fst, snd
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
