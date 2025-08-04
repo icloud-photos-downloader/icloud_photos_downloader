@@ -49,3 +49,15 @@ class AppleRuleTestCase(TestCase):
         rules = list(map(lambda p: (p, constant("lmn")), compile_patterns([r"abc\.def.*"])))
         result = apply_rule(input, "", rules)
         self.assertDictEqual({"abc": {"def": "lmn"}}, result, "json match")
+
+    def test_json_dict_drop(self) -> None:
+        input = {"abc": {"def": "hij"}}
+        rules = list(map(lambda p: (p, constant(None)), compile_patterns([r"abc\.def.*"])))
+        result = apply_rule(input, "", rules)
+        self.assertDictEqual({"abc": {}}, result, "json dict drop")
+
+    def test_json_list_drop(self) -> None:
+        input = {"abc": {"def": ["hij"]}}
+        rules = list(map(lambda p: (p, constant(None)), compile_patterns([r"abc\.def\..*"])))
+        result = apply_rule(input, "", rules)
+        self.assertDictEqual({"abc": {"def": []}}, result, "json list drop")

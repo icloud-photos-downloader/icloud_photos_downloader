@@ -3,6 +3,7 @@ from functools import partial, singledispatch
 from operator import is_, not_
 from typing import Any, Callable, Iterable, Mapping, Sequence, Tuple, TypeVar
 
+from foundation import non_empty_pairs
 from foundation.core import compose, flip, fst
 
 T1 = TypeVar("T1")
@@ -78,12 +79,27 @@ def apply_rule_tuple(input: Tuple[str, Any], context: Context, rules: Sequence[R
         return (input[0], first_found_rule[1]("tuple"))
 
 
+filter_not_none: Callable[[Iterable[T1 | None]], Iterable[T1]] = partial(filter, is_not_none)
+
+
+def apply_rule_flipped(context: Context, rules: Sequence[Rule], input: Any) -> Any:
+    return apply_rule(input, context, rules)
+
+
 @apply_rule.register(list)
 def apply_rule_list(input: Sequence[Any], context: Context, rules: Sequence[Rule]) -> Any:
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
-        return list(map(lambda v: apply_rule(v, context + ".", rules), input))
+        apply_context_rules = partial(apply_rule_flipped, context + ".", rules)
+        apply_rule_iter = partial(map, apply_context_rules)
+        apply_and_filter: Callable[[Iterable[Any]], Iterable[Any]] = compose(
+            filter_not_none, apply_rule_iter
+        )
+        materialized_apply_and_filter: Callable[[Iterable[Any]], Iterable[Any]] = compose(
+            list, apply_and_filter
+        )
+        return materialized_apply_and_filter(input)
     else:
         # this is to allow overriding the whole list with string
         return first_found_rule[1]("list")
@@ -94,7 +110,15 @@ def apply_rule_dict(input: Mapping[str, Any], context: Context, rules: Sequence[
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
-        return dict(map(lambda v: apply_rule(v, context, rules), input.items()))
+        apply_context_rules = partial(apply_rule_flipped, context, rules)
+        apply_rule_iter = partial(map, apply_context_rules)
+        apply_and_filter: Callable[[Iterable[Any]], Iterable[Any]] = compose(
+            non_empty_pairs, apply_rule_iter
+        )
+        materialized_apply_and_filter: Callable[[Iterable[Any]], Iterable[Any]] = compose(
+            dict, apply_and_filter
+        )
+        return materialized_apply_and_filter(input.items())
     else:
         # this is to allow overriding the whole list with string
         return first_found_rule[1]("dict")
