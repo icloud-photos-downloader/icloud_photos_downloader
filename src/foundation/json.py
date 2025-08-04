@@ -43,7 +43,7 @@ is_not_none = compose(not_, is_none)
 
 
 def first_matching_rule(context: Context, rules: Sequence[Rule]) -> Rule | None:
-    match_with_context = partial(flip(re.match), context)
+    match_with_context = partial(flip(re.search), context)
     match_on_key_of_pair = compose(match_with_context, fst)
     is_matching_pair = compose(is_not_none, match_on_key_of_pair)
     filter_pairs: Callable[[Iterable[Rule]], Iterable[Rule]] = partial(filter, is_matching_pair)

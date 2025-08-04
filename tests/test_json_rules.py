@@ -50,6 +50,12 @@ class AppleRuleTestCase(TestCase):
         result = apply_rule(input, "", rules)
         self.assertDictEqual({"abc": {"def": "lmn"}}, result, "json match")
 
+    def test_json_match_by_leaf(self) -> None:
+        input = {"abc": {"def": "hij"}}
+        rules = list(map(lambda p: (p, constant("lmn")), compile_patterns([r"def.*"])))
+        result = apply_rule(input, "", rules)
+        self.assertDictEqual({"abc": {"def": "lmn"}}, result, "json match")
+
     def test_json_dict_drop(self) -> None:
         input = {"abc": {"def": "hij"}}
         rules = list(map(lambda p: (p, constant(None)), compile_patterns([r"abc\.def.*"])))
