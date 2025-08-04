@@ -1,3 +1,5 @@
+from functools import partial
+from itertools import chain
 import sys
 from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
 import typing
@@ -14,7 +16,10 @@ import base64
 import hashlib
 
 from requests import PreparedRequest, Request, Response
+from foundation.core import compose, constant, identity
+from foundation.json import apply_rule_flipped, compile_patterns
 
+from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
@@ -351,7 +356,31 @@ class PyiCloudService:
         LOGGER.debug("Checking session token validity")
         try:
             # set observer with obfuscator
-            # self.response_post_processor = 
+            if self.response_observer:
+                obfuscate_rule = lambda r: (r, obfuscate)
+                obfuscate_rules_from_pattern = partial(map, obfuscate_rule)
+                cookie_obfuscate_rules = obfuscate_rules_from_pattern([r"X_APPLE_.*", r"DES.*"])
+
+                header_obfuscate_rules = obfuscate_rules_from_pattern([r"X-APPLE-.*", r"scnt"])
+
+                pass_rule = lambda r: (r, identity)
+                pass_rules_from_pattern = partial(map, pass_rule)
+                header_pass_rules = pass_rules_from_pattern([r"^(request|response)\.headers\.(Origin|Referer|Content-Type|Location)$"])
+
+                drop_rule = lambda r: (r, constant(None))
+                drop_rules_from_pattern = partial(map, drop_rule)
+                header_drop_rules = drop_rules_from_pattern([r"^(request|response)\.headers\..+"])
+
+                rules = list(chain(
+                    cookie_obfuscate_rules,
+                    header_obfuscate_rules, 
+                    header_pass_rules,
+                    header_drop_rules
+                    ))
+                apply_rule_stub = partial(apply_rule_flipped, "", rules)
+                observe = compose(self.response_observer, apply_rule_stub)
+                self.session.response_observer = observe
+
             response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
             LOGGER.debug("Session token is still valid")
             result: Dict[str, Any] = response.json()
