@@ -63,13 +63,13 @@ def wrap_param_in_exception(caption: str, func: Callable[[T_in], T_out]) -> Call
 # def is_none(input: T_in | None) -> bool:
 #     return input is None
 
-is_None = partial(is_, None)
+is_none = partial(is_, None)
 
 
-is_not_none = compose(not_, is_None)
+is_not_none = compose(not_, is_none)
 
 empty_pairs: Callable[[Iterable[Tuple[T_in, T_out]]], Iterable[Tuple[T_in, T_out]]] = partial(
-    filter, compose(is_None, snd)
+    filter, compose(is_none, snd)
 )
 keys_from_pairs: Callable[[Iterable[Tuple[T_in, T_out]]], Iterable[T_in]] = partial(map, fst)
 keys_for_empty_values: Callable[[Iterable[Tuple[T_in, T_out]]], Iterable[T_in]] = compose(

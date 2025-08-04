@@ -56,27 +56,6 @@ class TrustedPhoneContextProvider(NamedTuple):
     domain: str
     oauth_session: AuthenticatedSession
 
-T1 = TypeVar('T1')
-T2 = TypeVar('T2')
-def extract_context(context: List[T1], pair: Tuple[T1, T2]) -> Tuple[List[T1], T2]:
-    return (context + [pair[0]], pair[1])
-
-
-
-def pass_through(response: Response) -> Response:
-    # headers
-    # converted_pairs = map(xxx)
-
-    # cookies from request header
-    is_cookie = partial(is_, "Cookie")
-    cookie_headers: Callable[[Iterable[Tuple[str, str]]], Iterable[Tuple[str, str]]] = partial(filter, compose(is_cookie, fst))
-    cookie_header_strings: Callable[[Iterable[Tuple[str, str]]], Iterable[str]] = compose(partial(map,snd), cookie_headers)
-    cookie_maps = compose(partial(map,cookie_str_to_dict),cookie_header_strings)
-    cookies = flat_dict(cookie_maps(response.request.headers.items()))
-
-    # drop null
-
-    return response
 
 
 

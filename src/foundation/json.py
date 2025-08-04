@@ -1,0 +1,113 @@
+import re
+from functools import partial, singledispatch
+from operator import is_, not_
+from typing import Any, Callable, Iterable, Mapping, Sequence, Tuple, TypeVar
+
+from foundation.core import compose, flip, fst
+
+T1 = TypeVar("T1")
+T2 = TypeVar("T2")
+
+# def extract_context(context: Context[T1], pair: Tuple[T1, T2]) -> Tuple[Context[T1], T2]:
+#     return (context + [pair[0]], pair[1])
+
+Context = str
+
+
+def extract_context(context: Context, pair: Tuple[str, T1]) -> Tuple[Context, T1]:
+    new_context = context + "." + pair[0] if context else pair[0]
+    return (new_context, pair[1])
+
+
+Rule = Tuple[re.Pattern[str], Callable[[str], str | None]]
+
+
+def first(input: Iterable[T1]) -> T1 | StopIteration:
+    for item in input:
+        return item
+    return StopIteration()
+
+
+def first_or_default(input: Iterable[T1], default: T2) -> T1 | T2:
+    for item in input:
+        return item
+    return default
+
+
+first_or_none: Callable[[Iterable[T1]], T1 | None] = partial(flip(first_or_default), None)
+
+is_none = partial(is_, None)
+
+is_not_none = compose(not_, is_none)
+
+
+def first_matching_rule(context: Context, rules: Sequence[Rule]) -> Rule | None:
+    match_with_context = partial(flip(re.match), context)
+    match_on_key_of_pair = compose(match_with_context, fst)
+    is_matching_pair = compose(is_not_none, match_on_key_of_pair)
+    filter_pairs: Callable[[Iterable[Rule]], Iterable[Rule]] = partial(filter, is_matching_pair)
+    first_matching = compose(first_or_none, filter_pairs)
+    first_found = first_matching(rules)
+    return first_found
+
+
+@singledispatch
+def apply_rule(input: Any, context: Context, rules: Sequence[Rule]) -> Any:
+    return input
+
+
+@apply_rule.register(str)
+def apply_rule_str(input: str, context: Context, rules: Sequence[Rule]) -> str | None:
+    first_found_rule = first_matching_rule(context, rules)
+    if first_found_rule is None:
+        # no pattern matched - return unchanged
+        return input
+    else:
+        return first_found_rule[1](input)
+
+
+@apply_rule.register(tuple)
+def apply_rule_tuple(input: Tuple[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
+    first_found_rule = first_matching_rule(context, rules)
+    if first_found_rule is None:
+        # no pattern matched - continue recursive
+        new_context, new_value = extract_context(context, input)
+        return (input[0], apply_rule(new_value, new_context, rules))
+    else:
+        # this is to allow overriding the whole object with string
+        return (input[0], first_found_rule[1]("tuple"))
+
+
+@apply_rule.register(list)
+def apply_rule_list(input: Sequence[Any], context: Context, rules: Sequence[Rule]) -> Any:
+    first_found_rule = first_matching_rule(context, rules)
+    if first_found_rule is None:
+        # no pattern matched - continue recursive
+        return list(map(lambda v: apply_rule(v, context + ".", rules), input))
+    else:
+        # this is to allow overriding the whole list with string
+        return first_found_rule[1]("list")
+
+
+@apply_rule.register(dict)
+def apply_rule_dict(input: Mapping[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
+    first_found_rule = first_matching_rule(context, rules)
+    if first_found_rule is None:
+        # no pattern matched - continue recursive
+        return dict(map(lambda v: apply_rule(v, context, rules), input.items()))
+    else:
+        # this is to allow overriding the whole list with string
+        return first_found_rule[1]("dict")
+
+
+def re_compile_flag(flags: re.RegexFlag, input: str) -> re.Pattern[str]:
+    return re.compile(input, flags)
+
+
+re_compile_ignorecase: Callable[[str], re.Pattern[str]] = partial(
+    re_compile_flag, re.RegexFlag.IGNORECASE
+)
+
+compile_patterns: Callable[[Iterable[str]], Iterable[re.Pattern[str]]] = partial(
+    map, re_compile_ignorecase
+)
