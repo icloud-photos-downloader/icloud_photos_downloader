@@ -16,7 +16,7 @@ Context = str
 
 
 def extract_context(context: Context, pair: Tuple[str, T1]) -> Tuple[Context, T1]:
-    new_context = context + "." + pair[0] if context else pair[0]
+    new_context = context + ("." if context and not context.endswith(".") else "") + pair[0]
     return (new_context, pair[1])
 
 
@@ -54,11 +54,13 @@ def first_matching_rule(context: Context, rules: Sequence[Rule]) -> Rule | None:
 
 @singledispatch
 def apply_rule(input: Any, context: Context, rules: Sequence[Rule]) -> Any:
+    # print(f"ANY {context} {input}")
     return input
 
 
 @apply_rule.register(str)
 def apply_rule_str(input: str, context: Context, rules: Sequence[Rule]) -> str | None:
+    # print(f"STR {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - return unchanged
@@ -69,6 +71,7 @@ def apply_rule_str(input: str, context: Context, rules: Sequence[Rule]) -> str |
 
 @apply_rule.register(tuple)
 def apply_rule_tuple(input: Tuple[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
+    # print(f"TUPLE {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
@@ -88,6 +91,7 @@ def apply_rule_flipped(context: Context, rules: Sequence[Rule], input: Any) -> A
 
 @apply_rule.register(list)
 def apply_rule_list(input: Sequence[Any], context: Context, rules: Sequence[Rule]) -> Any:
+    # print(f"LIST {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
@@ -107,6 +111,7 @@ def apply_rule_list(input: Sequence[Any], context: Context, rules: Sequence[Rule
 
 @apply_rule.register(dict)
 def apply_rule_dict(input: Mapping[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
+    # print(f"DICT {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
