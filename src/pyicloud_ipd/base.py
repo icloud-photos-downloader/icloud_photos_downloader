@@ -17,7 +17,7 @@ import hashlib
 
 from requests import PreparedRequest, Request, Response
 from foundation.core import compose, constant, identity
-from foundation.json import apply_rule_flipped, compile_patterns
+from foundation.json import Rule, apply_rule, apply_rule_flipped, compile_patterns
 
 from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import (
@@ -98,6 +98,7 @@ class PyiCloudService:
         self.with_family = with_family
         self.http_timeout = http_timeout
         self.response_observer = response_observer
+        self.observer_rules: Sequence[Rule] = []
 
         # set it when we get password
         self.password_filter: PyiCloudPasswordFilter|None = None
@@ -143,7 +144,11 @@ class PyiCloudService:
         else:
             self.session_data.update({"client_id": self.client_id})
 
-        self.session:PyiCloudSession = PyiCloudSession(self, response_observer)
+        def apply_rules_and_observe(response: Mapping[str, Any]) -> None:
+            if self.response_observer:
+                self.response_observer(apply_rule(response, "", self.observer_rules))
+        
+        self.session:PyiCloudSession = PyiCloudSession(self, apply_rules_and_observe if self.response_observer else None)
         self.session.verify = verify
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
@@ -371,17 +376,41 @@ class PyiCloudService:
                 drop_rules_from_pattern = partial(map, drop_rule)
                 header_drop_rules = drop_rules_from_pattern([r"^(request|response)\.headers\..+"])
 
-                rules = list(chain(
+                body_obfuscate_rules = obfuscate_rules_from_pattern([
+                    r"^response\.content\.dsInfo\.appleId$",
+                    r"^response\.content\.dsInfo\.appleIdAlias$",
+                    r"^response\.content\.dsInfo\.iCloudAppleIdAlias$",
+                    r"^response\.content\.dsInfo\.appleIdEntries\.value$",
+                    r"^response\.content\.dsInfo\.fullName",
+                    r"^response\.content\.dsInfo\.firstName",
+                    r"^response\.content\.dsInfo\.lastName",
+                    r"^response\.content\.dsInfo\.dsid",
+                    r"^response\.content\.dsInfo\.notificationId",
+                    r"^response\.content\.dsInfo\.aDsID",
+                    r"^response\.content\.dsInfo\.primaryEmail",
+                ])
+                body_drop_rules = drop_rules_from_pattern([
+                    r"^response\.content\.webservices\.", 
+                    r"^response\.content\.configBag\.urls\.", 
+                    r"^response\.content\.apps.*",
+                    r"^response\.content\.dsInfo\.mailFlags",
+                ])
+
+                self.observer_rules = list(chain(
                     cookie_obfuscate_rules,
                     header_obfuscate_rules, 
                     header_pass_rules,
-                    header_drop_rules
+                    header_drop_rules,
+                    body_obfuscate_rules,
+                    body_drop_rules,
                     ))
-                apply_rule_stub = partial(apply_rule_flipped, "", rules)
-                observe = compose(self.response_observer, apply_rule_stub)
-                self.session.response_observer = observe
+                # apply_rule_stub = partial(apply_rule_flipped, "", rules)
+                # observe = compose(self.response_observer, apply_rule_stub)
+                # self.session.response_observer = observe
 
             response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
+            # turn off observer
+            self.observer_rules = []
             LOGGER.debug("Session token is still valid")
             result: Dict[str, Any] = response.json()
             return result
