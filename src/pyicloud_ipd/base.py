@@ -1,7 +1,8 @@
+from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 import sys
-from typing import Any, Callable, Dict, Mapping, NamedTuple, Optional, Sequence
+from typing import Any, Callable, Dict, Generator, Mapping, NamedTuple, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
@@ -178,6 +179,15 @@ class PyiCloudService:
         self.authenticate()
 
         self._photos: Optional[PhotosService] = None
+
+    @contextmanager
+    def use_rules(self, rules: Sequence[Rule]) -> Generator[Sequence[Rule], Any, None]:
+        temp_rules = self.observer_rules
+        try:
+            self.observer_rules = rules
+            yield temp_rules
+        finally:
+            self.observer_rules = temp_rules
 
     def authenticate(self, force_refresh:bool=False) -> None:
         """
@@ -396,7 +406,7 @@ class PyiCloudService:
                     r"^response\.content\.dsInfo\.mailFlags",
                 ])
 
-                self.observer_rules = list(chain(
+                rules = list(chain(
                     cookie_obfuscate_rules,
                     header_obfuscate_rules, 
                     header_pass_rules,
@@ -407,10 +417,13 @@ class PyiCloudService:
                 # apply_rule_stub = partial(apply_rule_flipped, "", rules)
                 # observe = compose(self.response_observer, apply_rule_stub)
                 # self.session.response_observer = observe
+            else:
+                rules = []
 
-            response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
+            with self.use_rules(rules):
+                response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
             # turn off observer
-            self.observer_rules = []
+            # self.observer_rules = []
             LOGGER.debug("Session token is still valid")
             result: Dict[str, Any] = response.json()
             return result
