@@ -121,7 +121,27 @@ jobs:
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
           python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
+  
+  snap:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      - name: Download artifacts (snap)
+        uses: actions/download-artifact@v4
+        with:
+          name: icloudpd-snap
+
+      - name: Setup Snapcraft
+        run: sudo snap install --classic snapcraft
+
+      - name: Release snap
+        env:
+          SNAPCRAFT_STORE_CREDENTIALS: ${{ secrets.STORE_TOKEN }}
+        run: |
+          snapcraft upload icloudpd_*.snap --release latest/candidate
+   
   gh_release:
     runs-on: ubuntu-22.04
     steps:

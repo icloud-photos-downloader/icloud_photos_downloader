@@ -101,6 +101,21 @@ yay -S icloudpd-bin
 npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
+(snap)=
+## Snap Package
+
+Snap packages can be installed on any Linux distribution where `snapd` in available. Ubuntu ships with `snapd` by default.
+
+```bash
+# Install the package
+sudo snap install icloudpd
+# Optionally allow access to removable media/drives. By default the snap
+# can only access files in your home directory.
+sudo snap connect icloudpd:removable-media
+```
+
+See the package [on the Snap Store](https://snapcraft.io/icloudpd).
+
 ## macOS binary
 
 `icloudpd` is available as Intel 64bit binary for macOS, but works on ARM macs too (M1, M2, M3).
