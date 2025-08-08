@@ -1,0 +1,58 @@
+name: icloudpd
+title: iCloud Photo Downloader
+adopt-info: icloudpd
+license: Apache-2.0
+base: core24
+summary: A command-line tool to download photos from iCloud
+description: |
+  A command-line tool to download photos from iCloud
+
+  - Three modes of operation:
+    - Copy - download new photos from iCloud (default mode)
+    - Sync - download new photos from iCloud and delete local files that were removed in iCloud (--auto-delete option)
+    - Move - download new photos from iCloud and delete photos in iCloud (--keep-icloud-recent-days option)
+  - Support for Live Photos (image and video as separate files) and RAW images (including RAW+JPEG)
+  - Automatic de-duplication of photos with the same name
+  - One time download and an option to monitor for iCloud changes continuously (--watch-with-interval option)
+  - Optimizations for incremental runs (--until-found and --recent options)
+  - Photo metadata (EXIF) updates (--set-exif-datetime option)
+  - ...and many more (use --help option to get full list)
+
+website: https://github.com/icloud-photos-downloader/icloud_photos_downloader
+contact: https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues
+issues: https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues
+source-code: https://github.com/icloud-photos-downloader/icloud_photos_downloader
+
+grade: stable
+confinement: strict
+compression: lzo
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  icloudpd:
+    command: bin/icloudpd
+    plugs:
+      - home
+      - network
+      - network-bind
+      - removable-media
+      - shmem
+
+parts:
+  icloudpd:
+    plugin: python
+    source: https://github.com/icloud-photos-downloader/icloud_photos_downloader
+    source-tag: v$SNAPCRAFT_PROJECT_VERSION
+    source-type: git
+    override-build: |
+      craftctl default
+      # Set the version of the snap from the pyproject.toml file.
+      craftctl set-version "$(cat pyproject.toml | grep -Po '^version="\K[^"]+')"
+
+plugs:
+  shmem:
+    interface: shared-memory
+    private: true
