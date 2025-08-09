@@ -18,7 +18,7 @@ import hashlib
 
 from requests import PreparedRequest, Request, Response
 from foundation.core import compose, constant, identity
-from foundation.json import Rule, apply_rule, apply_rule_flipped, compile_patterns, re_compile_ignorecase
+from foundation.json import Rule, _apply_rules_internal, apply_rules, compile_patterns, re_compile_ignorecase
 
 from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import (
@@ -147,7 +147,7 @@ class PyiCloudService:
 
         def apply_rules_and_observe(response: Mapping[str, Any]) -> None:
             if self.response_observer:
-                self.response_observer(apply_rule(response, "", self.observer_rules))
+                self.response_observer(apply_rules("", self.observer_rules, response))
         
         self.session:PyiCloudSession = PyiCloudSession(self, apply_rules_and_observe if self.response_observer else None)
         self.session.verify = verify

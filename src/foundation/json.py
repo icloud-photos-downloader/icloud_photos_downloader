@@ -53,13 +53,13 @@ def first_matching_rule(context: Context, rules: Sequence[Rule]) -> Rule | None:
 
 
 @singledispatch
-def apply_rule(input: Any, context: Context, rules: Sequence[Rule]) -> Any:
+def _apply_rules_internal(input: Any, context: Context, rules: Sequence[Rule]) -> Any:
     # print(f"ANY {context} {input}")
     return input
 
 
-@apply_rule.register(str)
-def apply_rule_str(input: str, context: Context, rules: Sequence[Rule]) -> str | None:
+@_apply_rules_internal.register(str)
+def _(input: str, context: Context, rules: Sequence[Rule]) -> str | None:
     # print(f"STR {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
@@ -69,14 +69,14 @@ def apply_rule_str(input: str, context: Context, rules: Sequence[Rule]) -> str |
         return first_found_rule[1](input)
 
 
-@apply_rule.register(tuple)
-def apply_rule_tuple(input: Tuple[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
+@_apply_rules_internal.register(tuple)
+def _(input: Tuple[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
     # print(f"TUPLE {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
         new_context, new_value = extract_context(context, input)
-        return (input[0], apply_rule(new_value, new_context, rules))
+        return (input[0], _apply_rules_internal(new_value, new_context, rules))
     else:
         # this is to allow overriding the whole object with string
         return (input[0], first_found_rule[1]("tuple"))
@@ -85,17 +85,17 @@ def apply_rule_tuple(input: Tuple[str, Any], context: Context, rules: Sequence[R
 filter_not_none: Callable[[Iterable[T1 | None]], Iterable[T1]] = partial(filter, is_not_none)
 
 
-def apply_rule_flipped(context: Context, rules: Sequence[Rule], input: Any) -> Any:
-    return apply_rule(input, context, rules)
+def apply_rules(context: Context, rules: Sequence[Rule], input: Any) -> Any:
+    return _apply_rules_internal(input, context, rules)
 
 
-@apply_rule.register(list)
-def apply_rule_list(input: Sequence[Any], context: Context, rules: Sequence[Rule]) -> Any:
+@_apply_rules_internal.register(list)
+def _(input: Sequence[Any], context: Context, rules: Sequence[Rule]) -> Any:
     # print(f"LIST {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
-        apply_context_rules = partial(apply_rule_flipped, context + ".", rules)
+        apply_context_rules = partial(apply_rules, context + ".", rules)
         apply_rule_iter = partial(map, apply_context_rules)
         apply_and_filter: Callable[[Iterable[Any]], Iterable[Any]] = compose(
             filter_not_none, apply_rule_iter
@@ -109,13 +109,13 @@ def apply_rule_list(input: Sequence[Any], context: Context, rules: Sequence[Rule
         return first_found_rule[1]("list")
 
 
-@apply_rule.register(dict)
-def apply_rule_dict(input: Mapping[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
+@_apply_rules_internal.register(dict)
+def _(input: Mapping[str, Any], context: Context, rules: Sequence[Rule]) -> Any:
     # print(f"DICT {context} {input}")
     first_found_rule = first_matching_rule(context, rules)
     if first_found_rule is None:
         # no pattern matched - continue recursive
-        apply_context_rules = partial(apply_rule_flipped, context, rules)
+        apply_context_rules = partial(apply_rules, context, rules)
         apply_rule_iter = partial(map, apply_context_rules)
         apply_and_filter: Callable[[Iterable[Any]], Iterable[Any]] = compose(
             non_empty_pairs, apply_rule_iter
