@@ -3,7 +3,7 @@
 
 from multiprocessing import freeze_support
 
-from requests import PreparedRequest, Response, Timeout
+from requests import Timeout
 from requests.exceptions import (
     ChunkedEncodingError,
     ConnectionError,
@@ -15,7 +15,6 @@ from urllib3.exceptions import NewConnectionError
 
 import foundation
 from foundation.core import compose, constant, identity
-from foundation.http import cookie_str_to_dict, jar_to_pairs
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
@@ -1282,6 +1281,13 @@ def compose_handlers(
     return composed
 
 
+def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, Any]]) -> None:
+    # dump captured responses
+    for entry in responses:
+        # compose(logger.debug, compose(json.dumps, response_to_har))(response)
+        dumper(json.dumps(entry, indent=2))
+
+
 def core(
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
@@ -1345,30 +1351,8 @@ def core(
                 os.environ.get("CLIENT_ID"),
             )
 
-            def dump_request(dumper: Callable[[Any], None], input: PreparedRequest) -> None:
-                dumper(f"Request: {input.method} {input.url}")
-                dumper(f"Headers: {input.headers}")
-
-                cookies = cookie_str_to_dict(input.headers["Cookie"])
-
-                dumper(f"Cookies: {cookies}")
-                # dumper(f"Payload: {input.body}")
-
-            def dump_response(dumper: Callable[[Any], None], input: Response) -> None:
-                dumper(f"Response: {input.status_code}")
-                dumper(f"Headers: {input.headers}")
-                cookies = cookie_str_to_dict(input.headers["Set-Cookie"])
-                dumper(f"Cookies: {cookies}")
-                cookies_response: Mapping[str, str] = dict(jar_to_pairs(input.cookies))
-                dumper(f"Cookies-response: {cookies_response}")
-                # dumper(f"Payload: {input.content}")
-
-            # dump captured responses
-            for entry in captured_responses:
-                # compose(logger.debug, compose(json.dumps, response_to_har))(response)
-                logger.debug(json.dumps(entry, indent=2))
-                # dump_request(logger.debug, response.request)
-                # dump_response(logger.debug, response)
+            # dump captured responses for debugging
+            # dump_responses(logger.debug, captured_responses)
 
             # turn off response capture
             icloud.response_observer = None
@@ -1573,6 +1557,7 @@ def core(
                     pass
         except (PyiCloudServiceNotActivatedException, PyiCloudServiceUnavailableException) as error:
             logger.info(error)
+            dump_responses(logger.debug, captured_responses)
             # it not watching then return error
             if not watch_interval:
                 return 1
@@ -1580,6 +1565,7 @@ def core(
                 pass
         except (ConnectionError, TimeoutError, Timeout, NewConnectionError) as _error:
             logger.info("Cannot connect to Apple iCloud service")
+            dump_responses(logger.debug, captured_responses)
             # logger.debug(error)
             # it not watching then return error
             if not watch_interval:
@@ -1596,6 +1582,10 @@ def core(
             logger.debug("Retrying...")
             # these errors we can safely retry
             continue
+        except Exception:
+            dump_responses(logger.debug, captured_responses)
+            raise
+
         if watch_interval:  # pragma: no cover
             logger.info(f"Waiting for {watch_interval} sec...")
             interval: Sequence[int] = range(1, watch_interval)
