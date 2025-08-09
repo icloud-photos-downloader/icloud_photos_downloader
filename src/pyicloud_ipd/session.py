@@ -1,11 +1,12 @@
-from typing import Any, Dict, NoReturn, Optional, Sequence
+from typing import Any, Callable, Dict, Mapping, NoReturn, Optional, Sequence
 from typing_extensions import override
 import typing
 import inspect
 import json
 import logging
-from requests import Session
+from requests import Response, Session
 
+from foundation.http import response_to_har_entry
 from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
     PyiCloud2SARequiredException,
@@ -44,9 +45,15 @@ class PyiCloudPasswordFilter(logging.Filter):
 class PyiCloudSession(Session):
     """iCloud session."""
 
-    def __init__(self, service: Any):
+    def __init__(self, service: Any, response_observer:Callable[[Mapping[str, Any]], None] | None = None):
         self.service = service
+        self.response_observer = response_observer
         super().__init__()
+
+    def observe(self, response: Response) -> Response:
+        if self.response_observer:
+            self.response_observer(response_to_har_entry(response)) 
+        return response
 
     @override
     def request(self, method: str, url, **kwargs): # type: ignore
@@ -59,10 +66,10 @@ class PyiCloudSession(Session):
             request_logger.addFilter(self.service.password_filter)
 
         request_logger.debug("%s %s %s", method, url, kwargs.get("data", ""))
-
+        
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
-        response = throw_on_503(super().request(method, url, **kwargs))
+        response = throw_on_503(self.observe(super().request(method, url, **kwargs)))
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
         json_mimetypes = ["application/json", "text/json"]

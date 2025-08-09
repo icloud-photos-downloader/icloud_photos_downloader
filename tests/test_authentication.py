@@ -57,6 +57,7 @@ class AuthenticationTestCase(TestCase):
                     StatusExchange(),
                     "bad_username",
                     lambda: None,
+                    None,
                     cookie_dir,
                     "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
@@ -277,6 +278,7 @@ class AuthenticationTestCase(TestCase):
                 StatusExchange(),
                 "jdoe@gmail.com",
                 lambda: None,
+                None,
                 cookie_dir,
                 "EC5646DE-9423-11E8-BF21-14109FE0B321",
             )

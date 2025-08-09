@@ -1,12 +1,15 @@
+from contextlib import contextmanager
+from functools import partial
+from itertools import chain
 import sys
-from typing import Any, Callable, Dict, NamedTuple, Optional, Sequence
+from typing import Any, Callable, Dict, Generator, List, Mapping, NamedTuple, Optional, Sequence
 import typing
 from uuid import uuid1
 import json
 import logging
 from tempfile import gettempdir
 from os import path, mkdir
-from re import match
+from re import Pattern, match
 import http.cookiejar as cookielib
 import getpass
 import srp
@@ -14,7 +17,10 @@ import base64
 import hashlib
 
 from requests import PreparedRequest, Request, Response
+from foundation.core import compose, constant, identity
+from foundation.json import Rule, _apply_rules_internal, apply_rules, compile_patterns, re_compile_ignorecase
 
+from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
@@ -53,6 +59,7 @@ class TrustedPhoneContextProvider(NamedTuple):
 
 
 
+
 class PyiCloudService:
     """
     A base authentication class for the iCloud service. Handles the
@@ -73,6 +80,7 @@ class PyiCloudService:
         file_match_policy: FileMatchPolicy,
         apple_id: str,
         password_provider: Callable[[], str | None], 
+        response_observer: Callable[[Mapping[str, Any]], None] | None=None,
         cookie_directory:Optional[str]=None, 
         verify:bool=True,
         client_id:Optional[str]=None, 
@@ -90,6 +98,8 @@ class PyiCloudService:
         self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
         self.with_family = with_family
         self.http_timeout = http_timeout
+        self.response_observer = response_observer
+        self.observer_rules: Sequence[Rule] = []
 
         # set it when we get password
         self.password_filter: PyiCloudPasswordFilter|None = None
@@ -135,7 +145,11 @@ class PyiCloudService:
         else:
             self.session_data.update({"client_id": self.client_id})
 
-        self.session:PyiCloudSession = PyiCloudSession(self)
+        def apply_rules_and_observe(response: Mapping[str, Any]) -> None:
+            if self.response_observer:
+                self.response_observer(apply_rules("", self.observer_rules, response))
+        
+        self.session:PyiCloudSession = PyiCloudSession(self, apply_rules_and_observe if self.response_observer else None)
         self.session.verify = verify
         self.session.headers.update({
             'Origin': self.HOME_ENDPOINT,
@@ -162,9 +176,91 @@ class PyiCloudService:
             'clientId': self.client_id,
         }
 
+        # set observer rules
+        obfuscate_rule: Callable[[Pattern[str]], Rule] = lambda r: (r, obfuscate)
+        obfuscate_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(list, partial(map, compose(obfuscate_rule, re_compile_ignorecase)))
+        self.cookie_obfuscate_rules = obfuscate_rules_from_pattern([r"X_APPLE_.*", r"DES.*", r"acn01", r"aasp"])
+
+        self.header_obfuscate_rules = obfuscate_rules_from_pattern([r"X-APPLE-.*", r"scnt"])
+
+        pass_rule: Callable[[Pattern[str]], Rule] = lambda r: (r, identity)
+        pass_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(list, partial(map, compose(pass_rule, re_compile_ignorecase)))
+        self.header_pass_rules = pass_rules_from_pattern([r"^(request|response)\.headers\.(Origin|Referer|Content-Type|Location)$"])
+
+        drop_rule: Callable[[Pattern[str]], Rule] = lambda r: (r, constant(None))
+        drop_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(list, partial(map, compose(drop_rule, re_compile_ignorecase)))
+        self.header_drop_rules: List[Rule] = drop_rules_from_pattern([r"^(request|response)\.headers\..+"])
+
+        self.validate_response_body_obfuscate_rules = obfuscate_rules_from_pattern([
+            r"^response\.content\.dsInfo\.appleId$",
+            r"^response\.content\.dsInfo\.appleIdAlias$",
+            r"^response\.content\.dsInfo\.iCloudAppleIdAlias$",
+            r"^response\.content\.dsInfo\.appleIdEntries\.value$",
+            r"^response\.content\.dsInfo\.fullName",
+            r"^response\.content\.dsInfo\.firstName",
+            r"^response\.content\.dsInfo\.lastName",
+            r"^response\.content\.dsInfo\.dsid",
+            r"^response\.content\.dsInfo\.notificationId",
+            r"^response\.content\.dsInfo\.aDsID",
+            r"^response\.content\.dsInfo\.primaryEmail",
+        ])
+        self.validate_response_body_drop_rules = drop_rules_from_pattern([
+            r"^response\.content\.webservices\.", 
+            r"^response\.content\.configBag\.urls\.", 
+            r"^response\.content\.apps.*",
+            r"^response\.content\.dsInfo\.mailFlags",
+        ])
+        self.auth_srp_init_body_obfuscate_rules = obfuscate_rules_from_pattern([
+            r"^request\.content\.accountName",
+            r"^request\.content\.a$",
+            r"^response\.content\.salt",
+            r"^response\.content\.b",
+            r"^response\.content\.c",
+        ])
+        self.auth_srp_init_body_drop_rules = drop_rules_from_pattern([
+        ])
+        self.auth_srp_complete_body_obfuscate_rules = obfuscate_rules_from_pattern([
+            r"^request\.content\.accountName",
+            r"^request\.content\.c",
+            r"^request\.content\.m1",
+            r"^request\.content\.m2",
+            r"^request\.content\.trustTokens\.",
+        ])
+        self.auth_srp_complete_body_drop_rules = drop_rules_from_pattern([
+        ])
+        self.auth_srp_repair_complete_body_obfuscate_rules = obfuscate_rules_from_pattern([
+        ])
+        self.auth_srp_repair_complete_body_drop_rules = drop_rules_from_pattern([
+        ])
+        self.auth_raw_body_obfuscate_rules = obfuscate_rules_from_pattern([
+            r"^request\.content\.accountName",
+            r"^request\.content\.password",
+            r"^request\.content\.trustTokens\.",
+        ])
+        self.auth_raw_body_drop_rules = drop_rules_from_pattern([
+        ])
+        self.auth_token_body_obfuscate_rules = list(
+            chain(
+                obfuscate_rules_from_pattern([
+                    r"^request\.content\.dsWebAuthToken",
+                    r"^request\.content\.trustToken",
+                ]), 
+                self.validate_response_body_obfuscate_rules
+        ))
+        self.auth_token_body_drop_rules = self.validate_response_body_drop_rules
+
         self.authenticate()
 
         self._photos: Optional[PhotosService] = None
+
+    @contextmanager
+    def use_rules(self, rules: Sequence[Rule]) -> Generator[Sequence[Rule], Any, None]:
+        temp_rules = self.observer_rules
+        try:
+            self.observer_rules = rules
+            yield temp_rules
+        finally:
+            self.observer_rules = temp_rules
 
     def authenticate(self, force_refresh:bool=False) -> None:
         """
@@ -221,9 +317,25 @@ class PyiCloudService:
         }
 
         try:
-            req = self.session.post(
-                "%s/accountLogin" % self.SETUP_ENDPOINT, data=json.dumps(data)
-            )
+            # set observer with obfuscator
+            if self.response_observer:
+
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules, 
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.auth_token_body_obfuscate_rules,
+                        self.auth_token_body_drop_rules,
+                ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                req = self.session.post(
+                    "%s/accountLogin" % self.SETUP_ENDPOINT, data=json.dumps(data)
+                )
             self.data = req.json()
         except PyiCloudAPIResponseException as error:
             msg = "Invalid authentication token."
@@ -266,7 +378,21 @@ class PyiCloudService:
 
         headers = self._get_auth_headers()
         try:
-            response = self.session.post("%s/signin/init" % self.AUTH_ENDPOINT, data=json.dumps(data), headers=headers)
+            if self.response_observer:
+
+                rules = list(chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules, 
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                    self.auth_srp_init_body_obfuscate_rules,
+                    self.auth_srp_init_body_drop_rules,
+                    ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                response = self.session.post("%s/signin/init" % self.AUTH_ENDPOINT, data=json.dumps(data), headers=headers)
             if response.status_code == 401:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
         except PyiCloudAPIResponseException as error:
@@ -299,23 +425,53 @@ class PyiCloudService:
             data["trustTokens"] = [self.session_data.get("trust_token")]
 
         try:
-            response = self.session.post(
-                "%s/signin/complete" % self.AUTH_ENDPOINT,
-                params={"isRememberMeEnabled": "true"},
-                data=json.dumps(data),
-                headers=headers,
-            )
+            # set observer with obfuscator
+            if self.response_observer:
+
+                rules = list(chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules, 
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                    self.auth_srp_complete_body_obfuscate_rules,
+                    self.auth_srp_complete_body_drop_rules,
+                    ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                response = self.session.post(
+                    "%s/signin/complete" % self.AUTH_ENDPOINT,
+                    params={"isRememberMeEnabled": "true"},
+                    data=json.dumps(data),
+                    headers=headers,
+                )
             if response.status_code == 409:
                 # requires 2FA
                 pass
             elif response.status_code == 412:
                 # non 2FA account returns 412 "precondition no met"
                 headers = self._get_auth_headers()
-                response = self.session.post(
-                    "%s/repair/complete" % self.AUTH_ENDPOINT,
-                    data=json.dumps({}),
-                    headers=headers,
-                )
+                # set observer with obfuscator
+                if self.response_observer:
+
+                    rules = list(chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules, 
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.auth_srp_repair_complete_body_obfuscate_rules,
+                        self.auth_srp_repair_complete_body_drop_rules,
+                        ))
+                else:
+                    rules = []
+
+                with self.use_rules(rules):
+                    response = self.session.post(
+                        "%s/repair/complete" % self.AUTH_ENDPOINT,
+                        data=json.dumps({}),
+                        headers=headers,
+                    )
             elif response.status_code >= 400 and response.status_code < 600:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
         except PyiCloudAPIResponseException as error:
@@ -333,12 +489,27 @@ class PyiCloudService:
 
         headers = self._get_auth_headers()
         try:
-            self.session.post(
-                "%s/signin" % self.AUTH_ENDPOINT,
-                params={"isRememberMeEnabled": "true"},
-                data=json.dumps(data),
-                headers=headers,
-            )
+            # set observer with obfuscator
+            if self.response_observer:
+
+                rules = list(chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules, 
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                    self.auth_raw_body_obfuscate_rules,
+                    self.auth_raw_body_drop_rules,
+                    ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                self.session.post(
+                    "%s/signin" % self.AUTH_ENDPOINT,
+                    params={"isRememberMeEnabled": "true"},
+                    data=json.dumps(data),
+                    headers=headers,
+                )
         except PyiCloudAPIResponseException as error:
             msg = "Invalid email/password combination."
             raise PyiCloudFailedLoginException(msg, error) from error
@@ -347,9 +518,24 @@ class PyiCloudService:
         """Checks if the current access token is still valid."""
         LOGGER.debug("Checking session token validity")
         try:
-            req = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
+            # set observer with obfuscator
+            if self.response_observer:
+
+                rules = list(chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules, 
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                    self.validate_response_body_obfuscate_rules,
+                    self.validate_response_body_drop_rules,
+                    ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null")
             LOGGER.debug("Session token is still valid")
-            result: Dict[str, Any] = req.json()
+            result: Dict[str, Any] = response.json()
             return result
         except PyiCloudAPIResponseException as err:
             LOGGER.debug("Invalid authentication token")
