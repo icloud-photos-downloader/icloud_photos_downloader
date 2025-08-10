@@ -65,6 +65,7 @@ from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middl
 from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
+    PyiCloudFailedLoginException,
     PyiCloudServiceNotActivatedException,
     PyiCloudServiceUnavailableException,
 )
@@ -1555,6 +1556,13 @@ def core(
                     )
                 else:
                     pass
+        except PyiCloudFailedLoginException as _error:
+            logger.info("Invalid email/password combination.")
+            dump_responses(logger.debug, captured_responses)
+            if "webui" in password_providers and mfa_provider == MFAProvider.WEBUI:
+                pass
+            else:
+                return 1
         except (PyiCloudServiceNotActivatedException, PyiCloudServiceUnavailableException) as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)

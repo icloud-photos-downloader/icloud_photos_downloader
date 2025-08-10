@@ -295,15 +295,16 @@ class PyiCloudService:
             LOGGER.addFilter(self.password_filter)
 
             LOGGER.debug(f"Authenticating as {self.apple_id}")
-            try:
-                self._authenticate_srp(password)
-            except PyiCloudFailedLoginException as error:
-                LOGGER.error("Failed to login with srp, falling back to old raw password authentication. Error: %s", error)
-                try:
-                    self._authenticate_raw_password(password)
-                except PyiCloudFailedLoginException as error:
-                    LOGGER.error("Failed to login with raw password. Error: %s", error)
-                    raise error
+            self._authenticate_srp(password)
+            # try:
+            #     self._authenticate_srp(password)
+            # except PyiCloudFailedLoginException as error:
+            #     LOGGER.error("Failed to login with srp, falling back to old raw password authentication. Error: %s", error)
+            #     try:
+            #         self._authenticate_raw_password(password)
+            #     except PyiCloudFailedLoginException as error:
+            #         LOGGER.error("Failed to login with raw password. Error: %s", error)
+            #         raise error
 
             self._authenticate_with_token()
 

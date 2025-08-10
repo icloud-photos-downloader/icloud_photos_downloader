@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: disable raw password auth fallback [#1176](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1176)
+
 ## 1.29.3 (2025-08-09)
 
 - debug: dump auth traffic in case of a failure [#1176](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1176)
