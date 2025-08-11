@@ -643,7 +643,18 @@ class PyiCloudService:
             headers= req.headers
         ).prepare()
 
-        response = self.send_request(request)
+        if self.response_observer:
+            rules = list(chain(
+                self.cookie_obfuscate_rules,
+                self.header_obfuscate_rules, 
+                self.header_pass_rules,
+                self.header_drop_rules,
+                ))
+        else:
+            rules = []
+
+        with self.use_rules(rules):
+            response = self.send_request(request)
 
         return parse_trusted_phone_numbers_response(response)
 
@@ -662,7 +673,18 @@ class PyiCloudService:
             json = req.json,
         ).prepare()
 
-        response = self.send_request(request)
+        if self.response_observer:
+            rules = list(chain(
+                self.cookie_obfuscate_rules,
+                self.header_obfuscate_rules, 
+                self.header_pass_rules,
+                self.header_drop_rules,
+                ))
+        else:
+            rules = []
+
+        with self.use_rules(rules):
+            response = self.send_request(request)
 
         return response.ok
 
@@ -714,7 +736,18 @@ class PyiCloudService:
             data = req.data,
             json = req.json,
         ).prepare()
-        response = self.send_request(request)
+        if self.response_observer:
+            rules = list(chain(
+                self.cookie_obfuscate_rules,
+                self.header_obfuscate_rules, 
+                self.header_pass_rules,
+                self.header_drop_rules,
+                ))
+        else:
+            rules = []
+
+        with self.use_rules(rules):
+            response = self.send_request(request)
 
         if response.ok:
             return self.trust_session()
@@ -728,11 +761,22 @@ class PyiCloudService:
         headers = self._get_auth_headers({"Accept": "application/json"})
 
         try:
-            self.session.post(
-                "%s/verify/trusteddevice/securitycode" % self.AUTH_ENDPOINT,
-                data=json.dumps(data),
-                headers=headers,
-            )
+            if self.response_observer:
+                rules = list(chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules, 
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                    ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                self.session.post(
+                    "%s/verify/trusteddevice/securitycode" % self.AUTH_ENDPOINT,
+                    data=json.dumps(data),
+                    headers=headers,
+                )
         except PyiCloudAPIResponseException as error:
             if str(error.code) == "-21669":
                 # Wrong verification code
@@ -750,10 +794,21 @@ class PyiCloudService:
         headers = self._get_auth_headers()
 
         try:
-            self.session.get(
-                f"{self.AUTH_ENDPOINT}/2sv/trust",
-                headers=headers,
-            )
+            if self.response_observer:
+                rules = list(chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules, 
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                    ))
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                self.session.get(
+                    f"{self.AUTH_ENDPOINT}/2sv/trust",
+                    headers=headers,
+                )
             self._authenticate_with_token()
             return True
         except PyiCloudAPIResponseException:
