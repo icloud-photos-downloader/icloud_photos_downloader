@@ -124,7 +124,6 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     device_index_alphabet = "abcdefghijklmnopqrstuvwxyz"
     if devices_count > 0:
         if devices_count > len(device_index_alphabet):
-            logger.error("Too many trusted devices for authentication")
             raise PyiCloudFailedMFAException("Too many trusted devices for authentication")
 
         for i, device in enumerate(devices):
@@ -176,7 +175,6 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             device_index = device_index_alphabet.index(index_or_code)
             device = devices[device_index]
             if not icloud.send_2fa_code_sms(device.id):
-                logger.error("Failed to send two-factor authentication code")
                 raise PyiCloudFailedMFAException("Failed to send two-factor authentication code")
             while True:
                 code: str = click.prompt(
@@ -187,11 +185,9 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 click.echo("Invalid code, should be six digits. Try again")
 
             if not icloud.validate_2fa_code_sms(device.id, code):
-                logger.error("Failed to verify two-factor authentication code")
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
         else:
             if not icloud.validate_2fa_code(index_or_code):
-                logger.error("Failed to verify two-factor authentication code")
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     else:
         while True:
@@ -202,7 +198,6 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 break
             click.echo("Invalid code, should be six digits. Try again")
         if not icloud.validate_2fa_code(code):
-            logger.error("Failed to verify two-factor authentication code")
             raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     logger.info(
         "Great, you're all set up. The script can now be run without "

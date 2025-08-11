@@ -151,7 +151,7 @@ class TwoStepAuthTestCase(TestCase):
                 input="901431\n",
             )
             self.assertIn(
-                "ERROR    Failed to verify two-factor authentication code",
+                "Failed to verify two-factor authentication code",
                 self._caplog.text,
             )
 

@@ -201,8 +201,8 @@ def update_password_status_in_webui(status_exchange: StatusExchange, _u: str, _p
     status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
 
 
-def update_password_error_in_webui(status_exchange: StatusExchange, error: str) -> None:
-    status_exchange.set_error(error)
+def update_auth_error_in_webui(status_exchange: StatusExchange, error: str) -> bool:
+    return status_exchange.set_error(error)
 
 
 # def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
@@ -1558,9 +1558,7 @@ def core(
             logger.info("Invalid email/password combination.")
             dump_responses(logger.debug, captured_responses)
             if "webui" in password_providers:
-                update_password_error_in_webui(
-                    status_exchange, "Invalid email/password combination."
-                )
+                update_auth_error_in_webui(status_exchange, "Invalid email/password combination.")
                 continue
             else:
                 return 1
@@ -1568,7 +1566,7 @@ def core(
             logger.info(str(error))
             dump_responses(logger.debug, captured_responses)
             if mfa_provider == MFAProvider.WEBUI:
-                update_password_error_in_webui(status_exchange, str(error))
+                update_auth_error_in_webui(status_exchange, str(error))
                 continue
             else:
                 return 1
@@ -1576,9 +1574,12 @@ def core(
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
-            if "webui" in password_providers:
-                update_password_error_in_webui(status_exchange, str(error))
-                continue
+            if "webui" in password_providers or mfa_provider == MFAProvider.WEBUI:
+                if update_auth_error_in_webui(status_exchange, str(error)):
+                    # retry if it was during auth
+                    continue
+                else:
+                    pass
             else:
                 pass
             # it not watching then return error
@@ -1591,11 +1592,14 @@ def core(
             dump_responses(logger.debug, captured_responses)
             # logger.debug(error)
             # webui will display error and wait for password again
-            if "webui" in password_providers:
-                update_password_error_in_webui(
+            if "webui" in password_providers or mfa_provider == MFAProvider.WEBUI:
+                if update_auth_error_in_webui(
                     status_exchange, "Cannot connect to Apple iCloud service"
-                )
-                continue
+                ):
+                    # retry if it was during auth
+                    continue
+                else:
+                    pass
             else:
                 pass
             # it not watching then return error
