@@ -69,7 +69,11 @@ class StatusExchange:
                 return False
 
             self._error = error
-            self._status = Status.NO_INPUT_NEEDED
+            self._status = (
+                Status.NO_INPUT_NEEDED
+                if self._status == Status.CHECKING_PASSWORD
+                else Status.NEED_MFA
+            )
             return True
 
     def get_error(self) -> str | None:

@@ -213,43 +213,42 @@ def request_2fa_web(
 ) -> None:
     """Request two-factor authentication through Webui."""
     if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_MFA):
-        logger.error("Expected NO_INPUT_NEEDED, but got something else")
-        raise PyiCloudFailedMFAException("Expected NO_INPUT_NEEDED, but got something else")
+        raise PyiCloudFailedMFAException(
+            f"Expected NO_INPUT_NEEDED, but got {status_exchange.get_status()}"
+        )
 
     # wait for input
     while True:
         status = status_exchange.get_status()
         if status == Status.NEED_MFA:
             time.sleep(1)
+            continue
         else:
-            break
+            pass
 
-    if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
-        code = status_exchange.get_payload()
-        if not code:
-            logger.error("Internal error: did not get code for SUPPLIED_MFA status")
-            status_exchange.replace_status(
-                Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
-            )  # TODO Error
-            raise PyiCloudFailedMFAException(
-                "Internal error: did not get code for SUPPLIED_MFA status"
-            )
+        if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
+            code = status_exchange.get_payload()
+            if not code:
+                raise PyiCloudFailedMFAException(
+                    "Internal error: did not get code for SUPPLIED_MFA status"
+                )
 
-        if not icloud.validate_2fa_code(code):
-            logger.error("Failed to verify two-factor authentication code")
-            status_exchange.replace_status(
-                Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
-            )  # TODO Error
-            raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
-        status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
+            if not icloud.validate_2fa_code(code):
+                if status_exchange.set_error("Failed to verify two-factor authentication code"):
+                    # that will loop forever 
+                    # TODO give user an option to restart auth in case they missed code
+                    continue
+                else:
+                    raise PyiCloudFailedMFAException("Failed to chage status of invalid code")
+            else:
+                status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
 
-        logger.info(
-            "Great, you're all set up. The script can now be run without "
-            "user interaction until 2FA expires.\n"
-            "You can set up email notifications for when "
-            "the two-factor authentication expires.\n"
-            "(Use --help to view information about SMTP options.)"
-        )
-    else:
-        logger.error("Failed to change status")
-        raise PyiCloudFailedMFAException("Failed to change status")
+                logger.info(
+                    "Great, you're all set up. The script can now be run without "
+                    "user interaction until 2FA expires.\n"
+                    "You can set up email notifications for when "
+                    "the two-factor authentication expires.\n"
+                    "(Use --help to view information about SMTP options.)"
+                )
+        else:
+            raise PyiCloudFailedMFAException("Failed to change status")
