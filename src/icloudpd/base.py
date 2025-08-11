@@ -66,6 +66,7 @@ from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
     PyiCloudFailedLoginException,
+    PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
     PyiCloudServiceUnavailableException,
 )
@@ -169,43 +170,39 @@ def ask_password_in_console(_user: str) -> str | None:
 
 
 def get_password_from_webui(
-    logger: Logger, status_exchange: StatusExchange
-) -> Callable[[str], str | None]:
-    def _intern(_user: str) -> str | None:
-        """Request two-factor authentication through Webui."""
-        if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_PASSWORD):
-            logger.error("Expected NO_INPUT_NEEDED, but got something else")
-            return None
-
-        # wait for input
-        while True:
-            status = status_exchange.get_status()
-            if status == Status.NEED_PASSWORD:
-                time.sleep(1)
-            else:
-                break
-        if status_exchange.replace_status(Status.SUPPLIED_PASSWORD, Status.CHECKING_PASSWORD):
-            password = status_exchange.get_payload()
-            if not password:
-                logger.error("Internal error: did not get password for SUPPLIED_PASSWORD status")
-                status_exchange.replace_status(
-                    Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED
-                )  # TODO Error
-                return None
-            return password
-
-        return None  # TODO
-
-    return _intern
-
-
-def update_password_status_in_webui(status_exchange: StatusExchange) -> Callable[[str, str], None]:
-    def _intern(_u: str, _p: str) -> None:
-        # TODO we are not handling wrong passwords...
-        status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
+    logger: Logger, status_exchange: StatusExchange, _user: str
+) -> str | None:
+    """Request two-factor authentication through Webui."""
+    if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_PASSWORD):
+        logger.error("Expected NO_INPUT_NEEDED, but got something else")
         return None
 
-    return _intern
+    # wait for input
+    while True:
+        status = status_exchange.get_status()
+        if status == Status.NEED_PASSWORD:
+            time.sleep(1)
+        else:
+            break
+    if status_exchange.replace_status(Status.SUPPLIED_PASSWORD, Status.CHECKING_PASSWORD):
+        password = status_exchange.get_payload()
+        if not password:
+            logger.error("Internal error: did not get password for SUPPLIED_PASSWORD status")
+            status_exchange.replace_status(
+                Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED
+            )  # TODO Error
+            return None
+        return password
+
+    return None  # TODO
+
+
+def update_password_status_in_webui(status_exchange: StatusExchange, _u: str, _p: str) -> None:
+    status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
+
+
+def update_auth_error_in_webui(status_exchange: StatusExchange, error: str) -> bool:
+    return status_exchange.set_error(error)
 
 
 # def get_click_param_by_name(_name: str, _params: List[Parameter]) -> Optional[Parameter]:
@@ -234,6 +231,7 @@ def password_provider_generator(
 ) -> Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]]:
     def _map(provider: str) -> Tuple[Callable[[str], str | None], Callable[[str, str], None]]:
         if provider == "webui":
+            # ask_password_in_console will be replaced once we setup web
             return (ask_password_in_console, dummy_password_writter)
         if provider == "console":
             return (ask_password_in_console, dummy_password_writter)
@@ -805,8 +803,8 @@ def main(
         if "webui" in password_providers:
             # replace
             password_providers["webui"] = (
-                get_password_from_webui(logger, status_exchange),
-                update_password_status_in_webui(status_exchange),
+                partial(get_password_from_webui, logger, status_exchange),
+                partial(update_password_status_in_webui, status_exchange),
             )
 
         # hacky way to inject logger
@@ -1559,13 +1557,31 @@ def core(
         except PyiCloudFailedLoginException as _error:
             logger.info("Invalid email/password combination.")
             dump_responses(logger.debug, captured_responses)
-            if "webui" in password_providers and mfa_provider == MFAProvider.WEBUI:
-                pass
+            if "webui" in password_providers:
+                update_auth_error_in_webui(status_exchange, "Invalid email/password combination.")
+                continue
+            else:
+                return 1
+        except PyiCloudFailedMFAException as error:
+            logger.info(str(error))
+            dump_responses(logger.debug, captured_responses)
+            if mfa_provider == MFAProvider.WEBUI:
+                update_auth_error_in_webui(status_exchange, str(error))
+                continue
             else:
                 return 1
         except (PyiCloudServiceNotActivatedException, PyiCloudServiceUnavailableException) as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
+            # webui will display error and wait for password again
+            if "webui" in password_providers or mfa_provider == MFAProvider.WEBUI:
+                if update_auth_error_in_webui(status_exchange, str(error)):
+                    # retry if it was during auth
+                    continue
+                else:
+                    pass
+            else:
+                pass
             # it not watching then return error
             if not watch_interval:
                 return 1
@@ -1575,6 +1591,17 @@ def core(
             logger.info("Cannot connect to Apple iCloud service")
             dump_responses(logger.debug, captured_responses)
             # logger.debug(error)
+            # webui will display error and wait for password again
+            if "webui" in password_providers or mfa_provider == MFAProvider.WEBUI:
+                if update_auth_error_in_webui(
+                    status_exchange, "Cannot connect to Apple iCloud service"
+                ):
+                    # retry if it was during auth
+                    continue
+                else:
+                    pass
+            else:
+                pass
             # it not watching then return error
             if not watch_interval:
                 return 1

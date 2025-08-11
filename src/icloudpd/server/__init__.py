@@ -26,14 +26,19 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         _status = _status_exchange.get_status()
         _config = _status_exchange.get_config()
         _progress = _status_exchange.get_progress()
+        _error = _status_exchange.get_error()
         if _status == Status.NO_INPUT_NEEDED:
             return render_template(
-                "no_input.html", status=_status, progress=_progress, config=vars(_config)
+                "no_input.html",
+                status=_status,
+                error=_error,
+                progress=_progress,
+                config=vars(_config),
             )
         if _status == Status.NEED_MFA:
-            return render_template("code.html")
+            return render_template("code.html", error=_error)
         if _status == Status.NEED_PASSWORD:
-            return render_template("password.html", config=_config)
+            return render_template("password.html", error=_error, config=_config)
         return render_template("status.html", status=_status)
 
     @app.route("/code", methods=["POST"])
