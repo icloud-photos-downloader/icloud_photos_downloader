@@ -23,6 +23,7 @@ class StatusExchange:
         self.lock = Lock()
         self._status = Status.NO_INPUT_NEEDED
         self._payload: str | None = None
+        self._error: str | None = None
         self._config: Config | None = None
         self._progress = Progress()
 
@@ -47,6 +48,7 @@ class StatusExchange:
             self._status = (
                 Status.SUPPLIED_MFA if self._status == Status.NEED_MFA else Status.SUPPLIED_PASSWORD
             )
+            self._error = None
             return True
 
     def get_payload(self) -> str | None:
@@ -60,6 +62,26 @@ class StatusExchange:
                 return None
 
             return self._payload
+
+    def set_error(self, error: str) -> bool:
+        with self.lock:
+            if self._status != Status.CHECKING_MFA and self._status != Status.CHECKING_PASSWORD:
+                return False
+
+            self._error = error
+            self._status = Status.NO_INPUT_NEEDED
+            return True
+
+    def get_error(self) -> str | None:
+        with self.lock:
+            if self._status not in [
+                Status.NO_INPUT_NEEDED,
+                Status.NEED_PASSWORD,
+                Status.NEED_MFA,
+            ]:
+                return None
+
+            return self._error
 
     def set_config(self, config: Config) -> None:
         with self.lock:
