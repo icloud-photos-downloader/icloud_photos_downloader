@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: failed auth terminate webui [#1195](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1195)
 - fix: disable raw password auth fallback [#1176](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1176)
 
 ## 1.29.3 (2025-08-09)
