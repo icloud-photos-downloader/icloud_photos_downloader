@@ -33,6 +33,9 @@ class PyiCloudFailedLoginException(PyiCloudException):
     """iCloud failed login exception."""
     pass
 
+class PyiCloudFailedMFAException(PyiCloudException):
+    """iCloud failed validating multi-factor auth exception."""
+    pass
 
 class PyiCloud2SARequiredException(PyiCloudException):
     """iCloud 2SA required exception."""

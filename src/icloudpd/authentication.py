@@ -11,6 +11,7 @@ import click
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
@@ -124,7 +125,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     if devices_count > 0:
         if devices_count > len(device_index_alphabet):
             logger.error("Too many trusted devices for authentication")
-            sys.exit(1)
+            raise PyiCloudFailedMFAException("Too many trusted devices for authentication")
 
         for i, device in enumerate(devices):
             click.echo(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
@@ -176,7 +177,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             device = devices[device_index]
             if not icloud.send_2fa_code_sms(device.id):
                 logger.error("Failed to send two-factor authentication code")
-                sys.exit(1)
+                raise PyiCloudFailedMFAException("Failed to send two-factor authentication code")
             while True:
                 code: str = click.prompt(
                     "Please enter two-factor authentication code that you received over SMS",
@@ -187,11 +188,11 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
 
             if not icloud.validate_2fa_code_sms(device.id, code):
                 logger.error("Failed to verify two-factor authentication code")
-                sys.exit(1)
+                raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
         else:
             if not icloud.validate_2fa_code(index_or_code):
                 logger.error("Failed to verify two-factor authentication code")
-                sys.exit(1)
+                raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     else:
         while True:
             code = click.prompt(
@@ -202,7 +203,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             click.echo("Invalid code, should be six digits. Try again")
         if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
-            sys.exit(1)
+            raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2FA expires.\n"
@@ -218,7 +219,7 @@ def request_2fa_web(
     """Request two-factor authentication through Webui."""
     if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_MFA):
         logger.error("Expected NO_INPUT_NEEDED, but got something else")
-        return
+        raise PyiCloudFailedMFAException("Expected NO_INPUT_NEEDED, but got something else")
 
     # wait for input
     while True:
@@ -235,14 +236,16 @@ def request_2fa_web(
             status_exchange.replace_status(
                 Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
             )  # TODO Error
-            return
+            raise PyiCloudFailedMFAException(
+                "Internal error: did not get code for SUPPLIED_MFA status"
+            )
 
         if not icloud.validate_2fa_code(code):
             logger.error("Failed to verify two-factor authentication code")
             status_exchange.replace_status(
                 Status.CHECKING_MFA, Status.NO_INPUT_NEEDED
             )  # TODO Error
-            return
+            raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
         status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
 
         logger.info(
@@ -254,3 +257,4 @@ def request_2fa_web(
         )
     else:
         logger.error("Failed to change status")
+        raise PyiCloudFailedMFAException("Failed to change status")

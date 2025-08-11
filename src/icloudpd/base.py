@@ -66,6 +66,7 @@ from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
     PyiCloudFailedLoginException,
+    PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
     PyiCloudServiceUnavailableException,
 )
@@ -1560,6 +1561,14 @@ def core(
                 update_password_error_in_webui(
                     status_exchange, "Invalid email/password combination."
                 )
+                continue
+            else:
+                return 1
+        except PyiCloudFailedMFAException as error:
+            logger.info(str(error))
+            dump_responses(logger.debug, captured_responses)
+            if mfa_provider == MFAProvider.WEBUI:
+                update_password_error_in_webui(status_exchange, str(error))
                 continue
             else:
                 return 1
