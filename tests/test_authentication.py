@@ -62,12 +62,13 @@ class AuthenticationTestCase(TestCase):
                     "EC5646DE-9423-11E8-BF21-14109FE0B321",
                 )
 
-        self.assertIn(
-            "ERROR    Failed to login with srp, falling back to old raw password authentication.",
-            self._caplog.text,
-        )
+        # self.assertIn(
+        #     "ERROR    Failed to login with srp, falling back to old raw password authentication.",
+        #     self._caplog.text,
+        # )
         self.assertTrue("Invalid email/password combination." in str(context.exception))
 
+    @pytest.mark.skip(reason="No longer support fallback to raw")
     def test_fallback_raw_password(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
