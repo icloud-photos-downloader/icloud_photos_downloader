@@ -235,7 +235,7 @@ def request_2fa_web(
 
             if not icloud.validate_2fa_code(code):
                 if status_exchange.set_error("Failed to verify two-factor authentication code"):
-                    # that will loop forever 
+                    # that will loop forever
                     # TODO give user an option to restart auth in case they missed code
                     continue
                 else:
