@@ -626,6 +626,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     callback=skip_created_after_generator,
 )
 @click.option(
+    "--skip-photos",
+    help="Don't download any photos (default: Download all photos and videos)",
+    is_flag=True,
+)
+@click.option(
     "--version",
     help="Show the version, commit hash and timestamp",
     is_flag=True,
@@ -680,6 +685,7 @@ def main(
     use_os_locale: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
     skip_created_after: datetime.datetime | datetime.timedelta | None,
+    skip_photos: bool,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -703,6 +709,10 @@ def main(
             logger.setLevel(logging.ERROR)
 
     with logging_redirect_tqdm():
+        if skip_videos and skip_photos:
+            print("Only one of --skip-videos and --skip-photos can be used at a time")
+            sys.exit(2)
+
         # check required directory param only if not list albums
         if not list_albums and not list_libraries and not directory and not auth_only:
             print("--auth-only, --directory, --list-libraries or --list-albums are required")
@@ -826,6 +836,7 @@ def main(
             skip_videos,
             skip_created_before,
             skip_created_after,
+            skip_photos,
         )
         downloader = (
             partial(
@@ -938,11 +949,19 @@ def where_builder(
     skip_videos: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
     skip_created_after: datetime.datetime | datetime.timedelta | None,
+    skip_photos: bool,
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
         logger.debug(
             "Skipping %s, only downloading photos." + "(Item type was: %s)",
+            photo.filename,
+            photo.item_type,
+        )
+        return False
+    if skip_photos and photo.item_type == AssetItemType.IMAGE:
+        logger.debug(
+            "Skipping %s, only downloading videos." + "(Item type was: %s)",
             photo.filename,
             photo.item_type,
         )
