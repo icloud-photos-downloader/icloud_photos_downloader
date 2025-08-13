@@ -30,7 +30,7 @@ import sys
 import time
 import typing
 import urllib
-from functools import partial
+from functools import partial, singledispatch
 from logging import Logger
 from threading import Thread
 from typing import (
@@ -765,6 +765,23 @@ def main(
                 sys.exit(2)
 
         status_exchange = StatusExchange()
+
+        # hacky way to use one param in another
+        if "webui" in password_providers:
+            # replace
+            password_providers["webui"] = (
+                partial(get_password_from_webui, logger, status_exchange),
+                partial(update_password_status_in_webui, status_exchange),
+            )
+
+        # hacky way to inject logger
+        if "keyring" in password_providers:
+            # replace
+            password_providers["keyring"] = (
+                get_password_from_keyring,
+                keyring_password_writter(logger),
+            )
+
         config = Config(
             directory=directory,
             username=username,
@@ -806,24 +823,15 @@ def main(
             file_match_policy=file_match_policy,
             mfa_provider=mfa_provider,
             use_os_locale=use_os_locale,
+            skip_created_before=offset_to_datetime(skip_created_before)
+            if skip_created_before
+            else None,
+            skip_created_after=offset_to_datetime(skip_created_after)
+            if skip_created_after
+            else None,
+            skip_photos=skip_photos,
         )
         status_exchange.set_config(config)
-
-        # hacky way to use one param in another
-        if "webui" in password_providers:
-            # replace
-            password_providers["webui"] = (
-                partial(get_password_from_webui, logger, status_exchange),
-                partial(update_password_status_in_webui, status_exchange),
-            )
-
-        # hacky way to inject logger
-        if "keyring" in password_providers:
-            # replace
-            password_providers["keyring"] = (
-                get_password_from_keyring,
-                keyring_password_writter(logger),
-            )
 
         # start web server
         if mfa_provider == MFAProvider.WEBUI or "webui" in password_providers:
@@ -943,6 +951,21 @@ def notificator_builder(
     except Exception as error:
         logger.error("Notification of the required MFA failed")
         logger.debug(error)
+
+
+@singledispatch
+def offset_to_datetime(offset: Any) -> datetime.datetime:
+    raise NotImplementedError()
+
+
+@offset_to_datetime.register(datetime.datetime)
+def _(offset: datetime.datetime) -> datetime.datetime:
+    return offset
+
+
+@offset_to_datetime.register(datetime.timedelta)
+def _(offset: datetime.timedelta) -> datetime.datetime:
+    return datetime.datetime.now(get_localzone()) - offset
 
 
 def where_builder(
