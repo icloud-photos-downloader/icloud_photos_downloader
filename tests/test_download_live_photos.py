@@ -63,7 +63,7 @@ class DownloadLivePhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
         assert result.exit_code == 0
 
     def test_skip_existing_live_photodownloads(self) -> None:
@@ -105,7 +105,7 @@ class DownloadLivePhotoTestCase(TestCase):
             f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
             self._caplog.text,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
         assert result.exit_code == 0
 
     def test_skip_existing_live_photo_print_filenames(self) -> None:

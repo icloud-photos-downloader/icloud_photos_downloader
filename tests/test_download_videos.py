@@ -84,7 +84,7 @@ class DownloadVideoTestCase(TestCase):
         #     "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
         #     self._caplog.text,
         # )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All videos have been downloaded", self._caplog.text)
 
         # # Check that file was downloaded
         # # Check that mtime was updated to the photo creation date

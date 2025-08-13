@@ -1565,10 +1565,13 @@ def core(
                     logger.info("Iteration was cancelled")
                     status_exchange.get_progress().photos_last_message = "Iteration was cancelled"
                 else:
-                    logger.info("All photos have been downloaded")
-                    status_exchange.get_progress().photos_last_message = (
-                        "All photos have been downloaded"
-                    )
+                    if skip_photos or skip_videos:
+                        photo_video_phrase = "photos" if skip_videos else "videos"
+                    else:
+                        photo_video_phrase = "photos and videos"
+                    message = f"All {photo_video_phrase} have been downloaded"
+                    logger.info(message)
+                    status_exchange.get_progress().photos_last_message = message
                 status_exchange.get_progress().reset()
 
                 if auto_delete:

@@ -51,7 +51,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
         assert result.exit_code == 0
 
     def test_skip_existing_live_photodownloads_name_id7(self) -> None:
@@ -93,7 +93,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
             f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
             self._caplog.text,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
         assert result.exit_code == 0
 
     def test_skip_existing_live_photo_print_filenames_name_id7(self) -> None:
