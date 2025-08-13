@@ -95,7 +95,9 @@ class AutodeletePhotosTestCase(TestCase):
                     "INFO     Deleted IMG_3589.JPG",
                     self._caplog.text,
                 )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
 
                 # check files
                 for file_name in files:
@@ -129,7 +131,9 @@ class AutodeletePhotosTestCase(TestCase):
                     f"INFO     Downloading 0 original photos and videos to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
                 self.assertIn(
                     "INFO     Deleting any files found in 'Recently Deleted'...",
                     self._caplog.text,
@@ -198,7 +202,7 @@ class AutodeletePhotosTestCase(TestCase):
                 "INFO     Deleted IMG_3589.JPG",
                 self._caplog.text,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
 
             # check files
             for file_name in files:
@@ -232,7 +236,7 @@ class AutodeletePhotosTestCase(TestCase):
                 f"INFO     Downloading 0 original photos and videos to {data_dir} ...",
                 self._caplog.text,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
             self.assertIn(
                 "INFO     Deleting any files found in 'Recently Deleted'...",
                 self._caplog.text,

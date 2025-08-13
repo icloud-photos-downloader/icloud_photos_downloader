@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: add `--skip-photos` filter [#401](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/401) [#1206](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1206)
+
 ## 1.29.4 (2025-08-12)
 
 - fix: failed auth terminate webui [#1195](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1195)

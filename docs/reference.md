@@ -165,6 +165,15 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   If specified, video assets will not be processed
 
+(skip-photos-parameter)=
+`--skip-photos`
+
+    ```{versionadded} 1.30.0
+    ```
+
+    
+:   If specified, photos assets will not be processed
+
 (skip-live-photos-parameter)=
 `--skip-live-photos`
     

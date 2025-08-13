@@ -626,6 +626,11 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
     callback=skip_created_after_generator,
 )
 @click.option(
+    "--skip-photos",
+    help="Don't download any photos (default: Download all photos and videos)",
+    is_flag=True,
+)
+@click.option(
     "--version",
     help="Show the version, commit hash and timestamp",
     is_flag=True,
@@ -680,6 +685,7 @@ def main(
     use_os_locale: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
     skip_created_after: datetime.datetime | datetime.timedelta | None,
+    skip_photos: bool,
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
@@ -703,6 +709,10 @@ def main(
             logger.setLevel(logging.ERROR)
 
     with logging_redirect_tqdm():
+        if skip_videos and skip_photos:
+            print("Only one of --skip-videos and --skip-photos can be used at a time")
+            sys.exit(2)
+
         # check required directory param only if not list albums
         if not list_albums and not list_libraries and not directory and not auth_only:
             print("--auth-only, --directory, --list-libraries or --list-albums are required")
@@ -826,6 +836,7 @@ def main(
             skip_videos,
             skip_created_before,
             skip_created_after,
+            skip_photos,
         )
         downloader = (
             partial(
@@ -892,6 +903,7 @@ def main(
             password_providers,
             mfa_provider,
             status_exchange,
+            skip_photos,
         )
         sys.exit(result)
 
@@ -938,11 +950,19 @@ def where_builder(
     skip_videos: bool,
     skip_created_before: datetime.datetime | datetime.timedelta | None,
     skip_created_after: datetime.datetime | datetime.timedelta | None,
+    skip_photos: bool,
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
         logger.debug(
             "Skipping %s, only downloading photos." + "(Item type was: %s)",
+            photo.filename,
+            photo.item_type,
+        )
+        return False
+    if skip_photos and photo.item_type == AssetItemType.IMAGE:
+        logger.debug(
+            "Skipping %s, only downloading videos." + "(Item type was: %s)",
             photo.filename,
             photo.item_type,
         )
@@ -1320,6 +1340,7 @@ def core(
     password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
+    skip_photos: bool,
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
@@ -1394,9 +1415,12 @@ def core(
                 # would be better to have that in types though
                 directory = os.path.normpath(cast(str, directory))
 
-                videos_phrase = "" if skip_videos else " and videos"
+                if skip_photos or skip_videos:
+                    photo_video_phrase = "photos" if skip_videos else "videos"
+                else:
+                    photo_video_phrase = "photos and videos"
                 album_phrase = f" from album {album}" if album else ""
-                logger.debug(f"Looking up all photos{videos_phrase}{album_phrase}...")
+                logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
                 session_exception_handler = partial(session_error_handle_builder, logger, icloud)
                 internal_error_handler = partial(internal_error_handle_builder, logger)
@@ -1439,21 +1463,25 @@ def core(
 
                 if photos_count is not None:
                     plural_suffix = "" if photos_count == 1 else "s"
-                    video_suffix = ""
-                    photos_count_str = "the first" if photos_count == 1 else photos_count
+                    photos_count_str = "the first" if photos_count == 1 else str(photos_count)
 
-                    if not skip_videos:
-                        video_suffix = " or video" if photos_count == 1 else " and videos"
+                    if skip_photos or skip_videos:
+                        photo_video_phrase = ("photo" if skip_videos else "video") + plural_suffix
+                    else:
+                        photo_video_phrase = (
+                            "photo or video" if photos_count == 1 else "photos and videos"
+                        )
                 else:
                     photos_count_str = "???"
-                    plural_suffix = "s"
-                    video_suffix = " and videos" if not skip_videos else ""
+                    if skip_photos or skip_videos:
+                        photo_video_phrase = "photos" if skip_videos else "videos"
+                    else:
+                        photo_video_phrase = "photos and videos"
                 logger.info(
-                    ("Downloading %s %s" + " photo%s%s to %s ..."),
+                    ("Downloading %s %s %s to %s ..."),
                     photos_count_str,
                     ",".join([_s.value for _s in primary_sizes]),
-                    plural_suffix,
-                    video_suffix,
+                    photo_video_phrase,
                     directory,
                 )
 
@@ -1537,10 +1565,13 @@ def core(
                     logger.info("Iteration was cancelled")
                     status_exchange.get_progress().photos_last_message = "Iteration was cancelled"
                 else:
-                    logger.info("All photos have been downloaded")
-                    status_exchange.get_progress().photos_last_message = (
-                        "All photos have been downloaded"
-                    )
+                    if skip_photos or skip_videos:
+                        photo_video_phrase = "photos" if skip_videos else "videos"
+                    else:
+                        photo_video_phrase = "photos and videos"
+                    message = f"All {photo_video_phrase} have been downloaded"
+                    logger.info(message)
+                    status_exchange.get_progress().photos_last_message = message
                 status_exchange.get_progress().reset()
 
                 if auto_delete:

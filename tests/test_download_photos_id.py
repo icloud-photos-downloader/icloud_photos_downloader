@@ -194,7 +194,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             f"DEBUG    Setting EXIF timestamp for {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}: {expectedDatetime}",
             self._caplog.text,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
 
     def test_download_photos_and_get_exif_exceptions_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -291,7 +291,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             f"DEBUG    {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.MOV')), 96)} already exists",
             self._caplog.text,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
 
     def test_until_found_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -668,7 +668,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         f"Errors for {filename} size {size}",
                     )
 
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
             self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original_name_id7(self) -> None:
@@ -725,7 +725,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}",
                         self._caplog.text,
                     )
-                    self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                    self.assertIn(
+                        "INFO     All photos and videos have been downloaded", self._caplog.text
+                    )
                     dp_patched.assert_called_once_with(
                         ANY,
                         False,
@@ -785,7 +787,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     "ERROR    thumb size does not exist for IMG_7409_QVk2Yyt.JPG. Skipping...",
                     self._caplog.text,
                 )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
                 dp_patched.assert_not_called()
 
                 assert result.exit_code == 0
@@ -841,7 +845,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409_QVk2Yyt.JPG')), 96)}",
                 self._caplog.text,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
     @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
@@ -897,7 +901,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 f"DEBUG    Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409_QVk2Yyt.JPG')), 96)}",
                 self._caplog.text,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
     def test_creation_date_prior_1970_name_id7(self) -> None:
@@ -947,7 +951,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('1965/01/01/IMG_7409_QVk2Yyt.JPG'))}",
                 self._caplog.text,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
             assert result.exit_code == 0
 
     def test_missing_item_type_name_id7(self) -> None:
@@ -1233,7 +1237,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     f"INFO     Downloading the first original photo or video to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
                 assert result.exit_code == 0
 
     def test_download_one_recent_live_photo_chinese_name_id7(self) -> None:
@@ -1290,7 +1296,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     f"INFO     Downloading the first original photo or video to {data_dir} ...",
                     self._caplog.text,
                 )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
                 assert result.exit_code == 0
 
     def test_download_and_delete_after_name_id7(self) -> None:
