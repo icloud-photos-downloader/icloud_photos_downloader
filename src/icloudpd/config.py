@@ -52,8 +52,8 @@ class Config:
         file_match_policy: FileMatchPolicy,
         mfa_provider: MFAProvider,
         use_os_locale: bool,
-        skip_created_before: datetime.datetime | None,
-        skip_created_after: datetime.datetime | None,
+        skip_created_before: datetime.datetime | datetime.timedelta | None,
+        skip_created_after: datetime.datetime | datetime.timedelta | None,
         skip_photos: bool,
     ):
         self.directory = directory

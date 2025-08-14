@@ -822,12 +822,8 @@ def main(
             file_match_policy=file_match_policy,
             mfa_provider=mfa_provider,
             use_os_locale=use_os_locale,
-            skip_created_before=offset_to_datetime(skip_created_before)
-            if skip_created_before
-            else None,
-            skip_created_after=offset_to_datetime(skip_created_after)
-            if skip_created_after
-            else None,
+            skip_created_before=skip_created_before,
+            skip_created_after=skip_created_after,
             skip_photos=skip_photos,
         )
         status_exchange.set_config(config)
