@@ -962,43 +962,27 @@ def where_builder(
         compose(logger.debug, asset_type_skip_message)(photo)
         return False
 
-    try:
-        created_date = photo.created.astimezone(get_localzone())
-    except (ValueError, OSError):
-        logger.error("Could not convert photo created date to local timezone (%s)", photo.created)
-        created_date = photo.created
-
     if skip_created_before is not None:
-        if isinstance(skip_created_before, datetime.timedelta):
-            temp_created_before = datetime.datetime.now(get_localzone()) - skip_created_before
-        elif isinstance(skip_created_before, datetime.datetime):
-            temp_created_before = skip_created_before
-        else:
-            raise ValueError(
-                f"skip-created-before is of unsupported type {type(skip_created_before)}"
-            )
-        if created_date < temp_created_before:
-            logger.debug(
-                f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
-            )
+        temp_created_before = offset_to_datetime(skip_created_before)
+        if photo.created < temp_created_before:
+            logger.debug(skip_created_before_message(temp_created_before, photo))
             return False
 
     if skip_created_after is not None:
-        if isinstance(skip_created_after, datetime.timedelta):
-            temp_created_after = datetime.datetime.now(get_localzone()) - skip_created_after
-        elif isinstance(skip_created_after, datetime.datetime):
-            temp_created_after = skip_created_after
-        else:
-            raise ValueError(
-                f"skip-created-after is of unsupported type {type(skip_created_after)}"
-            )
-        if created_date > temp_created_after:
-            logger.debug(
-                f"Skipping {photo.filename}, as it was created {created_date}, after {skip_created_after}."
-            )
+        temp_created_after = offset_to_datetime(skip_created_after)
+        if photo.created > temp_created_after:
+            logger.debug(skip_created_after_message(temp_created_after, photo))
             return False
 
     return True
+
+
+def skip_created_before_message(target_created_date: datetime.datetime, photo: PhotoAsset) -> str:
+    return f"Skipping {photo.filename}, as it was created {photo.created}, before {target_created_date}."
+
+
+def skip_created_after_message(target_created_date: datetime.datetime, photo: PhotoAsset) -> str:
+    return f"Skipping {photo.filename}, as it was created {photo.created}, after {target_created_date}."
 
 
 def download_builder(
