@@ -946,19 +946,9 @@ def where_builder(
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
-        # logger.debug(
-        #     "Skipping %s, only downloading photos." + "(Item type was: %s)",
-        #     photo.filename,
-        #     photo.item_type,
-        # )
         compose(logger.debug, asset_type_skip_message)(photo)
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
-        # logger.debug(
-        #     "Skipping %s, only downloading videos." + "(Item type was: %s)",
-        #     photo.filename,
-        #     photo.item_type,
-        # )
         compose(logger.debug, asset_type_skip_message)(photo)
         return False
 
