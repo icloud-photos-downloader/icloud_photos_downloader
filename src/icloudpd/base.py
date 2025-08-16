@@ -946,18 +946,20 @@ def where_builder(
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
-        logger.debug(
-            "Skipping %s, only downloading photos." + "(Item type was: %s)",
-            photo.filename,
-            photo.item_type,
-        )
+        # logger.debug(
+        #     "Skipping %s, only downloading photos." + "(Item type was: %s)",
+        #     photo.filename,
+        #     photo.item_type,
+        # )
+        compose(logger.debug, asset_type_skip_message)(photo)
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
-        logger.debug(
-            "Skipping %s, only downloading videos." + "(Item type was: %s)",
-            photo.filename,
-            photo.item_type,
-        )
+        # logger.debug(
+        #     "Skipping %s, only downloading videos." + "(Item type was: %s)",
+        #     photo.filename,
+        #     photo.item_type,
+        # )
+        compose(logger.debug, asset_type_skip_message)(photo)
         return False
 
     try:
@@ -1297,6 +1299,12 @@ def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, A
     for entry in responses:
         # compose(logger.debug, compose(json.dumps, response_to_har))(response)
         dumper(json.dumps(entry, indent=2))
+
+
+def asset_type_skip_message(photo: PhotoAsset) -> str:
+    # reverse logic assumes only two options
+    photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
+    return f"Skipping {photo.filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
 
 def core(
