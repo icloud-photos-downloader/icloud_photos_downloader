@@ -28,6 +28,8 @@ from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.utils import add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
+from tzlocal import get_localzone
+
 logger = logging.getLogger(__name__)
 
 
@@ -693,7 +695,13 @@ class PhotoAsset(object):
 
     @property
     def created(self) -> datetime:
-        return self.asset_date
+        try:
+            created_date = self.asset_date.astimezone(get_localzone())
+        except (ValueError, OSError):
+            logger.error("Could not convert photo created date to local timezone (%s)", self.asset_date)
+            created_date = self.asset_date
+
+        return created_date
 
     @property
     def asset_date(self) -> datetime:

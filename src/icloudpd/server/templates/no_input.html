@@ -67,7 +67,14 @@
                         {% for record in config %}
                             <li class="list-group-item d-flex justify-content-between align-items-center">
                                 <div class="fw-bold">{{ record }}</div>
-                                <span>{{ config[record] }}</span>
+                                <span>
+                                    {% set value = config[record] %}
+                                    {% if value is sequence and value is not string %}
+                                        {{ value|map('string')|join(" ") }}
+                                    {% else %}
+                                        {{ value }}
+                                    {% endif %}
+                                </span>
                             </li>
                         {% endfor %}
                     </ul>

@@ -1,3 +1,4 @@
+import datetime
 from typing import Callable, Dict, Sequence, Tuple
 
 from icloudpd.mfa_provider import MFAProvider
@@ -51,12 +52,15 @@ class Config:
         file_match_policy: FileMatchPolicy,
         mfa_provider: MFAProvider,
         use_os_locale: bool,
+        skip_created_before: datetime.datetime | datetime.timedelta | None,
+        skip_created_after: datetime.datetime | datetime.timedelta | None,
+        skip_photos: bool,
     ):
         self.directory = directory
         self.username = username
         self.auth_only = auth_only
         self.cookie_directory = cookie_directory
-        self.size = " ".join(str(e) for e in primary_sizes)
+        self.size = primary_sizes
         self.live_photo_size = live_photo_size
         self.recent = recent
         self.until_found = until_found
@@ -66,6 +70,7 @@ class Config:
         self.list_libraries = list_libraries
         self.skip_videos = skip_videos
         self.skip_live_photos = skip_live_photos
+        self.xmp_sidecar = xmp_sidecar
         self.force_size = force_size
         self.auto_delete = auto_delete
         self.only_print_filenames = only_print_filenames
@@ -87,7 +92,10 @@ class Config:
         self.watch_with_interval = watch_with_interval
         self.dry_run = dry_run
         self.raw_policy = raw_policy
-        self.password_providers = " ".join(str(e) for e in password_providers)
+        self.password_providers = password_providers
         self.file_match_policy = file_match_policy
         self.mfa_provider = mfa_provider
         self.use_os_locale = use_os_locale
+        self.skip_created_before = skip_created_before
+        self.skip_created_after = skip_created_after
+        self.skip_photos = skip_photos

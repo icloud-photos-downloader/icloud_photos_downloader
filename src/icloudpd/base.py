@@ -30,7 +30,7 @@ import sys
 import time
 import typing
 import urllib
-from functools import partial
+from functools import partial, singledispatch
 from logging import Logger
 from threading import Thread
 from typing import (
@@ -44,7 +44,6 @@ from typing import (
     Sequence,
     Tuple,
     TypeVar,
-    cast,
 )
 
 import click
@@ -765,6 +764,23 @@ def main(
                 sys.exit(2)
 
         status_exchange = StatusExchange()
+
+        # hacky way to use one param in another
+        if "webui" in password_providers:
+            # replace
+            password_providers["webui"] = (
+                partial(get_password_from_webui, logger, status_exchange),
+                partial(update_password_status_in_webui, status_exchange),
+            )
+
+        # hacky way to inject logger
+        if "keyring" in password_providers:
+            # replace
+            password_providers["keyring"] = (
+                get_password_from_keyring,
+                keyring_password_writter(logger),
+            )
+
         config = Config(
             directory=directory,
             username=username,
@@ -806,24 +822,11 @@ def main(
             file_match_policy=file_match_policy,
             mfa_provider=mfa_provider,
             use_os_locale=use_os_locale,
+            skip_created_before=skip_created_before,
+            skip_created_after=skip_created_after,
+            skip_photos=skip_photos,
         )
         status_exchange.set_config(config)
-
-        # hacky way to use one param in another
-        if "webui" in password_providers:
-            # replace
-            password_providers["webui"] = (
-                partial(get_password_from_webui, logger, status_exchange),
-                partial(update_password_status_in_webui, status_exchange),
-            )
-
-        # hacky way to inject logger
-        if "keyring" in password_providers:
-            # replace
-            password_providers["keyring"] = (
-                get_password_from_keyring,
-                keyring_password_writter(logger),
-            )
 
         # start web server
         if mfa_provider == MFAProvider.WEBUI or "webui" in password_providers:
@@ -871,39 +874,13 @@ def main(
             notification_script,
         )
         result = core(
+            logger,
+            status_exchange,
             passer,
             downloader,
             notificator,
-            directory,
-            username,
-            auth_only,
-            cookie_directory,
-            size,
-            recent,
-            until_found,
-            album,
-            list_albums,
-            library,
-            list_libraries,
-            skip_videos,
-            auto_delete,
-            only_print_filenames,
-            folder_structure,
-            no_progress_bar,
-            delete_after_download,
-            keep_icloud_recent_days,
-            domain,
-            logger,
-            watch_with_interval,
-            dry_run,
             filename_cleaner,
             lp_filename_generator,
-            raw_policy,
-            file_match_policy,
-            password_providers,
-            mfa_provider,
-            status_exchange,
-            skip_photos,
         )
         sys.exit(result)
 
@@ -945,6 +922,21 @@ def notificator_builder(
         logger.debug(error)
 
 
+@singledispatch
+def offset_to_datetime(offset: Any) -> datetime.datetime:
+    raise NotImplementedError()
+
+
+@offset_to_datetime.register(datetime.datetime)
+def _(offset: datetime.datetime) -> datetime.datetime:
+    return offset
+
+
+@offset_to_datetime.register(datetime.timedelta)
+def _(offset: datetime.timedelta) -> datetime.datetime:
+    return datetime.datetime.now(get_localzone()) - offset
+
+
 def where_builder(
     logger: logging.Logger,
     skip_videos: bool,
@@ -954,57 +946,33 @@ def where_builder(
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
-        logger.debug(
-            "Skipping %s, only downloading photos." + "(Item type was: %s)",
-            photo.filename,
-            photo.item_type,
-        )
+        compose(logger.debug, asset_type_skip_message)(photo)
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
-        logger.debug(
-            "Skipping %s, only downloading videos." + "(Item type was: %s)",
-            photo.filename,
-            photo.item_type,
-        )
+        compose(logger.debug, asset_type_skip_message)(photo)
         return False
 
-    try:
-        created_date = photo.created.astimezone(get_localzone())
-    except (ValueError, OSError):
-        logger.error("Could not convert photo created date to local timezone (%s)", photo.created)
-        created_date = photo.created
-
     if skip_created_before is not None:
-        if isinstance(skip_created_before, datetime.timedelta):
-            temp_created_before = datetime.datetime.now(get_localzone()) - skip_created_before
-        elif isinstance(skip_created_before, datetime.datetime):
-            temp_created_before = skip_created_before
-        else:
-            raise ValueError(
-                f"skip-created-before is of unsupported type {type(skip_created_before)}"
-            )
-        if created_date < temp_created_before:
-            logger.debug(
-                f"Skipping {photo.filename}, as it was created {created_date}, before {temp_created_before}."
-            )
+        temp_created_before = offset_to_datetime(skip_created_before)
+        if photo.created < temp_created_before:
+            logger.debug(skip_created_before_message(temp_created_before, photo))
             return False
 
     if skip_created_after is not None:
-        if isinstance(skip_created_after, datetime.timedelta):
-            temp_created_after = datetime.datetime.now(get_localzone()) - skip_created_after
-        elif isinstance(skip_created_after, datetime.datetime):
-            temp_created_after = skip_created_after
-        else:
-            raise ValueError(
-                f"skip-created-after is of unsupported type {type(skip_created_after)}"
-            )
-        if created_date > temp_created_after:
-            logger.debug(
-                f"Skipping {photo.filename}, as it was created {created_date}, after {skip_created_after}."
-            )
+        temp_created_after = offset_to_datetime(skip_created_after)
+        if photo.created > temp_created_after:
+            logger.debug(skip_created_after_message(temp_created_after, photo))
             return False
 
     return True
+
+
+def skip_created_before_message(target_created_date: datetime.datetime, photo: PhotoAsset) -> str:
+    return f"Skipping {photo.filename}, as it was created {photo.created}, before {target_created_date}."
+
+
+def skip_created_after_message(target_created_date: datetime.datetime, photo: PhotoAsset) -> str:
+    return f"Skipping {photo.filename}, as it was created {photo.created}, after {target_created_date}."
 
 
 def download_builder(
@@ -1307,45 +1275,30 @@ def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, A
         dumper(json.dumps(entry, indent=2))
 
 
+def asset_type_skip_message(photo: PhotoAsset) -> str:
+    # reverse logic assumes only two options
+    photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
+    return f"Skipping {photo.filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
+
+
 def core(
+    logger: logging.Logger,
+    status_exchange: StatusExchange,
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     notificator: Callable[[], None],
-    directory: str | None,
-    username: str,
-    auth_only: bool,
-    cookie_directory: str,
-    primary_sizes: Sequence[AssetVersionSize],
-    recent: int | None,
-    until_found: int | None,
-    album: str | None,
-    list_albums: bool,
-    library: str,
-    list_libraries: bool,
-    skip_videos: bool,
-    auto_delete: bool,
-    only_print_filenames: bool,
-    folder_structure: str,
-    no_progress_bar: bool,
-    delete_after_download: bool,
-    keep_icloud_recent_days: int | None,
-    domain: str,
-    logger: logging.Logger,
-    watch_interval: int | None,
-    dry_run: bool,
     filename_cleaner: Callable[[str], str],
     lp_filename_generator: Callable[[str], str],
-    raw_policy: RawTreatmentPolicy,
-    file_match_policy: FileMatchPolicy,
-    password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
-    mfa_provider: MFAProvider,
-    status_exchange: StatusExchange,
-    skip_photos: bool,
 ) -> int:
     """Download all iCloud photos to a local directory"""
 
+    config = status_exchange.get_config()
+    if not config:
+        # messed up with passing config
+        raise NotImplementedError()
+
     skip_bar = not os.environ.get("FORCE_TQDM") and (
-        only_print_filenames or no_progress_bar or not sys.stdout.isatty()
+        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
     )
     while True:  # watch with interval & retry
         captured_responses: List[Mapping[str, Any]] = []
@@ -1356,18 +1309,18 @@ def core(
         try:
             icloud = authenticator(
                 logger,
-                domain,
+                config.domain,
                 filename_cleaner,
                 lp_filename_generator,
-                raw_policy,
-                file_match_policy,
-                password_providers,
-                mfa_provider,
+                config.raw_policy,
+                config.file_match_policy,
+                config.password_providers,
+                config.mfa_provider,
                 status_exchange,
-                username,
+                config.username,
                 notificator,
                 partial(append_response, captured_responses),
-                cookie_directory,
+                config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
             )
 
@@ -1377,11 +1330,11 @@ def core(
             # turn off response capture
             icloud.response_observer = None
 
-            if auth_only:
+            if config.auth_only:
                 logger.info("Authentication completed successfully")
                 return 0
 
-            if list_libraries:
+            elif config.list_libraries:
                 library_names = (
                     icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
                 )
@@ -1389,206 +1342,224 @@ def core(
                 return 0
 
             else:
-                # After 6 or 7 runs within 1h Apple blocks the API for some time. In that
-                # case exit.
                 # Access to the selected library. Defaults to the primary photos object.
-                library_object: PhotoLibrary = icloud.photos
-                if library:
-                    if library in icloud.photos.private_libraries:
-                        library_object = icloud.photos.private_libraries[library]
-                    elif library in icloud.photos.shared_libraries:
-                        library_object = icloud.photos.shared_libraries[library]
+                if config.library:
+                    if config.library in icloud.photos.private_libraries:
+                        library_object: PhotoLibrary = icloud.photos.private_libraries[
+                            config.library
+                        ]
+                    elif config.library in icloud.photos.shared_libraries:
+                        library_object = icloud.photos.shared_libraries[config.library]
                     else:
-                        logger.error("Unknown library: %s", library)
+                        logger.error("Unknown library: %s", config.library)
                         return 1
+                else:
+                    library_object = icloud.photos
 
-                photos = library_object.albums[album] if album else library_object.all
-
-                if list_albums:
+                if config.list_albums:
                     print("Albums:")
                     albums_dict = library_object.albums
                     albums = albums_dict.values()  # pragma: no cover
                     album_titles = [str(a) for a in albums]
                     print(*album_titles, sep="\n")
                     return 0
-                # casting is okay since we checked for list_albums and directory compatibily upstream
-                # would be better to have that in types though
-                directory = os.path.normpath(cast(str, directory))
-
-                if skip_photos or skip_videos:
-                    photo_video_phrase = "photos" if skip_videos else "videos"
                 else:
-                    photo_video_phrase = "photos and videos"
-                album_phrase = f" from album {album}" if album else ""
-                logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
-
-                session_exception_handler = partial(session_error_handle_builder, logger, icloud)
-                internal_error_handler = partial(internal_error_handle_builder, logger)
-
-                error_handler = compose_handlers(
-                    [session_exception_handler, internal_error_handler]
-                )
-
-                photos.exception_handler = error_handler
-
-                photos_count: int | None = len(photos)
-
-                photos_enumerator: Iterable[PhotoAsset] = photos
-
-                # Optional: Only download the x most recent photos.
-                if recent is not None:
-                    photos_count = recent
-                    photos_enumerator = itertools.islice(photos_enumerator, recent)
-
-                if until_found is not None:
-                    photos_count = None
-                    # ensure photos iterator doesn't have a known length
-                    photos_enumerator = (p for p in photos_enumerator)
-
-                # Skip the one-line progress bar if we're only printing the filenames,
-                # or if the progress bar is explicitly disabled,
-                # or if this is not a terminal (e.g. cron or piping output to file)
-                if skip_bar:
-                    photos_enumerator = photos_enumerator
-                    # logger.set_tqdm(None)
-                else:
-                    photos_enumerator = tqdm(
-                        iterable=photos_enumerator,
-                        total=photos_count,
-                        leave=False,
-                        dynamic_ncols=True,
-                        ascii=True,
-                    )
-                    # logger.set_tqdm(photos_enumerator)
-
-                if photos_count is not None:
-                    plural_suffix = "" if photos_count == 1 else "s"
-                    photos_count_str = "the first" if photos_count == 1 else str(photos_count)
-
-                    if skip_photos or skip_videos:
-                        photo_video_phrase = ("photo" if skip_videos else "video") + plural_suffix
+                    if not config.directory:
+                        # should be checked upstream
+                        raise NotImplementedError()
                     else:
-                        photo_video_phrase = (
-                            "photo or video" if photos_count == 1 else "photos and videos"
-                        )
-                else:
-                    photos_count_str = "???"
-                    if skip_photos or skip_videos:
-                        photo_video_phrase = "photos" if skip_videos else "videos"
+                        pass
+
+                    directory = os.path.normpath(config.directory)
+
+                    if config.skip_photos or config.skip_videos:
+                        photo_video_phrase = "photos" if config.skip_videos else "videos"
                     else:
                         photo_video_phrase = "photos and videos"
-                logger.info(
-                    ("Downloading %s %s %s to %s ..."),
-                    photos_count_str,
-                    ",".join([_s.value for _s in primary_sizes]),
-                    photo_video_phrase,
-                    directory,
-                )
+                    album_phrase = f" from album {config.album}" if config.album else ""
+                    logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
-                consecutive_files_found = Counter(0)
+                    session_exception_handler = partial(
+                        session_error_handle_builder, logger, icloud
+                    )
+                    internal_error_handler = partial(internal_error_handle_builder, logger)
 
-                def should_break(counter: Counter) -> bool:
-                    """Exit if until_found condition is reached"""
-                    return until_found is not None and counter.value() >= until_found
+                    error_handler = compose_handlers(
+                        [session_exception_handler, internal_error_handler]
+                    )
 
-                status_exchange.get_progress().photos_count = (
-                    0 if photos_count is None else photos_count
-                )
-                photos_counter = 0
+                    photos = (
+                        library_object.albums[config.album] if config.album else library_object.all
+                    )
 
-                now = datetime.datetime.now(get_localzone())
-                photos_iterator = iter(photos_enumerator)
+                    photos.exception_handler = error_handler
 
-                download_photo = partial(downloader, icloud)
+                    photos_count: int | None = len(photos)
 
-                while True:
-                    try:
-                        if should_break(consecutive_files_found):
-                            logger.info(
-                                "Found %s consecutive previously downloaded photos. Exiting",
-                                until_found,
-                            )
-                            break
-                        item = next(photos_iterator)
-                        should_delete = False
+                    photos_enumerator: Iterable[PhotoAsset] = photos
 
-                        passer_result = passer(item)
-                        download_result = passer_result and download_photo(
-                            consecutive_files_found, item
+                    # Optional: Only download the x most recent photos.
+                    if config.recent is not None:
+                        photos_count = config.recent
+                        photos_enumerator = itertools.islice(photos_enumerator, config.recent)
+
+                    if config.until_found is not None:
+                        photos_count = None
+                        # ensure photos iterator doesn't have a known length
+                        photos_enumerator = (p for p in photos_enumerator)
+
+                    # Skip the one-line progress bar if we're only printing the filenames,
+                    # or if the progress bar is explicitly disabled,
+                    # or if this is not a terminal (e.g. cron or piping output to file)
+                    if skip_bar:
+                        photos_enumerator = photos_enumerator
+                        # logger.set_tqdm(None)
+                    else:
+                        photos_enumerator = tqdm(
+                            iterable=photos_enumerator,
+                            total=photos_count,
+                            leave=False,
+                            dynamic_ncols=True,
+                            ascii=True,
                         )
-                        if download_result and delete_after_download:
-                            should_delete = True
+                        # logger.set_tqdm(photos_enumerator)
 
-                        if passer_result and keep_icloud_recent_days is not None:
-                            created_date = item.created.astimezone(get_localzone())
-                            age_days = (now - created_date).days
-                            logger.debug(f"Created date: {created_date}")
-                            logger.debug(f"Keep iCloud recent days: {keep_icloud_recent_days}")
-                            logger.debug(f"Age days: {age_days}")
-                            if age_days < keep_icloud_recent_days:
-                                logger.debug(
-                                    "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
-                                    item.filename,
-                                    age_days,
+                    if photos_count is not None:
+                        plural_suffix = "" if photos_count == 1 else "s"
+                        photos_count_str = "the first" if photos_count == 1 else str(photos_count)
+
+                        if config.skip_photos or config.skip_videos:
+                            photo_video_phrase = (
+                                "photo" if config.skip_videos else "video"
+                            ) + plural_suffix
+                        else:
+                            photo_video_phrase = (
+                                "photo or video" if photos_count == 1 else "photos and videos"
+                            )
+                    else:
+                        photos_count_str = "???"
+                        if config.skip_photos or config.skip_videos:
+                            photo_video_phrase = "photos" if config.skip_videos else "videos"
+                        else:
+                            photo_video_phrase = "photos and videos"
+                    logger.info(
+                        ("Downloading %s %s %s to %s ..."),
+                        photos_count_str,
+                        ",".join([_s.value for _s in config.size]),
+                        photo_video_phrase,
+                        directory,
+                    )
+
+                    consecutive_files_found = Counter(0)
+
+                    def should_break(counter: Counter) -> bool:
+                        """Exit if until_found condition is reached"""
+                        return (
+                            config.until_found is not None and counter.value() >= config.until_found
+                        )
+
+                    status_exchange.get_progress().photos_count = (
+                        0 if photos_count is None else photos_count
+                    )
+                    photos_counter = 0
+
+                    now = datetime.datetime.now(get_localzone())
+                    photos_iterator = iter(photos_enumerator)
+
+                    download_photo = partial(downloader, icloud)
+
+                    while True:
+                        try:
+                            if should_break(consecutive_files_found):
+                                logger.info(
+                                    "Found %s consecutive previously downloaded photos. Exiting",
+                                    config.until_found,
                                 )
-                            else:
+                                break
+                            item = next(photos_iterator)
+                            should_delete = False
+
+                            passer_result = passer(item)
+                            download_result = passer_result and download_photo(
+                                consecutive_files_found, item
+                            )
+                            if download_result and config.delete_after_download:
                                 should_delete = True
 
-                        if should_delete:
-                            delete_local = partial(
-                                delete_photo_dry_run if dry_run else delete_photo,
-                                logger,
-                                icloud.photos,
-                                library_object,
-                                item,
-                            )
+                            if passer_result and config.keep_icloud_recent_days is not None:
+                                created_date = item.created.astimezone(get_localzone())
+                                age_days = (now - created_date).days
+                                logger.debug(f"Created date: {created_date}")
+                                logger.debug(
+                                    f"Keep iCloud recent days: {config.keep_icloud_recent_days}"
+                                )
+                                logger.debug(f"Age days: {age_days}")
+                                if age_days < config.keep_icloud_recent_days:
+                                    logger.debug(
+                                        "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
+                                        item.filename,
+                                        age_days,
+                                    )
+                                else:
+                                    should_delete = True
 
-                            retrier(delete_local, error_handler)
-                            if photos.direction != "DESCENDING":
-                                photos.increment_offset(-1)
+                            if should_delete:
+                                delete_local = partial(
+                                    delete_photo_dry_run if config.dry_run else delete_photo,
+                                    logger,
+                                    icloud.photos,
+                                    library_object,
+                                    item,
+                                )
 
-                        photos_counter += 1
-                        status_exchange.get_progress().photos_counter = photos_counter
+                                retrier(delete_local, error_handler)
+                                if photos.direction != "DESCENDING":
+                                    photos.increment_offset(-1)
 
-                        if status_exchange.get_progress().cancel:
+                            photos_counter += 1
+                            status_exchange.get_progress().photos_counter = photos_counter
+
+                            if status_exchange.get_progress().cancel:
+                                break
+
+                        except StopIteration:
                             break
 
-                    except StopIteration:
-                        break
-
-                if only_print_filenames:
-                    return 0
-                else:
-                    pass
-
-                if status_exchange.get_progress().cancel:
-                    logger.info("Iteration was cancelled")
-                    status_exchange.get_progress().photos_last_message = "Iteration was cancelled"
-                else:
-                    if skip_photos or skip_videos:
-                        photo_video_phrase = "photos" if skip_videos else "videos"
+                    if config.only_print_filenames:
+                        return 0
                     else:
-                        photo_video_phrase = "photos and videos"
-                    message = f"All {photo_video_phrase} have been downloaded"
-                    logger.info(message)
-                    status_exchange.get_progress().photos_last_message = message
-                status_exchange.get_progress().reset()
+                        pass
 
-                if auto_delete:
-                    autodelete_photos(
-                        logger,
-                        dry_run,
-                        library_object,
-                        folder_structure,
-                        directory,
-                        primary_sizes,
-                    )
-                else:
-                    pass
+                    if status_exchange.get_progress().cancel:
+                        logger.info("Iteration was cancelled")
+                        status_exchange.get_progress().photos_last_message = (
+                            "Iteration was cancelled"
+                        )
+                    else:
+                        if config.skip_photos or config.skip_videos:
+                            photo_video_phrase = "photos" if config.skip_videos else "videos"
+                        else:
+                            photo_video_phrase = "photos and videos"
+                        message = f"All {photo_video_phrase} have been downloaded"
+                        logger.info(message)
+                        status_exchange.get_progress().photos_last_message = message
+                    status_exchange.get_progress().reset()
+
+                    if config.auto_delete:
+                        autodelete_photos(
+                            logger,
+                            config.dry_run,
+                            library_object,
+                            config.folder_structure,
+                            directory,
+                            config.size,
+                        )
+                    else:
+                        pass
         except PyiCloudFailedLoginException as _error:
             logger.info("Invalid email/password combination.")
             dump_responses(logger.debug, captured_responses)
-            if "webui" in password_providers:
+            if "webui" in config.password_providers:
                 update_auth_error_in_webui(status_exchange, "Invalid email/password combination.")
                 continue
             else:
@@ -1596,7 +1567,7 @@ def core(
         except PyiCloudFailedMFAException as error:
             logger.info(str(error))
             dump_responses(logger.debug, captured_responses)
-            if mfa_provider == MFAProvider.WEBUI:
+            if config.mfa_provider == MFAProvider.WEBUI:
                 update_auth_error_in_webui(status_exchange, str(error))
                 continue
             else:
@@ -1605,7 +1576,7 @@ def core(
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
-            if "webui" in password_providers or mfa_provider == MFAProvider.WEBUI:
+            if "webui" in config.password_providers or config.mfa_provider == MFAProvider.WEBUI:
                 if update_auth_error_in_webui(status_exchange, str(error)):
                     # retry if it was during auth
                     continue
@@ -1614,7 +1585,7 @@ def core(
             else:
                 pass
             # it not watching then return error
-            if not watch_interval:
+            if not config.watch_with_interval:
                 return 1
             else:
                 pass
@@ -1623,7 +1594,7 @@ def core(
             dump_responses(logger.debug, captured_responses)
             # logger.debug(error)
             # webui will display error and wait for password again
-            if "webui" in password_providers or mfa_provider == MFAProvider.WEBUI:
+            if "webui" in config.password_providers or config.mfa_provider == MFAProvider.WEBUI:
                 if update_auth_error_in_webui(
                     status_exchange, "Cannot connect to Apple iCloud service"
                 ):
@@ -1634,7 +1605,7 @@ def core(
             else:
                 pass
             # it not watching then return error
-            if not watch_interval:
+            if not config.watch_with_interval:
                 return 1
             else:
                 pass
@@ -1652,9 +1623,9 @@ def core(
             dump_responses(logger.debug, captured_responses)
             raise
 
-        if watch_interval:  # pragma: no cover
-            logger.info(f"Waiting for {watch_interval} sec...")
-            interval: Sequence[int] = range(1, watch_interval)
+        if config.watch_with_interval:  # pragma: no cover
+            logger.info(f"Waiting for {config.watch_with_interval} sec...")
+            interval: Sequence[int] = range(1, config.watch_with_interval)
             iterable: Sequence[int] = (
                 interval
                 if skip_bar
@@ -1670,7 +1641,7 @@ def core(
                 )
             )
             for counter in iterable:
-                status_exchange.get_progress().waiting = watch_interval - counter
+                status_exchange.get_progress().waiting = config.watch_with_interval - counter
                 if status_exchange.get_progress().resume:
                     status_exchange.get_progress().reset()
                     break
