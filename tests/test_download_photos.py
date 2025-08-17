@@ -680,8 +680,12 @@ class DownloadPhotoTestCase(TestCase):
                     PhotoAsset, "versions", new_callable=mock.PropertyMock
                 ) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
-                        AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie"),
+                        AssetVersionSize.ORIGINAL: AssetVersion(
+                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
+                        ),
+                        AssetVersionSize.MEDIUM: AssetVersion(
+                            "IMG_7409.JPG", 2, "ftp", "movie", "blah"
+                        ),
                     }
 
                     data_dir, result = run_icloudpd_test(
@@ -796,8 +800,12 @@ class DownloadPhotoTestCase(TestCase):
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
-                        AssetVersionSize.THUMB: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
+                        AssetVersionSize.ORIGINAL: AssetVersion(
+                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
+                        ),
+                        AssetVersionSize.THUMB: AssetVersion(
+                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
+                        ),
                     }
 
                     data_dir, result = run_icloudpd_test(

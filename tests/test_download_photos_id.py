@@ -689,10 +689,10 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 ) as pa:
                     pa.return_value = {
                         AssetVersionSize.ORIGINAL: AssetVersion(
-                            "IMG_7409_QVk2Yyt.JPG", 1, "http", "jpeg"
+                            "IMG_7409_QVk2Yyt.JPG", 1, "http", "jpeg", "blah"
                         ),
                         AssetVersionSize.MEDIUM: AssetVersion(
-                            "IMG_7409_QVk2Yyt.JPG", 2, "ftp", "movie"
+                            "IMG_7409_QVk2Yyt.JPG", 2, "ftp", "movie", "blah"
                         ),
                     }
 

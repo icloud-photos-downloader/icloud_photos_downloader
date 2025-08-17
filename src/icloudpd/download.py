@@ -108,7 +108,6 @@ def download_media(
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
     download_local = download_response_to_path_dry_run if dry_run else download_response_to_path
-
     if not mkdirs_local(logger, download_path):
         return False
 
