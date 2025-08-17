@@ -788,6 +788,7 @@ class PhotoAsset(object):
                     if size_entry:
                         version['size'] = size_entry['value']['size']
                         version['url'] = size_entry['value']['downloadURL']
+                        version['checksum'] = size_entry['value']['fileChecksum']
                     else:
                         raise ValueError(f"Expected {prefix}Res, but missing it")
                         # version['size'] = None
@@ -814,7 +815,7 @@ class PhotoAsset(object):
                         _size_suffix = self.VERSION_FILENAME_SUFFIX_LOOKUP[key]
                         version["filename"] = add_suffix_to_filename(f"-{_size_suffix}", version["filename"])
 
-                    _versions[key] = AssetVersion(version["filename"], version['size'], version['url'], version['type'])
+                    _versions[key] = AssetVersion(version["filename"], version['size'], version['url'], version['type'], version['checksum'])
 
             # swap original & alternative according to swap_raw_policy
             if AssetVersionSize.ALTERNATIVE in _versions and (("raw" in _versions[AssetVersionSize.ALTERNATIVE].type and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions[AssetVersionSize.ORIGINAL].type and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
@@ -827,9 +828,13 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, url: str) -> Response:
+    def download(self, url: str, start:int = 0) -> Response:
+        headers = {
+            "Range": f"bytes={start}-"
+        }
         return self._service.session.get(
             url,
+            headers=headers,
             stream=True
         )
 

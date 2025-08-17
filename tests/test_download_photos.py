@@ -25,9 +25,11 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
+    create_files,
     path_from_project_root,
     print_result_exception,
     recreate_path,
+    run_cassette,
     run_icloudpd_test,
 )
 
@@ -138,9 +140,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
+        def mocked_download(pa: PhotoAsset, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url)
+                response = orig_download(pa, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -435,7 +437,7 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_session_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any) -> NoReturn:
+        def mock_raise_response_error(_arg: Any, _size: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
@@ -601,67 +603,71 @@ class DownloadPhotoTestCase(TestCase):
     def test_missing_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch.object(PhotoAsset, "download") as pa_download:
-            pa_download.return_value = False
+        with mock.patch.object(Response, "ok") as pa_response:
+            pa_response.__get__ = mock.Mock(return_value=False)
+            with mock.patch.object(PhotoAsset, "download") as pa_download:
+                pa_download.return_value = Response()
 
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos.yml",
-                [],
-                [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "3",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "3",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos and videos...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
-                self._caplog.text,
-            )
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
+                    self._caplog.text,
+                )
 
-            # These error messages should not be repeated more than once for each size
-            for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
-                for size in ["original"]:
-                    self.assertEqual(
-                        sum(
-                            1
-                            for line in self._caplog.text.splitlines()
-                            if line
-                            == f"ERROR    Could not find URL to download {filename} for size {size}"
-                        ),
-                        1,
-                        f"Errors for {filename} size {size}",
-                    )
+                # These error messages should not be repeated more than once for each size
+                for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
+                    for size in ["original"]:
+                        self.assertEqual(
+                            sum(
+                                1
+                                for line in self._caplog.text.splitlines()
+                                if line
+                                == f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}",
+                        )
 
-            for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
-                for size in ["originalVideo"]:
-                    self.assertEqual(
-                        sum(
-                            1
-                            for line in self._caplog.text.splitlines()
-                            if line
-                            == f"ERROR    Could not find URL to download {filename} for size {size}"
-                        ),
-                        1,
-                        f"Errors for {filename} size {size}",
-                    )
+                for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
+                    for size in ["originalVideo"]:
+                        self.assertEqual(
+                            sum(
+                                1
+                                for line in self._caplog.text.splitlines()
+                                if line
+                                == f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}",
+                        )
 
-            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
-            self.assertEqual(result.exit_code, 0, "Exit code")
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
+                self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -676,8 +682,12 @@ class DownloadPhotoTestCase(TestCase):
                     PhotoAsset, "versions", new_callable=mock.PropertyMock
                 ) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
-                        AssetVersionSize.MEDIUM: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie"),
+                        AssetVersionSize.ORIGINAL: AssetVersion(
+                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
+                        ),
+                        AssetVersionSize.MEDIUM: AssetVersion(
+                            "IMG_7409.JPG", 2, "ftp", "movie", "blah"
+                        ),
                     }
 
                     data_dir, result = run_icloudpd_test(
@@ -792,8 +802,12 @@ class DownloadPhotoTestCase(TestCase):
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
-                        AssetVersionSize.THUMB: AssetVersion("IMG_7409.JPG", 1, "http", "jpeg"),
+                        AssetVersionSize.ORIGINAL: AssetVersion(
+                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
+                        ),
+                        AssetVersionSize.THUMB: AssetVersion(
+                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
+                        ),
                     }
 
                     data_dir, result = run_icloudpd_test(
@@ -1084,9 +1098,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self: PhotoAsset, _url: str) -> Response:
+        def mocked_download(self: PhotoAsset, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, _url)
+                response = orig_download(self, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -1275,9 +1289,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
+        def mocked_download(pa: PhotoAsset, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url)
+                response = orig_download(pa, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -1332,9 +1346,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url: str) -> Response:
+        def mocked_download(pa: PhotoAsset, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url)
+                response = orig_download(pa, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -1676,7 +1690,7 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any) -> NoReturn:
+        def mock_raise_response_error(_arg: Any, _size: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
@@ -2507,3 +2521,68 @@ class DownloadPhotoTestCase(TestCase):
             self._caplog.text,
         )
         self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+
+    def test_resume_download(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+        vcr_path = os.path.join(self.root_path, "vcr_cassettes")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
+
+        for dir in [base_dir, data_dir]:
+            recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
+
+        files_to_create: List[Tuple[str, str, int]] = [
+            ("2018/07/31", "AGHJZ6A3ATJDRWS7D5WZSUMJGNIPMVOBBY======.part", 1234),
+        ]
+
+        create_files(data_dir, files_to_create)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "listing_photos_resume.yml"),
+            [
+                "-d",
+                data_dir,
+                "--cookie-directory",
+                cookie_dir,
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+            ],
+        )
+
+        assert result.exit_code == 0
+        out_path = os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
+        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn(
+            f"INFO     Downloading the first original photo to {data_dir} ...",
+            self._caplog.text,
+        )
+        self.assertIn(
+            f"Resuming downloading of {out_path} from 1234",
+            self._caplog.text,
+        )
+        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+
+        # Check that file was downloaded
+        # Check that mtime was updated to the photo creation date
+        photo_mtime = os.path.getmtime(out_path)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        self.assertEqual(
+            "2018-07-31 07:22:24",
+            photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "photo timestamp",
+        )
+
+        # check size
+        photo_size = os.path.getsize(out_path)
+
+        self.assertEqual(617 + 1234, photo_size, "photo size")
