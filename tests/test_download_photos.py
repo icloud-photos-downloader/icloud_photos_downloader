@@ -2535,20 +2535,10 @@ class DownloadPhotoTestCase(TestCase):
         shutil.copytree(cookie_master_path, cookie_dir)
 
         files_to_create: List[Tuple[str, str, int]] = [
-            # ("2018/07/30", "IMG_7408.JPG", 1151066),
-            # ("2018/07/30", "IMG_7407.JPG", 656257),
             ("2018/07/31", "AGHJZ6A3ATJDRWS7D5WZSUMJGNIPMVOBBY======.part", 1234),
         ]
 
         create_files(data_dir, files_to_create)
-
-        # /2018/07/31/AGHJZ6A3ATJDRWS7D5WZSUMJGNIPMVOBBY======.part
-        # normalized_dir_name = os.path.normpath(dir_name)
-        # os.makedirs(os.path.join(data_dir, normalized_dir_name), exist_ok=True)
-        # with open(os.path.join(data_dir, normalized_dir_name, file_name), "a") as f:
-        #     f.truncate(file_size)
-
-        _files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         result = run_cassette(
             os.path.join(vcr_path, "listing_photos_resume.yml"),
@@ -2576,34 +2566,10 @@ class DownloadPhotoTestCase(TestCase):
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
         )
-        # for dir_name, file_name in files_to_download:
-        #     file_path = os.path.normpath(os.path.join(dir_name, file_name))
-        #     self.assertIn(
-        #         f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
-        #         self._caplog.text,
-        #     )
-        self.assertNotIn(
-            "IMG_7409.MOV",
+        self.assertIn(
+            "Resuming downloading of tests/fixtures/test_resume_download/data/2018/07/31/IMG_7409.JPG from 1234",
             self._caplog.text,
         )
-        # self.assertIn("Resuming downloading of tests/fixtures/test_resume_download/data/2018/07/31/IMG_7409.JPG from 1234", self._caplog.text)
-        # for dir_name, file_name in [
-        #     (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
-        # ]:
-        #     file_path = os.path.normpath(os.path.join(dir_name, file_name))
-        #     self.assertIn(
-        #         f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
-        #         self._caplog.text,
-        #     )
-
-        # self.assertIn(
-        #     "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
-        #     self._caplog.text,
-        # )
-        # self.assertIn(
-        #     "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
-        #     self._caplog.text,
-        # )
         self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         # Check that file was downloaded
@@ -2612,8 +2578,13 @@ class DownloadPhotoTestCase(TestCase):
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         )
         photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
-        self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
+        self.assertEqual(
+            "2018-07-31 07:22:24",
+            photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"),
+            "photo timestamp",
+        )
 
+        # check size
         photo_size = os.path.getsize(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         )
