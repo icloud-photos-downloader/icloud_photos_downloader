@@ -601,67 +601,71 @@ class DownloadPhotoTestCase(TestCase):
     def test_missing_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch.object(PhotoAsset, "download") as pa_download:
-            pa_download.return_value = False
+        with mock.patch.object(Response, "ok") as pa_response:
+            pa_response.__get__ = mock.Mock(return_value=False)
+            with mock.patch.object(PhotoAsset, "download") as pa_download:
+                pa_download.return_value = Response()
 
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos.yml",
-                [],
-                [],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "3",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "3",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
 
-            self.assertIn(
-                "DEBUG    Looking up all photos and videos...",
-                self._caplog.text,
-            )
-            self.assertIn(
-                f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
-                self._caplog.text,
-            )
+                self.assertIn(
+                    "DEBUG    Looking up all photos and videos...",
+                    self._caplog.text,
+                )
+                self.assertIn(
+                    f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
+                    self._caplog.text,
+                )
 
-            # These error messages should not be repeated more than once for each size
-            for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
-                for size in ["original"]:
-                    self.assertEqual(
-                        sum(
-                            1
-                            for line in self._caplog.text.splitlines()
-                            if line
-                            == f"ERROR    Could not find URL to download {filename} for size {size}"
-                        ),
-                        1,
-                        f"Errors for {filename} size {size}",
-                    )
+                # These error messages should not be repeated more than once for each size
+                for filename in ["IMG_7409.JPG", "IMG_7408.JPG", "IMG_7407.JPG"]:
+                    for size in ["original"]:
+                        self.assertEqual(
+                            sum(
+                                1
+                                for line in self._caplog.text.splitlines()
+                                if line
+                                == f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}",
+                        )
 
-            for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
-                for size in ["originalVideo"]:
-                    self.assertEqual(
-                        sum(
-                            1
-                            for line in self._caplog.text.splitlines()
-                            if line
-                            == f"ERROR    Could not find URL to download {filename} for size {size}"
-                        ),
-                        1,
-                        f"Errors for {filename} size {size}",
-                    )
+                for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
+                    for size in ["originalVideo"]:
+                        self.assertEqual(
+                            sum(
+                                1
+                                for line in self._caplog.text.splitlines()
+                                if line
+                                == f"ERROR    Could not find URL to download {filename} for size {size}"
+                            ),
+                            1,
+                            f"Errors for {filename} size {size}",
+                        )
 
-            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
-            self.assertEqual(result.exit_code, 0, "Exit code")
+                self.assertIn(
+                    "INFO     All photos and videos have been downloaded", self._caplog.text
+                )
+                self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

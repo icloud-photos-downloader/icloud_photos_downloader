@@ -116,13 +116,13 @@ def download_media(
     while True:
         try:
             photo_response = photo.download(version.url)
-            if photo_response:
+            if photo_response.ok:
                 return download_local(logger, photo_response, download_path, photo.created)
-
-            logger.error(
-                "Could not find URL to download %s for size %s", version.filename, size.value
-            )
-            break
+            else:
+                logger.error(
+                    "Could not find URL to download %s for size %s", version.filename, size.value
+                )
+                break
 
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
