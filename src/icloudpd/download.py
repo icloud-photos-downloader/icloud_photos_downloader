@@ -5,6 +5,7 @@ import datetime
 import logging
 import os
 import time
+from functools import partial
 
 from requests import Response
 from tzlocal import get_localzone
@@ -69,14 +70,14 @@ def mkdirs_for_path_dry_run(logger: logging.Logger, download_path: str) -> bool:
 
 
 def download_response_to_path(
-    _logger: logging.Logger,
     response: Response,
     temp_download_path: str,
+    append_mode: bool,
     download_path: str,
     created_date: datetime.datetime,
 ) -> bool:
     """Saves response content into file with desired created date"""
-    with open(temp_download_path, "wb") as file_obj:
+    with open(temp_download_path, ("ab" if append_mode else "wb")) as file_obj:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 file_obj.write(chunk)
@@ -89,6 +90,7 @@ def download_response_to_path_dry_run(
     logger: logging.Logger,
     _response: Response,
     _temp_download_path: str,
+    _append_mode: bool,
     download_path: str,
     _created_date: datetime.datetime,
 ) -> bool:
@@ -119,15 +121,23 @@ def download_media(
     checksum32 = base64.b32encode(checksum).decode()
     download_dir = os.path.dirname(download_path)
     temp_download_path = os.path.join(download_dir, checksum32) + ".part"
-    download_local = download_response_to_path_dry_run if dry_run else download_response_to_path
+
+    download_local = (
+        partial(download_response_to_path_dry_run, logger) if dry_run else download_response_to_path
+    )
 
     retries = 0
     while True:
         try:
-            photo_response = photo.download(version.url)
+            append_mode = os.path.exists(temp_download_path)
+            current_size = os.path.getsize(temp_download_path) if append_mode else 0
+            if append_mode:
+                logger.debug(f"Resuming downloading of {download_path} from {current_size}")
+
+            photo_response = photo.download(version.url, current_size)
             if photo_response.ok:
                 return download_local(
-                    logger, photo_response, temp_download_path, download_path, photo.created
+                    photo_response, temp_download_path, append_mode, download_path, photo.created
                 )
             else:
                 logger.error(

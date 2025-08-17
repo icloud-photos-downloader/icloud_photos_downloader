@@ -828,9 +828,13 @@ class PhotoAsset(object):
 
         return self._versions
 
-    def download(self, url: str) -> Response:
+    def download(self, url: str, start:int = 0) -> Response:
+        headers = {
+            "Range": f"bytes={start}-"
+        }
         return self._service.session.get(
             url,
+            headers=headers,
             stream=True
         )
 
