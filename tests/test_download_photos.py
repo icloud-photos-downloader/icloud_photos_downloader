@@ -2560,23 +2560,21 @@ class DownloadPhotoTestCase(TestCase):
         )
 
         assert result.exit_code == 0
-
+        out_path = os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
         self.assertIn(
             f"INFO     Downloading the first original photo to {data_dir} ...",
             self._caplog.text,
         )
         self.assertIn(
-            "Resuming downloading of tests/fixtures/test_resume_download/data/2018/07/31/IMG_7409.JPG from 1234",
+            f"Resuming downloading of {out_path} from 1234",
             self._caplog.text,
         )
         self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
-        photo_mtime = os.path.getmtime(
-            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
-        )
+        photo_mtime = os.path.getmtime(out_path)
         photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
         self.assertEqual(
             "2018-07-31 07:22:24",
@@ -2585,8 +2583,6 @@ class DownloadPhotoTestCase(TestCase):
         )
 
         # check size
-        photo_size = os.path.getsize(
-            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
-        )
+        photo_size = os.path.getsize(out_path)
 
         self.assertEqual(617 + 1234, photo_size, "photo size")
