@@ -64,6 +64,7 @@ from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middl
 from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
+    PyiCloudAPIResponseException,
     PyiCloudFailedLoginException,
     PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
@@ -1392,7 +1393,8 @@ def core(
                         library_object.albums[config.album] if config.album else library_object.all
                     )
 
-                    photos.exception_handler = error_handler
+                    # errors are handled at top level now. TODO remove all error handling
+                    # photos.exception_handler = error_handler
 
                     photos_count: int | None = len(photos)
 
@@ -1572,7 +1574,11 @@ def core(
                 continue
             else:
                 return 1
-        except (PyiCloudServiceNotActivatedException, PyiCloudServiceUnavailableException) as error:
+        except (
+            PyiCloudServiceNotActivatedException,
+            PyiCloudServiceUnavailableException,
+            PyiCloudAPIResponseException,
+        ) as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
