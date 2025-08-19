@@ -41,20 +41,17 @@ class PhotoLibrary(object):
     WHOLE_COLLECTION = {
             "obj_type": "CPLAssetByAssetDateWithoutHiddenOrDeleted",
             "list_type": "CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
-            "direction": "ASCENDING",
             "query_filter": None
         }
     RECENTLY_DELETED = {
             "obj_type": "CPLAssetDeletedByExpungedDate",
             "list_type": "CPLAssetAndMasterDeletedByExpungedDate",
-            "direction": "ASCENDING",
             "query_filter": None
         }
     SMART_FOLDERS = {
         "Time-lapse": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Timelapse",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -67,7 +64,6 @@ class PhotoLibrary(object):
         "Videos": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Video",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -80,7 +76,6 @@ class PhotoLibrary(object):
         "Slo-mo": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Slomo",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -93,13 +88,11 @@ class PhotoLibrary(object):
         "Bursts": {
             "obj_type": "CPLAssetBurstStackAssetByAssetDate",
             "list_type": "CPLBurstStackAssetAndMasterByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": None
         },
         "Favorites": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Favorite",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -112,7 +105,6 @@ class PhotoLibrary(object):
         "Panoramas": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Panorama",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -125,7 +117,6 @@ class PhotoLibrary(object):
         "Screenshots": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Screenshot",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -138,7 +129,6 @@ class PhotoLibrary(object):
         "Live": {
             "obj_type": "CPLAssetInSmartAlbumByAssetDate:Live",
             "list_type": "CPLAssetAndMasterInSmartAlbumByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": [{
                 "fieldName": "smartAlbum",
                 "comparator": "EQUALS",
@@ -152,7 +142,6 @@ class PhotoLibrary(object):
         "Hidden": {
             "obj_type": "CPLAssetHiddenByAssetDate",
             "list_type": "CPLAssetAndMasterHiddenByAssetDate",
-            "direction": "ASCENDING",
             "query_filter": None
         },
     }
@@ -212,7 +201,7 @@ class PhotoLibrary(object):
 
             album = PhotoAlbum(self.service, self.service_endpoint, folder_name,
                                 'CPLContainerRelationLiveByAssetDate',
-                                folder_obj_type, 'ASCENDING', query_filter,
+                                folder_obj_type, query_filter,
                                 zone_id=self.zone_id)
             albums[folder_name] = album
 
@@ -333,18 +322,14 @@ class PhotosService(PhotoLibrary):
 
 class PhotoAlbum(object):
 
-    def __init__(self, service:PhotosService, service_endpoint: str, name: str, list_type: str, obj_type: str, direction: str,
+    def __init__(self, service:PhotosService, service_endpoint: str, name: str, list_type: str, obj_type: str,
                  query_filter:Optional[Sequence[Dict[str, Any]]]=None, page_size:int=100, zone_id:Optional[Dict[str, Any]]=None):
         self.name = name
         self.service = service
         self.service_endpoint = service_endpoint
         self.list_type = list_type
         self.obj_type = obj_type
-        self.direction = direction
-        if self.direction == "DESCENDING":
-            self.offset = len(self) - 1
-        else:
-            self.offset = 0
+        self.offset = 0
         self.query_filter = query_filter
         self.page_size = page_size
         self.exception_handler: Optional[Callable[[Exception, int], None]] = None
@@ -383,7 +368,7 @@ class PhotoAlbum(object):
         return self.service.session.post(
             url,
             data=json.dumps(self._list_query_gen(
-                self.offset, self.list_type, self.direction,
+                self.offset, self.list_type,
                 self.query_filter)),
             headers={'Content-type': 'text/plain'}
         )
@@ -441,10 +426,7 @@ class PhotoAlbum(object):
                 break
 
     def increment_offset(self, value: int) -> None:
-        if self.direction == "DESCENDING":
-            self.offset -= value
-        else:
-            self.offset += value
+        self.offset += value
 
     def _count_query_gen(self, obj_type: str) -> Dict[str, Any]:
         query = {
@@ -470,7 +452,7 @@ class PhotoAlbum(object):
 
         return query
 
-    def _list_query_gen(self, offset: int, list_type: str, direction: str, query_filter:Optional[Sequence[Dict[str,None]]]=None) -> Dict[str, Any]:
+    def _list_query_gen(self, offset: int, list_type: str, query_filter:Optional[Sequence[Dict[str,None]]]=None) -> Dict[str, Any]:
         query: Dict[str, Any] = {
             u'query': {
                 u'filterBy': [
@@ -478,7 +460,7 @@ class PhotoAlbum(object):
                         {u'type': u'INT64', u'value': offset},
                         u'comparator': u'EQUALS'},
                     {u'fieldName': u'direction', u'fieldValue':
-                        {u'type': u'STRING', u'value': direction},
+                        {u'type': u'STRING', u'value': 'DESCENDING'},
                         u'comparator': u'EQUALS'}
                 ],
                 u'recordType': list_type
