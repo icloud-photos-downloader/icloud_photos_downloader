@@ -43,7 +43,6 @@ from typing import (
     NoReturn,
     Sequence,
     Tuple,
-    TypeVar,
 )
 
 import click
@@ -51,7 +50,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
-from icloudpd import constants, download, exif_datetime
+from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import Config
@@ -72,7 +71,7 @@ from pyicloud_ipd.exceptions import (
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import (
     add_suffix_to_filename,
     disambiguate_filenames,
@@ -1161,7 +1160,6 @@ def download_builder(
 
 def delete_photo(
     logger: logging.Logger,
-    photo_service: PhotosService,
     library_object: PhotoLibrary,
     photo: PhotoAsset,
 ) -> None:
@@ -1170,7 +1168,7 @@ def delete_photo(
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
         f"{library_object.service_endpoint}/records/modify?"
-        f"{urllib.parse.urlencode(photo_service.params)}"
+        f"{urllib.parse.urlencode(library_object.service.params)}"
     )
     post_data = json.dumps(
         {
@@ -1190,13 +1188,14 @@ def delete_photo(
             "zoneID": library_object.zone_id,
         }
     )
-    photo_service.session.post(url, data=post_data, headers={"Content-type": "application/json"})
+    library_object.service.session.post(
+        url, data=post_data, headers={"Content-type": "application/json"}
+    )
     logger.info("Deleted %s in iCloud", clean_filename_local)
 
 
 def delete_photo_dry_run(
     logger: logging.Logger,
-    _photo_service: PhotosService,
     library_object: PhotoLibrary,
     photo: PhotoAsset,
 ) -> None:
@@ -1208,53 +1207,53 @@ def delete_photo_dry_run(
     )
 
 
-RetrierT = TypeVar("RetrierT")
+# RetrierT = TypeVar("RetrierT")
 
 
-def retrier(
-    func: Callable[[], RetrierT], error_handler: Callable[[Exception, int], None]
-) -> RetrierT:
-    """Run main func and retry helper if receive session error"""
-    attempts = 0
-    while True:
-        try:
-            return func()
-        except Exception as ex:
-            attempts += 1
-            error_handler(ex, attempts)
-            if attempts > constants.MAX_RETRIES:
-                raise
+# def retrier(
+#     func: Callable[[], RetrierT], error_handler: Callable[[Exception, int], None]
+# ) -> RetrierT:
+#     """Run main func and retry helper if receive session error"""
+#     attempts = 0
+#     while True:
+#         try:
+#             return func()
+#         except Exception as ex:
+#             attempts += 1
+#             error_handler(ex, attempts)
+#             if attempts > constants.MAX_RETRIES:
+#                 raise
 
 
-def session_error_handle_builder(
-    logger: Logger, icloud: PyiCloudService, ex: Exception, attempt: int
-) -> None:
-    """Handles session errors in the PhotoAlbum photos iterator"""
-    if "Invalid global session" in str(ex):
-        if constants.MAX_RETRIES == 0:
-            logger.error("Session error, re-authenticating...")
-        if attempt > constants.MAX_RETRIES:
-            logger.error("iCloud re-authentication failed. Please try again later.")
-            raise ex
-        logger.error("Session error, re-authenticating...")
-        if attempt > 1:
-            # If the first re-authentication attempt failed,
-            # start waiting a few seconds before retrying in case
-            # there are some issues with the Apple servers
-            time.sleep(constants.WAIT_SECONDS * attempt)
-        icloud.authenticate()
+# def session_error_handle_builder(
+#     logger: Logger, icloud: PyiCloudService, ex: Exception, attempt: int
+# ) -> None:
+#     """Handles session errors in the PhotoAlbum photos iterator"""
+#     if "Invalid global session" in str(ex):
+#         if constants.MAX_RETRIES == 0:
+#             logger.error("Session error, re-authenticating...")
+#         if attempt > constants.MAX_RETRIES:
+#             logger.error("iCloud re-authentication failed. Please try again later.")
+#             raise ex
+#         logger.error("Session error, re-authenticating...")
+#         if attempt > 1:
+#             # If the first re-authentication attempt failed,
+#             # start waiting a few seconds before retrying in case
+#             # there are some issues with the Apple servers
+#             time.sleep(constants.WAIT_SECONDS * attempt)
+#         icloud.authenticate()
 
 
-def internal_error_handle_builder(logger: logging.Logger, ex: Exception, attempt: int) -> None:
-    """Handles session errors in the PhotoAlbum photos iterator"""
-    if "INTERNAL_ERROR" in str(ex):
-        if attempt > constants.MAX_RETRIES:
-            logger.error("Internal Error at Apple.")
-            raise ex
-        logger.error("Internal Error at Apple, retrying...")
-        # start waiting a few seconds before retrying in case
-        # there are some issues with the Apple servers
-        time.sleep(constants.WAIT_SECONDS * attempt)
+# def internal_error_handle_builder(logger: logging.Logger, ex: Exception, attempt: int) -> None:
+#     """Handles session errors in the PhotoAlbum photos iterator"""
+#     if "INTERNAL_ERROR" in str(ex):
+#         if attempt > constants.MAX_RETRIES:
+#             logger.error("Internal Error at Apple.")
+#             raise ex
+#         logger.error("Internal Error at Apple, retrying...")
+#         # start waiting a few seconds before retrying in case
+#         # there are some issues with the Apple servers
+#         time.sleep(constants.WAIT_SECONDS * attempt)
 
 
 def compose_handlers(
@@ -1380,25 +1379,25 @@ def core(
                     album_phrase = f" from album {config.album}" if config.album else ""
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
-                    session_exception_handler = partial(
-                        session_error_handle_builder, logger, icloud
-                    )
-                    internal_error_handler = partial(internal_error_handle_builder, logger)
+                    # session_exception_handler = partial(
+                    #     session_error_handle_builder, logger, icloud
+                    # )
+                    # internal_error_handler = partial(internal_error_handle_builder, logger)
 
-                    error_handler = compose_handlers(
-                        [session_exception_handler, internal_error_handler]
-                    )
+                    # error_handler = compose_handlers(
+                    #     [session_exception_handler, internal_error_handler]
+                    # )
 
-                    photos = (
+                    photo_album = (
                         library_object.albums[config.album] if config.album else library_object.all
                     )
 
                     # errors are handled at top level now. TODO remove all error handling
                     # photos.exception_handler = error_handler
 
-                    photos_count: int | None = len(photos)
+                    photos_count: int | None = len(photo_album)
 
-                    photos_enumerator: Iterable[PhotoAsset] = photos
+                    photos_enumerator: Iterable[PhotoAsset] = photo_album
 
                     # Optional: Only download the x most recent photos.
                     if config.recent is not None:
@@ -1506,16 +1505,17 @@ def core(
                                     should_delete = True
 
                             if should_delete:
-                                delete_local = partial(
-                                    delete_photo_dry_run if config.dry_run else delete_photo,
-                                    logger,
-                                    icloud.photos,
-                                    library_object,
-                                    item,
-                                )
+                                if config.dry_run:
+                                    delete_photo_dry_run(logger, library_object, item)
+                                else:
+                                    delete_photo(
+                                        logger,
+                                        library_object,
+                                        item,
+                                    )
 
-                                retrier(delete_local, error_handler)
-                                photos.increment_offset(-1)
+                                # retrier(delete_local, error_handler)
+                                photo_album.increment_offset(-1)
 
                             photos_counter += 1
                             status_exchange.get_progress().photos_counter = photos_counter
