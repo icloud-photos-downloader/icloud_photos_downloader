@@ -1,10 +1,13 @@
-from typing import Callable, Tuple, TypeVar
+from itertools import chain, tee, zip_longest
+from typing import Callable, Iterable, Tuple, TypeGuard, TypeVar
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
 _T2_contra = TypeVar("_T2_contra", contravariant=True)
 _T3_contra = TypeVar("_T3_contra", contravariant=True)
 _T_co = TypeVar("_T_co", covariant=True)
+_T2_co = TypeVar("_T2_co", covariant=True)
 _T_inv = TypeVar("_T_inv")
+_T2_inv = TypeVar("_T2_inv")
 
 
 def compose(
@@ -201,3 +204,123 @@ def pipe2(
     True
     """
     return expand2(pipe(compact2(f), g))
+
+
+def arrow(
+    func1: Callable[[_T_contra], _T_co],
+    func2: Callable[[_T2_contra], _T2_co],
+    inp: Tuple[_T_contra, _T2_contra],
+) -> Tuple[_T_co, _T2_co]:
+    """applies different functions for elements of the tuple like Control.Arrow ***"""
+
+    return (func1(inp[0]), func2(inp[1]))
+
+
+def partial_1_1(
+    f: Callable[[_T_contra, _T2_contra], _T_co], p1: _T_contra
+) -> Callable[[_T2_contra], _T_co]:
+    """
+    partial application of one parameter. Safe for static type-checking
+
+    Equiv: functools.partial
+    """
+
+    def inter_(value: _T2_contra) -> _T_co:
+        return f(p1, value)
+
+    return inter_
+
+
+def partial_2_1(
+    f: Callable[[_T_contra, _T2_contra, _T3_contra], _T_co], p1: _T_contra, p2: _T2_contra
+) -> Callable[[_T3_contra], _T_co]:
+    """
+    partial application of one parameter. Safe for static type-checking
+
+    Equiv: functools.partial
+    """
+
+    def inter_(value: _T3_contra) -> _T_co:
+        return f(p1, p2, value)
+
+    return inter_
+
+
+def filter_(f: Callable[[_T_contra], bool], p1: Iterable[_T_contra]) -> Iterable[_T_contra]:
+    """
+    typed filter
+
+    Equiv: functools.filter
+    """
+
+    return filter(f, p1)
+
+
+def filter_guarded(
+    f: Callable[[_T_contra], TypeGuard[_T2_contra]], p1: Iterable[_T_contra]
+) -> Iterable[_T2_contra]:
+    """
+    typed filter for guarded output
+
+    Equiv: functools.filter
+    """
+
+    return filter(f, p1)
+
+
+def map_(f: Callable[[_T_contra], _T_co], p1: Iterable[_T_contra]) -> Iterable[_T_co]:
+    """
+    typed map
+
+    Equiv: functools.map
+    """
+
+    return map(f, p1)
+
+
+def tee_(inp: Iterable[_T_contra]) -> Tuple[Iterable[_T_contra], Iterable[_T_contra]]:
+    """
+    duplicate iterable
+    >>> inp = [1, 2, 3]
+    >>> a, b = tee_(inp)
+    >>> list(a)
+    [1, 2, 3]
+    >>> list(b)
+    [1, 2, 3]
+    """
+    result = tee(inp)
+    return result[0], result[1]
+
+
+def zip_longest_(
+    inp: Tuple[Iterable[_T_inv], Iterable[_T2_inv]],
+) -> Iterable[Tuple[_T_inv | None, _T2_inv | None]]:
+    """
+    zip tuple of iterables into iterable of tuples
+    >>> inp = ([1, 2], [4, 5, 6])
+    >>> list(zip_longest_(inp))
+    [(1, 4), (2, 5), (None, 6)]
+    """
+    return zip_longest(inp[0], inp[1])
+
+
+def unzip(
+    inp: Iterable[Tuple[_T_inv, _T2_inv]],
+) -> Tuple[Iterable[_T_inv], Iterable[_T2_inv]]:
+    """
+    unzip iterable of tuples
+    >>> a, b = unzip([(1, 2), (3, 4), (5, 6)])
+    >>> list(a)
+    [1, 3, 5]
+    >>> list(b)
+    [2, 4, 6]
+    """
+    fst_i: Callable[[Iterable[Tuple[_T_inv, _T2_inv]]], Iterable[_T_inv]] = partial_1_1(map_, fst)
+    snd_i: Callable[[Iterable[Tuple[_T_inv, _T2_inv]]], Iterable[_T2_inv]] = partial_1_1(map_, snd)
+    split = partial_2_1(arrow, fst_i, snd_i)
+    func = compose(split, tee_)
+    return func(inp)
+
+
+def chain_from_iterable(inp: Iterable[Iterable[_T_inv]]) -> Iterable[_T_inv]:
+    return chain.from_iterable(inp)
