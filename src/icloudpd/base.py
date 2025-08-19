@@ -14,7 +14,7 @@ from requests.exceptions import (
 from urllib3.exceptions import NewConnectionError
 
 import foundation
-from foundation.core import compose, constant, identity
+from foundation.core import compose, constant, identity, map_
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
@@ -390,7 +390,8 @@ CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
 @click.option(
     "-a",
     "--album",
-    help="Album to download or whole collection if not specified",
+    help="Album(s) to download or whole collection if not specified",
+    multiple=True,
     metavar="<album>",
 )
 @click.option(
@@ -647,7 +648,7 @@ def main(
     live_photo_size: LivePhotoVersionSize,
     recent: int | None,
     until_found: int | None,
-    album: str | None,
+    album: Sequence[str],
     list_albums: bool,
     library: str,
     list_libraries: bool,
@@ -790,7 +791,7 @@ def main(
             live_photo_size=live_photo_size,
             recent=recent,
             until_found=until_found,
-            album=album,
+            albums=album,
             list_albums=list_albums,
             library=library,
             list_libraries=list_libraries,
@@ -1376,7 +1377,13 @@ def core(
                         photo_video_phrase = "photos" if config.skip_videos else "videos"
                     else:
                         photo_video_phrase = "photos and videos"
-                    album_phrase = f" from album {config.album}" if config.album else ""
+                    if len(config.albums) == 0:
+                        album_phrase = ""
+                    elif len(config.albums) == 1:
+                        album_phrase = f" from album {','.join(config.albums)}"
+                    else:
+                        album_phrase = f" from albums {','.join(config.albums)}"
+
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
                     # session_exception_handler = partial(
@@ -1388,163 +1395,167 @@ def core(
                     #     [session_exception_handler, internal_error_handler]
                     # )
 
-                    photo_album = (
-                        library_object.albums[config.album] if config.album else library_object.all
-                    )
+                    for photo_album in (
+                        map_(library_object.albums.__getitem__, config.albums)
+                        if len(config.albums) > 0
+                        else [library_object.all]
+                    ):
+                        # errors are handled at top level now. TODO remove all error handling
+                        # photos.exception_handler = error_handler
 
-                    # errors are handled at top level now. TODO remove all error handling
-                    # photos.exception_handler = error_handler
+                        photos_count: int | None = len(photo_album)
 
-                    photos_count: int | None = len(photo_album)
+                        photos_enumerator: Iterable[PhotoAsset] = photo_album
 
-                    photos_enumerator: Iterable[PhotoAsset] = photo_album
+                        # Optional: Only download the x most recent photos.
+                        if config.recent is not None:
+                            photos_count = config.recent
+                            photos_enumerator = itertools.islice(photos_enumerator, config.recent)
 
-                    # Optional: Only download the x most recent photos.
-                    if config.recent is not None:
-                        photos_count = config.recent
-                        photos_enumerator = itertools.islice(photos_enumerator, config.recent)
+                        if config.until_found is not None:
+                            photos_count = None
+                            # ensure photos iterator doesn't have a known length
+                            photos_enumerator = (p for p in photos_enumerator)
 
-                    if config.until_found is not None:
-                        photos_count = None
-                        # ensure photos iterator doesn't have a known length
-                        photos_enumerator = (p for p in photos_enumerator)
-
-                    # Skip the one-line progress bar if we're only printing the filenames,
-                    # or if the progress bar is explicitly disabled,
-                    # or if this is not a terminal (e.g. cron or piping output to file)
-                    if skip_bar:
-                        photos_enumerator = photos_enumerator
-                        # logger.set_tqdm(None)
-                    else:
-                        photos_enumerator = tqdm(
-                            iterable=photos_enumerator,
-                            total=photos_count,
-                            leave=False,
-                            dynamic_ncols=True,
-                            ascii=True,
-                        )
-                        # logger.set_tqdm(photos_enumerator)
-
-                    if photos_count is not None:
-                        plural_suffix = "" if photos_count == 1 else "s"
-                        photos_count_str = "the first" if photos_count == 1 else str(photos_count)
-
-                        if config.skip_photos or config.skip_videos:
-                            photo_video_phrase = (
-                                "photo" if config.skip_videos else "video"
-                            ) + plural_suffix
+                        # Skip the one-line progress bar if we're only printing the filenames,
+                        # or if the progress bar is explicitly disabled,
+                        # or if this is not a terminal (e.g. cron or piping output to file)
+                        if skip_bar:
+                            photos_enumerator = photos_enumerator
+                            # logger.set_tqdm(None)
                         else:
-                            photo_video_phrase = (
-                                "photo or video" if photos_count == 1 else "photos and videos"
+                            photos_enumerator = tqdm(
+                                iterable=photos_enumerator,
+                                total=photos_count,
+                                leave=False,
+                                dynamic_ncols=True,
+                                ascii=True,
                             )
-                    else:
-                        photos_count_str = "???"
-                        if config.skip_photos or config.skip_videos:
-                            photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            # logger.set_tqdm(photos_enumerator)
+
+                        if photos_count is not None:
+                            plural_suffix = "" if photos_count == 1 else "s"
+                            photos_count_str = (
+                                "the first" if photos_count == 1 else str(photos_count)
+                            )
+
+                            if config.skip_photos or config.skip_videos:
+                                photo_video_phrase = (
+                                    "photo" if config.skip_videos else "video"
+                                ) + plural_suffix
+                            else:
+                                photo_video_phrase = (
+                                    "photo or video" if photos_count == 1 else "photos and videos"
+                                )
                         else:
-                            photo_video_phrase = "photos and videos"
-                    logger.info(
-                        ("Downloading %s %s %s to %s ..."),
-                        photos_count_str,
-                        ",".join([_s.value for _s in config.size]),
-                        photo_video_phrase,
-                        directory,
-                    )
-
-                    consecutive_files_found = Counter(0)
-
-                    def should_break(counter: Counter) -> bool:
-                        """Exit if until_found condition is reached"""
-                        return (
-                            config.until_found is not None and counter.value() >= config.until_found
+                            photos_count_str = "???"
+                            if config.skip_photos or config.skip_videos:
+                                photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            else:
+                                photo_video_phrase = "photos and videos"
+                        logger.info(
+                            ("Downloading %s %s %s to %s ..."),
+                            photos_count_str,
+                            ",".join([_s.value for _s in config.size]),
+                            photo_video_phrase,
+                            directory,
                         )
 
-                    status_exchange.get_progress().photos_count = (
-                        0 if photos_count is None else photos_count
-                    )
-                    photos_counter = 0
+                        consecutive_files_found = Counter(0)
 
-                    now = datetime.datetime.now(get_localzone())
-                    photos_iterator = iter(photos_enumerator)
-
-                    download_photo = partial(downloader, icloud)
-
-                    while True:
-                        try:
-                            if should_break(consecutive_files_found):
-                                logger.info(
-                                    "Found %s consecutive previously downloaded photos. Exiting",
-                                    config.until_found,
-                                )
-                                break
-                            item = next(photos_iterator)
-                            should_delete = False
-
-                            passer_result = passer(item)
-                            download_result = passer_result and download_photo(
-                                consecutive_files_found, item
+                        def should_break(counter: Counter) -> bool:
+                            """Exit if until_found condition is reached"""
+                            return (
+                                config.until_found is not None
+                                and counter.value() >= config.until_found
                             )
-                            if download_result and config.delete_after_download:
-                                should_delete = True
 
-                            if passer_result and config.keep_icloud_recent_days is not None:
-                                created_date = item.created.astimezone(get_localzone())
-                                age_days = (now - created_date).days
-                                logger.debug(f"Created date: {created_date}")
-                                logger.debug(
-                                    f"Keep iCloud recent days: {config.keep_icloud_recent_days}"
-                                )
-                                logger.debug(f"Age days: {age_days}")
-                                if age_days < config.keep_icloud_recent_days:
-                                    logger.debug(
-                                        "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
-                                        item.filename,
-                                        age_days,
+                        status_exchange.get_progress().photos_count = (
+                            0 if photos_count is None else photos_count
+                        )
+                        photos_counter = 0
+
+                        now = datetime.datetime.now(get_localzone())
+                        photos_iterator = iter(photos_enumerator)
+
+                        download_photo = partial(downloader, icloud)
+
+                        while True:
+                            try:
+                                if should_break(consecutive_files_found):
+                                    logger.info(
+                                        "Found %s consecutive previously downloaded photos. Exiting",
+                                        config.until_found,
                                     )
-                                else:
+                                    break
+                                item = next(photos_iterator)
+                                should_delete = False
+
+                                passer_result = passer(item)
+                                download_result = passer_result and download_photo(
+                                    consecutive_files_found, item
+                                )
+                                if download_result and config.delete_after_download:
                                     should_delete = True
 
-                            if should_delete:
-                                if config.dry_run:
-                                    delete_photo_dry_run(logger, library_object, item)
-                                else:
-                                    delete_photo(
-                                        logger,
-                                        library_object,
-                                        item,
+                                if passer_result and config.keep_icloud_recent_days is not None:
+                                    created_date = item.created.astimezone(get_localzone())
+                                    age_days = (now - created_date).days
+                                    logger.debug(f"Created date: {created_date}")
+                                    logger.debug(
+                                        f"Keep iCloud recent days: {config.keep_icloud_recent_days}"
                                     )
+                                    logger.debug(f"Age days: {age_days}")
+                                    if age_days < config.keep_icloud_recent_days:
+                                        logger.debug(
+                                            "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
+                                            item.filename,
+                                            age_days,
+                                        )
+                                    else:
+                                        should_delete = True
 
-                                # retrier(delete_local, error_handler)
-                                photo_album.increment_offset(-1)
+                                if should_delete:
+                                    if config.dry_run:
+                                        delete_photo_dry_run(logger, library_object, item)
+                                    else:
+                                        delete_photo(
+                                            logger,
+                                            library_object,
+                                            item,
+                                        )
 
-                            photos_counter += 1
-                            status_exchange.get_progress().photos_counter = photos_counter
+                                    # retrier(delete_local, error_handler)
+                                    photo_album.increment_offset(-1)
 
-                            if status_exchange.get_progress().cancel:
+                                photos_counter += 1
+                                status_exchange.get_progress().photos_counter = photos_counter
+
+                                if status_exchange.get_progress().cancel:
+                                    break
+
+                            except StopIteration:
                                 break
 
-                        except StopIteration:
-                            break
-
-                    if config.only_print_filenames:
-                        return 0
-                    else:
-                        pass
-
-                    if status_exchange.get_progress().cancel:
-                        logger.info("Iteration was cancelled")
-                        status_exchange.get_progress().photos_last_message = (
-                            "Iteration was cancelled"
-                        )
-                    else:
-                        if config.skip_photos or config.skip_videos:
-                            photo_video_phrase = "photos" if config.skip_videos else "videos"
+                        if config.only_print_filenames:
+                            return 0
                         else:
-                            photo_video_phrase = "photos and videos"
-                        message = f"All {photo_video_phrase} have been downloaded"
-                        logger.info(message)
-                        status_exchange.get_progress().photos_last_message = message
-                    status_exchange.get_progress().reset()
+                            pass
+
+                        if status_exchange.get_progress().cancel:
+                            logger.info("Iteration was cancelled")
+                            status_exchange.get_progress().photos_last_message = (
+                                "Iteration was cancelled"
+                            )
+                        else:
+                            if config.skip_photos or config.skip_videos:
+                                photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            else:
+                                photo_video_phrase = "photos and videos"
+                            message = f"All {photo_video_phrase} have been downloaded"
+                            logger.info(message)
+                            status_exchange.get_progress().photos_last_message = message
+                        status_exchange.get_progress().reset()
 
                     if config.auto_delete:
                         autodelete_photos(

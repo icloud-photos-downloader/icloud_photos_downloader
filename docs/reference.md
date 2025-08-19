@@ -29,12 +29,12 @@ This is a list of all options available for command line interface (CLI) of the 
 (album-parameter)=
 `--album X`
     
-:   Specifies what Album to download. 
+:   Specifies what Album(s) to download. 
 
     When not specified, the whole asset collection is considered.
 
-    ```{note}
-    Only one album can be downloaded by `icloudpd`
+    ```{versionchanged} 1.30.1
+    Option may be specified multiple times to download from different albums
     ```    
 
 (list-albums-parameter)=
