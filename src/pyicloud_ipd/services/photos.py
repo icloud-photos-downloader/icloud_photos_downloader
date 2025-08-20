@@ -460,7 +460,7 @@ class PhotoAlbum(object):
                         {u'type': u'INT64', u'value': offset},
                         u'comparator': u'EQUALS'},
                     {u'fieldName': u'direction', u'fieldValue':
-                        {u'type': u'STRING', u'value': 'DESCENDING'},
+                        {u'type': u'STRING', u'value': 'ASCENDING'},
                         u'comparator': u'EQUALS'}
                 ],
                 u'recordType': list_type
