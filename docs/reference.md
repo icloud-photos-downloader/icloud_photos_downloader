@@ -33,7 +33,7 @@ This is a list of all options available for command line interface (CLI) of the 
 
     When not specified, the whole asset collection is considered.
 
-    ```{versionchanged} 1.30.1
+    ```{versionchanged} 1.31.0
     Option may be specified multiple times to download from different albums
     ```    
 
