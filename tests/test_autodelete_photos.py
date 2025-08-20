@@ -487,7 +487,7 @@ class AutodeletePhotosTestCase(TestCase):
         with vcr.use_cassette(os.path.join(self.vcr_path, "download_autodelete_photos.yml")):
 
             def mock_raise_response_error(
-                a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
+                a1_: logging.Logger, a3_: PhotoLibrary, a4_: PhotoAsset
             ) -> None:
                 raise PyiCloudAPIResponseException("Invalid global session", "100")
 
@@ -545,7 +545,7 @@ class AutodeletePhotosTestCase(TestCase):
                         # Error msg should be repeated MAX_RETRIES times
                         self.assertEqual(
                             self._caplog.text.count("Session error, re-authenticating..."),
-                            max(1, constants.MAX_RETRIES),
+                            max(0, constants.MAX_RETRIES),
                             "retry count",
                         )
 

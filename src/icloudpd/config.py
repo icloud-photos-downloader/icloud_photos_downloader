@@ -18,7 +18,7 @@ class Config:
         live_photo_size: LivePhotoVersionSize,
         recent: int | None,
         until_found: int | None,
-        album: str | None,
+        albums: Sequence[str],
         list_albums: bool,
         library: str,
         list_libraries: bool,
@@ -64,7 +64,7 @@ class Config:
         self.live_photo_size = live_photo_size
         self.recent = recent
         self.until_found = until_found
-        self.album = album
+        self.albums = albums
         self.list_albums = list_albums
         self.library = library
         self.list_libraries = list_libraries
