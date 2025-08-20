@@ -32,10 +32,13 @@ def cookie_str_to_dict(cookie_header: str) -> Mapping[str, str]:
 
 
 def response_body(response: Response) -> Any:
-    try:
-        return response.json()
-    except Exception:
-        return response.text
+    if response.raw.stream:
+        return None
+    else:
+        try:
+            return response.json()
+        except Exception:
+            return response.text
 
 
 def request_body(request: PreparedRequest) -> Any:
