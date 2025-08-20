@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: OOMing on large downloads [#1214](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1214)
+
 ## 1.30.0 (2025-08-17)
 
 - feat: resume interrupted downloads [#968](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/968) [#793](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/793)
