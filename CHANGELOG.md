@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.31.0 (2025-08-20)
+
 - fix: OOMing on large downloads [#1214](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1214)
 - feat: support downloading from multiple albums [#738](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/738) [#438](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/438)
 
