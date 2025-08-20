@@ -1409,22 +1409,26 @@ def core(
                         # Optional: Only download the x most recent photos.
                         if config.recent is not None:
                             photos_count = config.recent
-                            photos_enumerator = itertools.islice(photos_enumerator, config.recent)
+                            photos_top: Iterable[PhotoAsset] = itertools.islice(
+                                photos_enumerator, config.recent
+                            )
+                        else:
+                            photos_top = photos_enumerator
 
                         if config.until_found is not None:
                             photos_count = None
                             # ensure photos iterator doesn't have a known length
-                            photos_enumerator = (p for p in photos_enumerator)
+                            # photos_enumerator = (p for p in photos_enumerator)
 
                         # Skip the one-line progress bar if we're only printing the filenames,
                         # or if the progress bar is explicitly disabled,
                         # or if this is not a terminal (e.g. cron or piping output to file)
                         if skip_bar:
-                            photos_enumerator = photos_enumerator
+                            photos_bar: Iterable[PhotoAsset] = photos_top
                             # logger.set_tqdm(None)
                         else:
-                            photos_enumerator = tqdm(
-                                iterable=photos_enumerator,
+                            photos_bar = tqdm(
+                                iterable=photos_top,
                                 total=photos_count,
                                 leave=False,
                                 dynamic_ncols=True,
@@ -1475,11 +1479,11 @@ def core(
                         photos_counter = 0
 
                         now = datetime.datetime.now(get_localzone())
-                        photos_iterator = iter(photos_enumerator)
+                        # photos_iterator = iter(photos_enumerator)
 
                         download_photo = partial(downloader, icloud)
 
-                        while True:
+                        for item in photos_bar:
                             try:
                                 if should_break(consecutive_files_found):
                                     logger.info(
@@ -1487,7 +1491,7 @@ def core(
                                         config.until_found,
                                     )
                                     break
-                                item = next(photos_iterator)
+                                # item = next(photos_iterator)
                                 should_delete = False
 
                                 passer_result = passer(item)
