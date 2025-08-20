@@ -14,7 +14,7 @@ from requests.exceptions import (
 from urllib3.exceptions import NewConnectionError
 
 import foundation
-from foundation.core import compose, constant, identity, map_
+from foundation.core import compose, constant, identity, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
@@ -1394,15 +1394,21 @@ def core(
                     # )
 
                     albums: Iterable[PhotoAlbum] = (
-                        (map_(library_object.albums.__getitem__, config.albums))
+                        list(map_(library_object.albums.__getitem__, config.albums))
                         if len(config.albums) > 0
                         else [library_object.all]
                     )
+                    album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
+                        map_, len
+                    )
+
+                    def sum_(inp: Iterable[int]) -> int:
+                        return sum(inp)
+
+                    photos_count: int | None = compose(sum_, album_lengths)(albums)
                     for photo_album in albums:
                         # errors are handled at top level now. TODO remove all error handling
                         # photos.exception_handler = error_handler
-
-                        photos_count: int | None = len(photo_album)
 
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
