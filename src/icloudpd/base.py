@@ -71,7 +71,7 @@ from pyicloud_ipd.exceptions import (
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import (
     add_suffix_to_filename,
     disambiguate_filenames,
@@ -1359,9 +1359,7 @@ def core(
 
                 if config.list_albums:
                     print("Albums:")
-                    albums_dict = library_object.albums
-                    albums = albums_dict.values()  # pragma: no cover
-                    album_titles = [str(a) for a in albums]
+                    album_titles = [str(a) for a in library_object.albums.values()]
                     print(*album_titles, sep="\n")
                     return 0
                 else:
@@ -1395,11 +1393,12 @@ def core(
                     #     [session_exception_handler, internal_error_handler]
                     # )
 
-                    for photo_album in (
-                        map_(library_object.albums.__getitem__, config.albums)
+                    albums: Iterable[PhotoAlbum] = (
+                        (map_(library_object.albums.__getitem__, config.albums))
                         if len(config.albums) > 0
                         else [library_object.all]
-                    ):
+                    )
+                    for photo_album in albums:
                         # errors are handled at top level now. TODO remove all error handling
                         # photos.exception_handler = error_handler
 
