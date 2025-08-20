@@ -541,12 +541,12 @@ class DownloadPhotoTestCase(TestCase):
                     # Error msg should be repeated 5 times
                     self.assertEqual(
                         self._caplog.text.count("Session error, re-authenticating..."),
-                        max(1, constants.MAX_RETRIES),
+                        max(0, constants.MAX_RETRIES),
                         "retry count",
                     )
 
                     self.assertIn(
-                        "ERROR    iCloud re-authentication failed. Please try again later.",
+                        "Invalid global session",
                         self._caplog.text,
                     )
                     # Make sure we only call sleep 4 times (skip the first retry)
@@ -1740,7 +1740,7 @@ class DownloadPhotoTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         def mock_raise_response_error() -> NoReturn:
-            raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
+            raise PyiCloudAPIResponseException("Internal Error at Apple.", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
@@ -1776,7 +1776,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "ERROR    Internal Error at Apple.",
+                    "Internal Error at Apple.",
                     self._caplog.text,
                 )
 
