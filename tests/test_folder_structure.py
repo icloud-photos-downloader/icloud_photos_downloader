@@ -1,20 +1,14 @@
-import glob
 import inspect
 import os
-import shutil
 import sys
 from typing import List, Tuple
 from unittest import TestCase
 
 import pytest
-from click.testing import CliRunner
 from vcr import VCR
 
-from icloudpd.base import main
 from tests.helpers import (
     path_from_project_root,
-    print_result_exception,
-    recreate_path,
     run_icloudpd_test,
 )
 
@@ -135,84 +129,59 @@ class FolderStructureTestCase(TestCase):
     @pytest.mark.skipif(sys.platform == "win32", reason="local strings are not working on windows")
     def test_folder_structure_de_posix(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-        cookie_master_path = os.path.join(self.root_path, "cookie")
 
-        for dir in [base_dir, data_dir]:
-            recreate_path(dir)
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--only-print-filenames",
+                "--folder-structure={:%Y/%B}",
+                "--no-progress-bar",
+                "--use-os-locale",
+            ],
+            {
+                "LC_ALL": "de_DE.UTF-8",
+            },
+        )
+        self.assertEqual(0, result.exit_code, "exit code")
 
-        shutil.copytree(cookie_master_path, cookie_dir)
+        filenames = result.output.splitlines()
 
-        files_to_download: List[str] = []
-
-        # Note - This test uses the same cassette as test_download_photos.py
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-            # Pass fixed client ID via environment variable
-            runner = CliRunner(
-                env={
-                    "CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321",
-                    "LC_ALL": "de_DE.UTF-8",
-                }
-            )
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "5",
-                    "--only-print-filenames",
-                    "--folder-structure={:%Y/%B}",
-                    "--no-progress-bar",
-                    "--use-os-locale",
-                    "-d",
-                    data_dir,
-                    "--cookie-directory",
-                    cookie_dir,
-                ],
-            )
-            print_result_exception(result)
-            filenames = result.output.splitlines()
-
-            self.assertEqual(len(filenames), 8)
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7409.JPG")), filenames[0]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7409.MOV")), filenames[1]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7408.JPG")), filenames[2]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7408.MOV")), filenames[3]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7407.JPG")), filenames[4]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7407.MOV")), filenames[5]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7405.MOV")), filenames[6]
-            )
-            self.assertEqual(
-                os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7404.MOV")), filenames[7]
-            )
-
-            assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(files_to_download)
-
-        for file_name in files_to_download:
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), (
-                f"File {file_name} expected, but does not exist"
-            )
+        self.assertEqual(len(filenames), 8)
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7409.JPG")), filenames[0]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7409.MOV")), filenames[1]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7408.JPG")), filenames[2]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7408.MOV")), filenames[3]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7407.JPG")), filenames[4]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7407.MOV")), filenames[5]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7405.MOV")), filenames[6]
+        )
+        self.assertEqual(
+            os.path.join(data_dir, os.path.normpath("2018/Juli/IMG_7404.MOV")), filenames[7]
+        )
 
     def test_folder_structure_bad_format(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
