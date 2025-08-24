@@ -82,16 +82,23 @@ def assert_files(
         )
 
 
+def run_main(params: Sequence[str]) -> Result:
+    runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
+    result = runner.invoke(
+        main,
+        params,
+    )
+    print_result_exception(result)
+    return result
+
+
 def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
     with vcr.use_cassette(cassette_path):
-        # Pass fixed client ID via environment variable
-        runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-        result = runner.invoke(
-            main,
-            params,
-        )
-        print_result_exception(result)
-        return result
+        return run_main(params)
+
+
+def calc_data_dir(base_dir: str) -> str:
+    return os.path.join(base_dir, "data")
 
 
 def run_icloudpd_test(
@@ -104,7 +111,7 @@ def run_icloudpd_test(
     params: List[str],
 ) -> Tuple[str, Result]:
     cookie_dir = os.path.join(base_dir, "cookie")
-    data_dir = os.path.join(base_dir, "data")
+    data_dir = calc_data_dir(base_dir)
     vcr_path = os.path.join(root_path, "vcr_cassettes")
     cookie_master_path = os.path.join(root_path, "cookie")
 
