@@ -5,16 +5,14 @@ from typing import Any, NamedTuple, NoReturn
 from unittest import TestCase, mock
 
 import pytest
-from click.testing import CliRunner
 from requests import Timeout
 from requests.exceptions import ConnectionError
 from vcr import VCR
 
-# import vcr
 import pyicloud_ipd
 from foundation.core import constant, identity
 from icloudpd.authentication import authenticator
-from icloudpd.base import dummy_password_writter, lp_filename_concatinator, main
+from icloudpd.base import dummy_password_writter, lp_filename_concatinator
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
@@ -22,15 +20,14 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
-from tests.helpers import path_from_project_root, recreate_path
+from tests.helpers import path_from_project_root, recreate_path, run_cassette
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 class AuthenticationTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
@@ -63,8 +60,8 @@ class AuthenticationTestCase(TestCase):
                 )
 
         # self.assertIn(
-        #     "ERROR    Failed to login with srp, falling back to old raw password authentication.",
-        #     self._caplog.text,
+        #     "Failed to login with srp, falling back to old raw password authentication.",
+        #     result.output,
         # )
         self.assertTrue("Invalid email/password combination." in str(context.exception))
 
@@ -76,27 +73,25 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "fallback_raw_password.yml")):  # noqa: SIM117
-            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-            )
-            self.assertIn(
-                "ERROR    Failed to login with srp, falling back to old raw password authentication.",
-                self._caplog.text,
-            )
-            self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
-            assert result.exit_code == 0
+        result = run_cassette(
+            os.path.join(self.vcr_path, "fallback_raw_password.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+        )
+        self.assertIn(
+            "Failed to login with srp, falling back to old raw password authentication.",
+            result.output,
+        )
+        self.assertIn("Authentication completed successfully", result.output)
+        self.assertEqual(result.exit_code, 0, "exit code")
 
     def test_successful_token_validation(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -107,23 +102,21 @@ class AuthenticationTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "successful_auth.yml")):
-            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-            )
-            self.assertIn("INFO     Authentication completed successfully", self._caplog.text)
-            assert result.exit_code == 0
+        result = run_cassette(
+            os.path.join(self.vcr_path, "successful_auth.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+        )
+        self.assertIn("Authentication completed successfully", result.output)
+        self.assertEqual(result.exit_code, 0, "exit code")
 
     def test_password_prompt_2sa(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -132,36 +125,34 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2sa_flow_valid_code.yml")):
-            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-                input="0\n654321\n",
-            )
-            self.assertIn("DEBUG    Authenticating...", self._caplog.text)
-            self.assertIn(
-                "INFO     Two-step authentication is required",
-                self._caplog.text,
-            )
-            self.assertIn("  0: SMS to *******03", result.output)
-            self.assertIn("Please choose an option: [0]: 0", result.output)
-            self.assertIn("Please enter two-step authentication code: 654321", result.output)
-            self.assertIn(
-                "INFO     Great, you're all set up. The script can now be run without "
-                "user interaction until 2SA expires.",
-                self._caplog.text,
-            )
-            assert result.exit_code == 0
+        result = run_cassette(
+            os.path.join(self.vcr_path, "2sa_flow_valid_code.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+            input="0\n654321\n",
+        )
+        self.assertIn("Authenticating...", result.output)
+        self.assertIn(
+            "Two-step authentication is required",
+            result.output,
+        )
+        self.assertIn("  0: SMS to *******03", result.output)
+        self.assertIn("Please choose an option: [0]: 0", result.output)
+        self.assertIn("Please enter two-step authentication code: 654321", result.output)
+        self.assertIn(
+            "Great, you're all set up. The script can now be run without "
+            "user interaction until 2SA expires.",
+            result.output,
+        )
+        self.assertEqual(result.exit_code, 0, "exit code")
 
     def test_password_prompt_2fa(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -170,39 +161,37 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "2fa_flow_valid_code.yml")):
-            runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-                input="654321\n",
-            )
-            self.assertIn("DEBUG    Authenticating...", self._caplog.text)
-            self.assertIn(
-                "INFO     Two-factor authentication is required",
-                self._caplog.text,
-            )
-            self.assertIn("  a: (***) ***-**81", result.output)
-            self.assertIn(
-                "Please enter two-factor authentication code or device index (a) to send SMS with a code: 654321",
-                result.output,
-            )
-            self.assertIn(
-                "INFO     Great, you're all set up. The script can now be run without "
-                "user interaction until 2FA expires.",
-                self._caplog.text,
-            )
-            self.assertNotIn("Failed to parse response with JSON mimetype", self._caplog.text)
-            assert result.exit_code == 0
+        result = run_cassette(
+            os.path.join(self.vcr_path, "2fa_flow_valid_code.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+            input="654321\n",
+        )
+        self.assertIn("Authenticating...", result.output)
+        self.assertIn(
+            "Two-factor authentication is required",
+            result.output,
+        )
+        self.assertIn("  a: (***) ***-**81", result.output)
+        self.assertIn(
+            "Please enter two-factor authentication code or device index (a) to send SMS with a code: 654321",
+            result.output,
+        )
+        self.assertIn(
+            "Great, you're all set up. The script can now be run without "
+            "user interaction until 2FA expires.",
+            result.output,
+        )
+        self.assertNotIn("Failed to parse response with JSON mimetype", result.output)
+        self.assertEqual(result.exit_code, 0, "exit code")
 
     def test_parse_trusted_phone_numbers_payload_valid(self) -> None:
         html_path = os.path.join(self.data_path, "parse_trusted_phone_numbers_payload_valid.html")
@@ -293,29 +282,25 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")):  # noqa: SIM117
-            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-            )
-            self.assertNotIn(
-                "ERROR    Failed to login with srp, falling back to old raw password authentication.",
-                self._caplog.text,
-            )
-            self.assertIn(
-                "INFO     Apple iCloud is temporary refusing to serve icloudpd", self._caplog.text
-            )
-            assert result.exit_code == 1
+        result = run_cassette(
+            os.path.join(self.vcr_path, "failed_auth_503.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+        )
+        self.assertNotIn(
+            "Failed to login with srp, falling back to old raw password authentication.",
+            result.output,
+        )
+        self.assertIn("Apple iCloud is temporary refusing to serve icloudpd", result.output)
+        self.assertEqual(result.exit_code, 1, "exit code")
 
     def test_failed_auth_503_watch(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -324,38 +309,33 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")):  # noqa: SIM117
-            # errors.CannotOverwriteExistingCassetteException
-            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-            result = runner.invoke(
-                main,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--directory",
-                    base_dir,
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--watch-with-interval",
-                    "1",
-                ],
-            )
-            self.assertNotIn(
-                "ERROR    Failed to login with srp, falling back to old raw password authentication.",
-                self._caplog.text,
-            )
-            self.assertEqual(
-                2,
-                self._caplog.text.count(
-                    "INFO     Apple iCloud is temporary refusing to serve icloudpd"
-                ),
-            )
-            self.assertEqual(2, self._caplog.text.count("INFO     Waiting for 1 sec..."))
-            # self.assertTrue("Can't overwrite existing cassette" in str(context.exception))
-            assert result.exit_code == 1  # should error for vcr
+        result = run_cassette(
+            os.path.join(self.vcr_path, "failed_auth_503.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--directory",
+                base_dir,
+                "--cookie-directory",
+                cookie_dir,
+                "--watch-with-interval",
+                "1",
+            ],
+        )
+        self.assertNotIn(
+            "Failed to login with srp, falling back to old raw password authentication.",
+            result.output,
+        )
+        self.assertEqual(
+            2,
+            result.output.count("Apple iCloud is temporary refusing to serve icloudpd"),
+        )
+        self.assertEqual(2, result.output.count("Waiting for 1 sec..."))
+        # self.assertTrue("Can't overwrite existing cassette" in str(context.exception))
+        self.assertEqual(result.exit_code, 1, "exit code")
 
     def test_connection_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -367,16 +347,11 @@ class AuthenticationTestCase(TestCase):
         def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
             raise ConnectionError("Simulated Connection Error")
 
-        with (
-            mock.patch.object(
-                PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
-            ) as pa_request,
-            vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")),
-        ):  # noqa: SIM117
-            # errors.CannotOverwriteExistingCassetteException
-            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-            result = runner.invoke(
-                main,
+        with mock.patch.object(
+            PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+        ) as pa_request:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "failed_auth_503.yml"),
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -394,13 +369,13 @@ class AuthenticationTestCase(TestCase):
             pa_request.assert_called_once()
             self.assertIn(
                 "Authenticating...",
-                self._caplog.text,
+                result.output,
             )
             self.assertIn(
-                "INFO     Cannot connect to Apple iCloud service",
-                self._caplog.text,
+                "Cannot connect to Apple iCloud service",
+                result.output,
             )
-            assert result.exit_code == 1  # should error for vcr
+            self.assertEqual(result.exit_code, 1, "exit code")
 
     def test_timeout_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -412,16 +387,11 @@ class AuthenticationTestCase(TestCase):
         def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
             raise TimeoutError("Simulated TimeoutError")
 
-        with (
-            mock.patch.object(
-                PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
-            ) as pa_request,
-            vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")),
-        ):  # noqa: SIM117
-            # errors.CannotOverwriteExistingCassetteException
-            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-            result = runner.invoke(
-                main,
+        with mock.patch.object(
+            PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+        ) as pa_request:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "failed_auth_503.yml"),
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -439,13 +409,13 @@ class AuthenticationTestCase(TestCase):
             pa_request.assert_called_once()
             self.assertIn(
                 "Authenticating...",
-                self._caplog.text,
+                result.output,
             )
             self.assertIn(
-                "INFO     Cannot connect to Apple iCloud service",
-                self._caplog.text,
+                "Cannot connect to Apple iCloud service",
+                result.output,
             )
-            assert result.exit_code == 1  # should error for vcr
+            self.assertEqual(result.exit_code, 1, "exit code")
 
     def test_timeout(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -457,16 +427,11 @@ class AuthenticationTestCase(TestCase):
         def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
             raise Timeout("Simulated Timeout")
 
-        with (
-            mock.patch.object(
-                PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
-            ) as pa_request,
-            vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth_503.yml")),
-        ):  # noqa: SIM117
-            # errors.CannotOverwriteExistingCassetteException
-            runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-            result = runner.invoke(
-                main,
+        with mock.patch.object(
+            PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+        ) as pa_request:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "failed_auth_503.yml"),
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -484,13 +449,13 @@ class AuthenticationTestCase(TestCase):
             pa_request.assert_called_once()
             self.assertIn(
                 "Authenticating...",
-                self._caplog.text,
+                result.output,
             )
             self.assertIn(
-                "INFO     Cannot connect to Apple iCloud service",
-                self._caplog.text,
+                "Cannot connect to Apple iCloud service",
+                result.output,
             )
-            assert result.exit_code == 1  # should error for vcr
+            self.assertEqual(result.exit_code, 1, "exit code")
 
 
 class _TrustedDevice(NamedTuple):
