@@ -1,5 +1,4 @@
 import datetime
-import glob
 import inspect
 import logging
 import os
@@ -12,19 +11,18 @@ from unittest.mock import ANY, PropertyMock, call
 import piexif
 import pytest
 import pytz
-from click.testing import CliRunner
 from piexif._exceptions import InvalidImageDataError
 from requests import Response
 from vcr import VCR
 
 from icloudpd import constants
-from icloudpd.base import main
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
+    calc_data_dir,
     create_files,
     path_from_project_root,
     print_result_exception,
@@ -1614,79 +1612,6 @@ class DownloadPhotoTestCase(TestCase):
 
         assert result.exit_code == 0
 
-    @pytest.mark.skip("not ready yet. may be not needed")
-    def test_download_watch(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-
-        for dir in [base_dir, cookie_dir, data_dir]:
-            recreate_path(dir)
-
-        files_to_create = [
-            ("2018/07/30/IMG_7408.JPG", 1151066),
-            ("2018/07/30/IMG_7407.JPG", 656257),
-        ]
-
-        files_to_download = ["2018/07/31/IMG_7409.JPG"]
-
-        os.makedirs(os.path.join(data_dir, "2018/07/30/"))
-        for file_name, file_size in files_to_create:
-            with open(os.path.join(data_dir, file_name), "a") as f:
-                f.truncate(file_size)
-
-        # def my_sleep(_target_duration: int) -> Callable[[int], None]:
-        #     counter: int = 0
-
-        #     def sleep_(duration: int) -> None:
-        #         if counter > duration:
-        #             raise ValueError("SLEEP MOCK")
-        #         counter = counter + 1
-        #     return sleep_
-
-        with mock.patch("time.sleep"):
-            # import random
-            target_duration = 1
-            # sleep_patched.side_effect = my_sleep(target_duration)
-            with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "5",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--set-exif-datetime",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                        "-d",
-                        data_dir,
-                        "--watch-with-interval",
-                        str(target_duration),
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print_result_exception(result)
-
-                assert result.exit_code == 0
-
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_download)
-
-        for file_name in files_to_download + ([file_name for (file_name, _) in files_to_create]):
-            assert os.path.exists(os.path.join(data_dir, os.path.normpath(file_name))), (
-                f"File {file_name} expected, but does not exist"
-            )
-
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
@@ -1787,59 +1712,37 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_handle_io_error_mkdir(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        original_makedirs = os.makedirs
+        with mock.patch("os.makedirs", create=True) as m:
+            # Raise IOError when we try to write to the destination file
+            def my_makedirs(name: str, mode: int = 511, exist_ok: bool = False) -> None:
+                if name > calc_data_dir(base_dir):
+                    raise OSError
+                original_makedirs(name, mode, exist_ok)
 
-        # TODO remove code dup
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-        cookie_master_path = os.path.join(self.root_path, "cookie")
-
-        for dir in [base_dir, data_dir]:
-            recreate_path(dir)  # this needs to happen before mock
-
-        shutil.copytree(cookie_master_path, cookie_dir)
-
-        with vcr.use_cassette(os.path.join(self.vcr_path, "listing_photos.yml")):  # noqa: SIM117
-            with mock.patch("os.makedirs", create=True) as m:
-                # Raise IOError when we try to write to the destination file
-                m.side_effect = IOError
-
-                runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print_result_exception(result)
-
-                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
-                self.assertIn(
-                    f"INFO     Downloading the first original photo to {data_dir} ...",
-                    self._caplog.text,
-                )
-                self.assertIn(
-                    f"ERROR    Could not create folder {data_dir}",
-                    self._caplog.text,
-                )
-                self.assertEqual(result.exit_code, 0, "Exit code")
-
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        self.assertEqual(sum(1 for _ in files_in_result), 0, "Files at the end")
+            m.side_effect = my_makedirs
+            _, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
+            self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
