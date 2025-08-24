@@ -13,7 +13,6 @@ import pytest
 import pytz
 from piexif._exceptions import InvalidImageDataError
 from requests import Response
-from vcr import VCR
 
 from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion
@@ -31,16 +30,12 @@ from tests.helpers import (
     run_icloudpd_test,
 )
 
-vcr = VCR(decode_compressed_response=True, record_mode="none")
-
 
 class DownloadPhotoTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
-        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_download_and_skip_existing_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -77,39 +72,39 @@ class DownloadPhotoTestCase(TestCase):
 
         assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading 5 original photos to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading 5 original photos to {data_dir} ...",
+            result.output,
         )
         for dir_name, file_name in files_to_download:
             file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
-                self._caplog.text,
+                f"Downloading {os.path.join(data_dir, file_path)}",
+                result.output,
             )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
         for dir_name, file_name in [
             (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
         ]:
             file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
-                self._caplog.text,
+                f"{os.path.join(data_dir, file_path)} already exists",
+                result.output,
             )
 
         self.assertIn(
-            "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
-            self._caplog.text,
+            "Skipping IMG_7405.MOV, only downloading photos.",
+            result.output,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
-            self._caplog.text,
+            "Skipping IMG_7404.MOV, only downloading photos.",
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
@@ -173,16 +168,16 @@ class DownloadPhotoTestCase(TestCase):
                 assert result.exit_code == 0
 
         self.assertIn(
-            "DEBUG    Looking up all photos and videos...",
-            self._caplog.text,
+            "Looking up all photos and videos...",
+            result.output,
         )
         self.assertIn(
-            f"INFO     Downloading 4 original photos and videos to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading 4 original photos and videos to {data_dir} ...",
+            result.output,
         )
         self.assertIn(
-            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-            self._caplog.text,
+            f"Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            result.output,
         )
         # 2018:07:31 07:22:24 utc
         expectedDatetime = (
@@ -191,10 +186,10 @@ class DownloadPhotoTestCase(TestCase):
             .strftime("%Y-%m-%d %H:%M:%S%z")
         )
         self.assertIn(
-            f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
-            self._caplog.text,
+            f"Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
+            result.output,
         )
-        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+        self.assertIn("All photos and videos have been downloaded", result.output)
 
     def test_download_photos_and_get_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -228,24 +223,24 @@ class DownloadPhotoTestCase(TestCase):
             )
             assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         self.assertIn(
-            f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-            self._caplog.text,
+            f"Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            result.output,
         )
         self.assertIn(
-            f"DEBUG    Error fetching EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-            self._caplog.text,
+            f"Error fetching EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            result.output,
         )
         self.assertIn(
-            f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-            self._caplog.text,
+            f"Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
     def test_skip_existing_downloads(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -278,20 +273,20 @@ class DownloadPhotoTestCase(TestCase):
         )
         assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos and videos...", self._caplog.text)
+        self.assertIn("Looking up all photos and videos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo or video to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo or video to {data_dir} ...",
+            result.output,
         )
         self.assertIn(
-            f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists",
-            self._caplog.text,
+            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))} already exists",
+            result.output,
         )
         self.assertIn(
-            f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
-            self._caplog.text,
+            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.MOV'))} already exists",
+            result.output,
         )
-        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+        self.assertIn("All photos and videos have been downloaded", result.output)
 
     def test_until_found(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -367,25 +362,29 @@ class DownloadPhotoTestCase(TestCase):
                 dp_patched.assert_has_calls(expected_calls)
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
-                    self._caplog.text,
+                    "Looking up all photos and videos...",
+                    result.output,
                 )
                 self.assertIn(
-                    f"INFO     Downloading ??? original photos and videos to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading ??? original photos and videos to {data_dir} ...",
+                    result.output,
                 )
 
                 for s in files_to_create:
-                    expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(s[0]), s[1])} already exists"
-                    self.assertIn(expected_message, self._caplog.text)
+                    expected_message = (
+                        f"{os.path.join(data_dir, os.path.normpath(s[0]), s[1])} already exists"
+                    )
+                    self.assertIn(expected_message, result.output)
 
                 for d in files_to_download_ext:
-                    expected_message = f"DEBUG    {os.path.join(data_dir, os.path.normpath(d[0]), d[1])} already exists"
-                    self.assertNotIn(expected_message, self._caplog.text)
+                    expected_message = (
+                        f"{os.path.join(data_dir, os.path.normpath(d[0]), d[1])} already exists"
+                    )
+                    self.assertNotIn(expected_message, result.output)
 
                 self.assertIn(
-                    "INFO     Found 3 consecutive previously downloaded photos. Exiting",
-                    self._caplog.text,
+                    "Found 3 consecutive previously downloaded photos. Exiting",
+                    result.output,
                 )
                 assert result.exit_code == 0
 
@@ -418,17 +417,17 @@ class DownloadPhotoTestCase(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "ERROR    IOError while writing file to "
+                "IOError while writing file to "
                 f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}. "
                 "You might have run out of disk space, or the file might "
                 "be too large for your OS. Skipping this file...",
-                self._caplog.text,
+                result.output,
             )
             assert result.exit_code == 0
 
@@ -477,14 +476,14 @@ class DownloadPhotoTestCase(TestCase):
 
                     # Error msg should be repeated 5 times
                     self.assertEqual(
-                        self._caplog.text.count("Session error, re-authenticating..."),
+                        result.output.count("Session error, re-authenticating..."),
                         max(1, constants.MAX_RETRIES),
                         "retry count",
                     )
 
                     self.assertIn(
-                        "ERROR    Could not download IMG_7409.JPG. Please try again later.",
-                        self._caplog.text,
+                        "Could not download IMG_7409.JPG. Please try again later.",
+                        result.output,
                     )
 
                     # Make sure we only call sleep 4 times (skip the first retry)
@@ -538,14 +537,14 @@ class DownloadPhotoTestCase(TestCase):
 
                     # Error msg should be repeated 5 times
                     self.assertEqual(
-                        self._caplog.text.count("Session error, re-authenticating..."),
+                        result.output.count("Session error, re-authenticating..."),
                         max(0, constants.MAX_RETRIES),
                         "retry count",
                     )
 
                     self.assertIn(
                         "Invalid global session",
-                        self._caplog.text,
+                        result.output,
                     )
                     # Make sure we only call sleep 4 times (skip the first retry)
                     self.assertEqual(
@@ -627,12 +626,12 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
-                    self._caplog.text,
+                    "Looking up all photos and videos...",
+                    result.output,
                 )
                 self.assertIn(
-                    f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading 3 original photos and videos to {data_dir} ...",
+                    result.output,
                 )
 
                 # These error messages should not be repeated more than once for each size
@@ -641,9 +640,9 @@ class DownloadPhotoTestCase(TestCase):
                         self.assertEqual(
                             sum(
                                 1
-                                for line in self._caplog.text.splitlines()
+                                for line in result.output.splitlines()
                                 if line
-                                == f"ERROR    Could not find URL to download {filename} for size {size}"
+                                == f"Could not find URL to download {filename} for size {size}"
                             ),
                             1,
                             f"Errors for {filename} size {size}",
@@ -654,17 +653,15 @@ class DownloadPhotoTestCase(TestCase):
                         self.assertEqual(
                             sum(
                                 1
-                                for line in self._caplog.text.splitlines()
+                                for line in result.output.splitlines()
                                 if line
-                                == f"ERROR    Could not find URL to download {filename} for size {size}"
+                                == f"Could not find URL to download {filename} for size {size}"
                             ),
                             1,
                             f"Errors for {filename} size {size}",
                         )
 
-                self.assertIn(
-                    "INFO     All photos and videos have been downloaded", self._caplog.text
-                )
+                self.assertIn("All photos and videos have been downloaded", result.output)
                 self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original(self) -> None:
@@ -710,20 +707,18 @@ class DownloadPhotoTestCase(TestCase):
                         ],
                     )
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
-                        self._caplog.text,
+                        "Looking up all photos and videos...",
+                        result.output,
                     )
                     self.assertIn(
-                        f"INFO     Downloading the first thumb photo or video to {data_dir} ...",
-                        self._caplog.text,
+                        f"Downloading the first thumb photo or video to {data_dir} ...",
+                        result.output,
                     )
                     self.assertIn(
-                        f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                        self._caplog.text,
+                        f"Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        result.output,
                     )
-                    self.assertIn(
-                        "INFO     All photos and videos have been downloaded", self._caplog.text
-                    )
+                    self.assertIn("All photos and videos have been downloaded", result.output)
                     dp_patched.assert_called_once_with(
                         ANY,
                         False,
@@ -772,20 +767,18 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
-                    self._caplog.text,
+                    "Looking up all photos and videos...",
+                    result.output,
                 )
                 self.assertIn(
-                    f"INFO     Downloading the first thumb photo or video to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading the first thumb photo or video to {data_dir} ...",
+                    result.output,
                 )
                 self.assertIn(
-                    "ERROR    thumb size does not exist for IMG_7409.JPG. Skipping...",
-                    self._caplog.text,
+                    "thumb size does not exist for IMG_7409.JPG. Skipping...",
+                    result.output,
                 )
-                self.assertIn(
-                    "INFO     All photos and videos have been downloaded", self._caplog.text
-                )
+                self.assertIn("All photos and videos have been downloaded", result.output)
                 dp_patched.assert_not_called()
 
                 assert result.exit_code == 0
@@ -834,20 +827,18 @@ class DownloadPhotoTestCase(TestCase):
                     )
 
                     self.assertIn(
-                        "DEBUG    Looking up all photos and videos...",
-                        self._caplog.text,
+                        "Looking up all photos and videos...",
+                        result.output,
                     )
                     self.assertIn(
-                        f"INFO     Downloading the first medium,thumb photo or video to {data_dir} ...",
-                        self._caplog.text,
+                        f"Downloading the first medium,thumb photo or video to {data_dir} ...",
+                        result.output,
                     )
                     self.assertIn(
-                        "ERROR    medium size does not exist for IMG_7409.JPG. Skipping...",
-                        self._caplog.text,
+                        "medium size does not exist for IMG_7409.JPG. Skipping...",
+                        result.output,
                     )
-                    self.assertIn(
-                        "INFO     All photos and videos have been downloaded", self._caplog.text
-                    )
+                    self.assertIn("All photos and videos have been downloaded", result.output)
                     dp_patched.assert_called_once_with(
                         ANY,
                         False,
@@ -896,22 +887,22 @@ class DownloadPhotoTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...",
-                self._caplog.text,
+                "Looking up all photos and videos...",
+                result.output,
             )
             self.assertIn(
-                f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo or video to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "ERROR    Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
-                self._caplog.text,
+                "Could not convert photo created date to local timezone (2018-01-01 00:00:00)",
+                result.output,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
-                self._caplog.text,
+                f"Downloading {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_7409.JPG'))}",
+                result.output,
             )
-            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+            self.assertIn("All photos and videos have been downloaded", result.output)
             assert result.exit_code == 0
 
     @pytest.mark.skipif(sys.platform == "win32", reason="does not run on windows")
@@ -954,22 +945,22 @@ class DownloadPhotoTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...",
-                self._caplog.text,
+                "Looking up all photos and videos...",
+                result.output,
             )
             self.assertIn(
-                f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo or video to {data_dir} ...",
+                result.output,
             )
             # self.assertIn(
-            #     "ERROR    Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
-            #     self._caplog.text,
+            #     "Could not convert photo created date to local timezone (0005-01-01 00:00:00)",
+            #     result.output,
             # )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
-                self._caplog.text,
+                f"Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
+                result.output,
             )
-            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+            self.assertIn("All photos and videos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_creation_date_prior_1970(self) -> None:
@@ -1006,18 +997,18 @@ class DownloadPhotoTestCase(TestCase):
             )
 
             self.assertIn(
-                "DEBUG    Looking up all photos and videos...",
-                self._caplog.text,
+                "Looking up all photos and videos...",
+                result.output,
             )
             self.assertIn(
-                f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo or video to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, os.path.normpath('1965/01/01/IMG_7409.JPG'))}",
-                self._caplog.text,
+                f"Downloading {os.path.join(data_dir, os.path.normpath('1965/01/01/IMG_7409.JPG'))}",
+                result.output,
             )
-            self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+            self.assertIn("All photos and videos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_missing_item_type(self) -> None:
@@ -1126,26 +1117,22 @@ class DownloadPhotoTestCase(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading 5 original photos to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading 5 original photos to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
-                self._caplog.text,
+                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
+                result.output,
             )
             self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
-                self._caplog.text,
+                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
+                result.output,
             )
-            self.assertIn(
-                "DEBUG    Skipping IMG_7405.MOV, only downloading photos.", self._caplog.text
-            )
-            self.assertIn(
-                "DEBUG    Skipping IMG_7404.MOV, only downloading photos.", self._caplog.text
-            )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("Skipping IMG_7405.MOV, only downloading photos.", result.output)
+            self.assertIn("Skipping IMG_7404.MOV, only downloading photos.", result.output)
+            self.assertIn("All photos have been downloaded", result.output)
 
             # Check that mtime was updated to the photo creation date
             photo_mtime = os.path.getmtime(
@@ -1206,10 +1193,10 @@ class DownloadPhotoTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+                self.assertIn("Looking up all photos...", result.output)
                 self.assertIn(
-                    f"INFO     Downloading the first original photo to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading the first original photo to {data_dir} ...",
+                    result.output,
                 )
                 # 2018:07:31 07:22:24 utc
                 expectedDatetime = (
@@ -1218,14 +1205,14 @@ class DownloadPhotoTestCase(TestCase):
                     .strftime("%Y-%m-%d %H:%M:%S%z")
                 )
                 self.assertIn(
-                    f"DEBUG    Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
-                    self._caplog.text,
+                    f"Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
+                    result.output,
                 )
                 self.assertIn(
-                    f"DEBUG    Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                    self._caplog.text,
+                    f"Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                    result.output,
                 )
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn("All photos have been downloaded", result.output)
                 assert result.exit_code == 0
 
     def test_download_chinese(self) -> None:
@@ -1256,16 +1243,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(
@@ -1321,16 +1308,14 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
-                    self._caplog.text,
+                    "Looking up all photos and videos...",
+                    result.output,
                 )
                 self.assertIn(
-                    f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading the first original photo or video to {data_dir} ...",
+                    result.output,
                 )
-                self.assertIn(
-                    "INFO     All photos and videos have been downloaded", self._caplog.text
-                )
+                self.assertIn("All photos and videos have been downloaded", result.output)
                 assert result.exit_code == 0
 
     def test_download_one_recent_live_photo_chinese(self) -> None:
@@ -1380,16 +1365,14 @@ class DownloadPhotoTestCase(TestCase):
                 )
 
                 self.assertIn(
-                    "DEBUG    Looking up all photos and videos...",
-                    self._caplog.text,
+                    "Looking up all photos and videos...",
+                    result.output,
                 )
                 self.assertIn(
-                    f"INFO     Downloading the first original photo or video to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading the first original photo or video to {data_dir} ...",
+                    result.output,
                 )
-                self.assertIn(
-                    "INFO     All photos and videos have been downloaded", self._caplog.text
-                )
+                self.assertIn("All photos and videos have been downloaded", result.output)
                 assert result.exit_code == 0
 
     def test_download_and_delete_after(self) -> None:
@@ -1424,13 +1407,13 @@ class DownloadPhotoTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+                self.assertIn("Looking up all photos...", result.output)
                 self.assertIn(
-                    f"INFO     Downloading the first original photo to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading the first original photo to {data_dir} ...",
+                    result.output,
                 )
-                self.assertIn("INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text)
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertIn("Deleted IMG_7409.JPG in iCloud", result.output)
+                self.assertIn("All photos have been downloaded", result.output)
                 # TODO assert cass.all_played
                 assert result.exit_code == 0
 
@@ -1466,13 +1449,13 @@ class DownloadPhotoTestCase(TestCase):
                     ],
                 )
 
-                self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+                self.assertIn("Looking up all photos...", result.output)
                 self.assertIn(
-                    f"INFO     Downloading the first original photo to {data_dir} ...",
-                    self._caplog.text,
+                    f"Downloading the first original photo to {data_dir} ...",
+                    result.output,
                 )
-                self.assertNotIn("INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text)
-                self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
+                self.assertIn("All photos have been downloaded", result.output)
                 # TODO assert cass.all_played
                 assert result.exit_code == 0
 
@@ -1502,13 +1485,13 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
-        self.assertNotIn("INFO     Deleted IMG_7409.JPG in iCloud", self._caplog.text)
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
+        self.assertIn("All photos have been downloaded", result.output)
         # TODO assert cass.all_played
         assert result.exit_code == 0
 
@@ -1545,24 +1528,24 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading 5 original photos to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading 5 original photos to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
-            self._caplog.text,
+            "Skipping IMG_7405.MOV, only downloading photos.",
+            result.output,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
-            self._caplog.text,
+            "Skipping IMG_7404.MOV, only downloading photos.",
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(
@@ -1647,14 +1630,14 @@ class DownloadPhotoTestCase(TestCase):
 
                 # Error msg should be repeated 5 times
                 self.assertEqual(
-                    self._caplog.text.count("Error downloading"),
+                    result.output.count("Error downloading"),
                     constants.MAX_RETRIES,
                     "retry count",
                 )
 
                 self.assertIn(
-                    "ERROR    Could not download IMG_7409.JPG. Please try again later.",
-                    self._caplog.text,
+                    "Could not download IMG_7409.JPG. Please try again later.",
+                    result.output,
                 )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
@@ -1695,14 +1678,14 @@ class DownloadPhotoTestCase(TestCase):
 
                 # Error msg should be repeated 5 times
                 self.assertEqual(
-                    self._caplog.text.count("Internal Error at Apple, retrying..."),
+                    result.output.count("Internal Error at Apple, retrying..."),
                     constants.MAX_RETRIES,
                     "retry count",
                 )
 
                 self.assertIn(
                     "Internal Error at Apple.",
-                    self._caplog.text,
+                    result.output,
                 )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
@@ -1771,20 +1754,20 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         # self.assertIn(
-        #     f"INFO     Downloading 2 original photos to {data_dir} ...",
-        #     self._caplog.text,
+        #     f"Downloading 2 original photos to {data_dir} ...",
+        #     result.output,
         # )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
         self.assertNotIn(
             "ERROR",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -1827,15 +1810,13 @@ class DownloadPhotoTestCase(TestCase):
                         ],
                     )
 
-                    self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+                    self.assertIn("Looking up all photos...", result.output)
                     self.assertIn(
-                        f"INFO     Downloading the first original photo to {data_dir} ...",
-                        self._caplog.text,
+                        f"Downloading the first original photo to {data_dir} ...",
+                        result.output,
                     )
-                    self.assertIn(
-                        "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud", self._caplog.text
-                    )
-                    self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+                    self.assertIn("[DRY RUN] Would delete IMG_7409.JPG in iCloud", result.output)
+                    self.assertIn("All photos have been downloaded", result.output)
                     # TDOO self.assertEqual(
                     #     cass.all_played, False, "All mocks played")
                     self.assertEqual(result.exit_code, 0, "Exit code")
@@ -1869,16 +1850,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -1912,16 +1893,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original,thumb photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original,thumb photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -1962,16 +1943,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original,alternative photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original,alternative photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -2010,16 +1991,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first adjusted photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first adjusted photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -2060,16 +2041,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -2110,16 +2091,16 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         assert result.exit_code == 0
 
@@ -2265,12 +2246,12 @@ class DownloadPhotoTestCase(TestCase):
 
         self.assertEqual(result.exit_code, 0)
 
-        self.assertIn("DEBUG    Looking up all photos and videos...", self._caplog.text)
+        self.assertIn("Looking up all photos and videos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo or video to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo or video to {data_dir} ...",
+            result.output,
         )
-        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+        self.assertIn("All photos and videos have been downloaded", result.output)
 
     def test_download_and_skip_old(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -2307,47 +2288,47 @@ class DownloadPhotoTestCase(TestCase):
 
         assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading 5 original photos to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading 5 original photos to {data_dir} ...",
+            result.output,
         )
         for dir_name, file_name in files_to_download:
             file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
-                self._caplog.text,
+                f"Downloading {os.path.join(data_dir, file_path)}",
+                result.output,
             )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
         for dir_name, file_name in [
             (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
         ]:
             file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
-                self._caplog.text,
+                f"{os.path.join(data_dir, file_path)} already exists",
+                result.output,
             )
 
         self.assertIn(
-            "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
-            self._caplog.text,
+            "Skipping IMG_7405.MOV, only downloading photos.",
+            result.output,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
-            self._caplog.text,
+            "Skipping IMG_7404.MOV, only downloading photos.",
+            result.output,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7407.JPG, as it was created 2018-07-30 11:44:05.108000+00:00, before 2018-07-31 00:00:00+00:00.",
-            self._caplog.text,
+            "Skipping IMG_7407.JPG, as it was created 2018-07-30 11:44:05.108000+00:00, before 2018-07-31 00:00:00+00:00.",
+            result.output,
         )
         self.assertIn(
-            "DEBUG    Skipping IMG_7408.JPG, as it was created 2018-07-30 11:44:10.176000+00:00, before 2018-07-31 00:00:00+00:00.",
-            self._caplog.text,
+            "Skipping IMG_7408.JPG, as it was created 2018-07-30 11:44:10.176000+00:00, before 2018-07-31 00:00:00+00:00.",
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
@@ -2395,35 +2376,35 @@ class DownloadPhotoTestCase(TestCase):
 
         assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         for dir_name, file_name in files_to_download:
             file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
-                f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
-                self._caplog.text,
+                f"Downloading {os.path.join(data_dir, file_path)}",
+                result.output,
             )
         self.assertNotIn(
             "IMG_7409.MOV",
-            self._caplog.text,
+            result.output,
         )
         for dir_name, file_name in [
             (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
         ]:
             file_path = os.path.normpath(os.path.join(dir_name, file_name))
             self.assertIn(
-                f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
-                self._caplog.text,
+                f"{os.path.join(data_dir, file_path)} already exists",
+                result.output,
             )
 
         self.assertIn(
-            "DEBUG    Skipping IMG_7409.JPG, as it was created 2018-07-31 07:22:24.816000+00:00, after 2018-07-31 00:00:00+00:00",
-            self._caplog.text,
+            "Skipping IMG_7409.JPG, as it was created 2018-07-31 07:22:24.816000+00:00, after 2018-07-31 00:00:00+00:00",
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
     def test_resume_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -2464,16 +2445,16 @@ class DownloadPhotoTestCase(TestCase):
 
         assert result.exit_code == 0
         out_path = os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
-        self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+        self.assertIn("Looking up all photos...", result.output)
         self.assertIn(
-            f"INFO     Downloading the first original photo to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
         )
         self.assertIn(
             f"Resuming downloading of {out_path} from 1234",
-            self._caplog.text,
+            result.output,
         )
-        self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+        self.assertIn("All photos have been downloaded", result.output)
 
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date

@@ -3,23 +3,18 @@ import os
 from unittest import TestCase
 
 import pytest
-from vcr import VCR
 
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
 )
 
-vcr = VCR(decode_compressed_response=True, record_mode="none")
-
 
 class ListingLibraryTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
-        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_listing_library(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

@@ -4,20 +4,16 @@ import os
 from unittest import TestCase, mock
 
 import pytest
-from vcr import VCR
 
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
 )
 
-vcr = VCR(decode_compressed_response=True, record_mode="none")
-
 
 class ListingRecentPhotosTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
 

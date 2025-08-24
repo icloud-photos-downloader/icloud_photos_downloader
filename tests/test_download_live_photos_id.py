@@ -3,20 +3,16 @@ import os
 from unittest import TestCase
 
 import pytest
-from vcr import VCR
 
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
 )
 
-vcr = VCR(decode_compressed_response=True, record_mode="none")
-
 
 class DownloadLivePhotoNameIDTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
 
@@ -51,7 +47,7 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+        self.assertIn("All photos and videos have been downloaded", result.output)
         assert result.exit_code == 0
 
     def test_skip_existing_live_photodownloads_name_id7(self) -> None:
@@ -88,12 +84,12 @@ class DownloadLivePhotoNameIDTestCase(TestCase):
             ],
         )
 
-        self.assertIn("DEBUG    Looking up all photos and videos...", self._caplog.text)
+        self.assertIn("Looking up all photos and videos...", result.output)
         self.assertIn(
-            f"INFO     Downloading 3 original photos and videos to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading 3 original photos and videos to {data_dir} ...",
+            result.output,
         )
-        self.assertIn("INFO     All photos and videos have been downloaded", self._caplog.text)
+        self.assertIn("All photos and videos have been downloaded", result.output)
         assert result.exit_code == 0
 
     def test_skip_existing_live_photo_print_filenames_name_id7(self) -> None:

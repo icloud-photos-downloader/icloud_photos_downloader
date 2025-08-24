@@ -4,11 +4,13 @@ import shutil
 import traceback
 from typing import Callable, List, Mapping, Protocol, Sequence, Tuple, TypeVar
 
-import vcr
 from click.testing import CliRunner, Result
+from vcr import VCR
 
 from foundation.core import compose, flip, partial_1_1, partial_2_1
 from icloudpd.base import main
+
+vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 def print_result_exception(result: Result) -> Result:
