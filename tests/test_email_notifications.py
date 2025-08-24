@@ -4,20 +4,14 @@ from unittest import TestCase
 from unittest.mock import patch
 
 import pytest
-from click.testing import CliRunner
 from freezegun import freeze_time
-from vcr import VCR
 
-from icloudpd.base import main
-from tests.helpers import path_from_project_root, recreate_path
-
-vcr = VCR(decode_compressed_response=True, record_mode="none")
+from tests.helpers import path_from_project_root, recreate_path, run_cassette
 
 
 class EmailNotificationsTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
         self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
@@ -31,31 +25,29 @@ class EmailNotificationsTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
-            with patch("smtplib.SMTP") as smtp:
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--smtp-username",
-                        "jdoe+smtp@gmail.com",
-                        "--smtp-password",
-                        "password1",
-                        "--notification-email",
-                        "jdoe+notifications@gmail.com",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print(result.output)
-                assert result.exit_code == 1
+        with patch("smtplib.SMTP") as smtp:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "auth_requires_2fa.yml"),
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--smtp-username",
+                    "jdoe+smtp@gmail.com",
+                    "--smtp-password",
+                    "password1",
+                    "--notification-email",
+                    "jdoe+notifications@gmail.com",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            # print(result.output)
+            self.assertEqual(result.exit_code, 1, "exit code")
+
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
@@ -81,28 +73,25 @@ class EmailNotificationsTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
-            with patch("smtplib.SMTP") as smtp:
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--smtp-no-tls",
-                        "--notification-email",
-                        "jdoe+notifications@gmail.com",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print(result.output)
-                assert result.exit_code == 1
+        with patch("smtplib.SMTP") as smtp:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "auth_requires_2fa.yml"),
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--smtp-no-tls",
+                    "--notification-email",
+                    "jdoe+notifications@gmail.com",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            # print(result.output)
+            self.assertEqual(result.exit_code, 1, "exit code")
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_not_called()
@@ -128,27 +117,24 @@ class EmailNotificationsTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
-            with patch("subprocess.call") as subprocess_patched:
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--notification-script",
-                        "./test_script.sh",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print(result.output)
-                assert result.exit_code == 1
+        with patch("subprocess.call") as subprocess_patched:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "auth_requires_2fa.yml"),
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--notification-script",
+                    "./test_script.sh",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            # print(result.output)
+            self.assertEqual(result.exit_code, 1, "exit code")
             subprocess_patched.assert_called_once_with(["./test_script.sh"])
 
     @freeze_time("2018-01-01")
@@ -160,33 +146,30 @@ class EmailNotificationsTestCase(TestCase):
         for dir in [base_dir, cookie_dir, data_dir]:
             recreate_path(dir)
 
-        with vcr.use_cassette(os.path.join(self.vcr_path, "auth_requires_2fa.yml")):
-            with patch("smtplib.SMTP") as smtp:
-                # Pass fixed client ID via environment variable
-                runner = CliRunner(env={"CLIENT_ID": "EC5646DE-9423-11E8-BF21-14109FE0B321"})
-                result = runner.invoke(
-                    main,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--smtp-username",
-                        "jdoe+smtp@gmail.com",
-                        "--smtp-password",
-                        "password1",
-                        "--notification-email",
-                        "JD <jdoe+notifications@gmail.com>",
-                        "--notification-email-from",
-                        "JD <jdoe+notifications+from@gmail.com>",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-                print(result.output)
-                assert result.exit_code == 1
+        with patch("smtplib.SMTP") as smtp:
+            result = run_cassette(
+                os.path.join(self.vcr_path, "auth_requires_2fa.yml"),
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--smtp-username",
+                    "jdoe+smtp@gmail.com",
+                    "--smtp-password",
+                    "password1",
+                    "--notification-email",
+                    "JD <jdoe+notifications@gmail.com>",
+                    "--notification-email-from",
+                    "JD <jdoe+notifications+from@gmail.com>",
+                    "-d",
+                    data_dir,
+                    "--cookie-directory",
+                    cookie_dir,
+                ],
+            )
+            # print(result.output)
+            self.assertEqual(result.exit_code, 1, "exit code")
             smtp_instance = smtp()
             smtp_instance.connect.assert_called_once()
             smtp_instance.starttls.assert_called_once()
