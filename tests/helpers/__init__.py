@@ -2,7 +2,8 @@ import glob
 import os
 import shutil
 import traceback
-from typing import Callable, List, Mapping, Protocol, Sequence, Tuple, TypeVar
+from functools import partial
+from typing import IO, Any, Callable, List, Mapping, Protocol, Sequence, Tuple, TypeVar
 
 from click.testing import CliRunner, Result
 from vcr import VCR
@@ -91,12 +92,11 @@ def assert_files(
 DEFAULT_ENV: Mapping[str, str | None] = {"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"}
 
 
-def run_main_env(env: Mapping[str, str | None], params: Sequence[str]) -> Result:
+def run_main_env(
+    env: Mapping[str, str | None], params: Sequence[str], input: str | bytes | IO[Any] | None = None
+) -> Result:
     runner = CliRunner(env=env)
-    result = runner.invoke(
-        main,
-        params,
-    )
+    result = runner.invoke(main, params, input)
     return result
 
 
@@ -110,9 +110,11 @@ def run_with_cassette(cassette_path: str, f: Callable[[_T_contra], _T_co], inp: 
         return f(inp)
 
 
-def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
+def run_cassette(
+    cassette_path: str, params: Sequence[str], input: str | bytes | IO[Any] | None = None
+) -> Result:
     with vcr.use_cassette(cassette_path):
-        return run_main(params)
+        return print_result_exception(run_main_env(DEFAULT_ENV, params, input))
 
 
 _path_join_flipped = flip(os.path.join)
@@ -131,6 +133,7 @@ def run_icloudpd_test(
     files_to_download: List[Tuple[str, str]],
     params: List[str],
     additional_env: Mapping[str, str | None] = {},
+    input: str | bytes | IO[Any] | None = None,
 ) -> Tuple[str, Result]:
     cookie_dir = calc_cookie_dir(base_dir)
     data_dir = calc_data_dir(base_dir)
@@ -146,7 +149,7 @@ def run_icloudpd_test(
 
     combined_env: Mapping[str, str | None] = {**additional_env, **DEFAULT_ENV}
 
-    main_runner = compose(print_result_exception, partial_1_1(run_main_env, combined_env))
+    main_runner = compose(print_result_exception, partial(run_main_env, combined_env, input=input))
 
     with_cassette_main_runner = partial_2_1(
         run_with_cassette, os.path.join(vcr_path, cassette_filename), main_runner
