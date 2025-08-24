@@ -3,11 +3,17 @@ import copy
 import pathlib
 import sys
 from dataclasses import dataclass
-from typing import Any, List, Sequence, Tuple
+from typing import Any, Container, Iterable, List, Sequence, Tuple, TypeVar
+
+_T = TypeVar("_T")
 
 
-def split(splitter: Sequence[str], inp: Sequence[str]) -> Sequence[Sequence[str]]:
-    result: List[List[str]] = [[]]
+def split(splitter: Container[_T], inp: Iterable[_T]) -> Sequence[Sequence[_T]]:
+    """Breaks incoming sequence into subsequences based on supplied slitter. Splitter is supported as sequence of alternatives.
+    >>> split([2, 4], [1, 2, 3, 2, 5, 4, 6])
+    [[1], [2, 3], [2, 5], [4, 6]]
+    """
+    result: List[List[_T]] = [[]]
     for item in inp:
         if item in splitter:
             #  add group
