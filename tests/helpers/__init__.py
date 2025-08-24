@@ -2,15 +2,16 @@ import glob
 import os
 import shutil
 import traceback
-from typing import List, Protocol, Sequence, Tuple, TypeVar
+from typing import Callable, List, Mapping, Protocol, Sequence, Tuple, TypeVar
 
 import vcr
 from click.testing import CliRunner, Result
 
+from foundation.core import compose, flip, partial_1_1, partial_2_1
 from icloudpd.base import main
 
 
-def print_result_exception(result: Result) -> None:
+def print_result_exception(result: Result) -> Result:
     ex = result.exception
     if ex:
         # This only works on Python 3
@@ -18,6 +19,7 @@ def print_result_exception(result: Result) -> None:
             traceback.print_exception(type(ex), value=ex, tb=ex.__traceback__)
         else:
             print(ex)
+    return result
 
 
 def path_from_project_root(file_name: str) -> str:
@@ -59,6 +61,8 @@ def combine_file_lists(
 
 
 _T = TypeVar("_T")
+_T_co = TypeVar("_T_co", covariant=True)
+_T_contra = TypeVar("_T_contra", contravariant=True)
 
 
 class AssertEquality(Protocol):
@@ -82,14 +86,26 @@ def assert_files(
         )
 
 
-def run_main(params: Sequence[str]) -> Result:
-    runner = CliRunner(env={"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"})
+DEFAULT_ENV: Mapping[str, str | None] = {"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"}
+
+
+def run_main_env(env: Mapping[str, str | None], params: Sequence[str]) -> Result:
+    runner = CliRunner(env=env)
     result = runner.invoke(
         main,
         params,
     )
-    print_result_exception(result)
     return result
+
+
+run_main: Callable[[Sequence[str]], Result] = compose(
+    print_result_exception, partial_1_1(run_main_env, DEFAULT_ENV)
+)
+
+
+def run_with_cassette(cassette_path: str, f: Callable[[_T_contra], _T_co], inp: _T_contra) -> _T_co:
+    with vcr.use_cassette(cassette_path):
+        return f(inp)
 
 
 def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
@@ -97,8 +113,11 @@ def run_cassette(cassette_path: str, params: Sequence[str]) -> Result:
         return run_main(params)
 
 
-def calc_data_dir(base_dir: str) -> str:
-    return os.path.join(base_dir, "data")
+_path_join_flipped = flip(os.path.join)
+
+calc_data_dir = partial_1_1(_path_join_flipped, "data")
+calc_cookie_dir = partial_1_1(_path_join_flipped, "cookie")
+calc_vcr_dir = partial_1_1(_path_join_flipped, "vcr_cassettes")
 
 
 def run_icloudpd_test(
@@ -109,11 +128,12 @@ def run_icloudpd_test(
     files_to_create: Sequence[Tuple[str, str, int]],
     files_to_download: List[Tuple[str, str]],
     params: List[str],
+    additional_env: Mapping[str, str | None] = {},
 ) -> Tuple[str, Result]:
-    cookie_dir = os.path.join(base_dir, "cookie")
+    cookie_dir = calc_cookie_dir(base_dir)
     data_dir = calc_data_dir(base_dir)
-    vcr_path = os.path.join(root_path, "vcr_cassettes")
-    cookie_master_path = os.path.join(root_path, "cookie")
+    vcr_path = calc_vcr_dir(root_path)
+    cookie_master_path = calc_cookie_dir(root_path)
 
     for dir in [base_dir, data_dir]:
         recreate_path(dir)
@@ -122,17 +142,22 @@ def run_icloudpd_test(
 
     create_files(data_dir, files_to_create)
 
-    result = run_cassette(
-        os.path.join(vcr_path, cassette_filename),
-        [
-            "-d",
-            data_dir,
-            "--cookie-directory",
-            cookie_dir,
-        ]
-        + params,
+    combined_env: Mapping[str, str | None] = {**additional_env, **DEFAULT_ENV}
+
+    main_runner = compose(print_result_exception, partial_1_1(run_main_env, combined_env))
+
+    with_cassette_main_runner = partial_2_1(
+        run_with_cassette, os.path.join(vcr_path, cassette_filename), main_runner
     )
 
+    combined_params = [
+        "-d",
+        data_dir,
+        "--cookie-directory",
+        cookie_dir,
+    ] + params
+
+    result = with_cassette_main_runner(combined_params)
     files_to_assert = combine_file_lists(files_to_create, files_to_download)
     assert_files(assert_equal, data_dir, files_to_assert)
 
