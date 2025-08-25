@@ -6,6 +6,7 @@ from unittest import TestCase
 
 import pytest
 
+from icloudpd.cli import Config, GlobalConfig, format_help, parse
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
@@ -19,6 +20,156 @@ class CliTestCase(TestCase):
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
+
+    def test_cli_help(self) -> None:
+        _result = format_help()
+        # TODO validate result
+        # self.assertEqual("abc", format_help(), "help")
+
+    def test_cli_parser(self) -> None:
+        self.assertEqual(
+            parse(["--help"]),
+            (
+                GlobalConfig(
+                    help=True,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level="debug",
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=["parameter", "keyring", "console"],
+                    mfa_provider="console",
+                ),
+                [],
+            ),
+            "--help",
+        )
+        self.assertEqual(
+            parse(["--version", "--use-os-locale"]),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=True,
+                    use_os_locale=True,
+                    only_print_filenames=False,
+                    log_level="debug",
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=["parameter", "keyring", "console"],
+                    mfa_provider="console",
+                ),
+                [],
+            ),
+            "--version --use-os-locale",
+        )
+        self.assertEqual(
+            parse(
+                ["--directory", "abc", "--username", "u1", "--username", "u2", "--directory", "def"]
+            ),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level="debug",
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=["parameter", "keyring", "console"],
+                    mfa_provider="console",
+                ),
+                [
+                    Config(
+                        directory="abc",
+                        username="u1",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=["original"],
+                        live_photo_size="original",
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy="suffix",
+                        align_raw="as-is",
+                        file_match_policy="name-size-dedup-with-suffix",
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    ),
+                    Config(
+                        directory="def",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        username="u2",
+                        password=None,
+                        sizes=["original"],
+                        live_photo_size="original",
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy="suffix",
+                        align_raw="as-is",
+                        file_match_policy="name-size-dedup-with-suffix",
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    ),
+                ],
+            ),
+            "defaults propagated and overwritten",
+        )
 
     def test_cli(self) -> None:
         result = run_main(["--help"])
