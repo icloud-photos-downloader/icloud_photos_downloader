@@ -7,6 +7,7 @@ from unittest import TestCase
 import pytest
 
 from icloudpd.cli import Config, GlobalConfig, format_help, parse
+from icloudpd.mfa_provider import MFAProvider
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
@@ -41,11 +42,60 @@ class CliTestCase(TestCase):
                     domain="com",
                     watch_with_interval=None,
                     password_providers=["parameter", "keyring", "console"],
-                    mfa_provider="console",
+                    mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [],
             ),
             "--help",
+        )
+        self.assertEqual(
+            parse(["--mfa-provider", "weBui"]),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level="debug",
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=["parameter", "keyring", "console"],
+                    mfa_provider=MFAProvider.WEBUI,
+                ),
+                [],
+            ),
+            "--mfa-provider weBui",
+        )
+        self.assertEqual(
+            parse(
+                [
+                    "--password-provider",
+                    "weBui",
+                    "--password-provider",
+                    "CoNSoLe",
+                    "--password-provider",
+                    "WeBuI",
+                ]
+            ),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level="debug",
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=["webui", "console"],
+                    mfa_provider=MFAProvider.CONSOLE,
+                ),
+                [],
+            ),
+            "password-providers",
         )
         self.assertEqual(
             parse(["--version", "--use-os-locale"]),
@@ -61,7 +111,7 @@ class CliTestCase(TestCase):
                     domain="com",
                     watch_with_interval=None,
                     password_providers=["parameter", "keyring", "console"],
-                    mfa_provider="console",
+                    mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [],
             ),
@@ -83,7 +133,7 @@ class CliTestCase(TestCase):
                     domain="com",
                     watch_with_interval=None,
                     password_providers=["parameter", "keyring", "console"],
-                    mfa_provider="console",
+                    mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [
                     Config(

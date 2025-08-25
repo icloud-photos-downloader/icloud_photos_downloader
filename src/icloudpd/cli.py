@@ -3,9 +3,13 @@ import copy
 import pathlib
 import sys
 from dataclasses import dataclass
-from typing import Any, Container, Iterable, List, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, Tuple, TypeVar
+
+from foundation.core import compose, flip, map_, partial_1_1
+from icloudpd.mfa_provider import MFAProvider
 
 _T = TypeVar("_T")
+_T2 = TypeVar("_T2")
 
 
 def split(splitter: Container[_T], inp: Iterable[_T]) -> Sequence[Sequence[_T]]:
@@ -253,6 +257,35 @@ def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return cloned
 
 
+def lower(inp: str) -> str:
+    return inp.lower()
+
+
+def two_tuple(k: _T, v: _T2) -> Tuple[_T, _T2]:
+    return (k, v)
+
+
+def unique(inp: Iterable[_T]) -> Sequence[_T]:
+    """Unique values from iterable
+    >>> unique(["abc", "def", "abc", "ghi"])
+    ['abc', 'def', 'ghi']
+    >>> unique([1, 2, 1, 3])
+    [1, 2, 3]
+    """
+    to_kv = partial_1_1(map_, partial_1_1(flip(two_tuple), None))
+    to_dict: Callable[[Iterable[_T]], Mapping[_T, None]] = compose(dict, to_kv)
+    return list(to_dict(inp).keys())
+
+
+def parse_mfa_provider(provider: str) -> MFAProvider:
+    if provider.lower() == "console":
+        return MFAProvider.CONSOLE
+    elif provider.lower() == "webui":
+        return MFAProvider.WEBUI
+    else:
+        raise ValueError(f"Only `console` and `webui` are supported, but `{provider}` was supplied")
+
+
 def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
     cloned.add_argument(
@@ -309,16 +342,18 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     cloned.add_argument(
         "--password-provider",
         dest="password_providers",
-        help="Specifies passwords provider to check in the given order. Default: %(default)s",
+        help="Specifies passwords provider to check in the given order. Default: [`parameter`, `keyring`, `console`]",
         choices=["console", "keyring", "parameter", "webui"],
-        default=["parameter", "keyring", "console"],
+        default=None,
         action="append",
+        type=lower,
     )
     cloned.add_argument(
         "--mfa-provider",
         help="Specified where to get MFA code from",
         choices=["console", "webui"],
         default="console",
+        type=lower,
     )
     return cloned
 
@@ -395,7 +430,7 @@ class GlobalConfig:
     domain: str
     watch_with_interval: int | None
     password_providers: Sequence[str]
-    mfa_provider: str
+    mfa_provider: MFAProvider
 
 
 def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
@@ -426,7 +461,24 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
         for user_args in splitted_args[1:]
     ]
 
-    return (GlobalConfig(**vars(global_ns)), user_nses)
+    return (
+        GlobalConfig(
+            help=global_ns.help,
+            version=global_ns.version,
+            use_os_locale=global_ns.use_os_locale,
+            only_print_filenames=global_ns.only_print_filenames,
+            log_level=global_ns.log_level,
+            no_progress_bar=global_ns.no_progress_bar,
+            threads_num=global_ns.threads_num,
+            domain=global_ns.domain,
+            watch_with_interval=global_ns.watch_with_interval,
+            password_providers=unique(
+                global_ns.password_providers or ["parameter", "keyring", "console"]
+            ),
+            mfa_provider=MFAProvider(global_ns.mfa_provider),
+        ),
+        user_nses,
+    )
 
 
 def cli() -> int:
