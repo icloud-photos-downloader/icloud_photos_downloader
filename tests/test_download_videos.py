@@ -3,23 +3,18 @@ import os
 from unittest import TestCase
 
 import pytest
-from vcr import VCR
 
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
 )
 
-vcr = VCR(decode_compressed_response=True, record_mode="none")
-
 
 class DownloadVideoTestCase(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
-        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_download_and_skip_existing_videos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -56,35 +51,35 @@ class DownloadVideoTestCase(TestCase):
 
         assert result.exit_code == 0
 
-        self.assertIn("DEBUG    Looking up all videos...", self._caplog.text)
+        self.assertIn("Looking up all videos...", result.output)
         self.assertIn(
-            f"INFO     Downloading 4 original videos to {data_dir} ...",
-            self._caplog.text,
+            f"Downloading 4 original videos to {data_dir} ...",
+            result.output,
         )
         # for dir_name, file_name in files_to_download:
         #     file_path = os.path.normpath(os.path.join(dir_name, file_name))
         #     self.assertIn(
-        #         f"DEBUG    Downloading {os.path.join(data_dir, file_path)}",
-        #         self._caplog.text,
+        #         f"Downloading {os.path.join(data_dir, file_path)}",
+        #         result.output,
         #     )
         # for dir_name, file_name in [
         #     (dir_name, file_name) for (dir_name, file_name, _) in files_to_create
         # ]:
         #     file_path = os.path.normpath(os.path.join(dir_name, file_name))
         #     self.assertIn(
-        #         f"DEBUG    {os.path.join(data_dir, file_path)} already exists",
-        #         self._caplog.text,
+        #         f"{os.path.join(data_dir, file_path)} already exists",
+        #         result.output,
         #     )
 
         # self.assertIn(
-        #     "DEBUG    Skipping IMG_7405.MOV, only downloading photos.",
-        #     self._caplog.text,
+        #     "Skipping IMG_7405.MOV, only downloading photos.",
+        #     result.output,
         # )
         # self.assertIn(
-        #     "DEBUG    Skipping IMG_7404.MOV, only downloading photos.",
-        #     self._caplog.text,
+        #     "Skipping IMG_7404.MOV, only downloading photos.",
+        #     result.output,
         # )
-        self.assertIn("INFO     All videos have been downloaded", self._caplog.text)
+        self.assertIn("All videos have been downloaded", result.output)
 
         # # Check that file was downloaded
         # # Check that mtime was updated to the photo creation date

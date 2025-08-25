@@ -4,20 +4,15 @@ import os
 from unittest import TestCase, mock
 
 import pytest
-from vcr import VCR
 
 from tests.helpers import path_from_project_root, run_icloudpd_test
-
-vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 class KeepICloudModeTestCases(TestCase):
     @pytest.fixture(autouse=True)
-    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
-        self._caplog = caplog
+    def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
-        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_wide_range_keep_icloud_recent_days(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -52,16 +47,16 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "DEBUG    Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (89 days old)",
-                self._caplog.text,
+                "Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (89 days old)",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_narrow_range_keep_icloud_recent_days(self) -> None:
@@ -96,16 +91,16 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "DEBUG    Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (0 days old)",
-                self._caplog.text,
+                "Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (0 days old)",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_keep_icloud_recent_days_delete_all(self) -> None:
@@ -141,16 +136,16 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7409.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_keep_icloud_recent_days_1_keeps_today(self) -> None:
@@ -185,16 +180,16 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "DEBUG    Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (0 days old)",
-                self._caplog.text,
+                "Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (0 days old)",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_keep_icloud_recent_days_delete_existing(self) -> None:
@@ -233,24 +228,24 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading 3 original photos to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading 3 original photos to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7409.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7408.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7408.JPG in iCloud",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7407.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7407.JPG in iCloud",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_keep_icloud_recent_days_keeps_some(self) -> None:
@@ -289,24 +284,24 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading 3 original photos to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading 3 original photos to {data_dir} ...",
+                result.output,
             )
             self.assertNotIn(
-                "INFO     Deleted IMG_7409.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7408.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7408.JPG in iCloud",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7407.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7407.JPG in iCloud",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_keep_icloud_recent_days_delete_existing_dry_run(self) -> None:
@@ -343,16 +338,16 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading the first original photo to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
             )
             self.assertIn(
-                "INFO     [DRY RUN] Would delete IMG_7409.JPG in iCloud library PrimarySync",
-                self._caplog.text,
+                "[DRY RUN] Would delete IMG_7409.JPG in iCloud library PrimarySync",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
     def test_keep_icloud_recent_days_with_skip_videos(self) -> None:
@@ -391,26 +386,26 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
-            self.assertIn("DEBUG    Looking up all photos...", self._caplog.text)
+            self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
-                f"INFO     Downloading 4 original photos to {data_dir} ...",
-                self._caplog.text,
+                f"Downloading 4 original photos to {data_dir} ...",
+                result.output,
             )
             self.assertNotIn(
-                "INFO     Deleted IMG_7409.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7408.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7408.JPG in iCloud",
+                result.output,
             )
             self.assertIn(
-                "INFO     Deleted IMG_7407.JPG in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7407.JPG in iCloud",
+                result.output,
             )
             self.assertNotIn(
-                "INFO     Deleted IMG_7405.MOV in iCloud",
-                self._caplog.text,
+                "Deleted IMG_7405.MOV in iCloud",
+                result.output,
             )
-            self.assertIn("INFO     All photos have been downloaded", self._caplog.text)
+            self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
