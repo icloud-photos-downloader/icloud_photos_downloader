@@ -7,6 +7,7 @@ from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, 
 
 from foundation.core import compose, flip, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 _T = TypeVar("_T")
 _T2 = TypeVar("_T2")
@@ -219,6 +220,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="For photo assets with raw and jpeg, treat raw always in the specified size: `original` (raw+jpeg), `alternative` (jpeg+raw), or unchanged (as-is). It matters when choosing sizes to download. Default: %(default)s",
         choices=["as-is", "original", "alternative"],
         default="as-is",
+        type=lower,
     )
     cloned.add_argument(
         "--file-match-policy",
@@ -405,7 +407,7 @@ class _DefaultConfig:
     dry_run: bool
     keep_unicode_in_filenames: bool
     live_photo_mov_filename_policy: str
-    align_raw: str
+    align_raw: RawTreatmentPolicy
     file_match_policy: str
     skip_created_before: str | None
     skip_created_after: str | None
@@ -433,6 +435,49 @@ class GlobalConfig:
     mfa_provider: MFAProvider
 
 
+def map_to_config(user_ns: argparse.Namespace) -> Config:
+    return Config(
+        username=user_ns.username,
+        password=user_ns.password,
+        directory=user_ns.directory,
+        auth_only=user_ns.auth_only,
+        cookie_directory=user_ns.cookie_directory,
+        sizes=user_ns.sizes,
+        live_photo_size=user_ns.live_photo_size,
+        recent=user_ns.recent,
+        until_found=user_ns.until_found,
+        albums=user_ns.albums,
+        list_albums=user_ns.list_albums,
+        library=user_ns.library,
+        list_libraries=user_ns.list_libraries,
+        skip_videos=user_ns.skip_videos,
+        skip_live_photos=user_ns.skip_live_photos,
+        xmp_sidecar=user_ns.xmp_sidecar,
+        force_size=user_ns.force_size,
+        auto_delete=user_ns.auto_delete,
+        folder_structure=user_ns.folder_structure,
+        set_exif_datetime=user_ns.set_exif_datetime,
+        smtp_username=user_ns.smtp_username,
+        smtp_password=user_ns.smtp_password,
+        smtp_host=user_ns.smtp_host,
+        smtp_port=user_ns.smtp_port,
+        smtp_no_tls=user_ns.smtp_no_tls,
+        notification_email=user_ns.notification_email,
+        notification_email_from=user_ns.notification_email_from,
+        notification_script=user_ns.notification_script,
+        delete_after_download=user_ns.delete_after_download,
+        keep_icloud_recent_days=user_ns.keep_icloud_recent_days,
+        dry_run=user_ns.dry_run,
+        keep_unicode_in_filenames=user_ns.keep_unicode_in_filenames,
+        live_photo_mov_filename_policy=user_ns.live_photo_mov_filename_policy,
+        align_raw=RawTreatmentPolicy(user_ns.align_raw),
+        file_match_policy=user_ns.file_match_policy,
+        skip_created_before=user_ns.skip_created_before,
+        skip_created_after=user_ns.skip_created_after,
+        skip_photos=user_ns.skip_photos,
+    )
+
+
 def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
     # default --help
     if len(args) == 0:
@@ -457,7 +502,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
         add_options_for_user(argparse.ArgumentParser(exit_on_error=False, add_help=False))
     )
     user_nses = [
-        Config(**vars(user_parser.parse_args(user_args, copy.deepcopy(default_ns))))
+        map_to_config(user_parser.parse_args(user_args, copy.deepcopy(default_ns)))
         for user_args in splitted_args[1:]
     ]
 
