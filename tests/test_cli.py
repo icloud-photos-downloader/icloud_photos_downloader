@@ -8,6 +8,7 @@ import pytest
 
 from icloudpd.cli import Config, GlobalConfig, format_help, parse
 from icloudpd.mfa_provider import MFAProvider
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from tests.helpers import (
     path_from_project_root,
@@ -172,7 +173,7 @@ class CliTestCase(TestCase):
                         keep_unicode_in_filenames=False,
                         live_photo_mov_filename_policy="suffix",
                         align_raw=RawTreatmentPolicy.AS_IS,
-                        file_match_policy="name-size-dedup-with-suffix",
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                         skip_created_before=None,
                         skip_created_after=None,
                         skip_photos=False,
@@ -212,7 +213,7 @@ class CliTestCase(TestCase):
                         keep_unicode_in_filenames=False,
                         live_photo_mov_filename_policy="suffix",
                         align_raw=RawTreatmentPolicy.AS_IS,
-                        file_match_policy="name-size-dedup-with-suffix",
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                         skip_created_before=None,
                         skip_created_after=None,
                         skip_photos=False,

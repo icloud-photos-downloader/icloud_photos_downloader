@@ -7,6 +7,7 @@ from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, 
 
 from foundation.core import compose, flip, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 _T = TypeVar("_T")
@@ -227,6 +228,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names and does not de-duplicate. Default: %(default)s",
         choices=["name-size-dedup-with-suffix", "name-id7"],
         default="name-size-dedup-with-suffix",
+        type=lower,
     )
     cloned.add_argument(
         "--skip-created-before",
@@ -408,7 +410,7 @@ class _DefaultConfig:
     keep_unicode_in_filenames: bool
     live_photo_mov_filename_policy: str
     align_raw: RawTreatmentPolicy
-    file_match_policy: str
+    file_match_policy: FileMatchPolicy
     skip_created_before: str | None
     skip_created_after: str | None
     skip_photos: bool
@@ -471,7 +473,7 @@ def map_to_config(user_ns: argparse.Namespace) -> Config:
         keep_unicode_in_filenames=user_ns.keep_unicode_in_filenames,
         live_photo_mov_filename_policy=user_ns.live_photo_mov_filename_policy,
         align_raw=RawTreatmentPolicy(user_ns.align_raw),
-        file_match_policy=user_ns.file_match_policy,
+        file_match_policy=FileMatchPolicy(user_ns.file_match_policy),
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
