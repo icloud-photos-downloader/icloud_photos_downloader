@@ -9,7 +9,7 @@ from foundation.core import compose, flip, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.version_size import LivePhotoVersionSize
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
 _T = TypeVar("_T")
 _T2 = TypeVar("_T2")
@@ -47,9 +47,10 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "--size",
         help="Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` - never. If `adjusted` or `alternative` specified and is missing, then `original` is used. Default: %(default)s",
         choices=["original", "medium", "thumb", "adjusted", "alternative"],
-        default=["original"],
+        default=None,
         action="append",
         dest="sizes",
+        type=lower,
     )
     cloned.add_argument(
         "--live-photo-size",
@@ -383,7 +384,7 @@ class _DefaultConfig:
     directory: str
     auth_only: bool
     cookie_directory: str
-    sizes: Sequence[str]
+    sizes: Sequence[AssetVersionSize]
     live_photo_size: LivePhotoVersionSize
     recent: int | None
     until_found: int | None
@@ -446,7 +447,7 @@ def map_to_config(user_ns: argparse.Namespace) -> Config:
         directory=user_ns.directory,
         auth_only=user_ns.auth_only,
         cookie_directory=user_ns.cookie_directory,
-        sizes=user_ns.sizes,
+        sizes=list(map_(AssetVersionSize, unique(user_ns.sizes or ["original"]))),
         live_photo_size=LivePhotoVersionSize(user_ns.live_photo_size),
         recent=user_ns.recent,
         until_found=user_ns.until_found,

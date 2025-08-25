@@ -10,7 +10,7 @@ from icloudpd.cli import Config, GlobalConfig, format_help, parse
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.version_size import LivePhotoVersionSize
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
@@ -145,7 +145,7 @@ class CliTestCase(TestCase):
                         auth_only=False,
                         cookie_directory="~/.pyicloud",
                         password=None,
-                        sizes=["original"],
+                        sizes=[AssetVersionSize.ORIGINAL],
                         live_photo_size=LivePhotoVersionSize.ORIGINAL,
                         recent=None,
                         until_found=None,
@@ -185,7 +185,7 @@ class CliTestCase(TestCase):
                         cookie_directory="~/.pyicloud",
                         username="u2",
                         password=None,
-                        sizes=["original"],
+                        sizes=[AssetVersionSize.ORIGINAL],
                         live_photo_size=LivePhotoVersionSize.ORIGINAL,
                         recent=None,
                         until_found=None,
