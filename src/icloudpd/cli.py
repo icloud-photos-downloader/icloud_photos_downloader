@@ -9,6 +9,7 @@ from foundation.core import compose, flip, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.version_size import LivePhotoVersionSize
 
 _T = TypeVar("_T")
 _T2 = TypeVar("_T2")
@@ -56,6 +57,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         choices=["original", "medium", "thumb"],
         default="original",
         action="store",
+        type=lower,
     )
     cloned.add_argument(
         "--recent",
@@ -382,7 +384,7 @@ class _DefaultConfig:
     auth_only: bool
     cookie_directory: str
     sizes: Sequence[str]
-    live_photo_size: str
+    live_photo_size: LivePhotoVersionSize
     recent: int | None
     until_found: int | None
     albums: Sequence[str]
@@ -445,7 +447,7 @@ def map_to_config(user_ns: argparse.Namespace) -> Config:
         auth_only=user_ns.auth_only,
         cookie_directory=user_ns.cookie_directory,
         sizes=user_ns.sizes,
-        live_photo_size=user_ns.live_photo_size,
+        live_photo_size=LivePhotoVersionSize(user_ns.live_photo_size),
         recent=user_ns.recent,
         until_found=user_ns.until_found,
         albums=user_ns.albums,

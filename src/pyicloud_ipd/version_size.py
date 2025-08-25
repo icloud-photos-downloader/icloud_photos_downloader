@@ -14,9 +14,9 @@ class AssetVersionSize(Enum):
 
 
 class LivePhotoVersionSize(Enum):
-    ORIGINAL = "originalVideo"
-    MEDIUM = "mediumVideo"
-    THUMB = "smallVideo"
+    ORIGINAL = "original"
+    MEDIUM = "medium"
+    THUMB = "small"
 
     def __str__(self) -> str:
         return self.name

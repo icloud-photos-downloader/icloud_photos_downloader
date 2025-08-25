@@ -649,7 +649,7 @@ class DownloadPhotoTestCase(TestCase):
                         )
 
                 for filename in ["IMG_7409.MOV", "IMG_7408.MOV", "IMG_7407.MOV"]:
-                    for size in ["originalVideo"]:
+                    for size in ["original"]:
                         self.assertEqual(
                             sum(
                                 1
