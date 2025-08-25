@@ -7,6 +7,7 @@ from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, 
 
 from foundation.core import compose, flip, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
+from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -438,7 +439,7 @@ class GlobalConfig:
     threads_num: int
     domain: str
     watch_with_interval: int | None
-    password_providers: Sequence[str]
+    password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
 
 
@@ -526,8 +527,11 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
             threads_num=global_ns.threads_num,
             domain=global_ns.domain,
             watch_with_interval=global_ns.watch_with_interval,
-            password_providers=unique(
-                global_ns.password_providers or ["parameter", "keyring", "console"]
+            password_providers=list(
+                map_(
+                    PasswordProvider,
+                    unique(global_ns.password_providers or ["parameter", "keyring", "console"]),
+                )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
         ),

@@ -8,6 +8,7 @@ import pytest
 
 from icloudpd.cli import Config, GlobalConfig, format_help, parse
 from icloudpd.mfa_provider import MFAProvider
+from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -45,7 +46,11 @@ class CliTestCase(TestCase):
                     threads_num=1,
                     domain="com",
                     watch_with_interval=None,
-                    password_providers=["parameter", "keyring", "console"],
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
                     mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [],
@@ -65,7 +70,11 @@ class CliTestCase(TestCase):
                     threads_num=1,
                     domain="com",
                     watch_with_interval=None,
-                    password_providers=["parameter", "keyring", "console"],
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
                     mfa_provider=MFAProvider.WEBUI,
                 ),
                 [],
@@ -94,7 +103,7 @@ class CliTestCase(TestCase):
                     threads_num=1,
                     domain="com",
                     watch_with_interval=None,
-                    password_providers=["webui", "console"],
+                    password_providers=[PasswordProvider.WEBUI, PasswordProvider.CONSOLE],
                     mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [],
@@ -114,7 +123,11 @@ class CliTestCase(TestCase):
                     threads_num=1,
                     domain="com",
                     watch_with_interval=None,
-                    password_providers=["parameter", "keyring", "console"],
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
                     mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [],
@@ -136,7 +149,11 @@ class CliTestCase(TestCase):
                     threads_num=1,
                     domain="com",
                     watch_with_interval=None,
-                    password_providers=["parameter", "keyring", "console"],
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
                     mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [
