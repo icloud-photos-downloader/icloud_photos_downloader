@@ -8,6 +8,7 @@ from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, 
 from foundation.core import compose, flip, map_, partial_1_1
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
@@ -218,6 +219,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="How to produce filenames for video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep filename as it is. Default: %(default)s",
         choices=["suffix", "original"],
         default="suffix",
+        type=lower,
     )
     cloned.add_argument(
         "--align-raw",
@@ -411,7 +413,7 @@ class _DefaultConfig:
     keep_icloud_recent_days: int | None
     dry_run: bool
     keep_unicode_in_filenames: bool
-    live_photo_mov_filename_policy: str
+    live_photo_mov_filename_policy: LivePhotoMovFilenamePolicy
     align_raw: RawTreatmentPolicy
     file_match_policy: FileMatchPolicy
     skip_created_before: str | None
@@ -474,7 +476,9 @@ def map_to_config(user_ns: argparse.Namespace) -> Config:
         keep_icloud_recent_days=user_ns.keep_icloud_recent_days,
         dry_run=user_ns.dry_run,
         keep_unicode_in_filenames=user_ns.keep_unicode_in_filenames,
-        live_photo_mov_filename_policy=user_ns.live_photo_mov_filename_policy,
+        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy(
+            user_ns.live_photo_mov_filename_policy
+        ),
         align_raw=RawTreatmentPolicy(user_ns.align_raw),
         file_match_policy=FileMatchPolicy(user_ns.file_match_policy),
         skip_created_before=user_ns.skip_created_before,

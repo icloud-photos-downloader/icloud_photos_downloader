@@ -9,6 +9,7 @@ import pytest
 from icloudpd.cli import Config, GlobalConfig, format_help, parse
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
@@ -172,7 +173,7 @@ class CliTestCase(TestCase):
                         keep_icloud_recent_days=None,
                         dry_run=False,
                         keep_unicode_in_filenames=False,
-                        live_photo_mov_filename_policy="suffix",
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
                         align_raw=RawTreatmentPolicy.AS_IS,
                         file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                         skip_created_before=None,
@@ -212,7 +213,7 @@ class CliTestCase(TestCase):
                         keep_icloud_recent_days=None,
                         dry_run=False,
                         keep_unicode_in_filenames=False,
-                        live_photo_mov_filename_policy="suffix",
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
                         align_raw=RawTreatmentPolicy.AS_IS,
                         file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                         skip_created_before=None,
