@@ -8,11 +8,14 @@ from itertools import dropwhile
 from operator import eq, not_
 from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, Tuple, TypeVar
 
+from tzlocal import get_localzone
+
 import foundation
 from foundation.core import chain_from_iterable, compose, flip, map_, partial_1_1, skip
-from icloudpd.base import skip_created_generator
+from icloudpd.base import ensure_tzinfo
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
+from icloudpd.string_helpers import parse_timestamp_or_timedelta
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -245,13 +248,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "--skip-created-before",
         help="Do not process assets created before specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
         default=None,
-        type=skip_created_before_generator,
+        type=parse_timestamp_or_timedelta_tz_error,
     )
     cloned.add_argument(
         "--skip-created-after",
         help="Do not process assets created after specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
         default=None,
-        type=skip_created_after_generator,
+        type=parse_timestamp_or_timedelta_tz_error,
     )
     cloned.add_argument(
         "--skip-photos",
@@ -280,10 +283,18 @@ def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 def lower(inp: str) -> str:
+    """point-free version to lower the case of the string
+    >>> lower("AbCdEf")
+    'abcdef'
+    """
     return inp.lower()
 
 
 def two_tuple(k: _T, v: _T2) -> Tuple[_T, _T2]:
+    """Converts two positional arguments into tuple
+    >>> two_tuple(1, 2)
+    (1, 2)
+    """
     return (k, v)
 
 
@@ -378,6 +389,20 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         type=lower,
     )
     return cloned
+
+
+def parse_timestamp_or_timedelta_tz_error(
+    formatted: str,
+) -> datetime.datetime | datetime.timedelta | None:
+    """Converts ISO dates to datetime with tz and interval in days to timeinterval. Raises exception in case of the error"""
+    if formatted is None:
+        return None
+    result = parse_timestamp_or_timedelta(formatted)
+    if result is None:
+        raise argparse.ArgumentTypeError("Not an ISO timestamp or time interval in days")
+    if isinstance(result, datetime.datetime):
+        return ensure_tzinfo(get_localzone(), result)
+    return result
 
 
 def format_help_for_parser_(parser: argparse.ArgumentParser) -> str:
@@ -487,10 +512,6 @@ class GlobalConfig:
     mfa_provider: MFAProvider
 
 
-skip_created_before_generator = partial_1_1(skip_created_generator, "--skip-created-before")
-skip_created_after_generator = partial_1_1(skip_created_generator, "--skip-created-after")
-
-
 def map_to_config(user_ns: argparse.Namespace) -> Config:
     return Config(
         username=user_ns.username,
@@ -588,7 +609,11 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
 
 
 def cli() -> int:
-    global_ns, user_nses = parse(sys.argv[1:])
+    try:
+        global_ns, user_nses = parse(sys.argv[1:])
+    except argparse.ArgumentError as error:
+        print(error)
+        return 2
     if global_ns.use_os_locale:
         from locale import LC_ALL, setlocale
 

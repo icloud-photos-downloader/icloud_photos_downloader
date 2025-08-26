@@ -413,7 +413,10 @@ USER options. Can be specified for setting user config only.
             ),
             "valid skip-created parsed",
         )
-        with pytest.raises(ArgumentError):
+        with pytest.raises(
+            ArgumentError,
+            match="argument --skip-created-before: Not an ISO timestamp or time interval in days",
+        ):
             _ = parse(
                 [
                     "-d",
@@ -426,7 +429,10 @@ USER options. Can be specified for setting user config only.
                     "2d",
                 ]
             )
-        with pytest.raises(ArgumentError):
+        with pytest.raises(
+            ArgumentError,
+            match="argument --skip-created-after: Not an ISO timestamp or time interval in days",
+        ):
             _ = parse(
                 [
                     "-d",

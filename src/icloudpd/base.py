@@ -288,6 +288,7 @@ def skip_created_after_generator(
 def skip_created_generator(
     name: str, formatted: str
 ) -> datetime.datetime | datetime.timedelta | None:
+    """Converts ISO dates to datetime and interval in days to timeinterval using supplied name as part of raised exception in case of the error"""
     if formatted is None:
         return None
     result = parse_timestamp_or_timedelta(formatted)
