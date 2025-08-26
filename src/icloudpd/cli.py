@@ -6,40 +6,20 @@ import sys
 from dataclasses import dataclass
 from itertools import dropwhile
 from operator import eq, not_
-from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, Tuple, TypeVar
+from typing import Any, Callable, Iterable, Sequence, Tuple
 
 from tzlocal import get_localzone
 
 import foundation
-from foundation.core import chain_from_iterable, compose, flip, map_, partial_1_1, skip
+from foundation.core import chain_from_iterable, compose, map_, partial_1_1, skip
 from icloudpd.base import ensure_tzinfo
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
-from icloudpd.string_helpers import parse_timestamp_or_timedelta
+from icloudpd.string_helpers import lower, parse_timestamp_or_timedelta, splitlines
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-
-_T = TypeVar("_T")
-_T2 = TypeVar("_T2")
-
-
-def split(splitter: Container[_T], inp: Iterable[_T]) -> Sequence[Sequence[_T]]:
-    """Breaks incoming sequence into subsequences based on supplied slitter. Splitter is supported as sequence of alternatives.
-    >>> split([2, 4], [1, 2, 3, 2, 5, 4, 6])
-    [[1], [2, 3], [2, 5], [4, 6]]
-    """
-    result: List[List[_T]] = [[]]
-    for item in inp:
-        if item in splitter:
-            #  add group
-            result.append([])
-        else:
-            pass
-        group_index = len(result) - 1
-        result[group_index].append(item)
-    return result
 
 
 def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
@@ -282,34 +262,6 @@ def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     return cloned
 
 
-def lower(inp: str) -> str:
-    """point-free version to lower the case of the string
-    >>> lower("AbCdEf")
-    'abcdef'
-    """
-    return inp.lower()
-
-
-def two_tuple(k: _T, v: _T2) -> Tuple[_T, _T2]:
-    """Converts two positional arguments into tuple
-    >>> two_tuple(1, 2)
-    (1, 2)
-    """
-    return (k, v)
-
-
-def unique(inp: Iterable[_T]) -> Sequence[_T]:
-    """Unique values from iterable
-    >>> unique(["abc", "def", "abc", "ghi"])
-    ['abc', 'def', 'ghi']
-    >>> unique([1, 2, 1, 3])
-    [1, 2, 3]
-    """
-    to_kv = partial_1_1(map_, partial_1_1(flip(two_tuple), None))
-    to_dict: Callable[[Iterable[_T]], Mapping[_T, None]] = compose(dict, to_kv)
-    return list(to_dict(inp).keys())
-
-
 def parse_mfa_provider(provider: str) -> MFAProvider:
     if provider.lower() == "console":
         return MFAProvider.CONSOLE
@@ -407,10 +359,6 @@ def parse_timestamp_or_timedelta_tz_error(
 
 def format_help_for_parser_(parser: argparse.ArgumentParser) -> str:
     return parser.format_help()
-
-
-def splitlines(inp: str) -> Sequence[str]:
-    return inp.splitlines()
 
 
 def format_help() -> str:
@@ -519,7 +467,9 @@ def map_to_config(user_ns: argparse.Namespace) -> Config:
         directory=user_ns.directory,
         auth_only=user_ns.auth_only,
         cookie_directory=user_ns.cookie_directory,
-        sizes=list(map_(AssetVersionSize, unique(user_ns.sizes or ["original"]))),
+        sizes=list(
+            map_(AssetVersionSize, foundation.unique_sequence(user_ns.sizes or ["original"]))
+        ),
         live_photo_size=LivePhotoVersionSize(user_ns.live_photo_size),
         recent=user_ns.recent,
         until_found=user_ns.until_found,
@@ -564,7 +514,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
     else:
         pass
 
-    splitted_args = split(["-u", "--username"], args)
+    splitted_args = foundation.split_with_alternatives(["-u", "--username"], args)
     global_and_default_args = splitted_args[0]
     global_parser: argparse.ArgumentParser = add_global_options(
         argparse.ArgumentParser(exit_on_error=False, add_help=False)
@@ -599,7 +549,9 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
             password_providers=list(
                 map_(
                     PasswordProvider,
-                    unique(global_ns.password_providers or ["parameter", "keyring", "console"]),
+                    foundation.unique_sequence(
+                        global_ns.password_providers or ["parameter", "keyring", "console"]
+                    ),
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),

@@ -2,6 +2,7 @@
 
 import datetime
 import re
+from typing import Sequence
 
 
 def truncate_middle(string: str, length: int) -> str:
@@ -60,3 +61,15 @@ def parse_timestamp_or_timedelta(
     if p1 is None:
         return parse_timestamp(formatted)
     return p1
+
+
+def lower(inp: str) -> str:
+    """point-free version to lower the case of the string
+    >>> lower("AbCdEf")
+    'abcdef'
+    """
+    return inp.lower()
+
+
+def splitlines(inp: str) -> Sequence[str]:
+    return inp.splitlines()

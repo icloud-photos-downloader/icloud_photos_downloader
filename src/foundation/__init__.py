@@ -1,12 +1,22 @@
 import datetime
 from functools import partial
 from operator import is_, not_
-from typing import Callable, Iterable, Mapping, NamedTuple, Tuple, TypeVar
+from typing import (
+    Callable,
+    Container,
+    Iterable,
+    List,
+    Mapping,
+    NamedTuple,
+    Sequence,
+    Tuple,
+    TypeVar,
+)
 
 import pytz
 from tzlocal import get_localzone
 
-from foundation.core import compose, fst, snd
+from foundation.core import compose, flip, fst, map_, partial_1_1, snd
 
 
 class VersionInfo(NamedTuple):
@@ -82,3 +92,44 @@ def flat_dict(input: Iterable[Mapping[T_in, T_out]]) -> Mapping[T_in, T_out]:
     for d in input:
         flattened_dict.update(d)
     return flattened_dict
+
+
+_T = TypeVar("_T")
+_T2 = TypeVar("_T2")
+
+
+def split_with_alternatives(splitter: Container[_T], inp: Iterable[_T]) -> Sequence[Sequence[_T]]:
+    """Breaks incoming sequence into subsequences based on supplied slitter. Splitter is supported as sequence of alternatives.
+    >>> split_with_alternatives([2, 4], [1, 2, 3, 2, 5, 4, 6])
+    [[1], [2, 3], [2, 5], [4, 6]]
+    """
+    result: List[List[_T]] = [[]]
+    for item in inp:
+        if item in splitter:
+            #  add group
+            result.append([])
+        else:
+            pass
+        group_index = len(result) - 1
+        result[group_index].append(item)
+    return result
+
+
+def two_tuple(k: _T, v: _T2) -> Tuple[_T, _T2]:
+    """Converts two positional arguments into tuple
+    >>> two_tuple(1, 2)
+    (1, 2)
+    """
+    return (k, v)
+
+
+def unique_sequence(inp: Iterable[_T]) -> Sequence[_T]:
+    """Unique values from iterable
+    >>> unique_sequence(["abc", "def", "abc", "ghi"])
+    ['abc', 'def', 'ghi']
+    >>> unique_sequence([1, 2, 1, 3])
+    [1, 2, 3]
+    """
+    to_kv = partial_1_1(map_, partial_1_1(flip(two_tuple), None))
+    to_dict: Callable[[Iterable[_T]], Mapping[_T, None]] = compose(dict, to_kv)
+    return list(to_dict(inp).keys())
