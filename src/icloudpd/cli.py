@@ -589,18 +589,72 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
 
 def cli() -> int:
     global_ns, user_nses = parse(sys.argv[1:])
-    if global_ns.help:
-        print(format_help())
-        return 0
-    elif global_ns.use_os_locale:
+    if global_ns.use_os_locale:
         from locale import LC_ALL, setlocale
 
         setlocale(LC_ALL, "")
+    else:
+        pass
+    if global_ns.help:
+        print(format_help())
+        return 0
     elif global_ns.version:
         print(foundation.version_info_formatted())
         return 0
     else:
-        print(f"global_ns={global_ns}")
-        for user_ns in user_nses:
-            print(f"user_ns={user_ns}")
+        # check param compatibility
+        if [user_ns for user_ns in user_nses if user_ns.skip_videos and user_ns.skip_photos]:
+            print(
+                "Only one of --skip-videos and --skip-photos can be used at a time for each config"
+            )
+            return 2
+
+        # check required directory param only if not list albums
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if not user_ns.list_albums
+            and not user_ns.list_libraries
+            and not user_ns.directory
+            and not user_ns.auth_only
+        ]:
+            print(
+                "--auth-only, --directory, --list-libraries or --list-albums are required for each config"
+            )
+            return 2
+
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.auto_delete and user_ns.delete_after_download
+        ]:
+            print("--auto-delete and --delete-after-download are mutually exclusive per config")
+            return 2
+
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.keep_icloud_recent_days and user_ns.delete_after_download
+        ]:
+            print(
+                "--keep-icloud-recent-days and --delete-after-download should not be used together in one config"
+            )
+            return 2
+
+        elif global_ns.watch_with_interval and (
+            [
+                user_ns
+                for user_ns in user_nses
+                if user_ns.list_albums or user_ns.auth_only or user_ns.list_libraries
+            ]
+            or global_ns.only_print_filenames
+        ):
+            print(
+                "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, and --auth-only"
+            )
+            return 2
+        else:
+            print(f"global_ns={global_ns}")
+            for user_ns in user_nses:
+                print(f"user_ns={user_ns}")
     return 0
