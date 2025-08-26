@@ -4,9 +4,12 @@ import datetime
 import pathlib
 import sys
 from dataclasses import dataclass
+from itertools import dropwhile
+from operator import eq, not_
 from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, Tuple, TypeVar
 
-from foundation.core import compose, flip, map_, partial_1_1
+import foundation
+from foundation.core import chain_from_iterable, compose, flip, map_, partial_1_1, skip
 from icloudpd.base import skip_created_generator
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
@@ -260,11 +263,16 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
 
 def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
-    cloned.add_argument("-u", "--username", help="AppleID email address")
+    cloned.add_argument(
+        "-u",
+        "--username",
+        help="AppleID email address. Starts new configuration group.",
+        type=lower,
+    )
     cloned.add_argument(
         "-p",
         "--password",
-        help="iCloud password for the account if `--password-provider` includes `parameter`",
+        help="iCloud password for the account if `--password-provider` specifies `parameter`",
         default=None,
         type=str,
     )
@@ -302,13 +310,13 @@ def parse_mfa_provider(provider: str) -> MFAProvider:
 
 def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
-    cloned.add_argument(
-        "--use-os-locale", help="Use locale of the host OS to format dates", action="store_true"
-    )
     group = cloned.add_mutually_exclusive_group()
-    group.add_argument("--help", "-h", "-?", action="store_true")
+    group.add_argument("--help", "-h", action="store_true", help="Show this info")
     group.add_argument(
         "--version", help="Show the version, commit hash and timestamp", action="store_true"
+    )
+    cloned.add_argument(
+        "--use-os-locale", help="Use locale of the host OS to format dates", action="store_true"
     )
     cloned.add_argument(
         "--only-print-filenames",
@@ -372,18 +380,50 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     return cloned
 
 
+def format_help_for_parser_(parser: argparse.ArgumentParser) -> str:
+    return parser.format_help()
+
+
+def splitlines(inp: str) -> Sequence[str]:
+    return inp.splitlines()
+
+
 def format_help() -> str:
     # create fake parser and return it's help
-    global_help = add_global_options(
-        argparse.ArgumentParser(exit_on_error=False, add_help=False)
-    ).format_help()
-    default_help = add_options_for_user(
-        argparse.ArgumentParser(exit_on_error=False, add_help=False)
-    ).format_help()
-    user_help = add_options_for_user(
-        add_user_option(argparse.ArgumentParser(exit_on_error=False, add_help=False))
-    ).format_help()
-    return "\n".join([global_help, default_help, user_help])
+    pre_options_predicate: Callable[[str], bool] = compose(not_, partial_1_1(eq, "options:"))
+    skip_to_options_header: Callable[[Iterable[str]], Iterable[str]] = partial_1_1(
+        dropwhile, pre_options_predicate
+    )
+    skip_to_options = compose(partial_1_1(skip, 1), skip_to_options_header)
+
+    help_in_lines = compose(splitlines, format_help_for_parser_)
+
+    extract_option_lines = compose(skip_to_options, help_in_lines)
+
+    dummy_parser = argparse.ArgumentParser(exit_on_error=False, add_help=False)
+
+    global_help = compose(extract_option_lines, add_global_options)(dummy_parser)
+
+    default_help = compose(extract_option_lines, add_options_for_user)(dummy_parser)
+
+    user_help = compose(extract_option_lines, add_user_option)(dummy_parser)
+
+    all_help = chain_from_iterable(
+        [
+            ["usage: icloudpd [GLOBAL] [COMMON] [<USER> [COMMON] <USER> [COMMON] ...]", ""],
+            ["GLOBAL options. Applied for all user settings."],
+            global_help,
+            [
+                "",
+                "COMMON options. If specified before first username, then used as default for settings for all users.",
+            ],
+            default_help,
+            ["", "USER options. Can be specified for setting user config only."],
+            user_help,
+        ]
+    )
+
+    return "\n".join(all_help)
 
 
 @dataclass(kw_only=True)
@@ -552,8 +592,12 @@ def cli() -> int:
     if global_ns.help:
         print(format_help())
         return 0
+    elif global_ns.use_os_locale:
+        from locale import LC_ALL, setlocale
+
+        setlocale(LC_ALL, "")
     elif global_ns.version:
-        print("version printed here")
+        print(foundation.version_info_formatted())
         return 0
     else:
         print(f"global_ns={global_ns}")

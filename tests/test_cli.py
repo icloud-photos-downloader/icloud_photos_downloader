@@ -31,9 +31,99 @@ class CliTestCase(TestCase):
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
 
     def test_cli_help(self) -> None:
-        _result = format_help()
-        # TODO validate result
-        # self.assertEqual("abc", format_help(), "help")
+        result = format_help()
+        self.assertEqual(
+            """\
+usage: icloudpd [GLOBAL] [COMMON] [<USER> [COMMON] <USER> [COMMON] ...]
+
+GLOBAL options. Applied for all user settings.
+  --help, -h            Show this info
+  --version             Show the version, commit hash and timestamp
+  --use-os-locale       Use locale of the host OS to format dates
+  --only-print-filenames
+                        Only prints the filenames of all files that will be downloaded (not including files that are already downloaded.)(Does not download or delete any files.)
+  --log-level {debug,info,error}
+                        Log level. Default: debug
+  --no-progress-bar     Disables the one-line progress bar and prints log messages on separate lines (Progress bar is disabled by default if there is no tty attached)
+  --threads-num THREADS_NUM
+                        Number of cpu threads - deprecated & always 1. To be removed in future version
+  --domain {com,cn}     What iCloud root domain to use. Use 'cn' for mainland China. Default: com
+  --watch-with-interval WATCH_WITH_INTERVAL
+                        Run downloading in a infinite cycle, waiting specified seconds between runs
+  --password-provider {console,keyring,parameter,webui}
+                        Specifies passwords provider to check in the given order. Default: [`parameter`, `keyring`, `console`]
+  --mfa-provider {console,webui}
+                        Specified where to get MFA code from
+
+COMMON options. If specified before first username, then used as default for settings for all users.
+  -d, --directory DIRECTORY
+  --auth-only           Create/Update cookie and session tokens only.
+  --cookie-directory COOKIE_DIRECTORY
+                        Directory to store cookies for authentication. Default: ~/.pyicloud
+  --size {original,medium,thumb,adjusted,alternative}
+                        Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` - never. If
+                        `adjusted` or `alternative` specified and is missing, then `original` is used. Default: None
+  --live-photo-size {original,medium,thumb}
+                        Live Photo video size to download. Default: original
+  --recent RECENT       Number of recent photos to download (default: download all photos)
+  --until-found UNTIL_FOUND
+                        Download most recently added photos until we find x number of previously downloaded consecutive photos (default: download all photos)
+  -a, --album ALBUMS    Album(s) to download or whole collection if not specified
+  -l, --list-albums     Lists the available albums
+  --library LIBRARY     Library to download. Default: PrimarySync
+  --list-libraries      Lists the available libraries
+  --skip-videos         Don't download any videos (default: Download all photos and videos)
+  --skip-live-photos    Don't download any live photos (default: Download live photos)
+  --xmp-sidecar         Export additional data as XMP sidecar files (default: don't export)
+  --force-size          Only download the requested size (`adjusted` and `alternate` will not be forced). Default: download original if size is not available
+  --auto-delete         Scans the "Recently Deleted" folder and deletes any files found in there. (If you restore the photo in iCloud, it will be downloaded again.)
+  --folder-structure FOLDER_STRUCTURE
+                        Folder structure. If set to `none` all photos will just be placed into the download directory. Default: {:%Y/%m/%d}
+  --set-exif-datetime   Write the DateTimeOriginal exif tag from file creation date, if it doesn't exist.
+  --smtp-username SMTP_USERNAME
+                        SMTP username, for sending email notifications when two-step authentication expires.
+  --smtp-password SMTP_PASSWORD
+                        SMTP password, for sending email notifications when two-step authentication expires.
+  --smtp-host SMTP_HOST
+                        SMTP server host for notification
+  --smtp-port SMTP_PORT
+                        SMTP server port. Default: 587
+  --smtp-no-tls         Pass this flag to disable TLS for SMTP (TLS is required for Gmail)
+  --notification-email NOTIFICATION_EMAIL
+                        Email address where you would like to receive email notifications. Default: SMTP username
+  --notification-email-from NOTIFICATION_EMAIL_FROM
+                        Email address from which you would like to receive email notifications. Default: SMTP username or notification-email
+  --notification-script NOTIFICATION_SCRIPT
+                        Path to the external script to run when two factor authentication expires.
+  --delete-after-download
+                        Delete the photo/video after download it. The deleted items will be appear in the "Recently Deleted". Therefore, should not combine with --auto-delete option.
+  --keep-icloud-recent-days KEEP_ICLOUD_RECENT_DAYS
+                        Keep photos newer than this many days in iCloud. Deletes the rest. If set to 0, all photos will be deleted from iCloud.
+  --dry-run             Do not modify local system or iCloud
+  --keep-unicode-in-filenames
+                        Keep unicode chars in file names or remove non all ascii chars
+  --live-photo-mov-filename-policy {suffix,original}
+                        How to produce filenames for video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep filename as it is. Default: suffix
+  --align-raw {as-is,original,alternative}
+                        For photo assets with raw and jpeg, treat raw always in the specified size: `original` (raw+jpeg), `alternative` (jpeg+raw), or unchanged (as-is). It matters when
+                        choosing sizes to download. Default: as-is
+  --file-match-policy {name-size-dedup-with-suffix,name-id7}
+                        Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names
+                        and does not de-duplicate. Default: name-size-dedup-with-suffix
+  --skip-created-before SKIP_CREATED_BEFORE
+                        Do not process assets created before specified timestamp in ISO format (2025-01-02) or interval from now (20d)
+  --skip-created-after SKIP_CREATED_AFTER
+                        Do not process assets created after specified timestamp in ISO format (2025-01-02) or interval from now (20d)
+  --skip-photos         Don't download any photos (default: Download all photos and videos)
+
+USER options. Can be specified for setting user config only.
+  -u, --username USERNAME
+                        AppleID email address. Starts new configuration group.
+  -p, --password PASSWORD
+                        iCloud password for the account if `--password-provider` specifies `parameter`""",
+            result,
+            "help",
+        )
 
     def test_cli_parser(self) -> None:
         self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
