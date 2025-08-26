@@ -1,6 +1,9 @@
+import datetime
 import inspect
 import os
 import shutil
+import zoneinfo
+from argparse import ArgumentError
 from typing import Sequence, Tuple
 from unittest import TestCase
 
@@ -33,6 +36,7 @@ class CliTestCase(TestCase):
         # self.assertEqual("abc", format_help(), "help")
 
     def test_cli_parser(self) -> None:
+        self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
         self.assertEqual(
             parse(["--help"]),
             (
@@ -241,6 +245,110 @@ class CliTestCase(TestCase):
             ),
             "defaults propagated and overwritten",
         )
+        self.assertEqual(
+            parse(
+                [
+                    "-d",
+                    "abc",
+                    "--username",
+                    "u1",
+                    "--skip-created-before",
+                    "2025-01-02",
+                    "--skip-created-after",
+                    "2d",
+                ]
+            ),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level="debug",
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                ),
+                [
+                    Config(
+                        directory="abc",
+                        username="u1",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=[AssetVersionSize.ORIGINAL],
+                        live_photo_size=LivePhotoVersionSize.ORIGINAL,
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
+                        align_raw=RawTreatmentPolicy.AS_IS,
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                        skip_created_before=datetime.datetime(
+                            year=2025, month=1, day=2, tzinfo=zoneinfo.ZoneInfo(key="Etc/UTC")
+                        ),
+                        skip_created_after=datetime.timedelta(days=2),
+                        skip_photos=False,
+                    ),
+                ],
+            ),
+            "valid skip-created parsed",
+        )
+        with pytest.raises(ArgumentError):
+            _ = parse(
+                [
+                    "-d",
+                    "abc",
+                    "--username",
+                    "u1",
+                    "--skip-created-before",
+                    "2025-01-33",
+                    "--skip-created-after",
+                    "2d",
+                ]
+            )
+        with pytest.raises(ArgumentError):
+            _ = parse(
+                [
+                    "-d",
+                    "abc",
+                    "--username",
+                    "u1",
+                    "--skip-created-before",
+                    "2025-01-02",
+                    "--skip-created-after",
+                    "2",
+                ]
+            )
 
     def test_cli(self) -> None:
         result = run_main(["--help"])

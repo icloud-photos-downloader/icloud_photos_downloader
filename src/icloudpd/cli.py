@@ -1,11 +1,13 @@
 import argparse
 import copy
+import datetime
 import pathlib
 import sys
 from dataclasses import dataclass
 from typing import Any, Callable, Container, Iterable, List, Mapping, Sequence, Tuple, TypeVar
 
 from foundation.core import compose, flip, map_, partial_1_1
+from icloudpd.base import skip_created_generator
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -240,11 +242,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "--skip-created-before",
         help="Do not process assets created before specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
         default=None,
+        type=skip_created_before_generator,
     )
     cloned.add_argument(
         "--skip-created-after",
         help="Do not process assets created after specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
         default=None,
+        type=skip_created_after_generator,
     )
     cloned.add_argument(
         "--skip-photos",
@@ -417,8 +421,8 @@ class _DefaultConfig:
     live_photo_mov_filename_policy: LivePhotoMovFilenamePolicy
     align_raw: RawTreatmentPolicy
     file_match_policy: FileMatchPolicy
-    skip_created_before: str | None
-    skip_created_after: str | None
+    skip_created_before: datetime.datetime | datetime.timedelta | None
+    skip_created_after: datetime.datetime | datetime.timedelta | None
     skip_photos: bool
 
 
@@ -441,6 +445,10 @@ class GlobalConfig:
     watch_with_interval: int | None
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
+
+
+skip_created_before_generator = partial_1_1(skip_created_generator, "--skip-created-before")
+skip_created_after_generator = partial_1_1(skip_created_generator, "--skip-created-after")
 
 
 def map_to_config(user_ns: argparse.Namespace) -> Config:
