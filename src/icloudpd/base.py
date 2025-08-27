@@ -997,17 +997,94 @@ def convert_user_config_to_old_config(
 def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
     """Run the application with the new configuration system"""
 
-    # For now, we'll process each user config sequentially
-    # In the future, this could be parallelized or allow multiple user management
-    for user_config in user_configs:
-        # Convert to old config format
-        config = convert_user_config_to_old_config(global_config, user_config)
+    # Create shared logger
+    logger = create_logger(global_config)
 
-        # Create logger
-        logger = create_logger(global_config)
+    # Create shared status exchange for web server and progress tracking
+    shared_status_exchange = StatusExchange()
+
+    # Check if any user needs web server (webui for MFA or passwords)
+    needs_web_server = global_config.mfa_provider == MFAProvider.WEBUI or any(
+        provider.value == "webui" for provider in global_config.password_providers
+    )
+
+    # Start web server ONCE if needed, outside all loops
+    if needs_web_server:
+        logger.info("Starting web server for WebUI authentication...")
+        server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange])
+        server_thread.start()
+
+    # Check if we're in watch mode
+    watch_interval = global_config.watch_with_interval
+
+    if not watch_interval:
+        # No watch mode - process each user once and exit
+        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+    else:
+        # Watch mode - infinite loop processing all users, then wait
+        skip_bar = not os.environ.get("FORCE_TQDM") and (
+            global_config.only_print_filenames
+            or global_config.no_progress_bar
+            or not sys.stdout.isatty()
+        )
+
+        while True:
+            # Process all user configs in this iteration
+            result = _process_all_users_once(
+                global_config, user_configs, logger, shared_status_exchange
+            )
+
+            # If any critical operation (auth-only, list commands) succeeded, exit
+            if result == 0:
+                first_user = user_configs[0] if user_configs else None
+                if first_user and (
+                    first_user.auth_only or first_user.list_albums or first_user.list_libraries
+                ):
+                    return 0
+
+            # Wait for the watch interval before next iteration
+            logger.info(f"Waiting for {watch_interval} sec...")
+            interval: Sequence[int] = range(1, watch_interval)
+            iterable: Sequence[int] = (
+                interval
+                if skip_bar
+                else typing.cast(
+                    Sequence[int],
+                    tqdm(
+                        iterable=interval,
+                        desc="Waiting...",
+                        ascii=True,
+                        leave=False,
+                        dynamic_ncols=True,
+                    ),
+                )
+            )
+            for counter in iterable:
+                # Update shared status exchange with wait progress
+                shared_status_exchange.get_progress().waiting = watch_interval - counter
+                if shared_status_exchange.get_progress().resume:
+                    shared_status_exchange.get_progress().reset()
+                    break
+                time.sleep(1)
+
+
+def _process_all_users_once(
+    global_config: GlobalConfig,
+    user_configs: Sequence[UserConfig],
+    logger: logging.Logger,
+    shared_status_exchange: StatusExchange,
+) -> int:
+    """Process all user configs once (used by both single run and watch mode)"""
+
+    for user_config in user_configs:
+        # Convert to old config format, but disable watch at individual level
+        config = convert_user_config_to_old_config(global_config, user_config)
+        # Important: Clear watch interval for individual user runs since we handle it at the top level
+        config.watch_with_interval = None
 
         with logging_redirect_tqdm():
-            status_exchange = StatusExchange()
+            # Use shared status exchange instead of creating new ones per user
+            status_exchange = shared_status_exchange
 
             # Set up password providers with proper function replacements
             if "webui" in config.password_providers:
@@ -1025,12 +1102,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
             config.password_providers = config.password_providers
             status_exchange.set_config(config)
 
-            # Start web server if needed
-            if config.mfa_provider == MFAProvider.WEBUI or "webui" in config.password_providers:
-                server_thread = Thread(
-                    target=serve_app, daemon=True, args=[logger, status_exchange]
-                )
-                server_thread.start()
+            # Web server is now started once outside the user loop - no need to start it here
 
             # Set up filename processors directly since we don't have click context
             # redefining typed vars instead of using in ternary directly is a mypy hack
@@ -1092,8 +1164,9 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
                 config.notification_script,
             )
 
-            # Run the core logic
-            result = core(
+            # Use core_single_run since we've disabled watch at this level
+            logger.info(f"Processing user: {config.username}")
+            result = core_single_run(
                 logger,
                 status_exchange,
                 passer,
@@ -1103,9 +1176,15 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
                 lp_filename_generator,
             )
 
-            # If any user config fails, return the error code
+            # If any user config fails and we're not in watch mode, return the error code
             if result != 0:
-                return result
+                if not global_config.watch_with_interval:
+                    return result
+                else:
+                    # In watch mode, log error and continue with next user
+                    logger.error(
+                        f"Error processing user {config.username}, continuing with next user..."
+                    )
 
     return 0
 
@@ -1506,7 +1585,7 @@ def asset_type_skip_message(photo: PhotoAsset) -> str:
     return f"Skipping {photo.filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
 
-def core(
+def core_single_run(
     logger: logging.Logger,
     status_exchange: StatusExchange,
     passer: Callable[[PhotoAsset], bool],
@@ -1515,7 +1594,7 @@ def core(
     filename_cleaner: Callable[[str], str],
     lp_filename_generator: Callable[[str], str],
 ) -> int:
-    """Download all iCloud photos to a local directory"""
+    """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
     config = status_exchange.get_config()
     if not config:
@@ -1525,7 +1604,7 @@ def core(
     skip_bar = not os.environ.get("FORCE_TQDM") and (
         config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
     )
-    while True:  # watch with interval & retry
+    while True:  # retry loop (not watch - only for immediate retries)
         captured_responses: List[Mapping[str, Any]] = []
 
         def append_response(captured: List[Mapping[str, Any]], response: Mapping[str, Any]) -> None:
@@ -1833,11 +1912,8 @@ def core(
                     pass
             else:
                 pass
-            # it not watching then return error
-            if not config.watch_with_interval:
-                return 1
-            else:
-                pass
+            # In single run mode, return error after webui retry attempts
+            return 1
         except (ConnectionError, TimeoutError, Timeout, NewConnectionError) as _error:
             logger.info("Cannot connect to Apple iCloud service")
             dump_responses(logger.debug, captured_responses)
@@ -1853,11 +1929,8 @@ def core(
                     pass
             else:
                 pass
-            # it not watching then return error
-            if not config.watch_with_interval:
-                return 1
-            else:
-                pass
+            # In single run mode, return error after webui retry attempts
+            return 1
         except (
             ChunkedEncodingError,
             ContentDecodingError,
@@ -1872,30 +1945,80 @@ def core(
             dump_responses(logger.debug, captured_responses)
             raise
 
-        if config.watch_with_interval:  # pragma: no cover
-            logger.info(f"Waiting for {config.watch_with_interval} sec...")
-            interval: Sequence[int] = range(1, config.watch_with_interval)
-            iterable: Sequence[int] = (
-                interval
-                if skip_bar
-                else typing.cast(
-                    Sequence[int],
-                    tqdm(
-                        iterable=interval,
-                        desc="Waiting...",
-                        ascii=True,
-                        leave=False,
-                        dynamic_ncols=True,
-                    ),
-                )
-            )
-            for counter in iterable:
-                status_exchange.get_progress().waiting = config.watch_with_interval - counter
-                if status_exchange.get_progress().resume:
-                    status_exchange.get_progress().reset()
-                    break
-                time.sleep(1)
-        else:
-            break  # pragma: no cover
+        # In single run mode, we don't handle watch intervals - that's done at higher level
+        break
 
     return 0
+
+
+def core(
+    logger: logging.Logger,
+    status_exchange: StatusExchange,
+    passer: Callable[[PhotoAsset], bool],
+    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    notificator: Callable[[], None],
+    filename_cleaner: Callable[[str], str],
+    lp_filename_generator: Callable[[str], str],
+) -> int:
+    """Download all iCloud photos to a local directory (legacy function with watch loop)"""
+
+    config = status_exchange.get_config()
+    if not config:
+        raise NotImplementedError()
+
+    if not config.watch_with_interval:
+        # No watch mode, just single run
+        return core_single_run(
+            logger,
+            status_exchange,
+            passer,
+            downloader,
+            notificator,
+            filename_cleaner,
+            lp_filename_generator,
+        )
+
+    # Watch mode - infinite loop with watch intervals
+    skip_bar = not os.environ.get("FORCE_TQDM") and (
+        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
+    )
+
+    while True:
+        result = core_single_run(
+            logger,
+            status_exchange,
+            passer,
+            downloader,
+            notificator,
+            filename_cleaner,
+            lp_filename_generator,
+        )
+
+        # In watch mode, continue on errors, exit on success
+        if result == 0 and (config.auth_only or config.list_albums or config.list_libraries):
+            # Success - if we're only doing auth or listing, exit
+            return 0
+
+        # Wait for the watch interval
+        logger.info(f"Waiting for {config.watch_with_interval} sec...")
+        interval: Sequence[int] = range(1, config.watch_with_interval)
+        iterable: Sequence[int] = (
+            interval
+            if skip_bar
+            else typing.cast(
+                Sequence[int],
+                tqdm(
+                    iterable=interval,
+                    desc="Waiting...",
+                    ascii=True,
+                    leave=False,
+                    dynamic_ncols=True,
+                ),
+            )
+        )
+        for counter in iterable:
+            status_exchange.get_progress().waiting = config.watch_with_interval - counter
+            if status_exchange.get_progress().resume:
+                status_exchange.get_progress().reset()
+                break
+            time.sleep(1)
