@@ -913,12 +913,200 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
     return logger
 
 
+def convert_user_config_to_old_config(
+    global_config: GlobalConfig, user_config: UserConfig
+) -> Config:
+    """Convert new UserConfig and GlobalConfig to old Config format"""
+
+    # Convert password providers from enum list to old dict format
+    password_providers_dict: Dict[
+        str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+    ] = {}
+    for provider in global_config.password_providers:
+        if provider.value == "webui":
+            # webui will be replaced in main() with actual functions
+            password_providers_dict[provider.value] = (
+                ask_password_in_console,
+                dummy_password_writter,
+            )
+        elif provider.value == "console":
+            password_providers_dict[provider.value] = (
+                ask_password_in_console,
+                dummy_password_writter,
+            )
+        elif provider.value == "keyring":
+            password_providers_dict[provider.value] = (
+                get_password_from_keyring,
+                dummy_password_writter,
+            )
+        elif provider.value == "parameter":
+            password_providers_dict[provider.value] = (
+                constant(user_config.password),
+                dummy_password_writter,
+            )
+
+    return Config(
+        directory=user_config.directory,
+        username=user_config.username,
+        auth_only=user_config.auth_only,
+        cookie_directory=user_config.cookie_directory,
+        primary_sizes=user_config.sizes,
+        live_photo_size=user_config.live_photo_size,
+        recent=user_config.recent,
+        until_found=user_config.until_found,
+        albums=user_config.albums,
+        list_albums=user_config.list_albums,
+        library=user_config.library,
+        list_libraries=user_config.list_libraries,
+        skip_videos=user_config.skip_videos,
+        skip_live_photos=user_config.skip_live_photos,
+        xmp_sidecar=user_config.xmp_sidecar,
+        force_size=user_config.force_size,
+        auto_delete=user_config.auto_delete,
+        only_print_filenames=global_config.only_print_filenames,
+        folder_structure=user_config.folder_structure,
+        set_exif_datetime=user_config.set_exif_datetime,
+        smtp_username=user_config.smtp_username,
+        smtp_host=user_config.smtp_host,
+        smtp_port=user_config.smtp_port,
+        smtp_no_tls=user_config.smtp_no_tls,
+        notification_email=user_config.notification_email,
+        notification_email_from=user_config.notification_email_from,
+        log_level=global_config.log_level.value,  # Convert enum to string
+        no_progress_bar=global_config.no_progress_bar,
+        notification_script=str(user_config.notification_script)
+        if user_config.notification_script
+        else None,
+        threads_num=global_config.threads_num,
+        delete_after_download=user_config.delete_after_download,
+        keep_icloud_recent_days=user_config.keep_icloud_recent_days,
+        domain=global_config.domain,
+        watch_with_interval=global_config.watch_with_interval,
+        dry_run=user_config.dry_run,
+        raw_policy=user_config.align_raw,
+        password_providers=password_providers_dict,
+        file_match_policy=user_config.file_match_policy,
+        mfa_provider=global_config.mfa_provider,
+        use_os_locale=global_config.use_os_locale,
+        skip_created_before=user_config.skip_created_before,
+        skip_created_after=user_config.skip_created_after,
+        skip_photos=user_config.skip_photos,
+    )
+
+
 def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
-    _logger = create_logger(global_config)
-    with logging_redirect_tqdm():
-        print(f"global_ns={global_config}")
-        for user_config in user_configs:
-            print(f"user_ns={user_config}")
+    """Run the application with the new configuration system"""
+
+    # For now, we'll process each user config sequentially
+    # In the future, this could be parallelized or allow multiple user management
+    for user_config in user_configs:
+        # Convert to old config format
+        config = convert_user_config_to_old_config(global_config, user_config)
+
+        # Create logger
+        logger = create_logger(global_config)
+
+        with logging_redirect_tqdm():
+            status_exchange = StatusExchange()
+
+            # Set up password providers with proper function replacements
+            if "webui" in config.password_providers:
+                config.password_providers["webui"] = (
+                    partial(get_password_from_webui, logger, status_exchange),
+                    partial(update_password_status_in_webui, status_exchange),
+                )
+
+            if "keyring" in config.password_providers:
+                config.password_providers["keyring"] = (
+                    get_password_from_keyring,
+                    keyring_password_writter(logger),
+                )
+
+            config.password_providers = config.password_providers
+            status_exchange.set_config(config)
+
+            # Start web server if needed
+            if config.mfa_provider == MFAProvider.WEBUI or "webui" in config.password_providers:
+                server_thread = Thread(
+                    target=serve_app, daemon=True, args=[logger, status_exchange]
+                )
+                server_thread.start()
+
+            # Set up filename processors directly since we don't have click context
+            # redefining typed vars instead of using in ternary directly is a mypy hack
+            r: Callable[[str], str] = remove_unicode_chars
+            i: Callable[[str], str] = identity
+            filename_cleaner = compose(
+                (r if not user_config.keep_unicode_in_filenames else i),
+                clean_filename,
+            )
+
+            # Set up live photo filename generator directly
+            lp_filename_generator = (
+                lp_filename_original
+                if user_config.live_photo_mov_filename_policy.value == "original"
+                else lp_filename_concatinator
+            )
+
+            # Set up function builders
+            passer = partial(
+                where_builder,
+                logger,
+                config.skip_videos,
+                config.skip_created_before,
+                config.skip_created_after,
+                config.skip_photos,
+            )
+
+            downloader = (
+                partial(
+                    download_builder,
+                    logger,
+                    config.folder_structure,
+                    config.directory,
+                    config.size,
+                    config.force_size,
+                    config.only_print_filenames,
+                    config.set_exif_datetime,
+                    config.skip_live_photos,
+                    config.live_photo_size,
+                    config.dry_run,
+                    config.file_match_policy,
+                    config.xmp_sidecar,
+                )
+                if config.directory is not None
+                else (lambda _s, _c, _p: False)
+            )
+
+            notificator = partial(
+                notificator_builder,
+                logger,
+                config.username,
+                config.smtp_username,
+                user_config.smtp_password,  # This was missing from conversion
+                config.smtp_host,
+                config.smtp_port,
+                config.smtp_no_tls,
+                config.notification_email,
+                config.notification_email_from,
+                config.notification_script,
+            )
+
+            # Run the core logic
+            result = core(
+                logger,
+                status_exchange,
+                passer,
+                downloader,
+                notificator,
+                filename_cleaner,
+                lp_filename_generator,
+            )
+
+            # If any user config fails, return the error code
+            if result != 0:
+                return result
+
     return 0
 
 
