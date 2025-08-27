@@ -9,7 +9,9 @@ from unittest import TestCase
 
 import pytest
 
-from icloudpd.cli import Config, GlobalConfig, format_help, parse
+from icloudpd.cli import format_help, parse
+from icloudpd.config import GlobalConfig, UserConfig
+from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -135,7 +137,7 @@ USER options. Can be specified for setting user config only.
                     version=False,
                     use_os_locale=False,
                     only_print_filenames=False,
-                    log_level="debug",
+                    log_level=LogLevel.DEBUG,
                     no_progress_bar=False,
                     threads_num=1,
                     domain="com",
@@ -159,7 +161,7 @@ USER options. Can be specified for setting user config only.
                     version=False,
                     use_os_locale=False,
                     only_print_filenames=False,
-                    log_level="debug",
+                    log_level=LogLevel.DEBUG,
                     no_progress_bar=False,
                     threads_num=1,
                     domain="com",
@@ -192,7 +194,7 @@ USER options. Can be specified for setting user config only.
                     version=False,
                     use_os_locale=False,
                     only_print_filenames=False,
-                    log_level="debug",
+                    log_level=LogLevel.DEBUG,
                     no_progress_bar=False,
                     threads_num=1,
                     domain="com",
@@ -212,7 +214,7 @@ USER options. Can be specified for setting user config only.
                     version=True,
                     use_os_locale=True,
                     only_print_filenames=False,
-                    log_level="debug",
+                    log_level=LogLevel.DEBUG,
                     no_progress_bar=False,
                     threads_num=1,
                     domain="com",
@@ -238,7 +240,7 @@ USER options. Can be specified for setting user config only.
                     version=False,
                     use_os_locale=False,
                     only_print_filenames=False,
-                    log_level="debug",
+                    log_level=LogLevel.DEBUG,
                     no_progress_bar=False,
                     threads_num=1,
                     domain="com",
@@ -251,7 +253,7 @@ USER options. Can be specified for setting user config only.
                     mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [
-                    Config(
+                    UserConfig(
                         directory="abc",
                         username="u1",
                         auth_only=False,
@@ -291,7 +293,7 @@ USER options. Can be specified for setting user config only.
                         skip_created_after=None,
                         skip_photos=False,
                     ),
-                    Config(
+                    UserConfig(
                         directory="def",
                         auth_only=False,
                         cookie_directory="~/.pyicloud",
@@ -354,7 +356,7 @@ USER options. Can be specified for setting user config only.
                     version=False,
                     use_os_locale=False,
                     only_print_filenames=False,
-                    log_level="debug",
+                    log_level=LogLevel.DEBUG,
                     no_progress_bar=False,
                     threads_num=1,
                     domain="com",
@@ -367,7 +369,7 @@ USER options. Can be specified for setting user config only.
                     mfa_provider=MFAProvider.CONSOLE,
                 ),
                 [
-                    Config(
+                    UserConfig(
                         directory="abc",
                         username="u1",
                         auth_only=False,

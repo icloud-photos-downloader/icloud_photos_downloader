@@ -3,7 +3,6 @@ import copy
 import datetime
 import pathlib
 import sys
-from dataclasses import dataclass
 from itertools import dropwhile
 from operator import eq, not_
 from typing import Any, Callable, Iterable, Sequence, Tuple
@@ -12,7 +11,9 @@ from tzlocal import get_localzone
 
 import foundation
 from foundation.core import chain_from_iterable, compose, map_, partial_1_1, skip
-from icloudpd.base import ensure_tzinfo
+from icloudpd.base import ensure_tzinfo, run_with_configs
+from icloudpd.config import GlobalConfig, UserConfig
+from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.string_helpers import lower, parse_timestamp_or_timedelta, splitlines
@@ -117,7 +118,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "--folder-structure",
         help="Folder structure. If set to `none` all photos will just be placed into the download directory. Default: %(default)s",
         default="{:%Y/%m/%d}",
-        type=str,
+        type=validate_folder_structure,
     )
     cloned.add_argument(
         "--set-exif-datetime",
@@ -293,6 +294,7 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         help="Log level. Default: %(default)s",
         choices=["debug", "info", "error"],
         default="debug",
+        type=lower,
     )
     cloned.add_argument(
         "--no-progress-bar",
@@ -341,6 +343,17 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         type=lower,
     )
     return cloned
+
+
+def log_level(inp: str) -> LogLevel:
+    if inp == "debug":
+        return LogLevel.DEBUG
+    elif inp == "info":
+        return LogLevel.INFO
+    elif inp == "error":
+        return LogLevel.ERROR
+    else:
+        raise argparse.ArgumentTypeError(f"Unsupported log level {inp}")
 
 
 def parse_timestamp_or_timedelta_tz_error(
@@ -399,69 +412,8 @@ def format_help() -> str:
     return "\n".join(all_help)
 
 
-@dataclass(kw_only=True)
-class _DefaultConfig:
-    directory: str
-    auth_only: bool
-    cookie_directory: str
-    sizes: Sequence[AssetVersionSize]
-    live_photo_size: LivePhotoVersionSize
-    recent: int | None
-    until_found: int | None
-    albums: Sequence[str]
-    list_albums: bool
-    library: str
-    list_libraries: bool
-    skip_videos: bool
-    skip_live_photos: bool
-    xmp_sidecar: bool
-    force_size: bool
-    auto_delete: bool
-    folder_structure: str
-    set_exif_datetime: bool
-    smtp_username: str | None
-    smtp_password: str | None
-    smtp_host: str
-    smtp_port: int
-    smtp_no_tls: bool
-    notification_email: str | None
-    notification_email_from: str | None
-    notification_script: pathlib.Path | None
-    delete_after_download: bool
-    keep_icloud_recent_days: int | None
-    dry_run: bool
-    keep_unicode_in_filenames: bool
-    live_photo_mov_filename_policy: LivePhotoMovFilenamePolicy
-    align_raw: RawTreatmentPolicy
-    file_match_policy: FileMatchPolicy
-    skip_created_before: datetime.datetime | datetime.timedelta | None
-    skip_created_after: datetime.datetime | datetime.timedelta | None
-    skip_photos: bool
-
-
-@dataclass(kw_only=True)
-class Config(_DefaultConfig):
-    username: str
-    password: str | None
-
-
-@dataclass(kw_only=True)
-class GlobalConfig:
-    help: bool
-    version: bool
-    use_os_locale: bool
-    only_print_filenames: bool
-    log_level: str
-    no_progress_bar: bool
-    threads_num: int
-    domain: str
-    watch_with_interval: int | None
-    password_providers: Sequence[PasswordProvider]
-    mfa_provider: MFAProvider
-
-
-def map_to_config(user_ns: argparse.Namespace) -> Config:
-    return Config(
+def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
+    return UserConfig(
         username=user_ns.username,
         password=user_ns.password,
         directory=user_ns.directory,
@@ -507,7 +459,7 @@ def map_to_config(user_ns: argparse.Namespace) -> Config:
     )
 
 
-def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
+def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
     # default --help
     if len(args) == 0:
         args = ["--help"]
@@ -541,7 +493,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[Config]]:
             version=global_ns.version,
             use_os_locale=global_ns.use_os_locale,
             only_print_filenames=global_ns.only_print_filenames,
-            log_level=global_ns.log_level,
+            log_level=log_level(global_ns.log_level),
             no_progress_bar=global_ns.no_progress_bar,
             threads_num=global_ns.threads_num,
             domain=global_ns.domain,
@@ -631,7 +583,17 @@ def cli() -> int:
             )
             return 2
         else:
-            print(f"global_ns={global_ns}")
-            for user_ns in user_nses:
-                print(f"user_ns={user_ns}")
-    return 0
+            return run_with_configs(global_ns, user_nses)
+
+
+def validate_folder_structure(folder_structure: str) -> str:
+    if lower(folder_structure) == "none":
+        return "none"
+    else:
+        try:
+            folder_structure.format(datetime.datetime.now())
+            return folder_structure
+        except:  # noqa E722
+            raise argparse.ArgumentTypeError(
+                f"Format {folder_structure} specified in --folder-structure is incorrect"
+            ) from None

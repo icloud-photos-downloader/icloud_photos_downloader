@@ -15,6 +15,7 @@ from urllib3.exceptions import NewConnectionError
 
 import foundation
 from foundation.core import compose, constant, identity, map_, partial_1_1
+from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
@@ -53,7 +54,7 @@ from tzlocal import get_localzone
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.config import Config
+from icloudpd.config import Config, GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
@@ -690,6 +691,61 @@ def main(
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
+    if skip_videos and skip_photos:
+        print("Only one of --skip-videos and --skip-photos can be used at a time")
+        sys.exit(2)
+
+    # check required directory param only if not list albums
+    if not list_albums and not list_libraries and not directory and not auth_only:
+        print("--auth-only, --directory, --list-libraries or --list-albums are required")
+        sys.exit(2)
+
+    if auto_delete and delete_after_download:
+        print("--auto-delete and --delete-after-download are mutually exclusive")
+        sys.exit(2)
+
+    if keep_icloud_recent_days and delete_after_download:
+        print("--keep-icloud-recent-days and --delete-after-download should not be used together.")
+        sys.exit(2)
+
+    if watch_with_interval and (
+        list_albums or only_print_filenames or auth_only or list_libraries
+    ):  # pragma: no cover
+        print(
+            "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, --auth-only"
+        )
+        sys.exit(2)
+
+    # hacky way to use one param in another
+    if password and "parameter" in password_providers:
+        # replace
+        password_providers["parameter"] = (constant(password), lambda _r, _w: None)
+
+    if len(password_providers) == 0:  # pragma: no cover
+        print("You need to specify at least one --password-provider")
+        sys.exit(2)
+
+    if "console" in password_providers and "webui" in password_providers:
+        print("Console and webui are not compatible in --password-provider")
+        sys.exit(2)
+
+    if "console" in password_providers and list(password_providers)[-1] != "console":
+        print("Console must be the last --password-provider")
+        sys.exit(2)
+
+    if "webui" in password_providers and list(password_providers)[-1] != "webui":
+        print("Webui must be the last --password-provider")
+        sys.exit(2)
+
+    if folder_structure != "none":
+        try:
+            folder_structure.format(datetime.datetime.now())
+        except:  # noqa E722
+            print("Format specified in --folder-structure is incorrect")
+            sys.exit(2)
+
+    # parameter cross checking is complete, startign setup and execution
+
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -710,61 +766,6 @@ def main(
             logger.setLevel(logging.ERROR)
 
     with logging_redirect_tqdm():
-        if skip_videos and skip_photos:
-            print("Only one of --skip-videos and --skip-photos can be used at a time")
-            sys.exit(2)
-
-        # check required directory param only if not list albums
-        if not list_albums and not list_libraries and not directory and not auth_only:
-            print("--auth-only, --directory, --list-libraries or --list-albums are required")
-            sys.exit(2)
-
-        if auto_delete and delete_after_download:
-            print("--auto-delete and --delete-after-download are mutually exclusive")
-            sys.exit(2)
-
-        if keep_icloud_recent_days and delete_after_download:
-            print(
-                "--keep-icloud-recent-days and --delete-after-download should not be used together."
-            )
-            sys.exit(2)
-
-        if watch_with_interval and (
-            list_albums or only_print_filenames or auth_only or list_libraries
-        ):  # pragma: no cover
-            print(
-                "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, --auth-only"
-            )
-            sys.exit(2)
-
-        # hacky way to use one param in another
-        if password and "parameter" in password_providers:
-            # replace
-            password_providers["parameter"] = (constant(password), lambda _r, _w: None)
-
-        if len(password_providers) == 0:  # pragma: no cover
-            print("You need to specify at least one --password-provider")
-            sys.exit(2)
-
-        if "console" in password_providers and "webui" in password_providers:
-            print("Console and webui are not compatible in --password-provider")
-            sys.exit(2)
-
-        if "console" in password_providers and list(password_providers)[-1] != "console":
-            print("Console must be the last --password-provider")
-            sys.exit(2)
-
-        if "webui" in password_providers and list(password_providers)[-1] != "webui":
-            print("Webui must be the last --password-provider")
-            sys.exit(2)
-
-        if folder_structure != "none":
-            try:
-                folder_structure.format(datetime.datetime.now())
-            except:  # noqa E722
-                print("Format specified in --folder-structure is incorrect")
-                sys.exit(2)
-
         status_exchange = StatusExchange()
 
         # hacky way to use one param in another
@@ -885,6 +886,40 @@ def main(
             lp_filename_generator,
         )
         sys.exit(result)
+
+
+def create_logger(config: GlobalConfig) -> logging.Logger:
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        stream=sys.stdout,
+    )
+    logger = logging.getLogger("icloudpd")
+    if config.only_print_filenames:
+        logger.disabled = True
+    else:
+        # Need to make sure disabled is reset to the correct value,
+        # because the logger instance is shared between tests.
+        logger.disabled = False
+        if config.log_level == LogLevel.DEBUG:
+            logger.setLevel(logging.DEBUG)
+        elif config.log_level == LogLevel.INFO:
+            logger.setLevel(logging.INFO)
+        elif config.log_level == LogLevel.ERROR:
+            logger.setLevel(logging.ERROR)
+        else:
+            # Developer's error - not an exhaustive match
+            raise ValueError(f"Unsupported logging level {config.log_level}")
+    return logger
+
+
+def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
+    _logger = create_logger(global_config)
+    with logging_redirect_tqdm():
+        print(f"global_ns={global_config}")
+        for user_config in user_configs:
+            print(f"user_ns={user_config}")
+    return 0
 
 
 def notificator_builder(
