@@ -61,8 +61,9 @@ class CliTestCase(TestCase):
         self.assertIn("Show this info", result)
         self.assertIn("Show the version, commit hash and timestamp", result)
         self.assertIn("AppleID email address. Starts new configuration group.", result)
-        # Directory option exists (may not have detailed description)
-        self.assertIn("-d DIRECTORY, --directory DIRECTORY", result)
+        # Directory option exists with proper help text
+        self.assertIn("-d, --directory DIRECTORY", result)
+        self.assertIn("Local directory that should be used for download", result)
 
     def test_cli_parser(self) -> None:
         self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
