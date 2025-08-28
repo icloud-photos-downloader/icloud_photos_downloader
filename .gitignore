@@ -25,3 +25,5 @@ node_modules/
 # used for local troubleshooting
 .photos
 .cookies/
+
+.claude/
