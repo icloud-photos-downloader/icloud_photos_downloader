@@ -61,8 +61,12 @@ class CliTestCase(TestCase):
         self.assertIn("Show this info", result)
         self.assertIn("Show the version, commit hash and timestamp", result)
         self.assertIn("AppleID email address. Starts new configuration group.", result)
-        # Directory option exists with proper help text
-        self.assertIn("-d, --directory DIRECTORY", result)
+        # Directory option exists with proper help text (format varies by Python version)
+        self.assertTrue(
+            "-d, --directory DIRECTORY" in result
+            or "-d DIRECTORY, --directory DIRECTORY" in result,
+            f"Expected directory option format not found in help text",
+        )
         self.assertIn("Local directory that should be used for download", result)
 
     def test_cli_parser(self) -> None:
