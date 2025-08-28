@@ -12,7 +12,9 @@ cron_script.sh
 .coverage
 .coverage.*
 .git
-tests/
 .venv
 venv
 create/
+Dockerfile.test-py310
+.dockerignore.test
+check_py310_compat.py

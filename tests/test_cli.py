@@ -65,7 +65,7 @@ class CliTestCase(TestCase):
         self.assertTrue(
             "-d, --directory DIRECTORY" in result
             or "-d DIRECTORY, --directory DIRECTORY" in result,
-            f"Expected directory option format not found in help text",
+            "Expected directory option format not found in help text",
         )
         self.assertIn("Local directory that should be used for download", result)
 

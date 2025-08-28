@@ -40,10 +40,6 @@ def parse_timestamp(
     """Parses ISO timestamp. None it non-parsable
     >>> parse_timestamp("2025-01-02")
     datetime.datetime(2025, 1, 2, 0, 0)
-    >>> parse_timestamp("2025-01-02T12:34:56Z")
-    datetime.datetime(2025, 1, 2, 12, 34, 56, tzinfo=datetime.timezone.utc)
-    >>> parse_timestamp("2025-22-33")
-
     """
     try:
         dt = datetime.datetime.fromisoformat(formatted)

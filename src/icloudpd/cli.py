@@ -35,7 +35,12 @@ def map_align_raw_to_enum(align_raw_str: str) -> RawTreatmentPolicy:
 
 def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
-    cloned.add_argument("-d", "--directory", metavar="DIRECTORY", help="Local directory that should be used for download")
+    cloned.add_argument(
+        "-d",
+        "--directory",
+        metavar="DIRECTORY",
+        help="Local directory that should be used for download",
+    )
     cloned.add_argument(
         "--auth-only", action="store_true", help="Create/Update cookie and session tokens only."
     )
