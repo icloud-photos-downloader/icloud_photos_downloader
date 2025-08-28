@@ -2,6 +2,7 @@
 
 import datetime
 import re
+from typing import Sequence
 
 
 def truncate_middle(string: str, length: int) -> str:
@@ -21,6 +22,12 @@ def truncate_middle(string: str, length: int) -> str:
 def parse_timedelta(
     formatted: str,
 ) -> datetime.timedelta | None:
+    """Parses timedelta days. None if non-parsable
+    >>> parse_timedelta("2d")
+    datetime.timedelta(days=2)
+    >>> parse_timedelta("2d")
+    datetime.timedelta(days=2)
+    """
     m = re.match(r"(\d+)([dD]{1})", formatted)
     if m is not None and m.lastindex is not None and m.lastindex == 2:
         return datetime.timedelta(days=float(m.group(1)))
@@ -30,6 +37,10 @@ def parse_timedelta(
 def parse_timestamp(
     formatted: str,
 ) -> datetime.datetime | None:
+    """Parses ISO timestamp. None it non-parsable
+    >>> parse_timestamp("2025-01-02")
+    datetime.datetime(2025, 1, 2, 0, 0)
+    """
     try:
         dt = datetime.datetime.fromisoformat(formatted)
         return dt
@@ -40,7 +51,21 @@ def parse_timestamp(
 def parse_timestamp_or_timedelta(
     formatted: str,
 ) -> datetime.datetime | datetime.timedelta | None:
+    """parses ISO datetime and time interval params. Returns None if non-parsable"""
+
     p1 = parse_timedelta(formatted)
     if p1 is None:
         return parse_timestamp(formatted)
     return p1
+
+
+def lower(inp: str) -> str:
+    """point-free version to lower the case of the string
+    >>> lower("AbCdEf")
+    'abcdef'
+    """
+    return inp.lower()
+
+
+def splitlines(inp: str) -> Sequence[str]:
+    return inp.splitlines()

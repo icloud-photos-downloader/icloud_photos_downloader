@@ -291,7 +291,6 @@ jobs:
       run: |
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
-        mv dist/icloudpd_ex dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -542,7 +541,6 @@ jobs:
       run: |
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
-        mv dist/icloudpd_ex dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
@@ -583,10 +581,8 @@ jobs:
       run: |
         scripts/build_bin2 icloudpd icloud  && \
         scripts/build_bin1 icloud && \
-        scripts/build_bin1 icloudpd_ex  && \
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && \
-        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && \
-        mv dist/icloudpd_ex dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64
+        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64
 
     - name: Build Python Binary Wheel
       run: |
@@ -631,10 +627,8 @@ jobs:
       run: |
         scripts/build_bin2 icloudpd icloud  && \
         scripts/build_bin1 icloud && \
-        scripts/build_bin1 icloudpd_ex  && \
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-windows-amd64 && \
-        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-windows-amd64 && \
-        mv dist/icloudpd_ex dist/icloudpd-ex-${{inputs.icloudpd_version}}-windows-amd64
+        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-windows-amd64
 
     - name: Build Python Binary Wheel
       run: |
@@ -1450,13 +1444,10 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloud..." && 
             dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1489,7 +1480,6 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
             cat .result &&
@@ -1644,13 +1634,10 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             echo "test icloud..." && 
             dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
             touch /work/compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1683,7 +1670,6 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
             cat .result &&
@@ -1835,13 +1821,10 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloud..." && 
             dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
             touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -1875,7 +1858,6 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
             cat .result &&
@@ -2027,13 +2009,10 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             echo "test icloud..." && 
             dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
             echo "test icloudpd..." && 
             dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd-ex..." && 
-            dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
             touch /work/compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
   
       - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
@@ -2067,7 +2046,6 @@ jobs:
             cd /work && 
             chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
             echo "test icloudpd..." && 
             TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
             cat .result &&
@@ -2129,13 +2107,10 @@ jobs:
           echo "prep test..." && 
           chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
-          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
           echo "test icloud..." && 
           dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --version && 
-          echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 --version && 
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 
@@ -2158,7 +2133,6 @@ jobs:
           echo "prep test..." && 
           chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
           chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
-          chmod +x dist/icloudpd-ex-${{inputs.icloudpd_version}}-macos-amd64 && 
           echo "test icloudpd..." && 
           TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --use-os-locale --version 1>.result && 
           cat .result &&
@@ -2216,8 +2190,7 @@ jobs:
           dist/icloud-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
           echo "test icloudpd..." && 
           dist/icloudpd-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
-          echo "test icloudpd-ex..." && 
-          dist/icloudpd-ex-${{inputs.icloudpd_version}}-${{ matrix.prop[1] }}-amd64.exe --version && 
+ 
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.pass 
  
       - name: Record failure for ${{ matrix.prop[0] }} on amd64 

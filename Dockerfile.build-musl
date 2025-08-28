@@ -50,7 +50,6 @@ RUN \
     . .venv/bin/activate && \
     scripts/build_bin2 icloudpd icloud  && \
     scripts/build_bin1 icloud && \
-    scripts/build_bin1 icloudpd_ex  && \
     scripts/build_whl
 
 FROM scratch

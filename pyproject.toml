@@ -86,7 +86,7 @@ test = [
 Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
 
 [project.scripts]
-icloudpd = "icloudpd.base:main"
+icloudpd = "icloudpd.cli:cli"
 icloud = "pyicloud_ipd.cmdline:main"
 
 [tool.pytest.ini_options]

@@ -649,7 +649,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     "IMG_7408_QVI4T2l.MOV",
                     "IMG_7407_QVovd0F.MOV",
                 ]:
-                    for size in ["originalVideo"]:
+                    for size in ["original"]:
                         self.assertEqual(
                             sum(
                                 1

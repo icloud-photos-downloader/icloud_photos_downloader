@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from icloudpd.base import main
+from icloudpd.cli import cli
 
 if __name__ == "__main__":
-    main()
+    cli()

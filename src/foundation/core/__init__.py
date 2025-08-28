@@ -1,4 +1,4 @@
-from itertools import chain, tee, zip_longest
+from itertools import chain, islice, tee, zip_longest
 from typing import Callable, Iterable, Tuple, TypeGuard, TypeVar
 
 _T_contra = TypeVar("_T_contra", contravariant=True)
@@ -324,3 +324,26 @@ def unzip(
 
 def chain_from_iterable(inp: Iterable[Iterable[_T_inv]]) -> Iterable[_T_inv]:
     return chain.from_iterable(inp)
+
+
+def skip(inp: int, p1: Iterable[_T_co]) -> Iterable[_T_co]:
+    """
+    typed islice with start
+
+    Equiv: itertools.islice
+    >>> list(skip(3, [1, 2, 3, 4, 5]))
+    [4, 5]
+    """
+    return islice(p1, inp, None)
+
+
+def take(inp: int, p1: Iterable[_T_co]) -> Iterable[_T_co]:
+    """
+    typed islice with stop
+
+    Equiv: itertools.islice
+    >>> list(take(3, [1, 2, 3, 4, 5]))
+    [1, 2, 3]
+    """
+
+    return islice(p1, None, inp)

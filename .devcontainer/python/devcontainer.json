@@ -7,7 +7,7 @@
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
 	},
-	"postCreateCommand": "sudo apt-get update && sudo apt-get install -y locales-all"
+	"postCreateCommand": "sudo apt-get update && sudo apt-get install -y locales-all && (curl -fsSL https://claude.ai/install.sh | bash)"
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},

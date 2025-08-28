@@ -15,6 +15,7 @@ from urllib3.exceptions import NewConnectionError
 
 import foundation
 from foundation.core import compose, constant, identity, map_, partial_1_1
+from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
@@ -53,7 +54,7 @@ from tzlocal import get_localzone
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.config import Config
+from icloudpd.config import Config, GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
@@ -288,6 +289,7 @@ def skip_created_after_generator(
 def skip_created_generator(
     name: str, formatted: str
 ) -> datetime.datetime | datetime.timedelta | None:
+    """Converts ISO dates to datetime and interval in days to timeinterval using supplied name as part of raised exception in case of the error"""
     if formatted is None:
         return None
     result = parse_timestamp_or_timedelta(formatted)
@@ -689,6 +691,61 @@ def main(
 ) -> NoReturn:
     """Download all iCloud photos to a local directory"""
 
+    if skip_videos and skip_photos:
+        print("Only one of --skip-videos and --skip-photos can be used at a time")
+        sys.exit(2)
+
+    # check required directory param only if not list albums
+    if not list_albums and not list_libraries and not directory and not auth_only:
+        print("--auth-only, --directory, --list-libraries or --list-albums are required")
+        sys.exit(2)
+
+    if auto_delete and delete_after_download:
+        print("--auto-delete and --delete-after-download are mutually exclusive")
+        sys.exit(2)
+
+    if keep_icloud_recent_days and delete_after_download:
+        print("--keep-icloud-recent-days and --delete-after-download should not be used together.")
+        sys.exit(2)
+
+    if watch_with_interval and (
+        list_albums or only_print_filenames or auth_only or list_libraries
+    ):  # pragma: no cover
+        print(
+            "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, --auth-only"
+        )
+        sys.exit(2)
+
+    # hacky way to use one param in another
+    if password and "parameter" in password_providers:
+        # replace
+        password_providers["parameter"] = (constant(password), lambda _r, _w: None)
+
+    if len(password_providers) == 0:  # pragma: no cover
+        print("You need to specify at least one --password-provider")
+        sys.exit(2)
+
+    if "console" in password_providers and "webui" in password_providers:
+        print("Console and webui are not compatible in --password-provider")
+        sys.exit(2)
+
+    if "console" in password_providers and list(password_providers)[-1] != "console":
+        print("Console must be the last --password-provider")
+        sys.exit(2)
+
+    if "webui" in password_providers and list(password_providers)[-1] != "webui":
+        print("Webui must be the last --password-provider")
+        sys.exit(2)
+
+    if folder_structure != "none":
+        try:
+            folder_structure.format(datetime.datetime.now())
+        except:  # noqa E722
+            print("Format specified in --folder-structure is incorrect")
+            sys.exit(2)
+
+    # parameter cross checking is complete, startign setup and execution
+
     logging.basicConfig(
         format="%(asctime)s %(levelname)-8s %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -709,61 +766,6 @@ def main(
             logger.setLevel(logging.ERROR)
 
     with logging_redirect_tqdm():
-        if skip_videos and skip_photos:
-            print("Only one of --skip-videos and --skip-photos can be used at a time")
-            sys.exit(2)
-
-        # check required directory param only if not list albums
-        if not list_albums and not list_libraries and not directory and not auth_only:
-            print("--auth-only, --directory, --list-libraries or --list-albums are required")
-            sys.exit(2)
-
-        if auto_delete and delete_after_download:
-            print("--auto-delete and --delete-after-download are mutually exclusive")
-            sys.exit(2)
-
-        if keep_icloud_recent_days and delete_after_download:
-            print(
-                "--keep-icloud-recent-days and --delete-after-download should not be used together."
-            )
-            sys.exit(2)
-
-        if watch_with_interval and (
-            list_albums or only_print_filenames or auth_only or list_libraries
-        ):  # pragma: no cover
-            print(
-                "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, --auth-only"
-            )
-            sys.exit(2)
-
-        # hacky way to use one param in another
-        if password and "parameter" in password_providers:
-            # replace
-            password_providers["parameter"] = (constant(password), lambda _r, _w: None)
-
-        if len(password_providers) == 0:  # pragma: no cover
-            print("You need to specify at least one --password-provider")
-            sys.exit(2)
-
-        if "console" in password_providers and "webui" in password_providers:
-            print("Console and webui are not compatible in --password-provider")
-            sys.exit(2)
-
-        if "console" in password_providers and list(password_providers)[-1] != "console":
-            print("Console must be the last --password-provider")
-            sys.exit(2)
-
-        if "webui" in password_providers and list(password_providers)[-1] != "webui":
-            print("Webui must be the last --password-provider")
-            sys.exit(2)
-
-        if folder_structure != "none":
-            try:
-                folder_structure.format(datetime.datetime.now())
-            except:  # noqa E722
-                print("Format specified in --folder-structure is incorrect")
-                sys.exit(2)
-
         status_exchange = StatusExchange()
 
         # hacky way to use one param in another
@@ -884,6 +886,307 @@ def main(
             lp_filename_generator,
         )
         sys.exit(result)
+
+
+def create_logger(config: GlobalConfig) -> logging.Logger:
+    logging.basicConfig(
+        format="%(asctime)s %(levelname)-8s %(message)s",
+        datefmt="%Y-%m-%d %H:%M:%S",
+        stream=sys.stdout,
+    )
+    logger = logging.getLogger("icloudpd")
+    if config.only_print_filenames:
+        logger.disabled = True
+    else:
+        # Need to make sure disabled is reset to the correct value,
+        # because the logger instance is shared between tests.
+        logger.disabled = False
+        if config.log_level == LogLevel.DEBUG:
+            logger.setLevel(logging.DEBUG)
+        elif config.log_level == LogLevel.INFO:
+            logger.setLevel(logging.INFO)
+        elif config.log_level == LogLevel.ERROR:
+            logger.setLevel(logging.ERROR)
+        else:
+            # Developer's error - not an exhaustive match
+            raise ValueError(f"Unsupported logging level {config.log_level}")
+    return logger
+
+
+def convert_user_config_to_old_config(
+    global_config: GlobalConfig, user_config: UserConfig
+) -> Config:
+    """Convert new UserConfig and GlobalConfig to old Config format"""
+
+    # Convert password providers from enum list to old dict format
+    password_providers_dict: Dict[
+        str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+    ] = {}
+    for provider in global_config.password_providers:
+        if provider.value == "webui":
+            # webui will be replaced in main() with actual functions
+            password_providers_dict[provider.value] = (
+                ask_password_in_console,
+                dummy_password_writter,
+            )
+        elif provider.value == "console":
+            password_providers_dict[provider.value] = (
+                ask_password_in_console,
+                dummy_password_writter,
+            )
+        elif provider.value == "keyring":
+            password_providers_dict[provider.value] = (
+                get_password_from_keyring,
+                dummy_password_writter,
+            )
+        elif provider.value == "parameter":
+            password_providers_dict[provider.value] = (
+                constant(user_config.password),
+                dummy_password_writter,
+            )
+
+    return Config(
+        directory=user_config.directory,
+        username=user_config.username,
+        auth_only=user_config.auth_only,
+        cookie_directory=user_config.cookie_directory,
+        primary_sizes=user_config.sizes,
+        live_photo_size=user_config.live_photo_size,
+        recent=user_config.recent,
+        until_found=user_config.until_found,
+        albums=user_config.albums,
+        list_albums=user_config.list_albums,
+        library=user_config.library,
+        list_libraries=user_config.list_libraries,
+        skip_videos=user_config.skip_videos,
+        skip_live_photos=user_config.skip_live_photos,
+        xmp_sidecar=user_config.xmp_sidecar,
+        force_size=user_config.force_size,
+        auto_delete=user_config.auto_delete,
+        only_print_filenames=global_config.only_print_filenames,
+        folder_structure=user_config.folder_structure,
+        set_exif_datetime=user_config.set_exif_datetime,
+        smtp_username=user_config.smtp_username,
+        smtp_host=user_config.smtp_host,
+        smtp_port=user_config.smtp_port,
+        smtp_no_tls=user_config.smtp_no_tls,
+        notification_email=user_config.notification_email,
+        notification_email_from=user_config.notification_email_from,
+        log_level=global_config.log_level.value,  # Convert enum to string
+        no_progress_bar=global_config.no_progress_bar,
+        notification_script=str(user_config.notification_script)
+        if user_config.notification_script
+        else None,
+        threads_num=global_config.threads_num,
+        delete_after_download=user_config.delete_after_download,
+        keep_icloud_recent_days=user_config.keep_icloud_recent_days,
+        domain=global_config.domain,
+        watch_with_interval=global_config.watch_with_interval,
+        dry_run=user_config.dry_run,
+        raw_policy=user_config.align_raw,
+        password_providers=password_providers_dict,
+        file_match_policy=user_config.file_match_policy,
+        mfa_provider=global_config.mfa_provider,
+        use_os_locale=global_config.use_os_locale,
+        skip_created_before=user_config.skip_created_before,
+        skip_created_after=user_config.skip_created_after,
+        skip_photos=user_config.skip_photos,
+    )
+
+
+def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
+    """Run the application with the new configuration system"""
+
+    # Create shared logger
+    logger = create_logger(global_config)
+
+    # Create shared status exchange for web server and progress tracking
+    shared_status_exchange = StatusExchange()
+
+    # Check if any user needs web server (webui for MFA or passwords)
+    needs_web_server = global_config.mfa_provider == MFAProvider.WEBUI or any(
+        provider.value == "webui" for provider in global_config.password_providers
+    )
+
+    # Start web server ONCE if needed, outside all loops
+    if needs_web_server:
+        logger.info("Starting web server for WebUI authentication...")
+        server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange])
+        server_thread.start()
+
+    # Check if we're in watch mode
+    watch_interval = global_config.watch_with_interval
+
+    if not watch_interval:
+        # No watch mode - process each user once and exit
+        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+    else:
+        # Watch mode - infinite loop processing all users, then wait
+        skip_bar = not os.environ.get("FORCE_TQDM") and (
+            global_config.only_print_filenames
+            or global_config.no_progress_bar
+            or not sys.stdout.isatty()
+        )
+
+        while True:
+            # Process all user configs in this iteration
+            result = _process_all_users_once(
+                global_config, user_configs, logger, shared_status_exchange
+            )
+
+            # If any critical operation (auth-only, list commands) succeeded, exit
+            if result == 0:
+                first_user = user_configs[0] if user_configs else None
+                if first_user and (
+                    first_user.auth_only or first_user.list_albums or first_user.list_libraries
+                ):
+                    return 0
+
+            # Wait for the watch interval before next iteration
+            logger.info(f"Waiting for {watch_interval} sec...")
+            interval: Sequence[int] = range(1, watch_interval)
+            iterable: Sequence[int] = (
+                interval
+                if skip_bar
+                else typing.cast(
+                    Sequence[int],
+                    tqdm(
+                        iterable=interval,
+                        desc="Waiting...",
+                        ascii=True,
+                        leave=False,
+                        dynamic_ncols=True,
+                    ),
+                )
+            )
+            for counter in iterable:
+                # Update shared status exchange with wait progress
+                shared_status_exchange.get_progress().waiting = watch_interval - counter
+                if shared_status_exchange.get_progress().resume:
+                    shared_status_exchange.get_progress().reset()
+                    break
+                time.sleep(1)
+
+
+def _process_all_users_once(
+    global_config: GlobalConfig,
+    user_configs: Sequence[UserConfig],
+    logger: logging.Logger,
+    shared_status_exchange: StatusExchange,
+) -> int:
+    """Process all user configs once (used by both single run and watch mode)"""
+
+    for user_config in user_configs:
+        # Convert to old config format, but disable watch at individual level
+        config = convert_user_config_to_old_config(global_config, user_config)
+        # Important: Clear watch interval for individual user runs since we handle it at the top level
+        config.watch_with_interval = None
+
+        with logging_redirect_tqdm():
+            # Use shared status exchange instead of creating new ones per user
+            status_exchange = shared_status_exchange
+
+            # Set up password providers with proper function replacements
+            if "webui" in config.password_providers:
+                config.password_providers["webui"] = (
+                    partial(get_password_from_webui, logger, status_exchange),
+                    partial(update_password_status_in_webui, status_exchange),
+                )
+
+            if "keyring" in config.password_providers:
+                config.password_providers["keyring"] = (
+                    get_password_from_keyring,
+                    keyring_password_writter(logger),
+                )
+
+            config.password_providers = config.password_providers
+            status_exchange.set_config(config)
+
+            # Web server is now started once outside the user loop - no need to start it here
+
+            # Set up filename processors directly since we don't have click context
+            # redefining typed vars instead of using in ternary directly is a mypy hack
+            r: Callable[[str], str] = remove_unicode_chars
+            i: Callable[[str], str] = identity
+            filename_cleaner = compose(
+                (r if not user_config.keep_unicode_in_filenames else i),
+                clean_filename,
+            )
+
+            # Set up live photo filename generator directly
+            lp_filename_generator = (
+                lp_filename_original
+                if user_config.live_photo_mov_filename_policy.value == "original"
+                else lp_filename_concatinator
+            )
+
+            # Set up function builders
+            passer = partial(
+                where_builder,
+                logger,
+                config.skip_videos,
+                config.skip_created_before,
+                config.skip_created_after,
+                config.skip_photos,
+            )
+
+            downloader = (
+                partial(
+                    download_builder,
+                    logger,
+                    config.folder_structure,
+                    config.directory,
+                    config.size,
+                    config.force_size,
+                    config.only_print_filenames,
+                    config.set_exif_datetime,
+                    config.skip_live_photos,
+                    config.live_photo_size,
+                    config.dry_run,
+                    config.file_match_policy,
+                    config.xmp_sidecar,
+                )
+                if config.directory is not None
+                else (lambda _s, _c, _p: False)
+            )
+
+            notificator = partial(
+                notificator_builder,
+                logger,
+                config.username,
+                config.smtp_username,
+                user_config.smtp_password,  # This was missing from conversion
+                config.smtp_host,
+                config.smtp_port,
+                config.smtp_no_tls,
+                config.notification_email,
+                config.notification_email_from,
+                config.notification_script,
+            )
+
+            # Use core_single_run since we've disabled watch at this level
+            logger.info(f"Processing user: {config.username}")
+            result = core_single_run(
+                logger,
+                status_exchange,
+                passer,
+                downloader,
+                notificator,
+                filename_cleaner,
+                lp_filename_generator,
+            )
+
+            # If any user config fails and we're not in watch mode, return the error code
+            if result != 0:
+                if not global_config.watch_with_interval:
+                    return result
+                else:
+                    # In watch mode, log error and continue with next user
+                    logger.error(
+                        f"Error processing user {config.username}, continuing with next user..."
+                    )
+
+    return 0
 
 
 def notificator_builder(
@@ -1282,7 +1585,7 @@ def asset_type_skip_message(photo: PhotoAsset) -> str:
     return f"Skipping {photo.filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
 
-def core(
+def core_single_run(
     logger: logging.Logger,
     status_exchange: StatusExchange,
     passer: Callable[[PhotoAsset], bool],
@@ -1291,7 +1594,7 @@ def core(
     filename_cleaner: Callable[[str], str],
     lp_filename_generator: Callable[[str], str],
 ) -> int:
-    """Download all iCloud photos to a local directory"""
+    """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
     config = status_exchange.get_config()
     if not config:
@@ -1301,7 +1604,7 @@ def core(
     skip_bar = not os.environ.get("FORCE_TQDM") and (
         config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
     )
-    while True:  # watch with interval & retry
+    while True:  # retry loop (not watch - only for immediate retries)
         captured_responses: List[Mapping[str, Any]] = []
 
         def append_response(captured: List[Mapping[str, Any]], response: Mapping[str, Any]) -> None:
@@ -1609,11 +1912,8 @@ def core(
                     pass
             else:
                 pass
-            # it not watching then return error
-            if not config.watch_with_interval:
-                return 1
-            else:
-                pass
+            # In single run mode, return error after webui retry attempts
+            return 1
         except (ConnectionError, TimeoutError, Timeout, NewConnectionError) as _error:
             logger.info("Cannot connect to Apple iCloud service")
             dump_responses(logger.debug, captured_responses)
@@ -1629,11 +1929,8 @@ def core(
                     pass
             else:
                 pass
-            # it not watching then return error
-            if not config.watch_with_interval:
-                return 1
-            else:
-                pass
+            # In single run mode, return error after webui retry attempts
+            return 1
         except (
             ChunkedEncodingError,
             ContentDecodingError,
@@ -1648,30 +1945,80 @@ def core(
             dump_responses(logger.debug, captured_responses)
             raise
 
-        if config.watch_with_interval:  # pragma: no cover
-            logger.info(f"Waiting for {config.watch_with_interval} sec...")
-            interval: Sequence[int] = range(1, config.watch_with_interval)
-            iterable: Sequence[int] = (
-                interval
-                if skip_bar
-                else typing.cast(
-                    Sequence[int],
-                    tqdm(
-                        iterable=interval,
-                        desc="Waiting...",
-                        ascii=True,
-                        leave=False,
-                        dynamic_ncols=True,
-                    ),
-                )
-            )
-            for counter in iterable:
-                status_exchange.get_progress().waiting = config.watch_with_interval - counter
-                if status_exchange.get_progress().resume:
-                    status_exchange.get_progress().reset()
-                    break
-                time.sleep(1)
-        else:
-            break  # pragma: no cover
+        # In single run mode, we don't handle watch intervals - that's done at higher level
+        break
 
     return 0
+
+
+def core(
+    logger: logging.Logger,
+    status_exchange: StatusExchange,
+    passer: Callable[[PhotoAsset], bool],
+    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    notificator: Callable[[], None],
+    filename_cleaner: Callable[[str], str],
+    lp_filename_generator: Callable[[str], str],
+) -> int:
+    """Download all iCloud photos to a local directory (legacy function with watch loop)"""
+
+    config = status_exchange.get_config()
+    if not config:
+        raise NotImplementedError()
+
+    if not config.watch_with_interval:
+        # No watch mode, just single run
+        return core_single_run(
+            logger,
+            status_exchange,
+            passer,
+            downloader,
+            notificator,
+            filename_cleaner,
+            lp_filename_generator,
+        )
+
+    # Watch mode - infinite loop with watch intervals
+    skip_bar = not os.environ.get("FORCE_TQDM") and (
+        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
+    )
+
+    while True:
+        result = core_single_run(
+            logger,
+            status_exchange,
+            passer,
+            downloader,
+            notificator,
+            filename_cleaner,
+            lp_filename_generator,
+        )
+
+        # In watch mode, continue on errors, exit on success
+        if result == 0 and (config.auth_only or config.list_albums or config.list_libraries):
+            # Success - if we're only doing auth or listing, exit
+            return 0
+
+        # Wait for the watch interval
+        logger.info(f"Waiting for {config.watch_with_interval} sec...")
+        interval: Sequence[int] = range(1, config.watch_with_interval)
+        iterable: Sequence[int] = (
+            interval
+            if skip_bar
+            else typing.cast(
+                Sequence[int],
+                tqdm(
+                    iterable=interval,
+                    desc="Waiting...",
+                    ascii=True,
+                    leave=False,
+                    dynamic_ncols=True,
+                ),
+            )
+        )
+        for counter in iterable:
+            status_exchange.get_progress().waiting = config.watch_with_interval - counter
+            if status_exchange.get_progress().resume:
+                status_exchange.get_progress().reset()
+                break
+            time.sleep(1)
