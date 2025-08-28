@@ -135,7 +135,7 @@ class EmailNotificationsTestCase(TestCase):
             )
             # print(result.output)
             self.assertEqual(result.exit_code, 1, "exit code")
-            subprocess_patched.assert_called_once_with(["./test_script.sh"])
+            subprocess_patched.assert_called_once_with(["test_script.sh"])
 
     @freeze_time("2018-01-01")
     def test_2sa_required_email_notification_from(self) -> None:

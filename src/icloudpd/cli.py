@@ -23,6 +23,16 @@ from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
 
+def map_align_raw_to_enum(align_raw_str: str) -> RawTreatmentPolicy:
+    """Map user-friendly CLI strings to RawTreatmentPolicy enum values."""
+    mapping = {
+        "as-is": RawTreatmentPolicy.AS_IS,
+        "original": RawTreatmentPolicy.AS_ORIGINAL,
+        "alternative": RawTreatmentPolicy.AS_ALTERNATIVE,
+    }
+    return mapping[align_raw_str]
+
+
 def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
     cloned.add_argument("-d", "--directory")
@@ -451,7 +461,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy(
             user_ns.live_photo_mov_filename_policy
         ),
-        align_raw=RawTreatmentPolicy(user_ns.align_raw),
+        align_raw=map_align_raw_to_enum(user_ns.align_raw),
         file_match_policy=FileMatchPolicy(user_ns.file_match_policy),
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,

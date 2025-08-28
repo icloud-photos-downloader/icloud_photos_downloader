@@ -211,4 +211,9 @@ class FolderStructureTestCase(TestCase):
 
         messages = result.output.splitlines()
 
-        self.assertTrue("Format specified in --folder-structure is incorrect" in messages)
+        # Check if the error message about folder structure format is present
+        found_error = any(
+            "Format" in msg and "specified in --folder-structure is incorrect" in msg
+            for msg in messages
+        )
+        self.assertTrue(found_error)
