@@ -86,9 +86,8 @@ test = [
 Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
 
 [project.scripts]
-icloudpd = "icloudpd.base:main"
+icloudpd = "icloudpd.cli:cli"
 icloud = "pyicloud_ipd.cmdline:main"
-icloudpd_ex = "icloudpd.cli:cli"
 
 [tool.pytest.ini_options]
 log_format = "%(levelname)-8s %(message)s"
