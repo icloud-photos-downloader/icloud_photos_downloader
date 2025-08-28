@@ -118,30 +118,13 @@ def assert_files(
 DEFAULT_ENV: Mapping[str, str | None] = {"CLIENT_ID": "DE309E26-942E-11E8-92F5-14109FE0B321"}
 
 
-def reorder_cli_args(params: Sequence[str]) -> list[str]:
+def clean_boolean_args(params: Sequence[str]) -> list[str]:
     """
-    Reorder CLI arguments for compatibility with the CLI's argument splitting logic.
+    Clean legacy boolean argument values from CLI parameters.
 
-    The CLI uses foundation.split_with_alternatives to split args at --username boundaries,
-    then only passes the first section to the global parser. This function ensures global
-    options appear before the first --username so they are processed correctly.
+    Removes "true"/"false" values after boolean flags for backward compatibility
+    with old Click-based tests.
     """
-
-    # Global options that need to come before --username
-    global_options = {
-        "--help",
-        "-h",
-        "--version",
-        "--use-os-locale",
-        "--only-print-filenames",
-        "--log-level",
-        "--no-progress-bar",
-        "--threads-num",
-        "--domain",
-        "--watch-with-interval",
-        "--password-provider",
-        "--mfa-provider",
-    }
 
     # Boolean flags that don't take values - handle "true"/"false" cleanup
     boolean_flags = {
@@ -165,33 +148,21 @@ def reorder_cli_args(params: Sequence[str]) -> list[str]:
         "--no-progress-bar",
     }
 
-    global_args = []
-    user_args = []
-
+    cleaned_args = []
     i = 0
     while i < len(params):
         arg = params[i]
 
-        if arg in global_options:
-            global_args.append(arg)
-            # Include value for non-boolean options
-            if (
-                arg not in boolean_flags
-                and i + 1 < len(params)
-                and not params[i + 1].startswith("--")
-            ):
-                i += 1
-                global_args.append(params[i])
-        elif arg in boolean_flags:
-            user_args.append(arg)
+        if arg in boolean_flags:
+            cleaned_args.append(arg)
             # Skip legacy "true"/"false" values for boolean flags
             if i + 1 < len(params) and params[i + 1] in ("true", "false"):
                 i += 1
         else:
-            user_args.append(arg)
+            cleaned_args.append(arg)
         i += 1
 
-    return global_args + user_args
+    return cleaned_args
 
 
 def run_main_env(
@@ -244,7 +215,7 @@ def run_main_env(
                     # Mock stdin input and use main CLI function
                     original_stdin = sys.stdin
                     original_argv = sys.argv
-                    reordered_params = reorder_cli_args(params)
+                    cleaned_params = clean_boolean_args(params)
 
                     # Create a custom stdin that also echoes input to stdout for tests
                     class EchoingStringIO(io.StringIO):
@@ -260,7 +231,7 @@ def run_main_env(
                             return line
 
                     sys.stdin = EchoingStringIO(input_text, stdout_capture)
-                    sys.argv = ["icloudpd"] + reordered_params
+                    sys.argv = ["icloudpd"] + cleaned_params
                     try:
                         exit_code = cli()
                     finally:
@@ -269,8 +240,8 @@ def run_main_env(
                 else:
                     # Use the main CLI function which handles --help, --version, etc.
                     original_argv = sys.argv
-                    reordered_params = reorder_cli_args(params)
-                    sys.argv = ["icloudpd"] + reordered_params
+                    cleaned_params = clean_boolean_args(params)
+                    sys.argv = ["icloudpd"] + cleaned_params
                     try:
                         exit_code = cli()
                     finally:

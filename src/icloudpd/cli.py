@@ -396,7 +396,7 @@ def format_help() -> str:
 
     extract_option_lines = compose(skip_to_options, help_in_lines)
 
-    dummy_parser = argparse.ArgumentParser(exit_on_error=False, add_help=False)
+    dummy_parser = argparse.ArgumentParser(exit_on_error=False, add_help=False, allow_abbrev=False)
 
     global_help = compose(extract_option_lines, add_global_options)(dummy_parser)
 
@@ -476,21 +476,26 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
     else:
         pass
 
-    splitted_args = foundation.split_with_alternatives(["-u", "--username"], args)
-    global_and_default_args = splitted_args[0]
+    # Extract global options first from anywhere in the args using parse_known_args
     global_parser: argparse.ArgumentParser = add_global_options(
-        argparse.ArgumentParser(exit_on_error=False, add_help=False)
+        argparse.ArgumentParser(exit_on_error=False, add_help=False, allow_abbrev=False)
     )
-    global_ns, rest_args = global_parser.parse_known_args(global_and_default_args)
+    global_ns, non_global_args = global_parser.parse_known_args(args)
+
+    # Now split the remaining non-global args by username boundaries
+    splitted_args = foundation.split_with_alternatives(["-u", "--username"], non_global_args)
+    default_args = splitted_args[0]
 
     default_parser: argparse.ArgumentParser = add_options_for_user(
-        argparse.ArgumentParser(exit_on_error=False, add_help=False)
+        argparse.ArgumentParser(exit_on_error=False, add_help=False, allow_abbrev=False)
     )
 
-    default_ns = default_parser.parse_args(rest_args)
+    default_ns = default_parser.parse_args(default_args)
 
     user_parser: argparse.ArgumentParser = add_user_option(
-        add_options_for_user(argparse.ArgumentParser(exit_on_error=False, add_help=False))
+        add_options_for_user(
+            argparse.ArgumentParser(exit_on_error=False, add_help=False, allow_abbrev=False)
+        )
     )
     user_nses = [
         map_to_config(user_parser.parse_args(user_args, copy.deepcopy(default_ns)))
