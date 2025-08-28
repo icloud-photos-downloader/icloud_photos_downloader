@@ -123,7 +123,6 @@ Building platform executables:
 ``` sh
 scripts/build_bin2 icloudpd icloud
 scripts/build_bin1 icloud
-scripts/build_bin1 icloudpd_ex
 ```
 Note: that command is for Linux, including devcontainers. Windows & macOS scripts must be executed on respective platforms.
 
@@ -132,7 +131,6 @@ Building Linux static executables:
 ``` sh
 scripts/build_static icloudpd
 scripts/build_static icloud
-scripts/build_static icloudpd_ex
 ```
 
 Building Python wheels (with executable):
