@@ -253,6 +253,8 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
                     return 0
 
             # Wait for the watch interval before next iteration
+            # Clear current user during wait period to avoid misleading UI
+            shared_status_exchange.clear_current_user()
             logger.info(f"Waiting for {watch_interval} sec...")
             interval: Sequence[int] = range(1, watch_interval)
             iterable: Sequence[int] = (
