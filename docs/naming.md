@@ -2,7 +2,7 @@
 
 Assets on iCloud have names. When downloading assets, `icloudpd` can adjust names.
 
-(folder_structure)=
+(folder-structure)=
 ## Folder Structure
 
 ```{versionchanged} 1.7.0

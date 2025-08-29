@@ -105,13 +105,13 @@ This is a list of all options available for command line interface (CLI) of the 
 :   Specifies iCloud password to use for authentication
 
     ```{note}
-    Supplying credentials through command line parameters is considered not a good practice since they can be logged and/or otherwise exposed. Consider using other [password providers](authentication).
+    Supplying credentials through command line parameters is considered not a good practice since they can be logged and/or otherwise exposed. Consider using other [password providers](password-providers).
     ``` 
 
 (directory-parameter)=
 `--directory X`
     
-:   Specifies root folder where [folder structure](naming) will start and files will be downloaded.
+:   Specifies root folder where [folder structure](folder-structure-parameter) will start and files will be downloaded.
 
 (file-match-policy-parameter)=
 `--file-match-policy X`
@@ -125,7 +125,7 @@ This is a list of all options available for command line interface (CLI) of the 
 (username-parameter)=
 `--username X`
     
-:   Specifies AppleID (email address) used for authenticating to iCloud.
+:   Specifies AppleID (email address) used for authenticating to iCloud. May be used multiple times to introduce different configurations and/or accounts. See [Using Multiple Accounts and Config](multiple-accounts-and-configs)
 
 (auth-only-parameter)=
 `--auth-only`
@@ -220,7 +220,7 @@ This is a list of all options available for command line interface (CLI) of the 
     ```{seealso}
     [Modes of operation](mode)
 
-    [Folder Structure](folder_structure)
+    [Folder Structure](folder-structure)
     ```
 
 (only-print-filenames-parameter)=
@@ -237,7 +237,7 @@ This is a list of all options available for command line interface (CLI) of the 
 :   Specifies sub folder naming scheme. 
 
     ```{seealso}
-    Details in [Folder structure](naming) section.
+    Details in [Folder structure](folder-structure) section.
     ```
 
 (set-exif-datetime-parameter)=
@@ -279,7 +279,7 @@ This is a list of all options available for command line interface (CLI) of the 
 :   Customizes intake of the password for iCloud authentication.
 
     ```{seealso}
-    Details in [Password providers](authentication) section.
+    Details in [Password providers](password-providers) section.
     ```
 (mfa-provider-parameter)=
 `--mfa-provider X`
