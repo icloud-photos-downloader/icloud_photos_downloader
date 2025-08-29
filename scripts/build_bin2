@@ -1,9 +1,0 @@
-#!/usr/bin/env bash
-set -euo pipefail
-
-# prepare bin package in dist
-# expects python with installed dependencies
-# required params: <starter name1> <starter name2>
-# output: <starter name1>
-
-PYTHONHASHSEED=42 pyinstaller --collect-all keyrings.alt --copy-metadata keyrings.alt --hidden-import pkgutil --add-data "src/icloudpd/server/static:static" --add-data "src/icloudpd/server/templates:templates" --onefile src/starters/$1.py src/starters/$2.py --name $1
