@@ -3,23 +3,20 @@
 A Command Line Wrapper to allow easy use of pyicloud for
 command line scripts, and related.
 """
+
 import argparse
 import getpass
 import pickle
 import sys
-from typing import NoReturn, Optional, Sequence
+from typing import NoReturn, Sequence
 
-import click
-
-from click import confirm
-
-import foundation
 from foundation.core import identity
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.findmyiphone import AppleDevice
+
 from . import utils
 
 DEVICE_ERROR = "Please use the --device switch to indicate which device to use."
@@ -36,52 +33,8 @@ def create_pickled_data(idevice: AppleDevice, filename: str) -> None:
     with open(filename, "wb") as pickle_file:
         pickle.dump(idevice.content, pickle_file, protocol=pickle.HIGHEST_PROTOCOL)
 
-def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
-    if not value:
-        return value
-    vi = foundation.version_info_formatted()
-    click.echo(vi)
-    ctx.exit()
 
-CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
-
-@click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>")
-@click.option("--username", default="", help="Apple ID to Use")
-@click.option(
-    "--password",
-    default="",
-    help=(
-        "Apple ID Password to Use; if unspecified, password will be "
-        "fetched from the system keyring."
-    ),
-)
-@click.option("-n", "--non-interactive", default=True, is_flag=True, help="Disable interactive prompts.")
-@click.option(
-    "--delete-from-keyring",
-    default=False,
-    is_flag=True,
-    help="Delete stored password in system keyring for this username.",
-)
-@click.option(
-    "--domain",
-    type=click.Choice(["com", "cn"]),
-    show_default=True,
-    default="com",
-    help="Root Domain for requests to iCloud (com or cn)",
-)
-@click.option(
-    "--version",
-    help="Show the version, commit hash and timestamp",
-    is_flag=True,
-    expose_value=False,
-    is_eager=True,
-    callback=report_version,
-)
-def main(username: str, password: str, non_interactive: bool, delete_from_keyring: bool, domain: str) -> None:
-    print("Running in MAIN")
-    main_aux()
-
-def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
+def main(args: Sequence[str] | None = None) -> NoReturn:
     """Main commandline entrypoint."""
     if args is None:
         args = sys.argv[1:]
@@ -227,9 +180,9 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
 
     command_line = parser.parse_args(args)
 
-    username: Optional[str] = command_line.username.strip() or None
-    password: Optional[str] = command_line.password.strip() or None
-    domain   = command_line.domain
+    username: str | None = command_line.username.strip() or None
+    password: str | None = command_line.password.strip() or None
+    domain = command_line.domain
 
     if username is not None and command_line.delete_from_keyring:
         utils.delete_password_in_keyring(username)
@@ -249,7 +202,7 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
             got_from_keyring = password is not None
 
         if password is None:
-            password = getpass.getpass(f'Enter iCloud password for {username}: ').strip() or None
+            password = getpass.getpass(f"Enter iCloud password for {username}: ").strip() or None
 
         if password is None:
             parser.error("No password supplied")
@@ -262,13 +215,13 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 username,
-                lambda : password,
+                lambda: password,
                 lambda _: None,
             )
             if (
                 not got_from_keyring
                 and command_line.interactive
-                and confirm("Save password in keyring?")
+                and input("Save password in keyring? [y/N] ").strip().lower() in ("y", "yes")
             ):
                 utils.store_password_in_keyring(username, password)
 
@@ -301,9 +254,7 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
                         "    %s: %s"
                         % (
                             i,
-                            device.get(
-                                "deviceName", "SMS to %s" % device.get("phoneNumber")
-                            ),
+                            device.get("deviceName", "SMS to %s" % device.get("phoneNumber")),
                         )
                     )
 
@@ -328,9 +279,7 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
             if utils.password_exists_in_keyring(username):
                 utils.delete_password_in_keyring(username)
 
-            message = "Bad username or password for {username}".format(
-                username=username,
-            )
+            message = f"Bad username or password for {username}"
             password = None
 
             failure_count += 1
@@ -409,8 +358,7 @@ def main_aux(args:Optional[Sequence[str]]=None) -> NoReturn:
                     raise RuntimeError(
                         "%s %s"
                         % (
-                            "Silent Messages can only be played "
-                            "on a singular device.",
+                            "Silent Messages can only be played on a singular device.",
                             DEVICE_ERROR,
                         )
                     )
