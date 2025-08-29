@@ -1422,9 +1422,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3 
  
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -1612,9 +1610,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3 
  
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -1799,9 +1795,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3 
   
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -1987,9 +1981,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3 
   
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2297,9 +2289,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3 
  
-      - name: Set up QEMU 
-        if: steps.reload_docker.outcome != 'failure' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
  
       - name: Run test on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure'
@@ -2524,9 +2514,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2763,9 +2751,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2973,9 +2959,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -3190,9 +3174,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      - name: Set up QEMU 
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes 
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
