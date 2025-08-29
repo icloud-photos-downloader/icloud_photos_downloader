@@ -11,6 +11,7 @@ import sys
 from typing import NoReturn, Sequence
 
 from foundation.core import identity
+from foundation import version_info_formatted
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -178,7 +179,18 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
         help="Root domain for requests to iCloud. com or cn",
     )
 
+    parser.add_argument(
+        "--version",
+        action="store_true",
+        dest="version",
+        help="Show the version, commit hash and timestamp",
+    )
+
     command_line = parser.parse_args(args)
+
+    if command_line.version:
+        print(version_info_formatted())
+        sys.exit(0)
 
     username: str | None = command_line.username.strip() or None
     password: str | None = command_line.password.strip() or None
