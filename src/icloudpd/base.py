@@ -13,9 +13,10 @@ from requests.exceptions import (
 )
 from urllib3.exceptions import NewConnectionError
 
-from foundation.core import compose, constant, identity, map_, partial_1_1
+from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
+from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
@@ -52,7 +53,7 @@ from tzlocal import get_localzone
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.config import Config, GlobalConfig, UserConfig
+from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
@@ -203,87 +204,6 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
     return logger
 
 
-def convert_user_config_to_old_config(
-    global_config: GlobalConfig, user_config: UserConfig
-) -> Config:
-    """Convert new UserConfig and GlobalConfig to old Config format"""
-
-    # Convert password providers from enum list to old dict format
-    password_providers_dict: Dict[
-        str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
-    ] = {}
-    for provider in global_config.password_providers:
-        if provider.value == "webui":
-            # webui will be replaced in main() with actual functions
-            password_providers_dict[provider.value] = (
-                ask_password_in_console,
-                dummy_password_writter,
-            )
-        elif provider.value == "console":
-            password_providers_dict[provider.value] = (
-                ask_password_in_console,
-                dummy_password_writter,
-            )
-        elif provider.value == "keyring":
-            password_providers_dict[provider.value] = (
-                get_password_from_keyring,
-                dummy_password_writter,
-            )
-        elif provider.value == "parameter":
-            password_providers_dict[provider.value] = (
-                constant(user_config.password),
-                dummy_password_writter,
-            )
-
-    return Config(
-        directory=user_config.directory,
-        username=user_config.username,
-        auth_only=user_config.auth_only,
-        cookie_directory=user_config.cookie_directory,
-        primary_sizes=user_config.sizes,
-        live_photo_size=user_config.live_photo_size,
-        recent=user_config.recent,
-        until_found=user_config.until_found,
-        albums=user_config.albums,
-        list_albums=user_config.list_albums,
-        library=user_config.library,
-        list_libraries=user_config.list_libraries,
-        skip_videos=user_config.skip_videos,
-        skip_live_photos=user_config.skip_live_photos,
-        xmp_sidecar=user_config.xmp_sidecar,
-        force_size=user_config.force_size,
-        auto_delete=user_config.auto_delete,
-        only_print_filenames=global_config.only_print_filenames,
-        folder_structure=user_config.folder_structure,
-        set_exif_datetime=user_config.set_exif_datetime,
-        smtp_username=user_config.smtp_username,
-        smtp_host=user_config.smtp_host,
-        smtp_port=user_config.smtp_port,
-        smtp_no_tls=user_config.smtp_no_tls,
-        notification_email=user_config.notification_email,
-        notification_email_from=user_config.notification_email_from,
-        log_level=global_config.log_level.value,  # Convert enum to string
-        no_progress_bar=global_config.no_progress_bar,
-        notification_script=str(user_config.notification_script)
-        if user_config.notification_script
-        else None,
-        threads_num=global_config.threads_num,
-        delete_after_download=user_config.delete_after_download,
-        keep_icloud_recent_days=user_config.keep_icloud_recent_days,
-        domain=global_config.domain,
-        watch_with_interval=global_config.watch_with_interval,
-        dry_run=user_config.dry_run,
-        raw_policy=user_config.align_raw,
-        password_providers=password_providers_dict,
-        file_match_policy=user_config.file_match_policy,
-        mfa_provider=global_config.mfa_provider,
-        use_os_locale=global_config.use_os_locale,
-        skip_created_before=user_config.skip_created_before,
-        skip_created_after=user_config.skip_created_after,
-        skip_photos=user_config.skip_photos,
-    )
-
-
 def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
     """Run the application with the new configuration system"""
 
@@ -366,31 +286,53 @@ def _process_all_users_once(
 ) -> int:
     """Process all user configs once (used by both single run and watch mode)"""
 
-    for user_config in user_configs:
-        # Convert to old config format, but disable watch at individual level
-        config = convert_user_config_to_old_config(global_config, user_config)
-        # Important: Clear watch interval for individual user runs since we handle it at the top level
-        config.watch_with_interval = None
+    # Set global config and all user configs to status exchange once, before processing
+    shared_status_exchange.set_global_config(global_config)
+    shared_status_exchange.set_user_configs(user_configs)
 
+    for user_config in user_configs:
         with logging_redirect_tqdm():
             # Use shared status exchange instead of creating new ones per user
             status_exchange = shared_status_exchange
 
             # Set up password providers with proper function replacements
-            if "webui" in config.password_providers:
-                config.password_providers["webui"] = (
-                    partial(get_password_from_webui, logger, status_exchange),
-                    partial(update_password_status_in_webui, status_exchange),
-                )
+            password_providers_dict: Dict[
+                str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+            ] = {}
 
-            if "keyring" in config.password_providers:
-                config.password_providers["keyring"] = (
-                    get_password_from_keyring,
-                    keyring_password_writter(logger),
-                )
+            for provider in global_config.password_providers:
+                if provider.value == "webui":
+                    password_providers_dict[provider.value] = (
+                        partial(get_password_from_webui, logger, status_exchange),
+                        partial(update_password_status_in_webui, status_exchange),
+                    )
+                elif provider.value == "console":
+                    password_providers_dict[provider.value] = (
+                        ask_password_in_console,
+                        dummy_password_writter,
+                    )
+                elif provider.value == "keyring":
+                    password_providers_dict[provider.value] = (
+                        get_password_from_keyring,
+                        keyring_password_writter(logger),
+                    )
+                elif provider.value == "parameter":
 
-            config.password_providers = config.password_providers
-            status_exchange.set_config(config)
+                    def create_constant_password_provider(
+                        password: str | None,
+                    ) -> Callable[[str], str | None]:
+                        def password_provider(_username: str) -> str | None:
+                            return password
+
+                        return password_provider
+
+                    password_providers_dict[provider.value] = (
+                        create_constant_password_provider(user_config.password),
+                        dummy_password_writter,
+                    )
+
+            # Only set current user - global config and user configs are already set
+            status_exchange.set_current_user(user_config.username)
 
             # Web server is now started once outside the user loop - no need to start it here
 
@@ -414,51 +356,54 @@ def _process_all_users_once(
             passer = partial(
                 where_builder,
                 logger,
-                config.skip_videos,
-                config.skip_created_before,
-                config.skip_created_after,
-                config.skip_photos,
+                user_config.skip_videos,
+                user_config.skip_created_before,
+                user_config.skip_created_after,
+                user_config.skip_photos,
             )
 
             downloader = (
                 partial(
                     download_builder,
                     logger,
-                    config.folder_structure,
-                    config.directory,
-                    config.size,
-                    config.force_size,
-                    config.only_print_filenames,
-                    config.set_exif_datetime,
-                    config.skip_live_photos,
-                    config.live_photo_size,
-                    config.dry_run,
-                    config.file_match_policy,
-                    config.xmp_sidecar,
+                    user_config.folder_structure,
+                    user_config.directory,
+                    user_config.sizes,
+                    user_config.force_size,
+                    global_config.only_print_filenames,
+                    user_config.set_exif_datetime,
+                    user_config.skip_live_photos,
+                    user_config.live_photo_size,
+                    user_config.dry_run,
+                    user_config.file_match_policy,
+                    user_config.xmp_sidecar,
                 )
-                if config.directory is not None
+                if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
             )
 
             notificator = partial(
                 notificator_builder,
                 logger,
-                config.username,
-                config.smtp_username,
-                user_config.smtp_password,  # This was missing from conversion
-                config.smtp_host,
-                config.smtp_port,
-                config.smtp_no_tls,
-                config.notification_email,
-                config.notification_email_from,
-                config.notification_script,
+                user_config.username,
+                user_config.smtp_username,
+                user_config.smtp_password,
+                user_config.smtp_host,
+                user_config.smtp_port,
+                user_config.smtp_no_tls,
+                user_config.notification_email,
+                user_config.notification_email_from,
+                str(user_config.notification_script) if user_config.notification_script else None,
             )
 
             # Use core_single_run since we've disabled watch at this level
-            logger.info(f"Processing user: {config.username}")
+            logger.info(f"Processing user: {user_config.username}")
             result = core_single_run(
                 logger,
                 status_exchange,
+                global_config,
+                user_config,
+                password_providers_dict,
                 passer,
                 downloader,
                 notificator,
@@ -473,7 +418,7 @@ def _process_all_users_once(
                 else:
                     # In watch mode, log error and continue with next user
                     logger.error(
-                        f"Error processing user {config.username}, continuing with next user..."
+                        f"Error processing user {user_config.username}, continuing with next user..."
                     )
 
     return 0
@@ -878,6 +823,11 @@ def asset_type_skip_message(photo: PhotoAsset) -> str:
 def core_single_run(
     logger: logging.Logger,
     status_exchange: StatusExchange,
+    global_config: GlobalConfig,
+    user_config: UserConfig,
+    password_providers_dict: Dict[
+        str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+    ],
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     notificator: Callable[[], None],
@@ -886,13 +836,10 @@ def core_single_run(
 ) -> int:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
-    config = status_exchange.get_config()
-    if not config:
-        # messed up with passing config
-        raise NotImplementedError()
-
     skip_bar = not os.environ.get("FORCE_TQDM") and (
-        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
+        global_config.only_print_filenames
+        or global_config.no_progress_bar
+        or not sys.stdout.isatty()
     )
     while True:  # retry loop (not watch - only for immediate retries)
         captured_responses: List[Mapping[str, Any]] = []
@@ -903,18 +850,18 @@ def core_single_run(
         try:
             icloud = authenticator(
                 logger,
-                config.domain,
+                global_config.domain,
                 filename_cleaner,
                 lp_filename_generator,
-                config.raw_policy,
-                config.file_match_policy,
-                config.password_providers,
-                config.mfa_provider,
+                user_config.align_raw,
+                user_config.file_match_policy,
+                password_providers_dict,
+                global_config.mfa_provider,
                 status_exchange,
-                config.username,
+                user_config.username,
                 notificator,
                 partial(append_response, captured_responses),
-                config.cookie_directory,
+                user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
             )
 
@@ -924,11 +871,11 @@ def core_single_run(
             # turn off response capture
             icloud.response_observer = None
 
-            if config.auth_only:
+            if user_config.auth_only:
                 logger.info("Authentication completed successfully")
                 return 0
 
-            elif config.list_libraries:
+            elif user_config.list_libraries:
                 library_names = (
                     icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
                 )
@@ -937,43 +884,43 @@ def core_single_run(
 
             else:
                 # Access to the selected library. Defaults to the primary photos object.
-                if config.library:
-                    if config.library in icloud.photos.private_libraries:
+                if user_config.library:
+                    if user_config.library in icloud.photos.private_libraries:
                         library_object: PhotoLibrary = icloud.photos.private_libraries[
-                            config.library
+                            user_config.library
                         ]
-                    elif config.library in icloud.photos.shared_libraries:
-                        library_object = icloud.photos.shared_libraries[config.library]
+                    elif user_config.library in icloud.photos.shared_libraries:
+                        library_object = icloud.photos.shared_libraries[user_config.library]
                     else:
-                        logger.error("Unknown library: %s", config.library)
+                        logger.error("Unknown library: %s", user_config.library)
                         return 1
                 else:
                     library_object = icloud.photos
 
-                if config.list_albums:
+                if user_config.list_albums:
                     print("Albums:")
                     album_titles = [str(a) for a in library_object.albums.values()]
                     print(*album_titles, sep="\n")
                     return 0
                 else:
-                    if not config.directory:
+                    if not user_config.directory:
                         # should be checked upstream
                         raise NotImplementedError()
                     else:
                         pass
 
-                    directory = os.path.normpath(config.directory)
+                    directory = os.path.normpath(user_config.directory)
 
-                    if config.skip_photos or config.skip_videos:
-                        photo_video_phrase = "photos" if config.skip_videos else "videos"
+                    if user_config.skip_photos or user_config.skip_videos:
+                        photo_video_phrase = "photos" if user_config.skip_videos else "videos"
                     else:
                         photo_video_phrase = "photos and videos"
-                    if len(config.albums) == 0:
+                    if len(user_config.albums) == 0:
                         album_phrase = ""
-                    elif len(config.albums) == 1:
-                        album_phrase = f" from album {','.join(config.albums)}"
+                    elif len(user_config.albums) == 1:
+                        album_phrase = f" from album {','.join(user_config.albums)}"
                     else:
-                        album_phrase = f" from albums {','.join(config.albums)}"
+                        album_phrase = f" from albums {','.join(user_config.albums)}"
 
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
@@ -987,8 +934,8 @@ def core_single_run(
                     # )
 
                     albums: Iterable[PhotoAlbum] = (
-                        list(map_(library_object.albums.__getitem__, config.albums))
-                        if len(config.albums) > 0
+                        list(map_(library_object.albums.__getitem__, user_config.albums))
+                        if len(user_config.albums) > 0
                         else [library_object.all]
                     )
                     album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
@@ -1006,15 +953,15 @@ def core_single_run(
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
                         # Optional: Only download the x most recent photos.
-                        if config.recent is not None:
-                            photos_count = config.recent
+                        if user_config.recent is not None:
+                            photos_count = user_config.recent
                             photos_top: Iterable[PhotoAsset] = itertools.islice(
-                                photos_enumerator, config.recent
+                                photos_enumerator, user_config.recent
                             )
                         else:
                             photos_top = photos_enumerator
 
-                        if config.until_found is not None:
+                        if user_config.until_found is not None:
                             photos_count = None
                             # ensure photos iterator doesn't have a known length
                             # photos_enumerator = (p for p in photos_enumerator)
@@ -1041,9 +988,9 @@ def core_single_run(
                                 "the first" if photos_count == 1 else str(photos_count)
                             )
 
-                            if config.skip_photos or config.skip_videos:
+                            if user_config.skip_photos or user_config.skip_videos:
                                 photo_video_phrase = (
-                                    "photo" if config.skip_videos else "video"
+                                    "photo" if user_config.skip_videos else "video"
                                 ) + plural_suffix
                             else:
                                 photo_video_phrase = (
@@ -1051,14 +998,16 @@ def core_single_run(
                                 )
                         else:
                             photos_count_str = "???"
-                            if config.skip_photos or config.skip_videos:
-                                photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            if user_config.skip_photos or user_config.skip_videos:
+                                photo_video_phrase = (
+                                    "photos" if user_config.skip_videos else "videos"
+                                )
                             else:
                                 photo_video_phrase = "photos and videos"
                         logger.info(
                             ("Downloading %s %s %s to %s ..."),
                             photos_count_str,
-                            ",".join([_s.value for _s in config.size]),
+                            ",".join([_s.value for _s in user_config.sizes]),
                             photo_video_phrase,
                             directory,
                         )
@@ -1068,8 +1017,8 @@ def core_single_run(
                         def should_break(counter: Counter) -> bool:
                             """Exit if until_found condition is reached"""
                             return (
-                                config.until_found is not None
-                                and counter.value() >= config.until_found
+                                user_config.until_found is not None
+                                and counter.value() >= user_config.until_found
                             )
 
                         status_exchange.get_progress().photos_count = (
@@ -1087,7 +1036,7 @@ def core_single_run(
                                 if should_break(consecutive_files_found):
                                     logger.info(
                                         "Found %s consecutive previously downloaded photos. Exiting",
-                                        config.until_found,
+                                        user_config.until_found,
                                     )
                                     break
                                 # item = next(photos_iterator)
@@ -1097,18 +1046,21 @@ def core_single_run(
                                 download_result = passer_result and download_photo(
                                     consecutive_files_found, item
                                 )
-                                if download_result and config.delete_after_download:
+                                if download_result and user_config.delete_after_download:
                                     should_delete = True
 
-                                if passer_result and config.keep_icloud_recent_days is not None:
+                                if (
+                                    passer_result
+                                    and user_config.keep_icloud_recent_days is not None
+                                ):
                                     created_date = item.created.astimezone(get_localzone())
                                     age_days = (now - created_date).days
                                     logger.debug(f"Created date: {created_date}")
                                     logger.debug(
-                                        f"Keep iCloud recent days: {config.keep_icloud_recent_days}"
+                                        f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
                                     )
                                     logger.debug(f"Age days: {age_days}")
-                                    if age_days < config.keep_icloud_recent_days:
+                                    if age_days < user_config.keep_icloud_recent_days:
                                         logger.debug(
                                             "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
                                             item.filename,
@@ -1118,7 +1070,7 @@ def core_single_run(
                                         should_delete = True
 
                                 if should_delete:
-                                    if config.dry_run:
+                                    if user_config.dry_run:
                                         delete_photo_dry_run(logger, library_object, item)
                                     else:
                                         delete_photo(
@@ -1139,7 +1091,7 @@ def core_single_run(
                             except StopIteration:
                                 break
 
-                        if config.only_print_filenames:
+                        if global_config.only_print_filenames:
                             return 0
                         else:
                             pass
@@ -1150,8 +1102,10 @@ def core_single_run(
                                 "Iteration was cancelled"
                             )
                         else:
-                            if config.skip_photos or config.skip_videos:
-                                photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            if user_config.skip_photos or user_config.skip_videos:
+                                photo_video_phrase = (
+                                    "photos" if user_config.skip_videos else "videos"
+                                )
                             else:
                                 photo_video_phrase = "photos and videos"
                             message = f"All {photo_video_phrase} have been downloaded"
@@ -1159,21 +1113,21 @@ def core_single_run(
                             status_exchange.get_progress().photos_last_message = message
                         status_exchange.get_progress().reset()
 
-                    if config.auto_delete:
+                    if user_config.auto_delete:
                         autodelete_photos(
                             logger,
-                            config.dry_run,
+                            user_config.dry_run,
                             library_object,
-                            config.folder_structure,
+                            user_config.folder_structure,
                             directory,
-                            config.size,
+                            user_config.sizes,
                         )
                     else:
                         pass
         except PyiCloudFailedLoginException as _error:
             logger.info("Invalid email/password combination.")
             dump_responses(logger.debug, captured_responses)
-            if "webui" in config.password_providers:
+            if PasswordProvider.WEBUI in global_config.password_providers:
                 update_auth_error_in_webui(status_exchange, "Invalid email/password combination.")
                 continue
             else:
@@ -1181,7 +1135,7 @@ def core_single_run(
         except PyiCloudFailedMFAException as error:
             logger.info(str(error))
             dump_responses(logger.debug, captured_responses)
-            if config.mfa_provider == MFAProvider.WEBUI:
+            if global_config.mfa_provider == MFAProvider.WEBUI:
                 update_auth_error_in_webui(status_exchange, str(error))
                 continue
             else:
@@ -1194,7 +1148,10 @@ def core_single_run(
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
-            if "webui" in config.password_providers or config.mfa_provider == MFAProvider.WEBUI:
+            if (
+                PasswordProvider.WEBUI in global_config.password_providers
+                or global_config.mfa_provider == MFAProvider.WEBUI
+            ):
                 if update_auth_error_in_webui(status_exchange, str(error)):
                     # retry if it was during auth
                     continue
@@ -1209,7 +1166,10 @@ def core_single_run(
             dump_responses(logger.debug, captured_responses)
             # logger.debug(error)
             # webui will display error and wait for password again
-            if "webui" in config.password_providers or config.mfa_provider == MFAProvider.WEBUI:
+            if (
+                PasswordProvider.WEBUI in global_config.password_providers
+                or global_config.mfa_provider == MFAProvider.WEBUI
+            ):
                 if update_auth_error_in_webui(
                     status_exchange, "Cannot connect to Apple iCloud service"
                 ):
@@ -1239,76 +1199,3 @@ def core_single_run(
         break
 
     return 0
-
-
-def core(
-    logger: logging.Logger,
-    status_exchange: StatusExchange,
-    passer: Callable[[PhotoAsset], bool],
-    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
-    notificator: Callable[[], None],
-    filename_cleaner: Callable[[str], str],
-    lp_filename_generator: Callable[[str], str],
-) -> int:
-    """Download all iCloud photos to a local directory (legacy function with watch loop)"""
-
-    config = status_exchange.get_config()
-    if not config:
-        raise NotImplementedError()
-
-    if not config.watch_with_interval:
-        # No watch mode, just single run
-        return core_single_run(
-            logger,
-            status_exchange,
-            passer,
-            downloader,
-            notificator,
-            filename_cleaner,
-            lp_filename_generator,
-        )
-
-    # Watch mode - infinite loop with watch intervals
-    skip_bar = not os.environ.get("FORCE_TQDM") and (
-        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
-    )
-
-    while True:
-        result = core_single_run(
-            logger,
-            status_exchange,
-            passer,
-            downloader,
-            notificator,
-            filename_cleaner,
-            lp_filename_generator,
-        )
-
-        # In watch mode, continue on errors, exit on success
-        if result == 0 and (config.auth_only or config.list_albums or config.list_libraries):
-            # Success - if we're only doing auth or listing, exit
-            return 0
-
-        # Wait for the watch interval
-        logger.info(f"Waiting for {config.watch_with_interval} sec...")
-        interval: Sequence[int] = range(1, config.watch_with_interval)
-        iterable: Sequence[int] = (
-            interval
-            if skip_bar
-            else typing.cast(
-                Sequence[int],
-                tqdm(
-                    iterable=interval,
-                    desc="Waiting...",
-                    ascii=True,
-                    leave=False,
-                    dynamic_ncols=True,
-                ),
-            )
-        )
-        for counter in iterable:
-            status_exchange.get_progress().waiting = config.watch_with_interval - counter
-            if status_exchange.get_progress().resume:
-                status_exchange.get_progress().reset()
-                break
-            time.sleep(1)
