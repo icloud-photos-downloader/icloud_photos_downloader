@@ -1,26 +1,6 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-from multiprocessing import freeze_support
-
-from requests import Timeout
-from requests.exceptions import (
-    ChunkedEncodingError,
-    ConnectionError,
-    ContentDecodingError,
-    StreamConsumedError,
-    UnrewindableBodyError,
-)
-from urllib3.exceptions import NewConnectionError
-
-from foundation.core import compose, identity, map_, partial_1_1
-from icloudpd.log_level import LogLevel
-from icloudpd.mfa_provider import MFAProvider
-from icloudpd.password_provider import PasswordProvider
-from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
-
-freeze_support()  # fmt: skip # fixing tqdm on macos
-
 import datetime
 import getpass
 import itertools
@@ -34,6 +14,7 @@ import typing
 import urllib
 from functools import partial, singledispatch
 from logging import Logger
+from multiprocessing import freeze_support
 from threading import Thread
 from typing import (
     Any,
@@ -46,16 +27,29 @@ from typing import (
     Tuple,
 )
 
+from requests import Timeout
+from requests.exceptions import (
+    ChunkedEncodingError,
+    ConnectionError,
+    ContentDecodingError,
+    StreamConsumedError,
+    UnrewindableBodyError,
+)
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
+from urllib3.exceptions import NewConnectionError
 
+from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
+from icloudpd.log_level import LogLevel
+from icloudpd.mfa_provider import MFAProvider
+from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
@@ -70,6 +64,8 @@ from pyicloud_ipd.exceptions import (
     PyiCloudServiceUnavailableException,
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
+from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import (
     add_suffix_to_filename,
@@ -79,6 +75,8 @@ from pyicloud_ipd.utils import (
     store_password_in_keyring,
 )
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
+
+freeze_support()  # fmt: skip # fixing tqdm on macos
 
 
 def lp_filename_concatinator(filename: str) -> str:
@@ -215,7 +213,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
     # Check if any user needs web server (webui for MFA or passwords)
     needs_web_server = global_config.mfa_provider == MFAProvider.WEBUI or any(
-        provider.value == "webui" for provider in global_config.password_providers
+        provider == PasswordProvider.WEBUI for provider in global_config.password_providers
     )
 
     # Start web server ONCE if needed, outside all loops
@@ -299,26 +297,26 @@ def _process_all_users_once(
 
             # Set up password providers with proper function replacements
             password_providers_dict: Dict[
-                str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+                PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
             ] = {}
 
             for provider in global_config.password_providers:
-                if provider.value == "webui":
-                    password_providers_dict[provider.value] = (
+                if provider == PasswordProvider.WEBUI:
+                    password_providers_dict[provider] = (
                         partial(get_password_from_webui, logger, status_exchange),
                         partial(update_password_status_in_webui, status_exchange),
                     )
-                elif provider.value == "console":
-                    password_providers_dict[provider.value] = (
+                elif provider == PasswordProvider.CONSOLE:
+                    password_providers_dict[provider] = (
                         ask_password_in_console,
                         dummy_password_writter,
                     )
-                elif provider.value == "keyring":
-                    password_providers_dict[provider.value] = (
+                elif provider == PasswordProvider.KEYRING:
+                    password_providers_dict[provider] = (
                         get_password_from_keyring,
                         keyring_password_writter(logger),
                     )
-                elif provider.value == "parameter":
+                elif provider == PasswordProvider.PARAMETER:
 
                     def create_constant_password_provider(
                         password: str | None,
@@ -328,7 +326,7 @@ def _process_all_users_once(
 
                         return password_provider
 
-                    password_providers_dict[provider.value] = (
+                    password_providers_dict[provider] = (
                         create_constant_password_provider(user_config.password),
                         dummy_password_writter,
                     )
@@ -350,7 +348,7 @@ def _process_all_users_once(
             # Set up live photo filename generator directly
             lp_filename_generator = (
                 lp_filename_original
-                if user_config.live_photo_mov_filename_policy.value == "original"
+                if user_config.live_photo_mov_filename_policy == LivePhotoMovFilenamePolicy.ORIGINAL
                 else lp_filename_concatinator
             )
 
@@ -828,7 +826,7 @@ def core_single_run(
     global_config: GlobalConfig,
     user_config: UserConfig,
     password_providers_dict: Dict[
-        str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+        PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
     ],
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
@@ -857,7 +855,10 @@ def core_single_run(
                 lp_filename_generator,
                 user_config.align_raw,
                 user_config.file_match_policy,
-                password_providers_dict,
+                {
+                    provider.value: functions
+                    for provider, functions in password_providers_dict.items()
+                },
                 global_config.mfa_provider,
                 status_exchange,
                 user_config.username,
