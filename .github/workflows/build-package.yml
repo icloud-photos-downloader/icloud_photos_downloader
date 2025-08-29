@@ -810,7 +810,7 @@ jobs:
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
           ]
-    runs-on: ubuntu-22.04
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
     needs:
       - clone_linux_whl
       - clone_src_whl
@@ -856,9 +856,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3
 
-      - name: Set up QEMU
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed
 
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: steps.get_image.outputs.digest != '' 
@@ -1018,7 +1016,7 @@ jobs:
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
           ]
-    runs-on: ubuntu-22.04
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
     needs: 
       - clone_linux_whl
       - clone_src_whl
@@ -1063,9 +1061,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v3
 
-      - name: Set up QEMU
-        if: steps.get_image.outputs.digest != '' && matrix.prop[1] != 'amd64'
-        run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed
 
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: steps.get_image.outputs.digest != '' 
