@@ -1383,7 +1383,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ubuntu-22.04 
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
     needs: 
       - build_linux_apt
       # - build_linux_apk
