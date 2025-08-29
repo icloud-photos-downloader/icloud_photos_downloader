@@ -210,7 +210,7 @@ jobs:
   
   build_linux_apt:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ubuntu-22.04
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
     name: Build Linux ${{ matrix.platform[1] }} Debian
     strategy:
       fail-fast: false
@@ -238,9 +238,7 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up QEMU
-      if: matrix.platform[1] != 'amd64'
-      uses: docker/setup-qemu-action@v3
+    # ARM32v7 runs natively on ARM64 runners - no QEMU needed
 
     - uses: docker/setup-buildx-action@v3
       id: setup
@@ -466,7 +464,7 @@ jobs:
         
   build_linux_apk:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ubuntu-22.04
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
     name: Build Linux ${{ matrix.platform[1] }} Alpine
     strategy:
       fail-fast: false
@@ -494,9 +492,7 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up QEMU
-      if: matrix.platform[1] != 'amd64'
-      uses: docker/setup-qemu-action@v3
+    # ARM32v7 runs natively on ARM64 runners - no QEMU needed
 
     - uses: docker/setup-buildx-action@v3
       id: setup
