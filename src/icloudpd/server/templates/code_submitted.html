@@ -1,6 +1,6 @@
 <div id="zone">
     <div class="col-12">
-        <label for="smt" class="form-label">Code submitted and being checked</label>
+        <label for="smt" class="form-label">Code submitted and being checked{% if current_user %} for {{ current_user }}{% endif %}</label>
     </div>
     <div class="col-12">
         <button id="smt" hx-get="/status" hx-trigger="load delay:5s" hx-target="#zone" class="btn btn-primary">Refresh</button>

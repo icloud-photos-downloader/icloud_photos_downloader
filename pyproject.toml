@@ -25,7 +25,6 @@ classifiers = [
 dependencies = [
     "requests==2.32.3",
     "schema==0.7.7",
-    "click==8.1.8",
     "tqdm==4.67.1",
     "piexif==1.1.3",
     "python-dateutil==2.9.0.post0",

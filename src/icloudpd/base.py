@@ -1,27 +1,8 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
-from multiprocessing import freeze_support
-
-from requests import Timeout
-from requests.exceptions import (
-    ChunkedEncodingError,
-    ConnectionError,
-    ContentDecodingError,
-    StreamConsumedError,
-    UnrewindableBodyError,
-)
-from urllib3.exceptions import NewConnectionError
-
-import foundation
-from foundation.core import compose, constant, identity, map_, partial_1_1
-from icloudpd.log_level import LogLevel
-from icloudpd.mfa_provider import MFAProvider
-from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
-
-freeze_support()  # fmt: skip # fixing tqdm on macos
-
 import datetime
+import getpass
 import itertools
 import json
 import logging
@@ -33,6 +14,7 @@ import typing
 import urllib
 from functools import partial, singledispatch
 from logging import Logger
+from multiprocessing import freeze_support
 from threading import Thread
 from typing import (
     Any,
@@ -41,22 +23,33 @@ from typing import (
     Iterable,
     List,
     Mapping,
-    NoReturn,
     Sequence,
     Tuple,
 )
 
-import click
+from requests import Timeout
+from requests.exceptions import (
+    ChunkedEncodingError,
+    ConnectionError,
+    ContentDecodingError,
+    StreamConsumedError,
+    UnrewindableBodyError,
+)
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
+from urllib3.exceptions import NewConnectionError
 
+from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.config import Config, GlobalConfig, UserConfig
+from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
+from icloudpd.log_level import LogLevel
+from icloudpd.mfa_provider import MFAProvider
+from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
@@ -71,7 +64,8 @@ from pyicloud_ipd.exceptions import (
     PyiCloudServiceUnavailableException,
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
+from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import (
     add_suffix_to_filename,
@@ -82,18 +76,7 @@ from pyicloud_ipd.utils import (
 )
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
-
-def build_filename_cleaner(
-    _ctx: click.Context, _param: click.Parameter, is_keep_unicode: bool
-) -> Callable[[str], str]:
-    """Map keep_unicode parameter for function for cleaning filenames"""
-    # redefining typed vars instead of using in ternary directly is a mypy hack
-    r: Callable[[str], str] = remove_unicode_chars
-    i: Callable[[str], str] = identity
-    return compose(
-        (r if not is_keep_unicode else i),
-        clean_filename,
-    )
+freeze_support()  # fmt: skip # fixing tqdm on macos
 
 
 def lp_filename_concatinator(filename: str) -> str:
@@ -110,63 +93,8 @@ def lp_filename_original(filename: str) -> str:
     return name + ".MOV"
 
 
-def build_lp_filename_generator(
-    _ctx: click.Context, _param: click.Parameter, lp_filename_policy: str
-) -> Callable[[str], str]:
-    # redefining typed vars instead of using in ternary directly is a mypy hack
-    return lp_filename_original if lp_filename_policy == "original" else lp_filename_concatinator
-
-
-def raw_policy_generator(
-    _ctx: click.Context, _param: click.Parameter, raw_policy: str
-) -> RawTreatmentPolicy:
-    # redefining typed vars instead of using in ternary directly is a mypy hack
-    if raw_policy == "as-is":
-        return RawTreatmentPolicy.AS_IS
-    elif raw_policy == "original":
-        return RawTreatmentPolicy.AS_ORIGINAL
-    elif raw_policy == "alternative":
-        return RawTreatmentPolicy.AS_ALTERNATIVE
-    else:
-        raise ValueError(f"policy was provided with unsupported value of '{raw_policy}'")
-
-
-def size_generator(
-    _ctx: click.Context, _param: click.Parameter, sizes: Sequence[str]
-) -> Sequence[AssetVersionSize]:
-    def _map(size: str) -> AssetVersionSize:
-        if size == "original":
-            return AssetVersionSize.ORIGINAL
-        elif size == "adjusted":
-            return AssetVersionSize.ADJUSTED
-        elif size == "alternative":
-            return AssetVersionSize.ALTERNATIVE
-        elif size == "medium":
-            return AssetVersionSize.MEDIUM
-        elif size == "thumb":
-            return AssetVersionSize.THUMB
-        else:
-            raise ValueError(f"size was provided with unsupported value of '{size}'")
-
-    return [_map(_s) for _s in sizes]
-
-
-def mfa_provider_generator(
-    _ctx: click.Context, _param: click.Parameter, provider: str
-) -> MFAProvider:
-    if provider == "console":
-        return MFAProvider.CONSOLE
-    elif provider == "webui":
-        return MFAProvider.WEBUI
-    else:
-        raise ValueError(f"mfa provider has unsupported value of '{provider}'")
-
-
 def ask_password_in_console(_user: str) -> str | None:
-    return typing.cast(str | None, click.prompt("iCloud Password", hide_input=True))
-    # return getpass.getpass(
-    #         f'iCloud Password for {_user}:'
-    #     )
+    return getpass.getpass(f"iCloud Password for {_user}:")
 
 
 def get_password_from_webui(
@@ -226,66 +154,6 @@ def keyring_password_writter(logger: Logger) -> Callable[[str, str], None]:
     return _intern
 
 
-def password_provider_generator(
-    _ctx: click.Context, _param: click.Parameter, providers: Sequence[str]
-) -> Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]]:
-    def _map(provider: str) -> Tuple[Callable[[str], str | None], Callable[[str, str], None]]:
-        if provider == "webui":
-            # ask_password_in_console will be replaced once we setup web
-            return (ask_password_in_console, dummy_password_writter)
-        if provider == "console":
-            return (ask_password_in_console, dummy_password_writter)
-        elif provider == "keyring":
-            return (get_password_from_keyring, dummy_password_writter)
-        elif provider == "parameter":
-            # TODO get from parameter
-            # _param: Optional[Parameter] = get_click_param_by_name("password", _ctx.command.params)
-            # if _param:
-            #     _password: str = _param.consume_value(_ctx, {})
-            #     return constant(_password)
-            return (constant(None), dummy_password_writter)
-        else:
-            raise ValueError(f"password provider was given an unsupported value of '{provider}'")
-
-    return dict([(_s, _map(_s)) for _s in providers])
-
-
-def lp_size_generator(
-    _ctx: click.Context, _param: click.Parameter, size: str
-) -> LivePhotoVersionSize:
-    if size == "original":
-        return LivePhotoVersionSize.ORIGINAL
-    elif size == "medium":
-        return LivePhotoVersionSize.MEDIUM
-    elif size == "thumb":
-        return LivePhotoVersionSize.THUMB
-    else:
-        raise ValueError(f"size was provided with unsupported value of '{size}'")
-
-
-def file_match_policy_generator(
-    _ctx: click.Context, _param: click.Parameter, policy: str
-) -> FileMatchPolicy:
-    if policy == "name-size-dedup-with-suffix":
-        return FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
-    elif policy == "name-id7":
-        return FileMatchPolicy.NAME_ID7
-    else:
-        raise ValueError(f"policy was provided with unsupported value of '{policy}'")
-
-
-def skip_created_before_generator(
-    _ctx: click.Context, _param: click.Parameter, formatted: str
-) -> datetime.datetime | datetime.timedelta | None:
-    return skip_created_generator("--skip-created-before", formatted)
-
-
-def skip_created_after_generator(
-    _ctx: click.Context, _param: click.Parameter, formatted: str
-) -> datetime.datetime | datetime.timedelta | None:
-    return skip_created_generator("--skip-created-after", formatted)
-
-
 def skip_created_generator(
     name: str, formatted: str
 ) -> datetime.datetime | datetime.timedelta | None:
@@ -306,586 +174,7 @@ def ensure_tzinfo(tz: datetime.tzinfo, input: datetime.datetime) -> datetime.dat
     return input
 
 
-def locale_setter(_ctx: click.Context, _param: click.Parameter, use_os_locale: bool) -> bool:
-    # set locale
-    if use_os_locale:
-        from locale import LC_ALL, setlocale
-
-        setlocale(LC_ALL, "")
-    return use_os_locale
-
-
-def report_version(ctx: click.Context, _param: click.Parameter, value: bool) -> bool:
-    if not value:
-        return value
-    vi = foundation.version_info_formatted()
-    click.echo(vi)
-    ctx.exit()
-
-
 # Must import the constants object so that we can mock values in tests.
-
-CONTEXT_SETTINGS = {"help_option_names": ["-h", "--help"]}
-
-
-@click.command(context_settings=CONTEXT_SETTINGS, options_metavar="<options>", no_args_is_help=True)
-@click.option(
-    "-d",
-    "--directory",
-    help="Local directory that should be used for download",
-    type=click.Path(exists=True),
-    metavar="<directory>",
-)
-@click.option(
-    "-u",
-    "--username",
-    help="Your iCloud username or email address",
-    metavar="<username>",
-    prompt="iCloud username/email",
-)
-@click.option(
-    "-p",
-    "--password",
-    help="Your iCloud password (default: use PyiCloud keyring or prompt for password)",
-    metavar="<password>",
-    # is_eager=True,
-)
-@click.option(
-    "--auth-only",
-    help="Create/Update cookie and session tokens only.",
-    is_flag=True,
-)
-@click.option(
-    "--cookie-directory",
-    help="Directory to store cookies for authentication (default: ~/.pyicloud)",
-    metavar="</cookie/directory>",
-    default="~/.pyicloud",
-)
-@click.option(
-    "--size",
-    help="Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` - never. If `adjusted` or `alternative` specified and is missing, then `original` is used.",
-    type=click.Choice(["original", "medium", "thumb", "adjusted", "alternative"]),
-    default=["original"],
-    multiple=True,
-    show_default=True,
-    callback=size_generator,
-)
-@click.option(
-    "--live-photo-size",
-    help="Live Photo video size to download",
-    type=click.Choice(["original", "medium", "thumb"]),
-    default="original",
-    show_default=True,
-    callback=lp_size_generator,
-)
-@click.option(
-    "--recent",
-    help="Number of recent photos to download (default: download all photos)",
-    type=click.IntRange(0),
-)
-@click.option(
-    "--until-found",
-    help="Download most recently added photos until we find x number of "
-    "previously downloaded consecutive photos (default: download all photos)",
-    type=click.IntRange(0),
-)
-@click.option(
-    "-a",
-    "--album",
-    help="Album(s) to download or whole collection if not specified",
-    multiple=True,
-    metavar="<album>",
-)
-@click.option(
-    "-l",
-    "--list-albums",
-    help="Lists the available albums",
-    is_flag=True,
-)
-@click.option(
-    "--library",
-    help="Library to download (default: Personal Library)",
-    metavar="<library>",
-    default="PrimarySync",
-)
-@click.option(
-    "--list-libraries",
-    help="Lists the available libraries",
-    is_flag=True,
-)
-@click.option(
-    "--skip-videos",
-    help="Don't download any videos (default: Download all photos and videos)",
-    is_flag=True,
-)
-@click.option(
-    "--skip-live-photos",
-    help="Don't download any live photos (default: Download live photos)",
-    is_flag=True,
-)
-@click.option(
-    "--xmp-sidecar",
-    help="Export additional data as XMP sidecar files (default: don't export)",
-    is_flag=True,
-)
-@click.option(
-    "--force-size",
-    help="Only download the requested size (`adjusted` and `alternate` will not be forced)"
-    + "(default: download original if size is not available)",
-    is_flag=True,
-)
-@click.option(
-    "--auto-delete",
-    help='Scans the "Recently Deleted" folder and deletes any files found in there. '
-    + "(If you restore the photo in iCloud, it will be downloaded again.)",
-    is_flag=True,
-)
-@click.option(
-    "--only-print-filenames",
-    help="Only prints the filenames of all files that will be downloaded "
-    "(not including files that are already downloaded.)"
-    + "(Does not download or delete any files.)",
-    is_flag=True,
-)
-@click.option(
-    "--folder-structure",
-    help="Folder structure (default: {:%Y/%m/%d}). "
-    "If set to 'none' all photos will just be placed into the download directory",
-    metavar="<folder_structure>",
-    default="{:%Y/%m/%d}",
-)
-@click.option(
-    "--set-exif-datetime",
-    help="Write the DateTimeOriginal exif tag from file creation date, " + "if it doesn't exist.",
-    is_flag=True,
-)
-@click.option(
-    "--smtp-username",
-    help="Your SMTP username, for sending email notifications when "
-    "two-step authentication expires.",
-    metavar="<smtp_username>",
-)
-@click.option(
-    "--smtp-password",
-    help="Your SMTP password, for sending email notifications when "
-    "two-step authentication expires.",
-    metavar="<smtp_password>",
-)
-@click.option(
-    "--smtp-host",
-    help="Your SMTP server host. Defaults to: smtp.gmail.com",
-    metavar="<smtp_host>",
-    default="smtp.gmail.com",
-)
-@click.option(
-    "--smtp-port",
-    help="Your SMTP server port. Default: 587 (Gmail)",
-    metavar="<smtp_port>",
-    type=click.IntRange(0),
-    default=587,
-)
-@click.option(
-    "--smtp-no-tls",
-    help="Pass this flag to disable TLS for SMTP (TLS is required for Gmail)",
-    metavar="<smtp_no_tls>",
-    is_flag=True,
-)
-@click.option(
-    "--notification-email",
-    help="Email address where you would like to receive email notifications. "
-    "Default: SMTP username",
-    metavar="<notification_email>",
-)
-@click.option(
-    "--notification-email-from",
-    help="Email address from which you would like to receive email notifications. "
-    "Default: SMTP username or notification-email",
-    metavar="<notification_email_from>",
-)
-@click.option(
-    "--notification-script",
-    type=click.Path(),
-    help="Runs an external script when two factor authentication expires. "
-    "(path required: /path/to/my/script.sh)",
-)
-@click.option(
-    "--log-level",
-    help="Log level (default: debug)",
-    type=click.Choice(["debug", "info", "error"]),
-    default="debug",
-)
-@click.option(
-    "--no-progress-bar",
-    help="Disables the one-line progress bar and prints log messages on separate lines "
-    "(Progress bar is disabled by default if there is no tty attached)",
-    is_flag=True,
-)
-@click.option(
-    "--threads-num",
-    help="Number of cpu threads - deprecated & always 1. To be removed in future version",
-    type=click.IntRange(1),
-    default=1,
-)
-@click.option(
-    "--delete-after-download",
-    help="Delete the photo/video after download it."
-    + ' The deleted items will be appear in the "Recently Deleted".'
-    + " Therefore, should not combine with --auto-delete option.",
-    is_flag=True,
-)
-@click.option(
-    "--keep-icloud-recent-days",
-    help="Keep photos newer than this many days in iCloud. Deletes the rest. "
-    + "If set to 0, all photos will be deleted from iCloud.",
-    type=click.IntRange(0),
-    default=None,
-)
-@click.option(
-    "--domain",
-    help="What iCloud root domain to use. Use 'cn' for mainland China (default: 'com')",
-    type=click.Choice(["com", "cn"]),
-    default="com",
-)
-@click.option(
-    "--watch-with-interval",
-    help="Run downloading in a infinite cycle, waiting specified seconds between runs",
-    type=click.IntRange(1),
-)
-@click.option(
-    "--dry-run",
-    help="Do not modify local system or iCloud",
-    is_flag=True,
-    default=False,
-)
-@click.option(
-    "--keep-unicode-in-filenames",
-    "filename_cleaner",
-    help="Keep unicode chars in file names or remove non all ascii chars",
-    type=bool,
-    default=False,
-    callback=build_filename_cleaner,
-)
-@click.option(
-    "--live-photo-mov-filename-policy",
-    "lp_filename_generator",
-    help="How to produce filenames for video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep filename as it is.",
-    type=click.Choice(["suffix", "original"], case_sensitive=False),
-    default="suffix",
-    callback=build_lp_filename_generator,
-)
-@click.option(
-    "--align-raw",
-    "raw_policy",
-    help="For photo assets with raw and jpeg, treat raw always in the specified size: `original` (raw+jpeg), `alternative` (jpeg+raw), or unchanged (as-is). It matters when choosing sizes to download",
-    type=click.Choice(["as-is", "original", "alternative"], case_sensitive=False),
-    default="as-is",
-    show_default=True,
-    callback=raw_policy_generator,
-)
-@click.option(
-    "--password-provider",
-    "password_providers",
-    help="Specifies passwords provider to check in the specified order",
-    type=click.Choice(["console", "keyring", "parameter", "webui"], case_sensitive=False),
-    default=["parameter", "keyring", "console"],
-    show_default=True,
-    multiple=True,
-    callback=password_provider_generator,
-)
-@click.option(
-    "--file-match-policy",
-    "file_match_policy",
-    help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names and does not de-duplicate.",
-    type=click.Choice(["name-size-dedup-with-suffix", "name-id7"], case_sensitive=False),
-    default="name-size-dedup-with-suffix",
-    show_default=True,
-    callback=file_match_policy_generator,
-)
-@click.option(
-    "--mfa-provider",
-    help="Specified where to get MFA code from",
-    type=click.Choice(["console", "webui"], case_sensitive=False),
-    default="console",
-    show_default=True,
-    callback=mfa_provider_generator,
-)
-@click.option(
-    "--use-os-locale",
-    help="Use locale of the host OS to format dates",
-    is_flag=True,
-    default=False,
-    is_eager=True,
-    callback=locale_setter,
-)
-@click.option(
-    "--skip-created-before",
-    help="Do not process assets created before specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
-    callback=skip_created_before_generator,
-)
-@click.option(
-    "--skip-created-after",
-    help="Do not process assets created after specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
-    callback=skip_created_after_generator,
-)
-@click.option(
-    "--skip-photos",
-    help="Don't download any photos (default: Download all photos and videos)",
-    is_flag=True,
-)
-@click.option(
-    "--version",
-    help="Show the version, commit hash and timestamp",
-    is_flag=True,
-    expose_value=False,
-    is_eager=True,
-    callback=report_version,
-)
-def main(
-    directory: str | None,
-    username: str,
-    password: str | None,
-    auth_only: bool,
-    cookie_directory: str,
-    size: Sequence[AssetVersionSize],
-    live_photo_size: LivePhotoVersionSize,
-    recent: int | None,
-    until_found: int | None,
-    album: Sequence[str],
-    list_albums: bool,
-    library: str,
-    list_libraries: bool,
-    skip_videos: bool,
-    skip_live_photos: bool,
-    xmp_sidecar: bool,
-    force_size: bool,
-    auto_delete: bool,
-    only_print_filenames: bool,
-    folder_structure: str,
-    set_exif_datetime: bool,
-    smtp_username: str | None,
-    smtp_password: str | None,
-    smtp_host: str,
-    smtp_port: int,
-    smtp_no_tls: bool,
-    notification_email: str | None,
-    notification_email_from: str | None,
-    log_level: str,
-    no_progress_bar: bool,
-    notification_script: str | None,
-    threads_num: int,
-    delete_after_download: bool,
-    keep_icloud_recent_days: int | None,
-    domain: str,
-    watch_with_interval: int | None,
-    dry_run: bool,
-    filename_cleaner: Callable[[str], str],
-    lp_filename_generator: Callable[[str], str],
-    raw_policy: RawTreatmentPolicy,
-    password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
-    file_match_policy: FileMatchPolicy,
-    mfa_provider: MFAProvider,
-    use_os_locale: bool,
-    skip_created_before: datetime.datetime | datetime.timedelta | None,
-    skip_created_after: datetime.datetime | datetime.timedelta | None,
-    skip_photos: bool,
-) -> NoReturn:
-    """Download all iCloud photos to a local directory"""
-
-    if skip_videos and skip_photos:
-        print("Only one of --skip-videos and --skip-photos can be used at a time")
-        sys.exit(2)
-
-    # check required directory param only if not list albums
-    if not list_albums and not list_libraries and not directory and not auth_only:
-        print("--auth-only, --directory, --list-libraries or --list-albums are required")
-        sys.exit(2)
-
-    if auto_delete and delete_after_download:
-        print("--auto-delete and --delete-after-download are mutually exclusive")
-        sys.exit(2)
-
-    if keep_icloud_recent_days and delete_after_download:
-        print("--keep-icloud-recent-days and --delete-after-download should not be used together.")
-        sys.exit(2)
-
-    if watch_with_interval and (
-        list_albums or only_print_filenames or auth_only or list_libraries
-    ):  # pragma: no cover
-        print(
-            "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, --auth-only"
-        )
-        sys.exit(2)
-
-    # hacky way to use one param in another
-    if password and "parameter" in password_providers:
-        # replace
-        password_providers["parameter"] = (constant(password), lambda _r, _w: None)
-
-    if len(password_providers) == 0:  # pragma: no cover
-        print("You need to specify at least one --password-provider")
-        sys.exit(2)
-
-    if "console" in password_providers and "webui" in password_providers:
-        print("Console and webui are not compatible in --password-provider")
-        sys.exit(2)
-
-    if "console" in password_providers and list(password_providers)[-1] != "console":
-        print("Console must be the last --password-provider")
-        sys.exit(2)
-
-    if "webui" in password_providers and list(password_providers)[-1] != "webui":
-        print("Webui must be the last --password-provider")
-        sys.exit(2)
-
-    if folder_structure != "none":
-        try:
-            folder_structure.format(datetime.datetime.now())
-        except:  # noqa E722
-            print("Format specified in --folder-structure is incorrect")
-            sys.exit(2)
-
-    # parameter cross checking is complete, startign setup and execution
-
-    logging.basicConfig(
-        format="%(asctime)s %(levelname)-8s %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-        stream=sys.stdout,
-    )
-    logger = logging.getLogger("icloudpd")
-    if only_print_filenames:
-        logger.disabled = True
-    else:
-        # Need to make sure disabled is reset to the correct value,
-        # because the logger instance is shared between tests.
-        logger.disabled = False
-        if log_level == "debug":
-            logger.setLevel(logging.DEBUG)
-        elif log_level == "info":
-            logger.setLevel(logging.INFO)
-        elif log_level == "error":
-            logger.setLevel(logging.ERROR)
-
-    with logging_redirect_tqdm():
-        status_exchange = StatusExchange()
-
-        # hacky way to use one param in another
-        if "webui" in password_providers:
-            # replace
-            password_providers["webui"] = (
-                partial(get_password_from_webui, logger, status_exchange),
-                partial(update_password_status_in_webui, status_exchange),
-            )
-
-        # hacky way to inject logger
-        if "keyring" in password_providers:
-            # replace
-            password_providers["keyring"] = (
-                get_password_from_keyring,
-                keyring_password_writter(logger),
-            )
-
-        config = Config(
-            directory=directory,
-            username=username,
-            auth_only=auth_only,
-            cookie_directory=cookie_directory,
-            primary_sizes=size,
-            live_photo_size=live_photo_size,
-            recent=recent,
-            until_found=until_found,
-            albums=album,
-            list_albums=list_albums,
-            library=library,
-            list_libraries=list_libraries,
-            skip_videos=skip_videos,
-            skip_live_photos=skip_live_photos,
-            xmp_sidecar=xmp_sidecar,
-            force_size=force_size,
-            auto_delete=auto_delete,
-            only_print_filenames=only_print_filenames,
-            folder_structure=folder_structure,
-            set_exif_datetime=set_exif_datetime,
-            smtp_username=smtp_username,
-            smtp_host=smtp_host,
-            smtp_port=smtp_port,
-            smtp_no_tls=smtp_no_tls,
-            notification_email=notification_email,
-            notification_email_from=notification_email_from,
-            log_level=log_level,
-            no_progress_bar=no_progress_bar,
-            notification_script=notification_script,
-            threads_num=threads_num,
-            delete_after_download=delete_after_download,
-            keep_icloud_recent_days=keep_icloud_recent_days,
-            domain=domain,
-            watch_with_interval=watch_with_interval,
-            dry_run=dry_run,
-            raw_policy=raw_policy,
-            password_providers=password_providers,
-            file_match_policy=file_match_policy,
-            mfa_provider=mfa_provider,
-            use_os_locale=use_os_locale,
-            skip_created_before=skip_created_before,
-            skip_created_after=skip_created_after,
-            skip_photos=skip_photos,
-        )
-        status_exchange.set_config(config)
-
-        # start web server
-        if mfa_provider == MFAProvider.WEBUI or "webui" in password_providers:
-            server_thread = Thread(target=serve_app, daemon=True, args=[logger, status_exchange])
-            server_thread.start()
-
-        passer = partial(
-            where_builder,
-            logger,
-            skip_videos,
-            skip_created_before,
-            skip_created_after,
-            skip_photos,
-        )
-        downloader = (
-            partial(
-                download_builder,
-                logger,
-                folder_structure,
-                directory,
-                size,
-                force_size,
-                only_print_filenames,
-                set_exif_datetime,
-                skip_live_photos,
-                live_photo_size,
-                dry_run,
-                file_match_policy,
-                xmp_sidecar,
-            )
-            if directory is not None
-            else (lambda _s, _c, _p: False)
-        )
-        notificator = partial(
-            notificator_builder,
-            logger,
-            username,
-            smtp_username,
-            smtp_password,
-            smtp_host,
-            smtp_port,
-            smtp_no_tls,
-            notification_email,
-            notification_email_from,
-            notification_script,
-        )
-        result = core(
-            logger,
-            status_exchange,
-            passer,
-            downloader,
-            notificator,
-            filename_cleaner,
-            lp_filename_generator,
-        )
-        sys.exit(result)
 
 
 def create_logger(config: GlobalConfig) -> logging.Logger:
@@ -913,87 +202,6 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
     return logger
 
 
-def convert_user_config_to_old_config(
-    global_config: GlobalConfig, user_config: UserConfig
-) -> Config:
-    """Convert new UserConfig and GlobalConfig to old Config format"""
-
-    # Convert password providers from enum list to old dict format
-    password_providers_dict: Dict[
-        str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
-    ] = {}
-    for provider in global_config.password_providers:
-        if provider.value == "webui":
-            # webui will be replaced in main() with actual functions
-            password_providers_dict[provider.value] = (
-                ask_password_in_console,
-                dummy_password_writter,
-            )
-        elif provider.value == "console":
-            password_providers_dict[provider.value] = (
-                ask_password_in_console,
-                dummy_password_writter,
-            )
-        elif provider.value == "keyring":
-            password_providers_dict[provider.value] = (
-                get_password_from_keyring,
-                dummy_password_writter,
-            )
-        elif provider.value == "parameter":
-            password_providers_dict[provider.value] = (
-                constant(user_config.password),
-                dummy_password_writter,
-            )
-
-    return Config(
-        directory=user_config.directory,
-        username=user_config.username,
-        auth_only=user_config.auth_only,
-        cookie_directory=user_config.cookie_directory,
-        primary_sizes=user_config.sizes,
-        live_photo_size=user_config.live_photo_size,
-        recent=user_config.recent,
-        until_found=user_config.until_found,
-        albums=user_config.albums,
-        list_albums=user_config.list_albums,
-        library=user_config.library,
-        list_libraries=user_config.list_libraries,
-        skip_videos=user_config.skip_videos,
-        skip_live_photos=user_config.skip_live_photos,
-        xmp_sidecar=user_config.xmp_sidecar,
-        force_size=user_config.force_size,
-        auto_delete=user_config.auto_delete,
-        only_print_filenames=global_config.only_print_filenames,
-        folder_structure=user_config.folder_structure,
-        set_exif_datetime=user_config.set_exif_datetime,
-        smtp_username=user_config.smtp_username,
-        smtp_host=user_config.smtp_host,
-        smtp_port=user_config.smtp_port,
-        smtp_no_tls=user_config.smtp_no_tls,
-        notification_email=user_config.notification_email,
-        notification_email_from=user_config.notification_email_from,
-        log_level=global_config.log_level.value,  # Convert enum to string
-        no_progress_bar=global_config.no_progress_bar,
-        notification_script=str(user_config.notification_script)
-        if user_config.notification_script
-        else None,
-        threads_num=global_config.threads_num,
-        delete_after_download=user_config.delete_after_download,
-        keep_icloud_recent_days=user_config.keep_icloud_recent_days,
-        domain=global_config.domain,
-        watch_with_interval=global_config.watch_with_interval,
-        dry_run=user_config.dry_run,
-        raw_policy=user_config.align_raw,
-        password_providers=password_providers_dict,
-        file_match_policy=user_config.file_match_policy,
-        mfa_provider=global_config.mfa_provider,
-        use_os_locale=global_config.use_os_locale,
-        skip_created_before=user_config.skip_created_before,
-        skip_created_after=user_config.skip_created_after,
-        skip_photos=user_config.skip_photos,
-    )
-
-
 def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
     """Run the application with the new configuration system"""
 
@@ -1005,7 +213,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
     # Check if any user needs web server (webui for MFA or passwords)
     needs_web_server = global_config.mfa_provider == MFAProvider.WEBUI or any(
-        provider.value == "webui" for provider in global_config.password_providers
+        provider == PasswordProvider.WEBUI for provider in global_config.password_providers
     )
 
     # Start web server ONCE if needed, outside all loops
@@ -1043,6 +251,8 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
                     return 0
 
             # Wait for the watch interval before next iteration
+            # Clear current user during wait period to avoid misleading UI
+            shared_status_exchange.clear_current_user()
             logger.info(f"Waiting for {watch_interval} sec...")
             interval: Sequence[int] = range(1, watch_interval)
             iterable: Sequence[int] = (
@@ -1076,31 +286,53 @@ def _process_all_users_once(
 ) -> int:
     """Process all user configs once (used by both single run and watch mode)"""
 
-    for user_config in user_configs:
-        # Convert to old config format, but disable watch at individual level
-        config = convert_user_config_to_old_config(global_config, user_config)
-        # Important: Clear watch interval for individual user runs since we handle it at the top level
-        config.watch_with_interval = None
+    # Set global config and all user configs to status exchange once, before processing
+    shared_status_exchange.set_global_config(global_config)
+    shared_status_exchange.set_user_configs(user_configs)
 
+    for user_config in user_configs:
         with logging_redirect_tqdm():
             # Use shared status exchange instead of creating new ones per user
             status_exchange = shared_status_exchange
 
             # Set up password providers with proper function replacements
-            if "webui" in config.password_providers:
-                config.password_providers["webui"] = (
-                    partial(get_password_from_webui, logger, status_exchange),
-                    partial(update_password_status_in_webui, status_exchange),
-                )
+            password_providers_dict: Dict[
+                PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+            ] = {}
 
-            if "keyring" in config.password_providers:
-                config.password_providers["keyring"] = (
-                    get_password_from_keyring,
-                    keyring_password_writter(logger),
-                )
+            for provider in global_config.password_providers:
+                if provider == PasswordProvider.WEBUI:
+                    password_providers_dict[provider] = (
+                        partial(get_password_from_webui, logger, status_exchange),
+                        partial(update_password_status_in_webui, status_exchange),
+                    )
+                elif provider == PasswordProvider.CONSOLE:
+                    password_providers_dict[provider] = (
+                        ask_password_in_console,
+                        dummy_password_writter,
+                    )
+                elif provider == PasswordProvider.KEYRING:
+                    password_providers_dict[provider] = (
+                        get_password_from_keyring,
+                        keyring_password_writter(logger),
+                    )
+                elif provider == PasswordProvider.PARAMETER:
 
-            config.password_providers = config.password_providers
-            status_exchange.set_config(config)
+                    def create_constant_password_provider(
+                        password: str | None,
+                    ) -> Callable[[str], str | None]:
+                        def password_provider(_username: str) -> str | None:
+                            return password
+
+                        return password_provider
+
+                    password_providers_dict[provider] = (
+                        create_constant_password_provider(user_config.password),
+                        dummy_password_writter,
+                    )
+
+            # Only set current user - global config and user configs are already set
+            status_exchange.set_current_user(user_config.username)
 
             # Web server is now started once outside the user loop - no need to start it here
 
@@ -1116,7 +348,7 @@ def _process_all_users_once(
             # Set up live photo filename generator directly
             lp_filename_generator = (
                 lp_filename_original
-                if user_config.live_photo_mov_filename_policy.value == "original"
+                if user_config.live_photo_mov_filename_policy == LivePhotoMovFilenamePolicy.ORIGINAL
                 else lp_filename_concatinator
             )
 
@@ -1124,51 +356,54 @@ def _process_all_users_once(
             passer = partial(
                 where_builder,
                 logger,
-                config.skip_videos,
-                config.skip_created_before,
-                config.skip_created_after,
-                config.skip_photos,
+                user_config.skip_videos,
+                user_config.skip_created_before,
+                user_config.skip_created_after,
+                user_config.skip_photos,
             )
 
             downloader = (
                 partial(
                     download_builder,
                     logger,
-                    config.folder_structure,
-                    config.directory,
-                    config.size,
-                    config.force_size,
-                    config.only_print_filenames,
-                    config.set_exif_datetime,
-                    config.skip_live_photos,
-                    config.live_photo_size,
-                    config.dry_run,
-                    config.file_match_policy,
-                    config.xmp_sidecar,
+                    user_config.folder_structure,
+                    user_config.directory,
+                    user_config.sizes,
+                    user_config.force_size,
+                    global_config.only_print_filenames,
+                    user_config.set_exif_datetime,
+                    user_config.skip_live_photos,
+                    user_config.live_photo_size,
+                    user_config.dry_run,
+                    user_config.file_match_policy,
+                    user_config.xmp_sidecar,
                 )
-                if config.directory is not None
+                if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
             )
 
             notificator = partial(
                 notificator_builder,
                 logger,
-                config.username,
-                config.smtp_username,
-                user_config.smtp_password,  # This was missing from conversion
-                config.smtp_host,
-                config.smtp_port,
-                config.smtp_no_tls,
-                config.notification_email,
-                config.notification_email_from,
-                config.notification_script,
+                user_config.username,
+                user_config.smtp_username,
+                user_config.smtp_password,
+                user_config.smtp_host,
+                user_config.smtp_port,
+                user_config.smtp_no_tls,
+                user_config.notification_email,
+                user_config.notification_email_from,
+                str(user_config.notification_script) if user_config.notification_script else None,
             )
 
             # Use core_single_run since we've disabled watch at this level
-            logger.info(f"Processing user: {config.username}")
+            logger.info(f"Processing user: {user_config.username}")
             result = core_single_run(
                 logger,
                 status_exchange,
+                global_config,
+                user_config,
+                password_providers_dict,
                 passer,
                 downloader,
                 notificator,
@@ -1183,7 +418,7 @@ def _process_all_users_once(
                 else:
                     # In watch mode, log error and continue with next user
                     logger.error(
-                        f"Error processing user {config.username}, continuing with next user..."
+                        f"Error processing user {user_config.username}, continuing with next user..."
                     )
 
     return 0
@@ -1588,6 +823,11 @@ def asset_type_skip_message(photo: PhotoAsset) -> str:
 def core_single_run(
     logger: logging.Logger,
     status_exchange: StatusExchange,
+    global_config: GlobalConfig,
+    user_config: UserConfig,
+    password_providers_dict: Dict[
+        PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
+    ],
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     notificator: Callable[[], None],
@@ -1596,13 +836,10 @@ def core_single_run(
 ) -> int:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
-    config = status_exchange.get_config()
-    if not config:
-        # messed up with passing config
-        raise NotImplementedError()
-
     skip_bar = not os.environ.get("FORCE_TQDM") and (
-        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
+        global_config.only_print_filenames
+        or global_config.no_progress_bar
+        or not sys.stdout.isatty()
     )
     while True:  # retry loop (not watch - only for immediate retries)
         captured_responses: List[Mapping[str, Any]] = []
@@ -1613,18 +850,21 @@ def core_single_run(
         try:
             icloud = authenticator(
                 logger,
-                config.domain,
+                global_config.domain,
                 filename_cleaner,
                 lp_filename_generator,
-                config.raw_policy,
-                config.file_match_policy,
-                config.password_providers,
-                config.mfa_provider,
+                user_config.align_raw,
+                user_config.file_match_policy,
+                {
+                    provider.value: functions
+                    for provider, functions in password_providers_dict.items()
+                },
+                global_config.mfa_provider,
                 status_exchange,
-                config.username,
+                user_config.username,
                 notificator,
                 partial(append_response, captured_responses),
-                config.cookie_directory,
+                user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
             )
 
@@ -1634,11 +874,11 @@ def core_single_run(
             # turn off response capture
             icloud.response_observer = None
 
-            if config.auth_only:
+            if user_config.auth_only:
                 logger.info("Authentication completed successfully")
                 return 0
 
-            elif config.list_libraries:
+            elif user_config.list_libraries:
                 library_names = (
                     icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
                 )
@@ -1647,43 +887,43 @@ def core_single_run(
 
             else:
                 # Access to the selected library. Defaults to the primary photos object.
-                if config.library:
-                    if config.library in icloud.photos.private_libraries:
+                if user_config.library:
+                    if user_config.library in icloud.photos.private_libraries:
                         library_object: PhotoLibrary = icloud.photos.private_libraries[
-                            config.library
+                            user_config.library
                         ]
-                    elif config.library in icloud.photos.shared_libraries:
-                        library_object = icloud.photos.shared_libraries[config.library]
+                    elif user_config.library in icloud.photos.shared_libraries:
+                        library_object = icloud.photos.shared_libraries[user_config.library]
                     else:
-                        logger.error("Unknown library: %s", config.library)
+                        logger.error("Unknown library: %s", user_config.library)
                         return 1
                 else:
                     library_object = icloud.photos
 
-                if config.list_albums:
+                if user_config.list_albums:
                     print("Albums:")
                     album_titles = [str(a) for a in library_object.albums.values()]
                     print(*album_titles, sep="\n")
                     return 0
                 else:
-                    if not config.directory:
+                    if not user_config.directory:
                         # should be checked upstream
                         raise NotImplementedError()
                     else:
                         pass
 
-                    directory = os.path.normpath(config.directory)
+                    directory = os.path.normpath(user_config.directory)
 
-                    if config.skip_photos or config.skip_videos:
-                        photo_video_phrase = "photos" if config.skip_videos else "videos"
+                    if user_config.skip_photos or user_config.skip_videos:
+                        photo_video_phrase = "photos" if user_config.skip_videos else "videos"
                     else:
                         photo_video_phrase = "photos and videos"
-                    if len(config.albums) == 0:
+                    if len(user_config.albums) == 0:
                         album_phrase = ""
-                    elif len(config.albums) == 1:
-                        album_phrase = f" from album {','.join(config.albums)}"
+                    elif len(user_config.albums) == 1:
+                        album_phrase = f" from album {','.join(user_config.albums)}"
                     else:
-                        album_phrase = f" from albums {','.join(config.albums)}"
+                        album_phrase = f" from albums {','.join(user_config.albums)}"
 
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
@@ -1697,8 +937,8 @@ def core_single_run(
                     # )
 
                     albums: Iterable[PhotoAlbum] = (
-                        list(map_(library_object.albums.__getitem__, config.albums))
-                        if len(config.albums) > 0
+                        list(map_(library_object.albums.__getitem__, user_config.albums))
+                        if len(user_config.albums) > 0
                         else [library_object.all]
                     )
                     album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
@@ -1716,15 +956,15 @@ def core_single_run(
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
                         # Optional: Only download the x most recent photos.
-                        if config.recent is not None:
-                            photos_count = config.recent
+                        if user_config.recent is not None:
+                            photos_count = user_config.recent
                             photos_top: Iterable[PhotoAsset] = itertools.islice(
-                                photos_enumerator, config.recent
+                                photos_enumerator, user_config.recent
                             )
                         else:
                             photos_top = photos_enumerator
 
-                        if config.until_found is not None:
+                        if user_config.until_found is not None:
                             photos_count = None
                             # ensure photos iterator doesn't have a known length
                             # photos_enumerator = (p for p in photos_enumerator)
@@ -1751,9 +991,9 @@ def core_single_run(
                                 "the first" if photos_count == 1 else str(photos_count)
                             )
 
-                            if config.skip_photos or config.skip_videos:
+                            if user_config.skip_photos or user_config.skip_videos:
                                 photo_video_phrase = (
-                                    "photo" if config.skip_videos else "video"
+                                    "photo" if user_config.skip_videos else "video"
                                 ) + plural_suffix
                             else:
                                 photo_video_phrase = (
@@ -1761,14 +1001,16 @@ def core_single_run(
                                 )
                         else:
                             photos_count_str = "???"
-                            if config.skip_photos or config.skip_videos:
-                                photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            if user_config.skip_photos or user_config.skip_videos:
+                                photo_video_phrase = (
+                                    "photos" if user_config.skip_videos else "videos"
+                                )
                             else:
                                 photo_video_phrase = "photos and videos"
                         logger.info(
                             ("Downloading %s %s %s to %s ..."),
                             photos_count_str,
-                            ",".join([_s.value for _s in config.size]),
+                            ",".join([_s.value for _s in user_config.sizes]),
                             photo_video_phrase,
                             directory,
                         )
@@ -1778,8 +1020,8 @@ def core_single_run(
                         def should_break(counter: Counter) -> bool:
                             """Exit if until_found condition is reached"""
                             return (
-                                config.until_found is not None
-                                and counter.value() >= config.until_found
+                                user_config.until_found is not None
+                                and counter.value() >= user_config.until_found
                             )
 
                         status_exchange.get_progress().photos_count = (
@@ -1797,7 +1039,7 @@ def core_single_run(
                                 if should_break(consecutive_files_found):
                                     logger.info(
                                         "Found %s consecutive previously downloaded photos. Exiting",
-                                        config.until_found,
+                                        user_config.until_found,
                                     )
                                     break
                                 # item = next(photos_iterator)
@@ -1807,18 +1049,21 @@ def core_single_run(
                                 download_result = passer_result and download_photo(
                                     consecutive_files_found, item
                                 )
-                                if download_result and config.delete_after_download:
+                                if download_result and user_config.delete_after_download:
                                     should_delete = True
 
-                                if passer_result and config.keep_icloud_recent_days is not None:
+                                if (
+                                    passer_result
+                                    and user_config.keep_icloud_recent_days is not None
+                                ):
                                     created_date = item.created.astimezone(get_localzone())
                                     age_days = (now - created_date).days
                                     logger.debug(f"Created date: {created_date}")
                                     logger.debug(
-                                        f"Keep iCloud recent days: {config.keep_icloud_recent_days}"
+                                        f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
                                     )
                                     logger.debug(f"Age days: {age_days}")
-                                    if age_days < config.keep_icloud_recent_days:
+                                    if age_days < user_config.keep_icloud_recent_days:
                                         logger.debug(
                                             "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
                                             item.filename,
@@ -1828,7 +1073,7 @@ def core_single_run(
                                         should_delete = True
 
                                 if should_delete:
-                                    if config.dry_run:
+                                    if user_config.dry_run:
                                         delete_photo_dry_run(logger, library_object, item)
                                     else:
                                         delete_photo(
@@ -1849,7 +1094,7 @@ def core_single_run(
                             except StopIteration:
                                 break
 
-                        if config.only_print_filenames:
+                        if global_config.only_print_filenames:
                             return 0
                         else:
                             pass
@@ -1860,8 +1105,10 @@ def core_single_run(
                                 "Iteration was cancelled"
                             )
                         else:
-                            if config.skip_photos or config.skip_videos:
-                                photo_video_phrase = "photos" if config.skip_videos else "videos"
+                            if user_config.skip_photos or user_config.skip_videos:
+                                photo_video_phrase = (
+                                    "photos" if user_config.skip_videos else "videos"
+                                )
                             else:
                                 photo_video_phrase = "photos and videos"
                             message = f"All {photo_video_phrase} have been downloaded"
@@ -1869,21 +1116,21 @@ def core_single_run(
                             status_exchange.get_progress().photos_last_message = message
                         status_exchange.get_progress().reset()
 
-                    if config.auto_delete:
+                    if user_config.auto_delete:
                         autodelete_photos(
                             logger,
-                            config.dry_run,
+                            user_config.dry_run,
                             library_object,
-                            config.folder_structure,
+                            user_config.folder_structure,
                             directory,
-                            config.size,
+                            user_config.sizes,
                         )
                     else:
                         pass
         except PyiCloudFailedLoginException as _error:
             logger.info("Invalid email/password combination.")
             dump_responses(logger.debug, captured_responses)
-            if "webui" in config.password_providers:
+            if PasswordProvider.WEBUI in global_config.password_providers:
                 update_auth_error_in_webui(status_exchange, "Invalid email/password combination.")
                 continue
             else:
@@ -1891,7 +1138,7 @@ def core_single_run(
         except PyiCloudFailedMFAException as error:
             logger.info(str(error))
             dump_responses(logger.debug, captured_responses)
-            if config.mfa_provider == MFAProvider.WEBUI:
+            if global_config.mfa_provider == MFAProvider.WEBUI:
                 update_auth_error_in_webui(status_exchange, str(error))
                 continue
             else:
@@ -1904,7 +1151,10 @@ def core_single_run(
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
-            if "webui" in config.password_providers or config.mfa_provider == MFAProvider.WEBUI:
+            if (
+                PasswordProvider.WEBUI in global_config.password_providers
+                or global_config.mfa_provider == MFAProvider.WEBUI
+            ):
                 if update_auth_error_in_webui(status_exchange, str(error)):
                     # retry if it was during auth
                     continue
@@ -1919,7 +1169,10 @@ def core_single_run(
             dump_responses(logger.debug, captured_responses)
             # logger.debug(error)
             # webui will display error and wait for password again
-            if "webui" in config.password_providers or config.mfa_provider == MFAProvider.WEBUI:
+            if (
+                PasswordProvider.WEBUI in global_config.password_providers
+                or global_config.mfa_provider == MFAProvider.WEBUI
+            ):
                 if update_auth_error_in_webui(
                     status_exchange, "Cannot connect to Apple iCloud service"
                 ):
@@ -1949,76 +1202,3 @@ def core_single_run(
         break
 
     return 0
-
-
-def core(
-    logger: logging.Logger,
-    status_exchange: StatusExchange,
-    passer: Callable[[PhotoAsset], bool],
-    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
-    notificator: Callable[[], None],
-    filename_cleaner: Callable[[str], str],
-    lp_filename_generator: Callable[[str], str],
-) -> int:
-    """Download all iCloud photos to a local directory (legacy function with watch loop)"""
-
-    config = status_exchange.get_config()
-    if not config:
-        raise NotImplementedError()
-
-    if not config.watch_with_interval:
-        # No watch mode, just single run
-        return core_single_run(
-            logger,
-            status_exchange,
-            passer,
-            downloader,
-            notificator,
-            filename_cleaner,
-            lp_filename_generator,
-        )
-
-    # Watch mode - infinite loop with watch intervals
-    skip_bar = not os.environ.get("FORCE_TQDM") and (
-        config.only_print_filenames or config.no_progress_bar or not sys.stdout.isatty()
-    )
-
-    while True:
-        result = core_single_run(
-            logger,
-            status_exchange,
-            passer,
-            downloader,
-            notificator,
-            filename_cleaner,
-            lp_filename_generator,
-        )
-
-        # In watch mode, continue on errors, exit on success
-        if result == 0 and (config.auth_only or config.list_albums or config.list_libraries):
-            # Success - if we're only doing auth or listing, exit
-            return 0
-
-        # Wait for the watch interval
-        logger.info(f"Waiting for {config.watch_with_interval} sec...")
-        interval: Sequence[int] = range(1, config.watch_with_interval)
-        iterable: Sequence[int] = (
-            interval
-            if skip_bar
-            else typing.cast(
-                Sequence[int],
-                tqdm(
-                    iterable=interval,
-                    desc="Waiting...",
-                    ascii=True,
-                    leave=False,
-                    dynamic_ncols=True,
-                ),
-            )
-        )
-        for counter in iterable:
-            status_exchange.get_progress().waiting = config.watch_with_interval - counter
-            if status_exchange.get_progress().resume:
-                status_exchange.get_progress().reset()
-                break
-            time.sleep(1)

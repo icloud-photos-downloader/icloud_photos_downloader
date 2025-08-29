@@ -39,8 +39,10 @@ case "\$1" in
         exec /app/icloudpd "\$@"
         ;;
     *)
-        # Default to icloudpd
-        exec /app/icloudpd "\$@"
+        echo "Error: You must specify either 'icloud' or 'icloudpd' as the first argument."
+        echo "Usage: docker run <image> icloudpd [options]"
+        echo "   or: docker run <image> icloud [options]"
+        exit 1
         ;;
 esac
 EOF

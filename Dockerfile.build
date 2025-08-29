@@ -69,7 +69,7 @@ RUN \
 RUN \
     . .venv/bin/activate && \
     echo "Building binaries..." && \
-    scripts/build_bin2 icloudpd icloud  && \
+    scripts/build_bin1 icloudpd  && \
     scripts/build_bin1 icloud && \
     scripts/build_static icloudpd && \
     scripts/build_static icloud && \

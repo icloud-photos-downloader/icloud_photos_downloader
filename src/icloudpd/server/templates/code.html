@@ -1,6 +1,6 @@
 <form hx-post="/code" hx-swap="outerHTML" class="row align-items-center" hx-target-error="#toast-content">
     <fieldset>
-        <legend>Authentication</legend>
+        <legend>Authentication{% if current_user %} - {{ current_user }}{% endif %}</legend>
         {% if error %}
         <ul class="list-group list-group-flush">
             <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -9,7 +9,7 @@
         </ul>
         {% endif %}
         <div class="col-12 mb-3">
-          <label for="code" class="form-label">Two-Factor code of the user {{ config.username }}</label>
+          <label for="code" class="form-label">Two-Factor code for {{ current_user if current_user else 'iCloud account' }}</label>
           <input type="text" class="form-control" id="code" name="code" placeholder="Enter Two-Factor Code">
         </div>
         <div class="col-12">

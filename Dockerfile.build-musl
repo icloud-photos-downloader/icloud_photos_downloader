@@ -48,7 +48,7 @@ RUN \
     pip3 install --disable-pip-version-check . --group dev --group devlinux
 RUN \
     . .venv/bin/activate && \
-    scripts/build_bin2 icloudpd icloud  && \
+    scripts/build_bin1 icloudpd && \
     scripts/build_bin1 icloud && \
     scripts/build_whl
 

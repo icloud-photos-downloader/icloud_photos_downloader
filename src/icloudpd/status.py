@@ -1,7 +1,8 @@
 from enum import Enum
 from threading import Lock
+from typing import Sequence
 
-from icloudpd.config import Config
+from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.progress import Progress
 
 
@@ -24,7 +25,9 @@ class StatusExchange:
         self._status = Status.NO_INPUT_NEEDED
         self._payload: str | None = None
         self._error: str | None = None
-        self._config: Config | None = None
+        self._global_config: GlobalConfig | None = None
+        self._user_configs: Sequence[UserConfig] = []
+        self._current_user: str | None = None
         self._progress = Progress()
 
     def get_status(self) -> Status:
@@ -87,14 +90,34 @@ class StatusExchange:
 
             return self._error
 
-    def set_config(self, config: Config) -> None:
-        with self.lock:
-            self._config = config
-
-    def get_config(self) -> Config | None:
-        with self.lock:
-            return self._config
-
     def get_progress(self) -> Progress:
         with self.lock:
             return self._progress
+
+    def set_global_config(self, global_config: GlobalConfig) -> None:
+        with self.lock:
+            self._global_config = global_config
+
+    def get_global_config(self) -> GlobalConfig | None:
+        with self.lock:
+            return self._global_config
+
+    def set_user_configs(self, user_configs: Sequence[UserConfig]) -> None:
+        with self.lock:
+            self._user_configs = user_configs
+
+    def get_user_configs(self) -> Sequence[UserConfig]:
+        with self.lock:
+            return self._user_configs
+
+    def set_current_user(self, username: str) -> None:
+        with self.lock:
+            self._current_user = username
+
+    def get_current_user(self) -> str | None:
+        with self.lock:
+            return self._current_user
+
+    def clear_current_user(self) -> None:
+        with self.lock:
+            self._current_user = None

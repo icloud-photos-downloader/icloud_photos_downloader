@@ -6,14 +6,36 @@ import time
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Tuple
 
-import click
-
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+
+
+def prompt_int_range(message: str, default: str, min_val: int, max_val: int) -> int:
+    """Prompt user for integer input within a range, similar to click.IntRange"""
+    while True:
+        try:
+            response = input(f"{message} [{default}]: ").strip() or default
+            value = int(response)
+            if min_val <= value <= max_val:
+                return value
+            else:
+                print(f"Invalid input: {value} is not in the range {min_val}-{max_val}")
+        except ValueError:
+            print(f"Invalid input: '{response}' is not a valid integer")
+
+
+def prompt_string(message: str) -> str:
+    """Prompt user for string input"""
+    return input(f"{message}: ")
+
+
+def echo(message: str) -> None:
+    """Print message to stdout, similar to click.echo"""
+    print(message)
 
 
 def authenticator(
@@ -93,18 +115,16 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             number = device["phoneNumber"]
             alt_name = f"SMS to {number}"
             name = device.get("deviceName", alt_name)
-            click.echo(f"  {i}: {name}")
+            echo(f"  {i}: {name}")
 
-        device_index = click.prompt(
-            "Please choose an option:", default="0", type=click.IntRange(0, devices_count - 1)
-        )
+        device_index = prompt_int_range("Please choose an option:", "0", 0, devices_count - 1)
 
     device = devices[device_index]
     if not icloud.send_verification_code(device):
         logger.error("Failed to send two-step authentication code")
         sys.exit(1)
 
-    code = click.prompt("Please enter two-step authentication code")
+    code = prompt_string("Please enter two-step authentication code")
     if not icloud.validate_verification_code(device, code):
         logger.error("Failed to verify two-step authentication code")
         sys.exit(1)
@@ -127,35 +147,35 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             raise PyiCloudFailedMFAException("Too many trusted devices for authentication")
 
         for i, device in enumerate(devices):
-            click.echo(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
+            echo(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
 
         index_str = f"..{device_index_alphabet[devices_count - 1]}" if devices_count > 1 else ""
         index_or_code: str = ""
         while True:
             index_or_code = (
-                click.prompt(
-                    f"Please enter two-factor authentication code or device index ({device_index_alphabet[0]}{index_str}) to send SMS with a code",
+                prompt_string(
+                    f"Please enter two-factor authentication code or device index ({device_index_alphabet[0]}{index_str}) to send SMS with a code"
                 )
                 .strip()
                 .lower()
             )
 
             if index_or_code == "":
-                click.echo("Empty string. Try again")
+                echo("Empty string. Try again")
                 continue
 
             if len(index_or_code) == 1:
                 if index_or_code in device_index_alphabet:
                     if device_index_alphabet.index(index_or_code) > devices_count - 1:
-                        click.echo(
-                            f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again",
+                        echo(
+                            f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again"
                         )
                         continue
                     else:
                         break
                 else:
-                    click.echo(
-                        f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again",
+                    echo(
+                        f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again"
                     )
                     continue
 
@@ -163,11 +183,11 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 if index_or_code.isdigit():
                     break
                 else:
-                    click.echo("Invalid code, should be six digits. Try again")
+                    echo("Invalid code, should be six digits. Try again")
                     continue
 
-            click.echo(
-                f"Should be index ({device_index_alphabet[0]}{index_str}) or six-digit code. Try again",
+            echo(
+                f"Should be index ({device_index_alphabet[0]}{index_str}) or six-digit code. Try again"
             )
 
         if index_or_code in device_index_alphabet:
@@ -177,12 +197,12 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             if not icloud.send_2fa_code_sms(device.id):
                 raise PyiCloudFailedMFAException("Failed to send two-factor authentication code")
             while True:
-                code: str = click.prompt(
-                    "Please enter two-factor authentication code that you received over SMS",
+                code: str = prompt_string(
+                    "Please enter two-factor authentication code that you received over SMS"
                 ).strip()
                 if len(code) == 6 and code.isdigit():
                     break
-                click.echo("Invalid code, should be six digits. Try again")
+                echo("Invalid code, should be six digits. Try again")
 
             if not icloud.validate_2fa_code_sms(device.id, code):
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
@@ -191,12 +211,10 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     else:
         while True:
-            code = click.prompt(
-                "Please enter two-factor authentication code",
-            ).strip()
+            code = prompt_string("Please enter two-factor authentication code").strip()
             if len(code) == 6 and code.isdigit():
                 break
-            click.echo("Invalid code, should be six digits. Try again")
+            echo("Invalid code, should be six digits. Try again")
         if not icloud.validate_2fa_code(code):
             raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     logger.info(
