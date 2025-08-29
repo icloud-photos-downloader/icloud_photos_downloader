@@ -109,10 +109,6 @@ exclude = ["starters"]
 module = ['piexif.*', 'vcr.*', 'srp.*']
 ignore_missing_imports = true
 
-[[tool.mypy.overrides]]
-module = ['test_webui_demo']
-ignore_errors = true
-
 [tool.ruff]
 line-length = 100
 extend-exclude = [ "src/pyicloud_ipd" ]
