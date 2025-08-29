@@ -121,7 +121,7 @@ scripts/build
 Building platform executables:
 
 ``` sh
-scripts/build_bin2 icloudpd icloud
+scripts/build_bin1 icloudpd
 scripts/build_bin1 icloud
 ```
 Note: that command is for Linux, including devcontainers. Windows & macOS scripts must be executed on respective platforms.

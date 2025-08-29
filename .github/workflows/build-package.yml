@@ -575,7 +575,7 @@ jobs:
 
     - name: Build Release Executables
       run: |
-        scripts/build_bin2 icloudpd icloud  && \
+        scripts/build_bin1 icloudpd && \
         scripts/build_bin1 icloud && \
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && \
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64
@@ -621,7 +621,7 @@ jobs:
 
     - name: Build Release Executables
       run: |
-        scripts/build_bin2 icloudpd icloud  && \
+        scripts/build_bin1 icloudpd && \
         scripts/build_bin1 icloud && \
         mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-windows-amd64 && \
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-windows-amd64
