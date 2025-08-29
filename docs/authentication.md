@@ -10,7 +10,7 @@ You can receive an email notification when two-factor authentication expires by 
 `--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
 or you can send to a different email address with `--notification-email`.
 
-If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at <https://myaccount.google.com/apppasswords>
+If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at <https://myaccount.google.com/apppasswords>.
 
 ## MFA Providers
 
