@@ -2,7 +2,7 @@
 
 Assets on iCloud have names. When downloading assets, `icloudpd` can adjust names.
 
-(folder_structure)=
+(folder-structure)=
 ## Folder Structure
 
 ```{versionchanged} 1.7.0
@@ -18,7 +18,7 @@ Specifying `--folder-structure none` will put all files into one folder.
 
 ### Formatting
 
-`icloudpd` follows [Python string formatting grammar](https://docs.python.org/3/library/string.html#formatstrings) for [`--folder-structure`](folder-structure-parameter) parameter,e.g. `{:%Y}` means the need to take only 4-digit year out of created date. Full list of format codes is [available](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes).
+`icloudpd` follows [Python string formatting grammar](https://docs.python.org/3/library/string.html#formatstrings) for [`--folder-structure`](folder-structure-parameter) parameter, e.g. `{:%Y}` extracts only the 4-digit year from the creation date. Full list of format codes is [available](https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes).
 
 Default format is: `{:%Y/%m/%d}`
 

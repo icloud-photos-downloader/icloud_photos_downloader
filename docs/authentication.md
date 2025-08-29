@@ -10,7 +10,7 @@ You can receive an email notification when two-factor authentication expires by 
 `--smtp-username` and `--smtp-password` options. Emails will be sent to `--smtp-username` by default,
 or you can send to a different email address with `--notification-email`.
 
-If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at <https://myaccount.google.com/apppasswords>
+If you want to send notification emails using your Gmail account, and you have enabled two-factor authentication, you will need to generate an App Password at <https://myaccount.google.com/apppasswords>.
 
 ## MFA Providers
 
@@ -42,6 +42,7 @@ Advanced Data Protection (ADP) for iCloud accounts is not supported because `icl
 
 Some authentication errors may be resolved by clearing `.pyicloud` subfolder in the user's home directory. [Example](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/772#issuecomment-1950963522)
 
+(password-providers)=
 ## Password Providers
 
 ```{versionadded} 1.20.0
@@ -84,4 +85,38 @@ icloud --username jappleseed@apple.com --delete-from-keyring
 
 ```{note}
 Use `icloud`, not `icloudpd`
+```
+
+(multiple-accounts-and-configs)=
+## Using Multiple Accounts and Config
+
+`icloudpd` can process iCloud collections for multiple accounts or use multiple configs for one account. This is achived by specifying `--username` parameter multiples times: any options specified after `--username` will be applied to mentioned user only. Parameters specified before first `--username` work as defaults for all other user configs. Global app-wide settings can be specified anywhere.
+
+### Example: using two user accounts
+
+```
+$ icloudpd --use-os-locale --cookie-directory ./cookies --username alice@apple.com --directory ./alice --username bob@apple.com --directory ./bob
+```
+
+Explanation
+
+- `--use-os-locale` is global parameter and can be used anywhere
+- `--cookie-directory` is a default for both users; it is okay to use same folder since session and coockies are stored in files based on user name, so they would not collide
+- `--directory ./alice` is specifying that all photos for Alice will be downloaded into ./alice folder
+- `--directory ./bob` is specifying that all photos for Alice will be downloaded into ./alice folder
+
+### Example: using two configs for one account
+
+```
+$ icloudpd --cookie-directory ./cookies --username alice@apple.com --directory ./photos --skip-videos --username alice@apple.com --directory ./videos --skip-photos --use-os-locale
+```
+
+Explanation
+
+- `--cookie-directory` is a default for both configs
+- `--directory ./photos --skip-videos` is specifying that all photos for Alice will be downloaded into ./photos folder
+- `--directory ./videos --skip-photos` is specifying that all videos for Alice will be downloaded into ./videos folder
+- `--use-os-locale` is global parameter and can be used anywhere
+
+```{versionadded} 1.32.0
 ```
