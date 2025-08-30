@@ -79,7 +79,6 @@ class PyiCloudService:
 
     def __init__(
         self,
-        filename_cleaner: Callable[[str], str],
         domain:str,
         raw_policy: RawTreatmentPolicy,
         file_match_policy: FileMatchPolicy,
@@ -92,7 +91,6 @@ class PyiCloudService:
         with_family:bool=True, 
         http_timeout:float=30.0
     ):
-        self.filename_cleaner = filename_cleaner
         self.raw_policy = raw_policy
         self.file_match_policy = file_match_policy
         self.apple_id = apple_id
@@ -864,7 +862,6 @@ class PyiCloudService:
                 service_root,
                 self.session,
                 self.params,
-                self.filename_cleaner,
                 self.raw_policy,
                 self.file_match_policy
                 )

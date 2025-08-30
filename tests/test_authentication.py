@@ -10,7 +10,7 @@ from requests.exceptions import ConnectionError
 from vcr import VCR
 
 import pyicloud_ipd
-from foundation.core import constant, identity
+from foundation.core import constant
 from icloudpd.authentication import authenticator
 from icloudpd.base import dummy_password_writter
 from icloudpd.logger import setup_logger
@@ -45,7 +45,6 @@ class AuthenticationTestCase(TestCase):
                 authenticator(
                     setup_logger(),
                     "com",
-                    identity,
                     RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)},
@@ -258,7 +257,6 @@ class AuthenticationTestCase(TestCase):
             authenticator(
                 setup_logger(),
                 "com",
-                identity,
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 {"test": (constant("dummy"), dummy_password_writter)},

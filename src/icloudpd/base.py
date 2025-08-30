@@ -50,7 +50,7 @@ from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
-from icloudpd.paths import clean_filename, local_download_path, remove_unicode_chars
+from icloudpd.paths import local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
@@ -77,6 +77,24 @@ from pyicloud_ipd.utils import (
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
+
+
+def build_filename_cleaner(keep_unicode: bool) -> Callable[[str], str]:
+    """Build filename cleaner based on unicode preference.
+
+    Args:
+        keep_unicode: If True, preserve Unicode characters. If False, remove non-ASCII characters.
+
+    Returns:
+        Function that processes filenames according to unicode preference.
+        Note: Basic filesystem character cleaning (clean_filename) is always applied in calculate_filename.
+    """
+    if keep_unicode:
+        # Only basic cleaning is needed (already applied in calculate_filename)
+        return identity
+    else:
+        # Apply unicode removal in addition to basic cleaning
+        return remove_unicode_chars
 
 
 def lp_filename_concatinator(filename: str) -> str:
@@ -337,13 +355,7 @@ def _process_all_users_once(
             # Web server is now started once outside the user loop - no need to start it here
 
             # Set up filename processors directly since we don't have click context
-            # redefining typed vars instead of using in ternary directly is a mypy hack
-            r: Callable[[str], str] = remove_unicode_chars
-            i: Callable[[str], str] = identity
-            filename_cleaner = compose(
-                (r if not user_config.keep_unicode_in_filenames else i),
-                clean_filename,
-            )
+            # filename_cleaner was removed from services and should be passed explicitly to functions that need it
 
             # Set up live photo filename generator directly
             lp_filename_generator = (
@@ -351,6 +363,9 @@ def _process_all_users_once(
                 if user_config.live_photo_mov_filename_policy == LivePhotoMovFilenamePolicy.ORIGINAL
                 else lp_filename_concatinator
             )
+
+            # Set up filename cleaner based on user preference
+            filename_cleaner = build_filename_cleaner(user_config.keep_unicode_in_filenames)
 
             # Set up function builders
             passer = partial(
@@ -378,6 +393,7 @@ def _process_all_users_once(
                     user_config.file_match_policy,
                     user_config.xmp_sidecar,
                     lp_filename_generator,
+                    filename_cleaner,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -408,7 +424,6 @@ def _process_all_users_once(
                 passer,
                 downloader,
                 notificator,
-                filename_cleaner,
                 lp_filename_generator,
             )
 
@@ -529,6 +544,7 @@ def download_builder(
     file_match_policy: FileMatchPolicy,
     xmp_sidecar: bool,
     lp_filename_generator: Callable[[str], str],
+    filename_cleaner: Callable[[str], str],
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
@@ -587,7 +603,7 @@ def download_builder(
                 logger.error(
                     "%s size does not exist for %s. Skipping...",
                     download_size.value,
-                    photo.filename,
+                    photo.calculate_filename(file_match_policy, filename_cleaner),
                 )
                 continue
             if AssetVersionSize.ORIGINAL in primary_sizes:
@@ -596,7 +612,7 @@ def download_builder(
 
         version = versions[download_size]
         filename = calculate_version_filename(
-            photo.filename,
+            photo.calculate_filename(file_match_policy, filename_cleaner),
             version,
             download_size,
             lp_filename_generator,
@@ -669,7 +685,7 @@ def download_builder(
         if lp_size in photo.versions:
             version = photo.versions[lp_size]
             lp_filename = calculate_version_filename(
-                photo.filename,
+                photo.calculate_filename(file_match_policy, filename_cleaner),
                 version,
                 lp_size,
                 lp_filename_generator,
@@ -787,7 +803,6 @@ def core_single_run(
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     notificator: Callable[[], None],
-    filename_cleaner: Callable[[str], str],
     lp_filename_generator: Callable[[str], str],
 ) -> int:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
@@ -807,7 +822,6 @@ def core_single_run(
             icloud = authenticator(
                 logger,
                 global_config.domain,
-                filename_cleaner,
                 user_config.align_raw,
                 user_config.file_match_policy,
                 {
