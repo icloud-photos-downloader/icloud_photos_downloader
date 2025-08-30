@@ -209,21 +209,37 @@ class PhotoLibrary(object):
     def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
         if self.library_type == "shared":
             return []
-        url = ('%s/records/query?%s' %
-               (self.service_endpoint, urlencode(self.service.params)))
-        json_data = json.dumps({
-            "query": {"recordType":"CPLAlbumByPositionLive"},
-            "zoneID": self.zone_id,
-        })
 
-        request = self.service.session.post(
-            url,
-            data=json_data,
-            headers={'Content-type': 'text/plain'}
-        )
-        response = request.json()
+        all_records = []
+        continuation_marker = None
 
-        return typing.cast(Sequence[Dict[str, Any]], response['records'])
+        while True:
+            url = ('%s/records/query?%s' %
+                   (self.service_endpoint, urlencode(self.service.params)))
+            query_payload = {
+                "query": {"recordType": "CPLAlbumByPositionLive"},
+                "zoneID": self.zone_id,
+            }
+
+            if continuation_marker:
+                query_payload["continuationMarker"] = continuation_marker
+
+            json_data = json.dumps(query_payload)
+
+            request = self.service.session.post(
+                url,
+                data=json_data,
+                headers={'Content-type': 'text/plain'}
+            )
+            response = request.json()
+
+            all_records.extend(response.get('records', []))
+
+            continuation_marker = response.get('continuationMarker')
+            if not continuation_marker:
+                break
+
+        return typing.cast(Sequence[Dict[str, Any]], all_records)
 
     @property
     def all(self) -> "PhotoAlbum":
