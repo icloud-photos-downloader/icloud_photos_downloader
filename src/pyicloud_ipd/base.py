@@ -80,7 +80,6 @@ class PyiCloudService:
     def __init__(
         self,
         domain:str,
-        raw_policy: RawTreatmentPolicy,
         apple_id: str,
         password_provider: Callable[[], str | None], 
         response_observer: Callable[[Mapping[str, Any]], None] | None=None,
@@ -90,7 +89,6 @@ class PyiCloudService:
         with_family:bool=True, 
         http_timeout:float=30.0
     ):
-        self.raw_policy = raw_policy
         self.apple_id = apple_id
         self.password_provider: Callable[[], str|None] = password_provider
         self.data: Dict[str, Any] = {}
@@ -859,8 +857,7 @@ class PyiCloudService:
             self._photos = PhotosService(
                 service_root,
                 self.session,
-                self.params,
-                self.raw_policy
+                self.params
                 )
         return self._photos
 

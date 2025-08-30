@@ -11,6 +11,7 @@ from tzlocal import get_localzone
 
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
@@ -37,6 +38,7 @@ def autodelete_photos(
     directory: str,
     _sizes: Sequence[AssetVersionSize],
     lp_filename_generator: Callable[[str], str],
+    raw_policy: RawTreatmentPolicy,
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -73,7 +75,7 @@ def autodelete_photos(
         paths: Set[str] = set({})
         _size: VersionSize
         versions, filename_overrides = disambiguate_filenames(
-            media.versions, _sizes, media, lp_filename_generator
+            media.versions_with_raw_policy(raw_policy), _sizes, media, lp_filename_generator
         )
         for _size, _version in versions.items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
@@ -89,7 +91,7 @@ def autodelete_photos(
                 paths.add(
                     os.path.normpath(local_download_path(version_filename, download_dir)) + ".xmp"
                 )
-        for _size, _version in media.versions.items():
+        for _size, _version in media.versions_with_raw_policy(raw_policy).items():
             if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 version_filename = calculate_version_filename(
                     media.filename,

@@ -221,7 +221,6 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
         try:
             api = PyiCloudService(
                 domain,
-                RawTreatmentPolicy.AS_IS,
                 username,
                 lambda: password,
                 lambda _: None,

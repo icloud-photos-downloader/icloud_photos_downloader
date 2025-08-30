@@ -10,7 +10,6 @@ from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
-from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 
 def prompt_int_range(message: str, default: str, min_val: int, max_val: int) -> int:
@@ -40,7 +39,6 @@ def echo(message: str) -> None:
 def authenticator(
     logger: logging.Logger,
     domain: str,
-    raw_policy: RawTreatmentPolicy,
     password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
@@ -65,7 +63,6 @@ def authenticator(
 
     icloud = PyiCloudService(
         domain,
-        raw_policy,
         username,
         partial(password_provider, username, valid_password),
         response_observer,
