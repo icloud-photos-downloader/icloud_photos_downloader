@@ -53,10 +53,18 @@ This is a list of all options available for command line interface (CLI) of the 
     Only one library can be used by `icloudpd`
     ```    
 
+    ```{versionadded} 1.16.0
+    Shared library support added for iOS 16 shared libraries
+    ```
+
 (list-libraries-parameter)=
 `--list-libraries`
     
-:   Lists all libraries available for account 
+:   Lists all libraries available for account
+
+    ```{versionadded} 1.16.0
+    Shared library support added for iOS 16 shared libraries
+    ``` 
 
 (watch-with-interval-parameter)=
 `--watch-with-interval X`
