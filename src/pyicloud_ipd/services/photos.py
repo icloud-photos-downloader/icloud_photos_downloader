@@ -245,7 +245,6 @@ class PhotosService(PhotoLibrary):
             session: PyiCloudSession, 
             params: Dict[str, Any], 
             filename_cleaner:Callable[[str], str], 
-            lp_filename_generator: Callable[[str], str], 
             raw_policy: RawTreatmentPolicy,
             file_match_policy: FileMatchPolicy):
         self.session = session
@@ -256,7 +255,6 @@ class PhotosService(PhotoLibrary):
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
 
         self.filename_cleaner = filename_cleaner
-        self.lp_filename_generator = lp_filename_generator
         self.raw_policy = raw_policy
         self.file_match_policy = file_match_policy
 
@@ -695,13 +693,13 @@ class PhotoAsset:
             return ITEM_TYPE_EXTENSIONS[item_type]
         return 'unknown'
 
-    def calculate_version_filename(self, version: AssetVersion, version_size: VersionSize, filename_override: str | None = None) -> str:
+    def calculate_version_filename(self, version: AssetVersion, version_size: VersionSize, lp_filename_generator: Callable[[str], str], filename_override: str | None = None) -> str:
         """Calculate filename for a specific asset version."""
         return calculate_version_filename(
             self.filename,
             version,
             version_size, 
-            self._service.lp_filename_generator,
+            lp_filename_generator,
             self.item_type,
             filename_override
         )

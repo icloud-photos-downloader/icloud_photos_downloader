@@ -867,7 +867,6 @@ class PyiCloudService:
                 self.session,
                 self.params,
                 self.filename_cleaner,
-                self.lp_filename_generator,
                 self.raw_policy,
                 self.file_match_policy
                 )

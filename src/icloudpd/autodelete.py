@@ -5,7 +5,7 @@ Delete any files found in "Recently Deleted"
 import datetime
 import logging
 import os
-from typing import Sequence, Set
+from typing import Callable, Sequence, Set
 
 from tzlocal import get_localzone
 
@@ -36,6 +36,7 @@ def autodelete_photos(
     folder_structure: str,
     directory: str,
     _sizes: Sequence[AssetVersionSize],
+    lp_filename_generator: Callable[[str], str],
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -71,14 +72,16 @@ def autodelete_photos(
 
         paths: Set[str] = set({})
         _size: VersionSize
-        versions, filename_overrides = disambiguate_filenames(media.versions, _sizes, media)
+        versions, filename_overrides = disambiguate_filenames(
+            media.versions, _sizes, media, lp_filename_generator
+        )
         for _size, _version in versions.items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 version_filename = calculate_version_filename(
                     media.filename,
                     _version,
                     _size,
-                    media._service.lp_filename_generator,
+                    lp_filename_generator,
                     media.item_type,
                     filename_overrides.get(_size),
                 )
@@ -92,7 +95,7 @@ def autodelete_photos(
                     media.filename,
                     _version,
                     _size,
-                    media._service.lp_filename_generator,
+                    lp_filename_generator,
                     media.item_type,
                 )
                 paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))

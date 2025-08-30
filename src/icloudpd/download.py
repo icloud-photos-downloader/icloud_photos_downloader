@@ -12,7 +12,7 @@ from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
-from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
@@ -140,9 +140,19 @@ def download_media(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 )
             else:
+                # Simple live photo filename generator for error logging
+                def simple_lp_filename_generator(filename: str) -> str:
+                    import os
+
+                    name, ext = os.path.splitext(filename)
+                    return name + ".MOV"
+
+                version_filename = calculate_version_filename(
+                    photo.filename, version, size, simple_lp_filename_generator, photo.item_type
+                )
                 logger.error(
                     "Could not find URL to download %s for size %s",
-                    photo.calculate_version_filename(version, size),
+                    version_filename,
                     size.value,
                 )
                 break
