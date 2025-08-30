@@ -67,7 +67,12 @@ from pyicloud_ipd.exceptions import (
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
-from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import (
+    PhotoAlbum,
+    PhotoAsset,
+    PhotoLibrary,
+    apply_file_match_policy,
+)
 from pyicloud_ipd.utils import (
     disambiguate_filenames,
     get_password_from_keyring,
@@ -541,7 +546,10 @@ def skip_created_before_message(
     filename_cleaner: Callable[[str], str] | None = None,
 ) -> str:
     if file_match_policy is not None and filename_cleaner is not None:
-        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+        # Compose calculate_filename with file match policy transformation
+        filename_raw = photo.calculate_filename(filename_cleaner)
+        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+        filename = policy_transformer(filename_raw)
     else:
         filename = photo.filename
     return f"Skipping {filename}, as it was created {photo.created}, before {target_created_date}."
@@ -554,7 +562,10 @@ def skip_created_after_message(
     filename_cleaner: Callable[[str], str] | None = None,
 ) -> str:
     if file_match_policy is not None and filename_cleaner is not None:
-        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+        # Compose calculate_filename with file match policy transformation
+        filename_raw = photo.calculate_filename(filename_cleaner)
+        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+        filename = policy_transformer(filename_raw)
     else:
         filename = photo.filename
     return f"Skipping {filename}, as it was created {photo.created}, after {target_created_date}."
@@ -630,10 +641,14 @@ def download_builder(
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
             if force_size:
+                # Compose calculate_filename with file match policy transformation
+                filename_raw = photo.calculate_filename(filename_cleaner)
+                policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+                error_filename = policy_transformer(filename_raw)
                 logger.error(
                     "%s size does not exist for %s. Skipping...",
                     download_size.value,
-                    photo.calculate_filename(file_match_policy, filename_cleaner),
+                    error_filename,
                 )
                 continue
             if AssetVersionSize.ORIGINAL in primary_sizes:
@@ -641,8 +656,12 @@ def download_builder(
             download_size = AssetVersionSize.ORIGINAL
 
         version = versions[download_size]
+        # Compose calculate_filename with file match policy transformation
+        filename_raw = photo.calculate_filename(filename_cleaner)
+        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+        photo_filename = policy_transformer(filename_raw)
         filename = calculate_version_filename(
-            photo.calculate_filename(file_match_policy, filename_cleaner),
+            photo_filename,
             version,
             download_size,
             lp_filename_generator,
@@ -722,8 +741,12 @@ def download_builder(
         lp_size = live_photo_size
         if lp_size in photo.versions:
             version = photo.versions[lp_size]
+            # Compose calculate_filename with file match policy transformation
+            lp_filename_raw = photo.calculate_filename(filename_cleaner)
+            policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+            lp_photo_filename = policy_transformer(lp_filename_raw)
             lp_filename = calculate_version_filename(
-                photo.calculate_filename(file_match_policy, filename_cleaner),
+                lp_photo_filename,
                 version,
                 lp_size,
                 lp_filename_generator,
@@ -785,7 +808,10 @@ def delete_photo(
 ) -> None:
     """Delete a photo from the iCloud account."""
     if file_match_policy is not None and filename_cleaner is not None:
-        clean_filename_local = photo.calculate_filename(file_match_policy, filename_cleaner)
+        # Compose calculate_filename with file match policy transformation
+        filename_raw = photo.calculate_filename(filename_cleaner)
+        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+        clean_filename_local = policy_transformer(filename_raw)
     else:
         clean_filename_local = photo.filename
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
@@ -826,7 +852,10 @@ def delete_photo_dry_run(
 ) -> None:
     """Dry run for deleting a photo from the iCloud"""
     if file_match_policy is not None and filename_cleaner is not None:
-        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+        # Compose calculate_filename with file match policy transformation
+        filename_raw = photo.calculate_filename(filename_cleaner)
+        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+        filename = policy_transformer(filename_raw)
     else:
         filename = photo.filename
     logger.info(
@@ -851,7 +880,10 @@ def asset_type_skip_message(
     # reverse logic assumes only two options
     photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
     if file_match_policy is not None and filename_cleaner is not None:
-        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+        # Compose calculate_filename with file match policy transformation
+        filename_raw = photo.calculate_filename(filename_cleaner)
+        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
+        filename = policy_transformer(filename_raw)
     else:
         filename = photo.filename
     return f"Skipping {filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
@@ -1089,9 +1121,15 @@ def core_single_run(
                                         filename_cleaner_for_debug = build_filename_cleaner(
                                             user_config.keep_unicode_in_filenames
                                         )
-                                        debug_filename = item.calculate_filename(
-                                            user_config.file_match_policy,
-                                            filename_cleaner_for_debug,
+                                        # Compose calculate_filename with file match policy transformation
+                                        debug_filename_raw = item.calculate_filename(
+                                            filename_cleaner_for_debug
+                                        )
+                                        debug_policy_transformer = apply_file_match_policy(
+                                            user_config.file_match_policy, item.id
+                                        )
+                                        debug_filename = debug_policy_transformer(
+                                            debug_filename_raw
                                         )
                                         logger.debug(
                                             "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",

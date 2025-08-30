@@ -28,6 +28,30 @@ from pyicloud_ipd.exceptions import (
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+
+
+def apply_file_match_policy(file_match_policy: FileMatchPolicy, asset_id: str) -> Callable[[str], str]:
+    """
+    Create a function that applies the specified file match policy to a filename.
+    
+    Args:
+        file_match_policy: The file match policy to apply
+        asset_id: The asset ID used for generating unique suffixes
+        
+    Returns:
+        A function that transforms filenames according to the policy
+    """
+    def transform_filename(filename: str) -> str:
+        if file_match_policy == FileMatchPolicy.NAME_ID7:
+            # Generate 7-character base64 suffix from asset ID
+            id_suffix = base64.b64encode(asset_id.encode('utf-8')).decode('ascii')[0:7]
+            return add_suffix_to_filename(f"_{id_suffix}", filename)
+        else:
+            # For NAME_SIZE_DEDUP_WITH_SUFFIX and other policies, return filename as-is
+            # (the deduplication logic is handled elsewhere in the download process)
+            return filename
+    
+    return transform_filename
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -565,7 +589,11 @@ class PhotoAsset:
     def id(self) -> str:
         return typing.cast(str, self._master_record['recordName'])
 
-    def calculate_filename(self, file_match_policy: FileMatchPolicy, filename_cleaner: Callable[[str], str]) -> str:
+    def calculate_filename(self, filename_cleaner: Callable[[str], str]) -> str:
+        """
+        Calculate the base filename for this asset without applying file match policy.
+        File match policy transformations should be applied by composing this with apply_file_match_policy().
+        """
         fields = self._master_record['fields']
         if 'filenameEnc' in fields:
             filename_enc: Dict[str, Any] = fields['filenameEnc']
@@ -612,16 +640,7 @@ class PhotoAsset:
             )
             parser = wrap_param_in_exception("Parsing filenameEnc", extract_value_and_parse)
 
-            _filename = parser(filename_enc)
-
-            # _filename = self._service.filename_cleaner(base64.b64decode(
-            #     fields['filenameEnc']['value']
-            # ).decode('utf-8'))
-            
-            if file_match_policy == FileMatchPolicy.NAME_ID7:
-                _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]
-                _filename = add_suffix_to_filename(f"_{_a}", _filename)
-            return _filename
+            return parser(filename_enc)
 
         # Some photos don't have a filename.
         # In that case, just use the truncated fingerprint (hash),
@@ -632,11 +651,13 @@ class PhotoAsset:
     @property
     def filename(self) -> str:
         """Backward compatibility property - use calculate_filename() with explicit parameters"""
-        # Since clean_filename is now applied directly in calculate_filename,
-        # this only needs to handle additional processing (e.g., unicode handling)
-        # Use default file match policy for backward compatibility
+        # Use default file match policy for backward compatibility and compose with calculate_filename
         from pyicloud_ipd.file_match import FileMatchPolicy
-        return self.calculate_filename(FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, identity)
+        
+        # Compose calculate_filename with file match policy transformation
+        base_filename = self.calculate_filename(identity)
+        policy_transformer = apply_file_match_policy(FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, self.id)
+        return policy_transformer(base_filename)
 
     @property
     def size(self) -> int:
