@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Union
 
 
 class AssetVersionSize(Enum):
@@ -22,4 +21,4 @@ class LivePhotoVersionSize(Enum):
         return self.name
 
 
-VersionSize = Union[AssetVersionSize, LivePhotoVersionSize]
+VersionSize = AssetVersionSize | LivePhotoVersionSize

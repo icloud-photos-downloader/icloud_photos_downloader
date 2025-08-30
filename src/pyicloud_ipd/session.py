@@ -1,15 +1,16 @@
-from typing import Any, Callable, Dict, Mapping, NoReturn, Optional, Sequence
-from typing_extensions import override
-import typing
 import inspect
 import json
 import logging
+import typing
+from typing import Any, Callable, Dict, Mapping, NoReturn, Sequence
+
 from requests import Response, Session
+from typing_extensions import override
 
 from foundation.http import response_to_har_entry
 from pyicloud_ipd.exceptions import (
-    PyiCloudAPIResponseException,
     PyiCloud2SARequiredException,
+    PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
 )
 from pyicloud_ipd.utils import throw_on_503
@@ -37,7 +38,7 @@ class PyiCloudPasswordFilter(logging.Filter):
         message = record.getMessage()
         if self.name in message:
             record.msg = message.replace(self.name, "********")
-            record.args = [] # type: ignore[assignment]
+            record.args = []  # type: ignore[assignment]
 
         return True
 
@@ -45,28 +46,32 @@ class PyiCloudPasswordFilter(logging.Filter):
 class PyiCloudSession(Session):
     """iCloud session."""
 
-    def __init__(self, service: Any, response_observer:Callable[[Mapping[str, Any]], None] | None = None):
+    def __init__(
+        self, service: Any, response_observer: Callable[[Mapping[str, Any]], None] | None = None
+    ):
         self.service = service
         self.response_observer = response_observer
         super().__init__()
 
     def observe(self, response: Response) -> Response:
         if self.response_observer:
-            self.response_observer(response_to_har_entry(response)) 
+            self.response_observer(response_to_har_entry(response))
         return response
 
     @override
-    def request(self, method: str, url, **kwargs): # type: ignore
-
+    def request(self, method: str, url, **kwargs):  # type: ignore
         # Charge logging to the right service endpoint
         callee = inspect.stack()[2]
         module = inspect.getmodule(callee[0])
-        request_logger = logging.getLogger(module.__name__).getChild("http") #type: ignore[union-attr]
-        if self.service.password_filter and self.service.password_filter not in request_logger.filters:
+        request_logger = logging.getLogger(module.__name__).getChild("http")  # type: ignore[union-attr]
+        if (
+            self.service.password_filter
+            and self.service.password_filter not in request_logger.filters
+        ):
             request_logger.addFilter(self.service.password_filter)
 
         request_logger.debug("%s %s %s", method, url, kwargs.get("data", ""))
-        
+
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
         response = throw_on_503(self.observe(super().request(method, url, **kwargs)))
@@ -79,9 +84,7 @@ class PyiCloudSession(Session):
         for header, value in HEADER_DATA.items():
             if response.headers.get(header):
                 session_arg = value
-                self.service.session_data.update(
-                    {session_arg: response.headers.get(header)}
-                )
+                self.service.session_data.update({session_arg: response.headers.get(header)})
 
         # Save session_data to file
         with open(self.service.session_path, "w", encoding="utf-8") as outfile:
@@ -89,27 +92,25 @@ class PyiCloudSession(Session):
             LOGGER.debug("Saved session data to file")
 
         # Save cookies to file
-        self.cookies.save(ignore_discard=True, ignore_expires=True) # type: ignore[attr-defined]
+        self.cookies.save(ignore_discard=True, ignore_expires=True)  # type: ignore[attr-defined]
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
 
         if not response.ok and (
-            content_type not in json_mimetypes
-            or response.status_code in [421, 450, 500]
+            content_type not in json_mimetypes or response.status_code in [421, 450, 500]
         ):
-
             self._raise_error(str(response.status_code), response.reason)
 
         if content_type not in json_mimetypes:
             if self.service.session_data.get("apple_rscd") == "401":
-                code: Optional[str] = "401"
-                reason: Optional[str] = "Invalid username/password combination."
+                code: str | None = "401"
+                reason: str | None = "Invalid username/password combination."
                 self._raise_error(code or "Unknown", reason or "Unknown")
 
             return response
 
         try:
             data = response.json() if response.status_code != 204 else {}
-        except:
+        except ValueError:
             request_logger.warning("Failed to parse response with JSON mimetype")
             return response
 
@@ -117,7 +118,9 @@ class PyiCloudSession(Session):
 
         if isinstance(data, dict):
             if data.get("hasError"):
-                errors: Optional[Sequence[Dict[str, Any]]] = typing.cast(Optional[Sequence[Dict[str, Any]]], data.get("service_errors"))
+                errors: Sequence[Dict[str, Any]] | None = typing.cast(
+                    Sequence[Dict[str, Any]] | None, data.get("service_errors")
+                )
                 # service_errors returns a list of dict
                 #    dict includes the keys: code, title, message, supressDismissal
                 # Assuming a single error for now
@@ -147,10 +150,7 @@ class PyiCloudSession(Session):
         return response
 
     def _raise_error(self, code: str, reason: str) -> NoReturn:
-        if (
-            self.service.requires_2sa
-            and reason == "Missing X-APPLE-WEBAUTH-TOKEN cookie"
-        ):
+        if self.service.requires_2sa and reason == "Missing X-APPLE-WEBAUTH-TOKEN cookie":
             raise PyiCloud2SARequiredException(self.service.user["accountName"])
         if code in ("ZONE_NOT_FOUND", "AUTHENTICATION_FAILED"):
             reason = (
@@ -172,4 +172,3 @@ class PyiCloudSession(Session):
         api_error = PyiCloudAPIResponseException(reason, code)
         LOGGER.error(api_error)
         raise api_error
-
