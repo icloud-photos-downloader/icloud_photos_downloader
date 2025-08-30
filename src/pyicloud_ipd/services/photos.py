@@ -245,8 +245,7 @@ class PhotosService(PhotoLibrary):
             service_root: str, 
             session: PyiCloudSession, 
             params: Dict[str, Any], 
-            raw_policy: RawTreatmentPolicy,
-            file_match_policy: FileMatchPolicy):
+            raw_policy: RawTreatmentPolicy):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -255,7 +254,6 @@ class PhotosService(PhotoLibrary):
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
 
         self.raw_policy = raw_policy
-        self.file_match_policy = file_match_policy
 
         self.params.update({
             'remapEnums': True,
@@ -636,7 +634,9 @@ class PhotoAsset:
         """Backward compatibility property - use calculate_filename() with explicit parameters"""
         # Since clean_filename is now applied directly in calculate_filename,
         # this only needs to handle additional processing (e.g., unicode handling)
-        return self.calculate_filename(self._service.file_match_policy, identity)
+        # Use default file match policy for backward compatibility
+        from pyicloud_ipd.file_match import FileMatchPolicy
+        return self.calculate_filename(FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, identity)
 
     @property
     def size(self) -> int:

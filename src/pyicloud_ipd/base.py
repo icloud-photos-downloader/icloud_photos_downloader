@@ -81,7 +81,6 @@ class PyiCloudService:
         self,
         domain:str,
         raw_policy: RawTreatmentPolicy,
-        file_match_policy: FileMatchPolicy,
         apple_id: str,
         password_provider: Callable[[], str | None], 
         response_observer: Callable[[Mapping[str, Any]], None] | None=None,
@@ -92,7 +91,6 @@ class PyiCloudService:
         http_timeout:float=30.0
     ):
         self.raw_policy = raw_policy
-        self.file_match_policy = file_match_policy
         self.apple_id = apple_id
         self.password_provider: Callable[[], str|None] = password_provider
         self.data: Dict[str, Any] = {}
@@ -862,8 +860,7 @@ class PyiCloudService:
                 service_root,
                 self.session,
                 self.params,
-                self.raw_policy,
-                self.file_match_policy
+                self.raw_policy
                 )
         return self._photos
 

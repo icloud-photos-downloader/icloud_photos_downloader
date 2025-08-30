@@ -14,7 +14,6 @@ from foundation.core import identity
 from foundation import version_info_formatted
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
-from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.findmyiphone import AppleDevice
 
@@ -223,7 +222,6 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
             api = PyiCloudService(
                 domain,
                 RawTreatmentPolicy.AS_IS,
-                FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 username,
                 lambda: password,
                 lambda _: None,

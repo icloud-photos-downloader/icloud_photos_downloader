@@ -10,7 +10,6 @@ from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
-from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 
 
@@ -42,7 +41,6 @@ def authenticator(
     logger: logging.Logger,
     domain: str,
     raw_policy: RawTreatmentPolicy,
-    file_match_policy: FileMatchPolicy,
     password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
     mfa_provider: MFAProvider,
     status_exchange: StatusExchange,
@@ -68,7 +66,6 @@ def authenticator(
     icloud = PyiCloudService(
         domain,
         raw_policy,
-        file_match_policy,
         username,
         partial(password_provider, username, valid_password),
         response_observer,

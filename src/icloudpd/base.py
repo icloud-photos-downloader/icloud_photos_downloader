@@ -375,6 +375,8 @@ def _process_all_users_once(
                 user_config.skip_created_before,
                 user_config.skip_created_after,
                 user_config.skip_photos,
+                user_config.file_match_policy,
+                filename_cleaner,
             )
 
             downloader = (
@@ -498,36 +500,64 @@ def where_builder(
     skip_created_before: datetime.datetime | datetime.timedelta | None,
     skip_created_after: datetime.datetime | datetime.timedelta | None,
     skip_photos: bool,
+    file_match_policy: FileMatchPolicy,
+    filename_cleaner: Callable[[str], str],
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
-        compose(logger.debug, asset_type_skip_message)(photo)
+        logger.debug(asset_type_skip_message(photo, file_match_policy, filename_cleaner))
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
-        compose(logger.debug, asset_type_skip_message)(photo)
+        logger.debug(asset_type_skip_message(photo, file_match_policy, filename_cleaner))
         return False
 
     if skip_created_before is not None:
         temp_created_before = offset_to_datetime(skip_created_before)
         if photo.created < temp_created_before:
-            logger.debug(skip_created_before_message(temp_created_before, photo))
+            logger.debug(
+                skip_created_before_message(
+                    temp_created_before, photo, file_match_policy, filename_cleaner
+                )
+            )
             return False
 
     if skip_created_after is not None:
         temp_created_after = offset_to_datetime(skip_created_after)
         if photo.created > temp_created_after:
-            logger.debug(skip_created_after_message(temp_created_after, photo))
+            logger.debug(
+                skip_created_after_message(
+                    temp_created_after, photo, file_match_policy, filename_cleaner
+                )
+            )
             return False
 
     return True
 
 
-def skip_created_before_message(target_created_date: datetime.datetime, photo: PhotoAsset) -> str:
-    return f"Skipping {photo.filename}, as it was created {photo.created}, before {target_created_date}."
+def skip_created_before_message(
+    target_created_date: datetime.datetime,
+    photo: PhotoAsset,
+    file_match_policy: FileMatchPolicy | None = None,
+    filename_cleaner: Callable[[str], str] | None = None,
+) -> str:
+    if file_match_policy is not None and filename_cleaner is not None:
+        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+    else:
+        filename = photo.filename
+    return f"Skipping {filename}, as it was created {photo.created}, before {target_created_date}."
 
 
-def skip_created_after_message(target_created_date: datetime.datetime, photo: PhotoAsset) -> str:
-    return f"Skipping {photo.filename}, as it was created {photo.created}, after {target_created_date}."
+def skip_created_after_message(
+    target_created_date: datetime.datetime,
+    photo: PhotoAsset,
+    file_match_policy: FileMatchPolicy | None = None,
+    filename_cleaner: Callable[[str], str] | None = None,
+) -> str:
+    if file_match_policy is not None and filename_cleaner is not None:
+        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+    else:
+        filename = photo.filename
+    return f"Skipping {filename}, as it was created {photo.created}, after {target_created_date}."
 
 
 def download_builder(
@@ -653,7 +683,15 @@ def download_builder(
                 logger.debug("Downloading %s...", truncated_path)
 
                 download_result = download.download_media(
-                    logger, dry_run, icloud, photo, download_path, version, download_size
+                    logger,
+                    dry_run,
+                    icloud,
+                    photo,
+                    download_path,
+                    version,
+                    download_size,
+                    file_match_policy,
+                    filename_cleaner,
                 )
                 success = download_result
 
@@ -722,7 +760,15 @@ def download_builder(
                     truncated_path = truncate_middle(lp_download_path, 96)
                     logger.debug("Downloading %s...", truncated_path)
                     download_result = download.download_media(
-                        logger, dry_run, icloud, photo, lp_download_path, version, lp_size
+                        logger,
+                        dry_run,
+                        icloud,
+                        photo,
+                        lp_download_path,
+                        version,
+                        lp_size,
+                        file_match_policy,
+                        filename_cleaner,
                     )
                     success = download_result and success
                     if download_result:
@@ -734,9 +780,14 @@ def delete_photo(
     logger: logging.Logger,
     library_object: PhotoLibrary,
     photo: PhotoAsset,
+    file_match_policy: FileMatchPolicy | None = None,
+    filename_cleaner: Callable[[str], str] | None = None,
 ) -> None:
     """Delete a photo from the iCloud account."""
-    clean_filename_local = photo.filename
+    if file_match_policy is not None and filename_cleaner is not None:
+        clean_filename_local = photo.calculate_filename(file_match_policy, filename_cleaner)
+    else:
+        clean_filename_local = photo.filename
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
         f"{library_object.service_endpoint}/records/modify?"
@@ -770,11 +821,17 @@ def delete_photo_dry_run(
     logger: logging.Logger,
     library_object: PhotoLibrary,
     photo: PhotoAsset,
+    file_match_policy: FileMatchPolicy | None = None,
+    filename_cleaner: Callable[[str], str] | None = None,
 ) -> None:
     """Dry run for deleting a photo from the iCloud"""
+    if file_match_policy is not None and filename_cleaner is not None:
+        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+    else:
+        filename = photo.filename
     logger.info(
         "[DRY RUN] Would delete %s in iCloud library %s",
-        photo.filename,
+        filename,
         library_object.zone_id["zoneName"],
     )
 
@@ -786,10 +843,18 @@ def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, A
         dumper(json.dumps(entry, indent=2))
 
 
-def asset_type_skip_message(photo: PhotoAsset) -> str:
+def asset_type_skip_message(
+    photo: PhotoAsset,
+    file_match_policy: FileMatchPolicy | None = None,
+    filename_cleaner: Callable[[str], str] | None = None,
+) -> str:
     # reverse logic assumes only two options
     photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
-    return f"Skipping {photo.filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
+    if file_match_policy is not None and filename_cleaner is not None:
+        filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+    else:
+        filename = photo.filename
+    return f"Skipping {filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
 
 def core_single_run(
@@ -823,7 +888,6 @@ def core_single_run(
                 logger,
                 global_config.domain,
                 user_config.align_raw,
-                user_config.file_match_policy,
                 {
                     provider.value: functions
                     for provider, functions in password_providers_dict.items()
@@ -1021,22 +1085,42 @@ def core_single_run(
                                     )
                                     logger.debug(f"Age days: {age_days}")
                                     if age_days < user_config.keep_icloud_recent_days:
+                                        # Create filename cleaner for debug message
+                                        filename_cleaner_for_debug = build_filename_cleaner(
+                                            user_config.keep_unicode_in_filenames
+                                        )
+                                        debug_filename = item.calculate_filename(
+                                            user_config.file_match_policy,
+                                            filename_cleaner_for_debug,
+                                        )
                                         logger.debug(
                                             "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
-                                            item.filename,
+                                            debug_filename,
                                             age_days,
                                         )
                                     else:
                                         should_delete = True
 
                                 if should_delete:
+                                    # Create filename cleaner for delete operations
+                                    filename_cleaner_for_delete = build_filename_cleaner(
+                                        user_config.keep_unicode_in_filenames
+                                    )
                                     if user_config.dry_run:
-                                        delete_photo_dry_run(logger, library_object, item)
+                                        delete_photo_dry_run(
+                                            logger,
+                                            library_object,
+                                            item,
+                                            user_config.file_match_policy,
+                                            filename_cleaner_for_delete,
+                                        )
                                     else:
                                         delete_photo(
                                             logger,
                                             library_object,
                                             item,
+                                            user_config.file_match_policy,
+                                            filename_cleaner_for_delete,
                                         )
 
                                     # retrier(delete_local, error_handler)
