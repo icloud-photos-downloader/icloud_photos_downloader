@@ -6,6 +6,7 @@ import logging
 import os
 import time
 from functools import partial
+from typing import Callable
 
 from requests import Response
 from tzlocal import get_localzone
@@ -15,6 +16,7 @@ from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
@@ -110,6 +112,8 @@ def download_media(
     download_path: str,
     version: AssetVersion,
     size: VersionSize,
+    file_match_policy: FileMatchPolicy | None = None,
+    filename_cleaner: Callable[[str], str] | None = None,
 ) -> bool:
     """Download the photo to path, with retries and error handling"""
 
@@ -147,8 +151,13 @@ def download_media(
                     name, ext = os.path.splitext(filename)
                     return name + ".MOV"
 
+                # Get the proper filename based on file_match_policy
+                if file_match_policy is not None and filename_cleaner is not None:
+                    base_filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+                else:
+                    base_filename = photo.filename
                 version_filename = calculate_version_filename(
-                    photo.filename, version, size, simple_lp_filename_generator, photo.item_type
+                    base_filename, version, size, simple_lp_filename_generator, photo.item_type
                 )
                 logger.error(
                     "Could not find URL to download %s for size %s",
@@ -173,8 +182,13 @@ def download_media(
                     break
                 # you end up here when p.e. throttling by Apple happens
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
+                # Get the proper filename for error messages
+                if file_match_policy is not None and filename_cleaner is not None:
+                    error_filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+                else:
+                    error_filename = photo.filename
                 logger.error(
-                    "Error downloading %s, retrying after %s seconds...", photo.filename, wait_time
+                    "Error downloading %s, retrying after %s seconds...", error_filename, wait_time
                 )
                 time.sleep(wait_time)
 
@@ -191,9 +205,14 @@ def download_media(
         if retries >= constants.MAX_RETRIES:
             break
     if retries >= constants.MAX_RETRIES:
+        # Get the proper filename for error messages
+        if file_match_policy is not None and filename_cleaner is not None:
+            error_filename = photo.calculate_filename(file_match_policy, filename_cleaner)
+        else:
+            error_filename = photo.filename
         logger.error(
             "Could not download %s. Please try again later.",
-            photo.filename,
+            error_filename,
         )
 
     return False

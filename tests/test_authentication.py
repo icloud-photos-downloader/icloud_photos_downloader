@@ -16,7 +16,6 @@ from icloudpd.base import dummy_password_writter
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
-from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
@@ -46,7 +45,6 @@ class AuthenticationTestCase(TestCase):
                     setup_logger(),
                     "com",
                     RawTreatmentPolicy.AS_IS,
-                    FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)},
                     MFAProvider.CONSOLE,
                     StatusExchange(),
@@ -258,7 +256,6 @@ class AuthenticationTestCase(TestCase):
                 setup_logger(),
                 "com",
                 RawTreatmentPolicy.AS_IS,
-                FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 {"test": (constant("dummy"), dummy_password_writter)},
                 MFAProvider.CONSOLE,
                 StatusExchange(),
