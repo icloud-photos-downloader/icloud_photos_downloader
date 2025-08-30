@@ -377,6 +377,7 @@ def _process_all_users_once(
                     user_config.dry_run,
                     user_config.file_match_policy,
                     user_config.xmp_sidecar,
+                    lp_filename_generator,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -527,6 +528,7 @@ def download_builder(
     dry_run: bool,
     file_match_policy: FileMatchPolicy,
     xmp_sidecar: bool,
+    lp_filename_generator: Callable[[str], str],
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
@@ -554,7 +556,9 @@ def download_builder(
             date_path = folder_structure.format(created_date)
 
     try:
-        versions, filename_overrides = disambiguate_filenames(photo.versions, primary_sizes, photo)
+        versions, filename_overrides = disambiguate_filenames(
+            photo.versions, primary_sizes, photo, lp_filename_generator
+        )
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
         with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
@@ -595,7 +599,7 @@ def download_builder(
             photo.filename,
             version,
             download_size,
-            photo._service.lp_filename_generator,
+            lp_filename_generator,
             photo.item_type,
             filename_overrides.get(download_size),
         )
@@ -668,7 +672,7 @@ def download_builder(
                 photo.filename,
                 version,
                 lp_size,
-                photo._service.lp_filename_generator,
+                lp_filename_generator,
                 photo.item_type,
             )
             if live_photo_size != LivePhotoVersionSize.ORIGINAL:
@@ -1064,6 +1068,7 @@ def core_single_run(
                             user_config.folder_structure,
                             directory,
                             user_config.sizes,
+                            lp_filename_generator,
                         )
                     else:
                         pass
