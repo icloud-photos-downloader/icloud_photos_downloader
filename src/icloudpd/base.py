@@ -73,6 +73,7 @@ from pyicloud_ipd.services.photos import (
     PhotoLibrary,
     apply_file_match_policy,
     apply_filename_cleaner,
+    bind_filename_with_fallback,
 )
 from pyicloud_ipd.utils import (
     disambiguate_filenames,
@@ -548,7 +549,8 @@ def skip_created_before_message(
 ) -> str:
     if file_match_policy is not None and filename_cleaner is not None:
         # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = photo.calculate_filename()
+        fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+        raw_filename = fallback_binder(photo.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -566,7 +568,8 @@ def skip_created_after_message(
 ) -> str:
     if file_match_policy is not None and filename_cleaner is not None:
         # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = photo.calculate_filename()
+        fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+        raw_filename = fallback_binder(photo.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -647,7 +650,8 @@ def download_builder(
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
             if force_size:
                 # Compose calculate_filename with cleaning and file match policy transformations
-                raw_filename = photo.calculate_filename()
+                fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+                raw_filename = fallback_binder(photo.calculate_filename)
                 filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
                 cleaned_filename = filename_cleaner_transformer(raw_filename)
                 policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -664,7 +668,8 @@ def download_builder(
 
         version = versions[download_size]
         # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = photo.calculate_filename()
+        fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+        raw_filename = fallback_binder(photo.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -751,7 +756,8 @@ def download_builder(
         if lp_size in photo.versions:
             version = photo.versions[lp_size]
             # Compose calculate_filename with cleaning and file match policy transformations
-            raw_filename = photo.calculate_filename()
+            fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+            raw_filename = fallback_binder(photo.calculate_filename)
             filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
             cleaned_filename = filename_cleaner_transformer(raw_filename)
             policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -820,7 +826,8 @@ def delete_photo(
     """Delete a photo from the iCloud account."""
     if file_match_policy is not None and filename_cleaner is not None:
         # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = photo.calculate_filename()
+        fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+        raw_filename = fallback_binder(photo.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -866,7 +873,8 @@ def delete_photo_dry_run(
     """Dry run for deleting a photo from the iCloud"""
     if file_match_policy is not None and filename_cleaner is not None:
         # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = photo.calculate_filename()
+        fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+        raw_filename = fallback_binder(photo.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -896,7 +904,8 @@ def asset_type_skip_message(
     photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
     if file_match_policy is not None and filename_cleaner is not None:
         # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = photo.calculate_filename()
+        fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+        raw_filename = fallback_binder(photo.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -1139,7 +1148,10 @@ def core_single_run(
                                             user_config.keep_unicode_in_filenames
                                         )
                                         # Compose calculate_filename with file match policy transformation
-                                        raw_filename = item.calculate_filename()
+                                        fallback_binder = bind_filename_with_fallback(
+                                            item.id, item.item_type_extension
+                                        )
+                                        raw_filename = fallback_binder(item.calculate_filename)
                                         filename_cleaner_transformer = apply_filename_cleaner(
                                             filename_cleaner_for_debug
                                         )

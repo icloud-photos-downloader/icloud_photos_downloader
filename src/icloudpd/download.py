@@ -17,7 +17,12 @@ from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.services.photos import PhotoAsset, apply_file_match_policy, apply_filename_cleaner
+from pyicloud_ipd.services.photos import (
+    PhotoAsset,
+    apply_file_match_policy,
+    apply_filename_cleaner,
+    bind_filename_with_fallback,
+)
 from pyicloud_ipd.version_size import VersionSize
 
 
@@ -154,7 +159,10 @@ def download_media(
                 # Get the proper filename based on file_match_policy
                 if file_match_policy is not None and filename_cleaner is not None:
                     # Compose calculate_filename with cleaning and file match policy transformations
-                    raw_filename = photo.calculate_filename()
+                    fallback_binder = bind_filename_with_fallback(
+                        photo.id, photo.item_type_extension
+                    )
+                    raw_filename = fallback_binder(photo.calculate_filename)
                     filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
                     cleaned_filename = filename_cleaner_transformer(raw_filename)
                     policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -190,7 +198,10 @@ def download_media(
                 # Get the proper filename for error messages
                 if file_match_policy is not None and filename_cleaner is not None:
                     # Compose calculate_filename with cleaning and file match policy transformations
-                    raw_filename = photo.calculate_filename()
+                    fallback_binder = bind_filename_with_fallback(
+                        photo.id, photo.item_type_extension
+                    )
+                    raw_filename = fallback_binder(photo.calculate_filename)
                     filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
                     cleaned_filename = filename_cleaner_transformer(raw_filename)
                     policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
@@ -218,7 +229,8 @@ def download_media(
         # Get the proper filename for error messages
         if file_match_policy is not None and filename_cleaner is not None:
             # Compose calculate_filename with cleaning and file match policy transformations
-            raw_filename = photo.calculate_filename()
+            fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
+            raw_filename = fallback_binder(photo.calculate_filename)
             filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
             cleaned_filename = filename_cleaner_transformer(raw_filename)
             policy_transformer = apply_file_match_policy(file_match_policy, photo.id)

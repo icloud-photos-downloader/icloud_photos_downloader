@@ -69,6 +69,45 @@ def apply_filename_cleaner(filename_cleaner: Callable[[str], str]) -> Callable[[
         return compose(filename_cleaner, clean_filename)(raw_filename)
     
     return clean_filename_transform
+
+
+def generate_fingerprint_filename(asset_id: str, item_type_extension: str) -> str:
+    """
+    Generate a filename based on asset fingerprint when filenameEnc is not available.
+    
+    Args:
+        asset_id: The asset ID to use for generating the fingerprint
+        item_type_extension: The file extension based on item type
+        
+    Returns:
+        A filename based on truncated fingerprint hash with proper extension
+    """
+    # Use the truncated fingerprint (hash) plus the correct extension
+    fingerprint = re.sub('[^0-9a-zA-Z]', '_', asset_id)[0:12]
+    return '.'.join([fingerprint, item_type_extension])
+
+
+def bind_filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[[Callable[[], str | None]], str]:
+    """
+    Create a function that binds calculate_filename with fingerprint fallback.
+    
+    Args:
+        asset_id: The asset ID for generating fingerprint fallback
+        item_type_extension: The file extension for fingerprint fallback
+        
+    Returns:
+        A function that takes a calculate_filename function and returns a filename,
+        falling back to fingerprint if calculate_filename returns None
+    """
+    def bind_with_fallback(calculate_fn: Callable[[], str | None]) -> str:
+        result = calculate_fn()
+        if result is not None:
+            return result
+        else:
+            # Fall back to fingerprint-based filename
+            return generate_fingerprint_filename(asset_id, item_type_extension)
+    
+    return bind_with_fallback
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -606,11 +645,14 @@ class PhotoAsset:
     def id(self) -> str:
         return typing.cast(str, self._master_record['recordName'])
 
-    def calculate_filename(self) -> str:
+    def calculate_filename(self) -> str | None:
         """
-        Calculate the raw filename for this asset without applying cleaning or file match policy.
+        Calculate the raw filename for this asset from filenameEnc if present.
+        Returns None if filenameEnc is not available.
+        
         Filename cleaning should be applied by composing this with apply_filename_cleaner().
         File match policy transformations should be applied by composing this with apply_file_match_policy().
+        Fallback to fingerprint filename should be handled by bind_filename_with_fallback().
         """
         fields = self._master_record['fields']
         if 'filenameEnc' in fields:
@@ -652,12 +694,9 @@ class PhotoAsset:
             parser = wrap_param_in_exception("Parsing filenameEnc", extract_value_and_parse)
 
             return parser(filename_enc)
-
-        # Some photos don't have a filename.
-        # In that case, just use the truncated fingerprint (hash),
-        # plus the correct extension.
-        filename = re.sub('[^0-9a-zA-Z]', '_', self.id)[0:12]
-        return '.'.join([filename, self.item_type_extension])
+        else:
+            # No filenameEnc available, return None - caller should use fallback
+            return None
 
     @property
     def filename(self) -> str:
@@ -665,8 +704,9 @@ class PhotoAsset:
         # Use default file match policy for backward compatibility and compose with calculate_filename
         from pyicloud_ipd.file_match import FileMatchPolicy
         
-        # Compose calculate_filename with cleaning and file match policy transformations
-        raw_filename = self.calculate_filename()
+        # Bind calculate_filename with fallback, then apply cleaning and file match policy
+        fallback_binder = bind_filename_with_fallback(self.id, self.item_type_extension)
+        raw_filename = fallback_binder(self.calculate_filename)
         filename_cleaner_transformer = apply_filename_cleaner(identity)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, self.id)
