@@ -746,67 +746,6 @@ def delete_photo_dry_run(
     )
 
 
-# RetrierT = TypeVar("RetrierT")
-
-
-# def retrier(
-#     func: Callable[[], RetrierT], error_handler: Callable[[Exception, int], None]
-# ) -> RetrierT:
-#     """Run main func and retry helper if receive session error"""
-#     attempts = 0
-#     while True:
-#         try:
-#             return func()
-#         except Exception as ex:
-#             attempts += 1
-#             error_handler(ex, attempts)
-#             if attempts > constants.MAX_RETRIES:
-#                 raise
-
-
-# def session_error_handle_builder(
-#     logger: Logger, icloud: PyiCloudService, ex: Exception, attempt: int
-# ) -> None:
-#     """Handles session errors in the PhotoAlbum photos iterator"""
-#     if "Invalid global session" in str(ex):
-#         if constants.MAX_RETRIES == 0:
-#             logger.error("Session error, re-authenticating...")
-#         if attempt > constants.MAX_RETRIES:
-#             logger.error("iCloud re-authentication failed. Please try again later.")
-#             raise ex
-#         logger.error("Session error, re-authenticating...")
-#         if attempt > 1:
-#             # If the first re-authentication attempt failed,
-#             # start waiting a few seconds before retrying in case
-#             # there are some issues with the Apple servers
-#             time.sleep(constants.WAIT_SECONDS * attempt)
-#         icloud.authenticate()
-
-
-# def internal_error_handle_builder(logger: logging.Logger, ex: Exception, attempt: int) -> None:
-#     """Handles session errors in the PhotoAlbum photos iterator"""
-#     if "INTERNAL_ERROR" in str(ex):
-#         if attempt > constants.MAX_RETRIES:
-#             logger.error("Internal Error at Apple.")
-#             raise ex
-#         logger.error("Internal Error at Apple, retrying...")
-#         # start waiting a few seconds before retrying in case
-#         # there are some issues with the Apple servers
-#         time.sleep(constants.WAIT_SECONDS * attempt)
-
-
-def compose_handlers(
-    handlers: Sequence[Callable[[Exception, int], None]],
-) -> Callable[[Exception, int], None]:
-    """Compose multiple error handlers"""
-
-    def composed(ex: Exception, retries: int) -> None:
-        for handler in handlers:
-            handler(ex, retries)
-
-    return composed
-
-
 def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, Any]]) -> None:
     # dump captured responses
     for entry in responses:
@@ -927,15 +866,6 @@ def core_single_run(
 
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
-                    # session_exception_handler = partial(
-                    #     session_error_handle_builder, logger, icloud
-                    # )
-                    # internal_error_handler = partial(internal_error_handle_builder, logger)
-
-                    # error_handler = compose_handlers(
-                    #     [session_exception_handler, internal_error_handler]
-                    # )
-
                     albums: Iterable[PhotoAlbum] = (
                         list(map_(library_object.albums.__getitem__, user_config.albums))
                         if len(user_config.albums) > 0
@@ -950,9 +880,6 @@ def core_single_run(
 
                     photos_count: int | None = compose(sum_, album_lengths)(albums)
                     for photo_album in albums:
-                        # errors are handled at top level now. TODO remove all error handling
-                        # photos.exception_handler = error_handler
-
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
                         # Optional: Only download the x most recent photos.

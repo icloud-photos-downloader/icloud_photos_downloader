@@ -332,7 +332,6 @@ class PhotoAlbum(object):
         self.offset = 0
         self.query_filter = query_filter
         self.page_size = page_size
-        self.exception_handler: Optional[Callable[[Exception, int], None]] = None
 
         if zone_id:
             self._zone_id: Dict[str, Any] = zone_id
@@ -376,22 +375,9 @@ class PhotoAlbum(object):
 
     @property
     def photos(self) -> Generator["PhotoAsset", Any, None]:
-        exception_retries = 0
 
         while(True):
-            try:
-                request = self.photos_request()
-            except PyiCloudAPIResponseException as ex:
-                if self.exception_handler:
-                    exception_retries += 1
-                    self.exception_handler(ex, exception_retries)
-                    if exception_retries > 5:
-                        raise
-                    continue
-                else:
-                    raise
-
-            exception_retries = 0
+            request = self.photos_request()
 
 #            url = ('%s/records/query?' % self.service_endpoint) + \
 #                urlencode(self.service.params)
