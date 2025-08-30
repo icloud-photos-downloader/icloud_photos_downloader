@@ -15,6 +15,7 @@ from tzlocal import get_localzone
 
 from foundation import bytes_decode, wrap_param_in_exception
 from foundation.core import compose, identity
+from foundation.core.optional import fromMaybe
 from icloudpd.paths import clean_filename
 from pyicloud_ipd.asset_version import (
     ITEM_TYPE_EXTENSIONS,
@@ -88,27 +89,20 @@ def generate_fingerprint_filename(asset_id: str, item_type_extension: str) -> st
 
 
 
-def bind_filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[[Callable[[], str | None]], str]:
+def filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[[str | None], str]:
     """
-    Create a function that binds calculate_filename with fingerprint fallback.
+    Create a function that extracts filename from Maybe, using fingerprint fallback as default.
     
     Args:
         asset_id: The asset ID for generating fingerprint fallback
         item_type_extension: The file extension for fingerprint fallback
         
     Returns:
-        A function that takes a calculate_filename function and returns a filename,
-        falling back to fingerprint if calculate_filename returns None
+        A function that takes an optional filename and returns a filename,
+        falling back to fingerprint if the input is None
     """
-    def bind_with_fallback(calculate_fn: Callable[[], str | None]) -> str:
-        result = calculate_fn()
-        if result is not None:
-            return result
-        else:
-            # Fall back to fingerprint-based filename
-            return generate_fingerprint_filename(asset_id, item_type_extension)
-    
-    return bind_with_fallback
+    fallback = generate_fingerprint_filename(asset_id, item_type_extension)
+    return fromMaybe(fallback)
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -678,7 +672,7 @@ class PhotoAsset:
         
         Filename cleaning should be applied by composing this with apply_filename_cleaner().
         File match policy transformations should be applied by composing this with apply_file_match_policy().
-        Fallback to fingerprint filename should be handled by bind_filename_with_fallback().
+        Fallback to fingerprint filename should be handled by filename_with_fallback().
         """
         fields = self._master_record['fields']
         if 'filenameEnc' in fields:
@@ -730,9 +724,9 @@ class PhotoAsset:
         # Use default file match policy for backward compatibility and compose with calculate_filename
         from pyicloud_ipd.file_match import FileMatchPolicy
         
-        # Bind calculate_filename with fallback, then apply cleaning and file match policy
-        fallback_binder = bind_filename_with_fallback(self.id, self.item_type_extension)
-        raw_filename = fallback_binder(self.calculate_filename)
+        # Use fromMaybe to extract filename with fallback, then apply cleaning and file match policy
+        extract_with_fallback = filename_with_fallback(self.id, self.item_type_extension)
+        raw_filename = extract_with_fallback(self.calculate_filename())
         filename_cleaner_transformer = apply_filename_cleaner(identity)
         cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, self.id)

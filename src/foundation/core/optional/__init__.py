@@ -97,3 +97,33 @@ def lift3(
         return None
 
     return _intern
+
+
+def fromMaybe(default: _Tin) -> Callable[[_Tin | None], _Tin]:
+    """
+    FromMaybe function similar to Haskell's fromMaybe.
+    Takes a default value and returns a function that extracts the value from Maybe,
+    using the default if the Maybe is None.
+
+    Signature: a -> Maybe a -> a
+
+    Args:
+        default: The default value to return when input is None
+
+    Returns:
+        A function that takes an optional input and returns the value or default
+
+    Example usage:
+        >>> extract_or_zero = fromMaybe(0)
+        >>> extract_or_zero(5) == 5
+        True
+        >>> extract_or_zero(None) == 0
+        True
+    """
+
+    def _intern(maybe_value: _Tin | None) -> _Tin:
+        if maybe_value is not None:
+            return maybe_value
+        return default
+
+    return _intern
