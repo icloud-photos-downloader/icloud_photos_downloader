@@ -17,7 +17,7 @@ from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.services.photos import PhotoAsset, apply_file_match_policy
+from pyicloud_ipd.services.photos import PhotoAsset, apply_file_match_policy, apply_filename_cleaner
 from pyicloud_ipd.version_size import VersionSize
 
 
@@ -153,10 +153,12 @@ def download_media(
 
                 # Get the proper filename based on file_match_policy
                 if file_match_policy is not None and filename_cleaner is not None:
-                    # Compose calculate_filename with file match policy transformation
-                    base_filename_raw = photo.calculate_filename(filename_cleaner)
+                    # Compose calculate_filename with cleaning and file match policy transformations
+                    raw_filename = photo.calculate_filename()
+                    filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
+                    cleaned_filename = filename_cleaner_transformer(raw_filename)
                     policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-                    base_filename = policy_transformer(base_filename_raw)
+                    base_filename = policy_transformer(cleaned_filename)
                 else:
                     base_filename = photo.filename
                 version_filename = calculate_version_filename(
@@ -187,10 +189,12 @@ def download_media(
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
                 # Get the proper filename for error messages
                 if file_match_policy is not None and filename_cleaner is not None:
-                    # Compose calculate_filename with file match policy transformation
-                    error_filename_raw = photo.calculate_filename(filename_cleaner)
+                    # Compose calculate_filename with cleaning and file match policy transformations
+                    raw_filename = photo.calculate_filename()
+                    filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
+                    cleaned_filename = filename_cleaner_transformer(raw_filename)
                     policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-                    error_filename = policy_transformer(error_filename_raw)
+                    error_filename = policy_transformer(cleaned_filename)
                 else:
                     error_filename = photo.filename
                 logger.error(
@@ -213,10 +217,12 @@ def download_media(
     if retries >= constants.MAX_RETRIES:
         # Get the proper filename for error messages
         if file_match_policy is not None and filename_cleaner is not None:
-            # Compose calculate_filename with file match policy transformation
-            error_filename_raw = photo.calculate_filename(filename_cleaner)
+            # Compose calculate_filename with cleaning and file match policy transformations
+            raw_filename = photo.calculate_filename()
+            filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
+            cleaned_filename = filename_cleaner_transformer(raw_filename)
             policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-            error_filename = policy_transformer(error_filename_raw)
+            error_filename = policy_transformer(cleaned_filename)
         else:
             error_filename = photo.filename
         logger.error(

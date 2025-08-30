@@ -52,6 +52,23 @@ def apply_file_match_policy(file_match_policy: FileMatchPolicy, asset_id: str) -
             return filename
     
     return transform_filename
+
+
+def apply_filename_cleaner(filename_cleaner: Callable[[str], str]) -> Callable[[str], str]:
+    """
+    Create a function that applies filename cleaning to a raw filename.
+    
+    Args:
+        filename_cleaner: The filename cleaner function to apply (e.g., unicode handling)
+        
+    Returns:
+        A function that cleans filenames by composing basic cleaning with additional cleaning
+    """
+    def clean_filename_transform(raw_filename: str) -> str:
+        # Apply basic filesystem character cleaning first, then additional cleaning
+        return compose(filename_cleaner, clean_filename)(raw_filename)
+    
+    return clean_filename_transform
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -589,9 +606,10 @@ class PhotoAsset:
     def id(self) -> str:
         return typing.cast(str, self._master_record['recordName'])
 
-    def calculate_filename(self, filename_cleaner: Callable[[str], str]) -> str:
+    def calculate_filename(self) -> str:
         """
-        Calculate the base filename for this asset without applying file match policy.
+        Calculate the raw filename for this asset without applying cleaning or file match policy.
+        Filename cleaning should be applied by composing this with apply_filename_cleaner().
         File match policy transformations should be applied by composing this with apply_file_match_policy().
         """
         fields = self._master_record['fields']
@@ -626,16 +644,9 @@ class PhotoAsset:
 
             _value_parser = type_parser(filename_enc)
 
-            parse_and_clean = compose(
-                filename_cleaner,  # For additional processing (e.g., unicode handling)
-                compose(
-                    clean_filename,    # Always clean invalid filename characters
-                    _value_parser
-                )
-            )
-
+            # Just extract and parse the raw value, no cleaning applied
             extract_value_and_parse = compose(
-                parse_and_clean,
+                _value_parser,
                 _get_value,
             )
             parser = wrap_param_in_exception("Parsing filenameEnc", extract_value_and_parse)
@@ -654,10 +665,12 @@ class PhotoAsset:
         # Use default file match policy for backward compatibility and compose with calculate_filename
         from pyicloud_ipd.file_match import FileMatchPolicy
         
-        # Compose calculate_filename with file match policy transformation
-        base_filename = self.calculate_filename(identity)
+        # Compose calculate_filename with cleaning and file match policy transformations
+        raw_filename = self.calculate_filename()
+        filename_cleaner_transformer = apply_filename_cleaner(identity)
+        cleaned_filename = filename_cleaner_transformer(raw_filename)
         policy_transformer = apply_file_match_policy(FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX, self.id)
-        return policy_transformer(base_filename)
+        return policy_transformer(cleaned_filename)
 
     @property
     def size(self) -> int:
