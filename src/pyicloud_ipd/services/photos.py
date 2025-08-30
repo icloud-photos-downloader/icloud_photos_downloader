@@ -10,7 +10,7 @@ from typing import Any, Callable, Dict, Generator, Sequence, Tuple, cast
 from urllib.parse import urlencode
 
 import pytz
-from requests import Response
+from requests import Response, Session
 from tzlocal import get_localzone
 
 from foundation import bytes_decode, wrap_param_in_exception
@@ -107,6 +107,28 @@ from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
+
+
+def download_asset(session: Session, url: str, start: int = 0) -> Response:
+    """
+    Download an asset from the given URL using the provided session.
+    
+    Args:
+        session: The authenticated session to use for the download
+        url: The URL to download from
+        start: The byte offset to start downloading from (for resume capability)
+        
+    Returns:
+        The HTTP response for the download request
+    """
+    headers = {
+        "Range": f"bytes={start}-"
+    }
+    return session.get(
+        url,
+        headers=headers,
+        stream=True
+    )
 
 
 def apply_raw_policy(versions: Dict[VersionSize, AssetVersion], raw_policy: RawTreatmentPolicy) -> Dict[VersionSize, AssetVersion]:
@@ -500,7 +522,7 @@ class PhotoAlbum:
             if master_records_len:
                 for master_record in master_records:
                     record_name = master_record['recordName']
-                    yield PhotoAsset(self.service, master_record,
+                    yield PhotoAsset(master_record,
                                      asset_records[record_name])
                     self.increment_offset(1)
             else:
@@ -615,8 +637,7 @@ class PhotoAlbum:
 
 
 class PhotoAsset:
-    def __init__(self, service:PhotosService, master_record: Dict[str, Any], asset_record: Dict[str, Any]) -> None:
-        self._service = service
+    def __init__(self, master_record: Dict[str, Any], asset_record: Dict[str, Any]) -> None:
         self._master_record = master_record
         self._asset_record = asset_record
 
@@ -857,15 +878,9 @@ class PhotoAsset:
         """
         return apply_raw_policy(self.versions, raw_policy)
 
-    def download(self, url: str, start:int = 0) -> Response:
-        headers = {
-            "Range": f"bytes={start}-"
-        }
-        return self._service.session.get(
-            url,
-            headers=headers,
-            stream=True
-        )
+    def download(self, session: Session, url: str, start: int = 0) -> Response:
+        """Download this asset using the provided session."""
+        return download_asset(session, url, start)
 
     def __repr__(self) -> str:
         return "<%s: id=%s>" % (
