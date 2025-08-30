@@ -42,7 +42,6 @@ def authenticator(
     logger: logging.Logger,
     domain: str,
     filename_cleaner: Callable[[str], str],
-    lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
     file_match_policy: FileMatchPolicy,
     password_providers: Dict[str, Tuple[Callable[[str], str | None], Callable[[str, str], None]]],
@@ -69,7 +68,6 @@ def authenticator(
 
     icloud = PyiCloudService(
         filename_cleaner,
-        lp_filename_generator,
         domain,
         raw_policy,
         file_match_policy,
