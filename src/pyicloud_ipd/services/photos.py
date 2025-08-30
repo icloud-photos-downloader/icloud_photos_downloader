@@ -15,6 +15,7 @@ from tzlocal import get_localzone
 
 from foundation import bytes_decode, wrap_param_in_exception
 from foundation.core import compose, identity
+from icloudpd.paths import clean_filename
 from pyicloud_ipd.asset_version import (
     ITEM_TYPE_EXTENSIONS,
     AssetVersion,
@@ -244,7 +245,6 @@ class PhotosService(PhotoLibrary):
             service_root: str, 
             session: PyiCloudSession, 
             params: Dict[str, Any], 
-            filename_cleaner:Callable[[str], str], 
             raw_policy: RawTreatmentPolicy,
             file_match_policy: FileMatchPolicy):
         self.session = session
@@ -254,7 +254,6 @@ class PhotosService(PhotoLibrary):
         self._private_libraries: Dict[str, PhotoLibrary] | None = None
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
 
-        self.filename_cleaner = filename_cleaner
         self.raw_policy = raw_policy
         self.file_match_policy = file_match_policy
 
@@ -568,8 +567,7 @@ class PhotoAsset:
     def id(self) -> str:
         return typing.cast(str, self._master_record['recordName'])
 
-    @property
-    def filename(self) -> str:
+    def calculate_filename(self, file_match_policy: FileMatchPolicy, filename_cleaner: Callable[[str], str]) -> str:
         fields = self._master_record['fields']
         if 'filenameEnc' in fields:
             filename_enc: Dict[str, Any] = fields['filenameEnc']
@@ -603,8 +601,11 @@ class PhotoAsset:
             _value_parser = type_parser(filename_enc)
 
             parse_and_clean = compose(
-                self._service.filename_cleaner,
-                _value_parser
+                filename_cleaner,  # For additional processing (e.g., unicode handling)
+                compose(
+                    clean_filename,    # Always clean invalid filename characters
+                    _value_parser
+                )
             )
 
             extract_value_and_parse = compose(
@@ -619,7 +620,7 @@ class PhotoAsset:
             #     fields['filenameEnc']['value']
             # ).decode('utf-8'))
             
-            if self._service.file_match_policy == FileMatchPolicy.NAME_ID7:
+            if file_match_policy == FileMatchPolicy.NAME_ID7:
                 _a = base64.b64encode(self.id.encode('utf-8')).decode('ascii')[0:7]
                 _filename = add_suffix_to_filename(f"_{_a}", _filename)
             return _filename
@@ -629,6 +630,13 @@ class PhotoAsset:
         # plus the correct extension.
         filename = re.sub('[^0-9a-zA-Z]', '_', self.id)[0:12]
         return '.'.join([filename, self.item_type_extension])
+
+    @property
+    def filename(self) -> str:
+        """Backward compatibility property - use calculate_filename() with explicit parameters"""
+        # Since clean_filename is now applied directly in calculate_filename,
+        # this only needs to handle additional processing (e.g., unicode handling)
+        return self.calculate_filename(self._service.file_match_policy, identity)
 
     @property
     def size(self) -> int:
