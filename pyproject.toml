@@ -33,7 +33,6 @@ dependencies = [
     "Flask==3.1.1",
     "waitress==3.0.2",
     # from pyicloud_ipd
-    "six==1.17.0",
     "tzlocal==5.3.1",
     "pytz==2025.2",
     "certifi==2025.4.26",
@@ -74,7 +73,6 @@ test = [
     "types-pytz==2025.2.0.20250516",
     "types-tzlocal==5.1.0.1",
     "types-requests==2.31.0.2",
-    "types-six==1.17.0.20250515",
     "types-urllib3==1.26.25.14",
     "types-tqdm==4.67.0.20250516",
     "types-mock==5.2.0.20250516",
