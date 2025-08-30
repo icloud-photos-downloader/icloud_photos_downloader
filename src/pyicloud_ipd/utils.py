@@ -1,14 +1,16 @@
 import copy
-import os
-from typing import TYPE_CHECKING, Dict, Optional, Sequence
-import typing
+from typing import TYPE_CHECKING, Dict, Sequence, Tuple
+
 import keyring
 from requests import Response
 
 from pyicloud_ipd.asset_version import AssetVersion, add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
-from .exceptions import PyiCloudNoStoredPasswordAvailableException, PyiCloudServiceUnavailableException
+from .exceptions import (
+    PyiCloudNoStoredPasswordAvailableException,
+    PyiCloudServiceUnavailableException,
+)
 
 if TYPE_CHECKING:
     from pyicloud_ipd.services.photos import PhotoAsset
@@ -37,7 +39,7 @@ def password_exists_in_keyring(username:str) -> bool:
         return False
 
 
-def get_password_from_keyring(username:str) -> Optional[str]:
+def get_password_from_keyring(username:str) -> str | None:
     result = keyring.get_password(
         KEYRING_SYSTEM,
         username
@@ -94,9 +96,11 @@ def underscore_to_camelcase(word:str , initial_capital: bool=False) -> str:
 def size_to_suffix(size: VersionSize) -> str:
     return f"-{size}".lower()
 
-def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize], photo_asset: 'PhotoAsset') -> Dict[AssetVersionSize, AssetVersion]:
+def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize], photo_asset: 'PhotoAsset') -> Tuple[Dict[AssetVersionSize, AssetVersion], Dict[AssetVersionSize, str]]:
     
     _results: Dict[AssetVersionSize, AssetVersion] = {}
+    _filename_overrides: Dict[AssetVersionSize, str] = {}
+    
     # add those that were requested
     for _size in _sizes:
         _version = _versions.get(_size)
@@ -114,8 +118,8 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
                 original_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ORIGINAL], AssetVersionSize.ORIGINAL)
                 adjusted_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ADJUSTED], AssetVersionSize.ADJUSTED)
                 if original_filename == adjusted_filename:
-                    # Set filename override for adjusted version
-                    _results[AssetVersionSize.ADJUSTED].filename_override = add_suffix_to_filename("-adjusted", adjusted_filename)
+                    # Store filename override for adjusted version
+                    _filename_overrides[AssetVersionSize.ADJUSTED] = add_suffix_to_filename("-adjusted", adjusted_filename)
 
     # alternative
     if AssetVersionSize.ALTERNATIVE in _sizes:
@@ -126,8 +130,8 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
         else:
             # Check for filename conflicts and add disambiguating suffix if needed
             alternative_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ALTERNATIVE], AssetVersionSize.ALTERNATIVE)
-            alt_adjusted_filename: Optional[str] = None
-            alt_original_filename: Optional[str] = None
+            alt_adjusted_filename: str | None = None
+            alt_original_filename: str | None = None
             
             if AssetVersionSize.ADJUSTED in _results:
                 alt_adjusted_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ADJUSTED], AssetVersionSize.ADJUSTED)
@@ -135,8 +139,8 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
                 alt_original_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ORIGINAL], AssetVersionSize.ORIGINAL)
                 
             if (alt_adjusted_filename and alternative_filename == alt_adjusted_filename) or (alt_original_filename and alternative_filename == alt_original_filename):
-                # Set filename override for alternative version
-                _results[AssetVersionSize.ALTERNATIVE].filename_override = add_suffix_to_filename("-alternative", alternative_filename)
+                # Store filename override for alternative version
+                _filename_overrides[AssetVersionSize.ALTERNATIVE] = add_suffix_to_filename("-alternative", alternative_filename)
 
     for _size in _sizes:
         if _size not in [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE]:
@@ -148,7 +152,7 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
             #     _n, _e = os.path.splitext(_results[_size]["filename"])
             #     _results[_size]["filename"] = f"{_n}-{_size}{_e}"
 
-    return _results
+    return _results, _filename_overrides
 
 def throw_on_503(response: Response) -> Response:
     if response.status_code == 503:
