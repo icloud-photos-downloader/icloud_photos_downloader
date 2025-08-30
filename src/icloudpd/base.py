@@ -841,7 +841,7 @@ def delete_photo(
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
         f"{library_object.service_endpoint}/records/modify?"
-        f"{urllib.parse.urlencode(library_object.service.params)}"
+        f"{urllib.parse.urlencode(library_object.params)}"
     )
     post_data = json.dumps(
         {
@@ -861,9 +861,7 @@ def delete_photo(
             "zoneID": library_object.zone_id,
         }
     )
-    library_object.service.session.post(
-        url, data=post_data, headers={"Content-type": "application/json"}
-    )
+    library_object.session.post(url, data=post_data, headers={"Content-type": "application/json"})
     logger.info("Deleted %s in iCloud", clean_filename_local)
 
 

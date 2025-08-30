@@ -271,20 +271,21 @@ class PhotoLibrary:
         },
     }
 
-    def __init__(self, service: "PhotosService", zone_id: Dict[str, Any], library_type: str):
-        self.service = service
+    def __init__(self, service_endpoint: str, params: Dict[str, Any], session: Session, zone_id: Dict[str, Any], library_type: str):
+        self.service_endpoint = service_endpoint
+        self.params = params
+        self.session = session
         self.zone_id = zone_id
         self.library_type = library_type
-        self.service_endpoint = self.service.get_service_endpoint(library_type)
 
         url = ('%s/records/query?%s' %
-               (self.service_endpoint, urlencode(self.service.params)))
+               (self.service_endpoint, urlencode(self.params)))
         json_data = json.dumps({
             "query": {"recordType":"CheckIndexingState"},
             "zoneID": self.zone_id,
         })
 
-        request = self.service.session.post(
+        request = self.session.post(
             url,
             data=json_data,
             headers={'Content-type': 'text/plain'}
@@ -298,7 +299,7 @@ class PhotoLibrary:
     @property
     def albums(self) -> Dict[str, "PhotoAlbum"]:
         albums = {
-                name: PhotoAlbum(self.service, self.service_endpoint, name, zone_id=self.zone_id, **props) # type: ignore[arg-type] # dynamically builing params
+                name: PhotoAlbum(self.params, self.session, self.service_endpoint, name, zone_id=self.zone_id, **props) # type: ignore[arg-type] # dynamically builing params
                 for (name, props) in self.SMART_FOLDERS.items()
             }
 
@@ -324,7 +325,7 @@ class PhotoLibrary:
                 }
             }]
 
-            album = PhotoAlbum(self.service, self.service_endpoint, folder_name,
+            album = PhotoAlbum(self.params, self.session, self.service_endpoint, folder_name,
                                 'CPLContainerRelationLiveByAssetDate',
                                 folder_obj_type, query_filter,
                                 zone_id=self.zone_id)
@@ -336,13 +337,13 @@ class PhotoLibrary:
         if self.library_type == "shared":
             return []
         url = ('%s/records/query?%s' %
-               (self.service_endpoint, urlencode(self.service.params)))
+               (self.service_endpoint, urlencode(self.params)))
         json_data = json.dumps({
             "query": {"recordType":"CPLAlbumByPositionLive"},
             "zoneID": self.zone_id,
         })
 
-        request = self.service.session.post(
+        request = self.session.post(
             url,
             data=json_data,
             headers={'Content-type': 'text/plain'}
@@ -353,11 +354,11 @@ class PhotoLibrary:
 
     @property
     def all(self) -> "PhotoAlbum":
-        return PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.WHOLE_COLLECTION) # type: ignore[arg-type] # dynamically builing params
+        return PhotoAlbum(self.params, self.session, self.service_endpoint, "", zone_id=self.zone_id, **self.WHOLE_COLLECTION) # type: ignore[arg-type] # dynamically builing params
 
     @property
     def recently_deleted(self) -> "PhotoAlbum":
-        return PhotoAlbum(self.service, self.service_endpoint, "", zone_id=self.zone_id, **self.RECENTLY_DELETED) # type: ignore[arg-type] # dynamically builing params
+        return PhotoAlbum(self.params, self.session, self.service_endpoint, "", zone_id=self.zone_id, **self.RECENTLY_DELETED) # type: ignore[arg-type] # dynamically builing params
 
 class PhotosService(PhotoLibrary):
     """The 'Photos' iCloud service.
@@ -376,11 +377,15 @@ class PhotosService(PhotoLibrary):
         self._private_libraries: Dict[str, PhotoLibrary] | None = None
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
 
-
         self.params.update({
             'remapEnums': True,
             'getCurrentSyncToken': True
         })
+        
+        # Initialize as primary library
+        service_endpoint = self.get_service_endpoint("private")
+        zone_id = {'zoneName': 'PrimarySync'}
+        super().__init__(service_endpoint, self.params, self.session, zone_id, "private")
 
         # TODO: Does syncToken ever change?
         # self.params.update({
@@ -389,9 +394,6 @@ class PhotosService(PhotoLibrary):
         # })
 
         # self._photo_assets = {}
-
-        super(PhotosService, self).__init__(
-            service=self, zone_id={'zoneName': 'PrimarySync'}, library_type="private")
 
     @property
     def private_libraries(self) -> Dict[str, PhotoLibrary]:
@@ -422,8 +424,9 @@ class PhotosService(PhotoLibrary):
             for zone in response['zones']:
                 if not zone.get('deleted'):
                     zone_name = zone['zoneID']['zoneName']
+                    service_endpoint = self.get_service_endpoint(library_type)
                     libraries[zone_name] = PhotoLibrary(
-                        self, zone_id=zone['zoneID'], library_type=library_type)
+                        service_endpoint, self.params, self.session, zone_id=zone['zoneID'], library_type=library_type)
                         # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
                         # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
                         # direction="ASCENDING", query_filter=None,
@@ -439,10 +442,11 @@ class PhotosService(PhotoLibrary):
 
 class PhotoAlbum:
 
-    def __init__(self, service:PhotosService, service_endpoint: str, name: str, list_type: str, obj_type: str,
+    def __init__(self, params: Dict[str, Any], session: Session, service_endpoint: str, name: str, list_type: str, obj_type: str,
                  query_filter:Sequence[Dict[str, Any]] | None=None, page_size:int=100, zone_id:Dict[str, Any] | None=None):
         self.name = name
-        self.service = service
+        self.params = params
+        self.session = session
         self.service_endpoint = service_endpoint
         self.list_type = list_type
         self.obj_type = obj_type
@@ -465,8 +469,8 @@ class PhotoAlbum:
     def __len__(self) -> int:
         url = ('%s/internal/records/query/batch?%s' %
                 (self.service_endpoint,
-                urlencode(self.service.params)))
-        request = self.service.session.post(
+                urlencode(self.params)))
+        request = self.session.post(
             url,
             data=json.dumps(self._count_query_gen(self.obj_type)),
             headers={'Content-type': 'text/plain'}
@@ -480,8 +484,8 @@ class PhotoAlbum:
     # can mock it to test session errors.
     def photos_request(self) -> Response:
         url = ('%s/records/query?' % self.service_endpoint) + \
-            urlencode(self.service.params)
-        return self.service.session.post(
+            urlencode(self.params)
+        return self.session.post(
             url,
             data=json.dumps(self._list_query_gen(
                 self.offset, self.list_type,
