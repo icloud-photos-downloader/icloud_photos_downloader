@@ -111,7 +111,6 @@ ignore_missing_imports = true
 
 [tool.ruff]
 line-length = 100
-extend-exclude = [ "src/pyicloud_ipd" ]
 
 [tool.ruff.format]
 docstring-code-format = true

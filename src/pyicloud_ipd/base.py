@@ -1,38 +1,45 @@
+import base64
+import getpass
+import hashlib
+import http.cookiejar as cookielib
+import json
+import logging
+import typing
 from contextlib import contextmanager
 from functools import partial
 from itertools import chain
-import sys
-from typing import Any, Callable, Dict, Generator, List, Mapping, NamedTuple, Optional, Sequence
-import typing
-from uuid import uuid1
-import json
-import logging
-from tempfile import gettempdir
-from os import path, mkdir
+from os import mkdir, path
 from re import Pattern, match
-import http.cookiejar as cookielib
-import getpass
+from tempfile import gettempdir
+from typing import Any, Callable, Dict, Generator, List, Mapping, NamedTuple, Sequence
+from uuid import uuid1
+
 import srp
-import base64
-import hashlib
-
 from requests import PreparedRequest, Request, Response
-from foundation.core import compose, constant, identity
-from foundation.json import Rule, _apply_rules_internal, apply_rules, compile_patterns, re_compile_ignorecase
 
+from foundation.core import compose, constant, identity
+from foundation.json import (
+    Rule,
+    apply_rules,
+    re_compile_ignorecase,
+)
 from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import (
+    PyiCloudAPIResponseException,
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
-    PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
 )
-from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotosService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
-from pyicloud_ipd.sms import AuthenticatedSession, TrustedDevice, build_send_sms_code_request, build_trusted_phone_numbers_request, build_verify_sms_code_request, parse_trusted_phone_numbers_response
-
+from pyicloud_ipd.sms import (
+    AuthenticatedSession,
+    TrustedDevice,
+    build_send_sms_code_request,
+    build_trusted_phone_numbers_request,
+    build_verify_sms_code_request,
+    parse_trusted_phone_numbers_response,
+)
 
 LOGGER = logging.getLogger(__name__)
 
@@ -47,17 +54,14 @@ HEADER_DATA = {
     "scnt": "scnt",
 }
 
+
 def origin_referer_headers(input: str) -> Dict[str, str]:
-    return {
-    "Origin": input, 
-    "Referer": f"{input}/"
-    }
+    return {"Origin": input, "Referer": f"{input}/"}
+
 
 class TrustedPhoneContextProvider(NamedTuple):
     domain: str
     oauth_session: AuthenticatedSession
-
-
 
 
 class PyiCloudService:
@@ -73,35 +77,35 @@ class PyiCloudService:
 
     def __init__(
         self,
-        domain:str,
+        domain: str,
         apple_id: str,
-        password_provider: Callable[[], str | None], 
-        response_observer: Callable[[Mapping[str, Any]], None] | None=None,
-        cookie_directory:Optional[str]=None, 
-        verify:bool=True,
-        client_id:Optional[str]=None, 
-        with_family:bool=True, 
-        http_timeout:float=30.0
+        password_provider: Callable[[], str | None],
+        response_observer: Callable[[Mapping[str, Any]], None] | None = None,
+        cookie_directory: str | None = None,
+        verify: bool = True,
+        client_id: str | None = None,
+        with_family: bool = True,
+        http_timeout: float = 30.0,
     ):
         self.apple_id = apple_id
-        self.password_provider: Callable[[], str|None] = password_provider
+        self.password_provider: Callable[[], str | None] = password_provider
         self.data: Dict[str, Any] = {}
         self.params: Dict[str, Any] = {}
-        self.client_id: str = client_id or ("auth-%s" % str(uuid1()).lower())
+        self.client_id: str = client_id or (f"auth-{str(uuid1()).lower()}")
         self.with_family = with_family
         self.http_timeout = http_timeout
         self.response_observer = response_observer
         self.observer_rules: Sequence[Rule] = []
 
         # set it when we get password
-        self.password_filter: PyiCloudPasswordFilter|None = None
+        self.password_filter: PyiCloudPasswordFilter | None = None
 
-        if (domain == 'com'):
+        if domain == "com":
             self.AUTH_ROOT_ENDPOINT = "https://idmsa.apple.com"
             self.AUTH_ENDPOINT = "https://idmsa.apple.com/appleauth/auth"
             self.HOME_ENDPOINT = "https://www.icloud.com"
             self.SETUP_ENDPOINT = "https://setup.icloud.com/setup/ws/1"
-        elif (domain == 'cn'):
+        elif domain == "cn":
             self.AUTH_ROOT_ENDPOINT = "https://idmsa.apple.com.cn"
             self.AUTH_ENDPOINT = "https://idmsa.apple.com.cn/appleauth/auth"
             self.HOME_ENDPOINT = "https://www.icloud.com.cn"
@@ -112,9 +116,7 @@ class PyiCloudService:
         self.domain = domain
 
         if cookie_directory:
-            self._cookie_directory = path.expanduser(
-                path.normpath(cookie_directory)
-            )
+            self._cookie_directory = path.expanduser(path.normpath(cookie_directory))
             if not path.exists(self._cookie_directory):
                 mkdir(self._cookie_directory, 0o700)
         else:
@@ -131,9 +133,9 @@ class PyiCloudService:
         try:
             with open(self.session_path, encoding="utf-8") as session_f:
                 self.session_data = json.load(session_f)
-        except:
+        except (FileNotFoundError, json.JSONDecodeError):
             LOGGER.info("Session file does not exist")
-        session_client_id: Optional[str] = self.session_data.get("client_id")
+        session_client_id: str | None = self.session_data.get("client_id")
         if session_client_id:
             self.client_id = session_client_id
         else:
@@ -142,22 +144,26 @@ class PyiCloudService:
         def apply_rules_and_observe(response: Mapping[str, Any]) -> None:
             if self.response_observer:
                 self.response_observer(apply_rules("", self.observer_rules, response))
-        
-        self.session:PyiCloudSession = PyiCloudSession(self, apply_rules_and_observe if self.response_observer else None)
+
+        self.session: PyiCloudSession = PyiCloudSession(
+            self, apply_rules_and_observe if self.response_observer else None
+        )
         self.session.verify = verify
-        self.session.headers.update({
-            'Origin': self.HOME_ENDPOINT,
-            'Referer': '%s/' % self.HOME_ENDPOINT,
-            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36'
-        })
+        self.session.headers.update(
+            {
+                "Origin": self.HOME_ENDPOINT,
+                "Referer": f"{self.HOME_ENDPOINT}/",
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+            }
+        )
 
         cookiejar_path = self.cookiejar_path
-        self.session.cookies = cookielib.LWPCookieJar(filename=cookiejar_path) # type: ignore[assignment]
+        self.session.cookies = cookielib.LWPCookieJar(filename=cookiejar_path)  # type: ignore[assignment]
         if path.exists(cookiejar_path):
             try:
-                self.session.cookies.load(ignore_discard=True, ignore_expires=True) # type: ignore[attr-defined]
+                self.session.cookies.load(ignore_discard=True, ignore_expires=True)  # type: ignore[attr-defined]
                 LOGGER.debug("Read cookies from %s", cookiejar_path)
-            except:
+            except (FileNotFoundError, OSError):
                 # Most likely a pickled cookiejar from earlier versions.
                 # The cookiejar will get replaced with a valid one after
                 # successful authentication.
@@ -165,87 +171,113 @@ class PyiCloudService:
 
         # Unsure if this is still needed
         self.params = {
-            'clientBuildNumber': '2522Project44',
-            'clientMasteringNumber': '2522B2',
-            'clientId': self.client_id,
+            "clientBuildNumber": "2522Project44",
+            "clientMasteringNumber": "2522B2",
+            "clientId": self.client_id,
         }
 
         # set observer rules
-        obfuscate_rule: Callable[[Pattern[str]], Rule] = lambda r: (r, obfuscate)
-        obfuscate_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(list, partial(map, compose(obfuscate_rule, re_compile_ignorecase)))
-        self.cookie_obfuscate_rules = obfuscate_rules_from_pattern([r"X_APPLE_.*", r"DES.*", r"acn01", r"aasp"])
+        def obfuscate_rule(r: Pattern[str]) -> Rule:
+            return (r, obfuscate)
+
+        obfuscate_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(
+            list, partial(map, compose(obfuscate_rule, re_compile_ignorecase))
+        )
+        self.cookie_obfuscate_rules = obfuscate_rules_from_pattern(
+            [r"X_APPLE_.*", r"DES.*", r"acn01", r"aasp"]
+        )
 
         self.header_obfuscate_rules = obfuscate_rules_from_pattern([r"X-APPLE-.*", r"scnt"])
 
-        pass_rule: Callable[[Pattern[str]], Rule] = lambda r: (r, identity)
-        pass_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(list, partial(map, compose(pass_rule, re_compile_ignorecase)))
-        self.header_pass_rules = pass_rules_from_pattern([r"^(request|response)\.headers\.(Origin|Referer|Content-Type|Location)$"])
+        def pass_rule(r: Pattern[str]) -> Rule:
+            return (r, identity)
 
-        drop_rule: Callable[[Pattern[str]], Rule] = lambda r: (r, constant(None))
-        drop_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(list, partial(map, compose(drop_rule, re_compile_ignorecase)))
-        self.header_drop_rules: List[Rule] = drop_rules_from_pattern([r"^(request|response)\.headers\..+"])
+        pass_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(
+            list, partial(map, compose(pass_rule, re_compile_ignorecase))
+        )
+        self.header_pass_rules = pass_rules_from_pattern(
+            [r"^(request|response)\.headers\.(Origin|Referer|Content-Type|Location)$"]
+        )
 
-        self.validate_response_body_obfuscate_rules = obfuscate_rules_from_pattern([
-            r"^response\.content\.dsInfo\.appleId$",
-            r"^response\.content\.dsInfo\.appleIdAlias$",
-            r"^response\.content\.dsInfo\.iCloudAppleIdAlias$",
-            r"^response\.content\.dsInfo\.appleIdEntries\.value$",
-            r"^response\.content\.dsInfo\.fullName",
-            r"^response\.content\.dsInfo\.firstName",
-            r"^response\.content\.dsInfo\.lastName",
-            r"^response\.content\.dsInfo\.dsid",
-            r"^response\.content\.dsInfo\.notificationId",
-            r"^response\.content\.dsInfo\.aDsID",
-            r"^response\.content\.dsInfo\.primaryEmail",
-        ])
-        self.validate_response_body_drop_rules = drop_rules_from_pattern([
-            r"^response\.content\.webservices\.", 
-            r"^response\.content\.configBag\.urls\.", 
-            r"^response\.content\.apps.*",
-            r"^response\.content\.dsInfo\.mailFlags",
-        ])
-        self.auth_srp_init_body_obfuscate_rules = obfuscate_rules_from_pattern([
-            r"^request\.content\.accountName",
-            r"^request\.content\.a$",
-            r"^response\.content\.salt",
-            r"^response\.content\.b",
-            r"^response\.content\.c",
-        ])
-        self.auth_srp_init_body_drop_rules = drop_rules_from_pattern([
-        ])
-        self.auth_srp_complete_body_obfuscate_rules = obfuscate_rules_from_pattern([
-            r"^request\.content\.accountName",
-            r"^request\.content\.c",
-            r"^request\.content\.m1",
-            r"^request\.content\.m2",
-            r"^request\.content\.trustTokens\.",
-        ])
-        self.auth_srp_complete_body_drop_rules = drop_rules_from_pattern([
-        ])
-        self.auth_srp_repair_complete_body_obfuscate_rules = obfuscate_rules_from_pattern([
-        ])
-        self.auth_srp_repair_complete_body_drop_rules = drop_rules_from_pattern([
-        ])
-        self.auth_raw_body_obfuscate_rules = obfuscate_rules_from_pattern([
-            r"^request\.content\.accountName",
-            r"^request\.content\.password",
-            r"^request\.content\.trustTokens\.",
-        ])
-        self.auth_raw_body_drop_rules = drop_rules_from_pattern([
-        ])
+        def drop_rule(r: Pattern[str]) -> Rule:
+            return (r, constant(None))
+
+        drop_rules_from_pattern: Callable[[Sequence[str]], List[Rule]] = compose(
+            list, partial(map, compose(drop_rule, re_compile_ignorecase))
+        )
+        self.header_drop_rules: List[Rule] = drop_rules_from_pattern(
+            [r"^(request|response)\.headers\..+"]
+        )
+
+        self.validate_response_body_obfuscate_rules = obfuscate_rules_from_pattern(
+            [
+                r"^response\.content\.dsInfo\.appleId$",
+                r"^response\.content\.dsInfo\.appleIdAlias$",
+                r"^response\.content\.dsInfo\.iCloudAppleIdAlias$",
+                r"^response\.content\.dsInfo\.appleIdEntries\.value$",
+                r"^response\.content\.dsInfo\.fullName",
+                r"^response\.content\.dsInfo\.firstName",
+                r"^response\.content\.dsInfo\.lastName",
+                r"^response\.content\.dsInfo\.dsid",
+                r"^response\.content\.dsInfo\.notificationId",
+                r"^response\.content\.dsInfo\.aDsID",
+                r"^response\.content\.dsInfo\.primaryEmail",
+            ]
+        )
+        self.validate_response_body_drop_rules = drop_rules_from_pattern(
+            [
+                r"^response\.content\.webservices\.",
+                r"^response\.content\.configBag\.urls\.",
+                r"^response\.content\.apps.*",
+                r"^response\.content\.dsInfo\.mailFlags",
+            ]
+        )
+        self.auth_srp_init_body_obfuscate_rules = obfuscate_rules_from_pattern(
+            [
+                r"^request\.content\.accountName",
+                r"^request\.content\.a$",
+                r"^response\.content\.salt",
+                r"^response\.content\.b",
+                r"^response\.content\.c",
+            ]
+        )
+        self.auth_srp_init_body_drop_rules = drop_rules_from_pattern([])
+        self.auth_srp_complete_body_obfuscate_rules = obfuscate_rules_from_pattern(
+            [
+                r"^request\.content\.accountName",
+                r"^request\.content\.c",
+                r"^request\.content\.m1",
+                r"^request\.content\.m2",
+                r"^request\.content\.trustTokens\.",
+            ]
+        )
+        self.auth_srp_complete_body_drop_rules = drop_rules_from_pattern([])
+        self.auth_srp_repair_complete_body_obfuscate_rules = obfuscate_rules_from_pattern([])
+        self.auth_srp_repair_complete_body_drop_rules = drop_rules_from_pattern([])
+        self.auth_raw_body_obfuscate_rules = obfuscate_rules_from_pattern(
+            [
+                r"^request\.content\.accountName",
+                r"^request\.content\.password",
+                r"^request\.content\.trustTokens\.",
+            ]
+        )
+        self.auth_raw_body_drop_rules = drop_rules_from_pattern([])
         self.auth_token_body_obfuscate_rules = list(
             chain(
-                obfuscate_rules_from_pattern([
-                    r"^request\.content\.dsWebAuthToken",
-                    r"^request\.content\.trustToken",
-                ]), 
-                self.validate_response_body_obfuscate_rules
-        ))
+                obfuscate_rules_from_pattern(
+                    [
+                        r"^request\.content\.dsWebAuthToken",
+                        r"^request\.content\.trustToken",
+                    ]
+                ),
+                self.validate_response_body_obfuscate_rules,
+            )
+        )
         self.auth_token_body_drop_rules = self.validate_response_body_drop_rules
 
         self.authenticate()
 
-        self._photos: Optional[PhotosService] = None
+        self._photos: PhotosService | None = None
 
     @contextmanager
     def use_rules(self, rules: Sequence[Rule]) -> Generator[Sequence[Rule], Any, None]:
@@ -256,7 +288,7 @@ class PyiCloudService:
         finally:
             self.observer_rules = temp_rules
 
-    def authenticate(self, force_refresh:bool=False) -> None:
+    def authenticate(self, force_refresh: bool = False) -> None:
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.
@@ -275,7 +307,7 @@ class PyiCloudService:
             password = self.password_provider()
             if not password:
                 LOGGER.debug("Password Provider did not give any data")
-                return None                
+                return None
             # set logging filter
             self.password_filter = PyiCloudPasswordFilter(password)
             LOGGER.addFilter(self.password_filter)
@@ -295,7 +327,7 @@ class PyiCloudService:
             self._authenticate_with_token()
 
         # Is this needed?
-        self.params.update({'dsid': self.data['dsInfo']['dsid']})
+        self.params.update({"dsid": self.data["dsInfo"]["dsid"]})
 
         self._webservices = self.data["webservices"]
 
@@ -314,22 +346,22 @@ class PyiCloudService:
         try:
             # set observer with obfuscator
             if self.response_observer:
-
                 rules = list(
                     chain(
                         self.cookie_obfuscate_rules,
-                        self.header_obfuscate_rules, 
+                        self.header_obfuscate_rules,
                         self.header_pass_rules,
                         self.header_drop_rules,
                         self.auth_token_body_obfuscate_rules,
                         self.auth_token_body_drop_rules,
-                ))
+                    )
+                )
             else:
                 rules = []
 
             with self.use_rules(rules):
                 req = self.session.post(
-                    "%s/accountLogin" % self.SETUP_ENDPOINT, data=json.dumps(data)
+                    f"{self.SETUP_ENDPOINT}/accountLogin", data=json.dumps(data)
                 )
             self.data = req.json()
         except PyiCloudAPIResponseException as error:
@@ -337,13 +369,13 @@ class PyiCloudService:
             raise PyiCloudFailedLoginException(msg, error) from error
 
         # {'domainToUse': 'iCloud.com'}
-        domain_to_use = self.data.get('domainToUse')
-        if domain_to_use != None:
-            msg = f'Apple insists on using {domain_to_use} for your request. Please use --domain parameter'
+        domain_to_use = self.data.get("domainToUse")
+        if domain_to_use is not None:
+            msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
             raise PyiCloudConnectionException(msg)
 
-    def _authenticate_srp(self, password:str) -> None:
-        class SrpPassword():
+    def _authenticate_srp(self, password: str) -> None:
+        class SrpPassword:
             # srp uses the encoded password at process_challenge(), thus set_encrypt_info() should be called before that
             def __init__(self, password: str):
                 self.pwd = password
@@ -355,9 +387,15 @@ class PyiCloudService:
 
             def encode(self) -> bytes:
                 password_hash = hashlib.sha256(self.pwd.encode())
-                password_digest = password_hash.hexdigest().encode() if self.protocol == 's2k_fo' else password_hash.digest()
+                password_digest = (
+                    password_hash.hexdigest().encode()
+                    if self.protocol == "s2k_fo"
+                    else password_hash.digest()
+                )
                 key_length = 32
-                return hashlib.pbkdf2_hmac('sha256', password_digest, self.salt, self.iterations, key_length)
+                return hashlib.pbkdf2_hmac(
+                    "sha256", password_digest, self.salt, self.iterations, key_length
+                )
 
         # Step 1: client generates private key a (stored in srp.User) and public key A, sends to server
         srp_password = SrpPassword(password)
@@ -366,28 +404,31 @@ class PyiCloudService:
         usr = srp.User(self.apple_id, srp_password, hash_alg=srp.SHA256, ng_type=srp.NG_2048)
         uname, A = usr.start_authentication()
         data = {
-            'a': base64.b64encode(A).decode(),
-            'accountName': uname,
-            'protocols': ['s2k', 's2k_fo']
+            "a": base64.b64encode(A).decode(),
+            "accountName": uname,
+            "protocols": ["s2k", "s2k_fo"],
         }
 
         headers = self._get_auth_headers(origin_referer_headers(self.AUTH_ROOT_ENDPOINT))
         try:
             if self.response_observer:
-
-                rules = list(chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules, 
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.auth_srp_init_body_obfuscate_rules,
-                    self.auth_srp_init_body_drop_rules,
-                    ))
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.auth_srp_init_body_obfuscate_rules,
+                        self.auth_srp_init_body_drop_rules,
+                    )
+                )
             else:
                 rules = []
 
             with self.use_rules(rules):
-                response = self.session.post("%s/signin/init" % self.AUTH_ENDPOINT, data=json.dumps(data), headers=headers)
+                response = self.session.post(
+                    f"{self.AUTH_ENDPOINT}/signin/init", data=json.dumps(data), headers=headers
+                )
             if response.status_code == 401:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
         except PyiCloudAPIResponseException as error:
@@ -396,15 +437,15 @@ class PyiCloudService:
 
         # Step 2: server sends public key B, salt, and c to client
         body = response.json()
-        salt = base64.b64decode(body['salt'])
-        b = base64.b64decode(body['b'])
-        c = body['c']
-        iterations = body['iteration']
-        protocol = body['protocol']
+        salt = base64.b64decode(body["salt"])
+        b = base64.b64decode(body["b"])
+        c = body["c"]
+        iterations = body["iteration"]
+        protocol = body["protocol"]
 
         # Step 3: client generates session key M1 and M2 with salt and b, sends to server
         srp_password.set_encrypt_info(protocol, salt, iterations)
-        m1 = usr.process_challenge( salt, b )
+        m1 = usr.process_challenge(salt, b)
         m2 = usr.H_AMK
 
         data = {
@@ -422,21 +463,22 @@ class PyiCloudService:
         try:
             # set observer with obfuscator
             if self.response_observer:
-
-                rules = list(chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules, 
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.auth_srp_complete_body_obfuscate_rules,
-                    self.auth_srp_complete_body_drop_rules,
-                    ))
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.auth_srp_complete_body_obfuscate_rules,
+                        self.auth_srp_complete_body_drop_rules,
+                    )
+                )
             else:
                 rules = []
 
             with self.use_rules(rules):
                 response = self.session.post(
-                    "%s/signin/complete" % self.AUTH_ENDPOINT,
+                    f"{self.AUTH_ENDPOINT}/signin/complete",
                     params={"isRememberMeEnabled": "true"},
                     data=json.dumps(data),
                     headers=headers,
@@ -449,21 +491,22 @@ class PyiCloudService:
                 headers = self._get_auth_headers()
                 # set observer with obfuscator
                 if self.response_observer:
-
-                    rules = list(chain(
-                        self.cookie_obfuscate_rules,
-                        self.header_obfuscate_rules, 
-                        self.header_pass_rules,
-                        self.header_drop_rules,
-                        self.auth_srp_repair_complete_body_obfuscate_rules,
-                        self.auth_srp_repair_complete_body_drop_rules,
-                        ))
+                    rules = list(
+                        chain(
+                            self.cookie_obfuscate_rules,
+                            self.header_obfuscate_rules,
+                            self.header_pass_rules,
+                            self.header_drop_rules,
+                            self.auth_srp_repair_complete_body_obfuscate_rules,
+                            self.auth_srp_repair_complete_body_drop_rules,
+                        )
+                    )
                 else:
                     rules = []
 
                 with self.use_rules(rules):
                     response = self.session.post(
-                        "%s/repair/complete" % self.AUTH_ENDPOINT,
+                        f"{self.AUTH_ENDPOINT}/repair/complete",
                         data=json.dumps({}),
                         headers=headers,
                     )
@@ -475,7 +518,8 @@ class PyiCloudService:
 
     def _authenticate_raw_password(self, password: str) -> None:
         data = {
-            "accountName": self.apple_id, "password": password,
+            "accountName": self.apple_id,
+            "password": password,
             "rememberMe": True,
             "trustTokens": [],
         }
@@ -486,21 +530,22 @@ class PyiCloudService:
         try:
             # set observer with obfuscator
             if self.response_observer:
-
-                rules = list(chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules, 
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.auth_raw_body_obfuscate_rules,
-                    self.auth_raw_body_drop_rules,
-                    ))
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.auth_raw_body_obfuscate_rules,
+                        self.auth_raw_body_drop_rules,
+                    )
+                )
             else:
                 rules = []
 
             with self.use_rules(rules):
                 self.session.post(
-                    "%s/signin" % self.AUTH_ENDPOINT,
+                    f"{self.AUTH_ENDPOINT}/signin",
                     params={"isRememberMeEnabled": "true"},
                     data=json.dumps(data),
                     headers=headers,
@@ -516,20 +561,23 @@ class PyiCloudService:
         try:
             # set observer with obfuscator
             if self.response_observer:
-
-                rules = list(chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules, 
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.validate_response_body_obfuscate_rules,
-                    self.validate_response_body_drop_rules,
-                    ))
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.validate_response_body_obfuscate_rules,
+                        self.validate_response_body_drop_rules,
+                    )
+                )
             else:
                 rules = []
 
             with self.use_rules(rules):
-                response = self.session.post("%s/validate" % self.SETUP_ENDPOINT, data="null", headers=headers)
+                response = self.session.post(
+                    f"{self.SETUP_ENDPOINT}/validate", data="null", headers=headers
+                )
             LOGGER.debug("Session token is still valid")
             result: Dict[str, Any] = response.json()
             return result
@@ -537,13 +585,15 @@ class PyiCloudService:
             LOGGER.debug("Invalid authentication token")
             raise err
 
-    def _get_auth_headers(self, overrides: Optional[Dict[str, str]]=None) -> Dict[str, str]:
+    def _get_auth_headers(self, overrides: Dict[str, str] | None = None) -> Dict[str, str]:
         headers = {
             "Accept": "application/json, text/javascript",
             "Content-Type": "application/json",
             "X-Apple-OAuth-Client-Id": "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
             "X-Apple-OAuth-Client-Type": "firstPartyAuth",
-            "X-Apple-OAuth-Redirect-URI": "https://www.icloud.com.cn" if self.domain == "cn" else "https://www.icloud.com",
+            "X-Apple-OAuth-Redirect-URI": "https://www.icloud.com.cn"
+            if self.domain == "cn"
+            else "https://www.icloud.com",
             "X-Apple-OAuth-Require-Grant-Code": "true",
             "X-Apple-OAuth-Response-Mode": "web_message",
             "X-Apple-OAuth-Response-Type": "code",
@@ -567,7 +617,7 @@ class PyiCloudService:
         """Get path for cookiejar file."""
         return path.join(
             self._cookie_directory,
-            "".join([c for c in self.apple_id if match(r"\w", c)]), 
+            "".join([c for c in self.apple_id if match(r"\w", c)]),
         )
 
     @property
@@ -575,8 +625,7 @@ class PyiCloudService:
         """Get path for session data file."""
         return path.join(
             self._cookie_directory,
-            "".join([c for c in self.apple_id if match(r"\w", c)]) 
-            + ".session",
+            "".join([c for c in self.apple_id if match(r"\w", c)]) + ".session",
         )
 
     @property
@@ -589,9 +638,11 @@ class PyiCloudService:
     @property
     def requires_2fa(self) -> bool:
         """Returns True if two-factor authentication is required."""
-        return self.data["dsInfo"].get("hsaVersion", 0) == 2 and (
-            self.data.get("hsaChallengeRequired", False) or not self.is_trusted_session
-        ) and self.data["dsInfo"].get("hasICloudQualifyingDevice", False)
+        return (
+            self.data["dsInfo"].get("hsaVersion", 0) == 2
+            and (self.data.get("hsaChallengeRequired", False) or not self.is_trusted_session)
+            and self.data["dsInfo"].get("hasICloudQualifyingDevice", False)
+        )
 
     @property
     def is_trusted_session(self) -> bool:
@@ -600,12 +651,9 @@ class PyiCloudService:
 
     @property
     def trusted_devices(self) -> Sequence[Dict[str, Any]]:
-        """ Returns devices trusted for two-step authentication."""
-        request = self.session.get(
-            '%s/listDevices' % self.SETUP_ENDPOINT,
-            params=self.params
-        )
-        devices: Optional[Sequence[Dict[str, Any]]] = request.json().get('devices')
+        """Returns devices trusted for two-step authentication."""
+        request = self.session.get(f"{self.SETUP_ENDPOINT}/listDevices", params=self.params)
+        devices: Sequence[Dict[str, Any]] | None = request.json().get("devices")
         if devices:
             return devices
         return []
@@ -614,28 +662,30 @@ class PyiCloudService:
         return self.session.send(request)
 
     def get_oauth_session(self) -> AuthenticatedSession:
-        return AuthenticatedSession(client_id = self.client_id, scnt = self.session_data["scnt"], session_id = self.session_data["session_id"])
+        return AuthenticatedSession(
+            client_id=self.client_id,
+            scnt=self.session_data["scnt"],
+            session_id=self.session_data["session_id"],
+        )
 
     def get_trusted_phone_numbers(self) -> Sequence[TrustedDevice]:
-        """ Returns list of trusted phone number for sms 2fa """
+        """Returns list of trusted phone number for sms 2fa"""
 
         oauth_session = self.get_oauth_session()
-        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
+        context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
 
         req = build_trusted_phone_numbers_request(context)
-        request = Request(
-            method = req.method,
-            url = req.url,
-            headers= req.headers
-        ).prepare()
+        request = Request(method=req.method, url=req.url, headers=req.headers).prepare()
 
         if self.response_observer:
-            rules = list(chain(
-                self.cookie_obfuscate_rules,
-                self.header_obfuscate_rules, 
-                self.header_pass_rules,
-                self.header_drop_rules,
-                ))
+            rules = list(
+                chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules,
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                )
+            )
         else:
             rules = []
 
@@ -645,27 +695,29 @@ class PyiCloudService:
         return parse_trusted_phone_numbers_response(response)
 
     def send_2fa_code_sms(self, device_id: int) -> bool:
-        """ Requests that a verification code is sent to the given device"""
+        """Requests that a verification code is sent to the given device"""
 
         oauth_session = self.get_oauth_session()
-        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
+        context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
 
         req = build_send_sms_code_request(context, device_id)
         request = Request(
-            method = req.method,
-            url = req.url,
-            headers= req.headers,
-            data = req.data,
-            json = req.json,
+            method=req.method,
+            url=req.url,
+            headers=req.headers,
+            data=req.data,
+            json=req.json,
         ).prepare()
 
         if self.response_observer:
-            rules = list(chain(
-                self.cookie_obfuscate_rules,
-                self.header_obfuscate_rules, 
-                self.header_pass_rules,
-                self.header_drop_rules,
-                ))
+            rules = list(
+                chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules,
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                )
+            )
         else:
             rules = []
 
@@ -675,14 +727,12 @@ class PyiCloudService:
         return response.ok
 
     def send_verification_code(self, device: Dict[str, Any]) -> bool:
-        """ Requests that a verification code is sent to the given device"""
+        """Requests that a verification code is sent to the given device"""
         data = json.dumps(device)
         request = self.session.post(
-            '%s/sendVerificationCode' % self.SETUP_ENDPOINT,
-            params=self.params,
-            data=data
+            f"{self.SETUP_ENDPOINT}/sendVerificationCode", params=self.params, data=data
         )
-        return typing.cast(bool, request.json().get('success', False))
+        return typing.cast(bool, request.json().get("success", False))
 
     def validate_verification_code(self, device: Dict[str, Any], code: str) -> bool:
         """Verifies a verification code received on a trusted device."""
@@ -691,7 +741,7 @@ class PyiCloudService:
 
         try:
             self.session.post(
-                "%s/validateVerificationCode" % self.SETUP_ENDPOINT,
+                f"{self.SETUP_ENDPOINT}/validateVerificationCode",
                 params=self.params,
                 data=data,
             )
@@ -708,27 +758,29 @@ class PyiCloudService:
 
         return not self.requires_2sa
 
-    def validate_2fa_code_sms(self, device_id: int, code:str) -> bool:
+    def validate_2fa_code_sms(self, device_id: int, code: str) -> bool:
         """Verifies a verification code received via Apple's 2FA system through SMS."""
 
         oauth_session = self.get_oauth_session()
-        context = TrustedPhoneContextProvider(domain = self.domain, oauth_session=oauth_session)
+        context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
 
         req = build_verify_sms_code_request(context, device_id, code)
         request = Request(
-            method = req.method,
-            url = req.url,
-            headers= req.headers,
-            data = req.data,
-            json = req.json,
+            method=req.method,
+            url=req.url,
+            headers=req.headers,
+            data=req.data,
+            json=req.json,
         ).prepare()
         if self.response_observer:
-            rules = list(chain(
-                self.cookie_obfuscate_rules,
-                self.header_obfuscate_rules, 
-                self.header_pass_rules,
-                self.header_drop_rules,
-                ))
+            rules = list(
+                chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules,
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                )
+            )
         else:
             rules = []
 
@@ -739,8 +791,7 @@ class PyiCloudService:
             return self.trust_session()
         return False
 
-
-    def validate_2fa_code(self, code:str) -> bool:
+    def validate_2fa_code(self, code: str) -> bool:
         """Verifies a verification code received via Apple's 2FA system (HSA2)."""
         data = {"securityCode": {"code": code}}
 
@@ -748,18 +799,20 @@ class PyiCloudService:
 
         try:
             if self.response_observer:
-                rules = list(chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules, 
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    ))
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                    )
+                )
             else:
                 rules = []
 
             with self.use_rules(rules):
                 self.session.post(
-                    "%s/verify/trusteddevice/securitycode" % self.AUTH_ENDPOINT,
+                    f"{self.AUTH_ENDPOINT}/verify/trusteddevice/securitycode",
                     data=json.dumps(data),
                     headers=headers,
                 )
@@ -781,12 +834,14 @@ class PyiCloudService:
 
         try:
             if self.response_observer:
-                rules = list(chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules, 
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    ))
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                    )
+                )
             else:
                 rules = []
 
@@ -804,39 +859,23 @@ class PyiCloudService:
     def _get_webservice_url(self, ws_key: str) -> str:
         """Get webservice URL, raise an exception if not exists."""
         if self._webservices.get(ws_key) is None:
-            raise PyiCloudServiceNotActivatedException(
-                "Webservice not available", ws_key
-            )
+            raise PyiCloudServiceNotActivatedException("Webservice not available", ws_key)
         return typing.cast(str, self._webservices[ws_key]["url"])
-
-
-
-
 
     @property
     def photos(self) -> PhotosService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(
-                service_root,
-                self.session,
-                self.params
-                )
+            self._photos = PhotosService(service_root, self.session, self.params)
         return self._photos
 
-
-
-
     def __unicode__(self) -> str:
-        return 'iCloud API: %s' % self.apple_id
+        return f"iCloud API: {self.apple_id}"
 
     def __str__(self) -> str:
         as_unicode = self.__unicode__()
-        if sys.version_info[0] >= 3:
-            return as_unicode
-        else:
-            return as_unicode.encode('ascii', 'ignore')
+        return as_unicode
 
     def __repr__(self) -> str:
-        return '<%s>' % str(self)
+        return f"<{str(self)}>"

@@ -16,9 +16,6 @@ from pyicloud_ipd.exceptions import PyiCloudFailedLoginException
 from . import utils
 
 
-
-
-
 def main(args: Sequence[str] | None = None) -> NoReturn:
     """Main commandline entrypoint."""
     if args is None:
@@ -58,12 +55,6 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
         default=False,
         help="Delete stored password in system keyring for this username.",
     )
-
-
-
-
-
-
 
     parser.add_argument(
         "--domain",
@@ -114,10 +105,14 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
             parser.error("No password supplied")
 
         try:
+
+            def password_provider(pwd: str | None = password) -> str | None:
+                return pwd
+
             api = PyiCloudService(
                 domain,
                 username,
-                lambda: password,
+                password_provider,
                 lambda _: None,
             )
             if (
@@ -153,10 +148,9 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
                 devices = api.trusted_devices
                 for i, device in enumerate(devices):
                     print(
-                        "    %s: %s"
-                        % (
+                        "    {}: {}".format(
                             i,
-                            device.get("deviceName", "SMS to %s" % device.get("phoneNumber")),
+                            device.get("deviceName", "SMS to {}".format(device.get("phoneNumber"))),
                         )
                     )
 
