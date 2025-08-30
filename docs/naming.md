@@ -41,9 +41,9 @@ LC_ALL=ru_RU.UTF.8 icloudpd --use-os-locale --version
 `--file-match-policy` parameter added and `name-id7` policy implemented
 ```
 
-In large iCloud collections it is possible to have name collisions. To avoid collisions if files need to be downloaded into the same folder, use [`--file-match-policy`](file-match-policy-parameter) parameter:
-- add unique invariant asset identification suffix to the name (e.g. **"IMG_1234_QAZXSW.JPG"**) with `--file-match-policy name-id7`
-- de-duplicate by adding file size as a suffix (e.g. **"IMG_1234-67890.JPG"** for second asset); `--file-match-policy name-size-dedup-with-suffix` - it is default
+In large iCloud collections, it is possible to have name collisions. To avoid collisions if files need to be downloaded into the same folder, use the [`--file-match-policy`](file-match-policy-parameter) parameter:
+- add a unique invariant asset identification suffix to the name (e.g., **"IMG_1234_QAZXSW.JPG"**) with `--file-match-policy name-id7`
+- de-duplicate by adding file size as a suffix (e.g., **"IMG_1234-67890.JPG"** for the second asset); `--file-match-policy name-size-dedup-with-suffix` - this is the default
 
 ## Live Photos
 
@@ -51,10 +51,10 @@ In large iCloud collections it is possible to have name collisions. To avoid col
 `--live-photo-mov-filename-policy` parameter added and `original` policy implemented
 ```
 
-Live Photo assets have two components: still image and short video. `icloudpd` can download both and allows customizing file name of the video portion with [`--live-photo-mov-filename-policy`](live-photo-mov-filename-policy-parameter) parameter:
+Live Photo assets have two components: a still image and a short video. `icloudpd` can download both and allows customizing the file name of the video portion with the [`--live-photo-mov-filename-policy`](live-photo-mov-filename-policy-parameter) parameter:
 
-- Use video file name the same as still image with `original` policy; use `--file-match-policy name-id7` to avoid clashes of video file with other videos.
-- Use suffix from the still image with `suffix` policy: **"IMG_1234_HEVC.MOV"** for **"IMG_1234.HEIC"** still. This is default and works for HEIC still images only
+- Use the same video file name as the still image with the `original` policy; use `--file-match-policy name-id7` to avoid clashes of the video file with other videos.
+- Use a suffix from the still image with the `suffix` policy: **"IMG_1234_HEVC.MOV"** for **"IMG_1234.HEIC"** still image. This is the default and works for HEIC still images only
 
 ## Unicode
 

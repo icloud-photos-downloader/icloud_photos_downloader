@@ -3,15 +3,15 @@
 ## Apple ProRAW/ProRes
 
 Apple supports shooting stills and videos in [DNG](https://en.wikipedia.org/wiki/Digital_Negative) format and 
-they can be downloaded by `icloudpd` as any other supported format.
+they can be downloaded by `icloudpd` like any other supported format.
 
 ## Imported RAW images
 
 ```{versionadded} 1.19.0
 ```
 
-RAW images from third party cameras can be imported into Apple Photos or uploaded to iCloud.com. 
-These type of assets can also be downloaded by `icloudpd`. The following formats are recognized:
+RAW images from third-party cameras can be imported into Apple Photos or uploaded to iCloud.com. 
+These types of assets can also be downloaded by `icloudpd`. The following formats are recognized:
 
 - Adobe DNG - same as Apple ProRAW
 - Canon CR2, CR3, and CRW
@@ -29,13 +29,13 @@ These type of assets can also be downloaded by `icloudpd`. The following formats
 
 iCloud supports images with two representations. `icloudpd` can download one or both representations.
 
-One representation will be `original` [size](size) and another `alternative`.
+One representation will be the `original` [size](size) and the other `alternative`.
 
-As of June 2024, icloud.com always shows assets with two representations as RAW+JPEG. Photo app on Mac
+As of June 2024, icloud.com always shows assets with two representations as RAW+JPEG. The Photos app on Mac
 allows choosing which representation to treat as original, but it is not clear what that setting changes. 
 
-`icloudpd` disambiguates the behavior with [`--align-raw`](align-raw-parameter) parameter:
+`icloudpd` disambiguates the behavior with the [`--align-raw`](align-raw-parameter) parameter:
 
-- *original* always treat RAW as original [size](size)
-- *alternative* always treat RAW as alternative [size](size)
-- *as-is* treat RAW as it is in iCloud data
+- *original* always treats RAW as the original [size](size)
+- *alternative* always treats RAW as the alternative [size](size)
+- *as-is* treats RAW as it is in iCloud data
