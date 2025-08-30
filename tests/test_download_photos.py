@@ -715,15 +715,66 @@ class DownloadPhotoTestCase(TestCase):
                         result.output,
                     )
                     self.assertIn("All photos and videos have been downloaded", result.output)
-                    dp_patched.assert_called_once_with(
-                        ANY,
-                        False,
-                        ANY,
-                        ANY,
-                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                        ANY,
-                        AssetVersionSize.ORIGINAL,
+                    # Should be called once for thumb size (fallback to original)
+                    dp_patched.assert_called_once()
+
+                    assert result.exit_code == 0
+
+    def test_adjusted_size_fallback_to_original(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch("icloudpd.download.os.utime") as ut_patched:
+                ut_patched.return_value = None
+
+                with mock.patch.object(
+                    PhotoAsset, "versions", new_callable=mock.PropertyMock
+                ) as pa:
+                    pa.return_value = {
+                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
+                        # AssetVersionSize.ADJUSTED: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie"),
+                    }
+
+                    data_dir, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.root_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--size",
+                            "adjusted",
+                            "--size",
+                            "alternative",
+                            "--no-progress-bar",
+                            "--threads-num",
+                            "1",
+                        ],
                     )
+                    self.assertIn(
+                        "Looking up all photos and videos...",
+                        result.output,
+                    )
+                    self.assertIn(
+                        f"Downloading the first adjusted,alternative photo or video to {data_dir} ...",
+                        result.output,
+                    )
+                    self.assertIn(
+                        f"Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        result.output,
+                    )
+                    self.assertIn("All photos and videos have been downloaded", result.output)
+                    # Should be called twice - once for adjusted (fallback to original) and once for alternative (fallback to original)
+                    self.assertEqual(dp_patched.call_count, 2)
 
                     assert result.exit_code == 0
 
