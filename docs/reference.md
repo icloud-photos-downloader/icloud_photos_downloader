@@ -73,6 +73,9 @@ This is a list of all options available for command line interface (CLI) of the 
 
     Too short interval may trigger throttling on Apple side, although no evidence has been reported.
 
+    ```{versionadded} 1.10.0
+    ```
+
 (version-parameter)=
 `--version`
     
@@ -87,6 +90,9 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   Instructs `icloudpd` to use OS locale. If not specified (and by default), US English is used.
 
+    ```{versionadded} 1.22.0
+    ```
+
     ```{seealso}
     [File Naming](naming) section discusses affected behavior
     ```    
@@ -100,12 +106,18 @@ This is a list of all options available for command line interface (CLI) of the 
 
     This parameter is useful for experimenting with new parameters
 
+    ```{versionadded} 1.15.0
+    ```
+
 (domain-parameter)=
 `--domain X`
     
 :   Access to Apple servers is blocked from mainland China. As an alternative, iCloud service is available on internal .cn domain, which can be specified for `icloudpd` to work from mainland China.
 
     Default is ".com". ".cn" is the only other option available.
+
+    ```{versionadded} 1.9.0
+    ```
 
 (password-parameter)=
 `--password X`
@@ -126,6 +138,9 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   Specifies an algorithm (policy) to match remote to local files.
 
+    ```{versionadded} 1.20.0
+    ```
+
     ```{seealso}
     Discussion on [File Naming and Deduplication](naming)
     ``` 
@@ -139,6 +154,9 @@ This is a list of all options available for command line interface (CLI) of the 
 `--auth-only`
     
 :   Performs authentication, persists auth results (tokens/cookies), and exists without processing assets
+
+    ```{versionadded} 1.17.0
+    ```
 
 (cookie-directory-parameter)=
 `--cookie-directory X`
@@ -205,7 +223,7 @@ This is a list of all options available for command line interface (CLI) of the 
     If remote assets were not downloaded, e.g. because they were already in local storage, they will NOT be deleted in iCloud.
     ```
 
-    ```{versionadded} 1.21.0
+    ```{versionadded} 1.8.0
     ```
 
     ```{deprecated} 1.26.0
@@ -263,10 +281,16 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   If specified, unicode chars will be preserved in filenames. Otherwise they are removed (default).
 
+    ```{versionadded} 1.18.0
+    ```
+
 (live-photo-mov-filename-policy-parameter)=
 `--live-photo-mov-filename-policy X`
     
 :   Customizes naming of the video portion of the live photos.
+
+    ```{versionadded} 1.18.0
+    ```
 
     ```{seealso}
     Details in [Live Photo](naming) section.
@@ -277,6 +301,9 @@ This is a list of all options available for command line interface (CLI) of the 
     
 :   Customizes treating of the RAW+JPEG assets.
 
+    ```{versionadded} 1.19.0
+    ```
+
     ```{seealso}
     Details in [RAW+JPEG](raw) section.
     ```
@@ -285,6 +312,9 @@ This is a list of all options available for command line interface (CLI) of the 
 `--password-provider X`
     
 :   Customizes intake of the password for iCloud authentication.
+
+    ```{versionadded} 1.20.0
+    ```
 
     ```{seealso}
     Details in [Password providers](password-providers) section.
@@ -302,6 +332,9 @@ This is a list of all options available for command line interface (CLI) of the 
 `--xmp-sidecar`
 
 :   Export additional data as XMP sidecar files (default: don't export)
+
+    ```{versionadded} 1.25.0
+    ```
 
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
