@@ -677,12 +677,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     PhotoAsset, "versions", new_callable=mock.PropertyMock
                 ) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion(
-                            "IMG_7409_QVk2Yyt.JPG", 1, "http", "jpeg", "blah"
-                        ),
-                        AssetVersionSize.MEDIUM: AssetVersion(
-                            "IMG_7409_QVk2Yyt.JPG", 2, "ftp", "movie", "blah"
-                        ),
+                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
+                        AssetVersionSize.MEDIUM: AssetVersion(2, "ftp", "movie", "blah"),
                     }
 
                     data_dir, result = run_icloudpd_test(

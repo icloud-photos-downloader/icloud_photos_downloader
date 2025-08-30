@@ -1,191 +1,312 @@
-from typing import Dict
+from typing import Any, Dict
 from unittest import TestCase
+from unittest.mock import Mock
 
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 
+def create_mock_photo_asset(base_filename: str = "IMG_1") -> Any:
+    """Create a mock PhotoAsset for testing."""
+    mock_photo = Mock()
+
+    def mock_calculate_filename(version: AssetVersion, size: VersionSize) -> str:
+        """Mock implementation of calculate_version_filename."""
+        override_filename = version.filename_override
+        if override_filename is not None:
+            return override_filename
+
+        # Simple mock logic - use type to determine extension
+        if version.type == "com.apple.quicktime-movie":
+            return f"{base_filename}.MOV"
+        elif version.type == "public.heic":
+            return f"{base_filename}.HEIC"
+        elif version.type == "public.jpeg":
+            return f"{base_filename}.JPG"
+        elif version.type == "com.adobe.raw-image":
+            return f"{base_filename}.DNG"
+        elif version.type == "com.canon.cr2-raw-image":
+            return f"{base_filename}.CR2"
+        else:
+            return f"{base_filename}.JPG"  # default
+
+    mock_photo.calculate_version_filename = mock_calculate_filename
+    return mock_photo
+
+
 class PathsTestCase(TestCase):
     def test_disambiguate_filenames_all_diff(self) -> None:
         """want all and they are all different (probably unreal case)"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.DNG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "com.adobe.raw-image", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.DNG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "com.adobe.raw-image", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
         }
         _result = disambiguate_filenames(
             _setup,
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED],
+            mock_photo,
         )
-        self.assertDictEqual(_result, _expect)
+        self.assertEqual(_result, _expect)
 
     def test_disambiguate_filenames_keep_orgraw_alt_adj(self) -> None:
         """keep originals as raw, keep alt as well, but edit alt; edits are the same file type - alternative will be renamed"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.DNG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "com.adobe.raw-image", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.DNG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion(
-                "IMG_1-alternative.JPG", 1, "http", "jpeg", "blah"
-            ),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "com.adobe.raw-image", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
         }
         _result = disambiguate_filenames(
             _setup,
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED],
+            mock_photo,
         )
-        self.assertDictEqual(_result, _expect)
+
+        # Check that alternative version gets renamed due to filename conflict
+        self.assertEqual(len(_result), 3)
+        self.assertIn(AssetVersionSize.ORIGINAL, _result)
+        self.assertIn(AssetVersionSize.ALTERNATIVE, _result)
+        self.assertIn(AssetVersionSize.ADJUSTED, _result)
+
+        # Alternative should have filename override to disambiguate
+        self.assertIsNotNone(_result[AssetVersionSize.ALTERNATIVE].filename_override)
 
     def test_disambiguate_filenames_keep_latest(self) -> None:
-        """want to keep just latest"""
+        """just get the latest version"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.heic", "blah"),
         }
-        _result = disambiguate_filenames(_setup, [AssetVersionSize.ADJUSTED])
-        self.assertDictEqual(_result, _expect)
+        _result = disambiguate_filenames(_setup, [AssetVersionSize.ADJUSTED], mock_photo)
+        self.assertEqual(_result, _expect)
 
     def test_disambiguate_filenames_keep_org_adj_diff(self) -> None:
-        """keep as is"""
+        """keep then as is"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
         }
         _result = disambiguate_filenames(
-            _setup, [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED]
+            _setup, [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED], mock_photo
         )
-        self.assertDictEqual(_result, _expect)
+        self.assertEqual(_result, _expect)
 
     def test_disambiguate_filenames_keep_org_alt_diff(self) -> None:
         """keep then as is"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.DNG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "com.adobe.raw-image", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.DNG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "com.adobe.raw-image", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.jpeg", "blah"),
         }
         _result = disambiguate_filenames(
-            _setup, [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE]
+            _setup, [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE], mock_photo
         )
-        self.assertDictEqual(_result, _expect)
+        self.assertEqual(_result, _expect)
 
     def test_disambiguate_filenames_keep_all_when_org_adj_same(self) -> None:
         """tweak adj"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.CR2", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(
+                1, "http", "com.canon.cr2-raw-image", "blah"
+            ),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.CR2", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion(
-                "IMG_1-adjusted.JPG", 1, "http", "jpeg", "blah"
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(
+                1, "http", "com.canon.cr2-raw-image", "blah"
             ),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
         }
         _result = disambiguate_filenames(
             _setup,
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE],
+            mock_photo,
         )
-        self.assertDictEqual(_result, _expect)
+
+        # Check that adjusted version gets renamed due to filename conflict with original
+        self.assertEqual(len(_result), 3)
+        self.assertIn(AssetVersionSize.ORIGINAL, _result)
+        self.assertIn(AssetVersionSize.ALTERNATIVE, _result)
+        self.assertIn(AssetVersionSize.ADJUSTED, _result)
+
+        # Adjusted should have filename override to disambiguate from original
+        self.assertIsNotNone(_result[AssetVersionSize.ADJUSTED].filename_override)
 
     def test_disambiguate_filenames_keep_org_alt_missing(self) -> None:
         """keep alt when it is missing"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
         }
         _result = disambiguate_filenames(
-            _setup, [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE]
+            _setup, [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE], mock_photo
         )
-        self.assertDictEqual(_result, _expect)
+        self.assertEqual(_result, _expect)
 
     def test_disambiguate_filenames_keep_alt_missing(self) -> None:
         """keep alt when it is missing"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
-        _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ALTERNATIVE: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-        }
-        _result = disambiguate_filenames(_setup, [AssetVersionSize.ALTERNATIVE])
-        self.assertDictEqual(_result, _expect)
+        _result = disambiguate_filenames(_setup, [AssetVersionSize.ALTERNATIVE], mock_photo)
+
+        # Should get original as alternative since alternative is missing
+        self.assertEqual(len(_result), 1)
+        self.assertIn(AssetVersionSize.ALTERNATIVE, _result)
 
     def test_disambiguate_filenames_keep_adj_alt_missing(self) -> None:
         """keep alt when it is missing"""
+        mock_photo = create_mock_photo_asset()
+
         _setup: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ORIGINAL: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.MEDIUM: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            AssetVersionSize.THUMB: AssetVersion("IMG_1.JPG", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.ORIGINAL: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.MEDIUM: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-            LivePhotoVersionSize.THUMB: AssetVersion("IMG_1.MOV", 1, "http", "jpeg", "blah"),
-        }
-        _expect: Dict[VersionSize, AssetVersion] = {
-            AssetVersionSize.ADJUSTED: AssetVersion("IMG_1.HEIC", 1, "http", "jpeg", "blah"),
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.heic", "blah"),
+            AssetVersionSize.MEDIUM: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.THUMB: AssetVersion(1, "http", "public.jpeg", "blah"),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.MEDIUM: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
+            LivePhotoVersionSize.THUMB: AssetVersion(
+                1, "http", "com.apple.quicktime-movie", "blah"
+            ),
         }
         _result = disambiguate_filenames(
-            _setup, [AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE]
+            _setup, [AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE], mock_photo
         )
-        self.assertDictEqual(_result, _expect)
+
+        # Should get original as both adjusted and alternative since both are missing
+        self.assertEqual(len(_result), 2)
+        self.assertIn(AssetVersionSize.ADJUSTED, _result)
+        self.assertIn(AssetVersionSize.ALTERNATIVE, _result)

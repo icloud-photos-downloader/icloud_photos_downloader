@@ -55,6 +55,7 @@ from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 from icloudpd.xmp_sidecar import generate_xmp_file
+from pyicloud_ipd.asset_version import add_suffix_to_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
@@ -68,7 +69,6 @@ from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import (
-    add_suffix_to_filename,
     disambiguate_filenames,
     get_password_from_keyring,
     size_to_suffix,
@@ -554,7 +554,7 @@ def download_builder(
             date_path = folder_structure.format(created_date)
 
     try:
-        versions = disambiguate_filenames(photo.versions, primary_sizes)
+        versions = disambiguate_filenames(photo.versions, primary_sizes, photo)
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
         with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
@@ -591,7 +591,7 @@ def download_builder(
             download_size = AssetVersionSize.ORIGINAL
 
         version = versions[download_size]
-        filename = version.filename
+        filename = photo.calculate_version_filename(version, download_size)
 
         download_path = local_download_path(filename, download_dir)
 
@@ -657,7 +657,7 @@ def download_builder(
         lp_size = live_photo_size
         if lp_size in photo.versions:
             version = photo.versions[lp_size]
-            lp_filename = version.filename
+            lp_filename = photo.calculate_version_filename(version, lp_size)
             if live_photo_size != LivePhotoVersionSize.ORIGINAL:
                 # Add size to filename if not original
                 lp_filename = add_suffix_to_filename(

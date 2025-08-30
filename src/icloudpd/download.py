@@ -141,7 +141,9 @@ def download_media(
                 )
             else:
                 logger.error(
-                    "Could not find URL to download %s for size %s", version.filename, size.value
+                    "Could not find URL to download %s for size %s",
+                    photo.calculate_version_filename(version, size),
+                    size.value,
                 )
                 break
 

@@ -677,12 +677,8 @@ class DownloadPhotoTestCase(TestCase):
                     PhotoAsset, "versions", new_callable=mock.PropertyMock
                 ) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion(
-                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
-                        ),
-                        AssetVersionSize.MEDIUM: AssetVersion(
-                            "IMG_7409.JPG", 2, "ftp", "movie", "blah"
-                        ),
+                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
+                        AssetVersionSize.MEDIUM: AssetVersion(2, "ftp", "movie", "blah"),
                     }
 
                     data_dir, result = run_icloudpd_test(
@@ -793,12 +789,8 @@ class DownloadPhotoTestCase(TestCase):
 
                 with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
                     pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion(
-                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
-                        ),
-                        AssetVersionSize.THUMB: AssetVersion(
-                            "IMG_7409.JPG", 1, "http", "jpeg", "blah"
-                        ),
+                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
+                        AssetVersionSize.THUMB: AssetVersion(1, "http", "jpeg", "blah"),
                     }
 
                     data_dir, result = run_icloudpd_test(
@@ -844,7 +836,7 @@ class DownloadPhotoTestCase(TestCase):
                         False,
                         ANY,
                         ANY,
-                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-thumb.JPG'))}",
                         ANY,
                         AssetVersionSize.THUMB,
                     )
