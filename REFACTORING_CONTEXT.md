@@ -85,6 +85,31 @@ This refactoring series implements dependency injection patterns and functional 
 
 **Pattern**: Dead code elimination - Remove unused services
 
+### 8. Enable Code Quality Standards for pyicloud_ipd
+**Commit**: `6de74ac - refactor: enable formatting, linting, and typechecking for pyicloud_ipd`
+
+**Changes**:
+- Removed pyicloud_ipd from ruff exclusions in pyproject.toml
+- Fixed 91 linting issues across 14 files (import organization, modern Python syntax, exception handling)
+- Fixed 8 mypy strict typing errors (type annotations, constructor calls)
+- Applied consistent formatting using ruff format
+- Updated to modern Python patterns (f-strings, `X | Y` unions, specific exception handling)
+
+**Pattern**: Code quality standardization
+
+### 9. Remove Unused Dependencies
+**Commits**: `62cdaae - refactor: remove unused six dependency` and `[current] - refactor: replace python-dateutil with stdlib timezone`
+
+**Changes**:
+- Removed explicit `six==1.17.0` dependency (only needed transitively by python-dateutil and srp)
+- Removed `types-six==1.17.0.20250515` type stubs
+- Replaced `dateutil.tz.tzoffset()` with `timezone(timedelta(seconds=offset))` from stdlib
+- Removed `python-dateutil==2.9.0.post0` dependency entirely
+- Removed `types-python-dateutil==2.9.0.20250516` type stubs
+- Updated XMP sidecar generation to use standard library datetime timezone handling
+
+**Pattern**: Dependency minimization - Use standard library when possible
+
 ## Key Patterns Implemented
 
 ### 1. **Dependency Injection**
@@ -137,6 +162,7 @@ After:  PhotoLibrary receives params, session, service_endpoint directly
 - **Code Quality**: ruff linting passes with no issues
 - **Formatting**: ruff format applied consistently
 - **Code Reduction**: 694+ lines of unused code removed from pyicloud_ipd services
+- **Dependency Optimization**: Removed unused dependencies (six, python-dateutil)
 
 ## File Changes Summary
 
