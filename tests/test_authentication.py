@@ -16,7 +16,6 @@ from icloudpd.base import dummy_password_writter
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
-from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
 from tests.helpers import path_from_project_root, recreate_path, run_cassette
@@ -44,7 +43,6 @@ class AuthenticationTestCase(TestCase):
                 authenticator(
                     setup_logger(),
                     "com",
-                    RawTreatmentPolicy.AS_IS,
                     {"test": (constant("dummy"), dummy_password_writter)},
                     MFAProvider.CONSOLE,
                     StatusExchange(),
@@ -255,7 +253,6 @@ class AuthenticationTestCase(TestCase):
             authenticator(
                 setup_logger(),
                 "com",
-                RawTreatmentPolicy.AS_IS,
                 {"test": (constant("dummy"), dummy_password_writter)},
                 MFAProvider.CONSOLE,
                 StatusExchange(),

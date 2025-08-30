@@ -67,6 +67,7 @@ from pyicloud_ipd.exceptions import (
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import (
     PhotoAlbum,
     PhotoAsset,
@@ -403,6 +404,7 @@ def _process_all_users_once(
                     user_config.xmp_sidecar,
                     lp_filename_generator,
                     filename_cleaner,
+                    user_config.align_raw,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -594,6 +596,7 @@ def download_builder(
     xmp_sidecar: bool,
     lp_filename_generator: Callable[[str], str],
     filename_cleaner: Callable[[str], str],
+    raw_policy: RawTreatmentPolicy,
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
@@ -622,7 +625,7 @@ def download_builder(
 
     try:
         versions, filename_overrides = disambiguate_filenames(
-            photo.versions, primary_sizes, photo, lp_filename_generator
+            photo.versions_with_raw_policy(raw_policy), primary_sizes, photo, lp_filename_generator
         )
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
@@ -753,8 +756,9 @@ def download_builder(
     # Also download the live photo if present
     if not skip_live_photos:
         lp_size = live_photo_size
-        if lp_size in photo.versions:
-            version = photo.versions[lp_size]
+        photo_versions_with_policy = photo.versions_with_raw_policy(raw_policy)
+        if lp_size in photo_versions_with_policy:
+            version = photo_versions_with_policy[lp_size]
             # Compose calculate_filename with cleaning and file match policy transformations
             fallback_binder = bind_filename_with_fallback(photo.id, photo.item_type_extension)
             raw_filename = fallback_binder(photo.calculate_filename)
@@ -945,7 +949,6 @@ def core_single_run(
             icloud = authenticator(
                 logger,
                 global_config.domain,
-                user_config.align_raw,
                 {
                     provider.value: functions
                     for provider, functions in password_providers_dict.items()
@@ -1235,6 +1238,7 @@ def core_single_run(
                             directory,
                             user_config.sizes,
                             lp_filename_generator,
+                            user_config.align_raw,
                         )
                     else:
                         pass

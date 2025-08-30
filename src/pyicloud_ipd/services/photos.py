@@ -87,6 +87,7 @@ def generate_fingerprint_filename(asset_id: str, item_type_extension: str) -> st
     return '.'.join([fingerprint, item_type_extension])
 
 
+
 def bind_filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[[Callable[[], str | None]], str]:
     """
     Create a function that binds calculate_filename with fingerprint fallback.
@@ -112,6 +113,33 @@ from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 logger = logging.getLogger(__name__)
+
+
+def apply_raw_policy(versions: Dict[VersionSize, AssetVersion], raw_policy: RawTreatmentPolicy) -> Dict[VersionSize, AssetVersion]:
+    """
+    Apply raw treatment policy to asset versions, swapping original and alternative if needed.
+    
+    Args:
+        versions: Dictionary of asset versions
+        raw_policy: The raw treatment policy to apply
+        
+    Returns:
+        Dictionary of versions with raw policy applied
+    """
+    # Make a copy to avoid modifying the original
+    result_versions = dict(versions)
+    
+    # swap original & alternative according to raw_policy
+    if AssetVersionSize.ALTERNATIVE in result_versions and (
+        ("raw" in result_versions[AssetVersionSize.ALTERNATIVE].type and raw_policy == RawTreatmentPolicy.AS_ORIGINAL) 
+        or ("raw" in result_versions[AssetVersionSize.ORIGINAL].type and raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)
+    ):
+        _a = copy.copy(result_versions[AssetVersionSize.ALTERNATIVE])
+        _o = copy.copy(result_versions[AssetVersionSize.ORIGINAL])
+        result_versions[AssetVersionSize.ALTERNATIVE] = _o
+        result_versions[AssetVersionSize.ORIGINAL] = _a
+    
+    return result_versions
 
 
 class PhotoLibrary:
@@ -324,8 +352,7 @@ class PhotosService(PhotoLibrary):
             self, 
             service_root: str, 
             session: PyiCloudSession, 
-            params: Dict[str, Any], 
-            raw_policy: RawTreatmentPolicy):
+            params: Dict[str, Any]):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -333,7 +360,6 @@ class PhotosService(PhotoLibrary):
         self._private_libraries: Dict[str, PhotoLibrary] | None = None
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
 
-        self.raw_policy = raw_policy
 
         self.params.update({
             'remapEnums': True,
@@ -820,16 +846,22 @@ class PhotoAsset:
 
                     _versions[key] = AssetVersion(size, url, asset_type, checksum)
 
-            # swap original & alternative according to swap_raw_policy
-            if AssetVersionSize.ALTERNATIVE in _versions and (("raw" in _versions[AssetVersionSize.ALTERNATIVE].type and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions[AssetVersionSize.ORIGINAL].type and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):
-                _a = copy.copy(_versions[AssetVersionSize.ALTERNATIVE])
-                _o = copy.copy(_versions[AssetVersionSize.ORIGINAL])
-                _versions[AssetVersionSize.ALTERNATIVE] = _o
-                _versions[AssetVersionSize.ORIGINAL] = _a
 
             self._versions = _versions
 
         return self._versions
+    
+    def versions_with_raw_policy(self, raw_policy: RawTreatmentPolicy) -> Dict[VersionSize, AssetVersion]:
+        """
+        Get asset versions with the specified raw policy applied.
+        
+        Args:
+            raw_policy: The raw treatment policy to apply
+            
+        Returns:
+            Dictionary of versions with raw policy applied
+        """
+        return apply_raw_policy(self.versions, raw_policy)
 
     def download(self, url: str, start:int = 0) -> Response:
         headers = {
