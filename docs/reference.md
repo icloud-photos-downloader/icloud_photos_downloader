@@ -354,7 +354,7 @@ This is a list of all options available for the command line interface (CLI) of 
 (skip-created-before-parameter)=
 `--skip-created-before`
 
-:   Does not process assets created before the specified timestamp. The timestamp is in ISO format, e.g., 2025-06-01, or as an interval from now, e.g., 5d. If the timezone is not specified for ISO format, then the local timezone is used.
+:   Does not process assets created before the specified timestamp. The timestamp is in ISO format, e.g., 2025-06-01, or as an interval backwards from the current date, e.g., 5d (5 days ago). If the timezone is not specified for ISO format, then the local timezone is used.
 
     ```{versionadded} 1.28.0
     ```
@@ -366,7 +366,7 @@ This is a list of all options available for the command line interface (CLI) of 
 (skip-created-after-parameter)=
 `--skip-created-after`
 
-:   Does not process assets created after the specified timestamp. The timestamp is in ISO format, e.g., 2025-06-01, or as an interval from now, e.g., 5d. If the timezone is not specified for ISO format, then the local timezone is used.
+:   Does not process assets created after the specified timestamp. The timestamp is in ISO format, e.g., 2025-06-01, or as an interval backwards from the current date, e.g., 5d (5 days ago). If the timezone is not specified for ISO format, then the local timezone is used.
 
     ```{versionadded} 1.29.0
     ```

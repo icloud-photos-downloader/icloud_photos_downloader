@@ -40,10 +40,10 @@ class CliTestCase(TestCase):
         )
         self.assertIn("GLOBAL options. Applied for all user settings.", result)
         self.assertIn(
-            "COMMON options. If specified before first username, then used as default for settings for all users.",
+            "COMMON options. If specified before the first username, then used as defaults for settings for all users.",
             result,
         )
-        self.assertIn("USER options. Can be specified for setting user config only.", result)
+        self.assertIn("USER options. Can be specified for setting user configuration only.", result)
 
         # Test that all major options are present
         self.assertIn("--help, -h", result)
@@ -58,16 +58,16 @@ class CliTestCase(TestCase):
         self.assertIn("--dry-run", result)
 
         # Test that option descriptions are present
-        self.assertIn("Show this info", result)
-        self.assertIn("Show the version, commit hash and timestamp", result)
-        self.assertIn("AppleID email address. Starts new configuration group.", result)
+        self.assertIn("Show this information", result)
+        self.assertIn("Show the version, commit hash, and timestamp", result)
+        self.assertIn("Apple ID email address. Starts a new configuration", result)
         # Directory option exists with proper help text (format varies by Python version)
         self.assertTrue(
             "-d, --directory DIRECTORY" in result
             or "-d DIRECTORY, --directory DIRECTORY" in result,
             "Expected directory option format not found in help text",
         )
-        self.assertIn("Local directory that should be used for download", result)
+        self.assertIn("Local directory to use for downloads", result)
 
     def test_cli_parser(self) -> None:
         self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]

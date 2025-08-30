@@ -242,13 +242,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--skip-created-before",
-        help="Do not process assets created before the specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
+        help="Do not process assets created before the specified timestamp in ISO format (2025-01-02) or interval backwards from now (20d = 20 days ago)",
         default=None,
         type=parse_timestamp_or_timedelta_tz_error,
     )
     cloned.add_argument(
         "--skip-created-after",
-        help="Do not process assets created after the specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
+        help="Do not process assets created after the specified timestamp in ISO format (2025-01-02) or interval backwards from now (20d = 20 days ago)",
         default=None,
         type=parse_timestamp_or_timedelta_tz_error,
     )
@@ -577,7 +577,9 @@ def cli() -> int:
             for user_ns in user_nses
             if user_ns.auto_delete and user_ns.delete_after_download
         ]:
-            print("--auto-delete and --delete-after-download are mutually exclusive per configuration")
+            print(
+                "--auto-delete and --delete-after-download are mutually exclusive per configuration"
+            )
             return 2
 
         elif [
