@@ -39,10 +39,10 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "-d",
         "--directory",
         metavar="DIRECTORY",
-        help="Local directory that should be used for download",
+        help="Local directory to use for downloads",
     )
     cloned.add_argument(
-        "--auth-only", action="store_true", help="Create/Update cookie and session tokens only."
+        "--auth-only", action="store_true", help="Create/update cookie and session tokens only."
     )
     cloned.add_argument(
         "--cookie-directory",
@@ -51,7 +51,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--size",
-        help="Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` - never. If `adjusted` or `alternative` specified and is missing, then `original` is used. Default: %(default)s",
+        help="Image size to download. `medium` and `thumb` will always be added as suffixes to filenames, `adjusted` and `alternative` only if conflicting, `original` never. If `adjusted` or `alternative` is specified and missing, then `original` is used. Default: %(default)s",
         choices=["original", "medium", "thumb", "adjusted", "alternative"],
         default=None,
         action="append",
@@ -74,7 +74,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--until-found",
-        help="Download most recently added photos until we find x number of "
+        help="Download the most recently added photos until we find X number of "
         "previously downloaded consecutive photos (default: download all photos)",
         type=int,
         default=None,
@@ -82,7 +82,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     cloned.add_argument(
         "-a",
         "--album",
-        help="Album(s) to download or whole collection if not specified",
+        help="Album(s) to download, or the whole collection if not specified",
         action="append",
         default=[],
         dest="albums",
@@ -90,7 +90,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     cloned.add_argument(
         "-l",
         "--list-albums",
-        help="Lists the available albums",
+        help="List the available albums",
         action="store_true",
     )
     cloned.add_argument(
@@ -100,17 +100,17 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--list-libraries",
-        help="Lists the available libraries",
+        help="List the available libraries",
         action="store_true",
     )
     cloned.add_argument(
         "--skip-videos",
-        help="Don't download any videos (default: Download all photos and videos)",
+        help="Don't download any videos (default: download all photos and videos)",
         action="store_true",
     )
     cloned.add_argument(
         "--skip-live-photos",
-        help="Don't download any live photos (default: Download live photos)",
+        help="Don't download any live photos (default: download live photos)",
         action="store_true",
     )
     cloned.add_argument(
@@ -120,40 +120,40 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--force-size",
-        help="Only download the requested size (`adjusted` and `alternate` will not be forced). Default: download original if size is not available",
+        help="Only download the requested size (`adjusted` and `alternative` will not be forced). Default: download original if size is not available",
         action="store_true",
     )
     cloned.add_argument(
         "--auto-delete",
-        help='Scans the "Recently Deleted" folder and deletes any files found in there. '
+        help='Scan the "Recently Deleted" folder and delete any files found there. '
         + "(If you restore the photo in iCloud, it will be downloaded again.)",
         action="store_true",
     )
     cloned.add_argument(
         "--folder-structure",
-        help="Folder structure. If set to `none` all photos will just be placed into the download directory. Default: %(default)s",
+        help="Folder structure. If set to `none`, all photos will be placed into the download directory. Default: %(default)s",
         default="{:%Y/%m/%d}",
         type=validate_folder_structure,
     )
     cloned.add_argument(
         "--set-exif-datetime",
-        help="Write the DateTimeOriginal exif tag from file creation date, if it doesn't exist.",
+        help="Write the DateTimeOriginal EXIF tag from file creation date, if it doesn't exist.",
         action="store_true",
     )
 
     cloned.add_argument(
         "--smtp-username",
-        help="SMTP username, for sending email notifications when two-step authentication expires.",
+        help="SMTP username for sending email notifications when two-step authentication expires.",
         default=None,
     )
     cloned.add_argument(
         "--smtp-password",
-        help="SMTP password, for sending email notifications when two-step authentication expires.",
+        help="SMTP password for sending email notifications when two-step authentication expires.",
         default=None,
     )
     cloned.add_argument(
         "--smtp-host",
-        help="SMTP server host for notification",
+        help="SMTP server host for notifications",
         default="smtp.gmail.com",
     )
     cloned.add_argument(
@@ -164,7 +164,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--smtp-no-tls",
-        help="Pass this flag to disable TLS for SMTP (TLS is required for Gmail)",
+        help="Disable TLS for SMTP (TLS is required for Gmail)",
         action="store_true",
     )
     cloned.add_argument(
@@ -184,7 +184,7 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     cloned.add_argument(
         "--notification-script",
         type=pathlib.Path,
-        help="Path to the external script to run when two factor authentication expires.",
+        help="Path to external script to run when two-factor authentication expires.",
         default=None,
     )
     deprecated_kwargs: dict[str, Any] = {}
@@ -194,67 +194,67 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         pass
     cloned.add_argument(
         "--delete-after-download",
-        help="Delete the photo/video after download it."
-        + ' The deleted items will be appear in the "Recently Deleted".'
-        + " Therefore, should not combine with --auto-delete option.",
+        help="Delete the photo/video after downloading it."
+        + ' The deleted items will appear in "Recently Deleted".'
+        + " Therefore, should not be combined with --auto-delete option.",
         action="store_true",
         **deprecated_kwargs,
     )
     cloned.add_argument(
         "--keep-icloud-recent-days",
-        help="Keep photos newer than this many days in iCloud. Deletes the rest. "
+        help="Keep photos newer than this many days in iCloud. Delete the rest. "
         + "If set to 0, all photos will be deleted from iCloud.",
         type=int,
         default=None,
     )
     cloned.add_argument(
         "--dry-run",
-        help="Do not modify local system or iCloud",
+        help="Do not modify the local system or iCloud",
         action="store_true",
         default=False,
     )
     cloned.add_argument(
         "--keep-unicode-in-filenames",
-        help="Keep unicode chars in file names or remove non all ascii chars",
+        help="Keep Unicode characters in filenames, or remove all non-ASCII characters",
         action="store_true",
         default=False,
     )
     cloned.add_argument(
         "--live-photo-mov-filename-policy",
-        help="How to produce filenames for video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep filename as it is. Default: %(default)s",
+        help="How to produce filenames for the video portion of live photos: `suffix` will add _HEVC suffix and `original` will keep the filename as is. Default: %(default)s",
         choices=["suffix", "original"],
         default="suffix",
         type=lower,
     )
     cloned.add_argument(
         "--align-raw",
-        help="For photo assets with raw and jpeg, treat raw always in the specified size: `original` (raw+jpeg), `alternative` (jpeg+raw), or unchanged (as-is). It matters when choosing sizes to download. Default: %(default)s",
+        help="For photo assets with RAW and JPEG, always treat RAW in the specified size: `original` (RAW+JPEG), `alternative` (JPEG+RAW), or unchanged (as-is). This matters when choosing sizes to download. Default: %(default)s",
         choices=["as-is", "original", "alternative"],
         default="as-is",
         type=lower,
     )
     cloned.add_argument(
         "--file-match-policy",
-        help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to deduplicate. `name-id7` adds asset id from iCloud to all file names and does not de-duplicate. Default: %(default)s",
+        help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to de-duplicate. `name-id7` adds asset ID from iCloud to all filenames and does not de-duplicate. Default: %(default)s",
         choices=["name-size-dedup-with-suffix", "name-id7"],
         default="name-size-dedup-with-suffix",
         type=lower,
     )
     cloned.add_argument(
         "--skip-created-before",
-        help="Do not process assets created before specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
+        help="Do not process assets created before the specified timestamp in ISO format (2025-01-02) or interval backwards from now (20d = 20 days ago)",
         default=None,
         type=parse_timestamp_or_timedelta_tz_error,
     )
     cloned.add_argument(
         "--skip-created-after",
-        help="Do not process assets created after specified timestamp in ISO format (2025-01-02) or interval from now (20d)",
+        help="Do not process assets created after the specified timestamp in ISO format (2025-01-02) or interval backwards from now (20d = 20 days ago)",
         default=None,
         type=parse_timestamp_or_timedelta_tz_error,
     )
     cloned.add_argument(
         "--skip-photos",
-        help="Don't download any photos (default: Download all photos and videos)",
+        help="Don't download any photos (default: download all photos and videos)",
         action="store_true",
     )
     return cloned
@@ -265,7 +265,7 @@ def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned.add_argument(
         "-u",
         "--username",
-        help="AppleID email address. Starts new configuration group.",
+        help="Apple ID email address. Starts a new configuration group.",
         type=lower,
     )
     cloned.add_argument(
@@ -284,23 +284,23 @@ def parse_mfa_provider(provider: str) -> MFAProvider:
     elif provider.lower() == "webui":
         return MFAProvider.WEBUI
     else:
-        raise ValueError(f"Only `console` and `webui` are supported, but `{provider}` was supplied")
+        raise ValueError(f"Only `console` and `webui` are supported, but `{provider}` was provided")
 
 
 def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
     group = cloned.add_mutually_exclusive_group()
-    group.add_argument("--help", "-h", action="store_true", help="Show this info")
+    group.add_argument("--help", "-h", action="store_true", help="Show this information")
     group.add_argument(
-        "--version", help="Show the version, commit hash and timestamp", action="store_true"
+        "--version", help="Show the version, commit hash, and timestamp", action="store_true"
     )
     cloned.add_argument(
-        "--use-os-locale", help="Use locale of the host OS to format dates", action="store_true"
+        "--use-os-locale", help="Use the locale of the host OS to format dates", action="store_true"
     )
     cloned.add_argument(
         "--only-print-filenames",
-        help="Only prints the filenames of all files that will be downloaded "
-        "(not including files that are already downloaded.)"
+        help="Only print the filenames of all files that will be downloaded "
+        "(not including files that are already downloaded). "
         + "(Does not download or delete any files.)",
         action="store_true",
     )
@@ -313,8 +313,8 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     )
     cloned.add_argument(
         "--no-progress-bar",
-        help="Disables the one-line progress bar and prints log messages on separate lines "
-        "(Progress bar is disabled by default if there is no tty attached)",
+        help="Disable the one-line progress bar and print log messages on separate lines "
+        "(progress bar is disabled by default if there is no TTY attached)",
         action="store_true",
     )
     deprecated_kwargs: dict[str, Any] = {}
@@ -324,27 +324,27 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         pass
     cloned.add_argument(
         "--threads-num",
-        help="Number of cpu threads - deprecated & always 1. To be removed in future version",
+        help="Number of CPU threads - deprecated & always 1. To be removed in a future version",
         type=int,
         default=1,
         **deprecated_kwargs,
     )
     cloned.add_argument(
         "--domain",
-        help="What iCloud root domain to use. Use 'cn' for mainland China. Default: %(default)s",
+        help="Which iCloud root domain to use. Use 'cn' for mainland China. Default: %(default)s",
         choices=["com", "cn"],
         default="com",
     )
     cloned.add_argument(
         "--watch-with-interval",
-        help="Run downloading in a infinite cycle, waiting specified seconds between runs",
+        help="Run downloading in an infinite cycle, waiting the specified seconds between runs",
         type=int,
         default=None,
     )
     cloned.add_argument(
         "--password-provider",
         dest="password_providers",
-        help="Specifies passwords provider to check in the given order. Default: [`parameter`, `keyring`, `console`]",
+        help="Specify password providers to check in the given order. Default: [`parameter`, `keyring`, `console`]",
         choices=["console", "keyring", "parameter", "webui"],
         default=None,
         action="append",
@@ -352,7 +352,7 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     )
     cloned.add_argument(
         "--mfa-provider",
-        help="Specified where to get MFA code from",
+        help="Specify where to get the MFA code from",
         choices=["console", "webui"],
         default="console",
         type=lower,
@@ -374,7 +374,7 @@ def log_level(inp: str) -> LogLevel:
 def parse_timestamp_or_timedelta_tz_error(
     formatted: str,
 ) -> datetime.datetime | datetime.timedelta | None:
-    """Converts ISO dates to datetime with tz and interval in days to timeinterval. Raises exception in case of the error"""
+    """Convert ISO dates to datetime with tz and interval in days to time interval. Raise exception in case of error."""
     if formatted is None:
         return None
     result = parse_timestamp_or_timedelta(formatted)
@@ -416,10 +416,10 @@ def format_help() -> str:
             global_help,
             [
                 "",
-                "COMMON options. If specified before first username, then used as default for settings for all users.",
+                "COMMON options. If specified before the first username, then used as defaults for settings for all users.",
             ],
             default_help,
-            ["", "USER options. Can be specified for setting user config only."],
+            ["", "USER options. Can be specified for setting user configuration only."],
             user_help,
         ]
     )
@@ -554,7 +554,7 @@ def cli() -> int:
         # check param compatibility
         if [user_ns for user_ns in user_nses if user_ns.skip_videos and user_ns.skip_photos]:
             print(
-                "Only one of --skip-videos and --skip-photos can be used at a time for each config"
+                "Only one of --skip-videos and --skip-photos can be used at a time for each configuration"
             )
             return 2
 
@@ -568,7 +568,7 @@ def cli() -> int:
             and not user_ns.auth_only
         ]:
             print(
-                "--auth-only, --directory, --list-libraries or --list-albums are required for each config"
+                "--auth-only, --directory, --list-libraries, or --list-albums are required for each configuration"
             )
             return 2
 
@@ -577,7 +577,9 @@ def cli() -> int:
             for user_ns in user_nses
             if user_ns.auto_delete and user_ns.delete_after_download
         ]:
-            print("--auto-delete and --delete-after-download are mutually exclusive per config")
+            print(
+                "--auto-delete and --delete-after-download are mutually exclusive per configuration"
+            )
             return 2
 
         elif [
@@ -586,7 +588,7 @@ def cli() -> int:
             if user_ns.keep_icloud_recent_days and user_ns.delete_after_download
         ]:
             print(
-                "--keep-icloud-recent-days and --delete-after-download should not be used together in one config"
+                "--keep-icloud-recent-days and --delete-after-download should not be used together in one configuration"
             )
             return 2
 

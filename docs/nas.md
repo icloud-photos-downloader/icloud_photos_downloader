@@ -4,7 +4,7 @@ The following are example setups for NAS.
 
 ## TrueNAS
 
-Use [`Install Custom App` button](https://www.truenas.com/docs/scale/23.10/scaletutorials/apps/usingcustomapp/) to set up `icloudpd`:
+Use the [`Install Custom App` button](https://www.truenas.com/docs/scale/23.10/scaletutorials/apps/usingcustomapp/) to set up `icloudpd`:
 | Field | Value | Note |
 |-------|-------|------|
 Application Name | `icloudpd` |
@@ -22,15 +22,15 @@ Portal Configuration/Protocol to Portal | `HTTP Protocol` |
 Portal Configuration/Use Node IP for Portal IP/Domain | checked | 
 Portal Configuration/Port | `9090` | Same as "Port Forwarding/Host Port" above
 
-Once the app has started, connect to the [WebUI](webui) to enter password and MFA code one of two ways:
-- Using browser from your PC to 9090 port of your NAS
-- Clicking on `icloudpd` button in Detail/Application Info section of TrueNAS portal
+Once the app has started, connect to the [WebUI](webui) to enter the password and MFA code in one of two ways:
+- Using a browser from your PC to port 9090 of your NAS
+- Clicking on the `icloudpd` button in the Detail/Application Info section of the TrueNAS portal
 
 ## Running on Synology NAS
 
-The error `Failed to execv() /tmp/staticx-kJmNbp` has a workaround by (from an SSH terminal in my case) running `sudo mount /tmp -o remount,exec`. [#788](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/788)
+The error `Failed to execv() /tmp/staticx-kJmNbp` has a workaround by running `sudo mount /tmp -o remount,exec` (from an SSH terminal). [#788](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/788)
 
-CPU/Arch [used by Synology](https://kb.synology.com/en-me/DSM/tutorial/What_kind_of_CPU_does_my_NAS_have) other than amd64 (after x12):
+CPU/Arch [used by Synology](https://kb.synology.com/en-me/DSM/tutorial/What_kind_of_CPU_does_my_NAS_have) other than amd64 (from x12 onwards):
 | Models | CPU | Arch | 
 |-------|-------|------|
 DS124, DS423, DS223j, DS223 | Realtek RTD1619B | arm64 | 
@@ -53,6 +53,6 @@ DS414j | Mindspeed Comcerto C200 | arm32v7
 DS413, DS213+ | Freescale P1022 | power (Unsupported) | 
 DS413j, DS213, DS213air | Marvell Kirkwood 88F6282 | arm32v5 (Unsupported) | 
 
-Non x86 64bit models from x12 and before are not supported
+Non-x86 64-bit models from x12 and earlier are not supported.
 
-[Additional info on Marvel](https://www.kernel.org/doc/html/v6.1/arm/marvell.html)
+[Additional info on Marvell](https://www.kernel.org/doc/html/v6.1/arm/marvell.html)
