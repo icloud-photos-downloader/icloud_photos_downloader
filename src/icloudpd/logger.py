@@ -11,7 +11,7 @@ class IPDLogger(logging.Logger):
 
     def __init__(self, name: str, level: int = INFO):
         logging.Logger.__init__(self, name, level)
-        self.tqdm = None
+        self.tqdm: Any = None
 
     # If tdqm progress bar is not set, we just write regular log messages
     def set_tqdm(self, tdqm: Any) -> None:

@@ -372,7 +372,7 @@ def log_level(inp: str) -> LogLevel:
 
 
 def parse_timestamp_or_timedelta_tz_error(
-    formatted: str,
+    formatted: str | None,
 ) -> datetime.datetime | datetime.timedelta | None:
     """Convert ISO dates to datetime with tz and interval in days to time interval. Raise exception in case of error."""
     if formatted is None:
