@@ -133,9 +133,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url: str, start: int) -> Response:
+        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url, start)
+                response = orig_download(pa, session, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -436,7 +436,7 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_session_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any, _size: Any) -> NoReturn:
+        def mock_raise_response_error(_arg: Any, _session: Any, _size: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("Invalid global session", "100")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
@@ -1134,9 +1134,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(self: PhotoAsset, _url: str, start: int) -> Response:
+        def mocked_download(self: PhotoAsset, session: Any, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, _url, start)
+                response = orig_download(self, session, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -1321,9 +1321,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url: str, start: int) -> Response:
+        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url, start)
+                response = orig_download(pa, session, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -1376,9 +1376,9 @@ class DownloadPhotoTestCase(TestCase):
         # Download the first photo, but mock the video download
         orig_download = PhotoAsset.download
 
-        def mocked_download(pa: PhotoAsset, _url: str, start: int) -> Response:
+        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
             if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, _url, start)
+                response = orig_download(pa, session, _url, start)
                 setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
                 return response
             return mock.MagicMock()
@@ -1645,7 +1645,7 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any, _size: Any) -> NoReturn:
+        def mock_raise_response_error(_arg: Any, _session: Any, _size: Any) -> NoReturn:
             raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
