@@ -13,7 +13,7 @@ import typing
 from requests import Response
 from foundation import wrap_param_in_exception, bytes_decode
 from foundation.core import compose, identity
-from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.asset_version import AssetVersion, calculate_asset_version_filename, add_suffix_to_filename
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 
@@ -25,7 +25,6 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
-from pyicloud_ipd.utils import add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 from tzlocal import get_localzone
@@ -720,6 +719,21 @@ class PhotoAsset(object):
             return self.ITEM_TYPE_EXTENSIONS[item_type]
         return 'unknown'
 
+    def calculate_version_filename(self, version: AssetVersion, version_size: VersionSize) -> str:
+        """Calculate filename for a specific asset version."""
+        if version.filename_override is not None:
+            return version.filename_override
+            
+        return calculate_asset_version_filename(
+            self.filename,
+            version.type,
+            version_size,
+            self._service.lp_filename_generator,
+            self.ITEM_TYPE_EXTENSIONS,
+            self.VERSION_FILENAME_SUFFIX_LOOKUP,
+            (self.item_type or AssetItemType.IMAGE) == AssetItemType.IMAGE
+        )
+
     @property
     def versions(self) -> Dict[VersionSize, AssetVersion]:
         if not self._versions:
@@ -738,52 +752,21 @@ class PhotoAsset(object):
                 if not f and '%sRes' % prefix in self._master_record['fields']:
                     f = self._master_record['fields']
                 if f:
-                    version: Dict[str, Any] = {'filename': self.filename}
-
-                    # width_entry = f.get('%sWidth' % prefix)
-                    # if width_entry:
-                    #     version['width'] = width_entry['value']
-                    # else:
-                    #     version['width'] = None
-
-                    # height_entry = f.get('%sHeight' % prefix)
-                    # if height_entry:
-                    #     version['height'] = height_entry['value']
-                    # else:
-                    #     version['height'] = None
-
                     size_entry = f.get('%sRes' % prefix)
                     if size_entry:
-                        version['size'] = size_entry['value']['size']
-                        version['url'] = size_entry['value']['downloadURL']
-                        version['checksum'] = size_entry['value']['fileChecksum']
+                        size = size_entry['value']['size']
+                        url = size_entry['value']['downloadURL']
+                        checksum = size_entry['value']['fileChecksum']
                     else:
                         raise ValueError(f"Expected {prefix}Res, but missing it")
-                        # version['size'] = None
-                        # version['url'] = None
 
                     type_entry = f.get('%sFileType' % prefix)
                     if type_entry:
-                        version['type'] = type_entry['value']
+                        asset_type = type_entry['value']
                     else:
                         raise ValueError(f"Expected {prefix}FileType, but missing it")
-                        # version['type'] = None
 
-                    # Change live photo movie file extension to .MOV
-                    if ((self.item_type or AssetItemType.IMAGE) == AssetItemType.IMAGE and
-                        version['type'] == "com.apple.quicktime-movie"):
-                        version['filename'] = self._service.lp_filename_generator(self.filename) # without size
-                    else:
-                        # for non live photo movie, try to change file type to match asset type
-                        _f, _e = os.path.splitext(version["filename"])
-                        version["filename"] = _f + "." + self.ITEM_TYPE_EXTENSIONS.get(version["type"], _e[1:])
-
-                    # add size suffix
-                    if key in self.VERSION_FILENAME_SUFFIX_LOOKUP:
-                        _size_suffix = self.VERSION_FILENAME_SUFFIX_LOOKUP[key]
-                        version["filename"] = add_suffix_to_filename(f"-{_size_suffix}", version["filename"])
-
-                    _versions[key] = AssetVersion(version["filename"], version['size'], version['url'], version['type'], version['checksum'])
+                    _versions[key] = AssetVersion(size, url, asset_type, checksum)
 
             # swap original & alternative according to swap_raw_policy
             if AssetVersionSize.ALTERNATIVE in _versions and (("raw" in _versions[AssetVersionSize.ALTERNATIVE].type and self._service.raw_policy == RawTreatmentPolicy.AS_ORIGINAL) or ("raw" in _versions[AssetVersionSize.ORIGINAL].type and self._service.raw_policy == RawTreatmentPolicy.AS_ALTERNATIVE)):

@@ -1,14 +1,17 @@
 import copy
 import os
-from typing import Dict, Optional, Sequence
+from typing import TYPE_CHECKING, Dict, Optional, Sequence
 import typing
 import keyring
 from requests import Response
 
-from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.asset_version import AssetVersion, add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
 from .exceptions import PyiCloudNoStoredPasswordAvailableException, PyiCloudServiceUnavailableException
+
+if TYPE_CHECKING:
+    from pyicloud_ipd.services.photos import PhotoAsset
 
 KEYRING_SYSTEM = 'pyicloud://icloud-password'
 
@@ -91,11 +94,8 @@ def underscore_to_camelcase(word:str , initial_capital: bool=False) -> str:
 def size_to_suffix(size: VersionSize) -> str:
     return f"-{size}".lower()
 
-def add_suffix_to_filename(suffix: str, filename: str) -> str:
-    _n, _e = os.path.splitext(filename)
-    return _n + suffix + _e
-
-def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize]) -> Dict[AssetVersionSize, AssetVersion]:
+def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Sequence[AssetVersionSize], photo_asset: 'PhotoAsset') -> Dict[AssetVersionSize, AssetVersion]:
+    
     _results: Dict[AssetVersionSize, AssetVersion] = {}
     # add those that were requested
     for _size in _sizes:
@@ -110,19 +110,33 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
                 # clone
                 _results[AssetVersionSize.ADJUSTED] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
         else:
-            if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ADJUSTED].filename:
-                _results[AssetVersionSize.ADJUSTED].filename = add_suffix_to_filename("-adjusted", _results[AssetVersionSize.ADJUSTED].filename)
+            if AssetVersionSize.ADJUSTED in _results:
+                original_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ORIGINAL], AssetVersionSize.ORIGINAL)
+                adjusted_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ADJUSTED], AssetVersionSize.ADJUSTED)
+                if original_filename == adjusted_filename:
+                    # Set filename override for adjusted version
+                    _results[AssetVersionSize.ADJUSTED].filename_override = add_suffix_to_filename("-adjusted", adjusted_filename)
 
     # alternative
     if AssetVersionSize.ALTERNATIVE in _sizes:
-        if AssetVersionSize.ORIGINAL not in _sizes and AssetVersionSize.ADJUSTED not in _results:
-            if AssetVersionSize.ALTERNATIVE not in _results:
-                # clone
+        if AssetVersionSize.ALTERNATIVE not in _results:
+            # Only clone from original when alternative is missing AND original is not requested
+            if AssetVersionSize.ORIGINAL not in _sizes:
                 _results[AssetVersionSize.ALTERNATIVE] = copy.copy(_versions[AssetVersionSize.ORIGINAL])
         else:
-            if AssetVersionSize.ALTERNATIVE in _results:
-                if AssetVersionSize.ADJUSTED in _results and _results[AssetVersionSize.ADJUSTED].filename == _results[AssetVersionSize.ALTERNATIVE].filename or AssetVersionSize.ORIGINAL in _results and _results[AssetVersionSize.ORIGINAL].filename == _results[AssetVersionSize.ALTERNATIVE].filename:
-                    _results[AssetVersionSize.ALTERNATIVE].filename = add_suffix_to_filename("-alternative", _results[AssetVersionSize.ALTERNATIVE].filename)
+            # Check for filename conflicts and add disambiguating suffix if needed
+            alternative_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ALTERNATIVE], AssetVersionSize.ALTERNATIVE)
+            alt_adjusted_filename: Optional[str] = None
+            alt_original_filename: Optional[str] = None
+            
+            if AssetVersionSize.ADJUSTED in _results:
+                alt_adjusted_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ADJUSTED], AssetVersionSize.ADJUSTED)
+            if AssetVersionSize.ORIGINAL in _results:
+                alt_original_filename = photo_asset.calculate_version_filename(_results[AssetVersionSize.ORIGINAL], AssetVersionSize.ORIGINAL)
+                
+            if (alt_adjusted_filename and alternative_filename == alt_adjusted_filename) or (alt_original_filename and alternative_filename == alt_original_filename):
+                # Set filename override for alternative version
+                _results[AssetVersionSize.ALTERNATIVE].filename_override = add_suffix_to_filename("-alternative", alternative_filename)
 
     for _size in _sizes:
         if _size not in [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE]:
@@ -133,7 +147,6 @@ def disambiguate_filenames(_versions: Dict[VersionSize, AssetVersion], _sizes:Se
             # else:
             #     _n, _e = os.path.splitext(_results[_size]["filename"])
             #     _results[_size]["filename"] = f"{_n}-{_size}{_e}"
-
 
     return _results
 
