@@ -12,7 +12,7 @@ from vcr import VCR
 import pyicloud_ipd
 from foundation.core import constant, identity
 from icloudpd.authentication import authenticator
-from icloudpd.base import dummy_password_writter, lp_filename_concatinator
+from icloudpd.base import dummy_password_writter
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
@@ -46,7 +46,6 @@ class AuthenticationTestCase(TestCase):
                     setup_logger(),
                     "com",
                     identity,
-                    lp_filename_concatinator,
                     RawTreatmentPolicy.AS_IS,
                     FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                     {"test": (constant("dummy"), dummy_password_writter)},
@@ -260,7 +259,6 @@ class AuthenticationTestCase(TestCase):
                 setup_logger(),
                 "com",
                 identity,
-                lp_filename_concatinator,
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                 {"test": (constant("dummy"), dummy_password_writter)},

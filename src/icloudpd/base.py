@@ -808,7 +808,6 @@ def core_single_run(
                 logger,
                 global_config.domain,
                 filename_cleaner,
-                lp_filename_generator,
                 user_config.align_raw,
                 user_config.file_match_policy,
                 {

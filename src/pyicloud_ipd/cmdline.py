@@ -222,7 +222,6 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
         try:
             api = PyiCloudService(
                 identity,
-                identity,
                 domain,
                 RawTreatmentPolicy.AS_IS,
                 FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
