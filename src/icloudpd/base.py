@@ -155,7 +155,7 @@ def keyring_password_writter(logger: Logger) -> Callable[[str, str], None]:
 
 
 def skip_created_generator(
-    name: str, formatted: str
+    name: str, formatted: str | None
 ) -> datetime.datetime | datetime.timedelta | None:
     """Converts ISO dates to datetime and interval in days to timeinterval using supplied name as part of raised exception in case of the error"""
     if formatted is None:
