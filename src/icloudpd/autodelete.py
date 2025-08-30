@@ -70,9 +70,12 @@ def autodelete_photos(
 
         paths: Set[str] = set({})
         _size: VersionSize
-        for _size, _version in disambiguate_filenames(media.versions, _sizes, media).items():
+        versions, filename_overrides = disambiguate_filenames(media.versions, _sizes, media)
+        for _size, _version in versions.items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
-                version_filename = media.calculate_version_filename(_version, _size)
+                version_filename = media.calculate_version_filename(
+                    _version, _size, filename_overrides.get(_size)
+                )
                 paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))
                 paths.add(
                     os.path.normpath(local_download_path(version_filename, download_dir)) + ".xmp"

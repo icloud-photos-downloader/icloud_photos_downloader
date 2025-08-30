@@ -16,17 +16,6 @@ class AssetVersion:
         self.url = url
         self.type = type
         self.checksum = checksum
-        self._filename_override: str | None = None
-
-    @property
-    def filename_override(self) -> str | None:
-        """Override filename used for disambiguation purposes."""
-        return self._filename_override
-    
-    @filename_override.setter
-    def filename_override(self, value: str | None) -> None:
-        """Set override filename for disambiguation purposes."""
-        self._filename_override = value
 
     def __eq__(self, other: object) -> bool: 
         if not isinstance(other, AssetVersion):

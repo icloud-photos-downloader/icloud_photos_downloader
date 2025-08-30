@@ -719,10 +719,10 @@ class PhotoAsset(object):
             return self.ITEM_TYPE_EXTENSIONS[item_type]
         return 'unknown'
 
-    def calculate_version_filename(self, version: AssetVersion, version_size: VersionSize) -> str:
+    def calculate_version_filename(self, version: AssetVersion, version_size: VersionSize, filename_override: str | None = None) -> str:
         """Calculate filename for a specific asset version."""
-        if version.filename_override is not None:
-            return version.filename_override
+        if filename_override is not None:
+            return filename_override
             
         return calculate_asset_version_filename(
             self.filename,

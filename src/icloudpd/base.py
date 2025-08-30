@@ -554,7 +554,7 @@ def download_builder(
             date_path = folder_structure.format(created_date)
 
     try:
-        versions = disambiguate_filenames(photo.versions, primary_sizes, photo)
+        versions, filename_overrides = disambiguate_filenames(photo.versions, primary_sizes, photo)
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
         with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
@@ -591,7 +591,9 @@ def download_builder(
             download_size = AssetVersionSize.ORIGINAL
 
         version = versions[download_size]
-        filename = photo.calculate_version_filename(version, download_size)
+        filename = photo.calculate_version_filename(
+            version, download_size, filename_overrides.get(download_size)
+        )
 
         download_path = local_download_path(filename, download_dir)
 
