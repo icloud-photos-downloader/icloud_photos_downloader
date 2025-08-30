@@ -29,13 +29,7 @@ from pyicloud_ipd.exceptions import (
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.findmyiphone import AppleDevice, FindMyiPhoneServiceManager
-from pyicloud_ipd.services.calendar import CalendarService
-from pyicloud_ipd.services.ubiquity import UbiquityService
-from pyicloud_ipd.services.contacts import ContactsService
-from pyicloud_ipd.services.reminders import RemindersService
 from pyicloud_ipd.services.photos import PhotosService
-from pyicloud_ipd.services.account import AccountService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
 from pyicloud_ipd.sms import AuthenticatedSession, TrustedDevice, build_send_sms_code_request, build_trusted_phone_numbers_request, build_verify_sms_code_request, parse_trusted_phone_numbers_response
 
@@ -815,39 +809,9 @@ class PyiCloudService:
             )
         return typing.cast(str, self._webservices[ws_key]["url"])
 
-    @property
-    def devices(self) -> Sequence[AppleDevice]:
-        """ Return all devices."""
-        service_root = self._get_webservice_url("findme")
-        return typing.cast(Sequence[AppleDevice], FindMyiPhoneServiceManager(
-            service_root,
-            self.session,
-            self.params
-        ))
 
-    @property
-    def account(self):  # type: ignore
-        service_root = self._get_webservice_url("account")
-        return AccountService(  # type: ignore
-            service_root,
-            self.session,
-            self.params
-        )
 
-    @property
-    def iphone(self):  # type: ignore
-        return self.devices[0]
 
-    @property
-    def files(self):  # type: ignore
-        if not hasattr(self, '_files'):
-            service_root = self._get_webservice_url("ubiquity")
-            self._files = UbiquityService(  # type: ignore
-                service_root,
-                self.session,
-                self.params
-            )
-        return self._files
 
     @property
     def photos(self) -> PhotosService:
@@ -861,20 +825,8 @@ class PyiCloudService:
                 )
         return self._photos
 
-    @property
-    def calendar(self):  # type: ignore
-        service_root = self._get_webservice_url("calendar")
-        return CalendarService(service_root, self.session, self.params)  # type: ignore
 
-    @property
-    def contacts(self):  # type: ignore
-        service_root = self._get_webservice_url("contacts")
-        return ContactsService(service_root, self.session, self.params)  # type: ignore
 
-    @property
-    def reminders(self):  # type: ignore
-        service_root = self._get_webservice_url("reminders")
-        return RemindersService(service_root, self.session, self.params)  # type: ignore
 
     def __unicode__(self) -> str:
         return 'iCloud API: %s' % self.apple_id
