@@ -8,11 +8,9 @@ import logging
 import os
 import plistlib
 import zlib
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from typing import Any, NamedTuple
 from xml.etree import ElementTree
-
-import dateutil.tz
 
 from foundation import version_info
 
@@ -150,7 +148,7 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
             timezone_offset = asset_record["fields"]["timeZoneOffset"]["value"]
         create_date = datetime.fromtimestamp(
             int(asset_record["fields"]["assetDate"]["value"]) / 1000,
-            tz=dateutil.tz.tzoffset(None, timezone_offset),
+            tz=timezone(timedelta(seconds=timezone_offset)),
         )
 
     rating = None
