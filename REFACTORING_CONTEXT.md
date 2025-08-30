@@ -62,6 +62,29 @@ This refactoring series implements dependency injection patterns and functional 
 
 **Pattern**: Constructor Dependency Injection
 
+### 6. Remove Unused Device Management from icloud cmdline
+**Commit**: `2c4eb83 - refactor: remove all device management functionality from icloud cmdline`
+
+**Changes**:
+- Removed all device management parameters: --list, --llist, --locate, --device, --sound, --message, --silentmessage, --lostmode, --lostphone, --lostpassword, --lostmessage, --outputfile
+- Removed create_pickled_data() function and DEVICE_ERROR constant
+- Removed all device management logic (196 lines deleted)
+- Simplified icloud cmdline to only handle authentication and keyring management
+
+**Pattern**: Code simplification - Remove unused functionality
+
+### 7. Remove All Unused Services from pyicloud_ipd
+**Commit**: `f72763b - refactor: remove all unused services from pyicloud_ipd`
+
+**Changes**:
+- Removed CalendarService, ContactsService, FindMyiPhoneServiceManager, RemindersService, UbiquityService, and AccountService
+- Deleted corresponding service files: calendar.py, contacts.py, findmyiphone.py, reminders.py, ubiquity.py, account.py
+- Removed all service imports and properties from base.py: .calendar, .contacts, .devices, .iphone, .reminders, .files, .account
+- Updated services/__init__.py to only import PhotosService
+- Streamlined pyicloud_ipd to only support PhotosService (core functionality)
+
+**Pattern**: Dead code elimination - Remove unused services
+
 ## Key Patterns Implemented
 
 ### 1. **Dependency Injection**
@@ -109,18 +132,29 @@ After:  PhotoLibrary receives params, session, service_endpoint directly
 
 ## Quality Metrics
 
-- **Tests**: All 203 tests pass (200 passed, 3 skipped)
-- **Type Safety**: mypy strict mode passes on 73 files (src + tests)
+- **Tests**: All 203 tests pass (200 passed, 3 skipped) after all refactorings
+- **Type Safety**: mypy strict mode passes on all source files
 - **Code Quality**: ruff linting passes with no issues
 - **Formatting**: ruff format applied consistently
+- **Code Reduction**: 694+ lines of unused code removed from pyicloud_ipd services
 
 ## File Changes Summary
 
 ### Core Service Files
 - `src/pyicloud_ipd/services/photos.py` - Major refactoring of PhotoAsset, PhotoLibrary, PhotoAlbum, PhotosService
-- `src/pyicloud_ipd/base.py` - Updated PyiCloudService and download_builder
+- `src/pyicloud_ipd/base.py` - Updated PyiCloudService and download_builder, removed all unused service properties
+- `src/pyicloud_ipd/cmdline.py` - Simplified to only handle authentication (removed 196 lines of device management)
+- `src/pyicloud_ipd/services/__init__.py` - Streamlined to only import PhotosService
 - `src/icloudpd/base.py` - Updated callers to use new dependency injection patterns
 - `src/icloudpd/download.py` - Updated to pass session explicitly to PhotoAsset.download()
+
+### Removed Service Files
+- `src/pyicloud_ipd/services/calendar.py` - CalendarService (deleted)
+- `src/pyicloud_ipd/services/contacts.py` - ContactsService (deleted)
+- `src/pyicloud_ipd/services/findmyiphone.py` - FindMyiPhoneServiceManager, AppleDevice (deleted)
+- `src/pyicloud_ipd/services/reminders.py` - RemindersService (deleted)  
+- `src/pyicloud_ipd/services/ubiquity.py` - UbiquityService (deleted)
+- `src/pyicloud_ipd/services/account.py` - AccountService (deleted)
 
 ### Foundation Layer
 - `src/foundation/core/optional/__init__.py` - Added fromMaybe function for functional composition
