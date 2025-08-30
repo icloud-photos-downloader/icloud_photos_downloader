@@ -1,13 +1,76 @@
 import os
 from typing import Callable, Dict
 
-from pyicloud_ipd.version_size import VersionSize
+from pyicloud_ipd.item_type import AssetItemType
+from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
+
+# Constants moved from PhotoAsset class
+ITEM_TYPE_EXTENSIONS = {
+    "public.heic": "HEIC",
+    "public.heif": "HEIF", 
+    "public.jpeg": "JPG",
+    "public.png": "PNG",
+    "com.apple.quicktime-movie": "MOV",
+    "com.adobe.raw-image": "DNG",
+    "com.canon.cr2-raw-image": "CR2",
+    'com.canon.crw-raw-image': "CRW",
+    'com.sony.arw-raw-image': "ARW",
+    'com.fuji.raw-image': "RAF",
+    'com.panasonic.rw2-raw-image': "RW2",
+    'com.nikon.nrw-raw-image': "NRF",
+    'com.pentax.raw-image': "PEF",
+    'com.nikon.raw-image': "NEF",
+    'com.olympus.raw-image': "ORF",
+    'com.canon.cr3-raw-image': "CR3",
+    'com.olympus.or-raw-image': "ORF",
+}
+
+VERSION_FILENAME_SUFFIX_LOOKUP: Dict[VersionSize, str] = {
+    AssetVersionSize.MEDIUM: "medium",
+    AssetVersionSize.THUMB: "thumb",
+}
 
 
 def add_suffix_to_filename(suffix: str, filename: str) -> str:
     """Add suffix to filename before extension."""
     _n, _e = os.path.splitext(filename)
     return _n + suffix + _e
+
+
+def calculate_version_filename(
+    base_filename: str,
+    version: 'AssetVersion', 
+    version_size: VersionSize,
+    lp_filename_generator: Callable[[str], str],
+    item_type: AssetItemType | None = None,
+    filename_override: str | None = None
+) -> str:
+    """
+    Calculate filename for a specific asset version with optional override.
+    
+    Args:
+        base_filename: The base filename from PhotoAsset
+        version: The AssetVersion object
+        version_size: The size key for this version
+        lp_filename_generator: Function to generate live photo filenames
+        item_type: Asset item type for live photo detection
+        filename_override: Optional override filename for disambiguation
+        
+    Returns:
+        The calculated or override filename for this asset version
+    """
+    if filename_override is not None:
+        return filename_override
+        
+    return calculate_asset_version_filename(
+        base_filename,
+        version.type,
+        version_size,
+        lp_filename_generator,
+        ITEM_TYPE_EXTENSIONS,
+        VERSION_FILENAME_SUFFIX_LOOKUP,
+        (item_type or AssetItemType.IMAGE) == AssetItemType.IMAGE
+    )
 
 
 class AssetVersion:

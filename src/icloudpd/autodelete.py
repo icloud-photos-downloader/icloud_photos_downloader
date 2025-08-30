@@ -10,6 +10,7 @@ from typing import Sequence, Set
 from tzlocal import get_localzone
 
 from icloudpd.paths import local_download_path
+from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.services.photos import PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
@@ -73,8 +74,13 @@ def autodelete_photos(
         versions, filename_overrides = disambiguate_filenames(media.versions, _sizes, media)
         for _size, _version in versions.items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
-                version_filename = media.calculate_version_filename(
-                    _version, _size, filename_overrides.get(_size)
+                version_filename = calculate_version_filename(
+                    media.filename,
+                    _version,
+                    _size,
+                    media._service.lp_filename_generator,
+                    media.item_type,
+                    filename_overrides.get(_size),
                 )
                 paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))
                 paths.add(
@@ -82,7 +88,13 @@ def autodelete_photos(
                 )
         for _size, _version in media.versions.items():
             if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
-                version_filename = media.calculate_version_filename(_version, _size)
+                version_filename = calculate_version_filename(
+                    media.filename,
+                    _version,
+                    _size,
+                    media._service.lp_filename_generator,
+                    media.item_type,
+                )
                 paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))
                 paths.add(
                     os.path.normpath(local_download_path(version_filename, download_dir)) + ".xmp"

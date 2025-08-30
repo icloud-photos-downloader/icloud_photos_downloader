@@ -55,7 +55,7 @@ from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 from icloudpd.xmp_sidecar import generate_xmp_file
-from pyicloud_ipd.asset_version import add_suffix_to_filename
+from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
@@ -591,8 +591,13 @@ def download_builder(
             download_size = AssetVersionSize.ORIGINAL
 
         version = versions[download_size]
-        filename = photo.calculate_version_filename(
-            version, download_size, filename_overrides.get(download_size)
+        filename = calculate_version_filename(
+            photo.filename,
+            version,
+            download_size,
+            photo._service.lp_filename_generator,
+            photo.item_type,
+            filename_overrides.get(download_size),
         )
 
         download_path = local_download_path(filename, download_dir)
@@ -659,7 +664,13 @@ def download_builder(
         lp_size = live_photo_size
         if lp_size in photo.versions:
             version = photo.versions[lp_size]
-            lp_filename = photo.calculate_version_filename(version, lp_size)
+            lp_filename = calculate_version_filename(
+                photo.filename,
+                version,
+                lp_size,
+                photo._service.lp_filename_generator,
+                photo.item_type,
+            )
             if live_photo_size != LivePhotoVersionSize.ORIGINAL:
                 # Add size to filename if not original
                 lp_filename = add_suffix_to_filename(

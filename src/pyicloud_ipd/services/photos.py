@@ -1,38 +1,39 @@
+import base64
 import copy
-import os
-import sys
 import json
 import logging
-import base64
 import re
-
-from datetime import datetime
-from typing import Any, Callable, Dict, Generator, Optional, Sequence, Tuple, TypeVar, Union, cast
+import sys
 import typing
-
-from requests import Response
-from foundation import wrap_param_in_exception, bytes_decode
-from foundation.core import compose, identity
-from pyicloud_ipd.asset_version import AssetVersion, calculate_asset_version_filename, add_suffix_to_filename
-from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-
-import pytz
-
+from datetime import datetime
+from typing import Any, Callable, Dict, Generator, Sequence, Tuple, cast
 from urllib.parse import urlencode
 
+import pytz
+from requests import Response
+from tzlocal import get_localzone
+
+from foundation import bytes_decode, wrap_param_in_exception
+from foundation.core import compose, identity
+from pyicloud_ipd.asset_version import (
+    ITEM_TYPE_EXTENSIONS,
+    AssetVersion,
+    add_suffix_to_filename,
+    calculate_version_filename,
+)
+from pyicloud_ipd.exceptions import (
+    PyiCloudServiceNotActivatedException,
+)
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
-from tzlocal import get_localzone
-
 logger = logging.getLogger(__name__)
 
 
-class PhotoLibrary(object):
+class PhotoLibrary:
     """Represents a library in the user's photos.
 
     This provides access to all the albums as well as the photos.
@@ -251,8 +252,8 @@ class PhotosService(PhotoLibrary):
         self.params = dict(params)
         self._service_root = service_root
 
-        self._private_libraries: Optional[Dict[str, PhotoLibrary]] = None
-        self._shared_libraries: Optional[Dict[str, PhotoLibrary]] = None
+        self._private_libraries: Dict[str, PhotoLibrary] | None = None
+        self._shared_libraries: Dict[str, PhotoLibrary] | None = None
 
         self.filename_cleaner = filename_cleaner
         self.lp_filename_generator = lp_filename_generator
@@ -273,7 +274,7 @@ class PhotosService(PhotoLibrary):
         # self._photo_assets = {}
 
         super(PhotosService, self).__init__(
-            service=self, zone_id={u'zoneName': u'PrimarySync'}, library_type="private")
+            service=self, zone_id={'zoneName': 'PrimarySync'}, library_type="private")
 
     @property
     def private_libraries(self) -> Dict[str, PhotoLibrary]:
@@ -319,10 +320,10 @@ class PhotosService(PhotoLibrary):
                 % (self._service_root, library_type))
 
 
-class PhotoAlbum(object):
+class PhotoAlbum:
 
     def __init__(self, service:PhotosService, service_endpoint: str, name: str, list_type: str, obj_type: str,
-                 query_filter:Optional[Sequence[Dict[str, Any]]]=None, page_size:int=100, zone_id:Optional[Dict[str, Any]]=None):
+                 query_filter:Sequence[Dict[str, Any]] | None=None, page_size:int=100, zone_id:Dict[str, Any] | None=None):
         self.name = name
         self.service = service
         self.service_endpoint = service_endpoint
@@ -335,7 +336,7 @@ class PhotoAlbum(object):
         if zone_id:
             self._zone_id: Dict[str, Any] = zone_id
         else:
-            self._zone_id = {u'zoneName': u'PrimarySync'}
+            self._zone_id = {'zoneName': 'PrimarySync'}
 
     @property
     def title(self) -> str:
@@ -415,85 +416,85 @@ class PhotoAlbum(object):
 
     def _count_query_gen(self, obj_type: str) -> Dict[str, Any]:
         query = {
-            u'batch': [{
-                u'resultsLimit': 1,
-                u'query': {
-                    u'filterBy': {
-                        u'fieldName': u'indexCountID',
-                        u'fieldValue': {
-                            u'type': u'STRING_LIST',
-                            u'value': [
+            'batch': [{
+                'resultsLimit': 1,
+                'query': {
+                    'filterBy': {
+                        'fieldName': 'indexCountID',
+                        'fieldValue': {
+                            'type': 'STRING_LIST',
+                            'value': [
                                 obj_type
                             ]
                         },
-                        u'comparator': u'IN'
+                        'comparator': 'IN'
                     },
-                    u'recordType': u'HyperionIndexCountLookup'
+                    'recordType': 'HyperionIndexCountLookup'
                 },
-                u'zoneWide': True,
-                u'zoneID': self._zone_id
+                'zoneWide': True,
+                'zoneID': self._zone_id
             }]
         }
 
         return query
 
-    def _list_query_gen(self, offset: int, list_type: str, query_filter:Optional[Sequence[Dict[str,None]]]=None) -> Dict[str, Any]:
+    def _list_query_gen(self, offset: int, list_type: str, query_filter:Sequence[Dict[str, None]] | None=None) -> Dict[str, Any]:
         query: Dict[str, Any] = {
-            u'query': {
-                u'filterBy': [
-                    {u'fieldName': u'startRank', u'fieldValue':
-                        {u'type': u'INT64', u'value': offset},
-                        u'comparator': u'EQUALS'},
-                    {u'fieldName': u'direction', u'fieldValue':
-                        {u'type': u'STRING', u'value': 'ASCENDING'},
-                        u'comparator': u'EQUALS'}
+            'query': {
+                'filterBy': [
+                    {'fieldName': 'startRank', 'fieldValue':
+                        {'type': 'INT64', 'value': offset},
+                        'comparator': 'EQUALS'},
+                    {'fieldName': 'direction', 'fieldValue':
+                        {'type': 'STRING', 'value': 'ASCENDING'},
+                        'comparator': 'EQUALS'}
                 ],
-                u'recordType': list_type
+                'recordType': list_type
             },
-            u'resultsLimit': self.page_size * 2,
-            u'desiredKeys': [
-                u'resJPEGFullWidth', u'resJPEGFullHeight',
-                u'resJPEGFullFileType', u'resJPEGFullFingerprint',
-                u'resJPEGFullRes', u'resJPEGLargeWidth',
-                u'resJPEGLargeHeight', u'resJPEGLargeFileType',
-                u'resJPEGLargeFingerprint', u'resJPEGLargeRes',
-                u'resJPEGMedWidth', u'resJPEGMedHeight',
-                u'resJPEGMedFileType', u'resJPEGMedFingerprint',
-                u'resJPEGMedRes', u'resJPEGThumbWidth',
-                u'resJPEGThumbHeight', u'resJPEGThumbFileType',
-                u'resJPEGThumbFingerprint', u'resJPEGThumbRes',
-                u'resVidFullWidth', u'resVidFullHeight',
-                u'resVidFullFileType', u'resVidFullFingerprint',
-                u'resVidFullRes', u'resVidMedWidth', u'resVidMedHeight',
-                u'resVidMedFileType', u'resVidMedFingerprint',
-                u'resVidMedRes', u'resVidSmallWidth', u'resVidSmallHeight',
-                u'resVidSmallFileType', u'resVidSmallFingerprint',
-                u'resVidSmallRes', u'resSidecarWidth', u'resSidecarHeight',
-                u'resSidecarFileType', u'resSidecarFingerprint',
-                u'resSidecarRes', u'itemType', u'dataClassType',
-                u'filenameEnc', u'originalOrientation', u'resOriginalWidth',
-                u'resOriginalHeight', u'resOriginalFileType',
-                u'resOriginalFingerprint', u'resOriginalRes',
-                u'resOriginalAltWidth', u'resOriginalAltHeight',
-                u'resOriginalAltFileType', u'resOriginalAltFingerprint',
-                u'resOriginalAltRes', u'resOriginalVidComplWidth',
-                u'resOriginalVidComplHeight', u'resOriginalVidComplFileType',
-                u'resOriginalVidComplFingerprint', u'resOriginalVidComplRes',
-                u'isDeleted', u'isExpunged', u'dateExpunged', u'remappedRef',
-                u'recordName', u'recordType', u'recordChangeTag',
-                u'masterRef', u'adjustmentRenderType', u'assetDate',
-                u'addedDate', u'isFavorite', u'isHidden', u'orientation',
-                u'duration', u'assetSubtype', u'assetSubtypeV2',
-                u'assetHDRType', u'burstFlags', u'burstFlagsExt', u'burstId',
-                u'captionEnc', u'locationEnc', u'locationV2Enc',
-                u'locationLatitude', u'locationLongitude', u'adjustmentType',
-                u'timeZoneOffset', u'vidComplDurValue', u'vidComplDurScale',
-                u'vidComplDispValue', u'vidComplDispScale',
-                u'keywordsEnc',u'extendedDescEnc',u'adjustedMediaMetaDataEnc',u'adjustmentSimpleDataEnc',
-                u'vidComplVisibilityState', u'customRenderedValue',
-                u'containerId', u'itemId', u'position', u'isKeyAsset'
+            'resultsLimit': self.page_size * 2,
+            'desiredKeys': [
+                'resJPEGFullWidth', 'resJPEGFullHeight',
+                'resJPEGFullFileType', 'resJPEGFullFingerprint',
+                'resJPEGFullRes', 'resJPEGLargeWidth',
+                'resJPEGLargeHeight', 'resJPEGLargeFileType',
+                'resJPEGLargeFingerprint', 'resJPEGLargeRes',
+                'resJPEGMedWidth', 'resJPEGMedHeight',
+                'resJPEGMedFileType', 'resJPEGMedFingerprint',
+                'resJPEGMedRes', 'resJPEGThumbWidth',
+                'resJPEGThumbHeight', 'resJPEGThumbFileType',
+                'resJPEGThumbFingerprint', 'resJPEGThumbRes',
+                'resVidFullWidth', 'resVidFullHeight',
+                'resVidFullFileType', 'resVidFullFingerprint',
+                'resVidFullRes', 'resVidMedWidth', 'resVidMedHeight',
+                'resVidMedFileType', 'resVidMedFingerprint',
+                'resVidMedRes', 'resVidSmallWidth', 'resVidSmallHeight',
+                'resVidSmallFileType', 'resVidSmallFingerprint',
+                'resVidSmallRes', 'resSidecarWidth', 'resSidecarHeight',
+                'resSidecarFileType', 'resSidecarFingerprint',
+                'resSidecarRes', 'itemType', 'dataClassType',
+                'filenameEnc', 'originalOrientation', 'resOriginalWidth',
+                'resOriginalHeight', 'resOriginalFileType',
+                'resOriginalFingerprint', 'resOriginalRes',
+                'resOriginalAltWidth', 'resOriginalAltHeight',
+                'resOriginalAltFileType', 'resOriginalAltFingerprint',
+                'resOriginalAltRes', 'resOriginalVidComplWidth',
+                'resOriginalVidComplHeight', 'resOriginalVidComplFileType',
+                'resOriginalVidComplFingerprint', 'resOriginalVidComplRes',
+                'isDeleted', 'isExpunged', 'dateExpunged', 'remappedRef',
+                'recordName', 'recordType', 'recordChangeTag',
+                'masterRef', 'adjustmentRenderType', 'assetDate',
+                'addedDate', 'isFavorite', 'isHidden', 'orientation',
+                'duration', 'assetSubtype', 'assetSubtypeV2',
+                'assetHDRType', 'burstFlags', 'burstFlagsExt', 'burstId',
+                'captionEnc', 'locationEnc', 'locationV2Enc',
+                'locationLatitude', 'locationLongitude', 'adjustmentType',
+                'timeZoneOffset', 'vidComplDurValue', 'vidComplDurScale',
+                'vidComplDispValue', 'vidComplDispScale',
+                'keywordsEnc','extendedDescEnc','adjustedMediaMetaDataEnc','adjustmentSimpleDataEnc',
+                'vidComplVisibilityState', 'customRenderedValue',
+                'containerId', 'itemId', 'position', 'isKeyAsset'
             ],
-            u'zoneID': self._zone_id
+            'zoneID': self._zone_id
         }
 
         if query_filter:
@@ -518,77 +519,52 @@ class PhotoAlbum(object):
         )
 
 
-class PhotoAsset(object):
+class PhotoAsset:
     def __init__(self, service:PhotosService, master_record: Dict[str, Any], asset_record: Dict[str, Any]) -> None:
         self._service = service
         self._master_record = master_record
         self._asset_record = asset_record
 
-        self._versions: Optional[Dict[VersionSize, AssetVersion]] = None
+        self._versions: Dict[VersionSize, AssetVersion] | None = None
 
     ITEM_TYPES = {
-        u"public.heic": AssetItemType.IMAGE,
-        u"public.heif": AssetItemType.IMAGE,
-        u"public.jpeg": AssetItemType.IMAGE,
-        u"public.png": AssetItemType.IMAGE,
-        u"com.apple.quicktime-movie": AssetItemType.MOVIE,
-        u"com.adobe.raw-image": AssetItemType.IMAGE,
-        u"com.canon.cr2-raw-image": AssetItemType.IMAGE,
-        u'com.canon.crw-raw-image': AssetItemType.IMAGE,
-        u'com.sony.arw-raw-image': AssetItemType.IMAGE,
-        u'com.fuji.raw-image': AssetItemType.IMAGE,
-        u'com.panasonic.rw2-raw-image': AssetItemType.IMAGE,
-        u'com.nikon.nrw-raw-image': AssetItemType.IMAGE,
-        u'com.pentax.raw-image': AssetItemType.IMAGE,
-        u'com.nikon.raw-image': AssetItemType.IMAGE,
-        u'com.olympus.raw-image': AssetItemType.IMAGE,
-        u'com.canon.cr3-raw-image': AssetItemType.IMAGE,
-        u'com.olympus.or-raw-image': AssetItemType.IMAGE,
+        "public.heic": AssetItemType.IMAGE,
+        "public.heif": AssetItemType.IMAGE,
+        "public.jpeg": AssetItemType.IMAGE,
+        "public.png": AssetItemType.IMAGE,
+        "com.apple.quicktime-movie": AssetItemType.MOVIE,
+        "com.adobe.raw-image": AssetItemType.IMAGE,
+        "com.canon.cr2-raw-image": AssetItemType.IMAGE,
+        'com.canon.crw-raw-image': AssetItemType.IMAGE,
+        'com.sony.arw-raw-image': AssetItemType.IMAGE,
+        'com.fuji.raw-image': AssetItemType.IMAGE,
+        'com.panasonic.rw2-raw-image': AssetItemType.IMAGE,
+        'com.nikon.nrw-raw-image': AssetItemType.IMAGE,
+        'com.pentax.raw-image': AssetItemType.IMAGE,
+        'com.nikon.raw-image': AssetItemType.IMAGE,
+        'com.olympus.raw-image': AssetItemType.IMAGE,
+        'com.canon.cr3-raw-image': AssetItemType.IMAGE,
+        'com.olympus.or-raw-image': AssetItemType.IMAGE,
     }
 
-    ITEM_TYPE_EXTENSIONS = {
-        u"public.heic": u"HEIC",
-        u"public.heif": u"HEIF",
-        u"public.jpeg": u"JPG",
-        u"public.png": u"PNG",
-        u"com.apple.quicktime-movie": u"MOV",
-        u"com.adobe.raw-image": u"DNG",
-        u"com.canon.cr2-raw-image": u"CR2",
-        u'com.canon.crw-raw-image': u"CRW",
-        u'com.sony.arw-raw-image': u"ARW",
-        u'com.fuji.raw-image': u"RAF",
-        u'com.panasonic.rw2-raw-image': u"RW2",
-        u'com.nikon.nrw-raw-image': u"NRF",
-        u'com.pentax.raw-image': u"PEF",
-        u'com.nikon.raw-image': u"NEF",
-        u'com.olympus.raw-image': u"ORF",
-        u'com.canon.cr3-raw-image': u"CR3",
-        u'com.olympus.or-raw-image': u"ORF",
-    }
 
     PHOTO_VERSION_LOOKUP: Dict[VersionSize, str] = {
-        AssetVersionSize.ORIGINAL: u"resOriginal",
-        AssetVersionSize.ALTERNATIVE: u"resOriginalAlt",
-        AssetVersionSize.MEDIUM: u"resJPEGMed",
-        AssetVersionSize.THUMB: u"resJPEGThumb",
-        AssetVersionSize.ADJUSTED: u"resJPEGFull",
-        LivePhotoVersionSize.ORIGINAL: u"resOriginalVidCompl",
-        LivePhotoVersionSize.MEDIUM: u"resVidMed",
-        LivePhotoVersionSize.THUMB: u"resVidSmall",
+        AssetVersionSize.ORIGINAL: "resOriginal",
+        AssetVersionSize.ALTERNATIVE: "resOriginalAlt",
+        AssetVersionSize.MEDIUM: "resJPEGMed",
+        AssetVersionSize.THUMB: "resJPEGThumb",
+        AssetVersionSize.ADJUSTED: "resJPEGFull",
+        LivePhotoVersionSize.ORIGINAL: "resOriginalVidCompl",
+        LivePhotoVersionSize.MEDIUM: "resVidMed",
+        LivePhotoVersionSize.THUMB: "resVidSmall",
     }
 
     VIDEO_VERSION_LOOKUP: Dict[VersionSize, str] = {
-        AssetVersionSize.ORIGINAL: u"resOriginal",
-        AssetVersionSize.MEDIUM: u"resVidMed",
-        AssetVersionSize.THUMB: u"resVidSmall"
+        AssetVersionSize.ORIGINAL: "resOriginal",
+        AssetVersionSize.MEDIUM: "resVidMed",
+        AssetVersionSize.THUMB: "resVidSmall"
     }
 
-    VERSION_FILENAME_SUFFIX_LOOKUP: Dict[VersionSize, str] = {
-        AssetVersionSize.MEDIUM: u"medium",
-        AssetVersionSize.THUMB: u"thumb",
-        # LivePhotoVersionSize.MEDIUM: u"medium",
-        # LivePhotoVersionSize.THUMB: u"thumb",
-    }
 
     @property
     def id(self) -> str:
@@ -693,7 +669,7 @@ class PhotoAsset(object):
                 self._master_record['fields']['resOriginalHeight']['value'])
 
     @property
-    def item_type(self) -> Optional[AssetItemType]:
+    def item_type(self) -> AssetItemType | None:
         fields = self._master_record['fields']
         if 'itemType' not in fields:
             # raise ValueError(f"Cannot find itemType in {fields!r}")
@@ -715,23 +691,19 @@ class PhotoAsset(object):
         if 'itemType' not in fields or 'value' not in fields['itemType']:
             return 'unknown'
         item_type = self._master_record['fields']['itemType']['value']
-        if item_type in self.ITEM_TYPE_EXTENSIONS:
-            return self.ITEM_TYPE_EXTENSIONS[item_type]
+        if item_type in ITEM_TYPE_EXTENSIONS:
+            return ITEM_TYPE_EXTENSIONS[item_type]
         return 'unknown'
 
     def calculate_version_filename(self, version: AssetVersion, version_size: VersionSize, filename_override: str | None = None) -> str:
         """Calculate filename for a specific asset version."""
-        if filename_override is not None:
-            return filename_override
-            
-        return calculate_asset_version_filename(
+        return calculate_version_filename(
             self.filename,
-            version.type,
-            version_size,
+            version,
+            version_size, 
             self._service.lp_filename_generator,
-            self.ITEM_TYPE_EXTENSIONS,
-            self.VERSION_FILENAME_SUFFIX_LOOKUP,
-            (self.item_type or AssetItemType.IMAGE) == AssetItemType.IMAGE
+            self.item_type,
+            filename_override
         )
 
     @property
@@ -746,7 +718,7 @@ class PhotoAsset(object):
             # self._master_record["dummy"] ## to trigger dump
 
             for key, prefix in typed_version_lookup.items():
-                f: Optional[Dict[str, Any]] = None
+                f: Dict[str, Any] | None = None
                 if '%sRes' % prefix in self._asset_record['fields']:
                     f = self._asset_record['fields']
                 if not f and '%sRes' % prefix in self._master_record['fields']:
