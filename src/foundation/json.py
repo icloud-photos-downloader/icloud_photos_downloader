@@ -16,7 +16,10 @@ Context = str
 
 
 def extract_context(context: Context, pair: Tuple[str, T1]) -> Tuple[Context, T1]:
-    new_context = context + ("." if context and not context.endswith(".") else "") + pair[0]
+    from foundation.string_utils import endswith
+
+    should_add_dot = context and not endswith(".")(context)
+    new_context = context + ("." if should_add_dot else "") + pair[0]
     return (new_context, pair[1])
 
 

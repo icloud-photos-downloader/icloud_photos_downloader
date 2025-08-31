@@ -1,4 +1,3 @@
-import os
 from typing import Any, Callable, Dict
 from unittest import TestCase
 from unittest.mock import Mock
@@ -42,10 +41,17 @@ def create_mock_photo_asset(base_filename: str = "IMG_1") -> Any:
 
 def mock_lp_filename_generator(filename: str) -> str:
     """Mock live photo filename generator for tests."""
+    import os
+
+    from foundation.core import compose
+    from foundation.string_utils import endswith, lower
+
     name, ext = os.path.splitext(filename)
     if not ext:
         return filename
-    return name + ("_HEVC.MOV" if ext.lower().endswith(".heic") else ".MOV")
+
+    is_heic = compose(endswith(".heic"), lower)(ext)
+    return name + ("_HEVC.MOV" if is_heic else ".MOV")
 
 
 class PathsTestCase(TestCase):

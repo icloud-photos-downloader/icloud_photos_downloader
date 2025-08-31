@@ -151,10 +151,10 @@ def download_media(
             else:
                 # Simple live photo filename generator for error logging
                 def simple_lp_filename_generator(filename: str) -> str:
-                    import os
+                    from foundation.string_utils import replace_extension
 
-                    name, ext = os.path.splitext(filename)
-                    return name + ".MOV"
+                    replace_with_mov = replace_extension(".MOV")
+                    return replace_with_mov(filename)
 
                 # Get the proper filename based on file_match_policy
                 if file_match_policy is not None and filename_cleaner is not None:

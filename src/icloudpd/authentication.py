@@ -33,6 +33,26 @@ def prompt_string(message: str) -> str:
     return input(f"{message}: ")
 
 
+# Pure validation functions for 2FA input
+def is_empty_string(input: str) -> bool:
+    """Check if input is empty string"""
+    return input == ""
+
+
+def is_valid_device_index(input: str, device_count: int, alphabet: str) -> bool:
+    """Check if input is a valid device index"""
+    is_single_char = len(input) == 1
+    is_in_alphabet = input in alphabet
+    is_valid_index = alphabet.index(input) <= device_count - 1 if input in alphabet else False
+
+    return is_single_char and is_in_alphabet and is_valid_index
+
+
+def is_valid_six_digit_code(input: str) -> bool:
+    """Check if input is a valid six-digit code"""
+    return len(input) == 6 and input.isdigit()
+
+
 def echo(message: str) -> None:
     """Print message to stdout, similar to click.echo"""
     print(message)
@@ -152,31 +172,24 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 )
             )
 
-            if index_or_code == "":
+            # Use pure validation functions
+            if is_empty_string(index_or_code):
                 echo("Empty string. Try again")
                 continue
 
-            if len(index_or_code) == 1:
-                if index_or_code in device_index_alphabet:
-                    if device_index_alphabet.index(index_or_code) > devices_count - 1:
-                        echo(
-                            f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again"
-                        )
-                        continue
-                    else:
-                        break
-                else:
-                    echo(
-                        f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again"
-                    )
-                    continue
+            if is_valid_device_index(index_or_code, devices_count, device_index_alphabet):
+                break
 
-            if len(index_or_code) == 6:
-                if index_or_code.isdigit():
-                    break
-                else:
-                    echo("Invalid code, should be six digits. Try again")
-                    continue
+            if is_valid_six_digit_code(index_or_code):
+                break
+
+            # Handle invalid input cases
+            if len(index_or_code) == 1:
+                echo(f"Invalid index, should be ({device_index_alphabet[0]}{index_str}). Try again")
+                continue
+            elif len(index_or_code) == 6:
+                echo("Invalid code, should be six digits. Try again")
+                continue
 
             echo(
                 f"Should be index ({device_index_alphabet[0]}{index_str}) or six-digit code. Try again"

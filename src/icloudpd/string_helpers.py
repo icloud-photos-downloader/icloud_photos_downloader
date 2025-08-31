@@ -59,13 +59,5 @@ def parse_timestamp_or_timedelta(
     return p1
 
 
-def lower(inp: str) -> str:
-    """point-free version to lower the case of the string
-    >>> lower("AbCdEf")
-    'abcdef'
-    """
-    return inp.lower()
-
-
 def splitlines(inp: str) -> Sequence[str]:
     return inp.splitlines()

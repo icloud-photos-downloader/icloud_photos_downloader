@@ -142,3 +142,23 @@ strip_and_lower: Callable[[str], str] = compose(lower, strip)
 >>> strip_and_lower('  HELLO  ')
 'hello'
 """
+
+
+def replace_extension(new_ext: str) -> Callable[[str], str]:
+    """Replace file extension with new extension
+
+    >>> replace_with_mov = replace_extension(".MOV")
+    >>> replace_with_mov("IMG_1234.HEIC")
+    'IMG_1234.MOV'
+    >>> replace_with_mov("no_extension")
+    'no_extension'
+    """
+    import os
+
+    def _replace_extension(filename: str) -> str:
+        name, ext = os.path.splitext(filename)
+        if not ext:
+            return filename
+        return name + new_ext
+
+    return _replace_extension
