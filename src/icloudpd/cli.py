@@ -190,8 +190,6 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     deprecated_kwargs: dict[str, Any] = {}
     if sys.version_info >= (3, 13):
         deprecated_kwargs["deprecated"] = True
-    else:
-        pass
     cloned.add_argument(
         "--delete-after-download",
         help="Delete the photo/video after downloading it."
@@ -326,8 +324,6 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     deprecated_kwargs: dict[str, Any] = {}
     if sys.version_info >= (3, 13):
         deprecated_kwargs["deprecated"] = True
-    else:
-        pass
     cloned.add_argument(
         "--threads-num",
         help="Number of CPU threads - deprecated & always 1. To be removed in a future version",
