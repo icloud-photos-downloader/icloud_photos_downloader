@@ -785,8 +785,23 @@ def download_builder(
 
             lp_file_exists = os.path.isfile(lp_download_path)
 
-            if only_print_filenames and not lp_file_exists:
-                print(lp_download_path)
+            if only_print_filenames:
+                if not lp_file_exists:
+                    print(lp_download_path)
+                # Handle deduplication case for only_print_filenames
+                if (
+                    lp_file_exists
+                    and file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
+                ):
+                    lp_file_size = os.stat(lp_download_path).st_size
+                    lp_photo_size = version.size
+                    if lp_file_size != lp_photo_size:
+                        lp_download_path = (f"-{lp_photo_size}.").join(
+                            lp_download_path.rsplit(".", 1)
+                        )
+                        logger.debug("%s deduplicated", truncate_middle(lp_download_path, 96))
+                        # Print the deduplicated filename but don't download
+                        print(lp_download_path)
             else:
                 if lp_file_exists:
                     if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
