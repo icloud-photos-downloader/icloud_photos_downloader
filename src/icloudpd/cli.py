@@ -11,12 +11,13 @@ from tzlocal import get_localzone
 
 import foundation
 from foundation.core import chain_from_iterable, compose, map_, partial_1_1, skip
+from foundation.string_utils import lower
 from icloudpd.base import ensure_tzinfo, run_with_configs
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
-from icloudpd.string_helpers import lower, parse_timestamp_or_timedelta, splitlines
+from icloudpd.string_helpers import parse_timestamp_or_timedelta, splitlines
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -277,8 +278,6 @@ def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 def parse_mfa_provider(provider: str) -> MFAProvider:
-    from foundation.string_utils import lower
-
     provider_map = {
         "console": MFAProvider.CONSOLE,
         "webui": MFAProvider.WEBUI,

@@ -106,22 +106,26 @@ def build_filename_cleaner(keep_unicode: bool) -> Callable[[str], str]:
 
 
 def lp_filename_concatinator(filename: str) -> str:
-    name, ext = os.path.splitext(filename)
-    if not ext:
-        return filename
+    """Generate concatenator-style live photo filename, adding HEVC suffix for HEIC files"""
+    import os
 
     from foundation.core import compose
     from foundation.string_utils import endswith, lower
+
+    name, ext = os.path.splitext(filename)
+    if not ext:
+        return filename
 
     is_heic = compose(endswith(".heic"), lower)(ext)
     return name + ("_HEVC.MOV" if is_heic else ".MOV")
 
 
 def lp_filename_original(filename: str) -> str:
-    name, ext = os.path.splitext(filename)
-    if not ext:
-        return filename
-    return name + ".MOV"
+    """Generate original-style live photo filename by replacing extension with .MOV"""
+    from foundation.string_utils import replace_extension
+
+    replace_with_mov = replace_extension(".MOV")
+    return replace_with_mov(filename)
 
 
 def ask_password_in_console(_user: str) -> str | None:
