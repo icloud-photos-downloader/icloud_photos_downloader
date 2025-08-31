@@ -2,6 +2,7 @@ from typing import Any, Callable, Dict
 from unittest import TestCase
 from unittest.mock import Mock
 
+from icloudpd.base import lp_filename_concatinator as mock_lp_filename_generator
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
@@ -37,21 +38,6 @@ def create_mock_photo_asset(base_filename: str = "IMG_1") -> Any:
 
     mock_photo.calculate_version_filename = mock_calculate_filename
     return mock_photo
-
-
-def mock_lp_filename_generator(filename: str) -> str:
-    """Mock live photo filename generator for tests."""
-    import os
-
-    from foundation.core import compose
-    from foundation.string_utils import endswith, lower
-
-    name, ext = os.path.splitext(filename)
-    if not ext:
-        return filename
-
-    is_heic = compose(endswith(".heic"), lower)(ext)
-    return name + ("_HEVC.MOV" if is_heic else ".MOV")
 
 
 class PathsTestCase(TestCase):
