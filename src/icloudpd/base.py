@@ -614,7 +614,12 @@ def download_builder(
         logger.error("Could not convert photo created date to local timezone (%s)", photo.created)
         created_date = photo.created
 
-    if folder_structure.lower() == "none":
+    from foundation.core import compose
+    from foundation.string_utils import eq, lower
+
+    is_none_folder = compose(eq("none"), lower)
+
+    if is_none_folder(folder_structure):
         date_path = ""
     else:
         try:
@@ -737,10 +742,15 @@ def download_builder(
                 success = download_result
 
                 if download_result:
+                    from foundation.core import compose
+                    from foundation.string_utils import endswith, lower
+
+                    is_jpeg = compose(endswith((".jpg", ".jpeg")), lower)
+
                     if (
                         not dry_run
                         and set_exif_datetime
-                        and filename.lower().endswith((".jpg", ".jpeg"))
+                        and is_jpeg(filename)
                         and not exif_datetime.get_photo_exif(logger, download_path)
                     ):
                         # %Y:%m:%d looks wrong, but it's the correct format
