@@ -41,7 +41,11 @@ class Issue1220OnlyPrintFilenamesDeduplicationBugTest(TestCase):
         # Create files that will trigger deduplication scenarios
         # We create files with different sizes than what the mock will return
         files_to_create: List[Tuple[str, str, int]] = [
-            (os.path.join("2018", "07", "31"), "IMG_7409.MOV", 100),  # Small size to trigger deduplication
+            (
+                os.path.join("2018", "07", "31"),
+                "IMG_7409.MOV",
+                100,
+            ),  # Small size to trigger deduplication
         ]
 
         # With --only-print-filenames, NO files should be downloaded

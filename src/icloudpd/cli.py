@@ -279,10 +279,16 @@ def add_user_option(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
 
 
 def parse_mfa_provider(provider: str) -> MFAProvider:
-    if provider.lower() == "console":
-        return MFAProvider.CONSOLE
-    elif provider.lower() == "webui":
-        return MFAProvider.WEBUI
+    from foundation.string_utils import lower
+
+    provider_map = {
+        "console": MFAProvider.CONSOLE,
+        "webui": MFAProvider.WEBUI,
+    }
+
+    normalized_provider = lower(provider)
+    if normalized_provider in provider_map:
+        return provider_map[normalized_provider]
     else:
         raise ValueError(f"Only `console` and `webui` are supported, but `{provider}` was provided")
 

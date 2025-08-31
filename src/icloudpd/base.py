@@ -109,7 +109,12 @@ def lp_filename_concatinator(filename: str) -> str:
     name, ext = os.path.splitext(filename)
     if not ext:
         return filename
-    return name + ("_HEVC.MOV" if ext.lower().endswith(".heic") else ".MOV")
+
+    from foundation.core import compose
+    from foundation.string_utils import endswith, lower
+
+    is_heic = compose(endswith(".heic"), lower)(ext)
+    return name + ("_HEVC.MOV" if is_heic else ".MOV")
 
 
 def lp_filename_original(filename: str) -> str:
