@@ -41,7 +41,7 @@ class Issue1220OnlyPrintFilenamesDeduplicationBugTest(TestCase):
         # Create files that will trigger deduplication scenarios
         # We create files with different sizes than what the mock will return
         files_to_create: List[Tuple[str, str, int]] = [
-            ("2018/07/31", "IMG_7409.MOV", 100),  # Small size to trigger deduplication
+            (os.path.join("2018", "07", "31"), "IMG_7409.MOV", 100),  # Small size to trigger deduplication
         ]
 
         # With --only-print-filenames, NO files should be downloaded
@@ -85,7 +85,7 @@ class Issue1220OnlyPrintFilenamesDeduplicationBugTest(TestCase):
                 actual_files.append(rel_path)
 
         # Only the file we created should exist (no downloads should have happened)
-        expected_files = [os.path.join("2018/07/31", "IMG_7409.MOV")]
+        expected_files = [os.path.join("2018", "07", "31", "IMG_7409.MOV")]
 
         # After the fix, this should pass
         self.assertEqual(
