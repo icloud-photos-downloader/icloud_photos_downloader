@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.32.1 (2025-08-30)
+
 - fix: KeyError when downloading photos with --size adjusted --size alternative options [#926](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/926)
 
 ## 1.32.0 (2025-08-29)

@@ -143,7 +143,7 @@ Note: that the step expects executables to be already prepared by previous steps
 Building NPM packages (with single executables; platform-specific):
 
 ``` sh
-scripts/build_npm 1.32.0
+scripts/build_npm 1.32.1
 ```
 Note: that the step expects executables to be already prepared by previous steps
 
@@ -207,4 +207,4 @@ We have GitHub actions taking care for building, testing, and releasing software
 - Update CHANGELOG.md with release changes if they were not added with commits
 - Update CHANGELOG.md with date of the release
 - Commit & push changes (either directly or through pull requests)
-- Add version tag to head (`git tag v1.32.0`) and push it to master (`git push origin v1.32.0`) -- there seems to be no way to do that in UI
+- Add version tag to head (`git tag v1.32.1`) and push it to master (`git push origin v1.32.1`) -- there seems to be no way to do that in UI
