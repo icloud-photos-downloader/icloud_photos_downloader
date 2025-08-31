@@ -11,7 +11,10 @@ def special_content_checker(expected_content):
     def _intern(filepath):
         with open(filepath, encoding="UTF-8") as file:
             content = file.read().strip()
-            return content not in expected_content
+            # Case insensitive comparison
+            content_lower = content.lower()
+            expected_content_lower = [c.lower() for c in expected_content]
+            return content_lower not in expected_content_lower
 
     return _intern
 
