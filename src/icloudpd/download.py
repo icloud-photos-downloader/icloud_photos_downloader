@@ -149,12 +149,8 @@ def download_media(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 )
             else:
-                # Simple live photo filename generator for error logging
-                def simple_lp_filename_generator(filename: str) -> str:
-                    from foundation.string_utils import replace_extension
-
-                    replace_with_mov = replace_extension(".MOV")
-                    return replace_with_mov(filename)
+                # Use the standard original filename generator for error logging
+                from icloudpd.base import lp_filename_original as simple_lp_filename_generator
 
                 # Get the proper filename based on file_match_policy
                 if file_match_policy is not None and filename_cleaner is not None:
