@@ -16,7 +16,9 @@ def prompt_int_range(message: str, default: str, min_val: int, max_val: int) -> 
     """Prompt user for integer input within a range, similar to click.IntRange"""
     while True:
         try:
-            response = input(f"{message} [{default}]: ").strip() or default
+            from foundation.string_utils import strip
+
+            response = strip(input(f"{message} [{default}]: ")) or default
             value = int(response)
             if min_val <= value <= max_val:
                 return value
@@ -142,12 +144,12 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         index_str = f"..{device_index_alphabet[devices_count - 1]}" if devices_count > 1 else ""
         index_or_code: str = ""
         while True:
-            index_or_code = (
+            from foundation.string_utils import strip_and_lower
+
+            index_or_code = strip_and_lower(
                 prompt_string(
                     f"Please enter two-factor authentication code or device index ({device_index_alphabet[0]}{index_str}) to send SMS with a code"
                 )
-                .strip()
-                .lower()
             )
 
             if index_or_code == "":
@@ -187,9 +189,13 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             if not icloud.send_2fa_code_sms(device.id):
                 raise PyiCloudFailedMFAException("Failed to send two-factor authentication code")
             while True:
-                code: str = prompt_string(
-                    "Please enter two-factor authentication code that you received over SMS"
-                ).strip()
+                from foundation.string_utils import strip
+
+                code: str = strip(
+                    prompt_string(
+                        "Please enter two-factor authentication code that you received over SMS"
+                    )
+                )
                 if len(code) == 6 and code.isdigit():
                     break
                 echo("Invalid code, should be six digits. Try again")
@@ -201,7 +207,9 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     else:
         while True:
-            code = prompt_string("Please enter two-factor authentication code").strip()
+            from foundation.string_utils import strip
+
+            code = strip(prompt_string("Please enter two-factor authentication code"))
             if len(code) == 6 and code.isdigit():
                 break
             echo("Invalid code, should be six digits. Try again")
