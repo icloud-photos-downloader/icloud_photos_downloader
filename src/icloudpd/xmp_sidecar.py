@@ -44,7 +44,11 @@ def generate_xmp_file(
         try:
             root = ElementTree.parse(sidecar_path).getroot()
             xmptk_value = root.attrib.get("{adobe:ns:meta/}xmptk")
-            if not xmptk_value or not xmptk_value.startswith("icloudpd"):
+            from foundation.string_utils import startswith
+
+            starts_with_icloudpd = startswith("icloudpd")
+
+            if not xmptk_value or not starts_with_icloudpd(xmptk_value):
                 logger.info(f"Not overwriting XMP file {sidecar_path} created by {xmptk_value}")
             else:
                 can_write_file = True
@@ -91,21 +95,23 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
     # - a zlib compressed JSON - used for simple photo metadata adjustments (orientation etc)
     # for exporting metadata, we only consider the JSON data, but it's the only one that doesn't have a predictable start pattern, so we check by excluding the other two
     orientation = None
-    if (
-        "adjustmentSimpleDataEnc" in asset_record["fields"]
-        and not asset_record["fields"]["adjustmentSimpleDataEnc"]["value"].startswith(
-            "Y3JkdA"
-        )  # "crdt"
-        and not asset_record["fields"]["adjustmentSimpleDataEnc"]["value"].startswith("YnBsaXN0MD")
-    ):  # "bplist00"
-        adjustments = json.loads(
-            zlib.decompress(
-                base64.b64decode(asset_record["fields"]["adjustmentSimpleDataEnc"]["value"]),
-                -zlib.MAX_WBITS,
+    from foundation.predicates import not_
+    from foundation.string_utils import startswith
+
+    if "adjustmentSimpleDataEnc" in asset_record["fields"]:
+        data_value = asset_record["fields"]["adjustmentSimpleDataEnc"]["value"]
+        is_not_crdt = not_(startswith("Y3JkdA"))
+        is_not_bplist = not_(startswith("YnBsaXN0MD"))
+
+        if is_not_crdt(data_value) and is_not_bplist(data_value):  # not "crdt" and not "bplist00"
+            adjustments = json.loads(
+                zlib.decompress(
+                    base64.b64decode(asset_record["fields"]["adjustmentSimpleDataEnc"]["value"]),
+                    -zlib.MAX_WBITS,
+                )
             )
-        )
-        if "metadata" in adjustments and "orientation" in adjustments["metadata"]:
-            orientation = adjustments["metadata"]["orientation"]
+            if "metadata" in adjustments and "orientation" in adjustments["metadata"]:
+                orientation = adjustments["metadata"]["orientation"]
 
     make, digital_source_type = None, None
     if (

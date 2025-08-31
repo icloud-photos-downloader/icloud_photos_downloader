@@ -32,7 +32,7 @@ def upper(s: str) -> str:
     return s.upper()
 
 
-def endswith(suffix: str) -> Callable[[str], bool]:
+def endswith(suffix: str | tuple[str, ...]) -> Callable[[str], bool]:
     """Curried version of str.endswith()
 
     >>> ends_with_txt = endswith(".txt")
@@ -40,6 +40,9 @@ def endswith(suffix: str) -> Callable[[str], bool]:
     True
     >>> ends_with_txt("file.pdf")
     False
+    >>> ends_with_images = endswith((".jpg", ".png"))
+    >>> ends_with_images("file.jpg")
+    True
     """
     return lambda s: s.endswith(suffix)
 

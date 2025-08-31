@@ -77,8 +77,10 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
         print(version_info_formatted())
         sys.exit(0)
 
-    username: str | None = command_line.username.strip() or None
-    password: str | None = command_line.password.strip() or None
+    from foundation.string_utils import strip
+
+    username: str | None = strip(command_line.username) or None
+    password: str | None = strip(command_line.password) or None
     domain = command_line.domain
 
     if username is not None and command_line.delete_from_keyring:
@@ -99,7 +101,7 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
             got_from_keyring = password is not None
 
         if password is None:
-            password = getpass.getpass(f"Enter iCloud password for {username}: ").strip() or None
+            password = strip(getpass.getpass(f"Enter iCloud password for {username}: ")) or None
 
         if password is None:
             parser.error("No password supplied")
@@ -115,12 +117,15 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
                 password_provider,
                 lambda _: None,
             )
-            if (
-                not got_from_keyring
-                and command_line.interactive
-                and input("Save password in keyring? [y/N] ").strip().lower() in ("y", "yes")
-            ):
-                utils.store_password_in_keyring(username, password)
+            from foundation.predicates import in_pred
+            from foundation.string_utils import strip_and_lower
+
+            if not got_from_keyring and command_line.interactive:
+                user_response = strip_and_lower(input("Save password in keyring? [y/N] "))
+                is_affirmative = in_pred(["y", "yes"])
+
+                if is_affirmative(user_response):
+                    utils.store_password_in_keyring(username, password)
 
             if api.requires_2fa:
                 # fmt: off

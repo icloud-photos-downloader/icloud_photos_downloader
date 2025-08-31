@@ -893,7 +893,12 @@ class PhotoAsset:
         item_type = item_type_field["value"]
         if item_type in self.ITEM_TYPES:
             return self.ITEM_TYPES[item_type]
-        if self.filename.lower().endswith((".heic", ".png", ".jpg", ".jpeg")):
+        from foundation.core import compose
+        from foundation.string_utils import endswith, lower
+
+        is_image_ext = compose(endswith((".heic", ".png", ".jpg", ".jpeg")), lower)
+
+        if is_image_ext(self.filename):
             return AssetItemType.IMAGE
         return AssetItemType.MOVIE
 

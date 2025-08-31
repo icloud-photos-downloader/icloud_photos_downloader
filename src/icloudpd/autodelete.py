@@ -56,7 +56,12 @@ def autodelete_photos(
             logger.error("Could not convert media created date to local timezone %s", media.created)
             created_date = media.created
 
-        if folder_structure.lower() == "none":
+        from foundation.core import compose
+        from foundation.string_utils import eq, lower
+
+        is_none_folder = compose(eq("none"), lower)
+
+        if is_none_folder(folder_structure):
             date_path = ""
         else:
             try:
