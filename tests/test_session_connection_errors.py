@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+import os
 import socket
+import tempfile
 import threading
 import time
 import unittest
@@ -66,8 +68,11 @@ class TestPyiCloudSessionConnectionErrors(unittest.TestCase):
         self.mock_service.password_filter = None
         self.mock_service.http_timeout = 1  # 1 second timeout for testing
         self.mock_service.session_data = {}
-        self.mock_service.session_path = "/tmp/test_session.json"
-        self.mock_service.cookiejar_path = "/tmp/test_cookies.jar"
+
+        # Use cross-platform temporary directory
+        temp_dir = tempfile.gettempdir()
+        self.mock_service.session_path = os.path.join(temp_dir, "test_session.json")
+        self.mock_service.cookiejar_path = os.path.join(temp_dir, "test_cookies.jar")
 
         # Mock the cookies.save method to avoid file operations
         self.session = PyiCloudSession(self.mock_service)
