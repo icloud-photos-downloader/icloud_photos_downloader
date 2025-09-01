@@ -13,7 +13,7 @@ from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
 )
-from pyicloud_ipd.utils import throw_on_503
+from pyicloud_ipd.utils import handle_connection_error, throw_on_503
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,7 +74,9 @@ class PyiCloudSession(Session):
 
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
-        response = throw_on_503(self.observe(super().request(method, url, **kwargs)))
+        response = throw_on_503(
+            self.observe(handle_connection_error(super().request)(method, url, **kwargs))
+        )
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
         json_mimetypes = ["application/json", "text/json"]

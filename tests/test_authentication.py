@@ -1,7 +1,7 @@
 import inspect
 import os
 import shutil
-from typing import Any, NamedTuple, NoReturn
+from typing import NamedTuple, NoReturn
 from unittest import TestCase, mock
 
 import pytest
@@ -16,7 +16,6 @@ from icloudpd.base import dummy_password_writter
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
-from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.sms import parse_trusted_phone_numbers_payload
 from tests.helpers import path_from_project_root, recreate_path, run_cassette
 
@@ -334,11 +333,11 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
+        def mock_raise_response_error(*args, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
             raise ConnectionError("Simulated Connection Error")
 
-        with mock.patch.object(
-            PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+        with mock.patch(
+            "requests.Session.request", side_effect=mock_raise_response_error
         ) as pa_request:
             result = run_cassette(
                 os.path.join(self.vcr_path, "failed_auth_503.yml"),
@@ -374,11 +373,11 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
+        def mock_raise_response_error(*args, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
             raise TimeoutError("Simulated TimeoutError")
 
-        with mock.patch.object(
-            PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+        with mock.patch(
+            "requests.Session.request", side_effect=mock_raise_response_error
         ) as pa_request:
             result = run_cassette(
                 os.path.join(self.vcr_path, "failed_auth_503.yml"),
@@ -414,11 +413,11 @@ class AuthenticationTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        def mock_raise_response_error(_a1: Any, _a2: Any, _a3: Any, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
+        def mock_raise_response_error(*args, **kwargs) -> NoReturn:  # type: ignore [no-untyped-def]
             raise Timeout("Simulated Timeout")
 
-        with mock.patch.object(
-            PyiCloudSession, "request", side_effect=mock_raise_response_error, autospec=True
+        with mock.patch(
+            "requests.Session.request", side_effect=mock_raise_response_error
         ) as pa_request:
             result = run_cassette(
                 os.path.join(self.vcr_path, "failed_auth_503.yml"),

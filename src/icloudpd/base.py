@@ -27,10 +27,8 @@ from typing import (
     Tuple,
 )
 
-from requests import Timeout
 from requests.exceptions import (
     ChunkedEncodingError,
-    ConnectionError,
     ContentDecodingError,
     StreamConsumedError,
     UnrewindableBodyError,
@@ -38,7 +36,6 @@ from requests.exceptions import (
 from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
-from urllib3.exceptions import NewConnectionError
 
 from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
@@ -59,6 +56,7 @@ from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
     PyiCloudAPIResponseException,
+    PyiCloudConnectionErrorException,
     PyiCloudFailedLoginException,
     PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
@@ -1296,6 +1294,7 @@ def core_single_run(
             PyiCloudServiceNotActivatedException,
             PyiCloudServiceUnavailableException,
             PyiCloudAPIResponseException,
+            PyiCloudConnectionErrorException,
         ) as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
@@ -1305,26 +1304,6 @@ def core_single_run(
                 or global_config.mfa_provider == MFAProvider.WEBUI
             ):
                 if update_auth_error_in_webui(status_exchange, str(error)):
-                    # retry if it was during auth
-                    continue
-                else:
-                    pass
-            else:
-                pass
-            # In single run mode, return error after webui retry attempts
-            return 1
-        except (ConnectionError, TimeoutError, Timeout, NewConnectionError) as _error:
-            logger.info("Cannot connect to Apple iCloud service")
-            dump_responses(logger.debug, captured_responses)
-            # logger.debug(error)
-            # webui will display error and wait for password again
-            if (
-                PasswordProvider.WEBUI in global_config.password_providers
-                or global_config.mfa_provider == MFAProvider.WEBUI
-            ):
-                if update_auth_error_in_webui(
-                    status_exchange, "Cannot connect to Apple iCloud service"
-                ):
                     # retry if it was during auth
                     continue
                 else:

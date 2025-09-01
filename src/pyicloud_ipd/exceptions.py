@@ -30,6 +30,12 @@ class PyiCloudServiceUnavailableException(PyiCloudException):
     pass
 
 
+class PyiCloudConnectionErrorException(PyiCloudException):
+    """Cannot connect to Apple iCloud service"""
+
+    pass
+
+
 # Login
 class PyiCloudFailedLoginException(PyiCloudException):
     """iCloud failed login exception."""
