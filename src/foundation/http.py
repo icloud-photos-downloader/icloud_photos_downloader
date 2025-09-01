@@ -31,8 +31,16 @@ def cookie_str_to_dict(cookie_header: str) -> Mapping[str, str]:
     return cookies
 
 
+def is_streaming_response(response: Response) -> bool:
+    """Check if response was created with stream=True"""
+    try:
+        return hasattr(response, "raw") and not response.raw.isclosed()
+    except Exception:
+        return False
+
+
 def response_body(response: Response) -> Any:
-    if response.raw.stream:
+    if is_streaming_response(response):
         return None
     else:
         try:
