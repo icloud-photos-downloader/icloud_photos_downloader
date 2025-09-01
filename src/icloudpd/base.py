@@ -44,6 +44,7 @@ from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
+from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
@@ -70,9 +71,6 @@ from pyicloud_ipd.services.photos import (
     PhotoAlbum,
     PhotoAsset,
     PhotoLibrary,
-    apply_file_match_policy,
-    apply_filename_cleaner,
-    filename_with_fallback,
 )
 from pyicloud_ipd.utils import (
     disambiguate_filenames,
@@ -382,6 +380,11 @@ def _process_all_users_once(
             # Set up filename cleaner based on user preference
             filename_cleaner = build_filename_cleaner(user_config.keep_unicode_in_filenames)
 
+            # Create filename builder with pre-configured policy and cleaner
+            filename_builder = create_filename_builder(
+                user_config.file_match_policy, filename_cleaner
+            )
+
             # Set up function builders
             passer = partial(
                 where_builder,
@@ -390,8 +393,7 @@ def _process_all_users_once(
                 user_config.skip_created_before,
                 user_config.skip_created_after,
                 user_config.skip_photos,
-                user_config.file_match_policy,
-                filename_cleaner,
+                filename_builder,
             )
 
             downloader = (
@@ -410,7 +412,7 @@ def _process_all_users_once(
                     user_config.file_match_policy,
                     user_config.xmp_sidecar,
                     lp_filename_generator,
-                    filename_cleaner,
+                    filename_builder,
                     user_config.align_raw,
                 )
                 if user_config.directory is not None
@@ -516,35 +518,26 @@ def where_builder(
     skip_created_before: datetime.datetime | datetime.timedelta | None,
     skip_created_after: datetime.datetime | datetime.timedelta | None,
     skip_photos: bool,
-    file_match_policy: FileMatchPolicy,
-    filename_cleaner: Callable[[str], str],
+    filename_builder: Callable[[PhotoAsset], str],
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
-        logger.debug(asset_type_skip_message(photo, file_match_policy, filename_cleaner))
+        logger.debug(asset_type_skip_message(photo, filename_builder))
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
-        logger.debug(asset_type_skip_message(photo, file_match_policy, filename_cleaner))
+        logger.debug(asset_type_skip_message(photo, filename_builder))
         return False
 
     if skip_created_before is not None:
         temp_created_before = offset_to_datetime(skip_created_before)
         if photo.created < temp_created_before:
-            logger.debug(
-                skip_created_before_message(
-                    temp_created_before, photo, file_match_policy, filename_cleaner
-                )
-            )
+            logger.debug(skip_created_before_message(temp_created_before, photo, filename_builder))
             return False
 
     if skip_created_after is not None:
         temp_created_after = offset_to_datetime(skip_created_after)
         if photo.created > temp_created_after:
-            logger.debug(
-                skip_created_after_message(
-                    temp_created_after, photo, file_match_policy, filename_cleaner
-                )
-            )
+            logger.debug(skip_created_after_message(temp_created_after, photo, filename_builder))
             return False
 
     return True
@@ -553,38 +546,18 @@ def where_builder(
 def skip_created_before_message(
     target_created_date: datetime.datetime,
     photo: PhotoAsset,
-    file_match_policy: FileMatchPolicy | None = None,
-    filename_cleaner: Callable[[str], str] | None = None,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> str:
-    if file_match_policy is not None and filename_cleaner is not None:
-        # Compose calculate_filename with cleaning and file match policy transformations
-        extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-        raw_filename = extract_with_fallback(photo.calculate_filename())
-        filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-        cleaned_filename = filename_cleaner_transformer(raw_filename)
-        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-        filename = policy_transformer(cleaned_filename)
-    else:
-        filename = photo.filename
+    filename = filename_builder(photo)
     return f"Skipping {filename}, as it was created {photo.created}, before {target_created_date}."
 
 
 def skip_created_after_message(
     target_created_date: datetime.datetime,
     photo: PhotoAsset,
-    file_match_policy: FileMatchPolicy | None = None,
-    filename_cleaner: Callable[[str], str] | None = None,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> str:
-    if file_match_policy is not None and filename_cleaner is not None:
-        # Compose calculate_filename with cleaning and file match policy transformations
-        extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-        raw_filename = extract_with_fallback(photo.calculate_filename())
-        filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-        cleaned_filename = filename_cleaner_transformer(raw_filename)
-        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-        filename = policy_transformer(cleaned_filename)
-    else:
-        filename = photo.filename
+    filename = filename_builder(photo)
     return f"Skipping {filename}, as it was created {photo.created}, after {target_created_date}."
 
 
@@ -602,7 +575,7 @@ def download_builder(
     file_match_policy: FileMatchPolicy,
     xmp_sidecar: bool,
     lp_filename_generator: Callable[[str], str],
-    filename_cleaner: Callable[[str], str],
+    filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
     icloud: PyiCloudService,
     counter: Counter,
@@ -664,13 +637,7 @@ def download_builder(
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
             if force_size:
-                # Compose calculate_filename with cleaning and file match policy transformations
-                extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-                raw_filename = extract_with_fallback(photo.calculate_filename())
-                filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-                cleaned_filename = filename_cleaner_transformer(raw_filename)
-                policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-                error_filename = policy_transformer(cleaned_filename)
+                error_filename = filename_builder(photo)
                 logger.error(
                     "%s size does not exist for %s. Skipping...",
                     download_size.value,
@@ -682,13 +649,7 @@ def download_builder(
             download_size = AssetVersionSize.ORIGINAL
 
         version = versions[download_size]
-        # Compose calculate_filename with cleaning and file match policy transformations
-        extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-        raw_filename = extract_with_fallback(photo.calculate_filename())
-        filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-        cleaned_filename = filename_cleaner_transformer(raw_filename)
-        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-        photo_filename = policy_transformer(cleaned_filename)
+        photo_filename = filename_builder(photo)
         filename = calculate_version_filename(
             photo_filename,
             version,
@@ -738,8 +699,7 @@ def download_builder(
                     download_path,
                     version,
                     download_size,
-                    file_match_policy,
-                    filename_cleaner,
+                    filename_builder,
                 )
                 success = download_result
 
@@ -776,13 +736,7 @@ def download_builder(
         photo_versions_with_policy = photo.versions_with_raw_policy(raw_policy)
         if lp_size in photo_versions_with_policy:
             version = photo_versions_with_policy[lp_size]
-            # Compose calculate_filename with cleaning and file match policy transformations
-            extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-            raw_filename = extract_with_fallback(photo.calculate_filename())
-            filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-            cleaned_filename = filename_cleaner_transformer(raw_filename)
-            policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-            lp_photo_filename = policy_transformer(cleaned_filename)
+            lp_photo_filename = filename_builder(photo)
             lp_filename = calculate_version_filename(
                 lp_photo_filename,
                 version,
@@ -843,8 +797,7 @@ def download_builder(
                         lp_download_path,
                         version,
                         lp_size,
-                        file_match_policy,
-                        filename_cleaner,
+                        filename_builder,
                     )
                     success = download_result and success
                     if download_result:
@@ -856,20 +809,10 @@ def delete_photo(
     logger: logging.Logger,
     library_object: PhotoLibrary,
     photo: PhotoAsset,
-    file_match_policy: FileMatchPolicy | None = None,
-    filename_cleaner: Callable[[str], str] | None = None,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> None:
     """Delete a photo from the iCloud account."""
-    if file_match_policy is not None and filename_cleaner is not None:
-        # Compose calculate_filename with cleaning and file match policy transformations
-        extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-        raw_filename = extract_with_fallback(photo.calculate_filename())
-        filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-        cleaned_filename = filename_cleaner_transformer(raw_filename)
-        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-        clean_filename_local = policy_transformer(cleaned_filename)
-    else:
-        clean_filename_local = photo.filename
+    clean_filename_local = filename_builder(photo)
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
         f"{library_object.service_endpoint}/records/modify?"
@@ -901,20 +844,10 @@ def delete_photo_dry_run(
     logger: logging.Logger,
     library_object: PhotoLibrary,
     photo: PhotoAsset,
-    file_match_policy: FileMatchPolicy | None = None,
-    filename_cleaner: Callable[[str], str] | None = None,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> None:
     """Dry run for deleting a photo from the iCloud"""
-    if file_match_policy is not None and filename_cleaner is not None:
-        # Compose calculate_filename with cleaning and file match policy transformations
-        extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-        raw_filename = extract_with_fallback(photo.calculate_filename())
-        filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-        cleaned_filename = filename_cleaner_transformer(raw_filename)
-        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-        filename = policy_transformer(cleaned_filename)
-    else:
-        filename = photo.filename
+    filename = filename_builder(photo)
     logger.info(
         "[DRY RUN] Would delete %s in iCloud library %s",
         filename,
@@ -931,21 +864,11 @@ def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, A
 
 def asset_type_skip_message(
     photo: PhotoAsset,
-    file_match_policy: FileMatchPolicy | None = None,
-    filename_cleaner: Callable[[str], str] | None = None,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> str:
     # reverse logic assumes only two options
     photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
-    if file_match_policy is not None and filename_cleaner is not None:
-        # Compose calculate_filename with cleaning and file match policy transformations
-        extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-        raw_filename = extract_with_fallback(photo.calculate_filename())
-        filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-        cleaned_filename = filename_cleaner_transformer(raw_filename)
-        policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-        filename = policy_transformer(cleaned_filename)
-    else:
-        filename = photo.filename
+    filename = filename_builder(photo)
     return f"Skipping {filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
 
@@ -1180,23 +1103,11 @@ def core_single_run(
                                         filename_cleaner_for_debug = build_filename_cleaner(
                                             user_config.keep_unicode_in_filenames
                                         )
-                                        # Compose calculate_filename with file match policy transformation
-                                        extract_with_fallback = filename_with_fallback(
-                                            item.id, item.item_type_extension
+                                        debug_filename = build_filename_with_policies(
+                                            user_config.file_match_policy,
+                                            filename_cleaner_for_debug,
+                                            item,
                                         )
-                                        raw_filename = extract_with_fallback(
-                                            item.calculate_filename()
-                                        )
-                                        filename_cleaner_transformer = apply_filename_cleaner(
-                                            filename_cleaner_for_debug
-                                        )
-                                        cleaned_filename = filename_cleaner_transformer(
-                                            raw_filename
-                                        )
-                                        debug_policy_transformer = apply_file_match_policy(
-                                            user_config.file_match_policy, item.id
-                                        )
-                                        debug_filename = debug_policy_transformer(cleaned_filename)
                                         logger.debug(
                                             "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
                                             debug_filename,
@@ -1206,25 +1117,26 @@ def core_single_run(
                                         should_delete = True
 
                                 if should_delete:
-                                    # Create filename cleaner for delete operations
+                                    # Create filename cleaner and builder for delete operations
                                     filename_cleaner_for_delete = build_filename_cleaner(
                                         user_config.keep_unicode_in_filenames
+                                    )
+                                    filename_builder_for_delete = create_filename_builder(
+                                        user_config.file_match_policy, filename_cleaner_for_delete
                                     )
                                     if user_config.dry_run:
                                         delete_photo_dry_run(
                                             logger,
                                             library_object,
                                             item,
-                                            user_config.file_match_policy,
-                                            filename_cleaner_for_delete,
+                                            filename_builder_for_delete,
                                         )
                                     else:
                                         delete_photo(
                                             logger,
                                             library_object,
                                             item,
-                                            user_config.file_match_policy,
-                                            filename_cleaner_for_delete,
+                                            filename_builder_for_delete,
                                         )
 
                                     # retrier(delete_local, error_handler)

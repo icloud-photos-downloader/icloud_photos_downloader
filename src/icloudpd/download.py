@@ -16,13 +16,7 @@ from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.file_match import FileMatchPolicy
-from pyicloud_ipd.services.photos import (
-    PhotoAsset,
-    apply_file_match_policy,
-    apply_filename_cleaner,
-    filename_with_fallback,
-)
+from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
 
@@ -117,8 +111,7 @@ def download_media(
     download_path: str,
     version: AssetVersion,
     size: VersionSize,
-    file_match_policy: FileMatchPolicy | None = None,
-    filename_cleaner: Callable[[str], str] | None = None,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> bool:
     """Download the photo to path, with retries and error handling"""
 
@@ -152,19 +145,8 @@ def download_media(
                 # Use the standard original filename generator for error logging
                 from icloudpd.base import lp_filename_original as simple_lp_filename_generator
 
-                # Get the proper filename based on file_match_policy
-                if file_match_policy is not None and filename_cleaner is not None:
-                    # Compose calculate_filename with cleaning and file match policy transformations
-                    extract_with_fallback = filename_with_fallback(
-                        photo.id, photo.item_type_extension
-                    )
-                    raw_filename = extract_with_fallback(photo.calculate_filename())
-                    filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-                    cleaned_filename = filename_cleaner_transformer(raw_filename)
-                    policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-                    base_filename = policy_transformer(cleaned_filename)
-                else:
-                    base_filename = photo.filename
+                # Get the proper filename using filename_builder
+                base_filename = filename_builder(photo)
                 version_filename = calculate_version_filename(
                     base_filename, version, size, simple_lp_filename_generator, photo.item_type
                 )
@@ -192,18 +174,7 @@ def download_media(
                 # you end up here when p.e. throttling by Apple happens
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
                 # Get the proper filename for error messages
-                if file_match_policy is not None and filename_cleaner is not None:
-                    # Compose calculate_filename with cleaning and file match policy transformations
-                    extract_with_fallback = filename_with_fallback(
-                        photo.id, photo.item_type_extension
-                    )
-                    raw_filename = extract_with_fallback(photo.calculate_filename())
-                    filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-                    cleaned_filename = filename_cleaner_transformer(raw_filename)
-                    policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-                    error_filename = policy_transformer(cleaned_filename)
-                else:
-                    error_filename = photo.filename
+                error_filename = filename_builder(photo)
                 logger.error(
                     "Error downloading %s, retrying after %s seconds...", error_filename, wait_time
                 )
@@ -223,16 +194,7 @@ def download_media(
             break
     if retries >= constants.MAX_RETRIES:
         # Get the proper filename for error messages
-        if file_match_policy is not None and filename_cleaner is not None:
-            # Compose calculate_filename with cleaning and file match policy transformations
-            extract_with_fallback = filename_with_fallback(photo.id, photo.item_type_extension)
-            raw_filename = extract_with_fallback(photo.calculate_filename())
-            filename_cleaner_transformer = apply_filename_cleaner(filename_cleaner)
-            cleaned_filename = filename_cleaner_transformer(raw_filename)
-            policy_transformer = apply_file_match_policy(file_match_policy, photo.id)
-            error_filename = policy_transformer(cleaned_filename)
-        else:
-            error_filename = photo.filename
+        error_filename = filename_builder(photo)
         logger.error(
             "Could not download %s. Please try again later.",
             error_filename,
