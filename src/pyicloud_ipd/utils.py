@@ -1,13 +1,16 @@
 import copy
-from typing import TYPE_CHECKING, Callable, Dict, Sequence, Tuple
+from typing import TYPE_CHECKING, Any, Callable, Dict, Sequence, Tuple, TypeVar
 
 import keyring
-from requests import Response
+from requests import Response, Timeout
+from requests.exceptions import ConnectionError
+from urllib3.exceptions import NewConnectionError
 
 from pyicloud_ipd.asset_version import AssetVersion, add_suffix_to_filename
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
 from .exceptions import (
+    PyiCloudConnectionErrorException,
     PyiCloudNoStoredPasswordAvailableException,
     PyiCloudServiceUnavailableException,
 )
@@ -202,3 +205,20 @@ def throw_on_503(response: Response) -> Response:
         )
     else:
         return response
+
+
+F = TypeVar("F", bound=Callable[..., Any])
+
+
+def handle_connection_error(func: F) -> F:
+    """Decorator to catch connection errors and raise PyiCloudConnectionErrorException."""
+
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        try:
+            return func(*args, **kwargs)
+        except (ConnectionError, TimeoutError, Timeout, NewConnectionError) as error:
+            raise PyiCloudConnectionErrorException(
+                "Cannot connect to Apple iCloud service"
+            ) from error
+
+    return wrapper  # type: ignore[return-value]
