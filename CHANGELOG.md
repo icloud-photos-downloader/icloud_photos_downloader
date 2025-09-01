@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: HTTP response content not captured for authentication and non-streaming requests [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
 - fix: `--only-print-filenames` downloads live photo video files during deduplication [#1220](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1220)
 
 ## 1.32.1 (2025-08-30)
