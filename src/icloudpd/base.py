@@ -1274,11 +1274,11 @@ def core_single_run(
                         )
                     else:
                         pass
-        except PyiCloudFailedLoginException as _error:
-            logger.info("Invalid email/password combination.")
+        except PyiCloudFailedLoginException as error:
+            logger.info(error)
             dump_responses(logger.debug, captured_responses)
             if PasswordProvider.WEBUI in global_config.password_providers:
-                update_auth_error_in_webui(status_exchange, "Invalid email/password combination.")
+                update_auth_error_in_webui(status_exchange, str(error))
                 continue
             else:
                 return 1
