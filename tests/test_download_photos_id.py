@@ -351,8 +351,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                             LivePhotoVersionSize.MEDIUM
                             if (f[2] == "photo" and f[1].endswith(".MOV"))
                             else AssetVersionSize.ORIGINAL,
-                            ANY,  # file_match_policy
-                            ANY,  # filename_cleaner
+                            ANY,  # filename_builder
                         ),
                         files_to_download_ext,
                     )
