@@ -522,10 +522,10 @@ def where_builder(
     photo: PhotoAsset,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
-        logger.debug(asset_type_skip_message(photo, filename_builder))
+        logger.debug(asset_type_skip_message(AssetItemType.IMAGE, filename_builder, photo))
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
-        logger.debug(asset_type_skip_message(photo, filename_builder))
+        logger.debug(asset_type_skip_message(AssetItemType.MOVIE, filename_builder, photo))
         return False
 
     if skip_created_before is not None:
@@ -863,11 +863,11 @@ def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, A
 
 
 def asset_type_skip_message(
-    photo: PhotoAsset,
+    desired_item_type: AssetItemType,
     filename_builder: Callable[[PhotoAsset], str],
+    photo: PhotoAsset,
 ) -> str:
-    # reverse logic assumes only two options
-    photo_video_phrase = "photos" if photo.item_type == AssetItemType.MOVIE else "videos"
+    photo_video_phrase = "photos" if desired_item_type == AssetItemType.IMAGE else "videos"
     filename = filename_builder(photo)
     return f"Skipping {filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
