@@ -288,14 +288,14 @@ class PyiCloudService:
         finally:
             self.observer_rules = temp_rules
 
-    def authenticate(self, force_refresh: bool = False) -> None:
+    def authenticate(self) -> None:
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.
         """
 
         login_successful = False
-        if self.session_data.get("session_token") and not force_refresh:
+        if self.session_data.get("session_token"):
             LOGGER.debug("Checking session token validity")
             try:
                 self.data = self._validate_token()
