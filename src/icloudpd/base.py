@@ -1209,6 +1209,10 @@ def core_single_run(
             PyiCloudConnectionErrorException,
         ) as error:
             logger.info(error)
+            if isinstance(error, PyiCloudAPIResponseException) and "Invalid global session" in str(
+                error
+            ):
+                continue
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
             if (

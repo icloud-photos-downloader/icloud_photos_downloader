@@ -159,14 +159,13 @@ def download_media(
 
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
-                logger.error("Session error, re-authenticating...")
-                if retries > 0:
-                    # If the first re-authentication attempt failed,
-                    # start waiting a few seconds before retrying in case
-                    # there are some issues with the Apple servers
-                    time.sleep(constants.WAIT_SECONDS)
+                error_filename = filename_builder(photo)
+                logger.error(
+                    "Could not download %s. Please try again later.",
+                    error_filename,
+                )
 
-                icloud.authenticate()
+                raise
             else:
                 # short circuiting 0 retries
                 if retries == constants.MAX_RETRIES:

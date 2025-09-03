@@ -427,12 +427,25 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_handle_session_error_during_download_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any, _session: Any, _size: Any) -> NoReturn:
-            raise PyiCloudAPIResponseException("Invalid global session", "100")
+        # Store reference to original download_asset function
+        from pyicloud_ipd.services.photos import download_asset
+
+        orig_download_asset = download_asset
+
+        # Global flag to track if download has been attempted
+        download_attempted = False
+
+        def mock_raise_response_error_once(session: Any, url: str, start: int = 0) -> Any:
+            nonlocal download_attempted
+            if not download_attempted:
+                download_attempted = True
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
+            else:
+                return orig_download_asset(session, url, start)
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAsset, "download") as pa_download:
-                pa_download.side_effect = mock_raise_response_error
+            with mock.patch("pyicloud_ipd.services.photos.download_asset") as mock_download_asset:
+                mock_download_asset.side_effect = mock_raise_response_error_once
 
                 # Let the initial authenticate() call succeed,
                 # but do nothing on the second try.
@@ -449,9 +462,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self.assertEqual,
                         self.root_path,
                         base_dir,
-                        "listing_photos.yml",
+                        "listing_photos_reauth.yml",
                         [],
-                        [],
+                        [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -469,8 +482,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     # Error msg should be repeated 5 times
                     self.assertEqual(
-                        result.output.count("Session error, re-authenticating..."),
-                        max(1, constants.MAX_RETRIES),
+                        result.output.count("Authenticating..."),
+                        2,
                         "retry count",
                     )
 
