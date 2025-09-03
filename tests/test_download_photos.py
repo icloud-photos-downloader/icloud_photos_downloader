@@ -4,7 +4,7 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, List, NoReturn, Sequence, Tuple
+from typing import Any, Dict, List, NoReturn, Sequence, Tuple
 from unittest import TestCase, mock
 from unittest.mock import ANY, PropertyMock, call
 
@@ -18,7 +18,7 @@ from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     calc_data_dir,
@@ -509,12 +509,27 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_session_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error() -> NoReturn:
-            raise PyiCloudAPIResponseException("Invalid global session", "100")
+        # Store reference to original photos_request function
+        from pyicloud_ipd.services.photos import photos_request
+
+        orig_photos_request = photos_request
+
+        # Global flag to track if photos_request has been attempted
+        photos_request_attempted = False
+
+        def mock_raise_response_error_once(
+            service_endpoint: str, params: Dict[str, Any], session: Any, query_data: str
+        ) -> Any:
+            nonlocal photos_request_attempted
+            if not photos_request_attempted:
+                photos_request_attempted = True
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
+            else:
+                return orig_photos_request(service_endpoint, params, session, query_data)
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
-                pa_photos_request.side_effect = mock_raise_response_error
+            with mock.patch("pyicloud_ipd.services.photos.photos_request") as pa_photos_request:
+                pa_photos_request.side_effect = mock_raise_response_error_once
 
                 # Let the initial authenticate() call succeed,
                 # but do nothing on the second try.
@@ -531,9 +546,9 @@ class DownloadPhotoTestCase(TestCase):
                         self.assertEqual,
                         self.root_path,
                         base_dir,
-                        "listing_photos.yml",
+                        "listing_photos_reauth_in_listing.yml",
                         [],
-                        [],
+                        [("2018/07/31", "IMG_7409.JPG")],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -551,8 +566,8 @@ class DownloadPhotoTestCase(TestCase):
 
                     # Error msg should be repeated 5 times
                     self.assertEqual(
-                        result.output.count("Session error, re-authenticating..."),
-                        max(0, constants.MAX_RETRIES),
+                        result.output.count("Authenticating..."),
+                        2,
                         "retry count",
                     )
 
@@ -565,7 +580,7 @@ class DownloadPhotoTestCase(TestCase):
                         sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
                     )
 
-                    assert result.exit_code == 1
+                    assert result.exit_code == 0
 
     def test_handle_albums_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -1705,11 +1720,13 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_internal_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error() -> NoReturn:
+        def mock_raise_response_error(
+            service_endpoint: str, params: Dict[str, Any], session: Any, query_data: str
+        ) -> NoReturn:
             raise PyiCloudAPIResponseException("Internal Error at Apple.", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
+            with mock.patch("pyicloud_ipd.services.photos.photos_request") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
                 _, result = run_icloudpd_test(

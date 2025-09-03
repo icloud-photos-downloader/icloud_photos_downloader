@@ -128,6 +128,18 @@ def download_asset(session: Session, url: str, start: int = 0) -> Response:
     return session.get(url, headers=headers, stream=True)
 
 
+def photos_request(
+    service_endpoint: str, params: Dict[str, Any], session: Session, query_data: str
+) -> Response:
+    """Module-level implementation of photos_request for easier testing"""
+    url = (f"{service_endpoint}/records/query?") + urlencode(params)
+    return session.post(
+        url,
+        data=query_data,
+        headers={"Content-type": "text/plain"},
+    )
+
+
 def apply_raw_policy(
     versions: Dict[VersionSize, AssetVersion], raw_policy: RawTreatmentPolicy
 ) -> Dict[VersionSize, AssetVersion]:
@@ -512,18 +524,16 @@ class PhotoAlbum:
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
-    def photos_request(self) -> Response:
-        url = (f"{self.service_endpoint}/records/query?") + urlencode(self.params)
-        return self.session.post(
-            url,
-            data=json.dumps(self._list_query_gen(self.offset, self.list_type, self.query_filter)),
-            headers={"Content-type": "text/plain"},
-        )
 
     @property
     def photos(self) -> Generator["PhotoAsset", Any, None]:
         while True:
-            request = self.photos_request()
+            request = photos_request(
+                self.service_endpoint,
+                self.params,
+                self.session,
+                json.dumps(self._list_query_gen(self.offset, self.list_type, self.query_filter)),
+            )
 
             #            url = ('%s/records/query?' % self.service_endpoint) + \
             #                urlencode(self.service.params)
