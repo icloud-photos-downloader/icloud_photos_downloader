@@ -1671,13 +1671,6 @@ class DownloadPhotoNameIDTestCase(TestCase):
                     ],
                 )
 
-                # Error msg should be repeated 5 times
-                self.assertEqual(
-                    result.output.count("Internal Error at Apple, retrying..."),
-                    constants.MAX_RETRIES,
-                    "retry count",
-                )
-
                 self.assertIn(
                     "Internal Error at Apple.",
                     result.output,

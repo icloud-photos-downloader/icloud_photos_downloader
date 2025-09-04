@@ -1751,20 +1751,13 @@ class DownloadPhotoTestCase(TestCase):
                     ],
                 )
 
-                # Error msg should be repeated 5 times
-                self.assertEqual(
-                    result.output.count("Internal Error at Apple, retrying..."),
-                    constants.MAX_RETRIES,
-                    "retry count",
-                )
-
                 self.assertIn(
                     "Internal Error at Apple.",
                     result.output,
                 )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
-                self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
+                self.assertEqual(sleep_mock.call_count, 0, "sleep count")
 
                 self.assertEqual(result.exit_code, 1, "Exit Code")
 

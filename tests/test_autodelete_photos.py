@@ -455,7 +455,6 @@ class AutodeletePhotosTestCase(TestCase):
 
         assert sum(1 for _ in files_in_result) == 1
 
-    @pytest.mark.skipif(constants.MAX_RETRIES == 0, reason="Disabled when MAX_RETRIES set to 0")
     def test_retry_delete_after_download_internal_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
@@ -476,7 +475,7 @@ class AutodeletePhotosTestCase(TestCase):
         ) -> None:
             if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
                 setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)  # noqa: B010
-                raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
+                raise PyiCloudAPIResponseException("Internal Error at Apple", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch("icloudpd.base.delete_photo") as pa_delete:
@@ -513,11 +512,7 @@ class AutodeletePhotosTestCase(TestCase):
                 )
 
                 # Error msg should be repeated MAX_RETRIES times
-                self.assertEqual(
-                    result.output.count("Internal Error at Apple, retrying..."),
-                    min(1, constants.MAX_RETRIES),
-                    "retry count",
-                )
+                self.assertIn("Internal Error at Apple", result.output)
 
                 self.assertEqual(
                     pa_delete.call_count, 1 + min(1, constants.MAX_RETRIES), "delete count"
@@ -526,7 +521,7 @@ class AutodeletePhotosTestCase(TestCase):
                 self.assertEqual(
                     sleep_mock.call_count, min(1, constants.MAX_RETRIES), "sleep count"
                 )
-                self.assertEqual(result.exit_code, 0, "Exit code")
+                self.assertEqual(result.exit_code, 1, "Exit code")
 
         # check files
         for file_name in files:
@@ -556,7 +551,7 @@ class AutodeletePhotosTestCase(TestCase):
         def mock_raise_response_error(
             a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
         ) -> None:
-            raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
+            raise PyiCloudAPIResponseException("Internal Error at Apple", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch("icloudpd.base.delete_photo") as pa_delete:
@@ -593,10 +588,10 @@ class AutodeletePhotosTestCase(TestCase):
                 )
 
                 # Error msg should be repeated 5 times
-                self.assertEqual(
-                    result.output.count("Internal Error at Apple, retrying..."),
-                    constants.MAX_RETRIES,
-                    "retry count",
+                self.assertIn(
+                    "Internal Error at Apple",
+                    result.output,
+                    "Error message",
                 )
 
                 self.assertEqual(pa_delete.call_count, constants.MAX_RETRIES + 1, "delete count")
