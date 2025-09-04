@@ -1238,6 +1238,10 @@ def core_single_run(
             logger.debug("Retrying...")
             # these errors we can safely retry
             continue
+        except OSError as error:
+            logger.error("IOError during file operations: %s", error)
+            dump_responses(logger.debug, captured_responses)
+            return 1
         except Exception:
             dump_responses(logger.debug, captured_responses)
             raise
