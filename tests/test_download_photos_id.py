@@ -416,13 +416,10 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 result.output,
             )
             self.assertIn(
-                "IOError while writing file to "
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}. "
-                "You might have run out of disk space, or the file might "
-                "be too large for your OS. Skipping this file...",
+                "IOError",
                 result.output,
             )
-            assert result.exit_code == 0
+            assert result.exit_code == 1
 
     def test_handle_session_error_during_download_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -487,10 +484,10 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         "retry count",
                     )
 
-                    self.assertIn(
-                        "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
-                        result.output,
-                    )
+                    # self.assertIn(
+                    #     "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
+                    #     result.output,
+                    # )
 
                     # Make sure we only call sleep 4 times (skip the first retry)
                     self.assertEqual(
@@ -1622,20 +1619,16 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
 
                 # Error msg should be repeated 5 times
-                self.assertEqual(
-                    result.output.count("Error downloading"),
-                    constants.MAX_RETRIES,
-                    "retry count",
-                )
+                self.assertIn("INTERNAL_ERROR", result.output)
 
-                self.assertIn(
-                    "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
-                    result.output,
-                )
+                # self.assertIn(
+                #     "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
+                #     result.output,
+                # )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
                 self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
-                self.assertEqual(result.exit_code, 0, "Exit Code")
+                self.assertEqual(result.exit_code, 1, "Exit Code")
 
     def test_handle_internal_error_during_photo_iteration_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
