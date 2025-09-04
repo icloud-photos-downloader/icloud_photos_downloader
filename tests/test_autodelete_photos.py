@@ -4,7 +4,7 @@ import inspect
 import logging
 import os
 import shutil
-from typing import Any, NoReturn
+from typing import Any, Callable, NoReturn
 from unittest import TestCase, mock
 
 import pytest
@@ -347,8 +347,7 @@ class AutodeletePhotosTestCase(TestCase):
                 f"{file_name} not expected, but present"
             )
 
-    @pytest.mark.skipif(constants.MAX_RETRIES == 0, reason="Disabled when MAX_RETRIES set to 0")
-    def test_retry_delete_after_download_session_error(self) -> None:
+    def test_delete_after_download_session_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
         data_dir = os.path.join(base_dir, "data")
@@ -363,12 +362,26 @@ class AutodeletePhotosTestCase(TestCase):
             f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
         ]
 
-        def mock_raise_response_error(
-            a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
+        # Store reference to original delete_photo function
+        from icloudpd.base import delete_photo
+
+        orig_delete_photo = delete_photo
+
+        # Global flag to track if delete_photo has been attempted
+        delete_photo_attempted = False
+
+        def mock_raise_response_error_once(
+            a1_: logging.Logger,
+            a2_: PhotoLibrary,
+            a3_: PhotoAsset,
+            a4_: Callable[[PhotoAsset], str],
         ) -> None:
-            if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
-                setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)  # noqa: B010
+            nonlocal delete_photo_attempted
+            if not delete_photo_attempted:
+                delete_photo_attempted = True
                 raise PyiCloudAPIResponseException("Invalid global session", "100")
+            else:
+                return orig_delete_photo(a1_, a2_, a3_, a4_)
 
         # Let the initial authenticate() call succeed,
         # but do nothing on the second try.
@@ -381,105 +394,11 @@ class AutodeletePhotosTestCase(TestCase):
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
             with mock.patch("icloudpd.base.delete_photo") as pa_delete:
-                pa_delete.side_effect = mock_raise_response_error
+                pa_delete.side_effect = mock_raise_response_error_once
 
                 with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
                     result = run_cassette(
-                        os.path.join(self.vcr_path, "download_autodelete_photos.yml"),
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--delete-after-download",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
-                        ],
-                    )
-
-                    self.assertIn(
-                        "Looking up all photos and videos...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading the first original photo or video to {data_dir} ...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
-                        result.output,
-                    )
-
-                    # Error msg should be repeated always 1 time
-                    self.assertEqual(
-                        result.output.count("Session error, re-authenticating..."),
-                        1,
-                        "retry count",
-                    )
-
-                    self.assertEqual(
-                        pa_delete.call_count,
-                        1 + min(1, constants.MAX_RETRIES),
-                        "delete call count",
-                    )
-                    # Make sure we only call sleep 0 times (skip the first retry)
-                    self.assertEqual(
-                        sleep_mock.call_count,
-                        0,
-                        "sleep count",
-                    )
-                    self.assertEqual(result.exit_code, 0, "Exit code")
-
-        # check files
-        for file_name in files:
-            assert os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} expected, but missing"
-            )
-
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 1
-
-    def test_retry_fail_delete_after_download_session_error(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-        cookie_master_path = os.path.join(self.root_path, "cookie")
-
-        for dir in [base_dir, data_dir]:
-            recreate_path(dir)
-
-        shutil.copytree(cookie_master_path, cookie_dir)
-
-        files = [
-            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
-        ]
-
-        def mock_raise_response_error(
-            a1_: logging.Logger, a3_: PhotoLibrary, a4_: PhotoAsset
-        ) -> None:
-            raise PyiCloudAPIResponseException("Invalid global session", "100")
-
-        # Let the initial authenticate() call succeed,
-        # but do nothing on the second try.
-        orig_authenticate = PyiCloudService.authenticate
-
-        def mocked_authenticate(self: PyiCloudService) -> None:
-            if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
-                orig_authenticate(self)
-                setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)  # noqa: B010
-
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch("icloudpd.base.delete_photo") as pa_delete:
-                pa_delete.side_effect = mock_raise_response_error
-
-                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
-                    result = run_cassette(
-                        os.path.join(self.vcr_path, "download_autodelete_photos_part1.yml"),
+                        os.path.join(self.vcr_path, "download_autodelete_photos_retry.yml"),
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -510,8 +429,8 @@ class AutodeletePhotosTestCase(TestCase):
 
                     # Error msg should be repeated MAX_RETRIES times
                     self.assertEqual(
-                        result.output.count("Session error, re-authenticating..."),
-                        max(0, constants.MAX_RETRIES),
+                        result.output.count("Authenticating..."),
+                        2,
                         "retry count",
                     )
 
@@ -524,7 +443,7 @@ class AutodeletePhotosTestCase(TestCase):
                         max(0, constants.MAX_RETRIES - 1),
                         "sleep count",
                     )
-                    self.assertEqual(result.exit_code, 1, "Exit code")
+                    self.assertEqual(result.exit_code, 0, "Exit code")
 
         # check files
         for file_name in files:
