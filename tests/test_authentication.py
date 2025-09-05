@@ -321,9 +321,10 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(
             2,
             result.output.count("Apple iCloud is temporary refusing to serve icloudpd"),
+            "refusing message",
         )
         self.assertEqual(2, result.output.count("Waiting for 1 sec..."))
-        # self.assertTrue("Can't overwrite existing cassette" in str(context.exception))
+        self.assertTrue("Can't overwrite existing cassette" in str(result.exception))
         self.assertEqual(result.exit_code, 1, "exit code")
 
     def test_connection_error(self) -> None:
