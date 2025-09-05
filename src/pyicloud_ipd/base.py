@@ -295,13 +295,13 @@ class PyiCloudService:
         """
 
         login_successful = False
-        if self.session_data.get("session_token"):
-            LOGGER.debug("Checking session token validity")
-            try:
-                self.data = self._validate_token()
-                login_successful = True
-            except PyiCloudAPIResponseException:
-                LOGGER.debug("Invalid authentication token, will log in from scratch.")
+        # if self.session_data.get("session_token"):
+        # LOGGER.debug("Checking session token validity")
+        try:
+            self.data = self._validate_token()
+            login_successful = True
+        except PyiCloudAPIResponseException:
+            LOGGER.debug("Invalid authentication token, will log in from scratch.")
 
         if not login_successful:
             password = self.password_provider()
