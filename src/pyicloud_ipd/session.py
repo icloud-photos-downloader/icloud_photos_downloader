@@ -7,7 +7,7 @@ from typing import Any, Callable, Dict, Mapping, NoReturn, Sequence
 from requests import Response, Session
 from typing_extensions import override
 
-from foundation.http import response_to_har_entry
+from foundation.http import is_streaming_response, response_to_har_entry
 from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
@@ -97,8 +97,10 @@ class PyiCloudSession(Session):
         self.cookies.save(ignore_discard=True, ignore_expires=True)  # type: ignore[attr-defined]
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
 
-        if not response.ok and (
-            content_type not in json_mimetypes or response.status_code in [421, 450, 500]
+        if (
+            not response.ok
+            and (content_type not in json_mimetypes or response.status_code in [421, 450, 500])
+            and not is_streaming_response(response)
         ):
             self._raise_error(str(response.status_code), response.reason)
 

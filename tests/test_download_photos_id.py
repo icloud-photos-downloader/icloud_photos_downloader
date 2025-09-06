@@ -618,77 +618,70 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_missing_size_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch.object(Response, "ok") as pa_response:
-            pa_response.__get__ = mock.Mock(return_value=False)
-            with mock.patch.object(PhotoAsset, "download") as pa_download:
-                pa_download.return_value = Response()
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_404.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "3",
+                "--no-progress-bar",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
 
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "3",
-                        "--no-progress-bar",
-                        "--file-match-policy",
-                        "name-id7",
-                    ],
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading 3 original photos and videos to {data_dir} ...",
+            result.output,
+        )
+
+        # These error messages should not be repeated more than once for each size
+        for filename in [
+            "IMG_7409_QVk2Yyt.JPG",
+            "IMG_7408_QVI4T2l.JPG",
+            "IMG_7407_QVovd0F.JPG",
+        ]:
+            for size in ["original"]:
+                self.assertEqual(
+                    sum(
+                        1
+                        for line in result.output.splitlines()
+                        if line == f"Could not find URL to download {filename} for size {size}"
+                    ),
+                    1,
+                    f"Errors for {filename} size {size}",
                 )
 
-                self.assertIn(
-                    "Looking up all photos and videos...",
-                    result.output,
+        for filename in [
+            "IMG_7409_QVk2Yyt.MOV",
+            "IMG_7408_QVI4T2l.MOV",
+            "IMG_7407_QVovd0F.MOV",
+        ]:
+            for size in ["original"]:
+                self.assertEqual(
+                    sum(
+                        1
+                        for line in result.output.splitlines()
+                        if line == f"Could not find URL to download {filename} for size {size}"
+                    ),
+                    1,
+                    f"Errors for {filename} size {size}",
                 )
-                self.assertIn(
-                    f"Downloading 3 original photos and videos to {data_dir} ...",
-                    result.output,
-                )
 
-                # These error messages should not be repeated more than once for each size
-                for filename in [
-                    "IMG_7409_QVk2Yyt.JPG",
-                    "IMG_7408_QVI4T2l.JPG",
-                    "IMG_7407_QVovd0F.JPG",
-                ]:
-                    for size in ["original"]:
-                        self.assertEqual(
-                            sum(
-                                1
-                                for line in result.output.splitlines()
-                                if line
-                                == f"Could not find URL to download {filename} for size {size}"
-                            ),
-                            1,
-                            f"Errors for {filename} size {size}",
-                        )
-
-                for filename in [
-                    "IMG_7409_QVk2Yyt.MOV",
-                    "IMG_7408_QVI4T2l.MOV",
-                    "IMG_7407_QVovd0F.MOV",
-                ]:
-                    for size in ["original"]:
-                        self.assertEqual(
-                            sum(
-                                1
-                                for line in result.output.splitlines()
-                                if line
-                                == f"Could not find URL to download {filename} for size {size}"
-                            ),
-                            1,
-                            f"Errors for {filename} size {size}",
-                        )
-
-                self.assertIn("All photos and videos have been downloaded", result.output)
-                self.assertEqual(result.exit_code, 0, "Exit code")
+        self.assertIn("All photos and videos have been downloaded", result.output)
+        self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
