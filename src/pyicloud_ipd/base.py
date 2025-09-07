@@ -516,7 +516,7 @@ class PyiCloudService:
             #     "message" : "This Apple Account has been locked for security reasons. Visit iForgot to reset your account (https://iforgot.apple.com).",
             #     "suppressDismissal" : false
             #   }
-            raise PyiCloudAPIResponseException("403", "403")
+            raise PyiCloudAPIResponseException(response.json()["serviceErrors"], "403")
         elif response.status_code == 401 and response.headers["content-type"].split(";")[0] in [
             "application/json"
         ]:
