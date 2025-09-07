@@ -314,6 +314,21 @@ def run_cassette(
         return print_result_exception(run_main_env(DEFAULT_ENV, params, input))
 
 
+def add_cloned_master_cookie_dir(
+    root_path: str, base_dir: str, params: Sequence[str]
+) -> Sequence[str]:
+    cookie_dir = calc_cookie_dir(base_dir)
+    cookie_master_path = calc_cookie_dir(root_path)
+
+    shutil.copytree(cookie_master_path, cookie_dir)
+
+    combined_params = [
+        "--cookie-directory",
+        cookie_dir,
+    ] + list(params)
+    return combined_params
+
+
 _path_join_flipped = flip(os.path.join)
 
 calc_data_dir = partial_1_1(_path_join_flipped, "data")
@@ -332,21 +347,32 @@ def run_icloudpd_test(
     additional_env: Mapping[str, str | None] = {},
     input: str | bytes | IO[Any] | None = None,
 ) -> Tuple[str, TestResult]:
-    cookie_dir = calc_cookie_dir(base_dir)
+    # cookie_dir = calc_cookie_dir(base_dir)
     data_dir = calc_data_dir(base_dir)
     vcr_path = calc_vcr_dir(root_path)
-    cookie_master_path = calc_cookie_dir(root_path)
+    # cookie_master_path = calc_cookie_dir(root_path)
 
     for dir in [base_dir, data_dir]:
         recreate_path(dir)
 
-    shutil.copytree(cookie_master_path, cookie_dir)
+    # shutil.copytree(cookie_master_path, cookie_dir)
 
     create_files(data_dir, files_to_create)
 
     combined_env: Mapping[str, str | None] = {**additional_env, **DEFAULT_ENV}
 
-    main_runner = compose(print_result_exception, partial(run_main_env, combined_env, input=input))
+    cookie_composer = partial_2_1(add_cloned_master_cookie_dir, root_path, base_dir)
+
+    # Break down the compose chain to help mypy type inference
+    params_to_result: Callable[[Sequence[str]], TestResult] = partial(
+        run_main_env, combined_env, input=input
+    )
+    params_with_cookies_to_result: Callable[[Sequence[str]], TestResult] = compose(
+        params_to_result, cookie_composer
+    )
+    main_runner: Callable[[Sequence[str]], TestResult] = compose(
+        print_result_exception, params_with_cookies_to_result
+    )
 
     with_cassette_main_runner = partial_2_1(
         run_with_cassette, os.path.join(vcr_path, cassette_filename), main_runner
@@ -355,8 +381,8 @@ def run_icloudpd_test(
     combined_params = [
         "-d",
         data_dir,
-        "--cookie-directory",
-        cookie_dir,
+        # "--cookie-directory",
+        # cookie_dir,
     ] + params
 
     result = with_cassette_main_runner(combined_params)

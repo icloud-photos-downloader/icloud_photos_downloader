@@ -19,7 +19,10 @@ from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePoli
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
+    add_cloned_master_cookie_dir,
+    calc_vcr_dir,
     path_from_project_root,
+    run_cassette,
     run_icloudpd_test,
     run_main,
 )
@@ -475,27 +478,39 @@ class CliTestCase(TestCase):
 
     def test_missing_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
         # need path removed
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
 
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "--recent",
-                "0",
-                "--log-level",
-                "info",
-                "-d",
+        sub_dir = os.path.join(base_dir, "dummy")
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        self.assertFalse(os.path.exists(sub_dir), f"{sub_dir} exists")
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
                 base_dir,
-            ],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--log-level",
+                    "info",
+                    "-d",
+                    sub_dir,
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
 
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+        self.assertFalse(os.path.exists(sub_dir), f"{sub_dir} exists")
 
     def test_missing_directory_param(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
