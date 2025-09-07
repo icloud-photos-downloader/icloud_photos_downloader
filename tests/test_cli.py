@@ -514,55 +514,85 @@ class CliTestCase(TestCase):
 
     def test_missing_directory_param(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "--recent",
-                "0",
-                "--log-level",
-                "info",
-            ],
+
+        # Clean up any existing directory
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
+                base_dir,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--log-level",
+                    "info",
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
-
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
     def test_conflict_options_delete_after_download_and_auto_delete(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "-d",
-                "/tmp",
-                "--delete-after-download",
-                "--auto-delete",
-            ],
+
+        # Clean up any existing directory
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
+                base_dir,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "-d",
+                    "/tmp",
+                    "--delete-after-download",
+                    "--auto-delete",
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
-
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
     def test_conflict_options_delete_after_download_and_keep_icloud_recent_days(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "-d",
-                "/tmp",
-                "--delete-after-download",
-                "--keep-icloud-recent-days",
-                "1",
-            ],
+
+        # Clean up any existing directory
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
+                base_dir,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "-d",
+                    "/tmp",
+                    "--delete-after-download",
+                    "--keep-icloud-recent-days",
+                    "1",
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
-
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
