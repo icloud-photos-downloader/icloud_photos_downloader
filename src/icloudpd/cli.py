@@ -1,6 +1,7 @@
 import argparse
 import copy
 import datetime
+import os
 import pathlib
 import sys
 from itertools import dropwhile
@@ -604,6 +605,20 @@ def cli() -> int:
             print(
                 "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, and --auth-only"
             )
+            return 2
+
+        # Validate that directories exist for configurations that need them
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.directory and not os.path.exists(user_ns.directory)
+        ]:
+            invalid_dirs = [
+                user_ns.directory
+                for user_ns in user_nses
+                if user_ns.directory and not os.path.exists(user_ns.directory)
+            ]
+            print(f"Directory does not exist: {invalid_dirs[0]}")
             return 2
         else:
             return run_with_configs(global_ns, user_nses)
