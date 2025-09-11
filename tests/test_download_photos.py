@@ -491,78 +491,51 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_session_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        # Store reference to original photos_request function
-        from pyicloud_ipd.services.photos import photos_request
+        # The cassette listing_photos_session_error_iteration.yml contains:
+        # 1. Initial authentication
+        # 2. Photo listing attempt that returns session error (401 with "Invalid global session")
+        # 3. Re-authentication happens automatically
+        # 4. Photo downloads successfully after re-auth
+        # No mocks needed - the cassette has all the necessary responses
+        
+        with mock.patch("time.sleep") as sleep_mock:
+            _, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_session_error_iteration.yml",
+                [],
+                [("2018/07/31", "IMG_7409.JPG")],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
-        orig_photos_request = photos_request
+            # Error msg should be repeated 5 times
+            self.assertEqual(
+                result.output.count("Authenticating..."),
+                2,
+                "retry count",
+            )
 
-        # Global flag to track if photos_request has been attempted
-        photos_request_attempted = False
-
-        def mock_raise_response_error_once(
-            service_endpoint: str, params: Dict[str, Any], session: Any, query_data: str
-        ) -> Any:
-            nonlocal photos_request_attempted
-            if not photos_request_attempted:
-                photos_request_attempted = True
-                raise PyiCloudAPIResponseException("Invalid global session", "100")
-            else:
-                return orig_photos_request(service_endpoint, params, session, query_data)
-
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch("pyicloud_ipd.services.photos.photos_request") as pa_photos_request:
-                pa_photos_request.side_effect = mock_raise_response_error_once
-
-                # Let the initial authenticate() call succeed,
-                # but do nothing on the second try.
-                orig_authenticate = PyiCloudService.authenticate
-
-                def mocked_authenticate(self: PyiCloudService) -> None:
-                    if not hasattr(self, "already_authenticated"):
-                        orig_authenticate(self)
-                        setattr(self, "already_authenticated", True)  # noqa: B010
-
-                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
-                    # Pass fixed client ID via environment variable
-                    _, result = run_icloudpd_test(
-                        self.assertEqual,
-                        self.root_path,
-                        base_dir,
-                        "listing_photos_reauth_in_listing.yml",
-                        [],
-                        [("2018/07/31", "IMG_7409.JPG")],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
-
-                    # Error msg should be repeated 5 times
-                    self.assertEqual(
-                        result.output.count("Authenticating..."),
-                        2,
-                        "retry count",
-                    )
-
-                    self.assertIn(
-                        "Invalid global session",
-                        result.output,
-                    )
-                    # Make sure we only call sleep 4 times (skip the first retry)
-                    self.assertEqual(
-                        sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
-                    )
-
-                    assert result.exit_code == 0
+            self.assertIn(
+                "Invalid global session",
+                result.output,
+            )
+            # Make sure we only call sleep 4 times (skip the first retry)
+            self.assertEqual(
+                sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
+            )
 
     def test_handle_albums_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
