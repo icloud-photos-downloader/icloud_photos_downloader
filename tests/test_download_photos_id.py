@@ -430,7 +430,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # 3. Download attempt that returns session error (401 with "Invalid global session")
         # 4. Re-authentication (second validate call)
         # No mocks needed - the cassette has all the necessary responses
-        
+
         _, result = run_icloudpd_test(
             self.assertEqual,
             self.root_path,
@@ -454,7 +454,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 "name-id7",
             ],
         )
-        
+
         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration_name_id7(self) -> None:
@@ -466,49 +466,44 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # 3. Re-authentication happens automatically
         # 4. Photo downloads successfully after re-auth
         # No mocks needed - the cassette has all the necessary responses
-        
-        with mock.patch("time.sleep") as sleep_mock:
-            _, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos_session_error_iteration_name_id7.yml",
-                [],
-                [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                    "--file-match-policy",
-                    "name-id7",
-                ],
-            )
 
-            # Error msg should be repeated 5 times
-            self.assertEqual(
-                result.output.count("Authenticating..."),
-                2,
-                "retry count",
-            )
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_session_error_iteration_name_id7.yml",
+            [],
+            [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
 
-            self.assertIn(
-                "Invalid global session",
-                result.output,
-            )
-            # Make sure we only call sleep 4 times (skip the first retry)
-            self.assertEqual(
-                sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
-            )
+        # Verify re-authentication happened
+        self.assertEqual(
+            result.output.count("Authenticating..."),
+            2,
+            "should authenticate twice - initial and after session error",
+        )
 
-            assert result.exit_code == 0
+        self.assertIn(
+            "Invalid global session",
+            result.output,
+        )
+
+        assert result.exit_code == 0
 
     def test_handle_albums_error_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

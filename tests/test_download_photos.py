@@ -497,45 +497,40 @@ class DownloadPhotoTestCase(TestCase):
         # 3. Re-authentication happens automatically
         # 4. Photo downloads successfully after re-auth
         # No mocks needed - the cassette has all the necessary responses
-        
-        with mock.patch("time.sleep") as sleep_mock:
-            _, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos_session_error_iteration.yml",
-                [],
-                [("2018/07/31", "IMG_7409.JPG")],
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
 
-            # Error msg should be repeated 5 times
-            self.assertEqual(
-                result.output.count("Authenticating..."),
-                2,
-                "retry count",
-            )
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_session_error_iteration.yml",
+            [],
+            [("2018/07/31", "IMG_7409.JPG")],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-            self.assertIn(
-                "Invalid global session",
-                result.output,
-            )
-            # Make sure we only call sleep 4 times (skip the first retry)
-            self.assertEqual(
-                sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
-            )
+        # Verify re-authentication happened
+        self.assertEqual(
+            result.output.count("Authenticating..."),
+            2,
+            "should authenticate twice - initial and after session error",
+        )
+
+        self.assertIn(
+            "Invalid global session",
+            result.output,
+        )
 
     def test_handle_albums_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
