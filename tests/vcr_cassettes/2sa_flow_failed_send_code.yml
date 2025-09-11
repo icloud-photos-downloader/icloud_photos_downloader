@@ -313,7 +313,7 @@ interactions:
     uri: https://setup.icloud.com/setup/ws/1/sendVerificationCode?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
   response:
     body:
-      string: !!python/unicode '{"success":false,"error":"Service temporarily unavailable"}'
+      string: !!python/unicode '{"success":false,"errorTitle":"Service Error","errorMessage":"Service temporarily unavailable","errorCode":-20000}'
     headers:
       Access-Control-Allow-Credentials: ['true']
       Access-Control-Allow-Origin: ['https://www.icloud.com']
@@ -326,8 +326,7 @@ interactions:
       X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
       X-Responding-Instance: ['setupservice:34400103:mr26p44ic-tydg07122301:8003:1813B80:3b85e7d76']
       access-control-expose-headers: ['X-Apple-Request-UUID, Via']
-      content-length: ['61']
-      status: {code: 503, message: 'Service Unavailable'}
+      content-length: ['116']
       via: ['via-123456789012345678901234567890']
     status:
       code: 200
