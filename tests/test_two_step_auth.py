@@ -1,10 +1,9 @@
 import inspect
 import os
-from unittest import TestCase, mock
+from unittest import TestCase
 
 import pytest
 
-from pyicloud_ipd.base import PyiCloudService
 from tests.helpers import (
     calc_cookie_dir,
     calc_vcr_dir,
@@ -92,34 +91,33 @@ class TwoStepAuthTestCase(TestCase):
         for dir in [base_dir, cookie_dir]:
             recreate_path(dir)
 
-        with mock.patch.object(PyiCloudService, "send_verification_code") as svc_mocked:
-            svc_mocked.return_value = False
-            result = run_cassette(
-                os.path.join(self.vcr_path, "2sa_flow_valid_code.yml"),
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--no-progress-bar",
-                    "--cookie-directory",
-                    cookie_dir,
-                    "--auth-only",
-                ],
-                input="0\n",
-            )
-            self.assertIn("Authenticating...", result.output)
-            self.assertIn(
-                "Two-step authentication is required",
-                result.output,
-            )
-            self.assertIn("  0: SMS to *******03", result.output)
-            self.assertIn("Please choose an option: [0]: 0", result.output)
-            self.assertIn(
-                "Failed to send two-step authentication code",
-                result.output,
-            )
-            self.assertEqual(result.exit_code, 1, "exit code")
+        # No mock needed - using cassette with failed response
+        result = run_cassette(
+            os.path.join(self.vcr_path, "2sa_flow_failed_send_code.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+            input="0\n",
+        )
+        self.assertIn("Authenticating...", result.output)
+        self.assertIn(
+            "Two-step authentication is required",
+            result.output,
+        )
+        self.assertIn("  0: SMS to *******03", result.output)
+        self.assertIn("Please choose an option: [0]: 0", result.output)
+        self.assertIn(
+            "Failed to send two-step authentication code",
+            result.output,
+        )
+        self.assertEqual(result.exit_code, 1, "exit code")
 
     def test_2fa_flow_invalid_code(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
