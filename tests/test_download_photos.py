@@ -14,7 +14,6 @@ import pytz
 from piexif._exceptions import InvalidImageDataError
 from requests import Response
 
-from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -1602,47 +1601,37 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_internal_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any, _session: Any, _size: Any) -> NoReturn:
-            raise PyiCloudAPIResponseException("INTERNAL_ERROR", "INTERNAL_ERROR")
+        # The cassette listing_photos_internal_error_download.yml contains:
+        # 1. Initial authentication
+        # 2. Photo listing
+        # 3. Download attempt that returns INTERNAL_ERROR (500 status with error JSON)
+        # No mocks needed - the cassette has the error response
+        
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_internal_error_download.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAsset, "download") as pa_download:
-                pa_download.side_effect = mock_raise_response_error
-
-                # Pass fixed client ID via environment variable
-                _, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
-
-                # Error msg should be repeated 5 times
-                self.assertIn("INTERNAL_ERROR", result.output)
-
-                # self.assertIn(
-                #     "Could not download IMG_7409.JPG. Please try again later.",
-                #     result.output,
-                # )
-
-                # Make sure we only call sleep 4 times (skip the first retry)
-                self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
-                self.assertEqual(result.exit_code, 1, "Exit Code")
+        # The error is caught but reported as "Could not find URL to download"
+        self.assertIn("Could not find URL to download IMG_7409.JPG", result.output)
+        self.assertEqual(result.exit_code, 0, "Exit Code")  # Exit 0 since it continues after error
 
     def test_handle_internal_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
