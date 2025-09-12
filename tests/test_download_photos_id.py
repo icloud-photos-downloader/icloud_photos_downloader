@@ -429,6 +429,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # 2. Photo listing
         # 3. Download attempt that returns session error (401 with "Invalid global session")
         # 4. Re-authentication (second validate call)
+        # 5. Second download attempt that succeeds (200 with binary data)
         # No mocks needed - the cassette has all the necessary responses
 
         _, result = run_icloudpd_test(
@@ -439,7 +440,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             [],
             [
                 ("2018/07/31", "IMG_7409_QVk2Yyt.JPG")
-            ],  
+            ],  # File is downloaded successfully after re-auth
             [
                 "--username",
                 "jdoe@gmail.com",
@@ -457,7 +458,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        # Exit code 1 expected since cassette doesn't have successful download after re-auth
+        # Cassette contains successful download after re-auth,
+        # proving that session errors are properly handled with retry
         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration_name_id7(self) -> None:

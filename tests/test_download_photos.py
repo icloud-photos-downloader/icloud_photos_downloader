@@ -442,6 +442,7 @@ class DownloadPhotoTestCase(TestCase):
         # 2. Photo listing
         # 3. Download attempt that returns session error (401 with "Invalid global session")
         # 4. Re-authentication (second validate call)
+        # 5. Second download attempt that succeeds (200 with binary data)
         # No mocks needed - the cassette has all the necessary responses
 
         # Pass fixed client ID via environment variable
@@ -451,9 +452,7 @@ class DownloadPhotoTestCase(TestCase):
             base_dir,
             "listing_photos_session_error_download.yml",
             [],
-            [
-                ("2018/07/31/", "IMG_7409.JPG")
-            ],  # No files expected since cassette doesn't have successful download after re-auth
+            [("2018/07/31/", "IMG_7409.JPG")],  # File is downloaded successfully after re-auth
             [
                 "--username",
                 "jdoe@gmail.com",
@@ -483,10 +482,9 @@ class DownloadPhotoTestCase(TestCase):
             result.output,
         )
 
-        # Since cassette doesn't have successful download after re-auth,
-        # the test will eventually fail, but that's OK - we've proven
-        # that cassettes can trigger PyiCloudAPIResponseException
-        assert result.exit_code == 0  # Expected to fail since no successful download in cassette
+        # Cassette contains successful download after re-auth,
+        # proving that session errors are properly handled with retry
+        assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
