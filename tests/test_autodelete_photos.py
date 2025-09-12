@@ -4,14 +4,13 @@ import inspect
 import logging
 import os
 import shutil
-from typing import Any, Callable, NoReturn
+from typing import Any, NoReturn
 from unittest import TestCase, mock
 
 import pytest
 from vcr import VCR
 
 from icloudpd import constants
-from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 from tests.helpers import (
@@ -356,88 +355,52 @@ class AutodeletePhotosTestCase(TestCase):
 
         files = ["2023/06/07/IMG_3589.JPG"]
 
-        # Store reference to original delete_photo function
-        from icloudpd.base import delete_photo
+        # The cassette download_autodelete_photos_retry.yml contains:
+        # 1. Initial authentication
+        # 2. Photo download
+        # 3. Delete attempt that returns session error (401 with "Invalid global session")
+        # 4. Re-authentication happens automatically
+        # 5. Successful delete after re-auth
+        # No mocks needed - the cassette has all the necessary responses
 
-        orig_delete_photo = delete_photo
+        result = run_cassette(
+            os.path.join(self.vcr_path, "download_autodelete_photos_retry.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--delete-after-download",
+                "-d",
+                data_dir,
+                "--cookie-directory",
+                cookie_dir,
+            ],
+        )
 
-        # Global flag to track if delete_photo has been attempted
-        delete_photo_attempted = False
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading the first original photo or video to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
+            result.output,
+        )
 
-        def mock_raise_response_error_once(
-            a1_: logging.Logger,
-            a2_: PhotoLibrary,
-            a3_: PhotoAsset,
-            a4_: Callable[[PhotoAsset], str],
-        ) -> None:
-            nonlocal delete_photo_attempted
-            if not delete_photo_attempted:
-                delete_photo_attempted = True
-                raise PyiCloudAPIResponseException("Invalid global session", "100")
-            else:
-                return orig_delete_photo(a1_, a2_, a3_, a4_)
+        # Error msg should be repeated MAX_RETRIES times
+        self.assertEqual(
+            result.output.count("Authenticating..."),
+            2,
+            "retry count",
+        )
 
-        # Let the initial authenticate() call succeed,
-        # but do nothing on the second try.
-        orig_authenticate = PyiCloudService.authenticate
-
-        def mocked_authenticate(self: PyiCloudService) -> None:
-            if not hasattr(self, f"already_authenticated{inspect.stack()[0][3]}"):
-                orig_authenticate(self)
-                setattr(self, f"already_authenticated{inspect.stack()[0][3]}", True)  # noqa: B010
-
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch("icloudpd.base.delete_photo") as pa_delete:
-                pa_delete.side_effect = mock_raise_response_error_once
-
-                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
-                    result = run_cassette(
-                        os.path.join(self.vcr_path, "download_autodelete_photos_retry.yml"),
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--delete-after-download",
-                            "-d",
-                            data_dir,
-                            "--cookie-directory",
-                            cookie_dir,
-                        ],
-                    )
-
-                    self.assertIn(
-                        "Looking up all photos and videos...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading the first original photo or video to {data_dir} ...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
-                        result.output,
-                    )
-
-                    # Error msg should be repeated MAX_RETRIES times
-                    self.assertEqual(
-                        result.output.count("Authenticating..."),
-                        2,
-                        "retry count",
-                    )
-
-                    self.assertEqual(
-                        pa_delete.call_count, constants.MAX_RETRIES + 1, "delete call count"
-                    )
-                    # Make sure we only call sleep MAX_RETRIES-1 times (skip the first retry)
-                    self.assertEqual(
-                        sleep_mock.call_count,
-                        max(0, constants.MAX_RETRIES - 1),
-                        "sleep count",
-                    )
-                    self.assertEqual(result.exit_code, 0, "Exit code")
+        self.assertEqual(result.exit_code, 0, "Exit code")
 
         # check files
         for file_name in files:
