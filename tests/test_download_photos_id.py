@@ -512,7 +512,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # 1. Initial authentication
         # 2. Albums fetch that returns API error (200 with error in JSON payload)
         # No mocks needed - the cassette has the error response
-        
+
         _, result = run_icloudpd_test(
             self.assertEqual,
             self.root_path,
