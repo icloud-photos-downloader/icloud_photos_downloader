@@ -410,29 +410,30 @@ class PyiCloudService:
         }
 
         headers = self._get_auth_headers(origin_referer_headers(self.AUTH_ROOT_ENDPOINT))
-        if self.response_observer:
-            rules = list(
-                chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules,
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.auth_srp_init_body_obfuscate_rules,
-                    self.auth_srp_init_body_drop_rules,
+        try:
+            if self.response_observer:
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.auth_srp_init_body_obfuscate_rules,
+                        self.auth_srp_init_body_drop_rules,
+                    )
                 )
-            )
-        else:
-            rules = []
+            else:
+                rules = []
 
-        with self.use_rules(rules):
-            response = self.session.post(
-                f"{self.AUTH_ENDPOINT}/signin/init", data=json.dumps(data), headers=headers
-            )
-        if response.status_code == 401:
-            raise PyiCloudAPIResponseException(response.text, str(response.status_code))
-        # except PyiCloudAPIResponseException as error:
-        #     msg = "Failed to initiate srp authentication."
-        #     raise PyiCloudFailedLoginException(msg, error) from error
+            with self.use_rules(rules):
+                response = self.session.post(
+                    f"{self.AUTH_ENDPOINT}/signin/init", data=json.dumps(data), headers=headers
+                )
+            if response.status_code == 401:
+                raise PyiCloudAPIResponseException(response.text, str(response.status_code))
+        except PyiCloudAPIResponseException as error:
+            msg = "Failed to initiate srp authentication."
+            raise PyiCloudFailedLoginException(msg, error) from error
 
         # Step 2: server sends public key B, salt, and c to client
         body = response.json()
@@ -459,34 +460,7 @@ class PyiCloudService:
         if self.session_data.get("trust_token"):
             data["trustTokens"] = [self.session_data.get("trust_token")]
 
-        # set observer with obfuscator
-        if self.response_observer:
-            rules = list(
-                chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules,
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.auth_srp_complete_body_obfuscate_rules,
-                    self.auth_srp_complete_body_drop_rules,
-                )
-            )
-        else:
-            rules = []
-
-        with self.use_rules(rules):
-            response = self.session.post(
-                f"{self.AUTH_ENDPOINT}/signin/complete",
-                params={"isRememberMeEnabled": "true"},
-                data=json.dumps(data),
-                headers=headers,
-            )
-        if response.status_code == 409:
-            # requires 2FA
-            pass
-        elif response.status_code == 412:
-            # non 2FA account returns 412 "precondition no met"
-            headers = self._get_auth_headers()
+        try:
             # set observer with obfuscator
             if self.response_observer:
                 rules = list(
@@ -495,8 +469,8 @@ class PyiCloudService:
                         self.header_obfuscate_rules,
                         self.header_pass_rules,
                         self.header_drop_rules,
-                        self.auth_srp_repair_complete_body_obfuscate_rules,
-                        self.auth_srp_repair_complete_body_drop_rules,
+                        self.auth_srp_complete_body_obfuscate_rules,
+                        self.auth_srp_complete_body_drop_rules,
                     )
                 )
             else:
@@ -504,29 +478,43 @@ class PyiCloudService:
 
             with self.use_rules(rules):
                 response = self.session.post(
-                    f"{self.AUTH_ENDPOINT}/repair/complete",
-                    data=json.dumps({}),
+                    f"{self.AUTH_ENDPOINT}/signin/complete",
+                    params={"isRememberMeEnabled": "true"},
+                    data=json.dumps(data),
                     headers=headers,
                 )
-        elif response.status_code == 403 and response.headers["content-type"].split(";")[0] in [
-            "application/json"
-        ]:
-            #   "serviceErrors" : [ {
-            #     "code" : "-20209",
-            #     "message" : "This Apple Account has been locked for security reasons. Visit iForgot to reset your account (https://iforgot.apple.com).",
-            #     "suppressDismissal" : false
-            #   }
-            raise PyiCloudAPIResponseException(response.json()["serviceErrors"], "403")
-        elif response.status_code == 401 and response.headers["content-type"].split(";")[0] in [
-            "application/json"
-        ]:
-            #   {"serviceErrors": [{"code":"-20101","message":"Enter the email or phone number and password for your Apple Account.","suppressDismissal":false}]}
-            raise PyiCloudFailedLoginException("Invalid email/password combination.")
-        elif response.status_code >= 400 and response.status_code < 600:
-            raise PyiCloudAPIResponseException(response.text, str(response.status_code))
-        # except PyiCloudAPIResponseException as error:
-        #     msg = "Invalid email/password combination."
-        #     raise PyiCloudFailedLoginException(msg, error) from error
+            if response.status_code == 409:
+                # requires 2FA
+                pass
+            elif response.status_code == 412:
+                # non 2FA account returns 412 "precondition no met"
+                headers = self._get_auth_headers()
+                # set observer with obfuscator
+                if self.response_observer:
+                    rules = list(
+                        chain(
+                            self.cookie_obfuscate_rules,
+                            self.header_obfuscate_rules,
+                            self.header_pass_rules,
+                            self.header_drop_rules,
+                            self.auth_srp_repair_complete_body_obfuscate_rules,
+                            self.auth_srp_repair_complete_body_drop_rules,
+                        )
+                    )
+                else:
+                    rules = []
+
+                with self.use_rules(rules):
+                    response = self.session.post(
+                        f"{self.AUTH_ENDPOINT}/repair/complete",
+                        data=json.dumps({}),
+                        headers=headers,
+                    )
+            elif response.status_code >= 400 and response.status_code < 600:
+                raise PyiCloudAPIResponseException(response.text, str(response.status_code))
+        except PyiCloudAPIResponseException as error:
+            msg = "Invalid email/password combination."
+            raise PyiCloudFailedLoginException(msg, error) from error
 
     def _authenticate_raw_password(self, password: str) -> None:
         data = {
@@ -568,51 +556,34 @@ class PyiCloudService:
 
     def _validate_token(self) -> Dict[str, Any]:
         """Checks if the current access token is still valid."""
-
         LOGGER.debug("Checking session token validity")
         headers = origin_referer_headers(self.HOME_ENDPOINT)
-
-        # set observer with obfuscator
-        if self.response_observer:
-            rules = list(
-                chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules,
-                    self.header_pass_rules,
-                    self.header_drop_rules,
-                    self.validate_response_body_obfuscate_rules,
-                    self.validate_response_body_drop_rules,
+        try:
+            # set observer with obfuscator
+            if self.response_observer:
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                        self.validate_response_body_obfuscate_rules,
+                        self.validate_response_body_drop_rules,
+                    )
                 )
-            )
-        else:
-            rules = []
+            else:
+                rules = []
 
-        with self.use_rules(rules):
-            response = self.session.post(
-                f"{self.SETUP_ENDPOINT}/validate", data="null", headers=headers
-            )
-
-        # Check for 421, 450, 500 status codes directly (no exception handling)
-        if response.status_code in [421, 450, 500]:
-            LOGGER.debug(
-                f"Token validation failed with status {response.status_code} - authentication required"
-            )
-            from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-
-            raise PyiCloudAPIResponseException(
-                "Authentication required for Account", str(response.status_code)
-            )
-        elif not response.ok:
-            LOGGER.debug(f"Token validation failed with status {response.status_code}")
-            from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-
-            raise PyiCloudAPIResponseException(
-                f"Token validation failed: {response.reason}", str(response.status_code)
-            )
-
-        LOGGER.debug("Session token is still valid")
-        result: Dict[str, Any] = response.json()
-        return result
+            with self.use_rules(rules):
+                response = self.session.post(
+                    f"{self.SETUP_ENDPOINT}/validate", data="null", headers=headers
+                )
+            LOGGER.debug("Session token is still valid")
+            result: Dict[str, Any] = response.json()
+            return result
+        except PyiCloudAPIResponseException as err:
+            LOGGER.debug("Invalid authentication token")
+            raise err
 
     def _get_auth_headers(self, overrides: Dict[str, str] | None = None) -> Dict[str, str]:
         headers = {
@@ -768,30 +739,24 @@ class PyiCloudService:
         device.update({"verificationCode": code, "trustBrowser": True})
         data = json.dumps(device)
 
-        response = self.session.post(
-            f"{self.SETUP_ENDPOINT}/validateVerificationCode",
-            params=self.params,
-            data=data,
-        )
-        if response.ok and response.headers["content-type"].split(";")[0] in ["application/json"]:
-            response_data = response.json()
-            if response_data.get("errorCode") == -21669:
-                # "content": {
-                #   "success": false,
-                #   "errorTitle": "Invalid Code",
-                #   "errorMessage": "The code you entered is not valid.",
-                #   "errorCode": -21669
-                # }
+        try:
+            self.session.post(
+                f"{self.SETUP_ENDPOINT}/validateVerificationCode",
+                params=self.params,
+                data=data,
+            )
+        except PyiCloudAPIResponseException as error:
+            if str(error.code) == "-21669":
                 # Wrong verification code
                 return False
-            else:
-                # When validating a code through the 2SA endpoint
-                # the /2sv/trust URL returns 404 and won't return a trust token
-                # self.trust_session()
-                self._authenticate_with_token()
+            raise
 
-                return not self.requires_2sa
-        raise PyiCloudAPIResponseException("Failed to verify code")
+        # When validating a code through the 2SA endpoint
+        # the /2sv/trust URL returns 404 and won't return a trust token
+        # self.trust_session()
+        self._authenticate_with_token()
+
+        return not self.requires_2sa
 
     def validate_2fa_code_sms(self, device_id: int, code: str) -> bool:
         """Verifies a verification code received via Apple's 2FA system through SMS."""
@@ -832,80 +797,64 @@ class PyiCloudService:
 
         headers = self._get_auth_headers({"Accept": "application/json"})
 
-        if self.response_observer:
-            rules = list(
-                chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules,
-                    self.header_pass_rules,
-                    self.header_drop_rules,
+        try:
+            if self.response_observer:
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                    )
                 )
-            )
-        else:
-            rules = []
-
-        with self.use_rules(rules):
-            response = self.session.post(
-                f"{self.AUTH_ENDPOINT}/verify/trusteddevice/securitycode",
-                data=json.dumps(data),
-                headers=headers,
-            )
-        if response.status_code == 400:
-            if response.headers["content-type"].split(";")[0] in ["application/json"]:
-                response_data = response.json()
-                if response_data["hasError"]:
-                    # "content": {
-                    #   "service_errors": [
-                    #     {
-                    #       "code": "-21669",
-                    #       "title": "Incorrect Verification Code",
-                    #       "message": "Incorrect verification code.",
-                    #       "suppressDismissal": false
-                    #     }
-                    #   ],
-                    #   "hasError": true
-                    # }
-                    # Wrong verification code
-                    LOGGER.error("Code verification failed.")
-                    return False
-                else:
-                    pass
             else:
-                pass
-            raise PyiCloudAPIResponseException("Unexpected response for code veridfication")
-        else:
-            LOGGER.debug("Code verification successful.")
+                rules = []
 
-            self.trust_session()
-            return not self.requires_2sa
+            with self.use_rules(rules):
+                self.session.post(
+                    f"{self.AUTH_ENDPOINT}/verify/trusteddevice/securitycode",
+                    data=json.dumps(data),
+                    headers=headers,
+                )
+        except PyiCloudAPIResponseException as error:
+            if str(error.code) == "-21669":
+                # Wrong verification code
+                LOGGER.error("Code verification failed.")
+                return False
+            raise
+
+        LOGGER.debug("Code verification successful.")
+
+        self.trust_session()
+        return not self.requires_2sa
 
     def trust_session(self) -> bool:
         """Request session trust to avoid user log in going forward."""
         headers = self._get_auth_headers()
 
-        if self.response_observer:
-            rules = list(
-                chain(
-                    self.cookie_obfuscate_rules,
-                    self.header_obfuscate_rules,
-                    self.header_pass_rules,
-                    self.header_drop_rules,
+        try:
+            if self.response_observer:
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                    )
                 )
-            )
-        else:
-            rules = []
-
-        with self.use_rules(rules):
-            response = self.session.get(
-                f"{self.AUTH_ENDPOINT}/2sv/trust",
-                headers=headers,
-            )
-            if response.ok:
-                self._authenticate_with_token()
-                return True
             else:
-                LOGGER.error("Session trust failed.")
-                return False
+                rules = []
+
+            with self.use_rules(rules):
+                self.session.get(
+                    f"{self.AUTH_ENDPOINT}/2sv/trust",
+                    headers=headers,
+                )
+            self._authenticate_with_token()
+            return True
+        except PyiCloudAPIResponseException:
+            LOGGER.error("Session trust failed.")
+            return False
 
     def _get_webservice_url(self, ws_key: str) -> str:
         """Get webservice URL, raise an exception if not exists."""
