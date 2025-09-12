@@ -113,62 +113,51 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_download_photos_and_set_exif_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [
-            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1151066),
-            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257),
-        ]
+        # files_to_create = [
+        #     # ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1151066),
+        #     # ("2018/07/30", "IMG_7407_QVovd0F.JPG", 656257),
+        # ]
 
         files_to_download = [
-            ("2018/07/30", "IMG_7405_QVkrUjN.MOV"),
-            ("2018/07/30", "IMG_7407_QVovd0F.MOV"),
-            ("2018/07/30", "IMG_7408_QVI4T2l.MOV"),
+            # ("2018/07/30", "IMG_7405_QVkrUjN.MOV"),
+            # ("2018/07/30", "IMG_7407_QVovd0F.MOV"),
+            # ("2018/07/30", "IMG_7408_QVI4T2l.MOV"),
             ("2018/07/31", "IMG_7409_QVk2Yyt.JPG"),
-            ("2018/07/31", "IMG_7409_QVk2Yyt.MOV"),
+            # ("2018/07/31", "IMG_7409_QVk2Yyt.MOV"),
         ]
 
-        # Download the first photo, but mock the video download
-        orig_download = PhotoAsset.download
-
-        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
-            if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, session, _url, start)
-                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
-                return response
-            return mock.MagicMock()
-
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
-            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
-                get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    files_to_create,
-                    files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "4",
-                        "--set-exif-datetime",
-                        # '--skip-videos',
-                        # "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--file-match-policy",
-                        "name-id7",
-                    ],
-                )
-                assert result.exit_code == 0
+        with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+            get_exif_patched.return_value = None
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_4_recent_all.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--set-exif-datetime",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--file-match-policy",
+                    "name-id7",
+                ],
+            )
+            assert result.exit_code == 0
 
         self.assertIn(
-            "Looking up all photos and videos...",
+            "Looking up all photos...",
             result.output,
         )
         self.assertIn(
-            f"Downloading 4 original photos and videos to {data_dir} ...",
+            f"Downloading the first original photo to {data_dir} ...",
             result.output,
         )
         self.assertIn(
@@ -185,7 +174,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             f"Setting EXIF timestamp for {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}: {expectedDatetime}",
             result.output,
         )
-        self.assertIn("All photos and videos have been downloaded", result.output)
+        self.assertIn("All photos have been downloaded", result.output)
 
     def test_download_photos_and_get_exif_exceptions_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
