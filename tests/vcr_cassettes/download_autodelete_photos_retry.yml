@@ -8522,6 +8522,48 @@ interactions:
       code: 200
       message: OK
 - request:
+    body: '{"atomic": true, "desiredKeys": ["isDeleted"], "operations": [{"operationType":
+      "update", "record": {"fields": {"isDeleted": {"value": 1}}, "recordChangeTag":
+      "49lh", "recordName": "F2A23C38-0020-42FE-A273-2923ADE3CAED", "recordType":
+      "CPLAsset"}}], "zoneID": {"zoneName": "PrimarySync"}}'
+    headers:
+      Accept:
+      - '*/*'
+      Accept-Encoding:
+      - gzip, deflate
+      Connection:
+      - keep-alive
+      Content-Length:
+      - '288'
+      Content-type:
+      - application/json
+      Origin:
+      - https://www.icloud.com
+      Referer:
+      - https://www.icloud.com/
+      User-Agent:
+      - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
+    method: POST
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body:
+      string: !!python/unicode '{"error":"Invalid global session","errorCode":"100"}'
+    headers:
+      Access-Control-Allow-Credentials: ['false']
+      Access-Control-Allow-Headers: ['']
+      Access-Control-Allow-Methods: ['GET,OPTIONS']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Connection: [keep-alive]
+      Content-Type: [application/json]
+      Date: ['Tue, 31 Jul 2018 12:37:09 GMT']
+      Server: [AppleHttpServer/2f080fc0]
+      X-Apple-Jingle-Correlation-Key: [4D26XAWYA5OIGHZSB362CI4HYY]
+      X-Apple-Request-UUID: [02b17a96-ee7c-4379-aecf-532ffda2c021-11533040629205]
+      X-Responding-Instance: ['contentvendorws:301500304:si03p01ic-ztde010306:8404:18RC199:nocommit']
+      apple-seq: ['0']
+      apple-tk: ['false']
+    status: {code: 401, message: Unauthorized}
+- request:
     body: 'null'
     headers:
       Accept: ['*/*']
