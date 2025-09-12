@@ -441,7 +441,7 @@ interactions:
     uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/query?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
   response:
     body:
-      string: '{"error":"Api Error","errorCode":"100"}'
+      string: '{"success":false,"error":"Api Error","errorCode":"100"}'
     headers:
       Access-Control-Allow-Credentials:
       - 'true'
@@ -482,7 +482,7 @@ interactions:
       - xrail:pv43p00ic-zteu05012101.me.com:8301:18H183:grp41
       - icloudedge:ds12p01ic-ztde01141501:7401:19RC123:Dusseldorf
     status:
-      code: 500
-      message: Internal Server Error
+      code: 200
+      message: OK
 
 version: 1
