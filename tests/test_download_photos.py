@@ -18,7 +18,7 @@ from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     calc_data_dir,
@@ -535,46 +535,34 @@ class DownloadPhotoTestCase(TestCase):
     def test_handle_albums_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error() -> None:
-            raise PyiCloudAPIResponseException("Api Error", "100")
+        # The cassette listing_albums_error.yml contains:
+        # 1. Initial authentication
+        # 2. Albums fetch that returns API error (500 with "Api Error")
+        # No mocks needed - the cassette has the error response
+        
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_albums_error.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        with mock.patch.object(PhotoLibrary, "_fetch_folders") as pa_photos_request:
-            pa_photos_request.side_effect = mock_raise_response_error
-
-            # Let the initial authenticate() call succeed,
-            # but do nothing on the second try.
-            orig_authenticate = PyiCloudService.authenticate
-
-            def mocked_authenticate(self: PyiCloudService) -> None:
-                if not hasattr(self, "already_authenticated"):
-                    orig_authenticate(self)
-                    setattr(self, "already_authenticated", True)  # noqa: B010
-
-            with mock.patch("icloudpd.constants.WAIT_SECONDS", 0):  # noqa: SIM117
-                with mock.patch.object(PyiCloudService, "authenticate", new=mocked_authenticate):
-                    _, result = run_icloudpd_test(
-                        self.assertEqual,
-                        self.root_path,
-                        base_dir,
-                        "listing_albums.yml",
-                        [],
-                        [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
-
-                    assert result.exit_code == 1
+        assert result.exit_code == 1
 
     def test_missing_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
