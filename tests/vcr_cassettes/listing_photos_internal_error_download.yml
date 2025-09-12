@@ -11636,26 +11636,11 @@ interactions:
     uri: https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/$%7Bf%7D?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ
   response:
     body:
-      string: '{"success":false,"error":"INTERNAL_ERROR","errorCode":"INTERNAL_ERROR"}'
+      string: ''
     headers:
-      Content-Type: [application/json]
-      Accept-Ranges: [bytes]
-      Access-Control-Allow-Credentials: ['false']
-      Access-Control-Allow-Headers: ['']
-      Access-Control-Allow-Methods: ['GET,OPTIONS']
-      Access-Control-Allow-Origin: ['https://www.icloud.com']
-      Apple-Originating-System: [UnknownOriginatingSystem]
       Connection: [keep-alive]
-      Content-Disposition: [attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D]
-      Content-Length: ['1884695']
-      Content-Type: [application/octet-stream]
       Date: ['Tue, 31 Jul 2018 12:37:09 GMT']
       Server: [AppleHttpServer/2f080fc0]
-      X-Apple-Jingle-Correlation-Key: [4D26XAWYA5OIGHZSB362CI4HYY]
-      X-Apple-Request-UUID: [02b17a96-ee7c-4379-aecf-532ffda2c021-11533040629205]
-      X-Responding-Instance: ['contentvendorws:301500304:si03p01ic-ztde010306:8404:18RC199:nocommit']
-      apple-seq: ['0']
-      apple-tk: ['false']
     status: {code: 500, message: Internal Server Error}
 - request:
     body: '{"atomic": true, "desiredKeys": ["isDeleted"], "operations": [{"operationType":
