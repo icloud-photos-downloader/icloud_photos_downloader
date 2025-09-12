@@ -8,8 +8,6 @@ from typing import Any, Callable, NoReturn
 from unittest import TestCase, mock
 
 import pytest
-import pytz
-from tzlocal import get_localzone
 from vcr import VCR
 
 from icloudpd import constants
@@ -152,9 +150,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        files = [
-            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
-        ]
+        files = ["2023/06/07/IMG_3589.JPG"]
 
         result = run_cassette(
             os.path.join(self.vcr_path, "download_autodelete_photos_part1.yml"),
@@ -253,28 +249,28 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7406.MOV",
-            f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7383.PNG",
-            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190.JPG",
-            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190-medium.JPG",
+            "2018/07/30/IMG_7406.MOV",
+            "2018/07/26/IMG_7383.PNG",
+            "2018/07/12/IMG_7190.JPG",
+            "2018/07/12/IMG_7190-medium.JPG",
         ]
 
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
+                "2018/07/30/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
+                "2018/07/26/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
+                "2018/07/12/",
             )
         )
 
@@ -358,9 +354,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        files = [
-            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
-        ]
+        files = ["2023/06/07/IMG_3589.JPG"]
 
         # Store reference to original delete_photo function
         from icloudpd.base import delete_photo
@@ -466,9 +460,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        files = [
-            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
-        ]
+        files = ["2023/06/07/IMG_3589.JPG"]
 
         def mock_raise_response_error(
             a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
@@ -544,9 +536,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        files = [
-            f"{f'{datetime.datetime.fromtimestamp(1686106167436.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_3589.JPG"
-        ]
+        files = ["2023/06/07/IMG_3589.JPG"]
 
         def mock_raise_response_error(
             a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
@@ -623,28 +613,28 @@ class AutodeletePhotosTestCase(TestCase):
         files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
 
         files_to_delete = [
-            f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7406.MOV",
-            f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7383.PNG",
-            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190.JPG",
-            f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/IMG_7190-medium.JPG",
+            "2018/07/30/IMG_7406.MOV",
+            "2018/07/26/IMG_7383.PNG",
+            "2018/07/12/IMG_7190.JPG",
+            "2018/07/12/IMG_7190-medium.JPG",
         ]
 
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{f'{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
+                "2018/07/30/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{f'{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
+                "2018/07/26/",
             )
         )
         os.makedirs(
             os.path.join(
                 data_dir,
-                f"{f'{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}'}/",
+                "2018/07/12/",
             )
         )
 
