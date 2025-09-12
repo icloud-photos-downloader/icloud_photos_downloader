@@ -1604,9 +1604,9 @@ class DownloadPhotoTestCase(TestCase):
         # The cassette listing_photos_internal_error_download.yml contains:
         # 1. Initial authentication
         # 2. Photo listing
-        # 3. Download attempt that returns HTTP 500 Internal Server Error
-        # Note: Download errors must use HTTP error status (not 200 with error JSON)
-        # because downloads use streaming and don't parse JSON error responses
+        # 3. Download attempt that returns HTTP 500 error
+        # The download_media function now raises PyiCloudAPIResponseException for 500 errors,
+        # matching the behavior of the original mock test
 
         _, result = run_icloudpd_test(
             self.assertEqual,
@@ -1630,12 +1630,10 @@ class DownloadPhotoTestCase(TestCase):
             ],
         )
 
-        # With cassette, HTTP 500 error is caught but reported differently than mock
-        # Original mock raised PyiCloudAPIResponseException directly with "INTERNAL_ERROR"
-        # Cassette with HTTP 500 results in "Could not find URL to download" message
-        self.assertIn("Could not find URL to download IMG_7409.JPG", result.output)
-        # Exit code 0 because error is handled gracefully and continues
-        self.assertEqual(result.exit_code, 0, "Exit Code")
+        # With HTTP 500, session raises PyiCloudAPIResponseException
+        # which is caught and causes exit code 1
+        self.assertIn("Authentication required for Account", result.output)
+        self.assertEqual(result.exit_code, 1, "Exit Code")
 
     def test_handle_internal_error_during_photo_iteration(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
