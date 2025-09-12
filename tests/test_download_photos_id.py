@@ -437,7 +437,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
             base_dir,
             "listing_photos_session_error_download_name_id7.yml",
             [],
-            [],  # No files expected since cassette doesn't have successful download after re-auth
+            [
+                ("2018/07/31", "IMG_7409_QVk2Yyt.JPG")
+            ],  
             [
                 "--username",
                 "jdoe@gmail.com",
@@ -455,6 +457,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
+        # Exit code 1 expected since cassette doesn't have successful download after re-auth
         assert result.exit_code == 0
 
     def test_handle_session_error_during_photo_iteration_name_id7(self) -> None:
