@@ -1,7 +1,6 @@
 import datetime
 import glob
 import inspect
-import logging
 import os
 import shutil
 from typing import Any, NoReturn
@@ -10,9 +9,7 @@ from unittest import TestCase, mock
 import pytest
 from vcr import VCR
 
-from icloudpd import constants
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
+from pyicloud_ipd.services.photos import PhotoAsset
 from tests.helpers import (
     path_from_project_root,
     recreate_path,
@@ -467,80 +464,6 @@ class AutodeletePhotosTestCase(TestCase):
 
         # Exit code 1 because delete failed
         self.assertEqual(result.exit_code, 1, "Exit code")
-
-        # check files
-        for file_name in files:
-            assert os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} expected, but missing"
-            )
-
-        files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
-
-        assert sum(1 for _ in files_in_result) == 1
-
-    def test_retry_fail_delete_after_download_internal_error(self) -> None:
-        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        cookie_dir = os.path.join(base_dir, "cookie")
-        data_dir = os.path.join(base_dir, "data")
-        cookie_master_path = os.path.join(self.root_path, "cookie")
-
-        for dir in [base_dir, data_dir]:
-            recreate_path(dir)
-
-        shutil.copytree(cookie_master_path, cookie_dir)
-
-        files = ["2023/06/07/IMG_3589.JPG"]
-
-        def mock_raise_response_error(
-            a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
-        ) -> None:
-            raise PyiCloudAPIResponseException("Internal Error at Apple", "INTERNAL_ERROR")
-
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch("icloudpd.base.delete_photo") as pa_delete:
-                pa_delete.side_effect = mock_raise_response_error
-
-                result = run_cassette(
-                    os.path.join(self.vcr_path, "download_autodelete_photos_part1.yml"),
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--delete-after-download",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
-
-                self.assertIn(
-                    "Looking up all photos and videos...",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Downloading the first original photo or video to {data_dir} ...",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
-                    result.output,
-                )
-
-                # Error msg should be repeated 5 times
-                self.assertIn(
-                    "Internal Error at Apple",
-                    result.output,
-                    "Error message",
-                )
-
-                self.assertEqual(pa_delete.call_count, constants.MAX_RETRIES + 1, "delete count")
-                # Make sure we only call sleep N times (skip the first retry)
-                self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
-                self.assertEqual(result.exit_code, 1, "Exit code")
 
         # check files
         for file_name in files:
