@@ -313,7 +313,7 @@ interactions:
     uri: https://setup.icloud.com/setup/ws/1/sendVerificationCode?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901
   response:
     body:
-      string: !!python/unicode '{"success":false,"errorTitle":"Service Error","errorMessage":"Service temporarily unavailable","errorCode":-20000}'
+      string: !!python/unicode '{"success":false, "errorTitle": "Invalid Code", "errorMessage": "The code you entered is not valid.","errorCode": -21669}'
     headers:
       Access-Control-Allow-Credentials: ['true']
       Access-Control-Allow-Origin: ['https://www.icloud.com']
