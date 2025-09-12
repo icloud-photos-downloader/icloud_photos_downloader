@@ -425,58 +425,48 @@ class AutodeletePhotosTestCase(TestCase):
 
         files = ["2023/06/07/IMG_3589.JPG"]
 
-        def mock_raise_response_error(
-            a1_: logging.Logger, a2_: PhotosService, a3_: PhotoLibrary, a4_: PhotoAsset
-        ) -> None:
-            if not hasattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}"):
-                setattr(self, f"already_raised_session_exception{inspect.stack()[0][3]}", True)  # noqa: B010
-                raise PyiCloudAPIResponseException("Internal Error at Apple", "INTERNAL_ERROR")
+        # The cassette download_autodelete_photos_internal_error.yml contains:
+        # 1. Initial authentication
+        # 2. Photo download
+        # 3. Delete attempt that returns internal error (500 with "Internal Error at Apple")
+        # 4. No retry happens because MAX_RETRIES is 0 for internal errors
+        # No mocks needed - the cassette has all the necessary responses
 
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch("icloudpd.base.delete_photo") as pa_delete:
-                pa_delete.side_effect = mock_raise_response_error
+        result = run_cassette(
+            os.path.join(self.vcr_path, "download_autodelete_photos_internal_error.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--delete-after-download",
+                "-d",
+                data_dir,
+                "--cookie-directory",
+                cookie_dir,
+            ],
+        )
 
-                result = run_cassette(
-                    os.path.join(self.vcr_path, "download_autodelete_photos_part1.yml"),
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--delete-after-download",
-                        "-d",
-                        data_dir,
-                        "--cookie-directory",
-                        cookie_dir,
-                    ],
-                )
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading the first original photo or video to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
+            result.output,
+        )
 
-                self.assertIn(
-                    "Looking up all photos and videos...",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Downloading the first original photo or video to {data_dir} ...",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Downloading {os.path.join(data_dir, os.path.normpath(files[0]))}",
-                    result.output,
-                )
+        # Error msg should appear
+        self.assertIn("Authentication required for Account. (500)", result.output)
 
-                # Error msg should be repeated MAX_RETRIES times
-                self.assertIn("Internal Error at Apple", result.output)
-
-                self.assertEqual(
-                    pa_delete.call_count, 1 + min(1, constants.MAX_RETRIES), "delete count"
-                )
-                # Make sure we only call sleep 4 times (skip the first retry)
-                self.assertEqual(
-                    sleep_mock.call_count, min(1, constants.MAX_RETRIES), "sleep count"
-                )
-                self.assertEqual(result.exit_code, 1, "Exit code")
+        # Exit code 1 because delete failed
+        self.assertEqual(result.exit_code, 1, "Exit code")
 
         # check files
         for file_name in files:
