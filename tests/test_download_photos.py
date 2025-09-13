@@ -288,15 +288,15 @@ class DownloadPhotoTestCase(TestCase):
 
         # Files to create locally (will trigger --until-found after 3 consecutive)
         files_to_create = [
-            ("2018/07/30", "IMG_7408.JPG", 151),  # Using small size like our one-pixel JPEG
-            ("2018/07/30", "IMG_7408-medium.MOV", 151),
-            ("2018/07/30", "IMG_7405.MOV", 151),
-            ("2018/07/30", "IMG_7404.MOV", 151),
-            ("2018/07/30", "IMG_7401.MOV", 151),
-            ("2018/07/30", "IMG_7400.JPG", 151),
-            ("2018/07/30", "IMG_7400-medium.MOV", 151),
-            ("2018/07/30", "IMG_7399.JPG", 151),
-            ("2018/07/30", "IMG_7399-medium.MOV", 151),
+            ("2018/07/30", "IMG_7408.JPG", 161),  # Using small size like our one-pixel JPEG
+            ("2018/07/30", "IMG_7408-medium.MOV", 161),
+            ("2018/07/30", "IMG_7405.MOV", 161),
+            ("2018/07/30", "IMG_7404.MOV", 161),
+            ("2018/07/30", "IMG_7401.MOV", 161),
+            ("2018/07/30", "IMG_7400.JPG", 161),
+            ("2018/07/30", "IMG_7400-medium.MOV", 161),
+            ("2018/07/30", "IMG_7399.JPG", 161),
+            ("2018/07/30", "IMG_7399-medium.MOV", 161),
         ]
 
         data_dir, result = run_icloudpd_test(
@@ -1011,13 +1011,13 @@ class DownloadPhotoTestCase(TestCase):
         files_to_create = [
             ("2018/07/31", "IMG_7409.JPG", 1),
             ("2018/07/31", "IMG_7409.MOV", 1),
-            ("2018/07/30", "IMG_7408.JPG", 151),
-            ("2018/07/30", "IMG_7408.MOV", 151),
+            ("2018/07/30", "IMG_7408.JPG", 161),
+            ("2018/07/30", "IMG_7408.MOV", 161),
         ]
 
         files_to_download = [
-            ("2018/07/31", "IMG_7409-151.JPG"),
-            ("2018/07/31", "IMG_7409-151.MOV"),
+            ("2018/07/31", "IMG_7409-161.JPG"),
+            ("2018/07/31", "IMG_7409-161.MOV"),
         ]
 
         data_dir, result = run_icloudpd_test(
@@ -1047,11 +1047,11 @@ class DownloadPhotoTestCase(TestCase):
             result.output,
         )
         self.assertIn(
-            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-151.JPG'))} deduplicated",
+            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-161.JPG'))} deduplicated",
             result.output,
         )
         self.assertIn(
-            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-151.MOV'))} deduplicated",
+            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-161.MOV'))} deduplicated",
             result.output,
         )
         # self.assertIn("Skipping IMG_7405.MOV, only downloading photos.", result.output)
@@ -1060,15 +1060,15 @@ class DownloadPhotoTestCase(TestCase):
 
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(
-            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-151.JPG"))
+            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-161.JPG"))
         )
         photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
         self.assertTrue(
-            os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-151.MOV")))
+            os.path.exists(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-161.MOV")))
         )
         photo_mtime = os.path.getmtime(
-            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-151.MOV"))
+            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-161.MOV"))
         )
         photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))

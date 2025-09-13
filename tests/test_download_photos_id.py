@@ -285,14 +285,14 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ("2018/07/30", "IMG_7399_QVVMcXN-medium.MOV"),
         ]
         files_to_create = [
-            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 151),
-            ("2018/07/30", "IMG_7408_QVI4T2l-medium.MOV", 151),
-            ("2018/07/30", "IMG_7405_QVkrUjN.MOV", 151),
-            ("2018/07/30", "IMG_7404_QVI5TWx.MOV", 151),
-            ("2018/07/30", "IMG_7401_QVRJanZ.MOV", 151),
-            ("2018/07/30", "IMG_7400_QVhFL01.JPG", 151),
-            ("2018/07/30", "IMG_7400_QVhFL01-medium.MOV", 151),
-            ("2018/07/30", "IMG_7399_QVVMcXN.JPG", 151),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 161),
+            ("2018/07/30", "IMG_7408_QVI4T2l-medium.MOV", 161),
+            ("2018/07/30", "IMG_7405_QVkrUjN.MOV", 161),
+            ("2018/07/30", "IMG_7404_QVI5TWx.MOV", 161),
+            ("2018/07/30", "IMG_7401_QVRJanZ.MOV", 161),
+            ("2018/07/30", "IMG_7400_QVhFL01.JPG", 161),
+            ("2018/07/30", "IMG_7400_QVhFL01-medium.MOV", 161),
+            ("2018/07/30", "IMG_7399_QVVMcXN.JPG", 161),
         ]
 
         data_dir, result = run_icloudpd_test(
@@ -941,14 +941,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
         files_to_create = [
             ("2018/07/31", "IMG_7409_QVk2Yyt.JPG", 1),
             ("2018/07/31", "IMG_7409_QVk2Yyt.MOV", 1),
-            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 151),
-            ("2018/07/30", "IMG_7408_QVI4T2l.MOV", 151),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 161),
+            ("2018/07/30", "IMG_7408_QVI4T2l.MOV", 161),
         ]
-
-        # files_to_download = [
-        # ("2018/07/31", "IMG_7409_QVk2Yyt-151.JPG"),
-        # ("2018/07/31", "IMG_7409_QVk2Yyt-151.MOV"),
-        # ]
 
         data_dir, result = run_icloudpd_test(
             self.assertEqual,
