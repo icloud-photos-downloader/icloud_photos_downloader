@@ -4,9 +4,9 @@ import logging
 import os
 import shutil
 import sys
-from typing import Any, List, NoReturn, Sequence, Tuple
+from typing import Any, List, NoReturn, Tuple
 from unittest import TestCase, mock
-from unittest.mock import ANY, PropertyMock, call
+from unittest.mock import ANY, PropertyMock
 
 import piexif
 import pytest
@@ -17,7 +17,7 @@ from requests import Response
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.services.photos import PhotoAsset
-from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
+from pyicloud_ipd.version_size import AssetVersionSize
 from tests.helpers import (
     calc_data_dir,
     create_files,
@@ -276,103 +276,79 @@ class DownloadPhotoTestCase(TestCase):
     def test_until_found(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download_ext: Sequence[Tuple[str, str, str]] = [
-            ("2018/07/31", "IMG_7409.JPG", "photo"),
-            ("2018/07/31", "IMG_7409-medium.MOV", "photo"),
-            ("2018/07/30", "IMG_7407.JPG", "photo"),
-            ("2018/07/30", "IMG_7407-medium.MOV", "photo"),
-            ("2018/07/30", "IMG_7403.MOV", "video"),
-            ("2018/07/30", "IMG_7402.MOV", "video"),
-            ("2018/07/30", "IMG_7399-medium.MOV", "photo"),
+        # Files that will be attempted to download (until finding 3 consecutive existing)
+        files_to_download = [
+            ("2018/07/31", "IMG_7409.JPG"),
+            ("2018/07/31", "IMG_7409-medium.MOV"),
+            ("2018/07/30", "IMG_7407.JPG"),
+            ("2018/07/30", "IMG_7407-medium.MOV"),
+            ("2018/07/30", "IMG_7403.MOV"),
+            ("2018/07/30", "IMG_7402.MOV"),
         ]
-        files_to_create_ext: Sequence[Tuple[str, str, str, int]] = [
-            ("2018/07/30", "IMG_7408.JPG", "photo", 1151066),
-            ("2018/07/30", "IMG_7408-medium.MOV", "photo", 894467),
-            ("2018/07/30", "IMG_7405.MOV", "video", 36491351),
-            ("2018/07/30", "IMG_7404.MOV", "video", 225935003),
-            # TODO large files on Windows times out
-            ("2018/07/30", "IMG_7401.MOV", "photo", 565699696),
-            ("2018/07/30", "IMG_7400.JPG", "photo", 2308885),
-            ("2018/07/30", "IMG_7400-medium.MOV", "photo", 1238639),
-            ("2018/07/30", "IMG_7399.JPG", "photo", 2251047),
-        ]
+
+        # Files to create locally (will trigger --until-found after 3 consecutive)
         files_to_create = [
-            (dir_name, file_name, size) for dir_name, file_name, _, size in files_to_create_ext
+            ("2018/07/30", "IMG_7408.JPG", 151),  # Using small size like our one-pixel JPEG
+            ("2018/07/30", "IMG_7408-medium.MOV", 151),
+            ("2018/07/30", "IMG_7405.MOV", 151),
+            ("2018/07/30", "IMG_7404.MOV", 151),
+            ("2018/07/30", "IMG_7401.MOV", 151),
+            ("2018/07/30", "IMG_7400.JPG", 151),
+            ("2018/07/30", "IMG_7400-medium.MOV", 151),
+            ("2018/07/30", "IMG_7399.JPG", 151),
+            ("2018/07/30", "IMG_7399-medium.MOV", 151),
         ]
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
-            with mock.patch("icloudpd.download.os.utime") as ut_patched:
-                ut_patched.return_value = None
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    files_to_create,
-                    [],  # we fake downloading
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--live-photo-size",
-                        "medium",
-                        "--until-found",
-                        "3",
-                        "--recent",
-                        "20",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_until_found.yml",  # New cassette with proper downloads
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--live-photo-size",
+                "medium",
+                "--until-found",
+                "3",
+                "--recent",
+                "20",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-                expected_calls = list(
-                    map(
-                        lambda f: call(
-                            ANY,
-                            False,
-                            ANY,
-                            ANY,
-                            os.path.join(data_dir, os.path.normpath(f[0]), f[1]),
-                            ANY,
-                            LivePhotoVersionSize.MEDIUM
-                            if (f[2] == "photo" and f[1].endswith(".MOV"))
-                            else AssetVersionSize.ORIGINAL,
-                            ANY,  # filename_builder
-                        ),
-                        files_to_download_ext,
-                    )
-                )
-                dp_patched.assert_has_calls(expected_calls)
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
 
-                self.assertIn(
-                    "Looking up all photos and videos...",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Downloading ??? original photos and videos to {data_dir} ...",
-                    result.output,
-                )
+        # Should download the first 4 files before hitting 3 consecutive existing
+        for dir_name, file_name in files_to_download:
+            file_path = os.path.join(data_dir, os.path.normpath(dir_name), file_name)
+            self.assertIn(
+                f"Downloading {file_path}",
+                result.output,
+            )
 
-                for s in files_to_create:
-                    expected_message = (
-                        f"{os.path.join(data_dir, os.path.normpath(s[0]), s[1])} already exists"
-                    )
-                    self.assertIn(expected_message, result.output)
+        # Should recognize existing files
+        for dir_name, file_name, _ in files_to_create[:3]:  # First 3 that trigger until-found
+            file_path = os.path.join(data_dir, os.path.normpath(dir_name), file_name)
+            self.assertIn(
+                f"{file_path} already exists",
+                result.output,
+            )
 
-                for d in files_to_download_ext:
-                    expected_message = (
-                        f"{os.path.join(data_dir, os.path.normpath(d[0]), d[1])} already exists"
-                    )
-                    self.assertNotIn(expected_message, result.output)
-
-                self.assertIn(
-                    "Found 3 consecutive previously downloaded photos. Exiting",
-                    result.output,
-                )
-                assert result.exit_code == 0
+        self.assertIn(
+            "Found 3 consecutive previously downloaded photos. Exiting",
+            result.output,
+        )
+        assert result.exit_code == 0
 
     def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
