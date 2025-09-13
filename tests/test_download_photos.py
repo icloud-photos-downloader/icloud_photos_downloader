@@ -6,7 +6,7 @@ import shutil
 import sys
 from typing import Any, List, NoReturn, Tuple
 from unittest import TestCase, mock
-from unittest.mock import ANY, PropertyMock
+from unittest.mock import PropertyMock
 
 import piexif
 import pytest
@@ -14,7 +14,6 @@ import pytz
 from piexif._exceptions import InvalidImageDataError
 from requests import Response
 
-from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import AssetVersionSize
@@ -726,68 +725,47 @@ class DownloadPhotoTestCase(TestCase):
 
     def test_download_two_sizes_with_force_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_two_sizes_forced.yml",
+            [],
+            [("2018/07/31", "IMG_7409-medium.JPG")],  # thumb is missing in cassette
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--size",
+                "medium",
+                "--size",
+                "thumb",
+                "--skip-live-photos",
+                "--force-size",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-            with mock.patch("icloudpd.download.os.utime") as ut_patched:
-                ut_patched.return_value = None
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading the first medium,thumb photo or video to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            "thumb size does not exist for IMG_7409.JPG. Skipping...",
+            result.output,
+        )
+        self.assertIn("All photos and videos have been downloaded", result.output)
 
-                with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
-                    pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
-                        AssetVersionSize.THUMB: AssetVersion(1, "http", "jpeg", "blah"),
-                    }
-
-                    data_dir, result = run_icloudpd_test(
-                        self.assertEqual,
-                        self.root_path,
-                        base_dir,
-                        "listing_photos.yml",
-                        [],
-                        [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--size",
-                            "medium",
-                            "--size",
-                            "thumb",
-                            "--force-size",
-                            "--no-progress-bar",
-                            "--threads-num",
-                            "1",
-                        ],
-                    )
-
-                    self.assertIn(
-                        "Looking up all photos and videos...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading the first medium,thumb photo or video to {data_dir} ...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        "medium size does not exist for IMG_7409.JPG. Skipping...",
-                        result.output,
-                    )
-                    self.assertIn("All photos and videos have been downloaded", result.output)
-                    dp_patched.assert_called_once_with(
-                        ANY,
-                        False,
-                        ANY,
-                        ANY,
-                        f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-thumb.JPG'))}",
-                        ANY,
-                        AssetVersionSize.THUMB,
-                        ANY,  # filename_builder
-                    )
-
-                    assert result.exit_code == 0
+        assert result.exit_code == 0
 
     def test_invalid_creation_date(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
