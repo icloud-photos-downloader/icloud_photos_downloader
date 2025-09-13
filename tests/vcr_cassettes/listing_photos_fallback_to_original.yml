@@ -557,7 +557,7 @@ interactions:
         \     \"resJPEGMedWidth\" : {\n        \"value\" : 1536,\n        \"type\"
         : \"INT64\"\n      },\n      \"resVidMedRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"AYekXYm6iiMJuV3UR3cjy4iyyAWI\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"k+e8PCUMkDF5KRnurRqH4g==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"k+e8PCUMkDF5KRnurRqH4g==\",\n          \"referenceChecksum\"
         : \"AeFBBYsTaK2qkoE8rGNy/XYzd9Tu\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AYekXYm6iiMJuV3UR3cjy4iyyAWIAeFBBYsTaK2qkoE8rGNy_XYzd9Tu/${f}?o=AqN_-dlKwRRPb2TPCyVjdv--v_2hI4vsYBqB6iKiUHI0&v=1&x=3&a=B7ovHHpleJFqw4tij5Vjb8Dv3Z_hA1LaRAEAAAMW2kQ&e=1533044225&k=k-e8PCUMkDF5KRnurRqH4g&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=SULMUU1tB_M-w3FghCx5YYfBvoQ\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalHeight\"
         : {\n        \"value\" : 3024,\n        \"type\" : \"INT64\"\n      },\n      \"resVidSmallFingerprint\"
@@ -568,19 +568,19 @@ interactions:
         : \"STRING\"\n      },\n      \"resJPEGMedHeight\" : {\n        \"value\"
         : 2048,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AY6c+BsE0jjaXx9tmVGJM1D2VcEO\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"Aj375aJi6sEmqgJPj64+7Q==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"Aj375aJi6sEmqgJPj64+7Q==\",\n
         \         \"referenceChecksum\" : \"AfUMnLhKAW8bwnMCwMMXLMKCslue\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/${f}?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
         : {\n        \"value\" : \"com.apple.quicktime-movie\",\n        \"type\"
         : \"STRING\"\n      },\n      \"resVidSmallRes\" : {\n        \"value\" :
         {\n          \"fileChecksum\" : \"AU1su88KMDhy1lv1ePqK9tLE5WZZ\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"NzrFrCvgMnbo497seRaA8A==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"NzrFrCvgMnbo497seRaA8A==\",\n          \"referenceChecksum\"
         : \"Aewv9OJtyVk3GSnF52VRAMBIoMbQ\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AU1su88KMDhy1lv1ePqK9tLE5WZZAewv9OJtyVk3GSnF52VRAMBIoMbQ/${f}?o=Aml341-JPIlpbDxurGGOYAHrl_SdCRgwTZYTbCRLpx6X&v=1&x=3&a=B7zVl3SIIZClIzgbRXrvrXjujsRCA1LaRAEAAAMW2kQ&e=1533044225&k=NzrFrCvgMnbo497seRaA8A&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=C8qXLULvFGWyYnWneAHwn7W4SLU\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGThumbHeight\"
         : {\n        \"value\" : 480,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalVidComplRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AWekUGGQQFdAFiLtTwv3XGhsvgGY\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"D0HS6APZL/8JtZI8l/WbCQ==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"D0HS6APZL/8JtZI8l/WbCQ==\",\n
         \         \"referenceChecksum\" : \"AXpCzDImJyuf45HmstD8fO8gaFJL\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AWekUGGQQFdAFiLtTwv3XGhsvgGYAXpCzDImJyuf45HmstD8fO8gaFJL/${f}?o=AgMPlX3QYicKbalru37NxsG4HXFF9L92swcwzWFPH49i&v=1&x=3&a=By22JnlH8SDKxIy--7wo_QuUADnLA1LaRAEAAAMW2kQ&e=1533044225&k=D0HS6APZL_8JtZI8l_WbCQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=BDQlDMoPEG-l0IAgOkWjboLgbYc\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGThumbFileType\"
@@ -621,7 +621,7 @@ interactions:
         \     \"resJPEGMedWidth\" : {\n        \"value\" : 1536,\n        \"type\"
         : \"INT64\"\n      },\n      \"resVidMedRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"ASG+HRFRWoQrpQKBLJKuBv7HDB2p\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"4BJ4Sz/aW/toWCDNinPIyA==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"4BJ4Sz/aW/toWCDNinPIyA==\",\n          \"referenceChecksum\"
         : \"AZR1KYriwa6GKSNWDN0OwBg1Ctdn\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/ASG-HRFRWoQrpQKBLJKuBv7HDB2pAZR1KYriwa6GKSNWDN0OwBg1Ctdn/${f}?o=AiERfcb-agtPt1BOcKiSTlvRY6ueYopGumsdbh2Y1XLo&v=1&x=3&a=B7L-e0Orw5lCzU0JsYNxqBKXkw8JA1LaRAEAAAMW2kQ&e=1533044225&k=4BJ4Sz_aW_toWCDNinPIyA&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=2U1y80fYBatUeRFeZJV4JeJ98ZA\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalHeight\"
         : {\n        \"value\" : 1932,\n        \"type\" : \"INT64\"\n      },\n      \"resVidSmallFingerprint\"
@@ -637,7 +637,7 @@ interactions:
         : \"STRING\"\n      },\n      \"resJPEGMedHeight\" : {\n        \"value\"
         : 2048,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AR8OijSKPNBuzFZHNvRpv+yNookj\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"7MYh4jo4bn5RZms1eQ7kvA==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"7MYh4jo4bn5RZms1eQ7kvA==\",\n
         \         \"referenceChecksum\" : \"ASH8zZzAu/sr1O5W5zJSCsoIm5Pw\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AR8OijSKPNBuzFZHNvRpv-yNookjASH8zZzAu_sr1O5W5zJSCsoIm5Pw/${f}?o=AkklPGk6kTQ2yTXtTXXThf5Oz4sMwYZhtinpTDZyw_MA&v=1&x=3&a=B9_3O6UjE95A4eJ_D1X1xAPhkjquA1LaRAEAAAMW2kQ&e=1533044225&k=7MYh4jo4bn5RZms1eQ7kvA&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=k4PregVdS2CbzfDUYq0wxAHQkJg\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -695,7 +695,7 @@ interactions:
         \     \"resJPEGMedWidth\" : {\n        \"value\" : 1536,\n        \"type\"
         : \"INT64\"\n      },\n      \"resVidMedRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"AbxMDiB/8XVbiedZ6lf4Kf7KFVOr\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"+aofn4PDBU6sgt1nVfweoQ==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"+aofn4PDBU6sgt1nVfweoQ==\",\n          \"referenceChecksum\"
         : \"ASepa7MA7H7E5Sk/hfywmMg/EIdi\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AbxMDiB_8XVbiedZ6lf4Kf7KFVOrASepa7MA7H7E5Sk_hfywmMg_EIdi/${f}?o=AtyuALmEfhRCrpd4xc2KeK-thx-s2MrF007Y83gNOv_h&v=1&x=3&a=BzEBLCEKZ38VlH-wBSrGqYtULJyqA1LaRAEAAAMW2kQ&e=1533044225&k=-aofn4PDBU6sgt1nVfweoQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=IhR6ZgLeuwpuEBLR74bvVY3KWJY\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalHeight\"
         : {\n        \"value\" : 1932,\n        \"type\" : \"INT64\"\n      },\n      \"resVidSmallFingerprint\"
@@ -703,7 +703,7 @@ interactions:
         : \"STRING\"\n      },\n      \"resVidMedWidth\" : {\n        \"value\" :
         720,\n        \"type\" : \"INT64\"\n      },\n      \"resJPEGMedRes\" : {\n
         \       \"value\" : {\n          \"fileChecksum\" : \"AY0G8CwtSFpqzZBJARlsN8tabAms\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"X0wJEIRv+tME254c0Bvc2A==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"X0wJEIRv+tME254c0Bvc2A==\",\n
         \         \"referenceChecksum\" : \"ARFMwuyS63DB8xGRIpqh4apUj/3P\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AY0G8CwtSFpqzZBJARlsN8tabAmsARFMwuyS63DB8xGRIpqh4apUj_3P/${f}?o=ArYJBCCx4bdG6HIo9iTpAvB-5wHys2VJIvC5QGOEj6Ed&v=1&x=3&a=BwZLll0310eKS5b2xQLPM-d6lvvSA1LaRAEAAAMW2kQ&e=1533044225&k=X0wJEIRv-tME254c0Bvc2A&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=oEzQliau5ur2pFBZv_lpgwoJeCo\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalVidComplFingerprint\"
@@ -711,19 +711,19 @@ interactions:
         : \"STRING\"\n      },\n      \"resJPEGMedHeight\" : {\n        \"value\"
         : 2048,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AZ/wAGT9P6jhr0NKCjLyh7KawNEx\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"F4dlJzPdG6NUrDdLGE1wfA==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"F4dlJzPdG6NUrDdLGE1wfA==\",\n
         \         \"referenceChecksum\" : \"AXTYT0ilcM846jo3ba/RtM1ValBE\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AZ_wAGT9P6jhr0NKCjLyh7KawNExAXTYT0ilcM846jo3ba_RtM1ValBE/${f}?o=Av2Vp9gjWG1KX0gkEwoN0YYSwhDQw9WY508zP2yrUdUw&v=1&x=3&a=B6Rl9EWeJdMlP-OatzCXUvOo7U7MA1LaRAEAAAMW2kQ&e=1533044225&k=F4dlJzPdG6NUrDdLGE1wfA&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=dGv2BpjUxufh8a25pTfMVRX6cJI\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
         : {\n        \"value\" : \"com.apple.quicktime-movie\",\n        \"type\"
         : \"STRING\"\n      },\n      \"resVidSmallRes\" : {\n        \"value\" :
         {\n          \"fileChecksum\" : \"AaPfkSRT1hSHY5MAbp+bH/ocgW6X\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"EeKFXa3n0/dh8nUjW+BxpQ==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"EeKFXa3n0/dh8nUjW+BxpQ==\",\n          \"referenceChecksum\"
         : \"AaX6I5HirNjHqdR5FAxJ82ZJhhUn\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AaPfkSRT1hSHY5MAbp-bH_ocgW6XAaX6I5HirNjHqdR5FAxJ82ZJhhUn/${f}?o=Ahv1LxeEbb0x6iBEJ3E1RMT_hb3UzxkWHKBcc-BIYNQk&v=1&x=3&a=B9oM5OlkYKyMGTJM506zsMW_k2B7A1LaRAEAAAMW2kQ&e=1533044225&k=EeKFXa3n0_dh8nUjW-BxpQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=cGAJbBPNpPBgJAvgdhQ15h0ip2c\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGThumbHeight\"
         : {\n        \"value\" : 478,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalVidComplRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"ASlbkprKW0RzLARSvXOH/7wHCb5N\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"Wlbiei/p5u27krg+QKohUQ==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"Wlbiei/p5u27krg+QKohUQ==\",\n
         \         \"referenceChecksum\" : \"AdZrnjq6s3OHLYeFxGBClozz/0AZ\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/ASlbkprKW0RzLARSvXOH_7wHCb5NAdZrnjq6s3OHLYeFxGBClozz_0AZ/${f}?o=AiBhAH_Jf-Fl4bxK4hxwWbURPfQe8VmPoBR0Bu-p6Lri&v=1&x=3&a=B9NqIUmn8o9DRt7dD-Ubgvc8APNHA1LaRAEAAAMW2kQ&e=1533044225&k=Wlbiei_p5u27krg-QKohUQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=E2M4kJ5H1E8sGCjH9ar8bv4tgR4\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGThumbFileType\"
@@ -781,7 +781,7 @@ interactions:
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGMedHeight\"
         : {\n        \"value\" : 1330,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AY+R3dhJpz0NaLm5n1dA8cdywPKa\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"5TNlYdiBQ8zr4g7T86ycyA==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"5TNlYdiBQ8zr4g7T86ycyA==\",\n
         \         \"referenceChecksum\" : \"AX1jSBZGBO2rjKosEOZOnMxw0V9K\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AY-R3dhJpz0NaLm5n1dA8cdywPKaAX1jSBZGBO2rjKosEOZOnMxw0V9K/${f}?o=AlX4gNN_--CZran1al5_4bkRrqWqbB1_Lgyzr0clAz7p&v=1&x=3&a=B8LRD9JsBlFaZc3EyyMwhZWc6iZLA1LaRAEAAAMW2kQ&e=1533044225&k=5TNlYdiBQ8zr4g7T86ycyA&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=SJTc0wInbhVJPLWSaX9_3F5TKVY\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -845,7 +845,7 @@ interactions:
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGMedHeight\"
         : {\n        \"value\" : 1330,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AR9MlEx0lFVJHEQTaHcKRCD294Gx\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"uDzt4jb4HafsH/DBlaE3GQ==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"uDzt4jb4HafsH/DBlaE3GQ==\",\n
         \         \"referenceChecksum\" : \"AYemVe89AWlFPlVcVFKMqhdKHKHA\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AR9MlEx0lFVJHEQTaHcKRCD294GxAYemVe89AWlFPlVcVFKMqhdKHKHA/${f}?o=AnKVo4naaWvq2DEjxSBxTLDRLOed6I77hEP2ioaDq_jp&v=1&x=3&a=B4FnM1lXgrde6_fxcDLSVaC1ZPIqA1LaRAEAAAMW2kQ&e=1533044225&k=uDzt4jb4HafsH_DBlaE3GQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=Oy8pLE6yQEs_3wuLyiM3oloAFGo\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -909,7 +909,7 @@ interactions:
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGMedHeight\"
         : {\n        \"value\" : 1330,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AW4UkI6B5ZqZbVK7cHvMqNTi3Cqb\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"OxgvXa65V0K+5WYaGObdjQ==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"OxgvXa65V0K+5WYaGObdjQ==\",\n
         \         \"referenceChecksum\" : \"AQris8UUvQ668Xd1ODfTWbRRwHvN\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AW4UkI6B5ZqZbVK7cHvMqNTi3CqbAQris8UUvQ668Xd1ODfTWbRRwHvN/${f}?o=AjiTkFCIfN8hsfxKIwGB3MJqunyQF61Hlaq7R3imbiI9&v=1&x=3&a=B1Rnu_5bC4QwUIIeATvmc4JGzlXdA1LaRAEAAAMW2kQ&e=1533044225&k=OxgvXa65V0K-5WYaGObdjQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=b1Vs1YuyXjc3QRAPVNof5OXlIzA\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -973,7 +973,7 @@ interactions:
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGMedHeight\"
         : {\n        \"value\" : 1330,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AWXh7InIou3rM0Zo+WXXXdecePBO\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"5lJ4mNlH2rChQK8GWPgu+w==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"5lJ4mNlH2rChQK8GWPgu+w==\",\n
         \         \"referenceChecksum\" : \"AQ5incLRGlfmb/tb/agzF3MQ1Ffc\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AWXh7InIou3rM0Zo-WXXXdecePBOAQ5incLRGlfmb_tb_agzF3MQ1Ffc/${f}?o=Altt2FccD9-TGVigQSBrtfpmDHyIWISaEEt9Hf1u9VHf&v=1&x=3&a=B0pvQCkoOJT7Dlgpyd9Zvaw2ogYPA1LaRAEAAAMW2kQ&e=1533044225&k=5lJ4mNlH2rChQK8GWPgu-w&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=uaLsqwVqMvMX2EzNs-uTrEHsUZg\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -1037,7 +1037,7 @@ interactions:
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGMedHeight\"
         : {\n        \"value\" : 1330,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"ATIjvJxHQ3UEEqzVXRAHP5lUVvDK\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"hwCh+mANT5h3OwP3A2IGqA==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"hwCh+mANT5h3OwP3A2IGqA==\",\n
         \         \"referenceChecksum\" : \"AXSXHI1Dr5L9QlqBXOrVkIX4oKaq\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/ATIjvJxHQ3UEEqzVXRAHP5lUVvDKAXSXHI1Dr5L9QlqBXOrVkIX4oKaq/${f}?o=AnFPQ9Z4t8EfKzAbxZSb-40MEjcH2SOLI8xjcsqRCp4D&v=1&x=3&a=B4aiSyuiFrWC-h0Q0rKW8clleN0_A1LaRAEAAAMW2kQ&e=1533044225&k=hwCh-mANT5h3OwP3A2IGqA&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=cqwdxKqdNF2YgZXOrLJ29acRvcg\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -1089,7 +1089,7 @@ interactions:
         \     \"resJPEGMedWidth\" : {\n        \"value\" : 2048,\n        \"type\"
         : \"INT64\"\n      },\n      \"resVidMedRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"AdxWopwaBi+GnIxIfmiE3M5h0DR6\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"byuVBxdUnwvf0V6gvlheIQ==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"byuVBxdUnwvf0V6gvlheIQ==\",\n          \"referenceChecksum\"
         : \"AVykIxqCP+lEv4/qUIn37r81PLdA\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AdxWopwaBi-GnIxIfmiE3M5h0DR6AVykIxqCP-lEv4_qUIn37r81PLdA/${f}?o=ArGRhBAeLAUvskoYeCh5Vn5km0sANkmBdWE4Pnrt4vPV&v=1&x=3&a=B3BIWfTCSDvxTmYbOoZF631NT48SA1LaRAEAAAMW2kQ&e=1533044225&k=byuVBxdUnwvf0V6gvlheIQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=_Z0EMKeSwi4Zb6Pu1nM9ZIlun1I\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalHeight\"
         : {\n        \"value\" : 3024,\n        \"type\" : \"INT64\"\n      },\n      \"resVidSmallFingerprint\"
@@ -1105,7 +1105,7 @@ interactions:
         : \"STRING\"\n      },\n      \"resJPEGMedHeight\" : {\n        \"value\"
         : 1536,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AXE/MlykbRbSwjFfqPAr1NDaT0T1\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"7Ho9Z9VtOn3PdSs39MqtjQ==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"7Ho9Z9VtOn3PdSs39MqtjQ==\",\n
         \         \"referenceChecksum\" : \"AcaLpGPax48DikzHT0VezJwtpe6L\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AXE_MlykbRbSwjFfqPAr1NDaT0T1AcaLpGPax48DikzHT0VezJwtpe6L/${f}?o=AoA045z1g8C9rgrRbG3voSs9d_A5D-vhwpQVoroEvq4e&v=1&x=3&a=Bym1RAfpD4xOpWxRU0ZL6dNJAzrfA1LaRAEAAAMW2kQ&e=1533044225&k=7Ho9Z9VtOn3PdSs39MqtjQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=_XEgVLP-snHhrbtt0SG2rJJkUCo\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -1163,7 +1163,7 @@ interactions:
         \     \"resJPEGMedWidth\" : {\n        \"value\" : 2048,\n        \"type\"
         : \"INT64\"\n      },\n      \"resVidMedRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"AVVBoiEpq/eMXC6o+vC0H5ZHIxz8\",\n          \"size\"
-        : 151,\n          \"wrappingKey\" : \"gY6XgKiX4wAoqY5+lpyt9A==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"gY6XgKiX4wAoqY5+lpyt9A==\",\n          \"referenceChecksum\"
         : \"AX6D1VRvzNPFN2T9PjHAseMtFlB3\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AVVBoiEpq_eMXC6o-vC0H5ZHIxz8AX6D1VRvzNPFN2T9PjHAseMtFlB3/${f}?o=AknHPnn6NZMDArtX8VrPFJovKB_RoFU4UBhM6K2jbb9c&v=1&x=3&a=B4FMupO33GqQoe5sDD2DkYzDBZV7A1LaRAEAAAMW2kQ&e=1533044225&k=gY6XgKiX4wAoqY5-lpyt9A&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=afOOA20lak6HEN79Vqris6LQsJ0\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resOriginalHeight\"
         : {\n        \"value\" : 3024,\n        \"type\" : \"INT64\"\n      },\n      \"resVidSmallFingerprint\"
@@ -1179,7 +1179,7 @@ interactions:
         : \"STRING\"\n      },\n      \"resJPEGMedHeight\" : {\n        \"value\"
         : 1536,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AULqseWEVDM/tX0Ew6z/srAwyKAE\",\n
-        \         \"size\" : 151,\n          \"wrappingKey\" : \"xIvmZgwoGc/I73MWoc8z3Q==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"xIvmZgwoGc/I73MWoc8z3Q==\",\n
         \         \"referenceChecksum\" : \"AZ+RRRRCpttKBufRN75tua9Mo0xk\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AULqseWEVDM_tX0Ew6z_srAwyKAEAZ-RRRRCpttKBufRN75tua9Mo0xk/${f}?o=AoylpRePShg_g-NxvGYzjgo_nanb8JZsklgatBaqtyny&v=1&x=3&a=B_MAaKWoPngu_2b5b1icSMUNjrU0A1LaRAEAAAMW2kQ&e=1533044225&k=xIvmZgwoGc_I73MWoc8z3Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=ZCmCDhIJDIzFp0esuL79sQFDTwI\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -11625,6 +11625,43 @@ interactions:
       x-filename: IMG_7409.JPG
     method: GET
     uri: https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/$%7Bf%7D?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ
+  response:
+    body:
+      string: !!binary |
+        /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
+        Upxn5RjbnJoJxhs4am1Yq4m4qCHy2KeHUEMneo25BZec0h4QFc59aSuxEu4n535PpQuG7c/ypwUA
+        nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
+    headers:
+      Accept-Ranges: [bytes]
+      Access-Control-Allow-Credentials: ['false']
+      Access-Control-Allow-Headers: ['']
+      Access-Control-Allow-Methods: ['GET,OPTIONS']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Apple-Originating-System: [UnknownOriginatingSystem]
+      Connection: [keep-alive]
+      Content-Disposition: [attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D]
+      Content-Length: ['1884695']
+      Content-Type: [application/octet-stream]
+      Date: ['Tue, 31 Jul 2018 12:37:09 GMT']
+      Server: [AppleHttpServer/2f080fc0]
+      X-Apple-Jingle-Correlation-Key: [4D26XAWYA5OIGHZSB362CI4HYY]
+      X-Apple-Request-UUID: [02b17a96-ee7c-4379-aecf-532ffda2c021-11533040629205]
+      X-Responding-Instance: ['contentvendorws:301500304:si03p01ic-ztde010306:8404:18RC199:nocommit']
+      apple-seq: ['0']
+      apple-tk: ['false']
+    status: {code: 200, message: OK}
+- request:
+    body: null
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: [keep-alive]
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
+      x-filename: IMG_7409.MOV
+    method: GET
+    uri: https://cvws.icloud-content.com/B/AWekUGGQQFdAFiLtTwv3XGhsvgGYAXpCzDImJyuf45HmstD8fO8gaFJL/$%7Bf%7D?o=AgMPlX3QYicKbalru37NxsG4HXFF9L92swcwzWFPH49i&v=1&x=3&a=By22JnlH8SDKxIy--7wo_QuUADnLA1LaRAEAAAMW2kQ&e=1533044225&k=D0HS6APZL_8JtZI8l_WbCQ&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=BDQlDMoPEG-l0IAgOkWjboLgbYc
   response:
     body:
       string: !!binary |

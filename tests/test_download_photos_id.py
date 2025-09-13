@@ -14,7 +14,6 @@ from requests import Response
 
 from icloudpd import constants
 from icloudpd.string_helpers import truncate_middle
-from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
@@ -622,64 +621,46 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_adjusted_size_fallback_to_original_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_fallback_to_original.yml",
+            [],
+            [("2018/07/31", "IMG_7409_QVk2Yyt.JPG"), ("2018/07/31", "IMG_7409_QVk2Yyt.MOV")],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--size",
+                "adjusted",
+                "--size",
+                "alternative",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading the first adjusted,alternative photo or video to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            "IMG_7409_QVk2Yyt.JPG",
+            result.output,
+        )
+        self.assertIn("All photos and videos have been downloaded", result.output)
 
-            with mock.patch("icloudpd.download.os.utime") as ut_patched:
-                ut_patched.return_value = None
-
-                with mock.patch.object(
-                    PhotoAsset, "versions", new_callable=mock.PropertyMock
-                ) as pa:
-                    pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
-                        # AssetVersionSize.ADJUSTED: AssetVersion("IMG_7409.JPG", 2, "ftp", "movie"),
-                    }
-
-                    data_dir, result = run_icloudpd_test(
-                        self.assertEqual,
-                        self.root_path,
-                        base_dir,
-                        "listing_photos.yml",
-                        [],
-                        [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--size",
-                            "adjusted",
-                            "--size",
-                            "alternative",
-                            "--no-progress-bar",
-                            "--file-match-policy",
-                            "name-id7",
-                        ],
-                    )
-                    self.assertIn(
-                        "Looking up all photos and videos...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading the first adjusted,alternative photo or video to {data_dir} ...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        "Downloading",
-                        result.output,
-                    )
-                    self.assertIn(
-                        "IMG_7409_QVk2Yyt.JPG",
-                        result.output,
-                    )
-                    self.assertIn("All photos and videos have been downloaded", result.output)
-                    # Should be called twice - once for adjusted (fallback to original) and once for alternative (fallback to original)
-                    self.assertEqual(dp_patched.call_count, 2)
-
-                    assert result.exit_code == 0
+        assert result.exit_code == 0
 
     def test_force_size_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
