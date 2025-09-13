@@ -577,58 +577,47 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_size_fallback_to_original_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch("icloudpd.download.download_media") as dp_patched:
-            dp_patched.return_value = True
+        files_to_download = [
+            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG"),
+        ]
 
-            with mock.patch("icloudpd.download.os.utime") as ut_patched:
-                ut_patched.return_value = None
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_fallback_to_original.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--size",
+                "thumb",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading the first thumb photo or video to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}",
+            result.output,
+        )
+        self.assertIn("All photos and videos have been downloaded", result.output)
 
-                with mock.patch.object(
-                    PhotoAsset, "versions", new_callable=mock.PropertyMock
-                ) as pa:
-                    pa.return_value = {
-                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "jpeg", "blah"),
-                        AssetVersionSize.MEDIUM: AssetVersion(2, "ftp", "movie", "blah"),
-                    }
-
-                    data_dir, result = run_icloudpd_test(
-                        self.assertEqual,
-                        self.root_path,
-                        base_dir,
-                        "listing_photos.yml",
-                        [],
-                        [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--size",
-                            "thumb",
-                            "--no-progress-bar",
-                            "--file-match-policy",
-                            "name-id7",
-                        ],
-                    )
-                    self.assertIn(
-                        "Looking up all photos and videos...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading the first thumb photo or video to {data_dir} ...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        f"Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')), 96)}",
-                        result.output,
-                    )
-                    self.assertIn("All photos and videos have been downloaded", result.output)
-                    # Should be called once for thumb size (fallback to original)
-                    dp_patched.assert_called_once()
-
-                    assert result.exit_code == 0
+        assert result.exit_code == 0
 
     def test_adjusted_size_fallback_to_original_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
