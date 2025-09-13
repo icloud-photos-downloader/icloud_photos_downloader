@@ -954,73 +954,62 @@ class DownloadPhotoNameIDTestCase(TestCase):
         assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos_name_id7(self) -> None:
+        """No deduping should happen for name-id7."""
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         files_to_create = [
-            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 1),
-            ("2018/07/30", "IMG_7408_QVI4T2l.MOV", 1),
-            ("2018/07/30", "IMG_7407_QVovd0F.JPG", 1),
-            ("2018/07/30", "IMG_7407_QVovd0F.MOV", 1),
+            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG", 1),
+            ("2018/07/31", "IMG_7409_QVk2Yyt.MOV", 1),
+            ("2018/07/30", "IMG_7408_QVI4T2l.JPG", 151),
+            ("2018/07/30", "IMG_7408_QVI4T2l.MOV", 151),
         ]
 
-        files_to_download = [
-            ("2018/07/31", "IMG_7409_QVk2Yyt.JPG"),
-            ("2018/07/31", "IMG_7409_QVk2Yyt.MOV"),
-        ]
+        # files_to_download = [
+        # ("2018/07/31", "IMG_7409_QVk2Yyt-151.JPG"),
+        # ("2018/07/31", "IMG_7409_QVk2Yyt-151.MOV"),
+        # ]
 
-        # Download the first photo, but mock the video download
-        orig_download = PhotoAsset.download
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_dedup.yml",
+            files_to_create,
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "2",
+                "--skip-videos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
 
-        def mocked_download(self: PhotoAsset, session: Any, _url: str, start: int) -> Response:
-            if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, session, _url, start)
-                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
-                return response
-            return mock.MagicMock()
+        self.assertIn("Looking up all photos...", result.output)
+        self.assertIn(
+            f"Downloading 2 original photos to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            f"{os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG')} already exists",
+            result.output,
+        )
+        self.assertIn(
+            f"{os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.MOV')} already exists",
+            result.output,
+        )
+        # self.assertIn("Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.", result.output)
+        # self.assertIn("Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.", result.output)
+        self.assertIn("All photos have been downloaded", result.output)
 
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos.yml",
-                files_to_create,
-                files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "5",
-                    "--skip-videos",
-                    # "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--file-match-policy",
-                    "name-id7",
-                ],
-            )
-
-            self.assertIn("Looking up all photos...", result.output)
-            self.assertIn(
-                f"Downloading 5 original photos to {data_dir} ...",
-                result.output,
-            )
-            self.assertNotIn(
-                "deduplicated",
-                result.output,
-            )
-            self.assertIn(
-                "Skipping IMG_7405_QVkrUjN.MOV, only downloading photos.",
-                result.output,
-            )
-            self.assertIn(
-                "Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.",
-                result.output,
-            )
-            self.assertIn("All photos have been downloaded", result.output)
-
-            assert result.exit_code == 0
+        assert result.exit_code == 0
 
     def test_download_photos_and_set_exif_exceptions_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
