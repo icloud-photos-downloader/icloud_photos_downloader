@@ -47,7 +47,7 @@ def apply_file_match_policy(
     """
 
     def transform_filename(filename: str) -> str:
-        if file_match_policy == FileMatchPolicy.NAME_ID7:
+        if file_match_policy in (FileMatchPolicy.NAME_ID7, FileMatchPolicy.NAME_ID7_VERSIONED):
             # Generate 7-character base64 suffix from asset ID
             id_suffix = base64.b64encode(asset_id.encode("utf-8")).decode("ascii")[0:7]
             return add_suffix_to_filename(f"_{id_suffix}", filename)
