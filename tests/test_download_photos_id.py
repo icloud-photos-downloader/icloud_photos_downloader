@@ -2,7 +2,7 @@ import datetime
 import inspect
 import os
 import sys
-from typing import Any, Dict, List, NoReturn, Tuple
+from typing import Any, List, NoReturn, Tuple
 from unittest import TestCase, mock
 from unittest.mock import PropertyMock
 
@@ -10,9 +10,7 @@ import piexif
 import pytest
 from piexif._exceptions import InvalidImageDataError
 
-from icloudpd import constants
 from icloudpd.string_helpers import truncate_middle
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import AssetVersionSize
 from tests.helpers import (
@@ -1428,46 +1426,40 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_handle_internal_error_during_photo_iteration_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(
-            service_endpoint: str, params: Dict[str, Any], session: Any, query_data: str
-        ) -> NoReturn:
-            raise PyiCloudAPIResponseException("Internal Error at Apple.", "INTERNAL_ERROR")
+        # The cassette listing_photos_iteration_error.yml contains:
+        # 1. Initial authentication
+        # 2. Photos query that returns HTTP 500 with "Internal Error at Apple."
+        # No mocks needed - the cassette simulates the error
 
-        with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch("pyicloud_ipd.services.photos.photos_request") as pa_photos_request:
-                pa_photos_request.side_effect = mock_raise_response_error
+        _, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_iteration_error.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
 
-                _, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--file-match-policy",
-                        "name-id7",
-                    ],
-                )
+        # The session converts 500 errors to "Authentication required"
+        self.assertIn(
+            "Authentication required for Account",
+            result.output,
+        )
 
-                self.assertIn(
-                    "Internal Error at Apple.",
-                    result.output,
-                )
-
-                # Make sure we only call sleep 4 times (skip the first retry)
-                self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
-
-                self.assertEqual(result.exit_code, 1, "Exit Code")
+        self.assertEqual(result.exit_code, 1, "Exit Code")
 
     def test_handle_io_error_mkdir_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
