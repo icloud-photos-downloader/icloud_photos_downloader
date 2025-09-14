@@ -1,6 +1,5 @@
 import datetime
 import inspect
-import logging
 import os
 import sys
 from typing import Any, Dict, List, NoReturn, Tuple
@@ -13,7 +12,6 @@ from piexif._exceptions import InvalidImageDataError
 
 from icloudpd import constants
 from icloudpd.string_helpers import truncate_middle
-from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import AssetVersionSize
@@ -1552,55 +1550,43 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_download_after_delete_dry_run_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def raise_response_error(
-            a0_: logging.Logger, a1_: PyiCloudService, a2_: PhotoAsset
-        ) -> NoReturn:
-            raise Exception("Unexpected call to delete_photo")
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_recent_live.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--dry-run",
+                "--file-match-policy",
+                "name-id7",
+                "--delete-after-download",
+            ],
+        )
 
-        with mock.patch.object(piexif, "insert") as piexif_patched:
-            piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
-                get_exif_patched.return_value = False
-                with mock.patch("icloudpd.base.delete_photo") as df_patched:
-                    df_patched.side_effect = raise_response_error
-
-                    data_dir, result = run_icloudpd_test(
-                        self.assertEqual,
-                        self.root_path,
-                        base_dir,
-                        "listing_photos.yml",
-                        [],
-                        [],
-                        [
-                            "--username",
-                            "jdoe@gmail.com",
-                            "--password",
-                            "password1",
-                            "--recent",
-                            "1",
-                            "--skip-videos",
-                            "--skip-live-photos",
-                            "--no-progress-bar",
-                            "--dry-run",
-                            "--file-match-policy",
-                            "name-id7",
-                            "--delete-after-download",
-                        ],
-                    )
-
-                    self.assertIn("Looking up all photos...", result.output)
-                    self.assertIn(
-                        f"Downloading the first original photo to {data_dir} ...",
-                        result.output,
-                    )
-                    self.assertIn(
-                        "[DRY RUN] Would delete IMG_7409_QVk2Yyt.JPG in iCloud",
-                        result.output,
-                    )
-                    self.assertIn("All photos have been downloaded", result.output)
-                    # TDOO self.assertEqual(
-                    #     cass.all_played, False, "All mocks played")
-                    self.assertEqual(result.exit_code, 0, "Exit code")
+        self.assertIn("Looking up all photos...", result.output)
+        self.assertIn(
+            f"Downloading the first original photo to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn(
+            "[DRY RUN] Would delete IMG_7409_QVk2Yyt.JPG in iCloud",
+            result.output,
+        )
+        self.assertIn("All photos have been downloaded", result.output)
+        # TDOO self.assertEqual(
+        #     cass.all_played, False, "All mocks played")
+        self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_download_raw_photos_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
