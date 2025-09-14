@@ -10,7 +10,6 @@ from unittest.mock import PropertyMock
 import piexif
 import pytest
 from piexif._exceptions import InvalidImageDataError
-from requests import Response
 
 from icloudpd import constants
 from icloudpd.string_helpers import truncate_middle
@@ -1136,54 +1135,38 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ("2018/07/31", "IMG_中文_7409_QVk2Yyt.MOV"),
         ]
 
-        # Download the first photo, but mock the video download
-        orig_download = PhotoAsset.download
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_recent_live_chinese.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--no-progress-bar",
+                "--keep-unicode-in-filenames",
+                "true",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
 
-        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
-            if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(pa, session, _url, start)
-                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
-                return response
-            return mock.MagicMock()
-
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
-            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
-                get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos_chinese.yml",
-                    [],
-                    files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        # "--set-exif-datetime",
-                        # '--skip-videos',
-                        # "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--keep-unicode-in-filenames",
-                        "true",
-                        "--file-match-policy",
-                        "name-id7",
-                    ],
-                )
-
-                self.assertIn(
-                    "Looking up all photos and videos...",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Downloading the first original photo or video to {data_dir} ...",
-                    result.output,
-                )
-                self.assertIn("All photos and videos have been downloaded", result.output)
-                assert result.exit_code == 0
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading the first original photo or video to {data_dir} ...",
+            result.output,
+        )
+        self.assertIn("All photos and videos have been downloaded", result.output)
+        assert result.exit_code == 0
 
     def test_download_and_delete_after_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
