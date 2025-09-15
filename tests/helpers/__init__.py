@@ -281,16 +281,10 @@ def run_main_env(
     # Create both original and cleaned output
     cleaned_output = "\n".join(cleaned_lines)
 
-    # For compatibility with old tests, adjust exit codes for specific error conditions
-    adjusted_exit_code = exit_code
-    if exit_code == 1 and "Invalid email/password combination" in raw_output:
-        # Authentication failure - old tests expect exit code 2
-        adjusted_exit_code = 2
-
     # For compatibility, provide the cleaned output as the primary output
     # but keep raw_output available if needed
     result = TestResult(
-        exit_code=adjusted_exit_code,
+        exit_code=exit_code,
         output=cleaned_output,
         exception=exception,
         stderr=stderr_capture.getvalue(),
