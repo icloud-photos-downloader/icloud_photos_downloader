@@ -5,7 +5,6 @@ import shutil
 import sys
 from typing import Any, List, NoReturn, Tuple
 from unittest import TestCase, mock
-from unittest.mock import PropertyMock
 
 import piexif
 import pytest
@@ -13,7 +12,6 @@ import pytz
 from piexif._exceptions import InvalidImageDataError
 
 from pyicloud_ipd.services.photos import PhotoAsset
-from pyicloud_ipd.version_size import AssetVersionSize
 from tests.helpers import (
     calc_data_dir,
     create_files,
