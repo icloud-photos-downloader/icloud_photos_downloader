@@ -13,7 +13,10 @@ from vcr import VCR
 from foundation.core import compose, flip, partial_1_1, partial_2_1
 from icloudpd.cli import cli
 
-vcr = VCR(decode_compressed_response=True, record_mode="none")
+vcr = VCR(
+    decode_compressed_response=True, 
+    record_mode="none"
+)
 
 
 class TestResult:
@@ -303,15 +306,21 @@ run_main: Callable[[Sequence[str]], TestResult] = compose(
 
 
 def run_with_cassette(cassette_path: str, f: Callable[[_T_contra], _T_co], inp: _T_contra) -> _T_co:
-    with vcr.use_cassette(cassette_path):
-        return f(inp)
+    with vcr.use_cassette(cassette_path, allow_playback_repeats=False) as cassette:
+        result = f(inp)
+        # Check that all interactions were played (optional - can be enabled per test)
+        # assert cassette.all_played, f"Not all cassette interactions were used in {cassette_path}"
+        return result
 
 
 def run_cassette(
     cassette_path: str, params: Sequence[str], input: str | bytes | IO[Any] | None = None
 ) -> TestResult:
-    with vcr.use_cassette(cassette_path):
-        return print_result_exception(run_main_env(DEFAULT_ENV, params, input))
+    with vcr.use_cassette(cassette_path, allow_playback_repeats=False) as cassette:
+        result = print_result_exception(run_main_env(DEFAULT_ENV, params, input))
+        # Check that all interactions were played (optional - can be enabled per test)
+        # assert cassette.all_played, f"Not all cassette interactions were used in {cassette_path}"
+        return result
 
 
 def add_cloned_master_cookie_dir(
