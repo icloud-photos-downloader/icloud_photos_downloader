@@ -11860,8 +11860,9 @@ interactions:
   response:
     body:
       string: !!binary |
-        AAABZW1vb3YAAABsbXZoZAAAAAAAAAAAAAAAAAAAA+gAAAPoAAAAAAABAAAAAAAAAAAAAAAAAAAA
-        AAAAAAEAAAAAAAAAAAAAAAAAAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAA
+        /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
+        Upxn5RjbnJoJxhs4am1Yq4m4qCHy2KeHUEMneo25BZec0h4QFc59aSuxEu4n535PpQuG7c/ypwUA
+        nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
     headers:
       Accept-Ranges: [bytes]
       Access-Control-Allow-Credentials: ['false']

@@ -8484,7 +8484,9 @@ interactions:
   response:
     body:
       string: !!binary |
-        /9j/4AAQSkZJRgABAQAAAQABAAD/4SM/RXhpZgAATU0AKgAAAAgABQEaAAUAAAABAAAASgEbAAUA
+        /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
+        Upxn5RjbnJoJxhs4am1Yq4m4qCHy2KeHUEMneo25BZec0h4QFc59aSuxEu4n535PpQuG7c/ypwUA
+        nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
     headers:
       Accept-Ranges:
       - bytes
@@ -8503,7 +8505,7 @@ interactions:
       Content-Disposition:
       - attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D
       Content-Length:
-      - '85638'
+      - '161'
       Content-Type:
       - application/octet-stream
       Date:

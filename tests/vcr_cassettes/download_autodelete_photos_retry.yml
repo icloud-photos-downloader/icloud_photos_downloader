@@ -490,7 +490,7 @@ interactions:
         \     \"originalOrientation\" : {\n        \"value\" : 1,\n        \"type\"
         : \"INT64\"\n      },\n      \"resOriginalRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"AeYfMtlOMb3dM9bETic9fXkMpjMV\",\n          \"size\"
-        : 171,\n          \"wrappingKey\" : \"vcGVqlrMadPcySeLfMbEXw==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"vcGVqlrMadPcySeLfMbEXw==\",\n          \"referenceChecksum\"
         : \"AaL34BSibtYVAvhCWscZ+HnA19Re\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AeYfMtlOMb3dM9bETic9fXkMpjMVAaL34BSibtYVAvhCWscZ-HnA19Re/${f}?o=AurPpKo_3uhp3RCQNv_NIlQzIKJC3_dbZyy3QD0hanIu&v=1&x=3&a=CAogEjykwJQtOjMHrwghvR2QT9hudpOHGO6zmeYR6XPulCYSbRCF-pqeiTEYhdf2n4kxIgEAUgQMpjMVWgTA19ReaibUYybVVmyefnKi8geQ4v93UX3GRTfyjQHYHKqbPwXqjlhNgmeBzHImW8BXPC9ad40YuBSuLZLXwdFiJ3k5AZ49bn7o2K8RSObjA1AG1Ng&e=1686110055&fl=&r=f8bc6446-0bf6-4960-8fa1-aa4f1f0b5f7f-1&k=vcGVqlrMadPcySeLfMbEXw&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=54&s=AJBWjHPzXTpyOTFlcoKdHt63w1c\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGThumbHeight\"
         : {\n        \"value\" : 341,\n        \"type\" : \"INT64\"\n      },\n      \"resJPEGThumbWidth\"
@@ -8484,9 +8484,9 @@ interactions:
   response:
     body:
       string: !!binary |
-        /9j/4AAQSkZJRgABAQAAAQABAAD/4SM/RXhpZgAATU0AKgAAAAgABQEaAAUAAAABAAAASgEbAAUA
-        AAABAAAAUgEoAAMAAAABAAIAAAITAAMAAAABAAEAAIdpAAQAAAABAAAAWgAAALQAAABIAAAAAQAA
-        tMABQAB14mC3Y2eIgkEGuS/qAtCmMvcAwMcU5hS15DcsLArzFNiyoDbzxWo+TNUxpwVxiIul1i2U
+        /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
+        Upxn5RjbnJoJxhs4am1Yq4m4qCHy2KeHUEMneo25BZec0h4QFc59aSuxEu4n535PpQuG7c/ypwUA
+        nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
     headers:
       Accept-Ranges:
       - bytes
@@ -8505,7 +8505,7 @@ interactions:
       Content-Disposition:
       - attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D
       Content-Length:
-      - '171'
+      - '161'
       Content-Type:
       - application/octet-stream
       Date:
@@ -9054,7 +9054,7 @@ interactions:
         \     \"originalOrientation\" : {\n        \"value\" : 1,\n        \"type\"
         : \"INT64\"\n      },\n      \"resOriginalRes\" : {\n        \"value\" : {\n
         \         \"fileChecksum\" : \"AeYfMtlOMb3dM9bETic9fXkMpjMV\",\n          \"size\"
-        : 171,\n          \"wrappingKey\" : \"vcGVqlrMadPcySeLfMbEXw==\",\n          \"referenceChecksum\"
+        : 161,\n          \"wrappingKey\" : \"vcGVqlrMadPcySeLfMbEXw==\",\n          \"referenceChecksum\"
         : \"AaL34BSibtYVAvhCWscZ+HnA19Re\",\n          \"downloadURL\" : \"https://cvws.icloud-content.com/B/AeYfMtlOMb3dM9bETic9fXkMpjMVAaL34BSibtYVAvhCWscZ-HnA19Re/${f}?o=AurPpKo_3uhp3RCQNv_NIlQzIKJC3_dbZyy3QD0hanIu&v=1&x=3&a=CAogEjykwJQtOjMHrwghvR2QT9hudpOHGO6zmeYR6XPulCYSbRCF-pqeiTEYhdf2n4kxIgEAUgQMpjMVWgTA19ReaibUYybVVmyefnKi8geQ4v93UX3GRTfyjQHYHKqbPwXqjlhNgmeBzHImW8BXPC9ad40YuBSuLZLXwdFiJ3k5AZ49bn7o2K8RSObjA1AG1Ng&e=1686110055&fl=&r=f8bc6446-0bf6-4960-8fa1-aa4f1f0b5f7f-1&k=vcGVqlrMadPcySeLfMbEXw&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=54&s=AJBWjHPzXTpyOTFlcoKdHt63w1c\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resJPEGThumbHeight\"
         : {\n        \"value\" : 341,\n        \"type\" : \"INT64\"\n      },\n      \"resJPEGThumbWidth\"
