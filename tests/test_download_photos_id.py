@@ -392,7 +392,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self.assertEqual,
             self.root_path,
             base_dir,
-            "listing_photos_session_error_download_name_id7.yml",
+            "listing_photos_session_error_download.yml",
             [],
             [
                 ("2018/07/31", "IMG_7409_QVk2Yyt.JPG")
@@ -432,7 +432,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self.assertEqual,
             self.root_path,
             base_dir,
-            "listing_photos_session_error_iteration_name_id7.yml",
+            "listing_photos_session_error_iteration.yml",
             [],
             [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")],
             [
@@ -478,7 +478,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             self.assertEqual,
             self.root_path,
             base_dir,
-            "listing_albums_error_name_id7.yml",
+            "listing_albums_error.yml",
             [],
             [],
             [
