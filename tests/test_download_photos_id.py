@@ -1389,17 +1389,18 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_handle_internal_error_during_download_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        # The cassette listing_photos_internal_error_download_name_id7.yml contains:
+        # The cassette listing_photos_internal_error_download.yml contains:
         # 1. Initial authentication
         # 2. Photo listing
         # 3. Download attempt that returns HTTP 500 error
-        # The session raises PyiCloudAPIResponseException for 500 errors
+        # The download_media function now raises PyiCloudAPIResponseException for 500 errors,
+        # matching the behavior of the original mock test
 
         _, result = run_icloudpd_test(
             self.assertEqual,
             self.root_path,
             base_dir,
-            "listing_photos_internal_error_download_name_id7.yml",
+            "listing_photos_internal_error_download.yml",
             [],
             [],
             [
@@ -1419,7 +1420,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
             ],
         )
 
-        # With HTTP 500, session raises exception
+        # With HTTP 500, session raises PyiCloudAPIResponseException
+        # which is caught and causes exit code 1
         self.assertIn("Authentication required for Account", result.output)
         self.assertEqual(result.exit_code, 1, "Exit Code")
 
