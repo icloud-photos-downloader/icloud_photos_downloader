@@ -12134,8 +12134,8 @@ interactions:
     body:
       string: !!binary |
         /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
-        AAEaAAUAAAABAAAAogEbAAUAAAABAAAAqgEoAAMAAAABAAIAAAExAAIAAAAHAAAAsgEyAAIAAAAU
-        FRyeaZscADB/Cpm5baRjGKFcOUSQAJgHbSg7UAU8UmWx+85FRMykA579KaJZIWx845z29PpSfxdM
+        Upxn5RjbnJoJxhs4am1Yq4m4qCHy2KeHUEMneo25BZec0h4QFc59aSuxEu4n535PpQuG7c/ypwUA
+        nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
     headers:
       Accept-Ranges: [bytes]
       Access-Control-Allow-Credentials: ['false']
@@ -12145,7 +12145,7 @@ interactions:
       Apple-Originating-System: [UnknownOriginatingSystem]
       Connection: [keep-alive]
       Content-Disposition: [attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D]
-      Content-Length: ['1884695']
+      Content-Length: ['161']
       Content-Type: [application/octet-stream]
       Date: ['Tue, 31 Jul 2018 12:37:09 GMT']
       Server: [AppleHttpServer/2f080fc0]
@@ -12154,35 +12154,5 @@ interactions:
       X-Responding-Instance: ['contentvendorws:301500304:si03p01ic-ztde010306:8404:18RC199:nocommit']
       apple-seq: ['0']
       apple-tk: ['false']
-    status: {code: 200, message: OK}
-- request:
-    body: '{"atomic": true, "desiredKeys": ["isDeleted"], "operations": [{"operationType":
-      "update", "record": {"fields": {"isDeleted": {"value": 1}}, "recordChangeTag":
-      "49lh", "recordName": "F2A23C38-0020-42FE-A273-2923ADE3CAED", "recordType":
-      "CPLAsset"}}], "zoneID": {"zoneName": "PrimarySync"}}'
-    headers:
-      Accept:
-      - '*/*'
-      Accept-Encoding:
-      - gzip, deflate
-      Connection:
-      - keep-alive
-      Content-Length:
-      - '288'
-      Content-type:
-      - application/json
-      Origin:
-      - https://www.icloud.com
-      Referer:
-      - https://www.icloud.com/
-      User-Agent:
-      - Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
-    method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/private/records/modify?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
-  response:
-    body:
-      string: "{}"
-    headers:
-      Content-type: application/json
     status: {code: 200, message: OK}
 version: 1
