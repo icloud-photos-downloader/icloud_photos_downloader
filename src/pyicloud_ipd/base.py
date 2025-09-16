@@ -30,11 +30,13 @@ from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
     PyiCloudServiceNotActivatedException,
+    PyiCloudServiceUnavailableException,
 )
 from pyicloud_ipd.response_types import (
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
     ResponseSuccess,
 )
 from pyicloud_ipd.services.photos import PhotosService
@@ -380,6 +382,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
             self.data = req.json()
         except PyiCloudAPIResponseException as error:
             msg = "Invalid authentication token."
@@ -456,6 +460,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
             if response.status_code == 401:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
         except PyiCloudAPIResponseException as error:
@@ -520,6 +526,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
             if response.status_code == 409:
                 # requires 2FA
                 pass
@@ -557,6 +565,8 @@ class PyiCloudService:
                             raise PyiCloudServiceNotActivatedException(reason, code)
                         case ResponseAPIError(reason, code):
                             raise PyiCloudAPIResponseException(reason, code)
+                        case ResponseServiceUnavailable(reason):
+                            raise PyiCloudServiceUnavailableException(reason)
             elif response.status_code >= 400 and response.status_code < 600:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
         except PyiCloudAPIResponseException as error:
@@ -607,6 +617,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
         except PyiCloudAPIResponseException as error:
             msg = "Invalid email/password combination."
             raise PyiCloudFailedLoginException(msg, error) from error
@@ -645,6 +657,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
             LOGGER.debug("Session token is still valid")
             json_result: Dict[str, Any] = response.json()
             return json_result
@@ -730,6 +744,8 @@ class PyiCloudService:
                 raise PyiCloudServiceNotActivatedException(reason, code)
             case ResponseAPIError(reason, code):
                 raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
         devices: Sequence[Dict[str, Any]] | None = request.json().get("devices")
         if devices:
             return devices
@@ -778,6 +794,8 @@ class PyiCloudService:
                     raise PyiCloudServiceNotActivatedException(reason, code)
                 case ResponseAPIError(reason, code):
                     raise PyiCloudAPIResponseException(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    raise PyiCloudServiceUnavailableException(reason)
 
         return parse_trusted_phone_numbers_response(response)
 
@@ -820,6 +838,8 @@ class PyiCloudService:
                     raise PyiCloudServiceNotActivatedException(reason, code)
                 case ResponseAPIError(reason, code):
                     raise PyiCloudAPIResponseException(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    raise PyiCloudServiceUnavailableException(reason)
 
         return response.ok
 
@@ -839,6 +859,8 @@ class PyiCloudService:
                 raise PyiCloudServiceNotActivatedException(reason, code)
             case ResponseAPIError(reason, code):
                 raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
         return typing.cast(bool, request.json().get("success", False))
 
     def validate_verification_code(self, device: Dict[str, Any], code: str) -> bool:
@@ -862,6 +884,8 @@ class PyiCloudService:
                     raise PyiCloudServiceNotActivatedException(reason, code)
                 case ResponseAPIError(reason, code):
                     raise PyiCloudAPIResponseException(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    raise PyiCloudServiceUnavailableException(reason)
         except PyiCloudAPIResponseException as error:
             if str(error.code) == "-21669":
                 # Wrong verification code
@@ -913,6 +937,8 @@ class PyiCloudService:
                     raise PyiCloudServiceNotActivatedException(reason, code)
                 case ResponseAPIError(reason, code):
                     raise PyiCloudAPIResponseException(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    raise PyiCloudServiceUnavailableException(reason)
 
         if response.ok:
             return self.trust_session()
@@ -953,6 +979,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
         except PyiCloudAPIResponseException as error:
             if str(error.code) == "-21669":
                 # Wrong verification code
@@ -997,6 +1025,8 @@ class PyiCloudService:
                         raise PyiCloudServiceNotActivatedException(reason, code)
                     case ResponseAPIError(reason, code):
                         raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
             self._authenticate_with_token()
             return True
         except PyiCloudAPIResponseException:

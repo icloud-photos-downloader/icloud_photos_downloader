@@ -72,6 +72,7 @@ from pyicloud_ipd.response_types import (
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
     ResponseSuccess,
 )
 from pyicloud_ipd.services.photos import (
@@ -856,6 +857,8 @@ def delete_photo(
             raise PyiCloudServiceNotActivatedException(reason, code)
         case ResponseAPIError(reason, code):
             raise PyiCloudAPIResponseException(reason, code)
+        case ResponseServiceUnavailable(reason):
+            raise PyiCloudServiceUnavailableException(reason)
     logger.info("Deleted %s in iCloud", clean_filename_local)
 
 
