@@ -1,6 +1,7 @@
 """ADT (Algebraic Data Type) definitions for response evaluation results."""
 
 from dataclasses import dataclass
+from typing import Any, Dict
 
 from requests import Response
 
@@ -49,4 +50,69 @@ ResponseEvaluation = (
     | ResponseServiceNotActivated
     | ResponseAPIError
     | ResponseServiceUnavailable
+)
+
+
+# Authentication-specific ADTs
+@dataclass(frozen=True)
+class AuthTokenValid:
+    """Token validation successful."""
+
+    data: Dict[str, Any]
+
+
+@dataclass(frozen=True)
+class AuthTokenInvalid:
+    """Token validation failed."""
+
+    error: Exception
+
+
+@dataclass(frozen=True)
+class AuthSRPSuccess:
+    """SRP authentication successful."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class AuthSRPFailed:
+    """SRP authentication failed."""
+
+    error: Exception
+
+
+@dataclass(frozen=True)
+class AuthWithTokenSuccess:
+    """Token authentication successful."""
+
+    data: Dict[str, Any]
+
+
+@dataclass(frozen=True)
+class AuthWithTokenFailed:
+    """Token authentication failed."""
+
+    error: Exception
+
+
+@dataclass(frozen=True)
+class AuthRequires2SA:
+    """Authentication requires 2SA."""
+
+    account_name: str
+
+
+@dataclass(frozen=True)
+class AuthDomainMismatch:
+    """Domain mismatch error."""
+
+    domain_to_use: str
+
+
+# Union types for authentication results
+ValidateTokenResult = AuthTokenValid | AuthTokenInvalid | AuthRequires2SA
+AuthenticateSRPResult = AuthSRPSuccess | AuthSRPFailed | AuthRequires2SA
+AuthenticateWithTokenResult = (
+    AuthWithTokenSuccess | AuthWithTokenFailed | AuthRequires2SA | AuthDomainMismatch
 )
