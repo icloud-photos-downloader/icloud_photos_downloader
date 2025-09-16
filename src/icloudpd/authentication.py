@@ -9,7 +9,16 @@ from typing import Any, Callable, Dict, List, Mapping, Tuple
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
+from pyicloud_ipd.exceptions import (
+    PyiCloudConnectionException,
+    PyiCloudFailedMFAException,
+)
+from pyicloud_ipd.response_types import (
+    AuthDomainMismatchError,
+    AuthenticationFailed,
+    AuthenticationSuccessWithService,
+    AuthRequires2SAWithService,
+)
 
 
 def prompt_int_range(message: str, default: str, min_val: int, max_val: int) -> int:
@@ -83,17 +92,28 @@ def authenticator(
                 return password
         return None
 
-    icloud = PyiCloudService(
-        domain,
-        username,
-        partial(password_provider, username, valid_password),
-        response_observer,
+    auth_result = PyiCloudService.create_pyicloud_service_adt(
+        domain=domain,
+        apple_id=username,
+        password_provider=partial(password_provider, username, valid_password),
+        response_observer=response_observer,
         cookie_directory=cookie_directory,
         client_id=client_id,
     )
 
-    if not icloud:
-        raise NotImplementedError("None of providers gave password")
+    # Handle authentication result and extract service
+    icloud: PyiCloudService
+    match auth_result:
+        case AuthenticationSuccessWithService(service):
+            icloud = service
+        case AuthenticationFailed(error):
+            raise error
+        case AuthRequires2SAWithService(service, _):
+            # 2SA is handled below, service is available
+            icloud = service
+        case AuthDomainMismatchError(domain_to_use):
+            msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
+            raise PyiCloudConnectionException(msg)
 
     if valid_password:
         # save valid password to all providers

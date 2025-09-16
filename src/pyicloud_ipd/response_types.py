@@ -1,9 +1,12 @@
 """ADT (Algebraic Data Type) definitions for response evaluation results."""
 
 from dataclasses import dataclass
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from requests import Response
+
+if TYPE_CHECKING:
+    from pyicloud_ipd.base import PyiCloudService
 
 
 @dataclass(frozen=True)
@@ -110,9 +113,57 @@ class AuthDomainMismatch:
     domain_to_use: str
 
 
+# Overall authentication result ADTs
+@dataclass(frozen=True)
+class AuthenticationSuccess:
+    """Authentication completed successfully."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class AuthenticationSuccessWithService:
+    """Authentication completed successfully with service instance."""
+
+    service: "PyiCloudService"
+
+
+@dataclass(frozen=True)
+class AuthenticationFailed:
+    """Authentication failed."""
+
+    error: Exception
+
+
+@dataclass(frozen=True)
+class AuthRequires2SAWithService:
+    """Authentication requires 2SA with service instance."""
+
+    service: "PyiCloudService"
+    account_name: str
+
+
+@dataclass(frozen=True)
+class AuthDomainMismatchError:
+    """Domain mismatch error without service."""
+
+    domain_to_use: str
+
+
 # Union types for authentication results
 ValidateTokenResult = AuthTokenValid | AuthTokenInvalid | AuthRequires2SA
 AuthenticateSRPResult = AuthSRPSuccess | AuthSRPFailed | AuthRequires2SA
 AuthenticateWithTokenResult = (
     AuthWithTokenSuccess | AuthWithTokenFailed | AuthRequires2SA | AuthDomainMismatch
+)
+# Service creation result - includes service in success/2SA cases
+ServiceCreationResult = (
+    AuthenticationSuccessWithService
+    | AuthenticationFailed
+    | AuthRequires2SAWithService
+    | AuthDomainMismatchError
+)
+# Keep old AuthenticationResult for backward compatibility - used internally
+AuthenticationResult = (
+    AuthenticationSuccess | AuthenticationFailed | AuthRequires2SA | AuthDomainMismatch
 )
