@@ -56,6 +56,7 @@ from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
+    PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionErrorException,
     PyiCloudFailedLoginException,
@@ -67,6 +68,12 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.response_types import (
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseSuccess,
+)
 from pyicloud_ipd.services.photos import (
     PhotoAlbum,
     PhotoAsset,
@@ -839,7 +846,16 @@ def delete_photo(
     response = library_object.session.post(
         url, data=post_data, headers={"Content-type": "application/json"}
     )
-    library_object.session.evaluate_response(response)
+    result = library_object.session.evaluate_response(response)
+    match result:
+        case ResponseSuccess(_):
+            pass  # Success, continue
+        case Response2SARequired(account_name):
+            raise PyiCloud2SARequiredException(account_name)
+        case ResponseServiceNotActivated(reason, code):
+            raise PyiCloudServiceNotActivatedException(reason, code)
+        case ResponseAPIError(reason, code):
+            raise PyiCloudAPIResponseException(reason, code)
     logger.info("Deleted %s in iCloud", clean_filename_local)
 
 

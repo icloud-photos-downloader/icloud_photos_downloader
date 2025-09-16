@@ -23,11 +23,19 @@ from pyicloud_ipd.asset_version import (
     calculate_version_filename,
 )
 from pyicloud_ipd.exceptions import (
+    PyiCloud2SARequiredException,
+    PyiCloudAPIResponseException,
     PyiCloudServiceNotActivatedException,
 )
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.response_types import (
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseSuccess,
+)
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -128,7 +136,16 @@ def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0)
     response = session.get(url, headers=headers, stream=True)
     # Check if this is a PyiCloudSession and evaluate the response
     if hasattr(session, "evaluate_response"):
-        response = session.evaluate_response(response)
+        result = session.evaluate_response(response)
+        match result:
+            case ResponseSuccess(resp):
+                response = resp
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
     return response
 
 
@@ -147,7 +164,16 @@ def photos_request(
     )
     # Check if this is a PyiCloudSession and evaluate the response
     if hasattr(session, "evaluate_response"):
-        response = session.evaluate_response(response)
+        result = session.evaluate_response(response)
+        match result:
+            case ResponseSuccess(resp):
+                response = resp
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
     return response
 
 
@@ -316,7 +342,16 @@ class PhotoLibrary:
         )
 
         request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
-        request = self.session.evaluate_response(request)
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
         response = request.json()
         indexing_state = response["records"][0]["fields"]["state"]["value"]
         if indexing_state != "FINISHED":
@@ -384,7 +419,16 @@ class PhotoLibrary:
         )
 
         request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
-        request = self.session.evaluate_response(request)
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
         response = request.json()
 
         return typing.cast(Sequence[Dict[str, Any]], response["records"])
@@ -465,7 +509,16 @@ class PhotosService(PhotoLibrary):
             service_endpoint = self.get_service_endpoint(library_type)
             url = f"{service_endpoint}/zones/list"
             request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
-            request = self.session.evaluate_response(request)
+            result = self.session.evaluate_response(request)
+            match result:
+                case ResponseSuccess(resp):
+                    request = resp
+                case Response2SARequired(account_name):
+                    raise PyiCloud2SARequiredException(account_name)
+                case ResponseServiceNotActivated(reason, code):
+                    raise PyiCloudServiceNotActivatedException(reason, code)
+                case ResponseAPIError(reason, code):
+                    raise PyiCloudAPIResponseException(reason, code)
             response = request.json()
             for zone in response["zones"]:
                 if not zone.get("deleted"):
@@ -532,7 +585,16 @@ class PhotoAlbum:
             data=json.dumps(self._count_query_gen(self.obj_type)),
             headers={"Content-type": "text/plain"},
         )
-        request = self.session.evaluate_response(request)
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
         response = request.json()
 
         return int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])

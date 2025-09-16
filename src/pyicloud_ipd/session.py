@@ -2,16 +2,18 @@ import inspect
 import json
 import logging
 import typing
-from typing import Any, Callable, Dict, Mapping, NoReturn, Sequence
+from typing import Any, Callable, Dict, Mapping, Sequence
 
 from requests import Response, Session
 from typing_extensions import override
 
 from foundation.http import response_to_har_entry
-from pyicloud_ipd.exceptions import (
-    PyiCloud2SARequiredException,
-    PyiCloudAPIResponseException,
-    PyiCloudServiceNotActivatedException,
+from pyicloud_ipd.response_types import (
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseEvaluation,
+    ResponseServiceNotActivated,
+    ResponseSuccess,
 )
 from pyicloud_ipd.utils import handle_connection_error, throw_on_503
 
@@ -98,7 +100,7 @@ class PyiCloudSession(Session):
 
     def evaluate_response(
         self, response: Response, request_logger: logging.Logger | None = None
-    ) -> Response:
+    ) -> ResponseEvaluation:
         """Evaluate the response for errors and exceptions.
 
         Args:
@@ -106,12 +108,7 @@ class PyiCloudSession(Session):
             request_logger: Logger instance for request-specific logging (optional)
 
         Returns:
-            The response object if no errors are found
-
-        Raises:
-            PyiCloudAPIResponseException: For various API errors
-            PyiCloud2SARequiredException: When 2SA is required
-            PyiCloudServiceNotActivatedException: When iCloud setup is incomplete
+            A ResponseEvaluation ADT indicating success or specific error type
         """
         # If no logger provided, create one based on the calling context
         if request_logger is None:
@@ -128,21 +125,21 @@ class PyiCloudSession(Session):
             and response.status_code != 404
             and (content_type not in json_mimetypes or response.status_code in [421, 450, 500])
         ):
-            self._raise_error(str(response.status_code), response.reason)
+            return self._create_error_response(str(response.status_code), response.reason)
 
         if content_type not in json_mimetypes:
             if self.service.session_data.get("apple_rscd") == "401":
                 code: str | None = "401"
                 reason: str | None = "Invalid username/password combination."
-                self._raise_error(code or "Unknown", reason or "Unknown")
+                return self._create_error_response(code or "Unknown", reason or "Unknown")
 
-            return response
+            return ResponseSuccess(response)
 
         try:
             data = response.json() if response.status_code != 204 else {}
         except ValueError:
             request_logger.warning("Failed to parse response with JSON mimetype")
-            return response
+            return ResponseSuccess(response)
 
         request_logger.debug(data)
 
@@ -158,7 +155,7 @@ class PyiCloudSession(Session):
                 if errors:
                     code = errors[0].get("code")
                     reason = errors[0].get("message")
-                self._raise_error(code or "Unknown", reason or "Unknown")
+                return self._create_error_response(code or "Unknown", reason or "Unknown")
             elif not data.get("success"):
                 reason = data.get("errorMessage")
                 reason = reason or data.get("reason")
@@ -175,22 +172,20 @@ class PyiCloudSession(Session):
                     code = data.get("error")
 
                 if reason:
-                    self._raise_error(code or "Unknown", reason)
+                    return self._create_error_response(code or "Unknown", reason)
 
-        return response
+        return ResponseSuccess(response)
 
-    def _raise_error(self, code: str, reason: str) -> NoReturn:
+    def _create_error_response(self, code: str, reason: str) -> ResponseEvaluation:
         if self.service.requires_2sa and reason == "Missing X-APPLE-WEBAUTH-TOKEN cookie":
-            raise PyiCloud2SARequiredException(self.service.user["accountName"])
+            return Response2SARequired(self.service.user["accountName"])
         if code in ("ZONE_NOT_FOUND", "AUTHENTICATION_FAILED"):
             reason = (
                 "Apple iCloud setup is not complete. Please log into https://icloud.com/ to manually "
                 "finish setting up your iCloud service"
             )
-            api_error: Exception = PyiCloudServiceNotActivatedException(reason, code)
-            LOGGER.error(api_error)
-
-            raise (api_error)
+            LOGGER.error("%s (%s)", reason, code)
+            return ResponseServiceNotActivated(reason, code)
         if code == "ACCESS_DENIED":
             reason = (
                 reason + ".  Please wait a few minutes then try again."
@@ -199,6 +194,5 @@ class PyiCloudSession(Session):
         if code in ["421", "450", "500"]:
             reason = "Authentication required for Account."
 
-        api_error = PyiCloudAPIResponseException(reason, code)
-        LOGGER.error(api_error)
-        raise api_error
+        LOGGER.error("%s (%s)", reason, code)
+        return ResponseAPIError(reason, code)
