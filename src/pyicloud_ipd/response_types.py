@@ -186,3 +186,41 @@ class TwoFactorAuthFailed:
 
 # Union type for 2FA/2SA results
 TwoFactorAuthResult = TwoFactorAuthSuccess | TwoFactorAuthFailed
+
+
+# Authenticator result ADTs
+@dataclass(frozen=True)
+class AuthenticatorSuccess:
+    """Authentication completed successfully."""
+
+    service: "PyiCloudService"
+
+
+@dataclass(frozen=True)
+class AuthenticatorConnectionError:
+    """Connection error during authentication."""
+
+    error: Exception
+
+
+@dataclass(frozen=True)
+class AuthenticatorMFAError:
+    """MFA error during authentication."""
+
+    error: str
+
+
+@dataclass(frozen=True)
+class AuthenticatorTwoSAExit:
+    """2SA failed - need to exit with code 1."""
+
+    pass
+
+
+# Union type for authenticator results
+AuthenticatorResult = (
+    AuthenticatorSuccess
+    | AuthenticatorConnectionError
+    | AuthenticatorMFAError
+    | AuthenticatorTwoSAExit
+)

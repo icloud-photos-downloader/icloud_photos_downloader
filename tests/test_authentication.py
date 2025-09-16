@@ -38,25 +38,25 @@ class AuthenticationTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth.yml")):  # noqa: SIM117
-            with self.assertRaises(pyicloud_ipd.exceptions.PyiCloudFailedLoginException) as context:
-                authenticator(
-                    setup_logger(),
-                    "com",
-                    {"test": (constant("dummy"), dummy_password_writter)},
-                    MFAProvider.CONSOLE,
-                    StatusExchange(),
-                    "bad_username",
-                    lambda: None,
-                    None,
-                    cookie_dir,
-                    "EC5646DE-9423-11E8-BF21-14109FE0B321",
-                )
+            from pyicloud_ipd.response_types import AuthenticatorConnectionError
 
-        # self.assertIn(
-        #     "Failed to login with srp, falling back to old raw password authentication.",
-        #     result.output,
-        # )
-        self.assertTrue("Invalid email/password combination." in str(context.exception))
+            result = authenticator(
+                setup_logger(),
+                "com",
+                {"test": (constant("dummy"), dummy_password_writter)},
+                MFAProvider.CONSOLE,
+                StatusExchange(),
+                "bad_username",
+                lambda: None,
+                None,
+                cookie_dir,
+                "EC5646DE-9423-11E8-BF21-14109FE0B321",
+            )
+            assert isinstance(result, AuthenticatorConnectionError)
+            self.assertIsInstance(
+                result.error, pyicloud_ipd.exceptions.PyiCloudFailedLoginException
+            )
+            self.assertTrue("Invalid email/password combination." in str(result.error))
 
     @pytest.mark.skip(reason="No longer support fallback to raw")
     def test_fallback_raw_password(self) -> None:
