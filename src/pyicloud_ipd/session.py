@@ -78,9 +78,6 @@ class PyiCloudSession(Session):
             self.observe(handle_connection_error(super().request)(method, url, **kwargs))
         )
 
-        content_type = response.headers.get("Content-Type", "").split(";")[0]
-        json_mimetypes = ["application/json", "text/json"]
-
         request_logger.debug(response.headers)
 
         for header, value in HEADER_DATA.items():
@@ -96,6 +93,27 @@ class PyiCloudSession(Session):
         # Save cookies to file
         self.cookies.save(ignore_discard=True, ignore_expires=True)  # type: ignore[attr-defined]
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
+
+        # Evaluate the response for errors and exceptions
+        return self._evaluate_response(response, request_logger)
+
+    def _evaluate_response(self, response: Response, request_logger: logging.Logger) -> Response:
+        """Evaluate the response for errors and exceptions.
+
+        Args:
+            response: The HTTP response object
+            request_logger: Logger instance for request-specific logging
+
+        Returns:
+            The response object if no errors are found
+
+        Raises:
+            PyiCloudAPIResponseException: For various API errors
+            PyiCloud2SARequiredException: When 2SA is required
+            PyiCloudServiceNotActivatedException: When iCloud setup is incomplete
+        """
+        content_type = response.headers.get("Content-Type", "").split(";")[0]
+        json_mimetypes = ["application/json", "text/json"]
 
         # For error responses, raise exceptions for authentication/server errors
         # but not for 404s which should be handled gracefully by the caller
