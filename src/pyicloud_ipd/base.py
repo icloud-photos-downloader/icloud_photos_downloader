@@ -34,9 +34,15 @@ from pyicloud_ipd.exceptions import (
 )
 from pyicloud_ipd.response_types import (
     AuthDomainMismatch,
+    AuthDomainMismatchError,
     AuthenticateSRPResult,
     AuthenticateWithTokenResult,
+    AuthenticationFailed,
+    AuthenticationResult,
+    AuthenticationSuccess,
+    AuthenticationSuccessWithService,
     AuthRequires2SA,
+    AuthRequires2SAWithService,
     AuthSRPFailed,
     AuthSRPSuccess,
     AuthTokenInvalid,
@@ -48,6 +54,7 @@ from pyicloud_ipd.response_types import (
     ResponseServiceNotActivated,
     ResponseServiceUnavailable,
     ResponseSuccess,
+    ServiceCreationResult,
     ValidateTokenResult,
 )
 from pyicloud_ipd.services.photos import PhotosService
@@ -94,6 +101,46 @@ class PyiCloudService:
         pyicloud = PyiCloudService('username@apple.com', 'password')
         pyicloud_ipd.iphone.location()
     """
+
+    @classmethod
+    def create_pyicloud_service_adt(
+        cls,
+        domain: str,
+        apple_id: str,
+        password_provider: Callable[[], str | None],
+        response_observer: Callable[[Mapping[str, Any]], None] | None = None,
+        cookie_directory: str | None = None,
+        verify: bool = True,
+        client_id: str | None = None,
+        with_family: bool = True,
+        http_timeout: float = 30.0,
+    ) -> ServiceCreationResult:
+        """Create PyiCloudService and authenticate, returning ADT result."""
+        try:
+            service = cls(
+                domain=domain,
+                apple_id=apple_id,
+                password_provider=password_provider,
+                response_observer=response_observer,
+                cookie_directory=cookie_directory,
+                verify=verify,
+                client_id=client_id,
+                with_family=with_family,
+                http_timeout=http_timeout,
+            )
+            result = service.authenticate_adt()
+            # Transform the result to include service where appropriate
+            match result:
+                case AuthenticationSuccess():
+                    return AuthenticationSuccessWithService(service)
+                case AuthRequires2SA(account_name):
+                    return AuthRequires2SAWithService(service, account_name)
+                case AuthenticationFailed(error):
+                    return AuthenticationFailed(error)
+                case AuthDomainMismatch(domain_to_use):
+                    return AuthDomainMismatchError(domain_to_use)
+        except Exception as e:
+            return AuthenticationFailed(e)
 
     def __init__(
         self,
@@ -295,7 +342,8 @@ class PyiCloudService:
         )
         self.auth_token_body_drop_rules = self.validate_response_body_drop_rules
 
-        self.authenticate()
+        # Authentication is now handled by the factory method
+        # Do not call authenticate() here
 
         self._photos: PhotosService | None = None
 
@@ -308,7 +356,7 @@ class PyiCloudService:
         finally:
             self.observer_rules = temp_rules
 
-    def authenticate(self) -> None:
+    def authenticate_adt(self) -> AuthenticationResult:
         """
         Handles authentication, and persists cookies so that
         subsequent logins will not cause additional e-mails from Apple.
@@ -322,18 +370,18 @@ class PyiCloudService:
                 self.data = data
                 login_successful = True
             case AuthTokenInvalid(error):
-                # If it's a 503 error, we should raise it immediately
+                # If it's a 503 error, we should return it immediately
                 if isinstance(error, PyiCloudServiceUnavailableException):
-                    raise error
+                    return AuthenticationFailed(error)
                 LOGGER.debug("Invalid authentication token, will log in from scratch.")
             case AuthRequires2SA(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return AuthRequires2SA(account_name)
 
         if not login_successful:
             password = self.password_provider()
             if not password:
                 LOGGER.debug("Password Provider did not give any data")
-                return None
+                return AuthenticationFailed(PyiCloudConnectionException("Password not provided"))
             # set logging filter
             self.password_filter = PyiCloudPasswordFilter(password)
             LOGGER.addFilter(self.password_filter)
@@ -344,9 +392,9 @@ class PyiCloudService:
                 case AuthSRPSuccess():
                     pass
                 case AuthSRPFailed(error):
-                    raise error
+                    return AuthenticationFailed(error)
                 case AuthRequires2SA(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
+                    return AuthRequires2SA(account_name)
             # try:
             #     self._authenticate_srp(password)
             # except PyiCloudFailedLoginException as error:
@@ -362,12 +410,11 @@ class PyiCloudService:
                 case AuthWithTokenSuccess(data):
                     self.data = data
                 case AuthWithTokenFailed(error):
-                    raise error
+                    return AuthenticationFailed(error)
                 case AuthRequires2SA(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
+                    return AuthRequires2SA(account_name)
                 case AuthDomainMismatch(domain_to_use):
-                    msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
-                    raise PyiCloudConnectionException(msg)
+                    return AuthDomainMismatch(domain_to_use)
 
         # Is this needed?
         self.params.update({"dsid": self.data["dsInfo"]["dsid"]})
@@ -376,6 +423,8 @@ class PyiCloudService:
 
         LOGGER.info("Authentication completed successfully")
         LOGGER.debug(self.params)
+        # Return old ADT without service - factory method will transform it
+        return AuthenticationSuccess()
 
     def _authenticate_with_token(self) -> AuthenticateWithTokenResult:
         """Authenticate using session token."""
