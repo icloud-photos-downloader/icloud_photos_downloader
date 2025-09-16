@@ -1,7 +1,6 @@
 """Handles username/password authentication and two-step authentication"""
 
 import logging
-import sys
 import time
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Tuple
@@ -18,6 +17,9 @@ from pyicloud_ipd.response_types import (
     AuthenticationFailed,
     AuthenticationSuccessWithService,
     AuthRequires2SAWithService,
+    TwoFactorAuthFailed,
+    TwoFactorAuthResult,
+    TwoFactorAuthSuccess,
 )
 
 
@@ -125,19 +127,34 @@ def authenticator(
         logger.info("Two-factor authentication is required (2fa)")
         notificator()
         if mfa_provider == MFAProvider.WEBUI:
-            request_2fa_web(icloud, logger, status_exchange)
+            result = request_2fa_web(icloud, logger, status_exchange)
         else:
-            request_2fa(icloud, logger)
+            result = request_2fa(icloud, logger)
+
+        match result:
+            case TwoFactorAuthSuccess():
+                pass  # Success, continue
+            case TwoFactorAuthFailed(error_msg):
+                raise PyiCloudFailedMFAException(error_msg)
 
     elif icloud.requires_2sa:
         logger.info("Two-step authentication is required (2sa)")
         notificator()
-        request_2sa(icloud, logger)
+        result = request_2sa(icloud, logger)
+
+        match result:
+            case TwoFactorAuthSuccess():
+                pass  # Success, continue
+            case TwoFactorAuthFailed(_):
+                # For 2SA, we exit with code 1 for backward compatibility
+                import sys
+
+                sys.exit(1)
 
     return icloud
 
 
-def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
+def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAuthResult:
     """Request two-step authentication. Prompts for SMS or device"""
     devices = icloud.trusted_devices
     devices_count = len(devices)
@@ -154,12 +171,12 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     device = devices[device_index]
     if not icloud.send_verification_code(device):
         logger.error("Failed to send two-step authentication code")
-        sys.exit(1)
+        return TwoFactorAuthFailed("Failed to send two-step authentication code")
 
     code = prompt_string("Please enter two-step authentication code")
     if not icloud.validate_verification_code(device, code):
         logger.error("Failed to verify two-step authentication code")
-        sys.exit(1)
+        return TwoFactorAuthFailed("Failed to verify two-step authentication code")
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2SA expires.\n"
@@ -167,16 +184,17 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         "the two-step authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
     )
+    return TwoFactorAuthSuccess()
 
 
-def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
+def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAuthResult:
     """Request two-factor authentication."""
     devices = icloud.get_trusted_phone_numbers()
     devices_count = len(devices)
     device_index_alphabet = "abcdefghijklmnopqrstuvwxyz"
     if devices_count > 0:
         if devices_count > len(device_index_alphabet):
-            raise PyiCloudFailedMFAException("Too many trusted devices for authentication")
+            return TwoFactorAuthFailed("Too many trusted devices for authentication")
 
         for i, device in enumerate(devices):
             echo(f"  {device_index_alphabet[i]}: {device.obfuscated_number}")
@@ -220,7 +238,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             device_index = device_index_alphabet.index(index_or_code)
             device = devices[device_index]
             if not icloud.send_2fa_code_sms(device.id):
-                raise PyiCloudFailedMFAException("Failed to send two-factor authentication code")
+                return TwoFactorAuthFailed("Failed to send two-factor authentication code")
             while True:
                 from foundation.string_utils import strip
 
@@ -234,10 +252,10 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 echo("Invalid code, should be six digits. Try again")
 
             if not icloud.validate_2fa_code_sms(device.id, code):
-                raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
+                return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
         else:
             if not icloud.validate_2fa_code(index_or_code):
-                raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
+                return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
     else:
         while True:
             from foundation.string_utils import strip
@@ -247,7 +265,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 break
             echo("Invalid code, should be six digits. Try again")
         if not icloud.validate_2fa_code(code):
-            raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
+            return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2FA expires.\n"
@@ -255,14 +273,15 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
         "the two-factor authentication expires.\n"
         "(Use --help to view information about SMTP options.)"
     )
+    return TwoFactorAuthSuccess()
 
 
 def request_2fa_web(
     icloud: PyiCloudService, logger: logging.Logger, status_exchange: StatusExchange
-) -> None:
+) -> TwoFactorAuthResult:
     """Request two-factor authentication through Webui."""
     if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_MFA):
-        raise PyiCloudFailedMFAException(
+        return TwoFactorAuthFailed(
             f"Expected NO_INPUT_NEEDED, but got {status_exchange.get_status()}"
         )
 
@@ -278,7 +297,7 @@ def request_2fa_web(
         if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
             code = status_exchange.get_payload()
             if not code:
-                raise PyiCloudFailedMFAException(
+                return TwoFactorAuthFailed(
                     "Internal error: did not get code for SUPPLIED_MFA status"
                 )
 
@@ -288,7 +307,7 @@ def request_2fa_web(
                     # TODO give user an option to restart auth in case they missed code
                     continue
                 else:
-                    raise PyiCloudFailedMFAException("Failed to chage status of invalid code")
+                    return TwoFactorAuthFailed("Failed to change status of invalid code")
             else:
                 status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
 
@@ -299,5 +318,6 @@ def request_2fa_web(
                     "the two-factor authentication expires.\n"
                     "(Use --help to view information about SMTP options.)"
                 )
+                return TwoFactorAuthSuccess()
         else:
-            raise PyiCloudFailedMFAException("Failed to change status")
+            return TwoFactorAuthFailed("Failed to change status")
