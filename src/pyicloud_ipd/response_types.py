@@ -167,3 +167,22 @@ ServiceCreationResult = (
 AuthenticationResult = (
     AuthenticationSuccess | AuthenticationFailed | AuthRequires2SA | AuthDomainMismatch
 )
+
+
+# 2FA/2SA request result ADTs
+@dataclass(frozen=True)
+class TwoFactorAuthSuccess:
+    """Two-factor authentication completed successfully."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class TwoFactorAuthFailed:
+    """Two-factor authentication failed."""
+
+    error: str
+
+
+# Union type for 2FA/2SA results
+TwoFactorAuthResult = TwoFactorAuthSuccess | TwoFactorAuthFailed
