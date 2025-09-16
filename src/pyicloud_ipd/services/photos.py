@@ -112,7 +112,7 @@ def filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[
 logger = logging.getLogger(__name__)
 
 
-def download_asset(session: Session, url: str, start: int = 0) -> Response:
+def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0) -> Response:
     """
     Download an asset from the given URL using the provided session.
 
@@ -125,19 +125,30 @@ def download_asset(session: Session, url: str, start: int = 0) -> Response:
         The HTTP response for the download request
     """
     headers = {"Range": f"bytes={start}-"}
-    return session.get(url, headers=headers, stream=True)
+    response = session.get(url, headers=headers, stream=True)
+    # Check if this is a PyiCloudSession and evaluate the response
+    if hasattr(session, "evaluate_response"):
+        response = session.evaluate_response(response)
+    return response
 
 
 def photos_request(
-    service_endpoint: str, params: Dict[str, Any], session: Session, query_data: str
+    service_endpoint: str,
+    params: Dict[str, Any],
+    session: Session | PyiCloudSession,
+    query_data: str,
 ) -> Response:
     """Module-level implementation of photos_request for easier testing"""
     url = (f"{service_endpoint}/records/query?") + urlencode(params)
-    return session.post(
+    response = session.post(
         url,
         data=query_data,
         headers={"Content-type": "text/plain"},
     )
+    # Check if this is a PyiCloudSession and evaluate the response
+    if hasattr(session, "evaluate_response"):
+        response = session.evaluate_response(response)
+    return response
 
 
 def apply_raw_policy(
@@ -286,7 +297,7 @@ class PhotoLibrary:
         self,
         service_endpoint: str,
         params: Dict[str, Any],
-        session: Session,
+        session: PyiCloudSession,
         zone_id: Dict[str, Any],
         library_type: str,
     ):
@@ -305,6 +316,7 @@ class PhotoLibrary:
         )
 
         request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+        request = self.session.evaluate_response(request)
         response = request.json()
         indexing_state = response["records"][0]["fields"]["state"]["value"]
         if indexing_state != "FINISHED":
@@ -372,6 +384,7 @@ class PhotoLibrary:
         )
 
         request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+        request = self.session.evaluate_response(request)
         response = request.json()
 
         return typing.cast(Sequence[Dict[str, Any]], response["records"])
@@ -452,6 +465,7 @@ class PhotosService(PhotoLibrary):
             service_endpoint = self.get_service_endpoint(library_type)
             url = f"{service_endpoint}/zones/list"
             request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
+            request = self.session.evaluate_response(request)
             response = request.json()
             for zone in response["zones"]:
                 if not zone.get("deleted"):
@@ -480,7 +494,7 @@ class PhotoAlbum:
     def __init__(
         self,
         params: Dict[str, Any],
-        session: Session,
+        session: PyiCloudSession,
         service_endpoint: str,
         name: str,
         list_type: str,
@@ -518,6 +532,7 @@ class PhotoAlbum:
             data=json.dumps(self._count_query_gen(self.obj_type)),
             headers={"Content-type": "text/plain"},
         )
+        request = self.session.evaluate_response(request)
         response = request.json()
 
         return int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
