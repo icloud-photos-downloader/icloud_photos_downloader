@@ -35,7 +35,18 @@ class ResponseAPIError:
     code: str
 
 
+@dataclass(frozen=True)
+class ResponseServiceUnavailable:
+    """Response indicates service is unavailable (503)."""
+
+    reason: str
+
+
 # Union type for all possible response evaluation results
 ResponseEvaluation = (
-    ResponseSuccess | Response2SARequired | ResponseServiceNotActivated | ResponseAPIError
+    ResponseSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
 )

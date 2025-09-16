@@ -13,9 +13,10 @@ from pyicloud_ipd.response_types import (
     ResponseAPIError,
     ResponseEvaluation,
     ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
     ResponseSuccess,
 )
-from pyicloud_ipd.utils import handle_connection_error, throw_on_503
+from pyicloud_ipd.utils import handle_connection_error
 
 LOGGER = logging.getLogger(__name__)
 
@@ -76,9 +77,7 @@ class PyiCloudSession(Session):
 
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
-        response = throw_on_503(
-            self.observe(handle_connection_error(super().request)(method, url, **kwargs))
-        )
+        response = self.observe(handle_connection_error(super().request)(method, url, **kwargs))
 
         request_logger.debug(response.headers)
 
@@ -110,6 +109,12 @@ class PyiCloudSession(Session):
         Returns:
             A ResponseEvaluation ADT indicating success or specific error type
         """
+        # Check for 503 Service Unavailable first
+        if response.status_code == 503:
+            return ResponseServiceUnavailable(
+                "Apple iCloud is temporary refusing to serve icloudpd"
+            )
+
         # If no logger provided, create one based on the calling context
         if request_logger is None:
             callee = inspect.stack()[1]
