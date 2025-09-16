@@ -94,15 +94,16 @@ class PyiCloudSession(Session):
         self.cookies.save(ignore_discard=True, ignore_expires=True)  # type: ignore[attr-defined]
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
 
-        # Evaluate the response for errors and exceptions
-        return self._evaluate_response(response, request_logger)
+        return response
 
-    def _evaluate_response(self, response: Response, request_logger: logging.Logger) -> Response:
+    def evaluate_response(
+        self, response: Response, request_logger: logging.Logger | None = None
+    ) -> Response:
         """Evaluate the response for errors and exceptions.
 
         Args:
             response: The HTTP response object
-            request_logger: Logger instance for request-specific logging
+            request_logger: Logger instance for request-specific logging (optional)
 
         Returns:
             The response object if no errors are found
@@ -112,6 +113,11 @@ class PyiCloudSession(Session):
             PyiCloud2SARequiredException: When 2SA is required
             PyiCloudServiceNotActivatedException: When iCloud setup is incomplete
         """
+        # If no logger provided, create one based on the calling context
+        if request_logger is None:
+            callee = inspect.stack()[1]
+            module = inspect.getmodule(callee[0])
+            request_logger = logging.getLogger(module.__name__).getChild("http")  # type: ignore[union-attr]
         content_type = response.headers.get("Content-Type", "").split(";")[0]
         json_mimetypes = ["application/json", "text/json"]
 

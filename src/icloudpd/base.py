@@ -836,7 +836,10 @@ def delete_photo(
             "zoneID": library_object.zone_id,
         }
     )
-    library_object.session.post(url, data=post_data, headers={"Content-type": "application/json"})
+    response = library_object.session.post(
+        url, data=post_data, headers={"Content-type": "application/json"}
+    )
+    library_object.session.evaluate_response(response)
     logger.info("Deleted %s in iCloud", clean_filename_local)
 
 
