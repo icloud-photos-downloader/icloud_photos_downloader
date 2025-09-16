@@ -69,6 +69,10 @@ from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    AuthenticatorConnectionError,
+    AuthenticatorMFAError,
+    AuthenticatorSuccess,
+    AuthenticatorTwoSAExit,
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
@@ -921,7 +925,7 @@ def core_single_run(
             captured.append(response)
 
         try:
-            icloud = authenticator(
+            auth_result = authenticator(
                 logger,
                 global_config.domain,
                 {
@@ -936,6 +940,17 @@ def core_single_run(
                 user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
             )
+
+            # Handle authentication result
+            match auth_result:
+                case AuthenticatorSuccess(service):
+                    icloud = service
+                case AuthenticatorConnectionError(error):
+                    raise error
+                case AuthenticatorMFAError(error_msg):
+                    raise PyiCloudFailedMFAException(error_msg)
+                case AuthenticatorTwoSAExit():
+                    sys.exit(1)
 
             # dump captured responses for debugging
             # dump_responses(logger.debug, captured_responses)

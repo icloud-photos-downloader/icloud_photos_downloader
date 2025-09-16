@@ -10,12 +10,16 @@ from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
     PyiCloudConnectionException,
-    PyiCloudFailedMFAException,
 )
 from pyicloud_ipd.response_types import (
     AuthDomainMismatchError,
     AuthenticationFailed,
     AuthenticationSuccessWithService,
+    AuthenticatorConnectionError,
+    AuthenticatorMFAError,
+    AuthenticatorResult,
+    AuthenticatorSuccess,
+    AuthenticatorTwoSAExit,
     AuthRequires2SAWithService,
     TwoFactorAuthFailed,
     TwoFactorAuthResult,
@@ -80,7 +84,7 @@ def authenticator(
     response_observer: Callable[[Mapping[str, Any]], None] | None = None,
     cookie_directory: str | None = None,
     client_id: str | None = None,
-) -> PyiCloudService:
+) -> AuthenticatorResult:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
     valid_password: List[str] = []
@@ -109,13 +113,13 @@ def authenticator(
         case AuthenticationSuccessWithService(service):
             icloud = service
         case AuthenticationFailed(error):
-            raise error
+            return AuthenticatorConnectionError(error)
         case AuthRequires2SAWithService(service, _):
             # 2SA is handled below, service is available
             icloud = service
         case AuthDomainMismatchError(domain_to_use):
             msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
-            raise PyiCloudConnectionException(msg)
+            return AuthenticatorConnectionError(PyiCloudConnectionException(msg))
 
     if valid_password:
         # save valid password to all providers
@@ -135,7 +139,7 @@ def authenticator(
             case TwoFactorAuthSuccess():
                 pass  # Success, continue
             case TwoFactorAuthFailed(error_msg):
-                raise PyiCloudFailedMFAException(error_msg)
+                return AuthenticatorMFAError(error_msg)
 
     elif icloud.requires_2sa:
         logger.info("Two-step authentication is required (2sa)")
@@ -146,12 +150,10 @@ def authenticator(
             case TwoFactorAuthSuccess():
                 pass  # Success, continue
             case TwoFactorAuthFailed(_):
-                # For 2SA, we exit with code 1 for backward compatibility
-                import sys
+                # For 2SA, need to exit with code 1 for backward compatibility
+                return AuthenticatorTwoSAExit()
 
-                sys.exit(1)
-
-    return icloud
+    return AuthenticatorSuccess(icloud)
 
 
 def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAuthResult:
