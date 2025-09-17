@@ -7,6 +7,7 @@ from requests import Response
 
 if TYPE_CHECKING:
     from pyicloud_ipd.base import PyiCloudService
+    from pyicloud_ipd.services.photos import PhotoLibrary, PhotosService
 
 
 @dataclass(frozen=True)
@@ -223,4 +224,47 @@ AuthenticatorResult = (
     | AuthenticatorConnectionError
     | AuthenticatorMFAError
     | AuthenticatorTwoSAExit
+)
+
+
+# PhotoLibrary initialization ADTs
+@dataclass(frozen=True)
+class PhotoLibraryInitSuccess:
+    """Photo library initialized successfully."""
+
+    library: "PhotoLibrary"
+
+
+@dataclass(frozen=True)
+class PhotoLibraryNotFinishedIndexing:
+    """Photo library has not finished indexing."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class PhotoLibraryInitFailed:
+    """Photo library initialization failed."""
+
+    error: Exception
+
+
+# Union type for PhotoLibrary initialization results
+PhotoLibraryInitResult = (
+    PhotoLibraryInitSuccess | PhotoLibraryNotFinishedIndexing | PhotoLibraryInitFailed
+)
+
+
+# PhotosService initialization ADTs
+@dataclass(frozen=True)
+class PhotosServiceInitSuccess:
+    """Photos service initialized successfully."""
+
+    service: "PhotosService"
+
+
+# Union type for PhotosService initialization results
+# Reuses PhotoLibraryNotFinishedIndexing and PhotoLibraryInitFailed since they're the same
+PhotosServiceInitResult = (
+    PhotosServiceInitSuccess | PhotoLibraryNotFinishedIndexing | PhotoLibraryInitFailed
 )

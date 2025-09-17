@@ -32,6 +32,12 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    PhotoLibraryInitFailed,
+    PhotoLibraryInitResult,
+    PhotoLibraryInitSuccess,
+    PhotoLibraryNotFinishedIndexing,
+    PhotosServiceInitResult,
+    PhotosServiceInitSuccess,
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
@@ -339,33 +345,51 @@ class PhotoLibrary:
         self.zone_id = zone_id
         self.library_type = library_type
 
-        url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
+    @classmethod
+    def check_and_create(
+        cls,
+        service_endpoint: str,
+        params: Dict[str, Any],
+        session: PyiCloudSession,
+        zone_id: Dict[str, Any],
+        library_type: str,
+    ) -> PhotoLibraryInitResult:
+        """Check indexing state and create PhotoLibrary if successful."""
+        url = f"{service_endpoint}/records/query?{urlencode(params)}"
         json_data = json.dumps(
             {
                 "query": {"recordType": "CheckIndexingState"},
-                "zoneID": self.zone_id,
+                "zoneID": zone_id,
             }
         )
 
-        request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
-        result = self.session.evaluate_response(request)
+        request = session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+        result = session.evaluate_response(request)
         match result:
             case ResponseSuccess(resp):
                 request = resp
             case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return PhotoLibraryInitFailed(PyiCloud2SARequiredException(account_name))
             case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
+                return PhotoLibraryInitFailed(PyiCloudServiceNotActivatedException(reason, code))
             case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
+                return PhotoLibraryInitFailed(PyiCloudAPIResponseException(reason, code))
             case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
+                return PhotoLibraryInitFailed(PyiCloudServiceUnavailableException(reason))
         response = request.json()
         indexing_state = response["records"][0]["fields"]["state"]["value"]
         if indexing_state != "FINISHED":
-            raise PyiCloudServiceNotActivatedException(
-                ("Apple iCloud Photo Library has not finished indexing yet"), None
-            )
+            return PhotoLibraryNotFinishedIndexing()
+
+        # Create and return the library
+        library = cls(
+            service_endpoint=service_endpoint,
+            params=params,
+            session=session,
+            zone_id=zone_id,
+            library_type=library_type,
+        )
+        return PhotoLibraryInitSuccess(library)
 
     @property
     def albums(self) -> Dict[str, "PhotoAlbum"]:
@@ -491,6 +515,39 @@ class PhotosService(PhotoLibrary):
         zone_id = {"zoneName": "PrimarySync"}
         super().__init__(service_endpoint, self.params, self.session, zone_id, "private")
 
+    @classmethod
+    def check_and_create_photos_service(
+        cls, service_root: str, session: PyiCloudSession, params: Dict[str, Any]
+    ) -> PhotosServiceInitResult:
+        """Check indexing state and create PhotosService if successful."""
+        # Create temporary service to get endpoint
+        temp_params = dict(params)
+        temp_params.update({"remapEnums": True, "getCurrentSyncToken": True})
+
+        # Get the service endpoint
+        service_endpoint = f"{service_root}/database/1/com.apple.photos.cloud/production/private"
+        zone_id = {"zoneName": "PrimarySync"}
+
+        # Use parent class method to check and create
+        result = PhotoLibrary.check_and_create(
+            service_endpoint=service_endpoint,
+            params=temp_params,
+            session=session,
+            zone_id=zone_id,
+            library_type="private",
+        )
+
+        # If successful, replace the library with PhotosService instance
+        match result:
+            case PhotoLibraryInitSuccess(_):
+                # Create the actual PhotosService
+                photos_service = cls(service_root, session, params)
+                return PhotosServiceInitSuccess(photos_service)
+            case PhotoLibraryNotFinishedIndexing():
+                return PhotoLibraryNotFinishedIndexing()
+            case PhotoLibraryInitFailed(error):
+                return PhotoLibraryInitFailed(error)
+
         # TODO: Does syncToken ever change?
         # self.params.update({
         #     'syncToken': response['syncToken'],
@@ -514,41 +571,50 @@ class PhotosService(PhotoLibrary):
         return self._shared_libraries
 
     def _fetch_libraries(self, library_type: str) -> Dict[str, PhotoLibrary]:
-        try:
-            libraries = {}
-            service_endpoint = self.get_service_endpoint(library_type)
-            url = f"{service_endpoint}/zones/list"
-            request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
-            result = self.session.evaluate_response(request)
-            match result:
-                case ResponseSuccess(resp):
-                    request = resp
-                case Response2SARequired(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
-                case ResponseAPIError(reason, code):
-                    raise PyiCloudAPIResponseException(reason, code)
-                case ResponseServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
-            response = request.json()
-            for zone in response["zones"]:
-                if not zone.get("deleted"):
-                    zone_name = zone["zoneID"]["zoneName"]
-                    service_endpoint = self.get_service_endpoint(library_type)
-                    libraries[zone_name] = PhotoLibrary(
-                        service_endpoint,
-                        self.params,
-                        self.session,
-                        zone_id=zone["zoneID"],
-                        library_type=library_type,
-                    )
-                    # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
-                    # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
-                    # direction="ASCENDING", query_filter=None,
-                    # zone_id=zone['zoneID'])
-        except Exception as e:
-            logger.error(f"library exception: {str(e)}")
+        # TODO: Refactor to return ADTs instead of Dict to properly propagate errors
+        # Currently, individual library initialization failures are logged and skipped,
+        # but the caller cannot distinguish between:
+        # - Empty result because no libraries exist
+        # - Empty result because all libraries failed to initialize
+        # - Partial result with some libraries skipped due to errors
+        libraries: Dict[str, PhotoLibrary] = {}
+        service_endpoint = self.get_service_endpoint(library_type)
+        url = f"{service_endpoint}/zones/list"
+        request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
+        response = request.json()
+        for zone in response["zones"]:
+            if not zone.get("deleted"):
+                zone_name = zone["zoneID"]["zoneName"]
+                service_endpoint = self.get_service_endpoint(library_type)
+                # Use check_and_create to verify indexing state
+                lib_result = PhotoLibrary.check_and_create(
+                    service_endpoint,
+                    self.params,
+                    self.session,
+                    zone_id=zone["zoneID"],
+                    library_type=library_type,
+                )
+                match lib_result:
+                    case PhotoLibraryInitSuccess(library):
+                        libraries[zone_name] = library
+                    case PhotoLibraryNotFinishedIndexing():
+                        logger.warning(f"Library {zone_name} has not finished indexing yet")
+                        # Skip this library
+                    case PhotoLibraryInitFailed(error):
+                        logger.error(f"Failed to initialize library {zone_name}: {error}")
+                        # Skip this library
         return libraries
 
     def get_service_endpoint(self, library_type: str) -> str:
