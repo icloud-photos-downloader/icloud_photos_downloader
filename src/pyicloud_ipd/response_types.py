@@ -307,3 +307,22 @@ class FoldersFetchFailed:
 
 # Union type for folder fetching results
 FoldersFetchResult = FoldersFetchSuccess | FoldersFetchFailed
+
+
+# Album length ADTs
+@dataclass(frozen=True)
+class AlbumLengthSuccess:
+    """Album length retrieved successfully."""
+
+    count: int
+
+
+@dataclass(frozen=True)
+class AlbumLengthFailed:
+    """Failed to retrieve album length."""
+
+    error: Exception
+
+
+# Union type for album length results
+AlbumLengthResult = AlbumLengthSuccess | AlbumLengthFailed
