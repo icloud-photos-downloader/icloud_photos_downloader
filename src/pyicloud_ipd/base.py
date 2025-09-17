@@ -1134,7 +1134,28 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params)
+
+            # Import here to avoid circular import
+            from pyicloud_ipd.response_types import (
+                PhotoLibraryInitFailed,
+                PhotoLibraryNotFinishedIndexing,
+                PhotosServiceInitSuccess,
+            )
+
+            # Use the class method to check and create
+            result = PhotosService.check_and_create_photos_service(
+                service_root, self.session, self.params
+            )
+
+            match result:
+                case PhotosServiceInitSuccess(service):
+                    self._photos = service
+                case PhotoLibraryNotFinishedIndexing():
+                    raise PyiCloudServiceNotActivatedException(
+                        "Apple iCloud Photo Library has not finished indexing yet", None
+                    )
+                case PhotoLibraryInitFailed(error):
+                    raise error
         return self._photos
 
     def __unicode__(self) -> str:
