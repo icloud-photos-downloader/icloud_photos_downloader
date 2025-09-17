@@ -1,7 +1,7 @@
 """ADT (Algebraic Data Type) definitions for response evaluation results."""
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Sequence
 
 from requests import Response
 
@@ -288,3 +288,22 @@ class LibrariesFetchFailed:
 
 # Union type for library fetching results
 LibrariesFetchResult = LibrariesFetchSuccess | LibrariesFetchFailed
+
+
+# Folder fetching ADTs
+@dataclass(frozen=True)
+class FoldersFetchSuccess:
+    """Folders fetched successfully."""
+
+    folders: Sequence[Dict[str, Any]]
+
+
+@dataclass(frozen=True)
+class FoldersFetchFailed:
+    """Failed to fetch folders list."""
+
+    error: Exception
+
+
+# Union type for folder fetching results
+FoldersFetchResult = FoldersFetchSuccess | FoldersFetchFailed

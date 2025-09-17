@@ -31,6 +31,9 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    FoldersFetchFailed,
+    FoldersFetchResult,
+    FoldersFetchSuccess,
     LibrariesFetchFailed,
     LibrariesFetchResult,
     LibrariesFetchSuccess,
@@ -404,43 +407,51 @@ class PhotoLibrary:
             for (name, props) in self.SMART_FOLDERS.items()
         }
 
-        for folder in self._fetch_folders():
-            # FIXME: Handle subfolders
-            if folder["recordName"] in ("----Root-Folder----", "----Project-Root-Folder----") or (
-                folder["fields"].get("isDeleted") and folder["fields"]["isDeleted"]["value"]
-            ):
-                continue
+        folders_result = self._fetch_folders()
+        match folders_result:
+            case FoldersFetchSuccess(folders):
+                for folder in folders:
+                    # FIXME: Handle subfolders
+                    if folder["recordName"] in (
+                        "----Root-Folder----",
+                        "----Project-Root-Folder----",
+                    ) or (
+                        folder["fields"].get("isDeleted") and folder["fields"]["isDeleted"]["value"]
+                    ):
+                        continue
 
-            folder_id = folder["recordName"]
-            folder_obj_type = f"CPLContainerRelationNotDeletedByAssetDate:{folder_id}"
-            folder_name = base64.b64decode(folder["fields"]["albumNameEnc"]["value"]).decode(
-                "utf-8"
-            )
-            query_filter = [
-                {
-                    "fieldName": "parentId",
-                    "comparator": "EQUALS",
-                    "fieldValue": {"type": "STRING", "value": folder_id},
-                }
-            ]
+                    folder_id = folder["recordName"]
+                    folder_obj_type = f"CPLContainerRelationNotDeletedByAssetDate:{folder_id}"
+                    folder_name = base64.b64decode(
+                        folder["fields"]["albumNameEnc"]["value"]
+                    ).decode("utf-8")
+                    query_filter = [
+                        {
+                            "fieldName": "parentId",
+                            "comparator": "EQUALS",
+                            "fieldValue": {"type": "STRING", "value": folder_id},
+                        }
+                    ]
 
-            album = PhotoAlbum(
-                self.params,
-                self.session,
-                self.service_endpoint,
-                folder_name,
-                "CPLContainerRelationLiveByAssetDate",
-                folder_obj_type,
-                query_filter,
-                zone_id=self.zone_id,
-            )
-            albums[folder_name] = album
+                    album = PhotoAlbum(
+                        self.params,
+                        self.session,
+                        self.service_endpoint,
+                        folder_name,
+                        "CPLContainerRelationLiveByAssetDate",
+                        folder_obj_type,
+                        query_filter,
+                        zone_id=self.zone_id,
+                    )
+                    albums[folder_name] = album
+            case FoldersFetchFailed(error):
+                raise error
 
         return albums
 
-    def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
+    def _fetch_folders(self) -> FoldersFetchResult:
         if self.library_type == "shared":
-            return []
+            return FoldersFetchSuccess([])
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
         json_data = json.dumps(
             {
@@ -455,16 +466,16 @@ class PhotoLibrary:
             case ResponseSuccess(resp):
                 request = resp
             case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return FoldersFetchFailed(PyiCloud2SARequiredException(account_name))
             case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
+                return FoldersFetchFailed(PyiCloudServiceNotActivatedException(reason, code))
             case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
+                return FoldersFetchFailed(PyiCloudAPIResponseException(reason, code))
             case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
+                return FoldersFetchFailed(PyiCloudServiceUnavailableException(reason))
         response = request.json()
 
-        return typing.cast(Sequence[Dict[str, Any]], response["records"])
+        return FoldersFetchSuccess(typing.cast(Sequence[Dict[str, Any]], response["records"]))
 
     @property
     def all(self) -> "PhotoAlbum":
