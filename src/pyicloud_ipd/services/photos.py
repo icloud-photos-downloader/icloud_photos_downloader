@@ -1,7 +1,6 @@
 import base64
 import copy
 import json
-import logging
 import re
 import typing
 from datetime import datetime
@@ -123,9 +122,6 @@ def filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[
     """
     fallback = generate_fingerprint_filename(asset_id, item_type_extension)
     return fromMaybe(fallback)
-
-
-logger = logging.getLogger(__name__)
 
 
 def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0) -> Response:
@@ -610,11 +606,11 @@ class PhotosService(PhotoLibrary):
                     case PhotoLibraryInitSuccess(library):
                         libraries[zone_name] = library
                     case PhotoLibraryNotFinishedIndexing():
-                        logger.warning(f"Library {zone_name} has not finished indexing yet")
-                        # Skip this library
-                    case PhotoLibraryInitFailed(error):
-                        logger.error(f"Failed to initialize library {zone_name}: {error}")
-                        # Skip this library
+                        # Skip this library - not finished indexing yet
+                        pass
+                    case PhotoLibraryInitFailed(_):
+                        # Skip this library - initialization failed
+                        pass
         return libraries
 
     def get_service_endpoint(self, library_type: str) -> str:
@@ -1016,9 +1012,7 @@ class PhotoAsset:
         try:
             created_date = self.asset_date.astimezone(get_localzone())
         except (ValueError, OSError):
-            logger.error(
-                "Could not convert photo created date to local timezone (%s)", self.asset_date
-            )
+            # Could not convert photo created date to local timezone, use as-is
             created_date = self.asset_date
 
         return created_date
