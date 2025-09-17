@@ -31,6 +31,9 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    LibrariesFetchFailed,
+    LibrariesFetchResult,
+    LibrariesFetchSuccess,
     PhotoLibraryInitFailed,
     PhotoLibraryInitResult,
     PhotoLibraryInitSuccess,
@@ -555,40 +558,48 @@ class PhotosService(PhotoLibrary):
     @property
     def private_libraries(self) -> Dict[str, PhotoLibrary]:
         if not self._private_libraries:
-            self._private_libraries = self._fetch_libraries("private")
+            result = self._fetch_libraries("private")
+            match result:
+                case LibrariesFetchSuccess(libraries, _):
+                    self._private_libraries = libraries
+                case LibrariesFetchFailed(error):
+                    raise error
 
         return self._private_libraries
 
     @property
     def shared_libraries(self) -> Dict[str, PhotoLibrary]:
         if not self._shared_libraries:
-            self._shared_libraries = self._fetch_libraries("shared")
+            result = self._fetch_libraries("shared")
+            match result:
+                case LibrariesFetchSuccess(libraries, _):
+                    self._shared_libraries = libraries
+                case LibrariesFetchFailed(error):
+                    raise error
 
         return self._shared_libraries
 
-    def _fetch_libraries(self, library_type: str) -> Dict[str, PhotoLibrary]:
-        # TODO: Refactor to return ADTs instead of Dict to properly propagate errors
-        # Currently, individual library initialization failures are logged and skipped,
-        # but the caller cannot distinguish between:
-        # - Empty result because no libraries exist
-        # - Empty result because all libraries failed to initialize
-        # - Partial result with some libraries skipped due to errors
+    def _fetch_libraries(self, library_type: str) -> LibrariesFetchResult:
         libraries: Dict[str, PhotoLibrary] = {}
+        skipped: Dict[str, str] = {}
+
         service_endpoint = self.get_service_endpoint(library_type)
         url = f"{service_endpoint}/zones/list"
+
         request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
         result = self.session.evaluate_response(request)
         match result:
             case ResponseSuccess(resp):
                 request = resp
             case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return LibrariesFetchFailed(PyiCloud2SARequiredException(account_name))
             case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
+                return LibrariesFetchFailed(PyiCloudServiceNotActivatedException(reason, code))
             case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
+                return LibrariesFetchFailed(PyiCloudAPIResponseException(reason, code))
             case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
+                return LibrariesFetchFailed(PyiCloudServiceUnavailableException(reason))
+
         response = request.json()
         for zone in response["zones"]:
             if not zone.get("deleted"):
@@ -606,12 +617,11 @@ class PhotosService(PhotoLibrary):
                     case PhotoLibraryInitSuccess(library):
                         libraries[zone_name] = library
                     case PhotoLibraryNotFinishedIndexing():
-                        # Skip this library - not finished indexing yet
-                        pass
-                    case PhotoLibraryInitFailed(_):
-                        # Skip this library - initialization failed
-                        pass
-        return libraries
+                        skipped[zone_name] = "Not finished indexing"
+                    case PhotoLibraryInitFailed(error):
+                        skipped[zone_name] = str(error)
+
+        return LibrariesFetchSuccess(libraries, skipped)
 
     def get_service_endpoint(self, library_type: str) -> str:
         return f"{self._service_root}/database/1/com.apple.photos.cloud/production/{library_type}"

@@ -268,3 +268,23 @@ class PhotosServiceInitSuccess:
 PhotosServiceInitResult = (
     PhotosServiceInitSuccess | PhotoLibraryNotFinishedIndexing | PhotoLibraryInitFailed
 )
+
+
+# Library fetching ADTs
+@dataclass(frozen=True)
+class LibrariesFetchSuccess:
+    """Libraries fetched successfully."""
+
+    libraries: Dict[str, "PhotoLibrary"]
+    skipped: Dict[str, str]  # zone_name -> reason for skipping
+
+
+@dataclass(frozen=True)
+class LibrariesFetchFailed:
+    """Failed to fetch libraries list."""
+
+    error: Exception
+
+
+# Union type for library fetching results
+LibrariesFetchResult = LibrariesFetchSuccess | LibrariesFetchFailed
