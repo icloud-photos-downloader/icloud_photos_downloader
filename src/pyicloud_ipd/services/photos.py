@@ -31,6 +31,9 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    AlbumLengthFailed,
+    AlbumLengthResult,
+    AlbumLengthSuccess,
     FoldersFetchFailed,
     FoldersFetchResult,
     FoldersFetchSuccess,
@@ -673,7 +676,8 @@ class PhotoAlbum:
     def __iter__(self) -> Generator["PhotoAsset", Any, None]:
         return self.photos
 
-    def __len__(self) -> int:
+    def get_album_length(self) -> AlbumLengthResult:
+        """Get the album length, returning an ADT result."""
         url = f"{self.service_endpoint}/internal/records/query/batch?{urlencode(self.params)}"
         request = self.session.post(
             url,
@@ -685,16 +689,25 @@ class PhotoAlbum:
             case ResponseSuccess(resp):
                 request = resp
             case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return AlbumLengthFailed(PyiCloud2SARequiredException(account_name))
             case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
+                return AlbumLengthFailed(PyiCloudServiceNotActivatedException(reason, code))
             case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
+                return AlbumLengthFailed(PyiCloudAPIResponseException(reason, code))
             case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
+                return AlbumLengthFailed(PyiCloudServiceUnavailableException(reason))
         response = request.json()
 
-        return int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
+        count = int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
+        return AlbumLengthSuccess(count)
+
+    def __len__(self) -> int:
+        result = self.get_album_length()
+        match result:
+            case AlbumLengthSuccess(count):
+                return count
+            case AlbumLengthFailed(error):
+                raise error
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
