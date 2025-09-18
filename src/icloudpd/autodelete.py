@@ -12,6 +12,11 @@ from tzlocal import get_localzone
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.response_types import (
+    PhotoIterationComplete,
+    PhotoIterationFailed,
+    PhotoIterationSuccess,
+)
 from pyicloud_ipd.services.photos import PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
@@ -49,7 +54,18 @@ def autodelete_photos(
 
     recently_deleted = library_object.recently_deleted
 
-    for media in recently_deleted:
+    for media_result in recently_deleted:
+        match media_result:
+            case PhotoIterationFailed(error):
+                raise error
+            case PhotoIterationComplete():
+                break
+            case PhotoIterationSuccess(media):
+                pass
+            case _:
+                # Should not happen, but handle gracefully
+                continue
+
         try:
             created_date = media.created.astimezone(get_localzone())
         except (ValueError, OSError):

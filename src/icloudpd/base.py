@@ -75,6 +75,10 @@ from pyicloud_ipd.response_types import (
     AuthenticatorMFAError,
     AuthenticatorSuccess,
     AuthenticatorTwoSAExit,
+    PhotoIterationComplete,
+    PhotoIterationFailed,
+    PhotoIterationResult,
+    PhotoIterationSuccess,
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
@@ -1036,12 +1040,12 @@ def core_single_run(
 
                     photos_count: int | None = compose(sum_, album_lengths)(albums)
                     for photo_album in albums:
-                        photos_enumerator: Iterable[PhotoAsset] = photo_album
+                        photos_enumerator: Iterable[PhotoIterationResult] = photo_album
 
                         # Optional: Only download the x most recent photos.
                         if user_config.recent is not None:
                             photos_count = user_config.recent
-                            photos_top: Iterable[PhotoAsset] = itertools.islice(
+                            photos_top: Iterable[PhotoIterationResult] = itertools.islice(
                                 photos_enumerator, user_config.recent
                             )
                         else:
@@ -1056,7 +1060,7 @@ def core_single_run(
                         # or if the progress bar is explicitly disabled,
                         # or if this is not a terminal (e.g. cron or piping output to file)
                         if skip_bar:
-                            photos_bar: Iterable[PhotoAsset] = photos_top
+                            photos_bar: Iterable[PhotoIterationResult] = photos_top
                             # logger.set_tqdm(None)
                         else:
                             photos_bar = tqdm(
@@ -1117,8 +1121,19 @@ def core_single_run(
 
                         download_photo = partial(downloader, icloud)
 
-                        for item in photos_bar:
+                        for item_result in photos_bar:
                             try:
+                                match item_result:
+                                    case PhotoIterationFailed(error):
+                                        raise error
+                                    case PhotoIterationComplete():
+                                        break
+                                    case PhotoIterationSuccess(item):
+                                        pass
+                                    case _:
+                                        # Should not happen, but handle gracefully
+                                        continue
+
                                 if should_break(consecutive_files_found):
                                     logger.info(
                                         "Found %s consecutive previously downloaded photos. Exiting",

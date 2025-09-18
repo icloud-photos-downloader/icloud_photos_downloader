@@ -8,7 +8,7 @@ from typing import Any, Callable, Dict, Generator, Sequence, Tuple, cast
 from urllib.parse import urlencode
 
 import pytz
-from requests import Response, Session
+from requests import Session
 from tzlocal import get_localzone
 
 from foundation import bytes_decode, wrap_param_in_exception
@@ -43,10 +43,17 @@ from pyicloud_ipd.response_types import (
     LibrariesFetchFailed,
     LibrariesFetchResult,
     LibrariesFetchSuccess,
+    PhotoIterationComplete,
+    PhotoIterationFailed,
+    PhotoIterationResult,
+    PhotoIterationSuccess,
     PhotoLibraryInitFailed,
     PhotoLibraryInitResult,
     PhotoLibraryInitSuccess,
     PhotoLibraryNotFinishedIndexing,
+    PhotosRequestFailed,
+    PhotosRequestResult,
+    PhotosRequestSuccess,
     PhotosServiceInitResult,
     PhotosServiceInitSuccess,
     Response2SARequired,
@@ -172,7 +179,7 @@ def photos_request(
     params: Dict[str, Any],
     session: Session | PyiCloudSession,
     query_data: str,
-) -> Response:
+) -> PhotosRequestResult:
     """Module-level implementation of photos_request for easier testing"""
     url = (f"{service_endpoint}/records/query?") + urlencode(params)
     response = session.post(
@@ -187,14 +194,14 @@ def photos_request(
             case ResponseSuccess(resp):
                 response = resp
             case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return PhotosRequestFailed(PyiCloud2SARequiredException(account_name))
             case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
+                return PhotosRequestFailed(PyiCloudServiceNotActivatedException(reason, code))
             case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
+                return PhotosRequestFailed(PyiCloudAPIResponseException(reason, code))
             case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
-    return response
+                return PhotosRequestFailed(PyiCloudServiceUnavailableException(reason))
+    return PhotosRequestSuccess(response)
 
 
 def apply_raw_policy(
@@ -676,7 +683,7 @@ class PhotoAlbum:
     def title(self) -> str:
         return self.name
 
-    def __iter__(self) -> Generator["PhotoAsset", Any, None]:
+    def __iter__(self) -> Generator[PhotoIterationResult, Any, None]:
         return self.photos
 
     def get_album_length(self) -> AlbumLengthResult:
@@ -708,44 +715,42 @@ class PhotoAlbum:
     # can mock it to test session errors.
 
     @property
-    def photos(self) -> Generator["PhotoAsset", Any, None]:
+    def photos(self) -> Generator[PhotoIterationResult, Any, None]:
         while True:
-            request = photos_request(
+            result = photos_request(
                 self.service_endpoint,
                 self.params,
                 self.session,
                 json.dumps(self._list_query_gen(self.offset, self.list_type, self.query_filter)),
             )
 
-            #            url = ('%s/records/query?' % self.service_endpoint) + \
-            #                urlencode(self.service.params)
-            #            request = self.service.session.post(
-            #                url,
-            #                data=json.dumps(self._list_query_gen(
-            #                    offset, self.list_type, self.direction,
-            #                    self.query_filter)),
-            #                headers={'Content-type': 'text/plain'}
-            #            )
+            match result:
+                case PhotosRequestFailed(error):
+                    yield PhotoIterationFailed(error)
+                    return
+                case PhotosRequestSuccess(request):
+                    response = request.json()
 
-            response = request.json()
+                    asset_records = {}
+                    master_records = []
+                    for rec in response["records"]:
+                        if rec["recordType"] == "CPLAsset":
+                            master_id = rec["fields"]["masterRef"]["value"]["recordName"]
+                            asset_records[master_id] = rec
+                        elif rec["recordType"] == "CPLMaster":
+                            master_records.append(rec)
 
-            asset_records = {}
-            master_records = []
-            for rec in response["records"]:
-                if rec["recordType"] == "CPLAsset":
-                    master_id = rec["fields"]["masterRef"]["value"]["recordName"]
-                    asset_records[master_id] = rec
-                elif rec["recordType"] == "CPLMaster":
-                    master_records.append(rec)
-
-            master_records_len = len(master_records)
-            if master_records_len:
-                for master_record in master_records:
-                    record_name = master_record["recordName"]
-                    yield PhotoAsset(master_record, asset_records[record_name])
-                    self.increment_offset(1)
-            else:
-                break
+                    master_records_len = len(master_records)
+                    if master_records_len:
+                        for master_record in master_records:
+                            record_name = master_record["recordName"]
+                            yield PhotoIterationSuccess(
+                                PhotoAsset(master_record, asset_records[record_name])
+                            )
+                            self.increment_offset(1)
+                    else:
+                        yield PhotoIterationComplete()
+                        return
 
     def increment_offset(self, value: int) -> None:
         self.offset += value

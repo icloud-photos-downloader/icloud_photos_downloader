@@ -7,7 +7,7 @@ from requests import Response
 
 if TYPE_CHECKING:
     from pyicloud_ipd.base import PyiCloudService
-    from pyicloud_ipd.services.photos import PhotoLibrary, PhotosService
+    from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
 
 
 @dataclass(frozen=True)
@@ -345,3 +345,48 @@ class DownloadFailed:
 
 # Union type for download results
 DownloadResult = DownloadSuccess | DownloadFailed
+
+
+# Photos request ADTs
+@dataclass(frozen=True)
+class PhotosRequestSuccess:
+    """Photos request succeeded."""
+
+    response: Response
+
+
+@dataclass(frozen=True)
+class PhotosRequestFailed:
+    """Photos request failed."""
+
+    error: Exception
+
+
+# Union type for photos request results
+PhotosRequestResult = PhotosRequestSuccess | PhotosRequestFailed
+
+
+# Photo iteration ADTs
+@dataclass(frozen=True)
+class PhotoIterationSuccess:
+    """Successfully retrieved a photo asset."""
+
+    asset: "PhotoAsset"
+
+
+@dataclass(frozen=True)
+class PhotoIterationFailed:
+    """Failed to retrieve photo assets."""
+
+    error: Exception
+
+
+@dataclass(frozen=True)
+class PhotoIterationComplete:
+    """No more photos to iterate."""
+
+    pass
+
+
+# Union type for photo iteration results
+PhotoIterationResult = PhotoIterationSuccess | PhotoIterationFailed | PhotoIterationComplete
