@@ -704,14 +704,6 @@ class PhotoAlbum:
         count = int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
         return AlbumLengthSuccess(count)
 
-    def __len__(self) -> int:
-        result = self.get_album_length()
-        match result:
-            case AlbumLengthSuccess(count):
-                return count
-            case AlbumLengthFailed(error):
-                raise error
-
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
 

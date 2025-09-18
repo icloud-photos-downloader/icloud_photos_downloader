@@ -69,6 +69,8 @@ from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    AlbumLengthFailed,
+    AlbumLengthSuccess,
     AuthenticatorConnectionError,
     AuthenticatorMFAError,
     AuthenticatorSuccess,
@@ -1016,8 +1018,17 @@ def core_single_run(
                         if len(user_config.albums) > 0
                         else [library_object.all]
                     )
+
+                    def get_album_count(album: PhotoAlbum) -> int:
+                        result = album.get_album_length()
+                        match result:
+                            case AlbumLengthSuccess(count):
+                                return count
+                            case AlbumLengthFailed(error):
+                                raise error
+
                     album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
-                        map_, len
+                        map_, get_album_count
                     )
 
                     def sum_(inp: Iterable[int]) -> int:
