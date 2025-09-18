@@ -75,13 +75,10 @@ from pyicloud_ipd.response_types import (
     AuthenticatorMFAError,
     AuthenticatorSuccess,
     AuthenticatorTwoSAExit,
-    AutodeleteFailed,
     AutodeleteSuccess,
-    DeletePhotoFailed,
     DeletePhotoResult,
     DeletePhotoSuccess,
     PhotoIterationComplete,
-    PhotoIterationFailed,
     PhotoIterationResult,
     PhotoIterationSuccess,
     Response2SARequired,
@@ -867,14 +864,13 @@ def delete_photo(
         case ResponseSuccess(_):
             logger.info("Deleted %s in iCloud", clean_filename_local)
             return DeletePhotoSuccess()
-        case Response2SARequired(account_name):
-            return DeletePhotoFailed(PyiCloud2SARequiredException(account_name))
-        case ResponseServiceNotActivated(reason, code):
-            return DeletePhotoFailed(PyiCloudServiceNotActivatedException(reason, code))
-        case ResponseAPIError(reason, code):
-            return DeletePhotoFailed(PyiCloudAPIResponseException(reason, code))
-        case ResponseServiceUnavailable(reason):
-            return DeletePhotoFailed(PyiCloudServiceUnavailableException(reason))
+        case (
+            Response2SARequired(_)
+            | ResponseServiceNotActivated(_, _)
+            | ResponseAPIError(_, _)
+            | ResponseServiceUnavailable(_)
+        ):
+            return result
 
 
 def delete_photo_dry_run(
@@ -1129,15 +1125,18 @@ def core_single_run(
                         for item_result in photos_bar:
                             try:
                                 match item_result:
-                                    case PhotoIterationFailed(error):
-                                        raise error
                                     case PhotoIterationComplete():
                                         break
                                     case PhotoIterationSuccess(item):
                                         pass
-                                    case _:
-                                        # Should not happen, but handle gracefully
-                                        continue
+                                    case Response2SARequired(account_name):
+                                        raise PyiCloud2SARequiredException(account_name)
+                                    case ResponseServiceNotActivated(reason, code):
+                                        raise PyiCloudServiceNotActivatedException(reason, code)
+                                    case ResponseAPIError(reason, code):
+                                        raise PyiCloudAPIResponseException(reason, code)
+                                    case ResponseServiceUnavailable(reason):
+                                        raise PyiCloudServiceUnavailableException(reason)
 
                                 if should_break(consecutive_files_found):
                                     logger.info(
@@ -1209,8 +1208,16 @@ def core_single_run(
                                         match delete_result:
                                             case DeletePhotoSuccess():
                                                 pass  # Success, continue
-                                            case DeletePhotoFailed(error):
-                                                raise error
+                                            case Response2SARequired(account_name):
+                                                raise PyiCloud2SARequiredException(account_name)
+                                            case ResponseServiceNotActivated(reason, code):
+                                                raise PyiCloudServiceNotActivatedException(
+                                                    reason, code
+                                                )
+                                            case ResponseAPIError(reason, code):
+                                                raise PyiCloudAPIResponseException(reason, code)
+                                            case ResponseServiceUnavailable(reason):
+                                                raise PyiCloudServiceUnavailableException(reason)
 
                                     # retrier(delete_local, error_handler)
                                     photo_album.increment_offset(-1)
@@ -1260,8 +1267,14 @@ def core_single_run(
                         match autodelete_result:
                             case AutodeleteSuccess():
                                 pass  # Success, continue
-                            case AutodeleteFailed(error):
-                                raise error
+                            case Response2SARequired(account_name):
+                                raise PyiCloud2SARequiredException(account_name)
+                            case ResponseServiceNotActivated(reason, code):
+                                raise PyiCloudServiceNotActivatedException(reason, code)
+                            case ResponseAPIError(reason, code):
+                                raise PyiCloudAPIResponseException(reason, code)
+                            case ResponseServiceUnavailable(reason):
+                                raise PyiCloudServiceUnavailableException(reason)
                     else:
                         pass
         except PyiCloudFailedLoginException as error:

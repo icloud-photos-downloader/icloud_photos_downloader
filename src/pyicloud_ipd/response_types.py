@@ -354,15 +354,14 @@ class PhotosRequestSuccess:
     response: Response
 
 
-@dataclass(frozen=True)
-class PhotosRequestFailed:
-    """Photos request failed."""
-
-    error: Exception
-
-
-# Union type for photos request results
-PhotosRequestResult = PhotosRequestSuccess | PhotosRequestFailed
+# Union type for photos request results - reuses response evaluation ADTs
+PhotosRequestResult = (
+    PhotosRequestSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Photo iteration ADTs
@@ -374,21 +373,21 @@ class PhotoIterationSuccess:
 
 
 @dataclass(frozen=True)
-class PhotoIterationFailed:
-    """Failed to retrieve photo assets."""
-
-    error: Exception
-
-
-@dataclass(frozen=True)
 class PhotoIterationComplete:
     """No more photos to iterate."""
 
     pass
 
 
-# Union type for photo iteration results
-PhotoIterationResult = PhotoIterationSuccess | PhotoIterationFailed | PhotoIterationComplete
+# Union type for photo iteration results - reuses response evaluation ADTs
+PhotoIterationResult = (
+    PhotoIterationSuccess
+    | PhotoIterationComplete
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Autodelete ADTs
@@ -399,15 +398,14 @@ class AutodeleteSuccess:
     pass
 
 
-@dataclass(frozen=True)
-class AutodeleteFailed:
-    """Autodelete failed."""
-
-    error: Exception
-
-
-# Union type for autodelete results
-AutodeleteResult = AutodeleteSuccess | AutodeleteFailed
+# Union type for autodelete results - reuses response evaluation ADTs
+AutodeleteResult = (
+    AutodeleteSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Albums fetch ADTs
@@ -437,12 +435,11 @@ class DeletePhotoSuccess:
     pass
 
 
-@dataclass(frozen=True)
-class DeletePhotoFailed:
-    """Failed to delete photo."""
-
-    error: Exception
-
-
-# Union type for delete photo results
-DeletePhotoResult = DeletePhotoSuccess | DeletePhotoFailed
+# Union type for delete photo results - reuses response evaluation ADTs
+DeletePhotoResult = (
+    DeletePhotoSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
