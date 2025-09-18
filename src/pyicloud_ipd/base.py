@@ -11,7 +11,20 @@ from itertools import chain
 from os import mkdir, path
 from re import Pattern, match
 from tempfile import gettempdir
-from typing import Any, Callable, Dict, Generator, List, Mapping, NamedTuple, Sequence
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Generator,
+    List,
+    Mapping,
+    NamedTuple,
+    Sequence,
+)
+
+if TYPE_CHECKING:
+    from pyicloud_ipd.response_types import PhotosServiceAccessResult
 from uuid import uuid1
 
 import srp
@@ -43,9 +56,7 @@ from pyicloud_ipd.response_types import (
     AuthenticationSuccessWithService,
     AuthRequires2SA,
     AuthRequires2SAWithService,
-    AuthSRPFailed,
     AuthSRPSuccess,
-    AuthTokenInvalid,
     AuthTokenValid,
     AuthWithTokenSuccess,
     Response2SARequired,
@@ -368,10 +379,10 @@ class PyiCloudService:
             case AuthTokenValid(data):
                 self.data = data
                 login_successful = True
-            case AuthTokenInvalid(error):
+            case ResponseServiceUnavailable(reason):
                 # If it's a 503 error, we should return it immediately
-                if isinstance(error, PyiCloudServiceUnavailableException):
-                    return AuthenticationFailed(error)
+                return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
+            case ResponseServiceNotActivated(_, _) | ResponseAPIError(_, _):
                 LOGGER.debug("Invalid authentication token, will log in from scratch.")
             case AuthRequires2SA(account_name):
                 return AuthRequires2SA(account_name)
@@ -390,8 +401,20 @@ class PyiCloudService:
             match srp_result:
                 case AuthSRPSuccess():
                     pass
-                case AuthSRPFailed(error):
-                    return AuthenticationFailed(error)
+                case ResponseServiceNotActivated(reason, code):
+                    return AuthenticationFailed(PyiCloudServiceNotActivatedException(reason, code))
+                case ResponseAPIError(reason, code):
+                    if code == "401":
+                        # Invalid email/password combination
+                        return AuthenticationFailed(
+                            PyiCloudFailedLoginException(
+                                "Invalid email/password combination.",
+                                PyiCloudAPIResponseException(reason, code),
+                            )
+                        )
+                    return AuthenticationFailed(PyiCloudAPIResponseException(reason, code))
+                case ResponseServiceUnavailable(reason):
+                    return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
                 case AuthRequires2SA(account_name):
                     return AuthRequires2SA(account_name)
             # try:
@@ -411,6 +434,14 @@ class PyiCloudService:
                 case ResponseServiceNotActivated(reason, code):
                     return AuthenticationFailed(PyiCloudServiceNotActivatedException(reason, code))
                 case ResponseAPIError(reason, code):
+                    if code == "401":
+                        # Invalid email/password combination
+                        return AuthenticationFailed(
+                            PyiCloudFailedLoginException(
+                                "Invalid email/password combination.",
+                                PyiCloudAPIResponseException(reason, code),
+                            )
+                        )
                     return AuthenticationFailed(PyiCloudAPIResponseException(reason, code))
                 case ResponseServiceUnavailable(reason):
                     return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
@@ -536,18 +567,15 @@ class PyiCloudService:
                     response = resp
                 case Response2SARequired(account_name):
                     return AuthRequires2SA(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    return AuthSRPFailed(PyiCloudServiceNotActivatedException(reason, code))
-                case ResponseAPIError(reason, code):
-                    msg = "Invalid email/password combination."
-                    api_error = PyiCloudAPIResponseException(reason, code)
-                    return AuthSRPFailed(PyiCloudFailedLoginException(msg, api_error))
-                case ResponseServiceUnavailable(reason):
-                    return AuthSRPFailed(PyiCloudServiceUnavailableException(reason))
+                case (
+                    ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
         if response.status_code == 401:
-            msg = "Failed to initiate srp authentication."
-            api_error = PyiCloudAPIResponseException(response.text, str(response.status_code))
-            return AuthSRPFailed(PyiCloudFailedLoginException(msg, api_error))
+            # Failed to initiate srp authentication
+            return ResponseAPIError(response.text, str(response.status_code))
 
         # Step 2: server sends public key B, salt, and c to client
         body = response.json()
@@ -602,14 +630,12 @@ class PyiCloudService:
                     response = resp
                 case Response2SARequired(account_name):
                     return AuthRequires2SA(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    return AuthSRPFailed(PyiCloudServiceNotActivatedException(reason, code))
-                case ResponseAPIError(reason, code):
-                    msg = "Invalid email/password combination."
-                    api_error = PyiCloudAPIResponseException(reason, code)
-                    return AuthSRPFailed(PyiCloudFailedLoginException(msg, api_error))
-                case ResponseServiceUnavailable(reason):
-                    return AuthSRPFailed(PyiCloudServiceUnavailableException(reason))
+                case (
+                    ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
         if response.status_code == 409:
             # requires 2FA
             pass
@@ -643,16 +669,15 @@ class PyiCloudService:
                         response = resp
                     case Response2SARequired(account_name):
                         return AuthRequires2SA(account_name)
-                    case ResponseServiceNotActivated(reason, code):
-                        return AuthSRPFailed(PyiCloudServiceNotActivatedException(reason, code))
-                    case ResponseAPIError(reason, code):
-                        return AuthSRPFailed(PyiCloudAPIResponseException(reason, code))
-                    case ResponseServiceUnavailable(reason):
-                        return AuthSRPFailed(PyiCloudServiceUnavailableException(reason))
+                    case (
+                        ResponseServiceNotActivated(_, _)
+                        | ResponseAPIError(_, _)
+                        | ResponseServiceUnavailable(_)
+                    ):
+                        return result
         elif response.status_code >= 400 and response.status_code < 600:
-            msg = "Invalid email/password combination."
-            api_error = PyiCloudAPIResponseException(response.text, str(response.status_code))
-            return AuthSRPFailed(PyiCloudFailedLoginException(msg, api_error))
+            # Invalid email/password combination
+            return ResponseAPIError(response.text, str(response.status_code))
 
         return AuthSRPSuccess()
 
@@ -735,12 +760,12 @@ class PyiCloudService:
                     response = resp
                 case Response2SARequired(account_name):
                     return AuthRequires2SA(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    return AuthTokenInvalid(PyiCloudServiceNotActivatedException(reason, code))
-                case ResponseAPIError(reason, code):
-                    return AuthTokenInvalid(PyiCloudAPIResponseException(reason, code))
-                case ResponseServiceUnavailable(reason):
-                    return AuthTokenInvalid(PyiCloudServiceUnavailableException(reason))
+                case (
+                    ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
         LOGGER.debug("Session token is still valid")
         json_result: Dict[str, Any] = response.json()
         return AuthTokenValid(json_result)
@@ -1140,16 +1165,14 @@ class PyiCloudService:
             raise PyiCloudServiceNotActivatedException("Webservice not available", ws_key)
         return typing.cast(str, self._webservices[ws_key]["url"])
 
-    @property
-    def photos(self) -> PhotosService:
-        """Gets the 'Photo' service."""
+    def get_photos_service(self) -> "PhotosServiceAccessResult":
+        """Get Photos service, returns ADT result."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
 
             # Import here to avoid circular import
             from pyicloud_ipd.response_types import (
-                PhotoLibraryInitFailed,
-                PhotoLibraryNotFinishedIndexing,
+                PhotosServiceAccessSuccess,
                 PhotosServiceInitSuccess,
             )
 
@@ -1161,13 +1184,44 @@ class PyiCloudService:
             match result:
                 case PhotosServiceInitSuccess(service):
                     self._photos = service
-                case PhotoLibraryNotFinishedIndexing():
-                    raise PyiCloudServiceNotActivatedException(
-                        "Apple iCloud Photo Library has not finished indexing yet", None
-                    )
-                case PhotoLibraryInitFailed(error):
-                    raise error
-        return self._photos
+                case _:
+                    # Propagate error ADTs
+                    return result
+
+        # Import here to avoid circular import
+        from pyicloud_ipd.response_types import PhotosServiceAccessSuccess
+
+        return PhotosServiceAccessSuccess(self._photos)
+
+    @property
+    def photos(self) -> PhotosService:
+        """Legacy property that raises exceptions. Use get_photos_service() for ADT-based approach."""
+        # Import here to avoid circular import
+        from pyicloud_ipd.response_types import (
+            PhotoLibraryNotFinishedIndexing,
+            PhotosServiceAccessSuccess,
+            Response2SARequired,
+            ResponseAPIError,
+            ResponseServiceNotActivated,
+            ResponseServiceUnavailable,
+        )
+
+        result = self.get_photos_service()
+        match result:
+            case PhotosServiceAccessSuccess(service):
+                return service
+            case PhotoLibraryNotFinishedIndexing():
+                raise PyiCloudServiceNotActivatedException(
+                    "Apple iCloud Photo Library has not finished indexing yet", None
+                )
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
 
     def __unicode__(self) -> str:
         return f"iCloud API: {self.apple_id}"

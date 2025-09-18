@@ -66,24 +66,10 @@ class AuthTokenValid:
 
 
 @dataclass(frozen=True)
-class AuthTokenInvalid:
-    """Token validation failed."""
-
-    error: Exception
-
-
-@dataclass(frozen=True)
 class AuthSRPSuccess:
     """SRP authentication successful."""
 
     pass
-
-
-@dataclass(frozen=True)
-class AuthSRPFailed:
-    """SRP authentication failed."""
-
-    error: Exception
 
 
 @dataclass(frozen=True)
@@ -144,9 +130,23 @@ class AuthDomainMismatchError:
     domain_to_use: str
 
 
-# Union types for authentication results
-ValidateTokenResult = AuthTokenValid | AuthTokenInvalid | AuthRequires2SA
-AuthenticateSRPResult = AuthSRPSuccess | AuthSRPFailed | AuthRequires2SA
+# Union types for authentication results - reuse response evaluation ADTs
+ValidateTokenResult = (
+    AuthTokenValid
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthRequires2SA
+)
+AuthenticateSRPResult = (
+    AuthSRPSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthRequires2SA
+)
 # AuthenticateWithTokenResult now reuses the response evaluation ADTs directly
 AuthenticateWithTokenResult = (
     AuthWithTokenSuccess
@@ -241,16 +241,14 @@ class PhotoLibraryNotFinishedIndexing:
     pass
 
 
-@dataclass(frozen=True)
-class PhotoLibraryInitFailed:
-    """Photo library initialization failed."""
-
-    error: Exception
-
-
-# Union type for PhotoLibrary initialization results
+# Union type for PhotoLibrary initialization results - reuses response evaluation ADTs
 PhotoLibraryInitResult = (
-    PhotoLibraryInitSuccess | PhotoLibraryNotFinishedIndexing | PhotoLibraryInitFailed
+    PhotoLibraryInitSuccess
+    | PhotoLibraryNotFinishedIndexing
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
 )
 
 
@@ -262,10 +260,33 @@ class PhotosServiceInitSuccess:
     service: "PhotosService"
 
 
-# Union type for PhotosService initialization results
-# Reuses PhotoLibraryNotFinishedIndexing and PhotoLibraryInitFailed since they're the same
+# Union type for PhotosService initialization results - reuses response evaluation ADTs
 PhotosServiceInitResult = (
-    PhotosServiceInitSuccess | PhotoLibraryNotFinishedIndexing | PhotoLibraryInitFailed
+    PhotosServiceInitSuccess
+    | PhotoLibraryNotFinishedIndexing
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# PhotosService access ADTs (for PyiCloudService.photos property)
+@dataclass(frozen=True)
+class PhotosServiceAccessSuccess:
+    """Photos service accessed successfully."""
+
+    service: "PhotosService"
+
+
+# Union type for PhotosService access results - reuses response evaluation ADTs
+PhotosServiceAccessResult = (
+    PhotosServiceAccessSuccess
+    | PhotoLibraryNotFinishedIndexing
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
 )
 
 
@@ -278,15 +299,14 @@ class LibrariesFetchSuccess:
     skipped: Dict[str, str]  # zone_name -> reason for skipping
 
 
-@dataclass(frozen=True)
-class LibrariesFetchFailed:
-    """Failed to fetch libraries list."""
-
-    error: Exception
-
-
-# Union type for library fetching results
-LibrariesFetchResult = LibrariesFetchSuccess | LibrariesFetchFailed
+# Union type for library fetching results - reuses response evaluation ADTs
+LibrariesFetchResult = (
+    LibrariesFetchSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Folder fetching ADTs
@@ -297,15 +317,14 @@ class FoldersFetchSuccess:
     folders: Sequence[Dict[str, Any]]
 
 
-@dataclass(frozen=True)
-class FoldersFetchFailed:
-    """Failed to fetch folders list."""
-
-    error: Exception
-
-
-# Union type for folder fetching results
-FoldersFetchResult = FoldersFetchSuccess | FoldersFetchFailed
+# Union type for folder fetching results - reuses response evaluation ADTs
+FoldersFetchResult = (
+    FoldersFetchSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Album length ADTs
@@ -316,15 +335,14 @@ class AlbumLengthSuccess:
     count: int
 
 
-@dataclass(frozen=True)
-class AlbumLengthFailed:
-    """Failed to retrieve album length."""
-
-    error: Exception
-
-
-# Union type for album length results
-AlbumLengthResult = AlbumLengthSuccess | AlbumLengthFailed
+# Union type for album length results - reuses response evaluation ADTs
+AlbumLengthResult = (
+    AlbumLengthSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Download asset ADTs
@@ -335,15 +353,14 @@ class DownloadSuccess:
     response: Response
 
 
-@dataclass(frozen=True)
-class DownloadFailed:
-    """Failed to download asset."""
-
-    error: Exception
-
-
-# Union type for download results
-DownloadResult = DownloadSuccess | DownloadFailed
+# Union type for download results - reuses response evaluation ADTs
+DownloadResult = (
+    DownloadSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Photos request ADTs
@@ -408,7 +425,7 @@ AutodeleteResult = (
 )
 
 
-# Albums fetch ADTs
+# Albums fetch ADTs (for PhotoLibrary.albums property)
 @dataclass(frozen=True)
 class AlbumsFetchSuccess:
     """Albums fetched successfully."""
@@ -416,15 +433,58 @@ class AlbumsFetchSuccess:
     albums: Dict[str, "PhotoAlbum"]
 
 
+# Union type for albums fetch results - reuses response evaluation ADTs
+AlbumsFetchResult = (
+    AlbumsFetchSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# Libraries access ADTs (for PhotosService.private_libraries/shared_libraries properties)
 @dataclass(frozen=True)
-class AlbumsFetchFailed:
-    """Failed to fetch albums."""
+class LibrariesAccessSuccess:
+    """Libraries accessed successfully."""
 
-    error: Exception
+    libraries: Dict[str, "PhotoLibrary"]
 
 
-# Union type for albums fetch results
-AlbumsFetchResult = AlbumsFetchSuccess | AlbumsFetchFailed
+# Union type for libraries access results - reuses response evaluation ADTs
+LibrariesAccessResult = (
+    LibrariesAccessSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# Download media ADTs (for download.py)
+@dataclass(frozen=True)
+class DownloadMediaSuccess:
+    """Media downloaded successfully."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class DownloadMediaSkipped:
+    """Media download skipped (file already exists or was filtered)."""
+
+    pass
+
+
+# Union type for download media results - reuses response evaluation ADTs
+DownloadMediaResult = (
+    DownloadMediaSuccess
+    | DownloadMediaSkipped
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
 
 
 # Delete photo ADTs

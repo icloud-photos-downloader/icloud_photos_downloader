@@ -69,8 +69,8 @@ from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
-    AlbumLengthFailed,
     AlbumLengthSuccess,
+    AlbumsFetchSuccess,
     AuthenticatorConnectionError,
     AuthenticatorMFAError,
     AuthenticatorSuccess,
@@ -78,9 +78,15 @@ from pyicloud_ipd.response_types import (
     AutodeleteSuccess,
     DeletePhotoResult,
     DeletePhotoSuccess,
+    DownloadMediaResult,
+    DownloadMediaSkipped,
+    DownloadMediaSuccess,
+    LibrariesAccessSuccess,
     PhotoIterationComplete,
     PhotoIterationResult,
     PhotoIterationSuccess,
+    PhotoLibraryNotFinishedIndexing,
+    PhotosServiceAccessSuccess,
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
@@ -436,7 +442,7 @@ def _process_all_users_once(
                     user_config.align_raw,
                 )
                 if user_config.directory is not None
-                else (lambda _s, _c, _p: False)
+                else (lambda _s, _c, _p: DownloadMediaSkipped())
             )
 
             notificator = partial(
@@ -600,7 +606,7 @@ def download_builder(
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
-) -> bool:
+) -> DownloadMediaResult:
     """function for actually downloading the photos"""
 
     try:
@@ -649,10 +655,12 @@ def download_builder(
             "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues"
         )
         print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
-        return False
+        return ResponseAPIError(f"KeyError: {ex}", "KEY_ERROR")
 
     download_dir = os.path.normpath(os.path.join(directory, date_path))
-    success = False
+    last_result: DownloadMediaResult = (
+        DownloadMediaSkipped()
+    )  # Default to skipped for files that aren't downloaded
 
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
@@ -721,31 +729,37 @@ def download_builder(
                     download_size,
                     filename_builder,
                 )
-                success = download_result
+                last_result = download_result
 
-                if download_result:
-                    from foundation.core import compose
-                    from foundation.string_utils import endswith, lower
+                match download_result:
+                    case DownloadMediaSuccess():
+                        from foundation.core import compose
+                        from foundation.string_utils import endswith, lower
 
-                    is_jpeg = compose(endswith((".jpg", ".jpeg")), lower)
+                        is_jpeg = compose(endswith((".jpg", ".jpeg")), lower)
 
-                    if (
-                        not dry_run
-                        and set_exif_datetime
-                        and is_jpeg(filename)
-                        and not exif_datetime.get_photo_exif(logger, download_path)
-                    ):
-                        # %Y:%m:%d looks wrong, but it's the correct format
-                        date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
-                        logger.debug("Setting EXIF timestamp for %s: %s", download_path, date_str)
-                        exif_datetime.set_photo_exif(
-                            logger,
-                            download_path,
-                            created_date.strftime("%Y:%m:%d %H:%M:%S"),
-                        )
-                    if not dry_run:
-                        download.set_utime(download_path, created_date)
-                    logger.info("Downloaded %s", truncated_path)
+                        if (
+                            not dry_run
+                            and set_exif_datetime
+                            and is_jpeg(filename)
+                            and not exif_datetime.get_photo_exif(logger, download_path)
+                        ):
+                            # %Y:%m:%d looks wrong, but it's the correct format
+                            date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
+                            logger.debug(
+                                "Setting EXIF timestamp for %s: %s", download_path, date_str
+                            )
+                            exif_datetime.set_photo_exif(
+                                logger,
+                                download_path,
+                                created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                            )
+                        if not dry_run:
+                            download.set_utime(download_path, created_date)
+                        logger.info("Downloaded %s", truncated_path)
+                    case _:
+                        # Error ADT - store it
+                        last_result = download_result
 
         if xmp_sidecar:
             generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
@@ -819,10 +833,27 @@ def download_builder(
                         lp_size,
                         filename_builder,
                     )
-                    success = download_result and success
-                    if download_result:
-                        logger.info("Downloaded %s", truncated_path)
-    return success
+                    match download_result:
+                        case DownloadMediaSuccess():
+                            logger.info("Downloaded %s", truncated_path)
+                            # Update last_result to success if it was skipped
+                            match last_result:
+                                case DownloadMediaSkipped():
+                                    last_result = download_result
+                                case _:
+                                    pass
+                        case DownloadMediaSkipped():
+                            # Live photo was skipped - keep current status
+                            pass
+                        case _:
+                            # Error ADT - update last_result if it's not already an error
+                            match last_result:
+                                case DownloadMediaSuccess() | DownloadMediaSkipped():
+                                    last_result = download_result
+                                case _:
+                                    # Keep existing error
+                                    pass
+    return last_result
 
 
 def delete_photo(
@@ -914,7 +945,7 @@ def core_single_run(
         PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
     ],
     passer: Callable[[PhotoAsset], bool],
-    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], DownloadMediaResult],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
 ) -> int:
@@ -970,32 +1001,134 @@ def core_single_run(
                 return 0
 
             elif user_config.list_libraries:
-                library_names = (
-                    icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
-                )
+                # Get photos service first
+                photos_service_result = icloud.get_photos_service()
+                match photos_service_result:
+                    case PhotosServiceAccessSuccess(photos_service):
+                        pass  # Continue with photos_service
+                    case PhotoLibraryNotFinishedIndexing():
+                        raise PyiCloudServiceNotActivatedException(
+                            "Apple iCloud Photo Library has not finished indexing yet", None
+                        )
+                    case Response2SARequired(account_name):
+                        raise PyiCloud2SARequiredException(account_name)
+                    case ResponseServiceNotActivated(reason, code):
+                        raise PyiCloudServiceNotActivatedException(reason, code)
+                    case ResponseAPIError(reason, code):
+                        raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
+
+                # Get private libraries
+                private_result = photos_service.get_private_libraries()
+                match private_result:
+                    case LibrariesAccessSuccess(private_libs):
+                        private_keys = private_libs.keys()
+                    case Response2SARequired(account_name):
+                        raise PyiCloud2SARequiredException(account_name)
+                    case ResponseServiceNotActivated(reason, code):
+                        raise PyiCloudServiceNotActivatedException(reason, code)
+                    case ResponseAPIError(reason, code):
+                        raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
+
+                # Get shared libraries
+                shared_result = photos_service.get_shared_libraries()
+                match shared_result:
+                    case LibrariesAccessSuccess(shared_libs):
+                        shared_keys = shared_libs.keys()
+                    case Response2SARequired(account_name):
+                        raise PyiCloud2SARequiredException(account_name)
+                    case ResponseServiceNotActivated(reason, code):
+                        raise PyiCloudServiceNotActivatedException(reason, code)
+                    case ResponseAPIError(reason, code):
+                        raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
+
+                library_names = private_keys | shared_keys
                 print(*library_names, sep="\n")
                 return 0
 
             else:
+                # Get photos service first
+                photos_service_result = icloud.get_photos_service()
+                match photos_service_result:
+                    case PhotosServiceAccessSuccess(photos_service):
+                        pass  # Continue with photos_service
+                    case PhotoLibraryNotFinishedIndexing():
+                        raise PyiCloudServiceNotActivatedException(
+                            "Apple iCloud Photo Library has not finished indexing yet", None
+                        )
+                    case Response2SARequired(account_name):
+                        raise PyiCloud2SARequiredException(account_name)
+                    case ResponseServiceNotActivated(reason, code):
+                        raise PyiCloudServiceNotActivatedException(reason, code)
+                    case ResponseAPIError(reason, code):
+                        raise PyiCloudAPIResponseException(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        raise PyiCloudServiceUnavailableException(reason)
+
                 # Access to the selected library. Defaults to the primary photos object.
                 if user_config.library:
-                    if user_config.library in icloud.photos.private_libraries:
-                        library_object: PhotoLibrary = icloud.photos.private_libraries[
-                            user_config.library
-                        ]
-                    elif user_config.library in icloud.photos.shared_libraries:
-                        library_object = icloud.photos.shared_libraries[user_config.library]
-                    else:
+                    # Try private libraries first
+                    private_result = photos_service.get_private_libraries()
+                    library_found = False
+
+                    match private_result:
+                        case LibrariesAccessSuccess(private_libs):
+                            if user_config.library in private_libs:
+                                library_object: PhotoLibrary = private_libs[user_config.library]
+                                library_found = True
+                        case Response2SARequired(account_name):
+                            raise PyiCloud2SARequiredException(account_name)
+                        case ResponseServiceNotActivated(reason, code):
+                            raise PyiCloudServiceNotActivatedException(reason, code)
+                        case ResponseAPIError(reason, code):
+                            raise PyiCloudAPIResponseException(reason, code)
+                        case ResponseServiceUnavailable(reason):
+                            raise PyiCloudServiceUnavailableException(reason)
+
+                    if not library_found:
+                        # Try shared libraries
+                        shared_result = photos_service.get_shared_libraries()
+                        match shared_result:
+                            case LibrariesAccessSuccess(shared_libs):
+                                if user_config.library in shared_libs:
+                                    library_object = shared_libs[user_config.library]
+                                    library_found = True
+                            case Response2SARequired(account_name):
+                                raise PyiCloud2SARequiredException(account_name)
+                            case ResponseServiceNotActivated(reason, code):
+                                raise PyiCloudServiceNotActivatedException(reason, code)
+                            case ResponseAPIError(reason, code):
+                                raise PyiCloudAPIResponseException(reason, code)
+                            case ResponseServiceUnavailable(reason):
+                                raise PyiCloudServiceUnavailableException(reason)
+
+                    if not library_found:
                         logger.error("Unknown library: %s", user_config.library)
                         return 1
                 else:
-                    library_object = icloud.photos
+                    library_object = photos_service
 
                 if user_config.list_albums:
                     print("Albums:")
-                    album_titles = [str(a) for a in library_object.albums.values()]
-                    print(*album_titles, sep="\n")
-                    return 0
+                    albums_result = library_object.get_albums()
+                    match albums_result:
+                        case AlbumsFetchSuccess(albums_dict):
+                            album_titles = [str(a) for a in albums_dict.values()]
+                            print(*album_titles, sep="\n")
+                            return 0
+                        case Response2SARequired(account_name):
+                            raise PyiCloud2SARequiredException(account_name)
+                        case ResponseServiceNotActivated(reason, code):
+                            raise PyiCloudServiceNotActivatedException(reason, code)
+                        case ResponseAPIError(reason, code):
+                            raise PyiCloudAPIResponseException(reason, code)
+                        case ResponseServiceUnavailable(reason):
+                            raise PyiCloudServiceUnavailableException(reason)
                 else:
                     if not user_config.directory:
                         # should be checked upstream
@@ -1018,19 +1151,40 @@ def core_single_run(
 
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
-                    albums: Iterable[PhotoAlbum] = (
-                        list(map_(library_object.albums.__getitem__, user_config.albums))
-                        if len(user_config.albums) > 0
-                        else [library_object.all]
-                    )
+                    # Fetch albums if user specified album names
+                    if len(user_config.albums) > 0:
+                        albums_result = library_object.get_albums()
+                        match albums_result:
+                            case AlbumsFetchSuccess(albums_dict):
+                                # Get the specified albums
+                                albums: Iterable[PhotoAlbum] = list(
+                                    map_(albums_dict.__getitem__, user_config.albums)
+                                )
+                            case Response2SARequired(account_name):
+                                raise PyiCloud2SARequiredException(account_name)
+                            case ResponseServiceNotActivated(reason, code):
+                                raise PyiCloudServiceNotActivatedException(reason, code)
+                            case ResponseAPIError(reason, code):
+                                raise PyiCloudAPIResponseException(reason, code)
+                            case ResponseServiceUnavailable(reason):
+                                raise PyiCloudServiceUnavailableException(reason)
+                    else:
+                        # Use the 'all' album when no specific albums are requested
+                        albums = [library_object.all]
 
                     def get_album_count(album: PhotoAlbum) -> int:
                         result = album.get_album_length()
                         match result:
                             case AlbumLengthSuccess(count):
                                 return count
-                            case AlbumLengthFailed(error):
-                                raise error
+                            case Response2SARequired(account_name):
+                                raise PyiCloud2SARequiredException(account_name)
+                            case ResponseServiceNotActivated(reason, code):
+                                raise PyiCloudServiceNotActivatedException(reason, code)
+                            case ResponseAPIError(reason, code):
+                                raise PyiCloudAPIResponseException(reason, code)
+                            case ResponseServiceUnavailable(reason):
+                                raise PyiCloudServiceUnavailableException(reason)
 
                     album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
                         map_, get_album_count
@@ -1148,11 +1302,36 @@ def core_single_run(
                                 should_delete = False
 
                                 passer_result = passer(item)
-                                download_result = passer_result and download_photo(
-                                    consecutive_files_found, item
-                                )
-                                if download_result and user_config.delete_after_download:
-                                    should_delete = True
+                                if passer_result:
+                                    download_result = download_photo(consecutive_files_found, item)
+                                    # Handle download result ADT
+                                    match download_result:
+                                        case DownloadMediaSuccess():
+                                            # File was actually downloaded
+                                            if user_config.delete_after_download:
+                                                should_delete = True
+                                        case DownloadMediaSkipped():
+                                            # File was skipped (already exists) - don't delete
+                                            pass
+                                        case Response2SARequired(account_name):
+                                            raise PyiCloud2SARequiredException(account_name)
+                                        case ResponseServiceNotActivated(reason, code):
+                                            raise PyiCloudServiceNotActivatedException(reason, code)
+                                        case ResponseAPIError(reason, code):
+                                            # Check if it's a session error that requires re-authentication
+                                            if "Invalid global session" in reason:
+                                                raise PyiCloudAPIResponseException(reason, code)
+                                            # 500 errors indicate server problems and should stop processing
+                                            if code == "500":
+                                                raise PyiCloudAPIResponseException(reason, code)
+                                            # Other API errors are logged but don't stop processing
+                                            logger.error("%s (%s)", reason, code)
+                                        case ResponseServiceUnavailable(reason):
+                                            raise PyiCloudServiceUnavailableException(reason)
+                                else:
+                                    download_result = (
+                                        DownloadMediaSkipped()
+                                    )  # Filtered files are skipped
 
                                 if (
                                     passer_result

@@ -31,22 +31,21 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
-    AlbumLengthFailed,
     AlbumLengthResult,
     AlbumLengthSuccess,
-    DownloadFailed,
+    AlbumsFetchResult,
+    AlbumsFetchSuccess,
     DownloadResult,
     DownloadSuccess,
-    FoldersFetchFailed,
     FoldersFetchResult,
     FoldersFetchSuccess,
-    LibrariesFetchFailed,
+    LibrariesAccessResult,
+    LibrariesAccessSuccess,
     LibrariesFetchResult,
     LibrariesFetchSuccess,
     PhotoIterationComplete,
     PhotoIterationResult,
     PhotoIterationSuccess,
-    PhotoLibraryInitFailed,
     PhotoLibraryInitResult,
     PhotoLibraryInitSuccess,
     PhotoLibraryNotFinishedIndexing,
@@ -161,14 +160,13 @@ def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0)
         match result:
             case ResponseSuccess(resp):
                 response = resp
-            case Response2SARequired(account_name):
-                return DownloadFailed(PyiCloud2SARequiredException(account_name))
-            case ResponseServiceNotActivated(reason, code):
-                return DownloadFailed(PyiCloudServiceNotActivatedException(reason, code))
-            case ResponseAPIError(reason, code):
-                return DownloadFailed(PyiCloudAPIResponseException(reason, code))
-            case ResponseServiceUnavailable(reason):
-                return DownloadFailed(PyiCloudServiceUnavailableException(reason))
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
     return DownloadSuccess(response)
 
 
@@ -380,14 +378,13 @@ class PhotoLibrary:
         match result:
             case ResponseSuccess(resp):
                 request = resp
-            case Response2SARequired(account_name):
-                return PhotoLibraryInitFailed(PyiCloud2SARequiredException(account_name))
-            case ResponseServiceNotActivated(reason, code):
-                return PhotoLibraryInitFailed(PyiCloudServiceNotActivatedException(reason, code))
-            case ResponseAPIError(reason, code):
-                return PhotoLibraryInitFailed(PyiCloudAPIResponseException(reason, code))
-            case ResponseServiceUnavailable(reason):
-                return PhotoLibraryInitFailed(PyiCloudServiceUnavailableException(reason))
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
         response = request.json()
         indexing_state = response["records"][0]["fields"]["state"]["value"]
         if indexing_state != "FINISHED":
@@ -403,8 +400,8 @@ class PhotoLibrary:
         )
         return PhotoLibraryInitSuccess(library)
 
-    @property
-    def albums(self) -> Dict[str, "PhotoAlbum"]:
+    def get_albums(self) -> AlbumsFetchResult:
+        """Get albums for this library, returns ADT result."""
         albums = {
             name: PhotoAlbum(
                 self.params,
@@ -454,10 +451,31 @@ class PhotoLibrary:
                         zone_id=self.zone_id,
                     )
                     albums[folder_name] = album
-            case FoldersFetchFailed(error):
-                raise error
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return folders_result
 
-        return albums
+        return AlbumsFetchSuccess(albums)
+
+    @property
+    def albums(self) -> Dict[str, "PhotoAlbum"]:
+        """Legacy property that raises exceptions. Use get_albums() for ADT-based approach."""
+        result = self.get_albums()
+        match result:
+            case AlbumsFetchSuccess(albums):
+                return albums
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
 
     def _fetch_folders(self) -> FoldersFetchResult:
         if self.library_type == "shared":
@@ -475,14 +493,13 @@ class PhotoLibrary:
         match result:
             case ResponseSuccess(resp):
                 request = resp
-            case Response2SARequired(account_name):
-                return FoldersFetchFailed(PyiCloud2SARequiredException(account_name))
-            case ResponseServiceNotActivated(reason, code):
-                return FoldersFetchFailed(PyiCloudServiceNotActivatedException(reason, code))
-            case ResponseAPIError(reason, code):
-                return FoldersFetchFailed(PyiCloudAPIResponseException(reason, code))
-            case ResponseServiceUnavailable(reason):
-                return FoldersFetchFailed(PyiCloudServiceUnavailableException(reason))
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
         response = request.json()
 
         return FoldersFetchSuccess(typing.cast(Sequence[Dict[str, Any]], response["records"]))
@@ -565,8 +582,13 @@ class PhotosService(PhotoLibrary):
                 return PhotosServiceInitSuccess(photos_service)
             case PhotoLibraryNotFinishedIndexing():
                 return PhotoLibraryNotFinishedIndexing()
-            case PhotoLibraryInitFailed(error):
-                return PhotoLibraryInitFailed(error)
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
 
         # TODO: Does syncToken ever change?
         # self.params.update({
@@ -576,29 +598,71 @@ class PhotosService(PhotoLibrary):
 
         # self._photo_assets = {}
 
-    @property
-    def private_libraries(self) -> Dict[str, PhotoLibrary]:
+    def get_private_libraries(self) -> LibrariesAccessResult:
+        """Get private libraries, returns ADT result."""
         if not self._private_libraries:
             result = self._fetch_libraries("private")
             match result:
                 case LibrariesFetchSuccess(libraries, _):
                     self._private_libraries = libraries
-                case LibrariesFetchFailed(error):
-                    raise error
+                case (
+                    Response2SARequired(_)
+                    | ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
 
-        return self._private_libraries
+        return LibrariesAccessSuccess(self._private_libraries)
 
     @property
-    def shared_libraries(self) -> Dict[str, PhotoLibrary]:
+    def private_libraries(self) -> Dict[str, PhotoLibrary]:
+        """Legacy property that raises exceptions. Use get_private_libraries() for ADT-based approach."""
+        result = self.get_private_libraries()
+        match result:
+            case LibrariesAccessSuccess(libraries):
+                return libraries
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
+
+    def get_shared_libraries(self) -> LibrariesAccessResult:
+        """Get shared libraries, returns ADT result."""
         if not self._shared_libraries:
             result = self._fetch_libraries("shared")
             match result:
                 case LibrariesFetchSuccess(libraries, _):
                     self._shared_libraries = libraries
-                case LibrariesFetchFailed(error):
-                    raise error
+                case (
+                    Response2SARequired(_)
+                    | ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
 
-        return self._shared_libraries
+        return LibrariesAccessSuccess(self._shared_libraries)
+
+    @property
+    def shared_libraries(self) -> Dict[str, PhotoLibrary]:
+        """Legacy property that raises exceptions. Use get_shared_libraries() for ADT-based approach."""
+        result = self.get_shared_libraries()
+        match result:
+            case LibrariesAccessSuccess(libraries):
+                return libraries
+            case Response2SARequired(account_name):
+                raise PyiCloud2SARequiredException(account_name)
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
 
     def _fetch_libraries(self, library_type: str) -> LibrariesFetchResult:
         libraries: Dict[str, PhotoLibrary] = {}
@@ -612,14 +676,13 @@ class PhotosService(PhotoLibrary):
         match result:
             case ResponseSuccess(resp):
                 request = resp
-            case Response2SARequired(account_name):
-                return LibrariesFetchFailed(PyiCloud2SARequiredException(account_name))
-            case ResponseServiceNotActivated(reason, code):
-                return LibrariesFetchFailed(PyiCloudServiceNotActivatedException(reason, code))
-            case ResponseAPIError(reason, code):
-                return LibrariesFetchFailed(PyiCloudAPIResponseException(reason, code))
-            case ResponseServiceUnavailable(reason):
-                return LibrariesFetchFailed(PyiCloudServiceUnavailableException(reason))
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
 
         response = request.json()
         for zone in response["zones"]:
@@ -639,8 +702,14 @@ class PhotosService(PhotoLibrary):
                         libraries[zone_name] = library
                     case PhotoLibraryNotFinishedIndexing():
                         skipped[zone_name] = "Not finished indexing"
-                    case PhotoLibraryInitFailed(error):
-                        skipped[zone_name] = str(error)
+                    case Response2SARequired(account_name):
+                        skipped[zone_name] = f"2SA required: {account_name}"
+                    case ResponseServiceNotActivated(reason, _):
+                        skipped[zone_name] = f"Service not activated: {reason}"
+                    case ResponseAPIError(reason, _):
+                        skipped[zone_name] = f"API error: {reason}"
+                    case ResponseServiceUnavailable(reason):
+                        skipped[zone_name] = f"Service unavailable: {reason}"
 
         return LibrariesFetchSuccess(libraries, skipped)
 
@@ -695,14 +764,13 @@ class PhotoAlbum:
         match result:
             case ResponseSuccess(resp):
                 request = resp
-            case Response2SARequired(account_name):
-                return AlbumLengthFailed(PyiCloud2SARequiredException(account_name))
-            case ResponseServiceNotActivated(reason, code):
-                return AlbumLengthFailed(PyiCloudServiceNotActivatedException(reason, code))
-            case ResponseAPIError(reason, code):
-                return AlbumLengthFailed(PyiCloudAPIResponseException(reason, code))
-            case ResponseServiceUnavailable(reason):
-                return AlbumLengthFailed(PyiCloudServiceUnavailableException(reason))
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
         response = request.json()
 
         count = int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
