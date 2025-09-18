@@ -75,6 +75,11 @@ from pyicloud_ipd.response_types import (
     AuthenticatorMFAError,
     AuthenticatorSuccess,
     AuthenticatorTwoSAExit,
+    AutodeleteFailed,
+    AutodeleteSuccess,
+    DeletePhotoFailed,
+    DeletePhotoResult,
+    DeletePhotoSuccess,
     PhotoIterationComplete,
     PhotoIterationFailed,
     PhotoIterationResult,
@@ -828,7 +833,7 @@ def delete_photo(
     library_object: PhotoLibrary,
     photo: PhotoAsset,
     filename_builder: Callable[[PhotoAsset], str],
-) -> None:
+) -> DeletePhotoResult:
     """Delete a photo from the iCloud account."""
     clean_filename_local = filename_builder(photo)
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
@@ -860,16 +865,16 @@ def delete_photo(
     result = library_object.session.evaluate_response(response)
     match result:
         case ResponseSuccess(_):
-            pass  # Success, continue
+            logger.info("Deleted %s in iCloud", clean_filename_local)
+            return DeletePhotoSuccess()
         case Response2SARequired(account_name):
-            raise PyiCloud2SARequiredException(account_name)
+            return DeletePhotoFailed(PyiCloud2SARequiredException(account_name))
         case ResponseServiceNotActivated(reason, code):
-            raise PyiCloudServiceNotActivatedException(reason, code)
+            return DeletePhotoFailed(PyiCloudServiceNotActivatedException(reason, code))
         case ResponseAPIError(reason, code):
-            raise PyiCloudAPIResponseException(reason, code)
+            return DeletePhotoFailed(PyiCloudAPIResponseException(reason, code))
         case ResponseServiceUnavailable(reason):
-            raise PyiCloudServiceUnavailableException(reason)
-    logger.info("Deleted %s in iCloud", clean_filename_local)
+            return DeletePhotoFailed(PyiCloudServiceUnavailableException(reason))
 
 
 def delete_photo_dry_run(
@@ -1195,12 +1200,17 @@ def core_single_run(
                                             filename_builder_for_delete,
                                         )
                                     else:
-                                        delete_photo(
+                                        delete_result = delete_photo(
                                             logger,
                                             library_object,
                                             item,
                                             filename_builder_for_delete,
                                         )
+                                        match delete_result:
+                                            case DeletePhotoSuccess():
+                                                pass  # Success, continue
+                                            case DeletePhotoFailed(error):
+                                                raise error
 
                                     # retrier(delete_local, error_handler)
                                     photo_album.increment_offset(-1)
@@ -1237,7 +1247,7 @@ def core_single_run(
                         status_exchange.get_progress().reset()
 
                     if user_config.auto_delete:
-                        autodelete_photos(
+                        autodelete_result = autodelete_photos(
                             logger,
                             user_config.dry_run,
                             library_object,
@@ -1247,6 +1257,11 @@ def core_single_run(
                             lp_filename_generator,
                             user_config.align_raw,
                         )
+                        match autodelete_result:
+                            case AutodeleteSuccess():
+                                pass  # Success, continue
+                            case AutodeleteFailed(error):
+                                raise error
                     else:
                         pass
         except PyiCloudFailedLoginException as error:

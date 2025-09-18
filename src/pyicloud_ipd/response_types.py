@@ -7,7 +7,7 @@ from requests import Response
 
 if TYPE_CHECKING:
     from pyicloud_ipd.base import PyiCloudService
-    from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
+    from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary, PhotosService
 
 
 @dataclass(frozen=True)
@@ -390,3 +390,60 @@ class PhotoIterationComplete:
 
 # Union type for photo iteration results
 PhotoIterationResult = PhotoIterationSuccess | PhotoIterationFailed | PhotoIterationComplete
+
+
+# Autodelete ADTs
+@dataclass(frozen=True)
+class AutodeleteSuccess:
+    """Autodelete completed successfully."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class AutodeleteFailed:
+    """Autodelete failed."""
+
+    error: Exception
+
+
+# Union type for autodelete results
+AutodeleteResult = AutodeleteSuccess | AutodeleteFailed
+
+
+# Albums fetch ADTs
+@dataclass(frozen=True)
+class AlbumsFetchSuccess:
+    """Albums fetched successfully."""
+
+    albums: Dict[str, "PhotoAlbum"]
+
+
+@dataclass(frozen=True)
+class AlbumsFetchFailed:
+    """Failed to fetch albums."""
+
+    error: Exception
+
+
+# Union type for albums fetch results
+AlbumsFetchResult = AlbumsFetchSuccess | AlbumsFetchFailed
+
+
+# Delete photo ADTs
+@dataclass(frozen=True)
+class DeletePhotoSuccess:
+    """Photo deleted successfully."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class DeletePhotoFailed:
+    """Failed to delete photo."""
+
+    error: Exception
+
+
+# Union type for delete photo results
+DeletePhotoResult = DeletePhotoSuccess | DeletePhotoFailed

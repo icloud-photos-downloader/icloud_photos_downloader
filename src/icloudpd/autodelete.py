@@ -13,6 +13,9 @@ from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
+    AutodeleteFailed,
+    AutodeleteResult,
+    AutodeleteSuccess,
     PhotoIterationComplete,
     PhotoIterationFailed,
     PhotoIterationSuccess,
@@ -44,7 +47,7 @@ def autodelete_photos(
     _sizes: Sequence[AssetVersionSize],
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
-) -> None:
+) -> AutodeleteResult:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -57,7 +60,7 @@ def autodelete_photos(
     for media_result in recently_deleted:
         match media_result:
             case PhotoIterationFailed(error):
-                raise error
+                return AutodeleteFailed(error)
             case PhotoIterationComplete():
                 break
             case PhotoIterationSuccess(media):
@@ -130,3 +133,5 @@ def autodelete_photos(
                 logger.debug("Deleting %s...", path)
                 delete_local = delete_file_dry_run if dry_run else delete_file
                 delete_local(logger, path)
+
+    return AutodeleteSuccess()
