@@ -47,7 +47,6 @@ from pyicloud_ipd.response_types import (
     AuthSRPSuccess,
     AuthTokenInvalid,
     AuthTokenValid,
-    AuthWithTokenFailed,
     AuthWithTokenSuccess,
     Response2SARequired,
     ResponseAPIError,
@@ -409,8 +408,12 @@ class PyiCloudService:
             match token_result:
                 case AuthWithTokenSuccess(data):
                     self.data = data
-                case AuthWithTokenFailed(error):
-                    return AuthenticationFailed(error)
+                case ResponseServiceNotActivated(reason, code):
+                    return AuthenticationFailed(PyiCloudServiceNotActivatedException(reason, code))
+                case ResponseAPIError(reason, code):
+                    return AuthenticationFailed(PyiCloudAPIResponseException(reason, code))
+                case ResponseServiceUnavailable(reason):
+                    return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
                 case AuthRequires2SA(account_name):
                     return AuthRequires2SA(account_name)
                 case AuthDomainMismatch(domain_to_use):
@@ -459,11 +462,11 @@ class PyiCloudService:
                 case Response2SARequired(account_name):
                     return AuthRequires2SA(account_name)
                 case ResponseServiceNotActivated(reason, code):
-                    return AuthWithTokenFailed(PyiCloudServiceNotActivatedException(reason, code))
+                    return ResponseServiceNotActivated(reason, code)
                 case ResponseAPIError(reason, code):
-                    return AuthWithTokenFailed(PyiCloudAPIResponseException(reason, code))
+                    return ResponseAPIError(reason, code)
                 case ResponseServiceUnavailable(reason):
-                    return AuthWithTokenFailed(PyiCloudServiceUnavailableException(reason))
+                    return ResponseServiceUnavailable(reason)
         data = req.json()
 
         # {'domainToUse': 'iCloud.com'}
@@ -973,8 +976,12 @@ class PyiCloudService:
         match token_result:
             case AuthWithTokenSuccess(token_data):
                 self.data = token_data
-            case AuthWithTokenFailed(error):
-                raise error
+            case ResponseServiceNotActivated(reason, code):
+                raise PyiCloudServiceNotActivatedException(reason, code)
+            case ResponseAPIError(reason, code):
+                raise PyiCloudAPIResponseException(reason, code)
+            case ResponseServiceUnavailable(reason):
+                raise PyiCloudServiceUnavailableException(reason)
             case AuthRequires2SA(account_name):
                 raise PyiCloud2SARequiredException(account_name)
             case AuthDomainMismatch(domain_to_use):
@@ -1114,7 +1121,11 @@ class PyiCloudService:
             case AuthWithTokenSuccess(data):
                 self.data = data
                 return True
-            case AuthWithTokenFailed(_):
+            case (
+                ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
                 LOGGER.error("Session trust failed.")
                 return False
             case AuthRequires2SA(account_name):
