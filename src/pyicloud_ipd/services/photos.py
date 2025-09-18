@@ -34,6 +34,9 @@ from pyicloud_ipd.response_types import (
     AlbumLengthFailed,
     AlbumLengthResult,
     AlbumLengthSuccess,
+    DownloadFailed,
+    DownloadResult,
+    DownloadSuccess,
     FoldersFetchFailed,
     FoldersFetchResult,
     FoldersFetchSuccess,
@@ -133,7 +136,7 @@ def filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[
     return fromMaybe(fallback)
 
 
-def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0) -> Response:
+def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0) -> DownloadResult:
     """
     Download an asset from the given URL using the provided session.
 
@@ -143,7 +146,7 @@ def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0)
         start: The byte offset to start downloading from (for resume capability)
 
     Returns:
-        The HTTP response for the download request
+        DownloadResult ADT indicating success or failure
     """
     headers = {"Range": f"bytes={start}-"}
     response = session.get(url, headers=headers, stream=True)
@@ -154,14 +157,14 @@ def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0)
             case ResponseSuccess(resp):
                 response = resp
             case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
+                return DownloadFailed(PyiCloud2SARequiredException(account_name))
             case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
+                return DownloadFailed(PyiCloudServiceNotActivatedException(reason, code))
             case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
+                return DownloadFailed(PyiCloudAPIResponseException(reason, code))
             case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
-    return response
+                return DownloadFailed(PyiCloudServiceUnavailableException(reason))
+    return DownloadSuccess(response)
 
 
 def photos_request(
@@ -1176,8 +1179,8 @@ class PhotoAsset:
         """
         return apply_raw_policy(self.versions, raw_policy)
 
-    def download(self, session: Session, url: str, start: int = 0) -> Response:
-        """Download this asset using the provided session."""
+    def download(self, session: Session, url: str, start: int = 0) -> DownloadResult:
+        """Download this asset using the provided session, returning an ADT result."""
         return download_asset(session, url, start)
 
     def __repr__(self) -> str:

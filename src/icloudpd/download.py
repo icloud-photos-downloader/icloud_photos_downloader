@@ -14,6 +14,7 @@ from tzlocal import get_localzone
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
+from pyicloud_ipd.response_types import DownloadFailed, DownloadSuccess
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
@@ -131,24 +132,28 @@ def download_media(
     if append_mode:
         logger.debug(f"Resuming downloading of {download_path} from {current_size}")
 
-    photo_response = photo.download(icloud.photos.session, version.url, current_size)
-    if photo_response.ok:
-        return download_local(
-            photo_response, temp_download_path, append_mode, download_path, photo.created
-        )
-    else:
-        # Use the standard original filename generator for error logging
-        from icloudpd.base import lp_filename_original as simple_lp_filename_generator
+    download_result = photo.download(icloud.photos.session, version.url, current_size)
+    match download_result:
+        case DownloadSuccess(photo_response):
+            if photo_response.ok:
+                return download_local(
+                    photo_response, temp_download_path, append_mode, download_path, photo.created
+                )
+            else:
+                # Use the standard original filename generator for error logging
+                from icloudpd.base import lp_filename_original as simple_lp_filename_generator
 
-        # Get the proper filename using filename_builder
-        base_filename = filename_builder(photo)
-        version_filename = calculate_version_filename(
-            base_filename, version, size, simple_lp_filename_generator, photo.item_type
-        )
-        logger.error(
-            "Could not find URL to download %s for size %s",
-            version_filename,
-            size.value,
-        )
-
-        return False
+                # Get the proper filename using filename_builder
+                base_filename = filename_builder(photo)
+                version_filename = calculate_version_filename(
+                    base_filename, version, size, simple_lp_filename_generator, photo.item_type
+                )
+                logger.error(
+                    "Could not find URL to download %s for size %s",
+                    version_filename,
+                    size.value,
+                )
+                return False
+        case DownloadFailed(error):
+            # Re-raise the exception from the download
+            raise error
