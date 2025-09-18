@@ -235,8 +235,8 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--file-match-policy",
-        help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to de-duplicate. `name-id7` adds asset ID from iCloud to all filenames and does not de-duplicate. Default: %(default)s",
-        choices=["name-size-dedup-with-suffix", "name-id7"],
+        help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to de-duplicate. `name-id7` adds asset ID from iCloud to all filenames and does not de-duplicate. `name-id7-versioned` is similar to `name-id7`, but adds asset ID from iCloud even on `adjusted` and `alternative`. Default: %(default)s",
+        choices=["name-size-dedup-with-suffix", "name-id7", "name-id7-versioned"],
         default="name-size-dedup-with-suffix",
         type=lower,
     )
