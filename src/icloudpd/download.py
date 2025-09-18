@@ -18,6 +18,8 @@ from pyicloud_ipd.response_types import (
     DownloadMediaResult,
     DownloadMediaSuccess,
     DownloadSuccess,
+    PhotoLibraryNotFinishedIndexing,
+    PhotosServiceAccessSuccess,
     Response2SARequired,
     ResponseAPIError,
     ResponseServiceNotActivated,
@@ -140,7 +142,25 @@ def download_media(
     if append_mode:
         logger.debug(f"Resuming downloading of {download_path} from {current_size}")
 
-    download_result = photo.download(icloud.photos.session, version.url, current_size)
+    # Get photos service to access session
+    photos_service_result = icloud.get_photos_service()
+
+    match photos_service_result:
+        case PhotosServiceAccessSuccess(photos_service):
+            download_result = photo.download(photos_service.session, version.url, current_size)
+        case PhotoLibraryNotFinishedIndexing():
+            # Photo library is still indexing, return as service error
+            return ResponseServiceNotActivated(
+                "Photo library has not finished indexing", "INDEXING"
+            )
+        case (
+            Response2SARequired()
+            | ResponseServiceNotActivated()
+            | ResponseAPIError()
+            | ResponseServiceUnavailable() as error
+        ):
+            # These errors are already part of DownloadMediaResult
+            return error
     match download_result:
         case DownloadSuccess(photo_response):
             if photo_response.ok:
