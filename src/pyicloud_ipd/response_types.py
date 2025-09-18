@@ -8,6 +8,7 @@ from requests import Response
 if TYPE_CHECKING:
     from pyicloud_ipd.base import PyiCloudService
     from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary, PhotosService
+    from pyicloud_ipd.sms import TrustedDevice
 
 
 @dataclass(frozen=True)
@@ -503,3 +504,202 @@ DeletePhotoResult = (
     | ResponseAPIError
     | ResponseServiceUnavailable
 )
+
+
+# Trusted devices ADTs
+@dataclass(frozen=True)
+class TrustedDevicesSuccess:
+    """Trusted devices retrieved successfully."""
+
+    devices: Sequence[Dict[str, Any]]
+
+
+# Union type for trusted devices results - reuses response evaluation ADTs
+TrustedDevicesResult = (
+    TrustedDevicesSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# Trusted phone numbers ADTs
+@dataclass(frozen=True)
+class TrustedPhoneNumbersSuccess:
+    """Trusted phone numbers retrieved successfully."""
+
+    devices: Sequence["TrustedDevice"]
+
+
+# Union type for trusted phone numbers results - reuses response evaluation ADTs
+TrustedPhoneNumbersResult = (
+    TrustedPhoneNumbersSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# Send verification code ADTs
+@dataclass(frozen=True)
+class SendVerificationCodeSuccess:
+    """Verification code sent successfully."""
+
+    success: bool
+
+
+# Union type for send verification code results - reuses response evaluation ADTs
+SendVerificationCodeResult = (
+    SendVerificationCodeSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# Send 2FA code SMS ADTs
+@dataclass(frozen=True)
+class Send2FACodeSMSSuccess:
+    """2FA code SMS sent successfully."""
+
+    success: bool
+
+
+# Union type for send 2FA code SMS results - reuses response evaluation ADTs
+Send2FACodeSMSResult = (
+    Send2FACodeSMSSuccess
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
+
+
+# Validate verification code ADTs
+@dataclass(frozen=True)
+class ValidateVerificationCodeSuccess:
+    """Verification code validated successfully."""
+
+    success: bool
+
+
+@dataclass(frozen=True)
+class ValidateVerificationCodeFailed:
+    """Verification code validation failed."""
+
+    pass
+
+
+# Union type for validate verification code results - reuses response evaluation ADTs
+ValidateVerificationCodeResult = (
+    ValidateVerificationCodeSuccess
+    | ValidateVerificationCodeFailed
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthDomainMismatch
+)
+
+
+# Validate 2FA code SMS ADTs
+@dataclass(frozen=True)
+class Validate2FACodeSMSSuccess:
+    """2FA code SMS validated successfully."""
+
+    success: bool
+
+
+@dataclass(frozen=True)
+class Validate2FACodeSMSFailed:
+    """2FA code SMS validation failed."""
+
+    pass
+
+
+# Union type for validate 2FA code SMS results - reuses response evaluation ADTs
+Validate2FACodeSMSResult = (
+    Validate2FACodeSMSSuccess
+    | Validate2FACodeSMSFailed
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthDomainMismatch
+)
+
+
+# Validate 2FA code ADTs
+@dataclass(frozen=True)
+class Validate2FACodeSuccess:
+    """2FA code validated successfully."""
+
+    success: bool
+
+
+@dataclass(frozen=True)
+class Validate2FACodeFailed:
+    """2FA code validation failed."""
+
+    pass
+
+
+# Union type for validate 2FA code results - reuses response evaluation ADTs
+Validate2FACodeResult = (
+    Validate2FACodeSuccess
+    | Validate2FACodeFailed
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthDomainMismatch
+)
+
+
+# Trust session ADTs
+@dataclass(frozen=True)
+class TrustSessionSuccess:
+    """Session trusted successfully."""
+
+    success: bool
+
+
+@dataclass(frozen=True)
+class TrustSessionFailed:
+    """Session trust failed."""
+
+    pass
+
+
+# Union type for trust session results - reuses response evaluation ADTs
+TrustSessionResult = (
+    TrustSessionSuccess
+    | TrustSessionFailed
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthDomainMismatch
+)
+
+
+# Get webservice URL ADTs
+@dataclass(frozen=True)
+class WebserviceURLSuccess:
+    """Webservice URL retrieved successfully."""
+
+    url: str
+
+
+@dataclass(frozen=True)
+class WebserviceNotAvailable:
+    """Webservice not available."""
+
+    service_key: str
+
+
+# Union type for get webservice URL results
+WebserviceURLResult = WebserviceURLSuccess | WebserviceNotAvailable
