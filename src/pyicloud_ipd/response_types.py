@@ -326,3 +326,22 @@ class AlbumLengthFailed:
 
 # Union type for album length results
 AlbumLengthResult = AlbumLengthSuccess | AlbumLengthFailed
+
+
+# Download asset ADTs
+@dataclass(frozen=True)
+class DownloadSuccess:
+    """Asset downloaded successfully."""
+
+    response: Response
+
+
+@dataclass(frozen=True)
+class DownloadFailed:
+    """Failed to download asset."""
+
+    error: Exception
+
+
+# Union type for download results
+DownloadResult = DownloadSuccess | DownloadFailed
