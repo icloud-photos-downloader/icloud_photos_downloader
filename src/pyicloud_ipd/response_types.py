@@ -94,13 +94,6 @@ class AuthWithTokenSuccess:
 
 
 @dataclass(frozen=True)
-class AuthWithTokenFailed:
-    """Token authentication failed."""
-
-    error: Exception
-
-
-@dataclass(frozen=True)
 class AuthRequires2SA:
     """Authentication requires 2SA."""
 
@@ -154,8 +147,14 @@ class AuthDomainMismatchError:
 # Union types for authentication results
 ValidateTokenResult = AuthTokenValid | AuthTokenInvalid | AuthRequires2SA
 AuthenticateSRPResult = AuthSRPSuccess | AuthSRPFailed | AuthRequires2SA
+# AuthenticateWithTokenResult now reuses the response evaluation ADTs directly
 AuthenticateWithTokenResult = (
-    AuthWithTokenSuccess | AuthWithTokenFailed | AuthRequires2SA | AuthDomainMismatch
+    AuthWithTokenSuccess
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+    | AuthRequires2SA
+    | AuthDomainMismatch
 )
 # Service creation result - includes service in success/2SA cases
 ServiceCreationResult = (
