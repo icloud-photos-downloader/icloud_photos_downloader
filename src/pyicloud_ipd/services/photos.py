@@ -21,12 +21,6 @@ from pyicloud_ipd.asset_version import (
     add_suffix_to_filename,
     calculate_version_filename,
 )
-from pyicloud_ipd.exceptions import (
-    PyiCloud2SARequiredException,
-    PyiCloudAPIResponseException,
-    PyiCloudServiceNotActivatedException,
-    PyiCloudServiceUnavailableException,
-)
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -461,22 +455,6 @@ class PhotoLibrary:
 
         return AlbumsFetchSuccess(albums)
 
-    @property
-    def albums(self) -> Dict[str, "PhotoAlbum"]:
-        """Legacy property that raises exceptions. Use get_albums() for ADT-based approach."""
-        result = self.get_albums()
-        match result:
-            case AlbumsFetchSuccess(albums):
-                return albums
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
-
     def _fetch_folders(self) -> FoldersFetchResult:
         if self.library_type == "shared":
             return FoldersFetchSuccess([])
@@ -615,22 +593,6 @@ class PhotosService(PhotoLibrary):
 
         return LibrariesAccessSuccess(self._private_libraries)
 
-    @property
-    def private_libraries(self) -> Dict[str, PhotoLibrary]:
-        """Legacy property that raises exceptions. Use get_private_libraries() for ADT-based approach."""
-        result = self.get_private_libraries()
-        match result:
-            case LibrariesAccessSuccess(libraries):
-                return libraries
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
-
     def get_shared_libraries(self) -> LibrariesAccessResult:
         """Get shared libraries, returns ADT result."""
         if not self._shared_libraries:
@@ -647,22 +609,6 @@ class PhotosService(PhotoLibrary):
                     return result
 
         return LibrariesAccessSuccess(self._shared_libraries)
-
-    @property
-    def shared_libraries(self) -> Dict[str, PhotoLibrary]:
-        """Legacy property that raises exceptions. Use get_shared_libraries() for ADT-based approach."""
-        result = self.get_shared_libraries()
-        match result:
-            case LibrariesAccessSuccess(libraries):
-                return libraries
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
 
     def _fetch_libraries(self, library_type: str) -> LibrariesFetchResult:
         libraries: Dict[str, PhotoLibrary] = {}

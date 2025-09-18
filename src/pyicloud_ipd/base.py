@@ -681,55 +681,55 @@ class PyiCloudService:
 
         return AuthSRPSuccess()
 
-    def _authenticate_raw_password(self, password: str) -> None:
-        data = {
-            "accountName": self.apple_id,
-            "password": password,
-            "rememberMe": True,
-            "trustTokens": [],
-        }
-        if self.session_data.get("trust_token"):
-            data["trustTokens"] = [self.session_data.get("trust_token")]
+    # def _authenticate_raw_password(self, password: str) -> None:
+    #     data = {
+    #         "accountName": self.apple_id,
+    #         "password": password,
+    #         "rememberMe": True,
+    #         "trustTokens": [],
+    #     }
+    #     if self.session_data.get("trust_token"):
+    #         data["trustTokens"] = [self.session_data.get("trust_token")]
 
-        headers = self._get_auth_headers(origin_referer_headers(self.AUTH_ROOT_ENDPOINT))
-        try:
-            # set observer with obfuscator
-            if self.response_observer:
-                rules = list(
-                    chain(
-                        self.cookie_obfuscate_rules,
-                        self.header_obfuscate_rules,
-                        self.header_pass_rules,
-                        self.header_drop_rules,
-                        self.auth_raw_body_obfuscate_rules,
-                        self.auth_raw_body_drop_rules,
-                    )
-                )
-            else:
-                rules = []
+    #     headers = self._get_auth_headers(origin_referer_headers(self.AUTH_ROOT_ENDPOINT))
+    #     try:
+    #         # set observer with obfuscator
+    #         if self.response_observer:
+    #             rules = list(
+    #                 chain(
+    #                     self.cookie_obfuscate_rules,
+    #                     self.header_obfuscate_rules,
+    #                     self.header_pass_rules,
+    #                     self.header_drop_rules,
+    #                     self.auth_raw_body_obfuscate_rules,
+    #                     self.auth_raw_body_drop_rules,
+    #                 )
+    #             )
+    #         else:
+    #             rules = []
 
-            with self.use_rules(rules):
-                response = self.session.post(
-                    f"{self.AUTH_ENDPOINT}/signin",
-                    params={"isRememberMeEnabled": "true"},
-                    data=json.dumps(data),
-                    headers=headers,
-                )
-                result = self.session.evaluate_response(response)
-                match result:
-                    case ResponseSuccess(_):
-                        pass  # Success, continue
-                    case Response2SARequired(account_name):
-                        raise PyiCloud2SARequiredException(account_name)
-                    case ResponseServiceNotActivated(reason, code):
-                        raise PyiCloudServiceNotActivatedException(reason, code)
-                    case ResponseAPIError(reason, code):
-                        raise PyiCloudAPIResponseException(reason, code)
-                    case ResponseServiceUnavailable(reason):
-                        raise PyiCloudServiceUnavailableException(reason)
-        except PyiCloudAPIResponseException as error:
-            msg = "Invalid email/password combination."
-            raise PyiCloudFailedLoginException(msg, error) from error
+    #         with self.use_rules(rules):
+    #             response = self.session.post(
+    #                 f"{self.AUTH_ENDPOINT}/signin",
+    #                 params={"isRememberMeEnabled": "true"},
+    #                 data=json.dumps(data),
+    #                 headers=headers,
+    #             )
+    #             result = self.session.evaluate_response(response)
+    #             match result:
+    #                 case ResponseSuccess(_):
+    #                     pass  # Success, continue
+    #                 case Response2SARequired(account_name):
+    #                     raise PyiCloud2SARequiredException(account_name)
+    #                 case ResponseServiceNotActivated(reason, code):
+    #                     raise PyiCloudServiceNotActivatedException(reason, code)
+    #                 case ResponseAPIError(reason, code):
+    #                     raise PyiCloudAPIResponseException(reason, code)
+    #                 case ResponseServiceUnavailable(reason):
+    #                     raise PyiCloudServiceUnavailableException(reason)
+    #     except PyiCloudAPIResponseException as error:
+    #         msg = "Invalid email/password combination."
+    #         raise PyiCloudFailedLoginException(msg, error) from error
 
     def _validate_token(self) -> ValidateTokenResult:
         """Checks if the current access token is still valid."""
@@ -1192,36 +1192,6 @@ class PyiCloudService:
         from pyicloud_ipd.response_types import PhotosServiceAccessSuccess
 
         return PhotosServiceAccessSuccess(self._photos)
-
-    @property
-    def photos(self) -> PhotosService:
-        """Legacy property that raises exceptions. Use get_photos_service() for ADT-based approach."""
-        # Import here to avoid circular import
-        from pyicloud_ipd.response_types import (
-            PhotoLibraryNotFinishedIndexing,
-            PhotosServiceAccessSuccess,
-            Response2SARequired,
-            ResponseAPIError,
-            ResponseServiceNotActivated,
-            ResponseServiceUnavailable,
-        )
-
-        result = self.get_photos_service()
-        match result:
-            case PhotosServiceAccessSuccess(service):
-                return service
-            case PhotoLibraryNotFinishedIndexing():
-                raise PyiCloudServiceNotActivatedException(
-                    "Apple iCloud Photo Library has not finished indexing yet", None
-                )
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
 
     def __unicode__(self) -> str:
         return f"iCloud API: {self.apple_id}"
