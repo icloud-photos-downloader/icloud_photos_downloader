@@ -14,7 +14,15 @@ from tzlocal import get_localzone
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.response_types import DownloadFailed, DownloadSuccess
+from pyicloud_ipd.response_types import (
+    DownloadMediaResult,
+    DownloadMediaSuccess,
+    DownloadSuccess,
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
+)
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
@@ -111,12 +119,12 @@ def download_media(
     version: AssetVersion,
     size: VersionSize,
     filename_builder: Callable[[PhotoAsset], str],
-) -> bool:
+) -> DownloadMediaResult:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
     if not mkdirs_local(logger, download_path):
-        return False
+        return ResponseAPIError("Could not create folder", "MKDIR_FAILED")
 
     checksum = base64.b64decode(version.checksum)
     checksum32 = base64.b32encode(checksum).decode()
@@ -136,9 +144,13 @@ def download_media(
     match download_result:
         case DownloadSuccess(photo_response):
             if photo_response.ok:
-                return download_local(
+                success = download_local(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 )
+                if success:
+                    return DownloadMediaSuccess()
+                else:
+                    return ResponseAPIError("Failed to save file", "SAVE_FAILED")
             else:
                 # Use the standard original filename generator for error logging
                 from icloudpd.base import lp_filename_original as simple_lp_filename_generator
@@ -153,7 +165,12 @@ def download_media(
                     version_filename,
                     size.value,
                 )
-                return False
-        case DownloadFailed(error):
-            # Re-raise the exception from the download
-            raise error
+                return ResponseAPIError(f"Could not find URL for size {size.value}", "NO_URL")
+        case (
+            Response2SARequired(_)
+            | ResponseServiceNotActivated(_, _)
+            | ResponseAPIError(_, _)
+            | ResponseServiceUnavailable(_)
+        ):
+            # Propagate the error ADT directly
+            return download_result
