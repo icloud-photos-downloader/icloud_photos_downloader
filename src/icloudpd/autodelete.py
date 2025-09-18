@@ -13,12 +13,14 @@ from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
-    AutodeleteFailed,
     AutodeleteResult,
     AutodeleteSuccess,
     PhotoIterationComplete,
-    PhotoIterationFailed,
     PhotoIterationSuccess,
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
 )
 from pyicloud_ipd.services.photos import PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
@@ -59,15 +61,17 @@ def autodelete_photos(
 
     for media_result in recently_deleted:
         match media_result:
-            case PhotoIterationFailed(error):
-                return AutodeleteFailed(error)
             case PhotoIterationComplete():
                 break
             case PhotoIterationSuccess(media):
                 pass
-            case _:
-                # Should not happen, but handle gracefully
-                continue
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return media_result
 
         try:
             created_date = media.created.astimezone(get_localzone())

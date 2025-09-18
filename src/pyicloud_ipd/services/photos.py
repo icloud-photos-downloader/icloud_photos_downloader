@@ -44,14 +44,12 @@ from pyicloud_ipd.response_types import (
     LibrariesFetchResult,
     LibrariesFetchSuccess,
     PhotoIterationComplete,
-    PhotoIterationFailed,
     PhotoIterationResult,
     PhotoIterationSuccess,
     PhotoLibraryInitFailed,
     PhotoLibraryInitResult,
     PhotoLibraryInitSuccess,
     PhotoLibraryNotFinishedIndexing,
-    PhotosRequestFailed,
     PhotosRequestResult,
     PhotosRequestSuccess,
     PhotosServiceInitResult,
@@ -193,14 +191,13 @@ def photos_request(
         match result:
             case ResponseSuccess(resp):
                 response = resp
-            case Response2SARequired(account_name):
-                return PhotosRequestFailed(PyiCloud2SARequiredException(account_name))
-            case ResponseServiceNotActivated(reason, code):
-                return PhotosRequestFailed(PyiCloudServiceNotActivatedException(reason, code))
-            case ResponseAPIError(reason, code):
-                return PhotosRequestFailed(PyiCloudAPIResponseException(reason, code))
-            case ResponseServiceUnavailable(reason):
-                return PhotosRequestFailed(PyiCloudServiceUnavailableException(reason))
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
     return PhotosRequestSuccess(response)
 
 
@@ -725,32 +722,37 @@ class PhotoAlbum:
             )
 
             match result:
-                case PhotosRequestFailed(error):
-                    yield PhotoIterationFailed(error)
-                    return
                 case PhotosRequestSuccess(request):
                     response = request.json()
+                case (
+                    Response2SARequired(_)
+                    | ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    yield result
+                    return
 
-                    asset_records = {}
-                    master_records = []
-                    for rec in response["records"]:
-                        if rec["recordType"] == "CPLAsset":
-                            master_id = rec["fields"]["masterRef"]["value"]["recordName"]
-                            asset_records[master_id] = rec
-                        elif rec["recordType"] == "CPLMaster":
-                            master_records.append(rec)
+            asset_records = {}
+            master_records = []
+            for rec in response["records"]:
+                if rec["recordType"] == "CPLAsset":
+                    master_id = rec["fields"]["masterRef"]["value"]["recordName"]
+                    asset_records[master_id] = rec
+                elif rec["recordType"] == "CPLMaster":
+                    master_records.append(rec)
 
-                    master_records_len = len(master_records)
-                    if master_records_len:
-                        for master_record in master_records:
-                            record_name = master_record["recordName"]
-                            yield PhotoIterationSuccess(
-                                PhotoAsset(master_record, asset_records[record_name])
-                            )
-                            self.increment_offset(1)
-                    else:
-                        yield PhotoIterationComplete()
-                        return
+            master_records_len = len(master_records)
+            if master_records_len:
+                for master_record in master_records:
+                    record_name = master_record["recordName"]
+                    yield PhotoIterationSuccess(
+                        PhotoAsset(master_record, asset_records[record_name])
+                    )
+                    self.increment_offset(1)
+            else:
+                yield PhotoIterationComplete()
+                return
 
     def increment_offset(self, value: int) -> None:
         self.offset += value
