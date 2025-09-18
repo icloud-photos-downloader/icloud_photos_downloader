@@ -171,14 +171,31 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAut
         device_index = prompt_int_range("Please choose an option:", "0", 0, devices_count - 1)
 
     device = devices[device_index]
-    if not icloud.send_verification_code(device):
-        logger.error("Failed to send two-step authentication code")
-        return TwoFactorAuthFailed("Failed to send two-step authentication code")
+    from pyicloud_ipd.response_types import (
+        SendVerificationCodeSuccess,
+        ValidateVerificationCodeSuccess,
+    )
+
+    send_result = icloud.send_verification_code(device)
+    match send_result:
+        case SendVerificationCodeSuccess(success):
+            if not success:
+                logger.error("Failed to send two-step authentication code")
+                return TwoFactorAuthFailed("Failed to send two-step authentication code")
+        case _:
+            logger.error("Failed to send two-step authentication code")
+            return TwoFactorAuthFailed("Failed to send two-step authentication code")
 
     code = prompt_string("Please enter two-step authentication code")
-    if not icloud.validate_verification_code(device, code):
-        logger.error("Failed to verify two-step authentication code")
-        return TwoFactorAuthFailed("Failed to verify two-step authentication code")
+    validate_result = icloud.validate_verification_code(device, code)
+    match validate_result:
+        case ValidateVerificationCodeSuccess(success):
+            if not success:
+                logger.error("Failed to verify two-step authentication code")
+                return TwoFactorAuthFailed("Failed to verify two-step authentication code")
+        case _:
+            logger.error("Failed to verify two-step authentication code")
+            return TwoFactorAuthFailed("Failed to verify two-step authentication code")
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2SA expires.\n"
@@ -191,7 +208,26 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAut
 
 def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAuthResult:
     """Request two-factor authentication."""
-    devices = icloud.get_trusted_phone_numbers()
+    from pyicloud_ipd.response_types import (
+        Response2SARequired,
+        ResponseAPIError,
+        ResponseServiceNotActivated,
+        ResponseServiceUnavailable,
+        TrustedPhoneNumbersSuccess,
+    )
+
+    devices_result = icloud.get_trusted_phone_numbers()
+    match devices_result:
+        case TrustedPhoneNumbersSuccess(devices):
+            pass  # Continue with devices
+        case (
+            Response2SARequired(_)
+            | ResponseServiceNotActivated(_, _)
+            | ResponseAPIError(_, _)
+            | ResponseServiceUnavailable(_)
+        ):
+            return TwoFactorAuthFailed("Failed to get trusted phone numbers")
+
     devices_count = len(devices)
     device_index_alphabet = "abcdefghijklmnopqrstuvwxyz"
     if devices_count > 0:
@@ -239,8 +275,15 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAut
             # need to send code
             device_index = device_index_alphabet.index(index_or_code)
             device = devices[device_index]
-            if not icloud.send_2fa_code_sms(device.id):
-                return TwoFactorAuthFailed("Failed to send two-factor authentication code")
+            from pyicloud_ipd.response_types import Send2FACodeSMSSuccess
+
+            send_result = icloud.send_2fa_code_sms(device.id)
+            match send_result:
+                case Send2FACodeSMSSuccess(success):
+                    if not success:
+                        return TwoFactorAuthFailed("Failed to send two-factor authentication code")
+                case _:
+                    return TwoFactorAuthFailed("Failed to send two-factor authentication code")
             while True:
                 from foundation.string_utils import strip
 
@@ -253,11 +296,29 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAut
                     break
                 echo("Invalid code, should be six digits. Try again")
 
-            if not icloud.validate_2fa_code_sms(device.id, code):
-                return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
+            from pyicloud_ipd.response_types import Validate2FACodeSMSSuccess
+
+            validate_result = icloud.validate_2fa_code_sms(device.id, code)
+            match validate_result:
+                case Validate2FACodeSMSSuccess(success):
+                    if not success:
+                        return TwoFactorAuthFailed(
+                            "Failed to verify two-factor authentication code"
+                        )
+                case _:
+                    return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
         else:
-            if not icloud.validate_2fa_code(index_or_code):
-                return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
+            from pyicloud_ipd.response_types import Validate2FACodeSuccess
+
+            validate_2fa_result = icloud.validate_2fa_code(index_or_code)
+            match validate_2fa_result:
+                case Validate2FACodeSuccess(success):
+                    if not success:
+                        return TwoFactorAuthFailed(
+                            "Failed to verify two-factor authentication code"
+                        )
+                case _:
+                    return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
     else:
         while True:
             from foundation.string_utils import strip
@@ -266,8 +327,15 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAut
             if len(code) == 6 and code.isdigit():
                 break
             echo("Invalid code, should be six digits. Try again")
-        if not icloud.validate_2fa_code(code):
-            return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
+        from pyicloud_ipd.response_types import Validate2FACodeSuccess
+
+        validate_2fa_result = icloud.validate_2fa_code(code)
+        match validate_2fa_result:
+            case Validate2FACodeSuccess(success):
+                if not success:
+                    return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
+            case _:
+                return TwoFactorAuthFailed("Failed to verify two-factor authentication code")
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2FA expires.\n"

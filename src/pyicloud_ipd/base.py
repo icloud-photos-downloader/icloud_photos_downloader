@@ -24,7 +24,18 @@ from typing import (
 )
 
 if TYPE_CHECKING:
-    from pyicloud_ipd.response_types import PhotosServiceAccessResult
+    from pyicloud_ipd.response_types import (
+        PhotosServiceAccessResult,
+        Send2FACodeSMSResult,
+        SendVerificationCodeResult,
+        TrustedDevicesResult,
+        TrustedPhoneNumbersResult,
+        TrustSessionResult,
+        Validate2FACodeResult,
+        Validate2FACodeSMSResult,
+        ValidateVerificationCodeResult,
+        WebserviceURLResult,
+    )
 from uuid import uuid1
 
 import srp
@@ -65,13 +76,14 @@ from pyicloud_ipd.response_types import (
     ResponseServiceUnavailable,
     ResponseSuccess,
     ServiceCreationResult,
+    TrustSessionFailed,
+    TrustSessionSuccess,
     ValidateTokenResult,
 )
 from pyicloud_ipd.services.photos import PhotosService
 from pyicloud_ipd.session import PyiCloudPasswordFilter, PyiCloudSession
 from pyicloud_ipd.sms import (
     AuthenticatedSession,
-    TrustedDevice,
     build_send_sms_code_request,
     build_trusted_phone_numbers_request,
     build_verify_sms_code_request,
@@ -834,14 +846,33 @@ class PyiCloudService:
         """Returns True if the session is trusted."""
         return typing.cast(bool, self.data.get("hsaTrustedBrowser", False))
 
-    @property
-    def trusted_devices(self) -> Sequence[Dict[str, Any]]:
-        """Returns devices trusted for two-step authentication."""
+    def get_trusted_devices(self) -> "TrustedDevicesResult":
+        """Returns devices trusted for two-step authentication (ADT version)."""
+        from pyicloud_ipd.response_types import TrustedDevicesSuccess
+
         request = self.session.get(f"{self.SETUP_ENDPOINT}/listDevices", params=self.params)
         result = self.session.evaluate_response(request)
         match result:
             case ResponseSuccess(resp):
-                request = resp
+                devices: Sequence[Dict[str, Any]] | None = resp.json().get("devices")
+                return TrustedDevicesSuccess(devices if devices else [])
+            case (
+                Response2SARequired()
+                | ResponseServiceNotActivated()
+                | ResponseAPIError()
+                | ResponseServiceUnavailable() as error
+            ):
+                return error
+
+    @property
+    def trusted_devices(self) -> Sequence[Dict[str, Any]]:
+        """Returns devices trusted for two-step authentication (legacy version)."""
+        result = self.get_trusted_devices()
+        from pyicloud_ipd.response_types import TrustedDevicesSuccess
+
+        match result:
+            case TrustedDevicesSuccess(devices):
+                return devices
             case Response2SARequired(account_name):
                 raise PyiCloud2SARequiredException(account_name)
             case ResponseServiceNotActivated(reason, code):
@@ -850,10 +881,6 @@ class PyiCloudService:
                 raise PyiCloudAPIResponseException(reason, code)
             case ResponseServiceUnavailable(reason):
                 raise PyiCloudServiceUnavailableException(reason)
-        devices: Sequence[Dict[str, Any]] | None = request.json().get("devices")
-        if devices:
-            return devices
-        return []
 
     def send_request(self, request: PreparedRequest) -> Response:
         return self.session.send(request)
@@ -865,8 +892,9 @@ class PyiCloudService:
             session_id=self.session_data["session_id"],
         )
 
-    def get_trusted_phone_numbers(self) -> Sequence[TrustedDevice]:
+    def get_trusted_phone_numbers(self) -> "TrustedPhoneNumbersResult":
         """Returns list of trusted phone number for sms 2fa"""
+        from pyicloud_ipd.response_types import TrustedPhoneNumbersSuccess
 
         oauth_session = self.get_oauth_session()
         context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
@@ -891,20 +919,19 @@ class PyiCloudService:
             result = self.session.evaluate_response(response)
             match result:
                 case ResponseSuccess(resp):
-                    response = resp
-                case Response2SARequired(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
-                case ResponseAPIError(reason, code):
-                    raise PyiCloudAPIResponseException(reason, code)
-                case ResponseServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
+                    devices = parse_trusted_phone_numbers_response(resp)
+                    return TrustedPhoneNumbersSuccess(devices)
+                case (
+                    Response2SARequired()
+                    | ResponseServiceNotActivated()
+                    | ResponseAPIError()
+                    | ResponseServiceUnavailable() as error
+                ):
+                    return error
 
-        return parse_trusted_phone_numbers_response(response)
-
-    def send_2fa_code_sms(self, device_id: int) -> bool:
+    def send_2fa_code_sms(self, device_id: int) -> "Send2FACodeSMSResult":
         """Requests that a verification code is sent to the given device"""
+        from pyicloud_ipd.response_types import Send2FACodeSMSSuccess
 
         oauth_session = self.get_oauth_session()
         context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
@@ -935,20 +962,19 @@ class PyiCloudService:
             result = self.session.evaluate_response(response)
             match result:
                 case ResponseSuccess(resp):
-                    response = resp
-                case Response2SARequired(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
-                case ResponseAPIError(reason, code):
-                    raise PyiCloudAPIResponseException(reason, code)
-                case ResponseServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
+                    return Send2FACodeSMSSuccess(resp.ok)
+                case (
+                    Response2SARequired()
+                    | ResponseServiceNotActivated()
+                    | ResponseAPIError()
+                    | ResponseServiceUnavailable() as error
+                ):
+                    return error
 
-        return response.ok
-
-    def send_verification_code(self, device: Dict[str, Any]) -> bool:
+    def send_verification_code(self, device: Dict[str, Any]) -> "SendVerificationCodeResult":
         """Requests that a verification code is sent to the given device"""
+        from pyicloud_ipd.response_types import SendVerificationCodeSuccess
+
         data = json.dumps(device)
         request = self.session.post(
             f"{self.SETUP_ENDPOINT}/sendVerificationCode", params=self.params, data=data
@@ -956,19 +982,25 @@ class PyiCloudService:
         result = self.session.evaluate_response(request)
         match result:
             case ResponseSuccess(resp):
-                request = resp
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
-        return typing.cast(bool, request.json().get("success", False))
+                success = typing.cast(bool, resp.json().get("success", False))
+                return SendVerificationCodeSuccess(success)
+            case (
+                Response2SARequired()
+                | ResponseServiceNotActivated()
+                | ResponseAPIError()
+                | ResponseServiceUnavailable() as error
+            ):
+                return error
 
-    def validate_verification_code(self, device: Dict[str, Any], code: str) -> bool:
+    def validate_verification_code(
+        self, device: Dict[str, Any], code: str
+    ) -> "ValidateVerificationCodeResult":
         """Verifies a verification code received on a trusted device."""
+        from pyicloud_ipd.response_types import (
+            ValidateVerificationCodeFailed,
+            ValidateVerificationCodeSuccess,
+        )
+
         device.update({"verificationCode": code, "trustBrowser": True})
         data = json.dumps(device)
 
@@ -981,18 +1013,18 @@ class PyiCloudService:
         match result:
             case ResponseSuccess(_):
                 pass  # Success, continue
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
+            case (
+                Response2SARequired()
+                | ResponseServiceNotActivated()
+                | ResponseServiceUnavailable() as error
+            ):
+                return error
+            case ResponseAPIError(_, api_code):
                 # Check for wrong verification code
-                if str(code) == "-21669":
+                if str(api_code) == "-21669":
                     # Wrong verification code
-                    return False
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
+                    return ValidateVerificationCodeFailed()
+                return result
 
         # When validating a code through the 2SA endpoint
         # the /2sv/trust URL returns 404 and won't return a trust token
@@ -1001,22 +1033,21 @@ class PyiCloudService:
         match token_result:
             case AuthWithTokenSuccess(token_data):
                 self.data = token_data
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
-            case AuthRequires2SA(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case AuthDomainMismatch(domain_to_use):
-                msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
-                raise PyiCloudConnectionException(msg)
+                return ValidateVerificationCodeSuccess(not self.requires_2sa)
+            case ResponseServiceNotActivated() | ResponseAPIError() | ResponseServiceUnavailable():
+                return token_result
+            case AuthRequires2SA(_):
+                # Still requires 2SA - validation didn't fully succeed
+                return ValidateVerificationCodeSuccess(False)
+            case AuthDomainMismatch():
+                return token_result
 
-        return not self.requires_2sa
-
-    def validate_2fa_code_sms(self, device_id: int, code: str) -> bool:
+    def validate_2fa_code_sms(self, device_id: int, code: str) -> "Validate2FACodeSMSResult":
         """Verifies a verification code received via Apple's 2FA system through SMS."""
+        from pyicloud_ipd.response_types import (
+            Validate2FACodeSMSFailed,
+            Validate2FACodeSMSSuccess,
+        )
 
         oauth_session = self.get_oauth_session()
         context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
@@ -1046,22 +1077,33 @@ class PyiCloudService:
             result = self.session.evaluate_response(response)
             match result:
                 case ResponseSuccess(resp):
-                    response = resp
-                case Response2SARequired(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
-                case ResponseAPIError(reason, code):
-                    raise PyiCloudAPIResponseException(reason, code)
-                case ResponseServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
+                    if resp.ok:
+                        trust_result = self.trust_session()
+                        match trust_result:
+                            case TrustSessionSuccess(success):
+                                return Validate2FACodeSMSSuccess(success)
+                            case TrustSessionFailed():
+                                return Validate2FACodeSMSFailed()
+                            case _:
+                                # Propagate other errors
+                                return trust_result
+                    else:
+                        return Validate2FACodeSMSFailed()
+                case (
+                    Response2SARequired()
+                    | ResponseServiceNotActivated()
+                    | ResponseAPIError()
+                    | ResponseServiceUnavailable() as error
+                ):
+                    return error
 
-        if response.ok:
-            return self.trust_session()
-        return False
-
-    def validate_2fa_code(self, code: str) -> bool:
+    def validate_2fa_code(self, code: str) -> "Validate2FACodeResult":
         """Verifies a verification code received via Apple's 2FA system (HSA2)."""
+        from pyicloud_ipd.response_types import (
+            Validate2FACodeFailed,
+            Validate2FACodeSuccess,
+        )
+
         data = {"securityCode": {"code": code}}
 
         headers = self._get_auth_headers({"Accept": "application/json"})
@@ -1088,26 +1130,38 @@ class PyiCloudService:
             match result:
                 case ResponseSuccess(_):
                     pass  # Success, continue
-                case Response2SARequired(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
-                case ResponseAPIError(reason, code):
+                case (
+                    Response2SARequired()
+                    | ResponseServiceNotActivated()
+                    | ResponseServiceUnavailable() as error
+                ):
+                    return error
+                case ResponseAPIError(_, api_code):
                     # Check for wrong verification code
-                    if str(code) == "-21669":
+                    if str(api_code) == "-21669":
                         LOGGER.error("Code verification failed.")
-                        return False
-                    raise PyiCloudAPIResponseException(reason, code)
-                case ResponseServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
+                        return Validate2FACodeFailed()
+                    return result
 
         LOGGER.debug("Code verification successful.")
 
-        self.trust_session()
-        return not self.requires_2sa
+        trust_result = self.trust_session()
+        match trust_result:
+            case TrustSessionSuccess(_):
+                return Validate2FACodeSuccess(not self.requires_2sa)
+            case TrustSessionFailed():
+                return Validate2FACodeFailed()
+            case _:
+                # Propagate other errors
+                return trust_result
 
-    def trust_session(self) -> bool:
+    def trust_session(self) -> "TrustSessionResult":
         """Request session trust to avoid user log in going forward."""
+        from pyicloud_ipd.response_types import (
+            TrustSessionFailed,
+            TrustSessionSuccess,
+        )
+
         headers = self._get_auth_headers()
 
         if self.response_observer:
@@ -1131,62 +1185,70 @@ class PyiCloudService:
             match result:
                 case ResponseSuccess(_):
                     pass  # Success, continue
-                case Response2SARequired(account_name):
-                    raise PyiCloud2SARequiredException(account_name)
-                case ResponseServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
-                case ResponseAPIError(reason, code):
+                case (
+                    Response2SARequired()
+                    | ResponseServiceNotActivated()
+                    | ResponseServiceUnavailable() as error
+                ):
+                    return error
+                case ResponseAPIError(_, _):
                     LOGGER.error("Session trust failed.")
-                    return False
-                case ResponseServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
+                    return TrustSessionFailed()
 
         token_result = self._authenticate_with_token()
         match token_result:
             case AuthWithTokenSuccess(data):
                 self.data = data
-                return True
+                return TrustSessionSuccess(True)
             case (
                 ResponseServiceNotActivated(_, _)
                 | ResponseAPIError(_, _)
                 | ResponseServiceUnavailable(_)
             ):
                 LOGGER.error("Session trust failed.")
-                return False
+                return TrustSessionFailed()
             case AuthRequires2SA(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case AuthDomainMismatch(domain_to_use):
-                msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
-                raise PyiCloudConnectionException(msg)
+                # Convert to Response2SARequired for consistency
+                return Response2SARequired(account_name)
+            case AuthDomainMismatch():
+                return token_result
 
-    def _get_webservice_url(self, ws_key: str) -> str:
-        """Get webservice URL, raise an exception if not exists."""
+    def _get_webservice_url(self, ws_key: str) -> "WebserviceURLResult":
+        """Get webservice URL, returns ADT result."""
+        from pyicloud_ipd.response_types import WebserviceNotAvailable, WebserviceURLSuccess
+
         if self._webservices.get(ws_key) is None:
-            raise PyiCloudServiceNotActivatedException("Webservice not available", ws_key)
-        return typing.cast(str, self._webservices[ws_key]["url"])
+            return WebserviceNotAvailable(ws_key)
+        return WebserviceURLSuccess(typing.cast(str, self._webservices[ws_key]["url"]))
 
     def get_photos_service(self) -> "PhotosServiceAccessResult":
         """Get Photos service, returns ADT result."""
         if not self._photos:
-            service_root = self._get_webservice_url("ckdatabasews")
-
             # Import here to avoid circular import
             from pyicloud_ipd.response_types import (
                 PhotosServiceAccessSuccess,
                 PhotosServiceInitSuccess,
+                ResponseServiceNotActivated,
+                WebserviceNotAvailable,
+                WebserviceURLSuccess,
             )
 
-            # Use the class method to check and create
-            result = PhotosService.check_and_create_photos_service(
-                service_root, self.session, self.params
-            )
+            url_result = self._get_webservice_url("ckdatabasews")
+            match url_result:
+                case WebserviceURLSuccess(service_root):
+                    # Use the class method to check and create
+                    result = PhotosService.check_and_create_photos_service(
+                        service_root, self.session, self.params
+                    )
 
-            match result:
-                case PhotosServiceInitSuccess(service):
-                    self._photos = service
-                case _:
-                    # Propagate error ADTs
-                    return result
+                    match result:
+                        case PhotosServiceInitSuccess(service):
+                            self._photos = service
+                        case _:
+                            # Propagate error ADTs
+                            return result
+                case WebserviceNotAvailable(service_key):
+                    return ResponseServiceNotActivated("Webservice not available", service_key)
 
         # Import here to avoid circular import
         from pyicloud_ipd.response_types import PhotosServiceAccessSuccess
