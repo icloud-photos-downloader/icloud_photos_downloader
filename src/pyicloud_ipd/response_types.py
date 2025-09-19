@@ -768,3 +768,24 @@ class WebserviceNotAvailable:
 
 # Union type for get webservice URL results
 WebserviceURLResult = WebserviceURLSuccess | WebserviceNotAvailable
+
+
+# Core single run error result - union of all possible error ADTs
+CoreSingleRunErrorResult = (
+    # Authentication errors
+    AuthenticatorConnectionError
+    | AuthPasswordNotProvided
+    | AuthInvalidCredentials
+    | AuthServiceNotActivated
+    | AuthServiceUnavailable
+    | AuthAPIError
+    | AuthUnexpectedError
+    | AuthenticatorMFAError
+    | AuthenticatorTwoSAExit
+    # Service errors
+    | PhotoLibraryNotFinishedIndexing
+    | Response2SARequired
+    | ResponseServiceNotActivated
+    | ResponseAPIError
+    | ResponseServiceUnavailable
+)
