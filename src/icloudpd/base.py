@@ -59,7 +59,6 @@ from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionErrorException,
-    PyiCloudConnectionException,
     PyiCloudFailedLoginException,
     PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
@@ -1006,7 +1005,7 @@ def core_single_run(
                 case AuthenticatorConnectionError(error):
                     raise error
                 case AuthPasswordNotProvided():
-                    raise PyiCloudConnectionException("Password not provided")
+                    return auth_result  # Return ADT instead of raising exception
                 case AuthInvalidCredentials():
                     raise PyiCloudFailedLoginException("Invalid email/password combination.")
                 case AuthServiceNotActivated(reason, code):
