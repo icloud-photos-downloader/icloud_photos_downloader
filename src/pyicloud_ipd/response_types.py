@@ -117,6 +117,51 @@ class AuthenticationFailed:
 
 
 @dataclass(frozen=True)
+class AuthPasswordNotProvided:
+    """Authentication failed - password not provided."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class AuthInvalidCredentials:
+    """Authentication failed - invalid email/password combination."""
+
+    pass
+
+
+@dataclass(frozen=True)
+class AuthServiceNotActivated:
+    """Authentication failed - service not activated."""
+
+    reason: str
+    code: str
+
+
+@dataclass(frozen=True)
+class AuthServiceUnavailable:
+    """Authentication failed - service unavailable (503)."""
+
+    reason: str
+
+
+@dataclass(frozen=True)
+class AuthAPIError:
+    """Authentication failed - API error."""
+
+    reason: str
+    code: str
+
+
+@dataclass(frozen=True)
+class AuthUnexpectedError:
+    """Authentication failed - unexpected error."""
+
+    error_type: str
+    error_message: str
+
+
+@dataclass(frozen=True)
 class AuthRequires2SAWithService:
     """Authentication requires 2SA with service instance."""
 
@@ -160,13 +205,27 @@ AuthenticateWithTokenResult = (
 # Service creation result - includes service in success/2SA cases
 ServiceCreationResult = (
     AuthenticationSuccessWithService
-    | AuthenticationFailed
+    | AuthenticationFailed  # Keep for backward compatibility, will be deprecated
+    | AuthPasswordNotProvided
+    | AuthInvalidCredentials
+    | AuthServiceNotActivated
+    | AuthServiceUnavailable
+    | AuthAPIError
+    | AuthUnexpectedError
     | AuthRequires2SAWithService
     | AuthDomainMismatchError
 )
 # Keep old AuthenticationResult for backward compatibility - used internally
 AuthenticationResult = (
-    AuthenticationSuccess | AuthenticationFailed | AuthRequires2SA | AuthDomainMismatch
+    AuthenticationSuccess
+    | AuthenticationFailed
+    | AuthRequires2SA
+    | AuthDomainMismatch
+    | AuthPasswordNotProvided
+    | AuthInvalidCredentials
+    | AuthServiceNotActivated
+    | AuthServiceUnavailable
+    | AuthAPIError
 )
 
 
@@ -224,6 +283,12 @@ AuthenticatorResult = (
     | AuthenticatorConnectionError
     | AuthenticatorMFAError
     | AuthenticatorTwoSAExit
+    | AuthPasswordNotProvided
+    | AuthInvalidCredentials
+    | AuthServiceNotActivated
+    | AuthServiceUnavailable
+    | AuthAPIError
+    | AuthUnexpectedError
 )
 
 

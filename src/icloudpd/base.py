@@ -59,6 +59,7 @@ from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionErrorException,
+    PyiCloudConnectionException,
     PyiCloudFailedLoginException,
     PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
@@ -71,10 +72,16 @@ from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.response_types import (
     AlbumLengthSuccess,
     AlbumsFetchSuccess,
+    AuthAPIError,
     AuthenticatorConnectionError,
     AuthenticatorMFAError,
     AuthenticatorSuccess,
     AuthenticatorTwoSAExit,
+    AuthInvalidCredentials,
+    AuthPasswordNotProvided,
+    AuthServiceNotActivated,
+    AuthServiceUnavailable,
+    AuthUnexpectedError,
     AutodeleteSuccess,
     DeletePhotoResult,
     DeletePhotoSuccess,
@@ -985,6 +992,22 @@ def core_single_run(
                     icloud = service
                 case AuthenticatorConnectionError(error):
                     raise error
+                case AuthPasswordNotProvided():
+                    raise PyiCloudConnectionException("Password not provided")
+                case AuthInvalidCredentials():
+                    raise PyiCloudFailedLoginException("Invalid email/password combination.")
+                case AuthServiceNotActivated(reason, code):
+                    raise PyiCloudServiceNotActivatedException(reason, code)
+                case AuthServiceUnavailable(reason):
+                    raise PyiCloudServiceUnavailableException(reason)
+                case AuthAPIError(reason, code):
+                    raise PyiCloudAPIResponseException(reason, code)
+                case AuthUnexpectedError(error_type, error_message):
+                    # Handle specific known error types
+                    if error_type == "PyiCloudConnectionErrorException":
+                        raise PyiCloudConnectionErrorException(error_message)
+                    else:
+                        raise Exception(f"{error_type}: {error_message}")
                 case AuthenticatorMFAError(error_msg):
                     raise PyiCloudFailedMFAException(error_msg)
                 case AuthenticatorTwoSAExit():

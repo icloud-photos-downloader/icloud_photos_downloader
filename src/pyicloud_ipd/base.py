@@ -48,14 +48,9 @@ from foundation.json import (
     re_compile_ignorecase,
 )
 from foundation.string import obfuscate
-from pyicloud_ipd.exceptions import (
-    PyiCloudAPIResponseException,
-    PyiCloudConnectionException,
-    PyiCloudFailedLoginException,
-    PyiCloudServiceNotActivatedException,
-    PyiCloudServiceUnavailableException,
-)
+from pyicloud_ipd.exceptions import PyiCloudConnectionErrorException
 from pyicloud_ipd.response_types import (
+    AuthAPIError,
     AuthDomainMismatch,
     AuthDomainMismatchError,
     AuthenticateSRPResult,
@@ -64,10 +59,15 @@ from pyicloud_ipd.response_types import (
     AuthenticationResult,
     AuthenticationSuccess,
     AuthenticationSuccessWithService,
+    AuthInvalidCredentials,
+    AuthPasswordNotProvided,
     AuthRequires2SA,
     AuthRequires2SAWithService,
+    AuthServiceNotActivated,
+    AuthServiceUnavailable,
     AuthSRPSuccess,
     AuthTokenValid,
+    AuthUnexpectedError,
     AuthWithTokenSuccess,
     Response2SARequired,
     ResponseAPIError,
@@ -157,11 +157,27 @@ class PyiCloudService:
                 case AuthRequires2SA(account_name):
                     return AuthRequires2SAWithService(service, account_name)
                 case AuthenticationFailed(error):
-                    return AuthenticationFailed(error)
+                    return AuthenticationFailed(error)  # Keep for backward compatibility
                 case AuthDomainMismatch(domain_to_use):
                     return AuthDomainMismatchError(domain_to_use)
+                case AuthPasswordNotProvided():
+                    return AuthPasswordNotProvided()
+                case AuthInvalidCredentials():
+                    return AuthInvalidCredentials()
+                case AuthServiceNotActivated(reason, code):
+                    return AuthServiceNotActivated(reason, code)
+                case AuthServiceUnavailable(reason):
+                    return AuthServiceUnavailable(reason)
+                case AuthAPIError(reason, code):
+                    return AuthAPIError(reason, code)
+                case _:
+                    # Unexpected result
+                    return AuthUnexpectedError("Unknown", f"Unexpected auth result: {type(result)}")
+        except PyiCloudConnectionErrorException as e:
+            # Connection errors are common and expected
+            return AuthUnexpectedError("PyiCloudConnectionErrorException", str(e))
         except Exception as e:
-            return AuthenticationFailed(e)
+            return AuthUnexpectedError(type(e).__name__, str(e))
 
     def __init__(
         self,
@@ -392,7 +408,7 @@ class PyiCloudService:
                 login_successful = True
             case ResponseServiceUnavailable(reason):
                 # If it's a 503 error, we should return it immediately
-                return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
+                return AuthServiceUnavailable(reason)
             case ResponseServiceNotActivated(_, _) | ResponseAPIError(_, _):
                 LOGGER.debug("Invalid authentication token, will log in from scratch.")
             case AuthRequires2SA(account_name):
@@ -402,7 +418,7 @@ class PyiCloudService:
             password = self.password_provider()
             if not password:
                 LOGGER.debug("Password Provider did not give any data")
-                return AuthenticationFailed(PyiCloudConnectionException("Password not provided"))
+                return AuthPasswordNotProvided()
             # set logging filter
             self.password_filter = PyiCloudPasswordFilter(password)
             LOGGER.addFilter(self.password_filter)
@@ -413,19 +429,14 @@ class PyiCloudService:
                 case AuthSRPSuccess():
                     pass
                 case ResponseServiceNotActivated(reason, code):
-                    return AuthenticationFailed(PyiCloudServiceNotActivatedException(reason, code))
+                    return AuthServiceNotActivated(reason, code)
                 case ResponseAPIError(reason, code):
-                    if code == "401":
-                        # Invalid email/password combination
-                        return AuthenticationFailed(
-                            PyiCloudFailedLoginException(
-                                "Invalid email/password combination.",
-                                PyiCloudAPIResponseException(reason, code),
-                            )
-                        )
-                    return AuthenticationFailed(PyiCloudAPIResponseException(reason, code))
+                    if code == "401" or code == "421":
+                        # Invalid email/password combination or authentication required
+                        return AuthInvalidCredentials()
+                    return AuthAPIError(reason, code)
                 case ResponseServiceUnavailable(reason):
-                    return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
+                    return AuthServiceUnavailable(reason)
                 case AuthRequires2SA(account_name):
                     return AuthRequires2SA(account_name)
             # try:
@@ -442,24 +453,23 @@ class PyiCloudService:
             match token_result:
                 case AuthWithTokenSuccess(data):
                     self.data = data
+                    # Continue to set up webservices
                 case ResponseServiceNotActivated(reason, code):
-                    return AuthenticationFailed(PyiCloudServiceNotActivatedException(reason, code))
+                    return AuthServiceNotActivated(reason, code)
                 case ResponseAPIError(reason, code):
-                    if code == "401":
-                        # Invalid email/password combination
-                        return AuthenticationFailed(
-                            PyiCloudFailedLoginException(
-                                "Invalid email/password combination.",
-                                PyiCloudAPIResponseException(reason, code),
-                            )
-                        )
-                    return AuthenticationFailed(PyiCloudAPIResponseException(reason, code))
+                    if code == "401" or code == "421":
+                        # Invalid email/password combination or authentication required
+                        return AuthInvalidCredentials()
+                    return AuthAPIError(reason, code)
                 case ResponseServiceUnavailable(reason):
-                    return AuthenticationFailed(PyiCloudServiceUnavailableException(reason))
+                    return AuthServiceUnavailable(reason)
                 case AuthRequires2SA(account_name):
                     return AuthRequires2SA(account_name)
                 case AuthDomainMismatch(domain_to_use):
                     return AuthDomainMismatch(domain_to_use)
+                case _:
+                    # Unexpected result type
+                    return AuthAPIError("Unknown token result", "unknown")
 
         # Is this needed?
         self.params.update({"dsid": self.data["dsInfo"]["dsid"]})

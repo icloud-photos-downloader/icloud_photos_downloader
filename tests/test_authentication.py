@@ -9,7 +9,6 @@ from requests import Timeout
 from requests.exceptions import ConnectionError
 from vcr import VCR
 
-import pyicloud_ipd
 from foundation.core import constant
 from icloudpd.authentication import authenticator
 from icloudpd.base import dummy_password_writter
@@ -38,7 +37,7 @@ class AuthenticationTestCase(TestCase):
             recreate_path(dir)
 
         with vcr.use_cassette(os.path.join(self.vcr_path, "failed_auth.yml")):  # noqa: SIM117
-            from pyicloud_ipd.response_types import AuthenticatorConnectionError
+            from pyicloud_ipd.response_types import AuthInvalidCredentials
 
             result = authenticator(
                 setup_logger(),
@@ -52,11 +51,7 @@ class AuthenticationTestCase(TestCase):
                 cookie_dir,
                 "EC5646DE-9423-11E8-BF21-14109FE0B321",
             )
-            assert isinstance(result, AuthenticatorConnectionError)
-            self.assertIsInstance(
-                result.error, pyicloud_ipd.exceptions.PyiCloudFailedLoginException
-            )
-            self.assertTrue("Invalid email/password combination." in str(result.error))
+            assert isinstance(result, AuthInvalidCredentials)
 
     @pytest.mark.skip(reason="No longer support fallback to raw")
     def test_fallback_raw_password(self) -> None:
