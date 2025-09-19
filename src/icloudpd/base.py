@@ -1024,7 +1024,7 @@ def core_single_run(
                 case AuthenticatorMFAError(error_msg):
                     raise PyiCloudFailedMFAException(error_msg)
                 case AuthenticatorTwoSAExit():
-                    sys.exit(1)
+                    return auth_result  # Return ADT instead of sys.exit
 
             # dump captured responses for debugging
             # dump_responses(logger.debug, captured_responses)
