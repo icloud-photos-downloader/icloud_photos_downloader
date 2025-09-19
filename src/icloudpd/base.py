@@ -83,6 +83,7 @@ from pyicloud_ipd.response_types import (
     AuthServiceUnavailable,
     AuthUnexpectedError,
     AutodeleteSuccess,
+    CoreSingleRunErrorResult,
     DeletePhotoResult,
     DeletePhotoSuccess,
     DownloadMediaResult,
@@ -480,10 +481,22 @@ def _process_all_users_once(
                 lp_filename_generator,
             )
 
+            # Handle the result using pattern matching
+            error_code: int = 0
+            match result:
+                case int():
+                    # Direct integer result (success or error code)
+                    error_code = result
+                case _:
+                    # ADT error result - map to error code
+                    # For now, all ADT errors map to exit code 1
+                    error_code = 1
+                    # In future phases, we can handle specific ADT cases here
+
             # If any user config fails and we're not in watch mode, return the error code
-            if result != 0:
+            if error_code != 0:
                 if not global_config.watch_with_interval:
-                    return result
+                    return error_code
                 else:
                     # In watch mode, log error and continue with next user
                     logger.error(
@@ -955,7 +968,7 @@ def core_single_run(
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], DownloadMediaResult],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
-) -> int:
+) -> int | CoreSingleRunErrorResult:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
     skip_bar = not os.environ.get("FORCE_TQDM") and (
