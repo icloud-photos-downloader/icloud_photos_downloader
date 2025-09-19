@@ -1007,7 +1007,7 @@ def core_single_run(
                 case AuthPasswordNotProvided():
                     return auth_result  # Return ADT instead of raising exception
                 case AuthInvalidCredentials():
-                    raise PyiCloudFailedLoginException("Invalid email/password combination.")
+                    return auth_result  # Return ADT instead of raising exception
                 case AuthServiceNotActivated(reason, code):
                     raise PyiCloudServiceNotActivatedException(reason, code)
                 case AuthServiceUnavailable(reason):
