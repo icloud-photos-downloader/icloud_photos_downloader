@@ -49,7 +49,6 @@ from foundation.json import (
 )
 from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import (
-    PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionException,
     PyiCloudFailedLoginException,
@@ -863,24 +862,6 @@ class PyiCloudService:
                 | ResponseServiceUnavailable() as error
             ):
                 return error
-
-    @property
-    def trusted_devices(self) -> Sequence[Dict[str, Any]]:
-        """Returns devices trusted for two-step authentication (legacy version)."""
-        result = self.get_trusted_devices()
-        from pyicloud_ipd.response_types import TrustedDevicesSuccess
-
-        match result:
-            case TrustedDevicesSuccess(devices):
-                return devices
-            case Response2SARequired(account_name):
-                raise PyiCloud2SARequiredException(account_name)
-            case ResponseServiceNotActivated(reason, code):
-                raise PyiCloudServiceNotActivatedException(reason, code)
-            case ResponseAPIError(reason, code):
-                raise PyiCloudAPIResponseException(reason, code)
-            case ResponseServiceUnavailable(reason):
-                raise PyiCloudServiceUnavailableException(reason)
 
     def send_request(self, request: PreparedRequest) -> Response:
         return self.session.send(request)

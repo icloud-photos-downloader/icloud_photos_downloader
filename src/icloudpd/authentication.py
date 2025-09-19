@@ -158,7 +158,26 @@ def authenticator(
 
 def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> TwoFactorAuthResult:
     """Request two-step authentication. Prompts for SMS or device"""
-    devices = icloud.trusted_devices
+    from pyicloud_ipd.response_types import (
+        Response2SARequired,
+        ResponseAPIError,
+        ResponseServiceNotActivated,
+        ResponseServiceUnavailable,
+        TrustedDevicesSuccess,
+    )
+
+    devices_result = icloud.get_trusted_devices()
+    match devices_result:
+        case TrustedDevicesSuccess(devices):
+            pass  # Continue with devices
+        case (
+            Response2SARequired(_)
+            | ResponseServiceNotActivated(_, _)
+            | ResponseAPIError(_, _)
+            | ResponseServiceUnavailable(_)
+        ):
+            return TwoFactorAuthFailed("Failed to get trusted devices")
+
     devices_count = len(devices)
     device_index: int = 0
     if devices_count > 0:
