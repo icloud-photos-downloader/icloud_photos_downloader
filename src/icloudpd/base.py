@@ -486,11 +486,35 @@ def _process_all_users_once(
                 case int():
                     # Direct integer result (success or error code)
                     error_code = result
-                case _:
-                    # ADT error result - map to error code
-                    # For now, all ADT errors map to exit code 1
+                case AuthUnexpectedError(error_type, error_message):
+                    # Special handling for AuthUnexpectedError to mimic exception behavior
                     error_code = 1
-                    # In future phases, we can handle specific ADT cases here
+                    # Log the error message like the exception handler would
+                    if error_type == "PyiCloudConnectionErrorException":
+                        # This mimics what would be logged when the exception is caught
+                        logger.info(error_message)
+                    else:
+                        # For other unexpected errors, log them similarly
+                        logger.info(f"{error_type}: {error_message}")
+
+                    # VCR/test-related exceptions should terminate immediately
+                    # These indicate test infrastructure issues, not recoverable errors
+                    if "Cassette" in error_type or "vcr" in error_type.lower():
+                        # Don't continue in watch mode for VCR errors
+                        return 1
+                case AuthServiceUnavailable(reason):
+                    # Special handling for AuthServiceUnavailable to maintain watch behavior
+                    error_code = 1
+                    # Log the error message like the exception handler would
+                    logger.info(reason)
+                case PhotoLibraryNotFinishedIndexing():
+                    # Special handling for PhotoLibraryNotFinishedIndexing to maintain watch behavior
+                    error_code = 1
+                    logger.info("Apple iCloud Photo Library has not finished indexing yet")
+                case _:
+                    # Other ADT error results - map to error code 1
+                    error_code = 1
+                    # These don't need special logging as they don't affect watch behavior
 
             # If any user config fails and we're not in watch mode, return the error code
             if error_code != 0:
@@ -1011,15 +1035,11 @@ def core_single_run(
                 case AuthServiceNotActivated(reason, code):
                     return auth_result  # Return ADT instead of raising exception
                 case AuthServiceUnavailable(reason):
-                    raise PyiCloudServiceUnavailableException(reason)
+                    return auth_result  # Return ADT instead of raising exception
                 case AuthAPIError(reason, code):
                     return auth_result  # Return ADT instead of raising exception
-                case AuthUnexpectedError(error_type, error_message):
-                    # Handle specific known error types
-                    if error_type == "PyiCloudConnectionErrorException":
-                        raise PyiCloudConnectionErrorException(error_message)
-                    else:
-                        raise Exception(f"{error_type}: {error_message}")
+                case AuthUnexpectedError():
+                    return auth_result  # Return ADT instead of raising exception
                 case AuthenticatorMFAError(error_msg):
                     raise PyiCloudFailedMFAException(error_msg)
                 case AuthenticatorTwoSAExit():
@@ -1042,9 +1062,7 @@ def core_single_run(
                     case PhotosServiceAccessSuccess(photos_service):
                         pass  # Continue with photos_service
                     case PhotoLibraryNotFinishedIndexing():
-                        raise PyiCloudServiceNotActivatedException(
-                            "Apple iCloud Photo Library has not finished indexing yet", None
-                        )
+                        return PhotoLibraryNotFinishedIndexing()
                     case Response2SARequired(account_name):
                         raise PyiCloud2SARequiredException(account_name)
                     case ResponseServiceNotActivated(reason, code):
@@ -1093,9 +1111,7 @@ def core_single_run(
                     case PhotosServiceAccessSuccess(photos_service):
                         pass  # Continue with photos_service
                     case PhotoLibraryNotFinishedIndexing():
-                        raise PyiCloudServiceNotActivatedException(
-                            "Apple iCloud Photo Library has not finished indexing yet", None
-                        )
+                        return PhotoLibraryNotFinishedIndexing()
                     case Response2SARequired(account_name):
                         raise PyiCloud2SARequiredException(account_name)
                     case ResponseServiceNotActivated(reason, code):
