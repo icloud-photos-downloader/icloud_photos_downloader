@@ -154,10 +154,9 @@ class AuthAPIError:
 
 
 @dataclass(frozen=True)
-class AuthUnexpectedError:
-    """Authentication failed - unexpected error."""
+class AuthConnectionError:
+    """Authentication failed - connection error."""
 
-    error_type: str
     error_message: str
 
 
@@ -211,7 +210,7 @@ ServiceCreationResult = (
     | AuthServiceNotActivated
     | AuthServiceUnavailable
     | AuthAPIError
-    | AuthUnexpectedError
+    | AuthConnectionError
     | AuthRequires2SAWithService
     | AuthDomainMismatchError
 )
@@ -288,7 +287,7 @@ AuthenticatorResult = (
     | AuthServiceNotActivated
     | AuthServiceUnavailable
     | AuthAPIError
-    | AuthUnexpectedError
+    | AuthConnectionError
 )
 
 
@@ -779,7 +778,7 @@ CoreSingleRunErrorResult = (
     | AuthServiceNotActivated
     | AuthServiceUnavailable
     | AuthAPIError
-    | AuthUnexpectedError
+    | AuthConnectionError
     | AuthenticatorMFAError
     | AuthenticatorTwoSAExit
     # Service errors
