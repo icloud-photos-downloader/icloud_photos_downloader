@@ -72,6 +72,7 @@ from pyicloud_ipd.response_types import (
     AlbumLengthSuccess,
     AlbumsFetchSuccess,
     AuthAPIError,
+    AuthConnectionError,
     AuthenticatorConnectionError,
     AuthenticatorMFAError,
     AuthenticatorSuccess,
@@ -80,7 +81,6 @@ from pyicloud_ipd.response_types import (
     AuthPasswordNotProvided,
     AuthServiceNotActivated,
     AuthServiceUnavailable,
-    AuthUnexpectedError,
     AutodeleteSuccess,
     CoreSingleRunErrorResult,
     DeletePhotoResult,
@@ -486,22 +486,10 @@ def _process_all_users_once(
                 case int():
                     # Direct integer result (success or error code)
                     error_code = result
-                case AuthUnexpectedError(error_type, error_message):
-                    # Special handling for AuthUnexpectedError to mimic exception behavior
+                case AuthConnectionError(error_message):
+                    # Connection errors are expected and should be logged
                     error_code = 1
-                    # Log the error message like the exception handler would
-                    if error_type == "PyiCloudConnectionErrorException":
-                        # This mimics what would be logged when the exception is caught
-                        logger.info(error_message)
-                    else:
-                        # For other unexpected errors, log them similarly
-                        logger.info(f"{error_type}: {error_message}")
-
-                    # VCR/test-related exceptions should terminate immediately
-                    # These indicate test infrastructure issues, not recoverable errors
-                    if "Cassette" in error_type or "vcr" in error_type.lower():
-                        # Don't continue in watch mode for VCR errors
-                        return 1
+                    logger.info(error_message)
                 case AuthServiceUnavailable(reason):
                     # Special handling for AuthServiceUnavailable to maintain watch behavior
                     error_code = 1
@@ -1038,8 +1026,8 @@ def core_single_run(
                     return auth_result  # Return ADT instead of raising exception
                 case AuthAPIError(reason, code):
                     return auth_result  # Return ADT instead of raising exception
-                case AuthUnexpectedError():
-                    return auth_result  # Return ADT instead of raising exception
+                case AuthConnectionError():
+                    return auth_result  # Return ADT for connection errors
                 case AuthenticatorMFAError(error_msg):
                     raise PyiCloudFailedMFAException(error_msg)
                 case AuthenticatorTwoSAExit():

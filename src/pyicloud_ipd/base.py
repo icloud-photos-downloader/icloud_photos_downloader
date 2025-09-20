@@ -51,6 +51,7 @@ from foundation.string import obfuscate
 from pyicloud_ipd.exceptions import PyiCloudConnectionErrorException
 from pyicloud_ipd.response_types import (
     AuthAPIError,
+    AuthConnectionError,
     AuthDomainMismatch,
     AuthDomainMismatchError,
     AuthenticateSRPResult,
@@ -67,7 +68,6 @@ from pyicloud_ipd.response_types import (
     AuthServiceUnavailable,
     AuthSRPSuccess,
     AuthTokenValid,
-    AuthUnexpectedError,
     AuthWithTokenSuccess,
     Response2SARequired,
     ResponseAPIError,
@@ -171,13 +171,13 @@ class PyiCloudService:
                 case AuthAPIError(reason, code):
                     return AuthAPIError(reason, code)
                 case _:
-                    # Unexpected result
-                    return AuthUnexpectedError("Unknown", f"Unexpected auth result: {type(result)}")
+                    # Unexpected result - this shouldn't happen, let it crash
+                    raise ValueError(f"Unexpected auth result: {type(result)}")
         except PyiCloudConnectionErrorException as e:
-            # Connection errors are common and expected
-            return AuthUnexpectedError("PyiCloudConnectionErrorException", str(e))
-        except Exception as e:
-            return AuthUnexpectedError(type(e).__name__, str(e))
+            # Connection errors are common and expected - handle with ADT
+            return AuthConnectionError(str(e))
+        # Let all other exceptions propagate and crash the program
+        # This includes VCR/test exceptions and any truly unexpected errors
 
     def __init__(
         self,

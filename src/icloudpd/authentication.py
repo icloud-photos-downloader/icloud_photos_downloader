@@ -13,6 +13,7 @@ from pyicloud_ipd.exceptions import (
 )
 from pyicloud_ipd.response_types import (
     AuthAPIError,
+    AuthConnectionError,
     AuthDomainMismatchError,
     AuthenticationFailed,
     AuthenticationSuccessWithService,
@@ -26,7 +27,6 @@ from pyicloud_ipd.response_types import (
     AuthRequires2SAWithService,
     AuthServiceNotActivated,
     AuthServiceUnavailable,
-    AuthUnexpectedError,
     TwoFactorAuthFailed,
     TwoFactorAuthResult,
     TwoFactorAuthSuccess,
@@ -130,8 +130,8 @@ def authenticator(
             return AuthServiceUnavailable(reason)
         case AuthAPIError(reason, code):
             return AuthAPIError(reason, code)
-        case AuthUnexpectedError(error_type, error_message):
-            return AuthUnexpectedError(error_type, error_message)
+        case AuthConnectionError(error_message):
+            return AuthConnectionError(error_message)
         case AuthRequires2SAWithService(service, _):
             # 2SA is handled below, service is available
             icloud = service
@@ -139,10 +139,8 @@ def authenticator(
             msg = f"Apple insists on using {domain_to_use} for your request. Please use --domain parameter"
             return AuthenticatorConnectionError(PyiCloudConnectionException(msg))
         case _:
-            # This should never happen, but ensures icloud is always bound
-            return AuthUnexpectedError(
-                "Unknown", f"Unexpected auth result type: {type(auth_result)}"
-            )
+            # This should never happen - let it crash with a clear error
+            raise ValueError(f"Unexpected auth result type: {type(auth_result)}")
 
     if valid_password:
         # save valid password to all providers
