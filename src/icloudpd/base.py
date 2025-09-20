@@ -59,8 +59,6 @@ from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionErrorException,
-    PyiCloudFailedLoginException,
-    PyiCloudFailedMFAException,
     PyiCloudServiceNotActivatedException,
     PyiCloudServiceUnavailableException,
 )
@@ -993,52 +991,57 @@ def core_single_run(
         def append_response(captured: List[Mapping[str, Any]], response: Mapping[str, Any]) -> None:
             captured.append(response)
 
+        # Authentication - returns ADT results instead of throwing exceptions
+        auth_result = authenticator(
+            logger,
+            global_config.domain,
+            {provider.value: functions for provider, functions in password_providers_dict.items()},
+            global_config.mfa_provider,
+            status_exchange,
+            user_config.username,
+            notificator,
+            partial(append_response, captured_responses),
+            user_config.cookie_directory,
+            os.environ.get("CLIENT_ID"),
+        )
+
+        # Handle authentication result
+        match auth_result:
+            case AuthenticatorSuccess(service):
+                icloud = service
+            case AuthenticatorConnectionError(error):
+                raise error
+            case AuthPasswordNotProvided():
+                return auth_result  # Return ADT instead of raising exception
+            case AuthInvalidCredentials():
+                return auth_result  # Return ADT instead of raising exception
+            case AuthServiceNotActivated(reason, code):
+                return auth_result  # Return ADT instead of raising exception
+            case AuthServiceUnavailable(reason):
+                return auth_result  # Return ADT instead of raising exception
+            case AuthAPIError(reason, code):
+                return auth_result  # Return ADT instead of raising exception
+            case AuthConnectionError():
+                return auth_result  # Return ADT for connection errors
+            case AuthenticatorMFAError(error_msg):
+                # Handle MFA error - in webui mode, update status and retry
+                logger.info(error_msg)
+                dump_responses(logger.debug, captured_responses)
+                if global_config.mfa_provider == MFAProvider.WEBUI:
+                    update_auth_error_in_webui(status_exchange, error_msg)
+                    continue  # retry loop
+                else:
+                    return 1
+            case AuthenticatorTwoSAExit():
+                return auth_result  # Return ADT instead of sys.exit
+
+        # dump captured responses for debugging
+        # dump_responses(logger.debug, captured_responses)
+
+        # turn off response capture
+        icloud.response_observer = None
+
         try:
-            auth_result = authenticator(
-                logger,
-                global_config.domain,
-                {
-                    provider.value: functions
-                    for provider, functions in password_providers_dict.items()
-                },
-                global_config.mfa_provider,
-                status_exchange,
-                user_config.username,
-                notificator,
-                partial(append_response, captured_responses),
-                user_config.cookie_directory,
-                os.environ.get("CLIENT_ID"),
-            )
-
-            # Handle authentication result
-            match auth_result:
-                case AuthenticatorSuccess(service):
-                    icloud = service
-                case AuthenticatorConnectionError(error):
-                    raise error
-                case AuthPasswordNotProvided():
-                    return auth_result  # Return ADT instead of raising exception
-                case AuthInvalidCredentials():
-                    return auth_result  # Return ADT instead of raising exception
-                case AuthServiceNotActivated(reason, code):
-                    return auth_result  # Return ADT instead of raising exception
-                case AuthServiceUnavailable(reason):
-                    return auth_result  # Return ADT instead of raising exception
-                case AuthAPIError(reason, code):
-                    return auth_result  # Return ADT instead of raising exception
-                case AuthConnectionError():
-                    return auth_result  # Return ADT for connection errors
-                case AuthenticatorMFAError(error_msg):
-                    raise PyiCloudFailedMFAException(error_msg)
-                case AuthenticatorTwoSAExit():
-                    return auth_result  # Return ADT instead of sys.exit
-
-            # dump captured responses for debugging
-            # dump_responses(logger.debug, captured_responses)
-
-            # turn off response capture
-            icloud.response_observer = None
-
             if user_config.auth_only:
                 logger.info("Authentication completed successfully")
                 return 0
@@ -1495,22 +1498,6 @@ def core_single_run(
                                 raise PyiCloudServiceUnavailableException(reason)
                     else:
                         pass
-        except PyiCloudFailedLoginException as error:
-            logger.info(error)
-            dump_responses(logger.debug, captured_responses)
-            if PasswordProvider.WEBUI in global_config.password_providers:
-                update_auth_error_in_webui(status_exchange, str(error))
-                continue
-            else:
-                return 1
-        except PyiCloudFailedMFAException as error:
-            logger.info(str(error))
-            dump_responses(logger.debug, captured_responses)
-            if global_config.mfa_provider == MFAProvider.WEBUI:
-                update_auth_error_in_webui(status_exchange, str(error))
-                continue
-            else:
-                return 1
         except (
             PyiCloudServiceNotActivatedException,
             PyiCloudServiceUnavailableException,
