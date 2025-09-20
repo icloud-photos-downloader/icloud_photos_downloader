@@ -1009,7 +1009,7 @@ def core_single_run(
                 case AuthInvalidCredentials():
                     return auth_result  # Return ADT instead of raising exception
                 case AuthServiceNotActivated(reason, code):
-                    raise PyiCloudServiceNotActivatedException(reason, code)
+                    return auth_result  # Return ADT instead of raising exception
                 case AuthServiceUnavailable(reason):
                     raise PyiCloudServiceUnavailableException(reason)
                 case AuthAPIError(reason, code):
