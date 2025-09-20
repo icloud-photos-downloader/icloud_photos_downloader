@@ -1013,7 +1013,7 @@ def core_single_run(
                 case AuthServiceUnavailable(reason):
                     raise PyiCloudServiceUnavailableException(reason)
                 case AuthAPIError(reason, code):
-                    raise PyiCloudAPIResponseException(reason, code)
+                    return auth_result  # Return ADT instead of raising exception
                 case AuthUnexpectedError(error_type, error_message):
                     # Handle specific known error types
                     if error_type == "PyiCloudConnectionErrorException":
