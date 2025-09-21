@@ -1254,6 +1254,9 @@ def core_single_run(
                     # If we need to retry authentication, continue the while loop
                     if should_retry_auth:
                         continue
+
+                    # Flag to track if we need to retry the whole operation
+                    needs_retry = False
                     for photo_album in albums:
                         photos_enumerator: Iterable[PhotoIterationResult] = photo_album
 
@@ -1336,7 +1339,6 @@ def core_single_run(
 
                         download_photo = partial(downloader, icloud)
 
-                        error_occurred = False
                         for item_result in photos_bar:
                             try:
                                 match item_result:
@@ -1354,7 +1356,7 @@ def core_single_run(
                                         if "Invalid global session" in reason:
                                             dump_responses(logger.debug, captured_responses)
                                             # Set flag to trigger retry in while loop
-                                            error_occurred = True
+                                            needs_retry = True
                                             break
                                         dump_responses(logger.debug, captured_responses)
                                         # webui will display error and wait for password again
@@ -1366,7 +1368,7 @@ def core_single_run(
                                             status_exchange, str(f"{reason} ({code})")
                                         ):
                                             # retry if it was during auth
-                                            error_occurred = True
+                                            needs_retry = True
                                             break
                                         return 1
                                     case ResponseServiceUnavailable(reason):
@@ -1396,20 +1398,27 @@ def core_single_run(
                                             # File was skipped (already exists) - don't delete
                                             pass
                                         case Response2SARequired(account_name):
-                                            raise PyiCloud2SARequiredException(account_name)
+                                            return Response2SARequired(account_name)
                                         case ResponseServiceNotActivated(reason, code):
-                                            raise PyiCloudServiceNotActivatedException(reason, code)
+                                            return ResponseServiceNotActivated(reason, code)
                                         case ResponseAPIError(reason, code):
                                             # Check if it's a session error that requires re-authentication
                                             if "Invalid global session" in reason:
-                                                raise PyiCloudAPIResponseException(reason, code)
+                                                logger.info(f"{reason} ({code})")
+                                                dump_responses(logger.debug, captured_responses)
+                                                needs_retry = True
+                                                break
                                             # 500 errors indicate server problems and should stop processing
                                             if code == "500":
-                                                raise PyiCloudAPIResponseException(reason, code)
+                                                logger.info(f"{reason} ({code})")
+                                                dump_responses(logger.debug, captured_responses)
+                                                return 1
                                             # Other API errors are logged but don't stop processing
                                             logger.error("%s (%s)", reason, code)
                                         case ResponseServiceUnavailable(reason):
-                                            raise PyiCloudServiceUnavailableException(reason)
+                                            logger.info(reason)
+                                            dump_responses(logger.debug, captured_responses)
+                                            return 1
                                 else:
                                     download_result = (
                                         DownloadMediaSkipped()
@@ -1492,9 +1501,9 @@ def core_single_run(
                             except StopIteration:
                                 break
 
-                        # If an error occurred that requires retry, continue the while loop
-                        if error_occurred:
-                            continue  # This continues the while True loop for retry
+                        # If we need to retry, break from the albums loop
+                        if needs_retry:
+                            break
 
                         if global_config.only_print_filenames:
                             return 0
@@ -1517,6 +1526,10 @@ def core_single_run(
                             logger.info(message)
                             status_exchange.get_progress().photos_last_message = message
                         status_exchange.get_progress().reset()
+
+                    # If we need to retry the whole operation, continue the while loop
+                    if needs_retry:
+                        continue
 
                     if user_config.auto_delete:
                         autodelete_result = autodelete_photos(
