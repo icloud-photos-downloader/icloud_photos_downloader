@@ -1055,13 +1055,13 @@ def core_single_run(
                     case PhotoLibraryNotFinishedIndexing():
                         return PhotoLibraryNotFinishedIndexing()
                     case Response2SARequired(account_name):
-                        raise PyiCloud2SARequiredException(account_name)
+                        return Response2SARequired(account_name)
                     case ResponseServiceNotActivated(reason, code):
-                        raise PyiCloudServiceNotActivatedException(reason, code)
+                        return ResponseServiceNotActivated(reason, code)
                     case ResponseAPIError(reason, code):
-                        raise PyiCloudAPIResponseException(reason, code)
+                        return ResponseAPIError(reason, code)
                     case ResponseServiceUnavailable(reason):
-                        raise PyiCloudServiceUnavailableException(reason)
+                        return ResponseServiceUnavailable(reason)
 
                 # Get private libraries
                 private_result = photos_service.get_private_libraries()
@@ -1069,13 +1069,13 @@ def core_single_run(
                     case LibrariesAccessSuccess(private_libs):
                         private_keys = private_libs.keys()
                     case Response2SARequired(account_name):
-                        raise PyiCloud2SARequiredException(account_name)
+                        return Response2SARequired(account_name)
                     case ResponseServiceNotActivated(reason, code):
-                        raise PyiCloudServiceNotActivatedException(reason, code)
+                        return ResponseServiceNotActivated(reason, code)
                     case ResponseAPIError(reason, code):
-                        raise PyiCloudAPIResponseException(reason, code)
+                        return ResponseAPIError(reason, code)
                     case ResponseServiceUnavailable(reason):
-                        raise PyiCloudServiceUnavailableException(reason)
+                        return ResponseServiceUnavailable(reason)
 
                 # Get shared libraries
                 shared_result = photos_service.get_shared_libraries()
@@ -1083,13 +1083,13 @@ def core_single_run(
                     case LibrariesAccessSuccess(shared_libs):
                         shared_keys = shared_libs.keys()
                     case Response2SARequired(account_name):
-                        raise PyiCloud2SARequiredException(account_name)
+                        return Response2SARequired(account_name)
                     case ResponseServiceNotActivated(reason, code):
-                        raise PyiCloudServiceNotActivatedException(reason, code)
+                        return ResponseServiceNotActivated(reason, code)
                     case ResponseAPIError(reason, code):
-                        raise PyiCloudAPIResponseException(reason, code)
+                        return ResponseAPIError(reason, code)
                     case ResponseServiceUnavailable(reason):
-                        raise PyiCloudServiceUnavailableException(reason)
+                        return ResponseServiceUnavailable(reason)
 
                 library_names = private_keys | shared_keys
                 print(*library_names, sep="\n")
@@ -1104,13 +1104,13 @@ def core_single_run(
                     case PhotoLibraryNotFinishedIndexing():
                         return PhotoLibraryNotFinishedIndexing()
                     case Response2SARequired(account_name):
-                        raise PyiCloud2SARequiredException(account_name)
+                        return Response2SARequired(account_name)
                     case ResponseServiceNotActivated(reason, code):
-                        raise PyiCloudServiceNotActivatedException(reason, code)
+                        return ResponseServiceNotActivated(reason, code)
                     case ResponseAPIError(reason, code):
-                        raise PyiCloudAPIResponseException(reason, code)
+                        return ResponseAPIError(reason, code)
                     case ResponseServiceUnavailable(reason):
-                        raise PyiCloudServiceUnavailableException(reason)
+                        return ResponseServiceUnavailable(reason)
 
                 # Access to the selected library. Defaults to the primary photos object.
                 if user_config.library:
@@ -1124,9 +1124,9 @@ def core_single_run(
                                 library_object: PhotoLibrary = private_libs[user_config.library]
                                 library_found = True
                         case Response2SARequired(account_name):
-                            raise PyiCloud2SARequiredException(account_name)
+                            return Response2SARequired(account_name)
                         case ResponseServiceNotActivated(reason, code):
-                            raise PyiCloudServiceNotActivatedException(reason, code)
+                            return ResponseServiceNotActivated(reason, code)
                         case ResponseAPIError(reason, code):
                             raise PyiCloudAPIResponseException(reason, code)
                         case ResponseServiceUnavailable(reason):
