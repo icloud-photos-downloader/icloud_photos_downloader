@@ -1336,6 +1336,7 @@ def core_single_run(
 
                         download_photo = partial(downloader, icloud)
 
+                        error_occurred = False
                         for item_result in photos_bar:
                             try:
                                 match item_result:
@@ -1348,9 +1349,30 @@ def core_single_run(
                                     case ResponseServiceNotActivated(reason, code):
                                         return ResponseServiceNotActivated(reason, code)
                                     case ResponseAPIError(reason, code):
-                                        raise PyiCloudAPIResponseException(reason, code)
+                                        logger.info(f"{reason} ({code})")
+                                        # Check if it's a session error that requires re-authentication
+                                        if "Invalid global session" in reason:
+                                            dump_responses(logger.debug, captured_responses)
+                                            # Set flag to trigger retry in while loop
+                                            error_occurred = True
+                                            break
+                                        dump_responses(logger.debug, captured_responses)
+                                        # webui will display error and wait for password again
+                                        if (
+                                            PasswordProvider.WEBUI
+                                            in global_config.password_providers
+                                            or global_config.mfa_provider == MFAProvider.WEBUI
+                                        ) and update_auth_error_in_webui(
+                                            status_exchange, str(f"{reason} ({code})")
+                                        ):
+                                            # retry if it was during auth
+                                            error_occurred = True
+                                            break
+                                        return 1
                                     case ResponseServiceUnavailable(reason):
-                                        raise PyiCloudServiceUnavailableException(reason)
+                                        logger.info(reason)
+                                        dump_responses(logger.debug, captured_responses)
+                                        return 1
 
                                 if should_break(consecutive_files_found):
                                     logger.info(
@@ -1469,6 +1491,10 @@ def core_single_run(
 
                             except StopIteration:
                                 break
+
+                        # If an error occurred that requires retry, continue the while loop
+                        if error_occurred:
+                            continue  # This continues the while True loop for retry
 
                         if global_config.only_print_filenames:
                             return 0
