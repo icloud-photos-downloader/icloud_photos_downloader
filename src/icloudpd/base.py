@@ -1164,13 +1164,13 @@ def core_single_run(
                             print(*album_titles, sep="\n")
                             return 0
                         case Response2SARequired(account_name):
-                            raise PyiCloud2SARequiredException(account_name)
+                            return Response2SARequired(account_name)
                         case ResponseServiceNotActivated(reason, code):
-                            raise PyiCloudServiceNotActivatedException(reason, code)
+                            return ResponseServiceNotActivated(reason, code)
                         case ResponseAPIError(reason, code):
-                            raise PyiCloudAPIResponseException(reason, code)
+                            return ResponseAPIError(reason, code)
                         case ResponseServiceUnavailable(reason):
-                            raise PyiCloudServiceUnavailableException(reason)
+                            return ResponseServiceUnavailable(reason)
                 else:
                     if not user_config.directory:
                         # should be checked upstream
@@ -1203,13 +1203,13 @@ def core_single_run(
                                     map_(albums_dict.__getitem__, user_config.albums)
                                 )
                             case Response2SARequired(account_name):
-                                raise PyiCloud2SARequiredException(account_name)
+                                return Response2SARequired(account_name)
                             case ResponseServiceNotActivated(reason, code):
-                                raise PyiCloudServiceNotActivatedException(reason, code)
+                                return ResponseServiceNotActivated(reason, code)
                             case ResponseAPIError(reason, code):
-                                raise PyiCloudAPIResponseException(reason, code)
+                                return ResponseAPIError(reason, code)
                             case ResponseServiceUnavailable(reason):
-                                raise PyiCloudServiceUnavailableException(reason)
+                                return ResponseServiceUnavailable(reason)
                     else:
                         # Use the 'all' album when no specific albums are requested
                         albums = [library_object.all]
@@ -1326,7 +1326,7 @@ def core_single_run(
                                     case PhotoIterationSuccess(item):
                                         pass
                                     case Response2SARequired(account_name):
-                                        raise PyiCloud2SARequiredException(account_name)
+                                        return Response2SARequired(account_name)
                                     case ResponseServiceNotActivated(reason, code):
                                         raise PyiCloudServiceNotActivatedException(reason, code)
                                     case ResponseAPIError(reason, code):
