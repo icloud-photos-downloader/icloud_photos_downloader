@@ -37,7 +37,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
-from foundation.core import compose, identity, map_, partial_1_1
+from foundation.core import identity
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
@@ -1199,9 +1199,9 @@ def core_single_run(
                         match albums_result:
                             case AlbumsFetchSuccess(albums_dict):
                                 # Get the specified albums
-                                albums: Iterable[PhotoAlbum] = list(
-                                    map_(albums_dict.__getitem__, user_config.albums)
-                                )
+                                albums: Iterable[PhotoAlbum] = [
+                                    albums_dict[album_name] for album_name in user_config.albums
+                                ]
                             case Response2SARequired(account_name):
                                 return Response2SARequired(account_name)
                             case ResponseServiceNotActivated(reason, code):
@@ -1214,28 +1214,46 @@ def core_single_run(
                         # Use the 'all' album when no specific albums are requested
                         albums = [library_object.all]
 
-                    def get_album_count(album: PhotoAlbum) -> int:
+                    # Calculate total photos count across albums
+                    photos_count: int | None = 0
+                    should_retry_auth = False
+                    for album in albums:
                         result = album.get_album_length()
                         match result:
                             case AlbumLengthSuccess(count):
-                                return count
+                                photos_count = (photos_count or 0) + count
                             case Response2SARequired(account_name):
-                                raise PyiCloud2SARequiredException(account_name)
+                                return Response2SARequired(account_name)
                             case ResponseServiceNotActivated(reason, code):
-                                raise PyiCloudServiceNotActivatedException(reason, code)
+                                return ResponseServiceNotActivated(reason, code)
                             case ResponseAPIError(reason, code):
-                                raise PyiCloudAPIResponseException(reason, code)
+                                logger.info(f"{reason} ({code})")
+                                # Check if it's a session error that requires re-authentication
+                                if "Invalid global session" in reason:
+                                    dump_responses(logger.debug, captured_responses)
+                                    # Break from for loop to trigger retry in while loop
+                                    should_retry_auth = True
+                                    break
+                                dump_responses(logger.debug, captured_responses)
+                                # webui will display error and wait for password again
+                                if (
+                                    PasswordProvider.WEBUI in global_config.password_providers
+                                    or global_config.mfa_provider == MFAProvider.WEBUI
+                                ) and update_auth_error_in_webui(
+                                    status_exchange, str(f"{reason} ({code})")
+                                ):
+                                    # retry if it was during auth
+                                    should_retry_auth = True
+                                    break
+                                return 1
                             case ResponseServiceUnavailable(reason):
-                                raise PyiCloudServiceUnavailableException(reason)
+                                logger.info(reason)
+                                dump_responses(logger.debug, captured_responses)
+                                return 1
 
-                    album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
-                        map_, get_album_count
-                    )
-
-                    def sum_(inp: Iterable[int]) -> int:
-                        return sum(inp)
-
-                    photos_count: int | None = compose(sum_, album_lengths)(albums)
+                    # If we need to retry authentication, continue the while loop
+                    if should_retry_auth:
+                        continue
                     for photo_album in albums:
                         photos_enumerator: Iterable[PhotoIterationResult] = photo_album
 
