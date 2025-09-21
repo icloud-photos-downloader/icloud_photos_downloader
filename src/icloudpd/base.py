@@ -1141,13 +1141,13 @@ def core_single_run(
                                     library_object = shared_libs[user_config.library]
                                     library_found = True
                             case Response2SARequired(account_name):
-                                raise PyiCloud2SARequiredException(account_name)
+                                return Response2SARequired(account_name)
                             case ResponseServiceNotActivated(reason, code):
-                                raise PyiCloudServiceNotActivatedException(reason, code)
+                                return ResponseServiceNotActivated(reason, code)
                             case ResponseAPIError(reason, code):
-                                raise PyiCloudAPIResponseException(reason, code)
+                                return ResponseAPIError(reason, code)
                             case ResponseServiceUnavailable(reason):
-                                raise PyiCloudServiceUnavailableException(reason)
+                                return ResponseServiceUnavailable(reason)
 
                     if not library_found:
                         logger.error("Unknown library: %s", user_config.library)
