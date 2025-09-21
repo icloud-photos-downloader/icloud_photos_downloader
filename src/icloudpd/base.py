@@ -1328,7 +1328,7 @@ def core_single_run(
                                     case Response2SARequired(account_name):
                                         return Response2SARequired(account_name)
                                     case ResponseServiceNotActivated(reason, code):
-                                        raise PyiCloudServiceNotActivatedException(reason, code)
+                                        return ResponseServiceNotActivated(reason, code)
                                     case ResponseAPIError(reason, code):
                                         raise PyiCloudAPIResponseException(reason, code)
                                     case ResponseServiceUnavailable(reason):
