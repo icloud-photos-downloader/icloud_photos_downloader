@@ -1128,9 +1128,9 @@ def core_single_run(
                         case ResponseServiceNotActivated(reason, code):
                             return ResponseServiceNotActivated(reason, code)
                         case ResponseAPIError(reason, code):
-                            raise PyiCloudAPIResponseException(reason, code)
+                            return ResponseAPIError(reason, code)
                         case ResponseServiceUnavailable(reason):
-                            raise PyiCloudServiceUnavailableException(reason)
+                            return ResponseServiceUnavailable(reason)
 
                     if not library_found:
                         # Try shared libraries
