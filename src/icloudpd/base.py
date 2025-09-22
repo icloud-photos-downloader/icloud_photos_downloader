@@ -1479,15 +1479,27 @@ def core_single_run(
                                             case DeletePhotoSuccess():
                                                 pass  # Success, continue
                                             case Response2SARequired(account_name):
-                                                raise PyiCloud2SARequiredException(account_name)
+                                                return Response2SARequired(account_name)
                                             case ResponseServiceNotActivated(reason, code):
-                                                raise PyiCloudServiceNotActivatedException(
-                                                    reason, code
-                                                )
+                                                return ResponseServiceNotActivated(reason, code)
                                             case ResponseAPIError(reason, code):
-                                                raise PyiCloudAPIResponseException(reason, code)
+                                                # Check if it's a session error that requires re-authentication
+                                                if "Invalid global session" in reason:
+                                                    logger.info(f"{reason} ({code})")
+                                                    dump_responses(logger.debug, captured_responses)
+                                                    needs_retry = True
+                                                    break
+                                                # 500 errors should cause exit for delete operations
+                                                if code == "500":
+                                                    logger.info(f"{reason} ({code})")
+                                                    dump_responses(logger.debug, captured_responses)
+                                                    return 1
+                                                # Log other API errors but continue processing
+                                                logger.error("%s (%s)", reason, code)
                                             case ResponseServiceUnavailable(reason):
-                                                raise PyiCloudServiceUnavailableException(reason)
+                                                logger.info(reason)
+                                                dump_responses(logger.debug, captured_responses)
+                                                return 1
 
                                     # retrier(delete_local, error_handler)
                                     photo_album.increment_offset(-1)
