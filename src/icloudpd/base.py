@@ -56,7 +56,6 @@ from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
-    PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionErrorException,
     PyiCloudServiceNotActivatedException,
@@ -1558,13 +1557,31 @@ def core_single_run(
                             case AutodeleteSuccess():
                                 pass  # Success, continue
                             case Response2SARequired(account_name):
-                                raise PyiCloud2SARequiredException(account_name)
+                                return Response2SARequired(account_name)
                             case ResponseServiceNotActivated(reason, code):
-                                raise PyiCloudServiceNotActivatedException(reason, code)
+                                return ResponseServiceNotActivated(reason, code)
                             case ResponseAPIError(reason, code):
-                                raise PyiCloudAPIResponseException(reason, code)
+                                logger.info(f"{reason} ({code})")
+                                # Check if it's a session error that requires re-authentication
+                                if "Invalid global session" in reason:
+                                    dump_responses(logger.debug, captured_responses)
+                                    # For autodelete, we'll continue the while loop for retry
+                                    continue
+                                dump_responses(logger.debug, captured_responses)
+                                # webui will display error and wait for password again
+                                if (
+                                    PasswordProvider.WEBUI in global_config.password_providers
+                                    or global_config.mfa_provider == MFAProvider.WEBUI
+                                ) and update_auth_error_in_webui(
+                                    status_exchange, str(f"{reason} ({code})")
+                                ):
+                                    # retry if it was during auth
+                                    continue
+                                return 1
                             case ResponseServiceUnavailable(reason):
-                                raise PyiCloudServiceUnavailableException(reason)
+                                logger.info(reason)
+                                dump_responses(logger.debug, captured_responses)
+                                return 1
                     else:
                         pass
         except (
