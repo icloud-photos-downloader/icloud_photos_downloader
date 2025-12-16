@@ -88,5 +88,15 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         _status_exchange.get_progress().cancel = True
         return make_response("Ok", 200)
 
+    @app.route("/health", methods=["GET"])
+    def health() -> Response | str:
+        _status = _status_exchange.get_status()
+        # Health is OK when login succeeded and download is in progress (NO_INPUT_NEEDED)
+        # Health is FAIL when waiting for user input (NEED_MFA, NEED_PASSWORD) or during auth checks
+        if _status == Status.NO_INPUT_NEEDED:
+            return make_response("ok", 200)
+        else:
+            return make_response("fail", 503)
+
     logger.debug("Starting web server...")
     return waitress.serve(app)
