@@ -4,23 +4,27 @@ The following are example setups for NAS.
 
 ## TrueNAS
 
-Use the [`Install Custom App` button](https://www.truenas.com/docs/scale/23.10/scaletutorials/apps/usingcustomapp/) to set up `icloudpd`:
+Use the [`Install Custom App` button](https://www.truenas.com/docs/scale/25.10/scaleuireference/apps/installcustomappscreens/) to set up `icloudpd`:
 | Field | Value | Note |
 |-------|-------|------|
 Application Name | `icloudpd` |
 Version | N/A | Leave default
-Container Images/Image repository | `icloudpd/icloudpd` |
-Container Images/Image tag | `latest` |
-Container Entrypoint/Container Args | `icloudpd` `-u` `your@email.address` `-d` `/data` `--password-provider` `webui` `--mfa-provider` `webui` `--watch-with-interval` `3600` | each as a separate arg (param name and param value become two separate args)
-Port Forwarding/Container Port | `8080` |
-Port Forwarding/Node Port | `9090` | or other available port on your host
-Storage/Host Path Volumes/Host Path | /mnt/my_pool/photos | or another location on your host
-Storage/Host Path Volumes/Mount Path | /data | 
+Image Configuration/Repository | `icloudpd/icloudpd` |
+Image Configuration/Tag | `latest` |
+Container Configuration/Command | `icloudpd`<br>`-u`<br>`your@email.address`<br>`-d`<br>`/data`<br>`--password-provider`<br>`webui`<br>`--mfa-provider`<br>`webui`<br>`--watch-with-interval`<br>`3600` | each param is a separate 'command'
+Network Configuration/Host Port | `9090` | or other available port on your host
+Network Configuration/Container Port | `8080` | 
 Portal Configuration/Enable Portal Configuration | checked | 
 Portal Configuration/Portal Name | `icloudpd` | 
 Portal Configuration/Protocol to Portal | `HTTP Protocol` | 
 Portal Configuration/Use Node IP for Portal IP/Domain | checked | 
 Portal Configuration/Port | `9090` | Same as "Port Forwarding/Host Port" above
+Storage Configuration/Type | Host Path
+Storage Configuration/Mount Path | /data 
+Storage Configuration/Host Path | /mnt/my_pool/photos | or another location on your host
+Resources Configuration/Enable Resource Limits | checked
+Resources Configuration/CPUs | 2 | or whatever makes sense for your system
+Resources Configuration/Memory (in MB) | 4096 | or whatever makes sense for your system
 
 Once the app has started, connect to the [WebUI](webui) to enter the password and MFA code in one of two ways:
 - Using a browser from your PC to port 9090 of your NAS
