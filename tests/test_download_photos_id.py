@@ -11,6 +11,7 @@ import piexif
 import pytest
 from piexif._exceptions import InvalidImageDataError
 from requests import Response
+from tzlocal import get_localzone
 
 from icloudpd import constants
 from icloudpd.string_helpers import truncate_middle
@@ -2309,12 +2310,22 @@ class DownloadPhotoNameIDTestCase(TestCase):
             "Skipping IMG_7404_QVI5TWx.MOV, only downloading photos.",
             result.output,
         )
+        # Dates are parsed as local timezone, so compare with local timezone
+        local_tz = get_localzone()
+        created_7407 = datetime.datetime(
+            2018, 7, 30, 11, 44, 5, 108000, datetime.timezone.utc
+        ).astimezone(local_tz)
+        created_7408 = datetime.datetime(
+            2018, 7, 30, 11, 44, 10, 176000, datetime.timezone.utc
+        ).astimezone(local_tz)
+        target_date = datetime.datetime(2018, 7, 31, 0, 0, 0, 0, tzinfo=local_tz)
+
         self.assertIn(
-            "Skipping IMG_7407_QVovd0F.JPG, as it was created 2018-07-30 11:44:05.108000+00:00, before 2018-07-31 00:00:00+00:00.",
+            f"Skipping IMG_7407_QVovd0F.JPG, as it was created {created_7407}, before {target_date}.",
             result.output,
         )
         self.assertIn(
-            "Skipping IMG_7408_QVI4T2l.JPG, as it was created 2018-07-30 11:44:10.176000+00:00, before 2018-07-31 00:00:00+00:00.",
+            f"Skipping IMG_7408_QVI4T2l.JPG, as it was created {created_7408}, before {target_date}.",
             result.output,
         )
         self.assertIn("All photos have been downloaded", result.output)
@@ -2386,8 +2397,15 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 result.output,
             )
 
+        # Dates are parsed as local timezone, so compare with local timezone
+        local_tz = get_localzone()
+        created_7409 = datetime.datetime(
+            2018, 7, 31, 7, 22, 24, 816000, datetime.timezone.utc
+        ).astimezone(local_tz)
+        target_date = datetime.datetime(2018, 7, 31, 0, 0, 0, 0, tzinfo=local_tz)
+
         self.assertIn(
-            "Skipping IMG_7409_QVk2Yyt.JPG, as it was created 2018-07-31 07:22:24.816000+00:00, after 2018-07-31 00:00:00+00:00.",
+            f"Skipping IMG_7409_QVk2Yyt.JPG, as it was created {created_7409}, after {target_date}.",
             result.output,
         )
         self.assertIn("All photos have been downloaded", result.output)
