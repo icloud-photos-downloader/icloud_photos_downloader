@@ -38,7 +38,7 @@ from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
 from foundation.core import identity
-from icloudpd import download, exif_datetime
+from icloudpd import download
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
@@ -52,7 +52,7 @@ from icloudpd.paths import local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
-from icloudpd.xmp_sidecar import generate_xmp_file
+from icloudpd.metadata_management import sync_exif_metadata, sync_xmp_metadata
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 
@@ -440,6 +440,9 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    user_config.favorite_to_rating,
+                    user_config.process_existing_favorites,
+                    user_config.metadata_overwrite,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: DownloadMediaSkipped())
@@ -630,6 +633,9 @@ def download_builder(
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
+    favorite_to_rating: int | None,
+    process_existing_favorites: bool,
+    metadata_overwrite: bool,
 ) -> DownloadMediaResult:
     """function for actually downloading the photos"""
 
@@ -757,27 +763,6 @@ def download_builder(
 
                 match download_result:
                     case DownloadMediaSuccess():
-                        from foundation.core import compose
-                        from foundation.string_utils import endswith, lower
-
-                        is_jpeg = compose(endswith((".jpg", ".jpeg")), lower)
-
-                        if (
-                            not dry_run
-                            and set_exif_datetime
-                            and is_jpeg(filename)
-                            and not exif_datetime.get_photo_exif(logger, download_path)
-                        ):
-                            # %Y:%m:%d looks wrong, but it's the correct format
-                            date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
-                            logger.debug(
-                                "Setting EXIF timestamp for %s: %s", download_path, date_str
-                            )
-                            exif_datetime.set_photo_exif(
-                                logger,
-                                download_path,
-                                created_date.strftime("%Y:%m:%d %H:%M:%S"),
-                            )
                         if not dry_run:
                             download.set_utime(download_path, created_date)
                         logger.info("Downloaded %s", truncated_path)
@@ -785,8 +770,30 @@ def download_builder(
                         # Error ADT - store it
                         last_result = download_result
 
+        # Sync EXIF metadata (handles both new and existing files)
+        sync_exif_metadata(
+            logger=logger,
+            download_path=download_path,
+            photo=photo,
+            created_date=created_date,
+            favorite_to_rating=favorite_to_rating,
+            set_exif_datetime=set_exif_datetime,
+            process_existing_favorites=process_existing_favorites,
+            metadata_overwrite=metadata_overwrite,
+            dry_run=dry_run,
+        )
+
+        # Sync XMP metadata (handles both new and existing files)
         if xmp_sidecar:
-            generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+            sync_xmp_metadata(
+                logger=logger,
+                download_path=download_path,
+                photo=photo,
+                favorite_to_rating=favorite_to_rating,
+                process_existing_favorites=process_existing_favorites,
+                metadata_overwrite=metadata_overwrite,
+                dry_run=dry_run,
+            )
 
     # Also download the live photo if present
     if not skip_live_photos:
