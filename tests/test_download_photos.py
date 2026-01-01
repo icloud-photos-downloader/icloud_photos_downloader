@@ -122,31 +122,29 @@ class DownloadPhotoTestCase(TestCase):
             # ("2018/07/31", "IMG_7409.MOV"),
         ]
 
-        with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
-            get_exif_patched.return_value = None
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos_4_recent_all.yml",
-                [],
-                files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "1",
-                    "--set-exif-datetime",
-                    "--skip-videos",
-                    "--skip-live-photos",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
-            assert result.exit_code == 0
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_4_recent_all.yml",
+            [],
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--set-exif-datetime",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
+        assert result.exit_code == 0
 
         self.assertIn(
             "Looking up all photos...",
@@ -213,12 +211,16 @@ class DownloadPhotoTestCase(TestCase):
             f"Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
             result.output,
         )
-        self.assertIn(
-            f"Error fetching EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-            result.output,
+        # 2018:07:31 07:22:24 utc
+        expectedDatetime = (
+            datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+            .astimezone()
+            .strftime("%Y-%m-%d %H:%M:%S%z")
         )
+        # When piexif.load fails, write_exif_metadata creates a minimal EXIF structure
+        # and continues, so the EXIF timestamp is successfully set
         self.assertIn(
-            f"Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            f"Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
             result.output,
         )
         self.assertIn("All photos have been downloaded", result.output)
@@ -1046,52 +1048,50 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.metadata_management.get_photo_exif") as get_exif_patched:
-                get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--set-exif-datetime",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ],
-                )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--set-exif-datetime",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
 
-                self.assertIn("Looking up all photos...", result.output)
-                self.assertIn(
-                    f"Downloading the first original photo to {data_dir} ...",
-                    result.output,
-                )
-                # 2018:07:31 07:22:24 utc
-                expectedDatetime = (
-                    datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
-                    .astimezone()
-                    .strftime("%Y-%m-%d %H:%M:%S%z")
-                )
-                self.assertIn(
-                    f"Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
-                    result.output,
-                )
-                self.assertIn(
-                    f"Error setting EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
-                    result.output,
-                )
-                self.assertIn("All photos have been downloaded", result.output)
-                assert result.exit_code == 0
+            self.assertIn("Looking up all photos...", result.output)
+            self.assertIn(
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
+            )
+            # 2018:07:31 07:22:24 utc
+            expectedDatetime = (
+                datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+                .astimezone()
+                .strftime("%Y-%m-%d %H:%M:%S%z")
+            )
+            self.assertIn(
+                f"Setting EXIF timestamp for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: {expectedDatetime}",
+                result.output,
+            )
+            self.assertIn(
+                f"Error writing EXIF data for {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+                result.output,
+            )
+            self.assertIn("All photos have been downloaded", result.output)
+            assert result.exit_code == 0
 
     def test_download_chinese(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3], "中文")
@@ -1228,40 +1228,38 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.metadata_management.get_photo_exif") as get_exif_patched:
-                get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    files_to_download,
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                        "--delete-after-download",
-                    ],
-                )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--delete-after-download",
+                ],
+            )
 
-                self.assertIn("Looking up all photos...", result.output)
-                self.assertIn(
-                    f"Downloading the first original photo to {data_dir} ...",
-                    result.output,
-                )
-                self.assertIn("Deleted IMG_7409.JPG in iCloud", result.output)
-                self.assertIn("All photos have been downloaded", result.output)
-                # TODO assert cass.all_played
-                assert result.exit_code == 0
+            self.assertIn("Looking up all photos...", result.output)
+            self.assertIn(
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
+            )
+            self.assertIn("Deleted IMG_7409.JPG in iCloud", result.output)
+            self.assertIn("All photos have been downloaded", result.output)
+            # TODO assert cass.all_played
+            assert result.exit_code == 0
 
     def test_download_and_not_delete_after_when_exists(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -1270,40 +1268,38 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.metadata_management.get_photo_exif") as get_exif_patched:
-                get_exif_patched.return_value = False
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    files_to_create,
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "1",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                        "--delete-after-download",
-                    ],
-                )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--delete-after-download",
+                ],
+            )
 
-                self.assertIn("Looking up all photos...", result.output)
-                self.assertIn(
-                    f"Downloading the first original photo to {data_dir} ...",
-                    result.output,
-                )
-                self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
-                self.assertIn("All photos have been downloaded", result.output)
-                # TODO assert cass.all_played
-                assert result.exit_code == 0
+            self.assertIn("Looking up all photos...", result.output)
+            self.assertIn(
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
+            )
+            self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
+            self.assertIn("All photos have been downloaded", result.output)
+            # TODO assert cass.all_played
+            assert result.exit_code == 0
 
     def test_download_and_delete_after_fail(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

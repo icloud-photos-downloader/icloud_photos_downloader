@@ -176,30 +176,6 @@ def write_exif_metadata(
         return
 
 
-def get_photo_exif(logger: logging.Logger, path: str) -> str | None:
-    """Get EXIF date for a photo, return nothing if there is an error"""
-    try:
-        exif_dict: piexif.ExifIFD = piexif.load(path)
-        return typing.cast(str | None, exif_dict.get("Exif").get(36867))
-    except (ValueError, InvalidImageDataError):
-        logger.debug("Error fetching EXIF data for %s", path)
-        return None
-
-
-def set_photo_exif(logger: logging.Logger, path: str, date: str) -> None:
-    """Set EXIF date on a photo, do nothing if there is an error"""
-    try:
-        exif_dict = piexif.load(path)
-        exif_dict.get("1st")[306] = date
-        exif_dict.get("Exif")[36867] = date
-        exif_dict.get("Exif")[36868] = date
-        exif_bytes = piexif.dump(exif_dict)
-        piexif.insert(exif_bytes, path)
-    except (ValueError, InvalidImageDataError):
-        logger.debug("Error setting EXIF data for %s", path)
-        return
-
-
 # ============================================================================
 # XMP Metadata Functions
 # ============================================================================
@@ -456,7 +432,9 @@ def can_write_xmp_file(logger: logging.Logger, sidecar_path: str) -> bool:
         xmptk_value = root.attrib.get("{adobe:ns:meta/}xmptk")
         starts_with_icloudpd = startswith("icloudpd")
 
-        if not xmptk_value or not starts_with_icloudpd(xmptk_value):
+        # Empty string or None means no toolkit - safe to write
+        # Only block if there's an actual external toolkit name
+        if xmptk_value and not starts_with_icloudpd(xmptk_value):
             logger.info(f"Not overwriting XMP file {sidecar_path} created by {xmptk_value}")
             return False
         else:
@@ -545,10 +523,20 @@ def write_xmp_metadata(
         return
 
     try:
-        # Start with existing XML tree if available, otherwise create new
-        if "_xml_tree" in metadata and metadata["_xml_tree"] is not None:
+        # Read existing file if it exists to preserve unknown fields
+        if os.path.exists(path) and os.path.getsize(path) > 0:
+            try:
+                root = ElementTree.parse(path).getroot()
+            except ElementTree.ParseError:
+                # If parse fails, create new root
+                root = None
+        elif "_xml_tree" in metadata and metadata["_xml_tree"] is not None:
             root = metadata["_xml_tree"]
         else:
+            root = None
+
+        # If no existing root, create new XMP structure
+        if root is None:
             # Create minimal XMP structure
             from foundation import version_info
 
@@ -566,9 +554,18 @@ def write_xmp_metadata(
             )
 
         # Find or create xmp Description
-        xmp_desc = rdf.find(
-            ".//{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description[@xmlns:xmp='http://ns.adobe.com/xap/1.0/']"
-        )
+        # ElementTree doesn't preserve xmlns: attributes when parsing, so we need to identify
+        # Description elements by their child elements' namespaces
+        xmp_desc = None
+        for desc in rdf.findall("./{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description"):
+            # Check if this Description has xmp namespace children
+            for child in desc:
+                if child.tag.startswith("{http://ns.adobe.com/xap/1.0/}"):
+                    xmp_desc = desc
+                    break
+            if xmp_desc is not None:
+                break
+
         if xmp_desc is None:
             xmp_desc = ElementTree.SubElement(
                 rdf,
@@ -577,9 +574,16 @@ def write_xmp_metadata(
             )
 
         # Find or create dc Description
-        dc_desc = rdf.find(
-            ".//{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description[@xmlns:dc='http://purl.org/dc/elements/1.1/']"
-        )
+        dc_desc = None
+        for desc in rdf.findall("./{http://www.w3.org/1999/02/22-rdf-syntax-ns#}Description"):
+            # Check if this Description has dc namespace children
+            for child in desc:
+                if child.tag.startswith("{http://purl.org/dc/elements/1.1/}"):
+                    dc_desc = desc
+                    break
+            if dc_desc is not None:
+                break
+
         if dc_desc is None and "title" in metadata:
             dc_desc = ElementTree.SubElement(
                 rdf,
@@ -589,21 +593,21 @@ def write_xmp_metadata(
 
         # Update rating
         if "rating" in metadata and metadata["rating"] is not None:
-            rating_elem = xmp_desc.find(".//{http://ns.adobe.com/xap/1.0/}Rating")
+            rating_elem = xmp_desc.find("./{http://ns.adobe.com/xap/1.0/}Rating")
             if rating_elem is None:
                 rating_elem = ElementTree.SubElement(xmp_desc, "xmp:Rating")
             rating_elem.text = str(metadata["rating"])
 
         # Update datetime
         if "datetime" in metadata and metadata["datetime"] is not None:
-            datetime_elem = xmp_desc.find(".//{http://ns.adobe.com/xap/1.0/}CreateDate")
+            datetime_elem = xmp_desc.find("./{http://ns.adobe.com/xap/1.0/}CreateDate")
             if datetime_elem is None:
                 datetime_elem = ElementTree.SubElement(xmp_desc, "xmp:CreateDate")
             datetime_elem.text = metadata["datetime"]
 
         # Update title
         if "title" in metadata and metadata["title"] is not None and dc_desc is not None:
-            title_elem = dc_desc.find(".//{http://purl.org/dc/elements/1.1/}title")
+            title_elem = dc_desc.find("./{http://purl.org/dc/elements/1.1/}title")
             if title_elem is None:
                 title_elem = ElementTree.SubElement(dc_desc, "dc:title")
             title_elem.text = metadata["title"]
@@ -681,7 +685,9 @@ def sync_exif_metadata(
     if not process_existing_favorites and set_exif_datetime:
         date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
         logger.debug("Setting EXIF timestamp for %s: %s", download_path, date_str)
-        set_photo_exif(logger, download_path, created_date.strftime("%Y:%m:%d %H:%M:%S"))
+        write_exif_metadata(
+            logger, download_path, {"datetime": created_date.strftime("%Y:%m:%d %H:%M:%S")}, dry_run=False
+        )
 
 
 def sync_xmp_metadata(

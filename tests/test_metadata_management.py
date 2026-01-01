@@ -258,17 +258,48 @@ class TestReadExifMetadata(unittest.TestCase):
         """Helper to create a JPEG with specific EXIF data"""
         path = os.path.join(self.temp_dir, filename)
 
-        # Create minimal valid JPEG
-        with open(path, "wb") as f:
-            # JPEG header
-            f.write(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00")
-            # JPEG footer
-            f.write(b"\xFF\xD9")
+        # Create a minimal JPEG by dumping EXIF and using a tiny base image
+        # This works around piexif.insert limitations
+        import io
 
-        # Insert EXIF data if provided
-        if exif_dict:
-            exif_bytes = piexif.dump(exif_dict)
-            piexif.insert(exif_bytes, path)
+        # If no EXIF dict provided, create minimal one
+        if not exif_dict:
+            exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+        else:
+            # Ensure required IFDs exist
+            if "Exif" not in exif_dict:
+                exif_dict["Exif"] = {}
+            if "GPS" not in exif_dict:
+                exif_dict["GPS"] = {}
+            if "1st" not in exif_dict:
+                exif_dict["1st"] = {}
+            if "thumbnail" not in exif_dict:
+                exif_dict["thumbnail"] = None
+
+        # Dump EXIF bytes
+        exif_bytes = piexif.dump(exif_dict)
+
+        # Create minimal JPEG with EXIF marker
+        # SOI + APP1 (EXIF) + minimal image data + EOI
+        app1_marker = b'\xff\xe1'  # APP1 marker
+        app1_size = (len(exif_bytes) + 2).to_bytes(2, byteorder='big')
+
+        jpeg_with_exif = (
+            b'\xff\xd8'  # SOI
+            + app1_marker
+            + app1_size
+            + exif_bytes
+            # Minimal JPEG image data (1x1 pixel)
+            + b'\xff\xdb\x00C\x00\x03\x02\x02\x03\x02\x02\x03\x03\x03\x03\x04\x03\x03\x04\x05\x08\x05\x05\x04\x04\x05\n\x07\x07\x06\x08\x0c\n\x0c\x0c\x0b\n\x0b\x0b\r\x0e\x12\x10\r\x0e\x11\x0e\x0b\x0b\x10\x16\x10\x11\x13\x14\x15\x15\x15\x0c\x0f\x17\x18\x16\x14\x18\x12\x14\x15\x14'
+            + b'\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00'
+            + b'\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08'
+            + b'\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            + b'\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00'
+            + b'\xff\xd9'  # EOI
+        )
+
+        with open(path, "wb") as f:
+            f.write(jpeg_with_exif)
 
         return path
 
@@ -361,11 +392,11 @@ class TestReadExifMetadata(unittest.TestCase):
         exif_dict = {
             "0th": {
                 18246: 4,  # Rating
-                271: "Canon",  # Make (unknown field we should preserve)
+                271: b"Canon",  # Make (unknown field we should preserve)
             },
             "Exif": {
                 36867: b"2024:01:15 10:30:00",  # DateTimeOriginal
-                37377: b"5.0",  # ShutterSpeed (unknown field)
+                37377: (5, 1),  # ShutterSpeed (unknown field) - SRational type
             },
         }
         path = self._create_jpeg_with_exif("test.jpg", exif_dict)
@@ -380,7 +411,7 @@ class TestReadExifMetadata(unittest.TestCase):
         # We'll verify this by re-reading with piexif
         exif_readback = piexif.load(path)
         self.assertEqual(exif_readback["0th"][271], b"Canon")
-        self.assertEqual(exif_readback["Exif"][37377], b"5.0")
+        self.assertEqual(exif_readback["Exif"][37377], (5, 1))
 
 
 class TestReadXmpMetadata(unittest.TestCase):
@@ -619,14 +650,48 @@ class TestWriteExifMetadata(unittest.TestCase):
         """Helper to create a JPEG with specific EXIF data"""
         path = os.path.join(self.temp_dir, filename)
 
-        # Create minimal valid JPEG
-        with open(path, "wb") as f:
-            f.write(b"\xFF\xD8\xFF\xE0\x00\x10JFIF\x00\x01\x01\x00\x00\x01\x00\x01\x00\x00")
-            f.write(b"\xFF\xD9")
+        # Create a minimal JPEG by dumping EXIF and using a tiny base image
+        # This works around piexif.insert limitations
+        import io
 
-        if exif_dict:
-            exif_bytes = piexif.dump(exif_dict)
-            piexif.insert(exif_bytes, path)
+        # If no EXIF dict provided, create minimal one
+        if not exif_dict:
+            exif_dict = {"0th": {}, "Exif": {}, "GPS": {}, "1st": {}, "thumbnail": None}
+        else:
+            # Ensure required IFDs exist
+            if "Exif" not in exif_dict:
+                exif_dict["Exif"] = {}
+            if "GPS" not in exif_dict:
+                exif_dict["GPS"] = {}
+            if "1st" not in exif_dict:
+                exif_dict["1st"] = {}
+            if "thumbnail" not in exif_dict:
+                exif_dict["thumbnail"] = None
+
+        # Dump EXIF bytes
+        exif_bytes = piexif.dump(exif_dict)
+
+        # Create minimal JPEG with EXIF marker
+        # SOI + APP1 (EXIF) + minimal image data + EOI
+        app1_marker = b'\xff\xe1'  # APP1 marker
+        app1_size = (len(exif_bytes) + 2).to_bytes(2, byteorder='big')
+
+        jpeg_with_exif = (
+            b'\xff\xd8'  # SOI
+            + app1_marker
+            + app1_size
+            + exif_bytes
+            # Minimal JPEG image data (1x1 pixel)
+            + b'\xff\xdb\x00C\x00\x03\x02\x02\x03\x02\x02\x03\x03\x03\x03\x04\x03\x03\x04\x05\x08\x05\x05\x04\x04\x05\n\x07\x07\x06\x08\x0c\n\x0c\x0c\x0b\n\x0b\x0b\r\x0e\x12\x10\r\x0e\x11\x0e\x0b\x0b\x10\x16\x10\x11\x13\x14\x15\x15\x15\x0c\x0f\x17\x18\x16\x14\x18\x12\x14\x15\x14'
+            + b'\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00'
+            + b'\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08'
+            + b'\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            + b'\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00'
+            + b'\xff\xd9'  # EOI
+        )
+
+        with open(path, "wb") as f:
+            f.write(jpeg_with_exif)
 
         return path
 
@@ -637,7 +702,7 @@ class TestWriteExifMetadata(unittest.TestCase):
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"rating": 5}
 
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # Verify rating was written
         exif_dict = piexif.load(path)
@@ -650,7 +715,7 @@ class TestWriteExifMetadata(unittest.TestCase):
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"datetime": "2024:01:15 10:30:00"}
 
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # Verify datetime was written to all three tags
         exif_dict = piexif.load(path)
@@ -665,7 +730,7 @@ class TestWriteExifMetadata(unittest.TestCase):
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"rating": 4, "datetime": "2024:01:15 10:30:00"}
 
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # Verify both were written
         exif_dict = piexif.load(path)
@@ -679,20 +744,20 @@ class TestWriteExifMetadata(unittest.TestCase):
         # Create JPEG with existing unknown EXIF fields
         existing_exif = {
             "0th": {271: b"Canon", 272: b"EOS R5"},  # Make, Model
-            "Exif": {37377: b"5.0"},  # ShutterSpeed
+            "Exif": {37377: (5, 1)},  # ShutterSpeed - SRational type
         }
         path = self._create_jpeg_with_exif("test.jpg", existing_exif)
 
         # Write only rating
         metadata = {"rating": 5}
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # Verify rating written and unknown fields preserved
         exif_dict = piexif.load(path)
         self.assertEqual(exif_dict["0th"][18246], 5)  # Rating added
         self.assertEqual(exif_dict["0th"][271], b"Canon")  # Make preserved
         self.assertEqual(exif_dict["0th"][272], b"EOS R5")  # Model preserved
-        self.assertEqual(exif_dict["Exif"][37377], b"5.0")  # ShutterSpeed preserved
+        self.assertEqual(exif_dict["Exif"][37377], (5, 1))  # ShutterSpeed preserved
 
     def test_write_exif_updates_existing_rating(self):
         """Writing EXIF updates existing rating value"""
@@ -704,7 +769,7 @@ class TestWriteExifMetadata(unittest.TestCase):
 
         # Update rating
         metadata = {"rating": 5}
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # Verify rating was updated
         exif_dict = piexif.load(path)
@@ -718,7 +783,7 @@ class TestWriteExifMetadata(unittest.TestCase):
         metadata = {}
 
         # Should not crash
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
     def test_write_exif_corrupt_file_handles_gracefully(self):
         """Writing to corrupt file is handled gracefully"""
@@ -731,7 +796,7 @@ class TestWriteExifMetadata(unittest.TestCase):
         metadata = {"rating": 5}
 
         # Should not crash, just log error
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # File should still exist (not deleted on error)
         self.assertTrue(os.path.exists(path))
@@ -743,7 +808,7 @@ class TestWriteExifMetadata(unittest.TestCase):
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"rating": None, "datetime": "2024:01:15 10:30:00"}
 
-        write_exif_metadata(self.logger, path, metadata)
+        write_exif_metadata(self.logger, path, metadata, dry_run=False)
 
         # Only datetime should be written
         exif_dict = piexif.load(path)
