@@ -1046,7 +1046,7 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+            with mock.patch("icloudpd.metadata_management.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
@@ -1228,7 +1228,7 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+            with mock.patch("icloudpd.metadata_management.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
@@ -1270,7 +1270,7 @@ class DownloadPhotoTestCase(TestCase):
 
         with mock.patch.object(piexif, "insert") as piexif_patched:
             piexif_patched.side_effect = InvalidImageDataError
-            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+            with mock.patch("icloudpd.metadata_management.get_photo_exif") as get_exif_patched:
                 get_exif_patched.return_value = False
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,

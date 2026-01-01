@@ -630,12 +630,12 @@ def download_builder(
     lp_filename_generator: Callable[[str], str],
     filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
-    icloud: PyiCloudService,
-    counter: Counter,
-    photo: PhotoAsset,
     favorite_to_rating: int | None,
     process_existing_favorites: bool,
     metadata_overwrite: bool,
+    icloud: PyiCloudService,
+    counter: Counter,
+    photo: PhotoAsset,
 ) -> DownloadMediaResult:
     """function for actually downloading the photos"""
 
@@ -766,34 +766,58 @@ def download_builder(
                         if not dry_run:
                             download.set_utime(download_path, created_date)
                         logger.info("Downloaded %s", truncated_path)
+
+                        # Sync EXIF metadata for new downloads
+                        sync_exif_metadata(
+                            logger=logger,
+                            download_path=download_path,
+                            photo=photo,
+                            created_date=created_date,
+                            favorite_to_rating=favorite_to_rating,
+                            set_exif_datetime=set_exif_datetime,
+                            process_existing_favorites=False,  # Not existing for newly downloaded
+                            metadata_overwrite=metadata_overwrite,
+                            dry_run=dry_run,
+                        )
+
+                        # Sync XMP metadata for new downloads
+                        if xmp_sidecar:
+                            sync_xmp_metadata(
+                                logger=logger,
+                                download_path=download_path,
+                                photo=photo,
+                                favorite_to_rating=favorite_to_rating,
+                                process_existing_favorites=False,  # Not existing for newly downloaded
+                                metadata_overwrite=metadata_overwrite,
+                                dry_run=dry_run,
+                            )
                     case _:
                         # Error ADT - store it
                         last_result = download_result
-
-        # Sync EXIF metadata (handles both new and existing files)
-        sync_exif_metadata(
-            logger=logger,
-            download_path=download_path,
-            photo=photo,
-            created_date=created_date,
-            favorite_to_rating=favorite_to_rating,
-            set_exif_datetime=set_exif_datetime,
-            process_existing_favorites=process_existing_favorites,
-            metadata_overwrite=metadata_overwrite,
-            dry_run=dry_run,
-        )
-
-        # Sync XMP metadata (handles both new and existing files)
-        if xmp_sidecar:
-            sync_xmp_metadata(
+        elif process_existing_favorites:
+            # For existing files, only process if process_existing_favorites is enabled
+            sync_exif_metadata(
                 logger=logger,
                 download_path=download_path,
                 photo=photo,
+                created_date=created_date,
                 favorite_to_rating=favorite_to_rating,
-                process_existing_favorites=process_existing_favorites,
+                set_exif_datetime=set_exif_datetime,
+                process_existing_favorites=True,
                 metadata_overwrite=metadata_overwrite,
                 dry_run=dry_run,
             )
+
+            if xmp_sidecar:
+                sync_xmp_metadata(
+                    logger=logger,
+                    download_path=download_path,
+                    photo=photo,
+                    favorite_to_rating=favorite_to_rating,
+                    process_existing_favorites=True,
+                    metadata_overwrite=metadata_overwrite,
+                    dry_run=dry_run,
+                )
 
     # Also download the live photo if present
     if not skip_live_photos:
