@@ -653,6 +653,7 @@ def sync_exif_metadata(
     process_existing_favorites: bool,
     metadata_overwrite: bool,
     dry_run: bool,
+    file_was_downloaded: bool,
 ) -> None:
     """
     Synchronize EXIF metadata for photo file.
@@ -674,6 +675,7 @@ def sync_exif_metadata(
         process_existing_favorites: Whether to process existing files
         metadata_overwrite: Whether to overwrite existing metadata
         dry_run: If True, don't write to disk
+        file_was_downloaded: Whether this file was just downloaded (vs already existed)
     """
     # Only process JPEG files for EXIF
     is_jpeg = compose(endswith((".jpg", ".jpeg")), lower)
@@ -684,8 +686,8 @@ def sync_exif_metadata(
     if dry_run:
         return
 
-    # For new files (process_existing_favorites=False), set EXIF datetime if requested
-    if not process_existing_favorites and set_exif_datetime:
+    # For newly downloaded files, set EXIF datetime if requested
+    if file_was_downloaded and set_exif_datetime:
         date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
         logger.debug("Setting EXIF timestamp for %s: %s", download_path, date_str)
         write_exif_metadata(
@@ -704,6 +706,7 @@ def sync_xmp_metadata(
     process_existing_favorites: bool,
     metadata_overwrite: bool,
     dry_run: bool,
+    file_was_downloaded: bool,
 ) -> None:
     """
     Synchronize XMP sidecar metadata for photo file.
@@ -723,6 +726,7 @@ def sync_xmp_metadata(
         process_existing_favorites: Whether to process existing files
         metadata_overwrite: Whether to overwrite existing metadata
         dry_run: If True, don't write to disk
+        file_was_downloaded: Whether this file was just downloaded (vs already existed)
     """
     # Use the XMP generation function which internally checks if file exists
     # and whether to overwrite (won't overwrite external XMP files)
