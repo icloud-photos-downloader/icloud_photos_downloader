@@ -2,13 +2,15 @@
 
 import logging
 import os
-import piexif
 import tempfile
 import unittest
 from unittest.mock import MagicMock, patch
 from xml.etree import ElementTree
 
+import piexif
+
 """Tests for metadata merging logic"""
+
 
 class TestMergeMetadata(unittest.TestCase):
     """Test metadata merging with various policies"""
@@ -193,8 +195,9 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_preserves_xml_tree_from_existing(self):
         """Merge preserves special _xml_tree field from existing for XMP"""
-        from icloudpd.metadata_management import merge_metadata
         from xml.etree import ElementTree
+
+        from icloudpd.metadata_management import merge_metadata
 
         xml_tree = ElementTree.Element("test")
         existing = {"rating": 3, "_xml_tree": xml_tree}
@@ -240,7 +243,9 @@ class TestMergeMetadata(unittest.TestCase):
         self.assertEqual(result["rating"], 5)
         self.assertEqual(result["datetime"], "2023:12:01 09:00:00")
 
+
 """Tests for metadata reading functions (EXIF and XMP)"""
+
 
 class TestReadExifMetadata(unittest.TestCase):
     """Test reading EXIF metadata from photos"""
@@ -281,21 +286,21 @@ class TestReadExifMetadata(unittest.TestCase):
 
         # Create minimal JPEG with EXIF marker
         # SOI + APP1 (EXIF) + minimal image data + EOI
-        app1_marker = b'\xff\xe1'  # APP1 marker
-        app1_size = (len(exif_bytes) + 2).to_bytes(2, byteorder='big')
+        app1_marker = b"\xff\xe1"  # APP1 marker
+        app1_size = (len(exif_bytes) + 2).to_bytes(2, byteorder="big")
 
         jpeg_with_exif = (
-            b'\xff\xd8'  # SOI
+            b"\xff\xd8"  # SOI
             + app1_marker
             + app1_size
             + exif_bytes
             # Minimal JPEG image data (1x1 pixel)
-            + b'\xff\xdb\x00C\x00\x03\x02\x02\x03\x02\x02\x03\x03\x03\x03\x04\x03\x03\x04\x05\x08\x05\x05\x04\x04\x05\n\x07\x07\x06\x08\x0c\n\x0c\x0c\x0b\n\x0b\x0b\r\x0e\x12\x10\r\x0e\x11\x0e\x0b\x0b\x10\x16\x10\x11\x13\x14\x15\x15\x15\x0c\x0f\x17\x18\x16\x14\x18\x12\x14\x15\x14'
-            + b'\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00'
-            + b'\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08'
-            + b'\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            + b'\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00'
-            + b'\xff\xd9'  # EOI
+            + b"\xff\xdb\x00C\x00\x03\x02\x02\x03\x02\x02\x03\x03\x03\x03\x04\x03\x03\x04\x05\x08\x05\x05\x04\x04\x05\n\x07\x07\x06\x08\x0c\n\x0c\x0c\x0b\n\x0b\x0b\r\x0e\x12\x10\r\x0e\x11\x0e\x0b\x0b\x10\x16\x10\x11\x13\x14\x15\x15\x15\x0c\x0f\x17\x18\x16\x14\x18\x12\x14\x15\x14"
+            + b"\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00"
+            + b"\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08"
+            + b"\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            + b"\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00"
+            + b"\xff\xd9"  # EOI
         )
 
         with open(path, "wb") as f:
@@ -634,6 +639,7 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
 """Tests for metadata writing functions (EXIF and XMP)"""
 
+
 class TestWriteExifMetadata(unittest.TestCase):
     """Test writing EXIF metadata to photos"""
 
@@ -673,21 +679,21 @@ class TestWriteExifMetadata(unittest.TestCase):
 
         # Create minimal JPEG with EXIF marker
         # SOI + APP1 (EXIF) + minimal image data + EOI
-        app1_marker = b'\xff\xe1'  # APP1 marker
-        app1_size = (len(exif_bytes) + 2).to_bytes(2, byteorder='big')
+        app1_marker = b"\xff\xe1"  # APP1 marker
+        app1_size = (len(exif_bytes) + 2).to_bytes(2, byteorder="big")
 
         jpeg_with_exif = (
-            b'\xff\xd8'  # SOI
+            b"\xff\xd8"  # SOI
             + app1_marker
             + app1_size
             + exif_bytes
             # Minimal JPEG image data (1x1 pixel)
-            + b'\xff\xdb\x00C\x00\x03\x02\x02\x03\x02\x02\x03\x03\x03\x03\x04\x03\x03\x04\x05\x08\x05\x05\x04\x04\x05\n\x07\x07\x06\x08\x0c\n\x0c\x0c\x0b\n\x0b\x0b\r\x0e\x12\x10\r\x0e\x11\x0e\x0b\x0b\x10\x16\x10\x11\x13\x14\x15\x15\x15\x0c\x0f\x17\x18\x16\x14\x18\x12\x14\x15\x14'
-            + b'\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00'
-            + b'\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08'
-            + b'\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            + b'\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00'
-            + b'\xff\xd9'  # EOI
+            + b"\xff\xdb\x00C\x00\x03\x02\x02\x03\x02\x02\x03\x03\x03\x03\x04\x03\x03\x04\x05\x08\x05\x05\x04\x04\x05\n\x07\x07\x06\x08\x0c\n\x0c\x0c\x0b\n\x0b\x0b\r\x0e\x12\x10\r\x0e\x11\x0e\x0b\x0b\x10\x16\x10\x11\x13\x14\x15\x15\x15\x0c\x0f\x17\x18\x16\x14\x18\x12\x14\x15\x14"
+            + b"\xff\xc0\x00\x0b\x08\x00\x01\x00\x01\x01\x01\x11\x00"
+            + b"\xff\xc4\x00\x14\x00\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x08"
+            + b"\xff\xc4\x00\x14\x10\x01\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00"
+            + b"\xff\xda\x00\x08\x01\x01\x00\x00?\x00\x7f\x00"
+            + b"\xff\xd9"  # EOI
         )
 
         with open(path, "wb") as f:
@@ -1055,6 +1061,7 @@ class TestBuildMetadata(unittest.TestCase):
     def test_build_metadata(self) -> None:
         from datetime import datetime
         from typing import Any, Dict
+
         from foundation import version_info
         from icloudpd.metadata_management import build_metadata
 
@@ -1085,7 +1092,8 @@ class TestBuildMetadata(unittest.TestCase):
         # Test full metadata record
         metadata = build_metadata(assetRecordStub)
         self.assertEqual(
-            metadata["XMPToolkit"], "icloudpd " + version_info.version + "+" + version_info.commit_sha
+            metadata["XMPToolkit"],
+            "icloudpd " + version_info.version + "+" + version_info.commit_sha,
         )
         self.assertEqual(metadata["Title"], "Title Here")
         self.assertEqual(metadata["Description"], "Caption Here")

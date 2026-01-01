@@ -46,13 +46,13 @@ from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
+from icloudpd.metadata_management import sync_exif_metadata, sync_xmp_metadata
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
-from icloudpd.metadata_management import sync_exif_metadata, sync_xmp_metadata
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 

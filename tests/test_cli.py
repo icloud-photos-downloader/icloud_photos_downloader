@@ -539,7 +539,9 @@ class CliTestCase(TestCase):
             )
         # Test --process-existing-favorites flag
         self.assertEqual(
-            parse(["--username", "abc", "--process-existing-favorites", "--favorite-to-rating", "5"]),
+            parse(
+                ["--username", "abc", "--process-existing-favorites", "--favorite-to-rating", "5"]
+            ),
             (
                 GlobalConfig(
                     help=False,

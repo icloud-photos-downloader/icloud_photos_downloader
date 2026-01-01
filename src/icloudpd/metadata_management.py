@@ -19,7 +19,6 @@ from foundation.core import compose
 from foundation.predicates import not_
 from foundation.string_utils import endswith, lower, startswith
 
-
 # ============================================================================
 # Metadata Merging
 # ============================================================================
@@ -271,7 +270,9 @@ def build_metadata(asset_record: dict[str, Any]) -> dict[str, Any]:
     ) or (
         "isDeleted" in asset_record["fields"] and asset_record["fields"]["isDeleted"]["value"] == 1
     ):
-        metadata["Rating"] = -1  # -1 means rejected: https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata#image-rating
+        metadata[
+            "Rating"
+        ] = -1  # -1 means rejected: https://www.iptc.org/std/photometadata/specification/IPTC-PhotoMetadata#image-rating
     # only mark photo as favorite if not hidden or deleted
     elif (
         "isFavorite" in asset_record["fields"]
@@ -540,7 +541,9 @@ def write_xmp_metadata(
             # Create minimal XMP structure
             from foundation import version_info
 
-            xmptk = metadata.get("xmptk", "icloudpd " + version_info.version + "+" + version_info.commit_sha)
+            xmptk = metadata.get(
+                "xmptk", "icloudpd " + version_info.version + "+" + version_info.commit_sha
+            )
             root = ElementTree.Element("x:xmpmeta", {"xmlns:x": "adobe:ns:meta/", "x:xmptk": xmptk})
             rdf = ElementTree.SubElement(
                 root, "rdf:RDF", {"xmlns:rdf": "http://www.w3.org/1999/02/22-rdf-syntax-ns#"}
@@ -686,7 +689,10 @@ def sync_exif_metadata(
         date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
         logger.debug("Setting EXIF timestamp for %s: %s", download_path, date_str)
         write_exif_metadata(
-            logger, download_path, {"datetime": created_date.strftime("%Y:%m:%d %H:%M:%S")}, dry_run=False
+            logger,
+            download_path,
+            {"datetime": created_date.strftime("%Y:%m:%d %H:%M:%S")},
+            dry_run=False,
         )
 
 
