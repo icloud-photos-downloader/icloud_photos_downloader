@@ -2,12 +2,25 @@
 
 import logging
 import os
+import shutil
 import tempfile
 import unittest
-from unittest.mock import MagicMock, patch
+from datetime import datetime
+from typing import Any, Dict
 from xml.etree import ElementTree
 
 import piexif
+
+from foundation import version_info
+from icloudpd.metadata_management import (
+    build_metadata,
+    can_write_xmp_file,
+    merge_metadata,
+    read_exif_metadata,
+    read_xmp_metadata,
+    write_exif_metadata,
+    write_xmp_metadata,
+)
 
 """Tests for metadata merging logic"""
 
@@ -17,7 +30,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_empty_dicts(self):
         """Merge two empty dicts returns empty dict"""
-        from icloudpd.metadata_management import merge_metadata
 
         result = merge_metadata(existing={}, desired={}, overwrite=False)
 
@@ -25,7 +37,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_no_existing_no_overwrite(self):
         """With no existing data, desired values are written"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -37,7 +48,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_existing_values_no_overwrite_preserves(self):
         """Without overwrite, existing values are preserved"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -50,7 +60,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_existing_values_with_overwrite_replaces(self):
         """With overwrite, desired values replace existing"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -63,7 +72,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_partial_existing_no_overwrite_adds_missing(self):
         """Without overwrite, missing fields are added from desired"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -76,7 +84,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_partial_existing_with_overwrite_replaces_all(self):
         """With overwrite, all desired values replace existing"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -89,7 +96,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_preserves_existing_unknown_fields(self):
         """Merge preserves fields in existing that aren't in desired"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "custom_field": "preserve me", "another": 42}
         desired = {"rating": 5}
@@ -103,7 +109,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_with_overwrite_preserves_existing_unknown_fields(self):
         """Merge with overwrite still preserves unknown fields from existing"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "custom_field": "preserve me"}
         desired = {"rating": 5}
@@ -116,7 +121,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_none_values_in_desired_no_overwrite(self):
         """None values in desired don't overwrite existing without overwrite flag"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": None, "datetime": "2024:01:15 10:30:00"}
@@ -129,7 +133,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_none_values_in_desired_with_overwrite_skips(self):
         """None values in desired are skipped even with overwrite"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": None, "datetime": "2024:01:15 10:30:00"}
@@ -142,7 +145,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_fields_to_update_only_rating(self):
         """With fields_to_update, only specified fields are merged"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -155,7 +157,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_fields_to_update_only_rating_with_overwrite(self):
         """With fields_to_update and overwrite, only specified field is overwritten"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -168,7 +169,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_fields_to_update_adds_missing_field(self):
         """With fields_to_update, can add missing field if not in existing"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"datetime": "2023:12:01 09:00:00"}
         desired = {"rating": 5, "title": "Photo"}
@@ -182,7 +182,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_fields_to_update_empty_set_does_nothing(self):
         """With empty fields_to_update, nothing from desired is merged"""
-        from icloudpd.metadata_management import merge_metadata
 
         existing = {"rating": 3, "datetime": "2023:12:01 09:00:00"}
         desired = {"rating": 5, "datetime": "2024:01:15 10:30:00"}
@@ -195,9 +194,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_preserves_xml_tree_from_existing(self):
         """Merge preserves special _xml_tree field from existing for XMP"""
-        from xml.etree import ElementTree
-
-        from icloudpd.metadata_management import merge_metadata
 
         xml_tree = ElementTree.Element("test")
         existing = {"rating": 3, "_xml_tree": xml_tree}
@@ -211,7 +207,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_complex_scenario_process_existing_favorites(self):
         """Complex scenario: --process-existing-favorites workflow"""
-        from icloudpd.metadata_management import merge_metadata
 
         # Scenario: JPEG has rating=3, we want to set rating=5 for favorite
         # But without --metadata-overwrite, should preserve existing
@@ -228,7 +223,6 @@ class TestMergeMetadata(unittest.TestCase):
 
     def test_merge_complex_scenario_with_metadata_overwrite(self):
         """Complex scenario: --process-existing-favorites with --metadata-overwrite"""
-        from icloudpd.metadata_management import merge_metadata
 
         # Scenario: JPEG has rating=3, we want to set rating=5 for favorite
         # With --metadata-overwrite, should replace
@@ -255,17 +249,11 @@ class TestReadExifMetadata(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def _create_jpeg_with_exif(self, filename: str, exif_dict: dict) -> str:
         """Helper to create a JPEG with specific EXIF data"""
         path = os.path.join(self.temp_dir, filename)
-
-        # Create a minimal JPEG by dumping EXIF and using a tiny base image
-        # This works around piexif.insert limitations
-        import io
 
         # If no EXIF dict provided, create minimal one
         if not exif_dict:
@@ -310,7 +298,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_with_rating_and_datetime(self):
         """Read EXIF with both rating and datetime"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         exif_dict = {
             "0th": {18246: 5},  # Rating = 5
@@ -325,7 +312,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_with_only_rating(self):
         """Read EXIF with only rating, no datetime"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         exif_dict = {
             "0th": {18246: 3},  # Rating = 3
@@ -339,7 +325,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_with_only_datetime(self):
         """Read EXIF with only datetime, no rating"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         exif_dict = {
             "Exif": {36867: b"2024:01:15 10:30:00"},
@@ -353,7 +338,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_empty(self):
         """Read EXIF from file with no EXIF data"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         path = self._create_jpeg_with_exif("test.jpg", {})
 
@@ -366,7 +350,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_corrupt_file(self):
         """Read EXIF from corrupt file returns empty dict"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         path = os.path.join(self.temp_dir, "corrupt.jpg")
         with open(path, "wb") as f:
@@ -380,7 +363,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_nonexistent_file(self):
         """Read EXIF from nonexistent file returns empty dict"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         path = os.path.join(self.temp_dir, "nonexistent.jpg")
 
@@ -392,7 +374,6 @@ class TestReadExifMetadata(unittest.TestCase):
 
     def test_read_exif_preserves_unknown_fields(self):
         """Read EXIF preserves fields we don't explicitly care about"""
-        from icloudpd.metadata_management import read_exif_metadata
 
         exif_dict = {
             "0th": {
@@ -427,8 +408,6 @@ class TestReadXmpMetadata(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def _create_xmp_file(self, filename: str, xmp_content: str) -> str:
@@ -440,7 +419,6 @@ class TestReadXmpMetadata(unittest.TestCase):
 
     def test_read_xmp_with_rating(self):
         """Read XMP with rating field"""
-        from icloudpd.metadata_management import read_xmp_metadata
 
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="icloudpd 1.0">
@@ -459,7 +437,6 @@ class TestReadXmpMetadata(unittest.TestCase):
 
     def test_read_xmp_with_multiple_fields(self):
         """Read XMP with rating, datetime, and title"""
-        from icloudpd.metadata_management import read_xmp_metadata
 
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="icloudpd 1.0">
@@ -483,7 +460,6 @@ class TestReadXmpMetadata(unittest.TestCase):
 
     def test_read_xmp_no_rating(self):
         """Read XMP without rating field"""
-        from icloudpd.metadata_management import read_xmp_metadata
 
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="icloudpd 1.0">
@@ -502,7 +478,6 @@ class TestReadXmpMetadata(unittest.TestCase):
 
     def test_read_xmp_file_not_exists(self):
         """Read XMP when file doesn't exist returns empty dict"""
-        from icloudpd.metadata_management import read_xmp_metadata
 
         path = os.path.join(self.temp_dir, "nonexistent.xmp")
         result = read_xmp_metadata(self.logger, path)
@@ -512,7 +487,6 @@ class TestReadXmpMetadata(unittest.TestCase):
 
     def test_read_xmp_corrupt_xml(self):
         """Read XMP with corrupt XML returns empty dict"""
-        from icloudpd.metadata_management import read_xmp_metadata
 
         xmp_content = """<?xml version="1.0"?>
 <broken><xml>no closing tag"""
@@ -526,7 +500,6 @@ class TestReadXmpMetadata(unittest.TestCase):
 
     def test_read_xmp_preserves_unknown_fields(self):
         """Read XMP preserves unknown fields for later writing"""
-        from icloudpd.metadata_management import read_xmp_metadata
 
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
 <x:xmpmeta xmlns:x="adobe:ns:meta/" x:xmptk="Adobe Lightroom">
@@ -561,8 +534,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def _create_xmp_file(self, filename: str, xmptk: str) -> str:
@@ -579,7 +550,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
     def test_can_write_nonexistent_file(self):
         """Can write to XMP file that doesn't exist"""
-        from icloudpd.metadata_management import can_write_xmp_file
 
         path = os.path.join(self.temp_dir, "new.xmp")
         result = can_write_xmp_file(self.logger, path)
@@ -588,7 +558,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
     def test_can_write_icloudpd_file(self):
         """Can write to XMP file created by icloudpd"""
-        from icloudpd.metadata_management import can_write_xmp_file
 
         path = self._create_xmp_file("test.xmp", "icloudpd 1.0+abc123")
         result = can_write_xmp_file(self.logger, path)
@@ -597,7 +566,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
     def test_cannot_write_external_tool_file(self):
         """Cannot write to XMP file created by external tool"""
-        from icloudpd.metadata_management import can_write_xmp_file
 
         path = self._create_xmp_file("test.xmp", "Adobe Lightroom")
         result = can_write_xmp_file(self.logger, path)
@@ -606,7 +574,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
     def test_cannot_write_another_external_tool(self):
         """Cannot write to XMP file created by another external tool"""
-        from icloudpd.metadata_management import can_write_xmp_file
 
         path = self._create_xmp_file("test.xmp", "Darktable")
         result = can_write_xmp_file(self.logger, path)
@@ -615,7 +582,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
     def test_can_write_empty_xmptk(self):
         """Can write to XMP file with empty xmptk (treat as new)"""
-        from icloudpd.metadata_management import can_write_xmp_file
 
         path = self._create_xmp_file("test.xmp", "")
         result = can_write_xmp_file(self.logger, path)
@@ -625,7 +591,6 @@ class TestCanWriteXmpFile(unittest.TestCase):
 
     def test_cannot_write_corrupt_xml(self):
         """Cannot write to corrupt XMP file (safety)"""
-        from icloudpd.metadata_management import can_write_xmp_file
 
         path = os.path.join(self.temp_dir, "corrupt.xmp")
         with open(path, "w") as f:
@@ -648,17 +613,11 @@ class TestWriteExifMetadata(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def _create_jpeg_with_exif(self, filename: str, exif_dict: dict) -> str:
         """Helper to create a JPEG with specific EXIF data"""
         path = os.path.join(self.temp_dir, filename)
-
-        # Create a minimal JPEG by dumping EXIF and using a tiny base image
-        # This works around piexif.insert limitations
-        import io
 
         # If no EXIF dict provided, create minimal one
         if not exif_dict:
@@ -703,7 +662,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_rating_only(self):
         """Write only rating to EXIF"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"rating": 5}
@@ -716,7 +674,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_datetime_only(self):
         """Write only datetime to EXIF"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"datetime": "2024:01:15 10:30:00"}
@@ -731,7 +688,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_rating_and_datetime(self):
         """Write both rating and datetime to EXIF"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"rating": 4, "datetime": "2024:01:15 10:30:00"}
@@ -745,7 +701,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_preserves_existing_unknown_fields(self):
         """Writing EXIF preserves existing unknown fields"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         # Create JPEG with existing unknown EXIF fields
         existing_exif = {
@@ -767,7 +722,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_updates_existing_rating(self):
         """Writing EXIF updates existing rating value"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         # Create JPEG with existing rating
         existing_exif = {"0th": {18246: 3}}
@@ -783,7 +737,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_empty_metadata_does_nothing(self):
         """Writing empty metadata dict doesn't crash"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {}
@@ -793,7 +746,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_corrupt_file_handles_gracefully(self):
         """Writing to corrupt file is handled gracefully"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         path = os.path.join(self.temp_dir, "corrupt.jpg")
         with open(path, "wb") as f:
@@ -809,7 +761,6 @@ class TestWriteExifMetadata(unittest.TestCase):
 
     def test_write_exif_none_values_skipped(self):
         """None values in metadata are skipped"""
-        from icloudpd.metadata_management import write_exif_metadata
 
         path = self._create_jpeg_with_exif("test.jpg", {})
         metadata = {"rating": None, "datetime": "2024:01:15 10:30:00"}
@@ -830,8 +781,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
         self.temp_dir = tempfile.mkdtemp()
 
     def tearDown(self):
-        import shutil
-
         shutil.rmtree(self.temp_dir, ignore_errors=True)
 
     def _create_xmp_file(self, filename: str, xmp_content: str) -> str:
@@ -847,7 +796,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_creates_new_file_with_rating(self):
         """Writing XMP creates new file when it doesn't exist"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         xmp_path = os.path.join(self.temp_dir, "test.xmp")
         metadata = {"rating": 5}
@@ -865,7 +813,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_creates_new_file_with_multiple_fields(self):
         """Writing XMP creates new file with multiple metadata fields"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         xmp_path = os.path.join(self.temp_dir, "test.xmp")
         metadata = {
@@ -889,7 +836,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_updates_existing_icloudpd_file_rating(self):
         """Writing XMP updates rating in existing icloudpd-created file"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         # Create existing XMP with rating=3
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
@@ -913,7 +859,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_preserves_existing_unknown_fields(self):
         """Writing XMP preserves unknown fields in existing file"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         # Create XMP with unknown fields
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
@@ -947,7 +892,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_adds_new_field_to_existing_file(self):
         """Writing XMP adds new field to existing file"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         # Create XMP without rating
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
@@ -974,7 +918,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_dry_run_does_not_write(self):
         """Dry run mode doesn't actually write XMP file"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         xmp_path = os.path.join(self.temp_dir, "test.xmp")
         metadata = {"rating": 5}
@@ -986,7 +929,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_dry_run_does_not_update_existing(self):
         """Dry run mode doesn't update existing XMP file"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         # Create XMP with rating=3
         xmp_content = """<?xml version="1.0" encoding="utf-8"?>
@@ -1010,7 +952,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_none_values_skipped(self):
         """None values in metadata are not written"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         xmp_path = os.path.join(self.temp_dir, "test.xmp")
         metadata = {"rating": None, "title": "My Photo"}
@@ -1027,7 +968,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_empty_metadata_creates_minimal_file(self):
         """Writing empty metadata creates minimal valid XMP"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         xmp_path = os.path.join(self.temp_dir, "test.xmp")
         metadata = {}
@@ -1041,7 +981,6 @@ class TestWriteXmpMetadata(unittest.TestCase):
 
     def test_write_xmp_sets_icloudpd_xmptk(self):
         """New XMP file has icloudpd xmptk attribute"""
-        from icloudpd.metadata_management import write_xmp_metadata
 
         xmp_path = os.path.join(self.temp_dir, "test.xmp")
         metadata = {"rating": 5}
@@ -1059,12 +998,6 @@ class TestBuildMetadata(unittest.TestCase):
     """Test build_metadata function from XMP sidecar"""
 
     def test_build_metadata(self) -> None:
-        from datetime import datetime
-        from typing import Any, Dict
-
-        from foundation import version_info
-        from icloudpd.metadata_management import build_metadata
-
         assetRecordStub: Dict[str, Dict[str, Any]] = {
             "fields": {
                 "captionEnc": {"value": "VGl0bGUgSGVyZQ==", "type": "ENCRYPTED_BYTES"},
