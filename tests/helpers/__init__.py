@@ -269,8 +269,12 @@ def run_main_env(
     import re
 
     # Remove timestamp and log level prefixes like "2025-08-27 21:32:15 ERROR    "
+    # Also filter out plugin discovery messages
     cleaned_lines = []
     for line in raw_output.splitlines():
+        # Skip plugin discovery messages
+        if "Discovered plugin" in line:
+            continue
         # Match pattern: YYYY-MM-DD HH:MM:SS LEVEL<spaces>
         cleaned_line = re.sub(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2} \w+\s+", "", line)
         cleaned_lines.append(cleaned_line)

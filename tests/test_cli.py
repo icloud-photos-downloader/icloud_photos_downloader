@@ -14,6 +14,7 @@ from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
+from icloudpd.plugins.manager import PluginManager
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -74,8 +75,9 @@ class CliTestCase(TestCase):
 
     def test_cli_parser(self) -> None:
         self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
+        global_config, user_configs, _ = parse(["--help"])
         self.assertEqual(
-            parse(["--help"]),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=True,
@@ -93,13 +95,15 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [],
             ),
             "--help",
         )
+        global_config, user_configs, _ = parse(["--mfa-provider", "weBui"])
         self.assertEqual(
-            parse(["--mfa-provider", "weBui"]),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -117,22 +121,24 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.WEBUI,
+                    plugins=None,
                 ),
                 [],
             ),
             "--mfa-provider weBui",
         )
+        global_config, user_configs, _ = parse(
+            [
+                "--password-provider",
+                "weBui",
+                "--password-provider",
+                "CoNSoLe",
+                "--password-provider",
+                "WeBuI",
+            ]
+        )
         self.assertEqual(
-            parse(
-                [
-                    "--password-provider",
-                    "weBui",
-                    "--password-provider",
-                    "CoNSoLe",
-                    "--password-provider",
-                    "WeBuI",
-                ]
-            ),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -146,13 +152,15 @@ class CliTestCase(TestCase):
                     watch_with_interval=None,
                     password_providers=[PasswordProvider.WEBUI, PasswordProvider.CONSOLE],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [],
             ),
             "password-providers",
         )
+        global_config, user_configs, _ = parse(["--version", "--use-os-locale"])
         self.assertEqual(
-            parse(["--version", "--use-os-locale"]),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -170,15 +178,17 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [],
             ),
             "--version --use-os-locale",
         )
+        global_config, user_configs, _ = parse(
+            ["--directory", "abc", "--username", "u1", "--username", "u2", "--directory", "def"]
+        )
         self.assertEqual(
-            parse(
-                ["--directory", "abc", "--username", "u1", "--username", "u2", "--directory", "def"]
-            ),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -196,6 +206,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [
                     UserConfig(
@@ -288,19 +299,20 @@ class CliTestCase(TestCase):
             ),
             "defaults propagated and overwritten",
         )
+        global_config, user_configs, _ = parse(
+            [
+                "-d",
+                "abc",
+                "--username",
+                "u1",
+                "--skip-created-before",
+                "2025-01-02",
+                "--skip-created-after",
+                "2d",
+            ]
+        )
         self.assertEqual(
-            parse(
-                [
-                    "-d",
-                    "abc",
-                    "--username",
-                    "u1",
-                    "--skip-created-before",
-                    "2025-01-02",
-                    "--skip-created-after",
-                    "2d",
-                ]
-            ),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -318,6 +330,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [
                     UserConfig(
@@ -369,8 +382,9 @@ class CliTestCase(TestCase):
             ),
             "valid skip-created parsed",
         )
+        global_config, user_configs, _ = parse(["--username", "abc", "--favorite-to-rating"])
         self.assertEqual(
-            parse(["--username", "abc", "--favorite-to-rating"]),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -388,6 +402,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [
                     UserConfig(
@@ -437,8 +452,9 @@ class CliTestCase(TestCase):
             ),
             "Favorite-to-rating is default if no parameter",
         )
+        global_config, user_configs, _ = parse(["--username", "abc", "--favorite-to-rating", "1"])
         self.assertEqual(
-            parse(["--username", "abc", "--favorite-to-rating", "1"]),
+            (global_config, user_configs),
             (
                 GlobalConfig(
                     help=False,
@@ -456,6 +472,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
                 ),
                 [
                     UserConfig(
@@ -729,7 +746,13 @@ class CliTestCase(TestCase):
             for text in expected:
                 self.assertIn(text, self._caplog.text)
             for text in not_expected:
-                self.assertNotIn(text, self._caplog.text)
+                # Filter out plugin discovery messages which always run at startup
+                log_text = "\n".join(
+                    line
+                    for line in self._caplog.text.split("\n")
+                    if "Discovered plugin" not in line
+                )
+                self.assertNotIn(text, log_text)
 
     def test_tqdm(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -896,3 +919,226 @@ class CliTestCase(TestCase):
             ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
+
+
+class PluginCliTestCase(TestCase):
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self, caplog: pytest.LogCaptureFixture) -> None:
+        self._caplog = caplog
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+
+    def test_plugin_help_contains_plugin_options(self) -> None:
+        result = format_help()
+        # Test that plugin options are present in help
+        self.assertIn("Plugin Options:", result)
+        self.assertIn("--plugin", result)
+        self.assertIn("--list-plugins", result)
+        self.assertIn("--plugin-help", result)
+        self.assertIn("Enable a plugin (can be used multiple times)", result)
+        self.assertIn("List available plugins and exit", result)
+        self.assertIn("Show help for a specific plugin", result)
+
+    def test_plugin_parser_single_plugin(self) -> None:
+        self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
+        global_config, user_configs, _ = parse(["--plugin", "demo"])
+        self.assertEqual(
+            (global_config, user_configs),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                    plugins=["demo"],
+                ),
+                [],
+            ),
+            "--plugin demo",
+        )
+
+    def test_plugin_parser_multiple_plugins(self) -> None:
+        self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
+        global_config, user_configs, _ = parse(["--plugin", "demo", "--plugin", "immich"])
+        self.assertEqual(
+            (global_config, user_configs),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                    plugins=["demo", "immich"],
+                ),
+                [],
+            ),
+            "--plugin demo --plugin immich",
+        )
+
+    def test_plugin_parser_with_user_config(self) -> None:
+        self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
+        global_config, user_configs, _ = parse(
+            [
+                "--plugin",
+                "demo",
+                "--directory",
+                "test_dir",
+                "--username",
+                "test@example.com",
+            ]
+        )
+        self.assertEqual(
+            (global_config, user_configs),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                    plugins=["demo"],
+                ),
+                [
+                    UserConfig(
+                        directory="test_dir",
+                        username="test@example.com",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=[AssetVersionSize.ORIGINAL],
+                        live_photo_size=LivePhotoVersionSize.ORIGINAL,
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        favorite_to_rating=None,
+                        process_existing_favorites=False,
+                        metadata_overwrite=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
+                        align_raw=RawTreatmentPolicy.AS_IS,
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    ),
+                ],
+            ),
+            "--plugin demo with user config",
+        )
+
+    def test_plugin_parser_no_plugins(self) -> None:
+        self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
+        global_config, user_configs, _ = parse(["--version"])
+        self.assertEqual(
+            (global_config, user_configs),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=True,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                    plugins=None,
+                ),
+                [],
+            ),
+            "no plugins specified",
+        )
+
+    def test_plugin_manager_discovers_demo_plugin(self) -> None:
+        plugin_manager = PluginManager()
+        plugin_manager.discover()
+        available_plugins = plugin_manager.list_available()
+        self.assertIn("demo", available_plugins, "demo plugin should be discovered")
+
+    def test_plugin_manager_get_info(self) -> None:
+        plugin_manager = PluginManager()
+        plugin_manager.discover()
+        info = plugin_manager.get_plugin_info("demo")
+        self.assertEqual(info["name"], "demo")
+        self.assertEqual(info["version"], "1.0.0")
+        self.assertEqual(info["description"], "Demo plugin showing hook context (development tool)")
+
+    def test_plugin_list_plugins_exit(self) -> None:
+        result = run_main(["--list-plugins"])
+        self.assertEqual(result.exit_code, 0, "exit code")
+        self.assertIn("Available plugins:", result.output)
+        self.assertIn("demo:", result.output)
+
+    def test_plugin_help_exit(self) -> None:
+        result = run_main(["--plugin-help", "demo"])
+        self.assertEqual(result.exit_code, 0, "exit code")
+        self.assertIn("demo Plugin", result.output)
+        self.assertIn("Version: 1.0.0", result.output)
+        self.assertIn("Demo Plugin Options", result.output)
+        self.assertIn("--demo-verbose", result.output)
+        self.assertIn("--demo-compact", result.output)
+
+    def test_plugin_help_nonexistent_plugin(self) -> None:
+        result = run_main(["--plugin-help", "nonexistent"])
+        self.assertEqual(result.exit_code, 0, "exit code")
+        self.assertIn("Plugin 'nonexistent' not found", result.output)
+        self.assertIn("Available:", result.output)

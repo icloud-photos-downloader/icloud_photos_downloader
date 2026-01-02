@@ -50,6 +50,7 @@ from icloudpd.metadata_management import sync_exif_metadata, sync_xmp_metadata
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
+from icloudpd.plugins.manager import PluginManager
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
@@ -259,11 +260,23 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
     return logger
 
 
-def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
+def run_with_configs(
+    global_config: GlobalConfig,
+    user_configs: Sequence[UserConfig],
+    plugin_manager: PluginManager | None,
+) -> int:
     """Run the application with the new configuration system"""
 
     # Create shared logger
     logger = create_logger(global_config)
+
+    # Update plugin manager with runtime configs (if plugin manager exists)
+    if plugin_manager:
+        plugin_manager.set_plugin_config(
+            plugin_manager.plugin_config,  # Keep existing namespace
+            global_config,
+            user_configs,
+        )
 
     # Create shared status exchange for web server and progress tracking
     shared_status_exchange = StatusExchange()
@@ -284,7 +297,9 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
     if not watch_interval:
         # No watch mode - process each user once and exit
-        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+        return _process_all_users_once(
+            global_config, user_configs, logger, shared_status_exchange, plugin_manager
+        )
     else:
         # Watch mode - infinite loop processing all users, then wait
         skip_bar = not os.environ.get("FORCE_TQDM") and (
@@ -296,7 +311,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         while True:
             # Process all user configs in this iteration
             result = _process_all_users_once(
-                global_config, user_configs, logger, shared_status_exchange
+                global_config, user_configs, logger, shared_status_exchange, plugin_manager
             )
 
             # If any critical operation (auth-only, list commands) succeeded, exit
@@ -340,6 +355,7 @@ def _process_all_users_once(
     user_configs: Sequence[UserConfig],
     logger: logging.Logger,
     shared_status_exchange: StatusExchange,
+    plugin_manager: PluginManager | None,
 ) -> int:
     """Process all user configs once (used by both single run and watch mode)"""
 
@@ -426,6 +442,7 @@ def _process_all_users_once(
                 partial(
                     download_builder,
                     logger,
+                    plugin_manager,
                     user_config.folder_structure,
                     user_config.directory,
                     user_config.sizes,
@@ -474,6 +491,7 @@ def _process_all_users_once(
                 downloader,
                 notificator,
                 lp_filename_generator,
+                plugin_manager,
             )
 
             # Handle the result using pattern matching
@@ -616,6 +634,7 @@ def skip_created_after_message(
 
 def download_builder(
     logger: logging.Logger,
+    plugin_manager: PluginManager | None,
     folder_structure: str,
     directory: str,
     primary_sizes: Sequence[AssetVersionSize],
@@ -666,7 +685,10 @@ def download_builder(
 
     try:
         versions, filename_overrides = disambiguate_filenames(
-            photo.versions_with_raw_policy(raw_policy), primary_sizes, photo, lp_filename_generator
+            photo.versions_with_raw_policy(raw_policy),
+            primary_sizes,
+            photo,
+            lp_filename_generator,
         )
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
@@ -741,6 +763,19 @@ def download_builder(
                 counter.increment()
                 logger.debug("%s already exists", truncate_middle(download_path, 96))
 
+                # HOOK: File already exists/downloads
+                if plugin_manager:
+                    try:
+                        plugin_manager.call_hook(
+                            "on_download_exists",
+                            download_path=download_path,
+                            photo_filename=photo_filename,
+                            download_size=download_size,
+                            photo=photo,
+                            dry_run=dry_run,
+                        )
+                    except Exception as e:
+                        logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
         if not file_exists:
             counter.reset()
             if only_print_filenames:
@@ -795,6 +830,20 @@ def download_builder(
                         # Set file mtime AFTER metadata writes to preserve the timestamp
                         if not dry_run:
                             download.set_utime(download_path, created_date)
+
+                        # HOOK: File downloaded
+                        if plugin_manager:
+                            try:
+                                plugin_manager.call_hook(
+                                    "on_download_downloaded",
+                                    download_path=download_path,
+                                    photo_filename=photo_filename,
+                                    download_size=download_size,
+                                    photo=photo,
+                                    dry_run=dry_run,
+                                )
+                            except Exception as e:
+                                logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
                     case _:
                         # Error ADT - store it
                         last_result = download_result
@@ -824,6 +873,20 @@ def download_builder(
                     dry_run=dry_run,
                     file_was_downloaded=False,
                 )
+
+        # HOOK: Download complete or existing (always happens)
+        if plugin_manager:
+            try:
+                plugin_manager.call_hook(
+                    "on_download_complete",
+                    download_path=download_path,
+                    photo_filename=photo_filename,
+                    download_size=download_size,
+                    photo=photo,
+                    dry_run=dry_run,
+                )
+            except Exception as e:
+                logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -881,6 +944,21 @@ def download_builder(
                             lp_file_exists = os.path.isfile(lp_download_path)
                     if lp_file_exists:
                         logger.debug("%s already exists", truncate_middle(lp_download_path, 96))
+
+                        # HOOK: File exists for live photo
+                        if plugin_manager:
+                            try:
+                                plugin_manager.call_hook(
+                                    "on_download_exists_live",
+                                    download_path=lp_download_path,
+                                    photo_filename=lp_photo_filename,
+                                    download_size=lp_size,
+                                    photo=photo,
+                                    dry_run=dry_run,
+                                )
+                            except Exception as e:
+                                logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
                 if not lp_file_exists:
                     truncated_path = truncate_middle(lp_download_path, 96)
                     logger.debug("Downloading %s...", truncated_path)
@@ -897,6 +975,21 @@ def download_builder(
                     match download_result:
                         case DownloadMediaSuccess():
                             logger.info("Downloaded %s", truncated_path)
+
+                            # HOOK: Live photo downloaded
+                            if plugin_manager:
+                                try:
+                                    plugin_manager.call_hook(
+                                        "on_download_downloaded_live",
+                                        download_path=lp_download_path,
+                                        photo_filename=lp_photo_filename,
+                                        download_size=lp_size,
+                                        photo=photo,
+                                        dry_run=dry_run,
+                                    )
+                                except Exception as e:
+                                    logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
                             # Update last_result to success if it was skipped
                             match last_result:
                                 case DownloadMediaSkipped():
@@ -914,6 +1007,32 @@ def download_builder(
                                 case _:
                                     # Keep existing error
                                     pass
+
+            # HOOK: Live photos downloaded or skipped or exist... always run
+            if plugin_manager:
+                try:
+                    plugin_manager.call_hook(
+                        "on_download_complete_live",
+                        download_path=download_path,
+                        photo_filename=photo_filename,
+                        download_size=download_size,
+                        photo=photo,
+                        dry_run=dry_run,
+                    )
+                except Exception as e:
+                    logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
+    # HOOK: All file operations for image size sets complete
+    if plugin_manager:
+        try:
+            plugin_manager.call_hook(
+                "on_download_all_sizes_complete",
+                photo=photo,
+                dry_run=dry_run,
+            )
+        except Exception as e:
+            logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
     return last_result
 
 
@@ -1009,6 +1128,7 @@ def core_single_run(
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], DownloadMediaResult],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
+    plugin_manager: PluginManager | None,
 ) -> int | CoreSingleRunErrorResult:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
@@ -1621,5 +1741,16 @@ def core_single_run(
 
         # In single run mode, we don't handle watch intervals - that's done at higher level
         break
+
+    # HOOK: Run completed
+    if plugin_manager:
+        try:
+            plugin_manager.call_hook(
+                "on_run_completed",
+                dry_run=user_config.dry_run,
+            )
+            plugin_manager.cleanup_all()
+        except Exception as e:
+            logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
 
     return 0
