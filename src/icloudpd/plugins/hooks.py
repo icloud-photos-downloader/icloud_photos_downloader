@@ -30,7 +30,7 @@ class DownloadHook(Protocol):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -41,7 +41,7 @@ class DownloadHook(Protocol):
         Args:
             download_path: Full path to the file that exists
             photo_filename: Base filename of the photo
-            download_size: Size variant (original, medium, thumb, etc.)
+            requested_size: Size variant requested (may differ from actual if fallback occurred)
             photo: The PhotoAsset object from iCloud
             dry_run: True if this is a dry run
 
@@ -55,7 +55,7 @@ class DownloadHook(Protocol):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -66,7 +66,7 @@ class DownloadHook(Protocol):
         Args:
             download_path: Full path to the downloaded file
             photo_filename: Base filename of the photo
-            download_size: Size variant that was downloaded
+            requested_size: Size variant requested (may differ from actual if fallback occurred)
             photo: The PhotoAsset object from iCloud
             dry_run: True if this is a dry run
 
@@ -80,7 +80,7 @@ class DownloadHook(Protocol):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -92,13 +92,13 @@ class DownloadHook(Protocol):
         Args:
             download_path: Full path to the file
             photo_filename: Base filename of the photo
-            download_size: Size variant processed
+            requested_size: Size variant requested (may differ from actual if fallback occurred)
             photo: The PhotoAsset object from iCloud
             dry_run: True if this is a dry run
 
         Example:
-            >>> def on_download_complete(self, download_path, download_size, **kwargs):
-            ...     self.files.append({"path": download_path, "size": download_size})
+            >>> def on_download_complete(self, download_path, requested_size, **kwargs):
+            ...     self.files.append({"path": download_path, "size": requested_size})
         """
         ...
 
@@ -110,7 +110,7 @@ class DownloadHook(Protocol):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -119,7 +119,7 @@ class DownloadHook(Protocol):
         Args:
             download_path: Full path to the .MOV file that exists
             photo_filename: Base filename of the photo
-            download_size: Size variant of live photo
+            requested_size: Size variant of live photo
             photo: The PhotoAsset object from iCloud
             dry_run: True if this is a dry run
         """
@@ -129,7 +129,7 @@ class DownloadHook(Protocol):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -138,7 +138,7 @@ class DownloadHook(Protocol):
         Args:
             download_path: Full path to the downloaded .MOV file
             photo_filename: Base filename of the photo
-            download_size: Size variant that was downloaded
+            requested_size: Size variant that was downloaded
             photo: The PhotoAsset object from iCloud
             dry_run: True if this is a dry run
         """
@@ -148,7 +148,7 @@ class DownloadHook(Protocol):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -159,7 +159,7 @@ class DownloadHook(Protocol):
         Args:
             download_path: Full path to the .MOV file
             photo_filename: Base filename of the photo
-            download_size: Size variant processed
+            requested_size: Size variant processed
             photo: The PhotoAsset object from iCloud
             dry_run: True if this is a dry run
         """

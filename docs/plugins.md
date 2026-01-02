@@ -218,20 +218,20 @@ Plugins can implement the following hooks to respond to download events:
 
 These hooks are called for each size variant (original, adjusted, medium, etc.) of a photo:
 
-#### `on_download_exists(download_path, photo_filename, download_size, photo, dry_run)`
+#### `on_download_exists(download_path, photo_filename, requested_size, photo, dry_run)`
 
 Called when a file already exists on disk (not downloaded).
 
 **Parameters:**
 - `download_path` (str): Full path to the file
 - `photo_filename` (str): Original filename from iCloud
-- `download_size` (VersionSize): Size variant (ORIGINAL, ADJUSTED, MEDIUM, etc.)
+- `requested_size` (VersionSize): Size variant requested (ORIGINAL, ADJUSTED, MEDIUM, etc.)
 - `photo` (PhotoAsset): Photo metadata object
 - `dry_run` (bool): True if running in dry-run mode
 
 **Use case:** Track which files already exist, skip processing for existing files
 
-#### `on_download_downloaded(download_path, photo_filename, download_size, photo, dry_run)`
+#### `on_download_downloaded(download_path, photo_filename, requested_size, photo, dry_run)`
 
 Called when a file is newly downloaded.
 
@@ -239,7 +239,7 @@ Called when a file is newly downloaded.
 
 **Use case:** Process newly downloaded files, upload to external service
 
-#### `on_download_complete(download_path, photo_filename, download_size, photo, dry_run)`
+#### `on_download_complete(download_path, photo_filename, requested_size, photo, dry_run)`
 
 Called after a size variant is fully processed (always runs, regardless of exists/downloaded).
 
@@ -251,19 +251,19 @@ Called after a size variant is fully processed (always runs, regardless of exist
 
 These hooks are called for live photo video components (.mov files):
 
-#### `on_download_exists_live(download_path, photo_filename, download_size, photo, dry_run)`
+#### `on_download_exists_live(download_path, photo_filename, requested_size, photo, dry_run)`
 
 Called when a live photo video already exists.
 
 **Parameters:** Same as `on_download_exists`
 
-#### `on_download_downloaded_live(download_path, photo_filename, download_size, photo, dry_run)`
+#### `on_download_downloaded_live(download_path, photo_filename, requested_size, photo, dry_run)`
 
 Called when a live photo video is newly downloaded.
 
 **Parameters:** Same as `on_download_exists`
 
-#### `on_download_complete_live(download_path, photo_filename, download_size, photo, dry_run)`
+#### `on_download_complete_live(download_path, photo_filename, requested_size, photo, dry_run)`
 
 Called after a live photo video is fully processed.
 
@@ -376,17 +376,17 @@ def on_download_downloaded(
     self,
     download_path: str,
     photo_filename: str,
-    download_size: VersionSize,
+    requested_size: VersionSize,
     photo: PhotoAsset,
     dry_run: bool,
 ) -> None:
     """Accumulate downloaded files"""
-    logger.info(f"Downloaded: {download_size.value} - {download_path}")
+    logger.info(f"Downloaded: {requested_size.value} - {download_path}")
 
     # ACCUMULATE - don't process yet!
     self.current_files.append({
         'path': download_path,
-        'size': download_size.value,
+        'size': requested_size.value,
         'status': 'downloaded'
     })
 
@@ -556,19 +556,19 @@ def cleanup(self) -> None:
 ### Pattern 1: File Accumulation with Metadata
 
 ```python
-def on_download_downloaded(self, download_path, photo_filename, download_size, photo, dry_run):
+def on_download_downloaded(self, download_path, photo_filename, requested_size, photo, dry_run):
     self.current_files.append({
         'path': download_path,
-        'size': download_size.value,
+        'size': requested_size.value,
         'status': 'downloaded',
         'is_live': False,
         'filename': photo_filename,
     })
 
-def on_download_exists(self, download_path, photo_filename, download_size, photo, dry_run):
+def on_download_exists(self, download_path, photo_filename, requested_size, photo, dry_run):
     self.current_files.append({
         'path': download_path,
-        'size': download_size.value,
+        'size': requested_size.value,
         'status': 'existed',
         'is_live': False,
         'filename': photo_filename,
@@ -730,7 +730,7 @@ class TestMyPluginHooks(unittest.TestCase):
         self.plugin.on_download_downloaded(
             download_path='/path/test.jpg',
             photo_filename='test.jpg',
-            download_size=AssetVersionSize.ORIGINAL,
+            requested_size=AssetVersionSize.ORIGINAL,
             photo=mock_photo,
             dry_run=False
         )
@@ -847,7 +847,7 @@ class TestMyPluginIntegration(unittest.TestCase):
             "on_download_downloaded",
             download_path="/path/test.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.ORIGINAL,
+            requested_size=AssetVersionSize.ORIGINAL,
             photo=mock_photo,
             dry_run=False
         )

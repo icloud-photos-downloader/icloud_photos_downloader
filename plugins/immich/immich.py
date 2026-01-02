@@ -762,7 +762,7 @@ class ImmichPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -786,13 +786,13 @@ class ImmichPlugin(IcloudpdPlugin):
 
         if should_process:
             logger.debug(
-                f"Immich: Accumulating existing file {download_size.value} - {download_path}"
+                f"Immich: Accumulating existing file {requested_size.value} - {download_path}"
             )
             self.current_photo_files.append(
                 {
                     "status": "existed",
                     "path": download_path,
-                    "size": download_size.value,
+                    "size": requested_size.value,
                     "is_live": False,
                     "photo_filename": photo_filename,
                 }
@@ -804,19 +804,19 @@ class ImmichPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
         """File was downloaded - always add to accumulator"""
         logger.debug(
-            f"Immich: Accumulating downloaded file {download_size.value} - {download_path}"
+            f"Immich: Accumulating downloaded file {requested_size.value} - {download_path}"
         )
         self.current_photo_files.append(
             {
                 "status": "downloaded",
                 "path": download_path,
-                "size": download_size.value,
+                "size": requested_size.value,
                 "is_live": False,
                 "photo_filename": photo_filename,
             }
@@ -826,7 +826,7 @@ class ImmichPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:

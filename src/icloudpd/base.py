@@ -714,7 +714,9 @@ def download_builder(
         DownloadMediaSkipped()
     )  # Default to skipped for files that aren't downloaded
 
-    for download_size in primary_sizes:
+    for requested_size in primary_sizes:
+        # Keep track of what user requested vs what we actually download (after fallback)
+        download_size = requested_size
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
             if force_size:
                 error_filename = filename_builder(photo)
@@ -770,7 +772,7 @@ def download_builder(
                             "on_download_exists",
                             download_path=download_path,
                             photo_filename=photo_filename,
-                            download_size=download_size,
+                            requested_size=requested_size,
                             photo=photo,
                             dry_run=dry_run,
                         )
@@ -838,7 +840,7 @@ def download_builder(
                                     "on_download_downloaded",
                                     download_path=download_path,
                                     photo_filename=photo_filename,
-                                    download_size=download_size,
+                                    requested_size=requested_size,
                                     photo=photo,
                                     dry_run=dry_run,
                                 )
@@ -881,7 +883,7 @@ def download_builder(
                     "on_download_complete",
                     download_path=download_path,
                     photo_filename=photo_filename,
-                    download_size=download_size,
+                    requested_size=requested_size,
                     photo=photo,
                     dry_run=dry_run,
                 )

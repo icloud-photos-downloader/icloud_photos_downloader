@@ -42,17 +42,17 @@ class MockPlugin(IcloudpdPlugin):
         self.mock_option = getattr(config, "mock_option", None)
 
     def on_download_exists(
-        self, download_path, photo_filename, download_size, photo, dry_run
+        self, download_path, photo_filename, requested_size, photo, dry_run
     ) -> None:
         self.calls.append(("on_download_exists", download_path))
 
     def on_download_downloaded(
-        self, download_path, photo_filename, download_size, photo, dry_run
+        self, download_path, photo_filename, requested_size, photo, dry_run
     ) -> None:
         self.calls.append(("on_download_downloaded", download_path))
 
     def on_download_complete(
-        self, download_path, photo_filename, download_size, photo, dry_run
+        self, download_path, photo_filename, requested_size, photo, dry_run
     ) -> None:
         self.calls.append(("on_download_complete", download_path))
 
@@ -240,7 +240,7 @@ class TestPluginManager(unittest.TestCase):
             "on_download_complete",
             download_path="/path/to/file.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.ORIGINAL,
+            requested_size=AssetVersionSize.ORIGINAL,
             photo=mock_photo,
             dry_run=False,
         )
@@ -371,7 +371,7 @@ class TestDemoPlugin(unittest.TestCase):
         plugin.on_download_complete(
             download_path="/path/original.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.ORIGINAL,
+            requested_size=AssetVersionSize.ORIGINAL,
             photo=mock_photo,
             dry_run=False,
         )
@@ -379,7 +379,7 @@ class TestDemoPlugin(unittest.TestCase):
         plugin.on_download_complete(
             download_path="/path/medium.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.MEDIUM,
+            requested_size=AssetVersionSize.MEDIUM,
             photo=mock_photo,
             dry_run=False,
         )
@@ -407,7 +407,7 @@ class TestDemoPlugin(unittest.TestCase):
         plugin.on_download_exists(
             download_path="/path/original.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.ORIGINAL,
+            requested_size=AssetVersionSize.ORIGINAL,
             photo=mock_photo,
             dry_run=False,
         )
@@ -416,7 +416,7 @@ class TestDemoPlugin(unittest.TestCase):
         plugin.on_download_downloaded(
             download_path="/path/medium.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.MEDIUM,
+            requested_size=AssetVersionSize.MEDIUM,
             photo=mock_photo,
             dry_run=False,
         )
@@ -523,7 +523,7 @@ class TestPluginManagerErrorHandling(unittest.TestCase):
             "on_download_complete",
             download_path="/path/test.jpg",
             photo_filename="test.jpg",
-            download_size=AssetVersionSize.ORIGINAL,
+            requested_size=AssetVersionSize.ORIGINAL,
             photo=mock_photo,
             dry_run=False,
         )

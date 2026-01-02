@@ -119,20 +119,20 @@ class DemoPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
         """File already exists - add to accumulator"""
         if not self.compact and not self.verbose:
-            logger.info(f"   📂 Exists:     {download_size.value:>11} - {download_path}")
+            logger.info(f"   📂 Exists:     {requested_size.value:>11} - {download_path}")
 
         # Accumulate
         self.current_photo_files.append(
             {
                 "status": "existed",
                 "path": download_path,
-                "size": download_size.value,
+                "size": requested_size.value,
                 "is_live": False,
             }
         )
@@ -142,20 +142,20 @@ class DemoPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
         """File was downloaded - add to accumulator"""
         if not self.compact and not self.verbose:
-            logger.info(f"   ⬇️  Downloaded: {download_size.value:>11} - {download_path}")
+            logger.info(f"   ⬇️  Downloaded: {requested_size.value:>11} - {download_path}")
 
         # Accumulate
         self.current_photo_files.append(
             {
                 "status": "downloaded",
                 "path": download_path,
-                "size": download_size.value,
+                "size": requested_size.value,
                 "is_live": False,
             }
         )
@@ -165,7 +165,7 @@ class DemoPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -184,13 +184,13 @@ class DemoPlugin(IcloudpdPlugin):
                 {
                     "status": "complete",
                     "path": download_path,
-                    "size": download_size.value,
+                    "size": requested_size.value,
                     "is_live": False,
                 }
             )
 
         if self.verbose:
-            logger.info(f"   ✅ Complete:   {download_size.value:>11} - {download_path}")
+            logger.info(f"   ✅ Complete:   {requested_size.value:>11} - {download_path}")
 
     # ========================================================================
     # LIVE PHOTO HOOKS - Accumulate live photo data
@@ -200,20 +200,20 @@ class DemoPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
         """Live photo exists - add to accumulator"""
         if not self.compact and not self.verbose:
-            logger.info(f"   📂 Exists:     {download_size.value:>11} - {download_path} 🎥")
+            logger.info(f"   📂 Exists:     {requested_size.value:>11} - {download_path} 🎥")
 
         # Accumulate
         self.current_photo_files.append(
             {
                 "status": "existed",
                 "path": download_path,
-                "size": download_size.value,
+                "size": requested_size.value,
                 "is_live": True,
             }
         )
@@ -224,20 +224,20 @@ class DemoPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
         """Live photo downloaded - add to accumulator"""
         if not self.compact and not self.verbose:
-            logger.info(f"   ⬇️  Downloaded: {download_size.value:>11} - {download_path} 🎥")
+            logger.info(f"   ⬇️  Downloaded: {requested_size.value:>11} - {download_path} 🎥")
 
         # Accumulate
         self.current_photo_files.append(
             {
                 "status": "downloaded",
                 "path": download_path,
-                "size": download_size.value,
+                "size": requested_size.value,
                 "is_live": True,
             }
         )
@@ -248,7 +248,7 @@ class DemoPlugin(IcloudpdPlugin):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -262,14 +262,14 @@ class DemoPlugin(IcloudpdPlugin):
                 {
                     "status": "complete",
                     "path": download_path,
-                    "size": download_size.value,
+                    "size": requested_size.value,
                     "is_live": True,
                 }
             )
             self.total_files_live += 1
 
         if self.verbose:
-            logger.info(f"   ✅ Complete:   {download_size.value:>11} - {download_path} 🎥")
+            logger.info(f"   ✅ Complete:   {requested_size.value:>11} - {download_path} 🎥")
 
     # ========================================================================
     # KEY HOOK - Process accumulated data and clear

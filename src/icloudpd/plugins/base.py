@@ -126,7 +126,7 @@ class IcloudpdPlugin(ABC):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -137,7 +137,7 @@ class IcloudpdPlugin(ABC):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -148,7 +148,7 @@ class IcloudpdPlugin(ABC):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -161,7 +161,7 @@ class IcloudpdPlugin(ABC):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -172,7 +172,7 @@ class IcloudpdPlugin(ABC):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
@@ -183,7 +183,7 @@ class IcloudpdPlugin(ABC):
         self,
         download_path: str,
         photo_filename: str,
-        download_size: VersionSize,
+        requested_size: VersionSize,
         photo: PhotoAsset,
         dry_run: bool,
     ) -> None:
