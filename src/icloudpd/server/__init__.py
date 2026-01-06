@@ -8,7 +8,7 @@ from flask import Flask, Response, make_response, render_template, request
 from icloudpd.status import Status, StatusExchange
 
 
-def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
+def serve_app(logger: Logger, _status_exchange: StatusExchange, telegram_bot=None, port: int = 8080) -> None:
     app = Flask(__name__)
     app.logger = logger
     # for running in pyinstaller
@@ -88,5 +88,19 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         _status_exchange.get_progress().cancel = True
         return make_response("Ok", 200)
 
-    logger.debug("Starting web server...")
-    return waitress.serve(app)
+    # Telegram webhook endpoint (for push notifications)
+    @app.route("/telegram/webhook", methods=["POST"])
+    def telegram_webhook() -> Response:
+        if telegram_bot:
+            try:
+                update = request.get_json()
+                if update:
+                    telegram_bot.process_update(update)
+                return make_response("Ok", 200)
+            except Exception as e:
+                logger.error(f"Error processing Telegram webhook: {e}")
+                return make_response("Error", 500)
+        return make_response("Telegram bot not configured", 404)
+
+    logger.debug(f"Starting web server on port {port}...")
+    return waitress.serve(app, host="0.0.0.0", port=port)
