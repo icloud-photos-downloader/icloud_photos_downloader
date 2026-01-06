@@ -413,7 +413,7 @@ interactions:
         : \"STRING\"\n      },\n      \"resJPEGMedHeight\" : {\n        \"value\"
         : 2048,\n        \"type\" : \"INT64\"\n      },\n      \"resOriginalRes\"
         : {\n        \"value\" : {\n          \"fileChecksum\" : \"AY6c+BsE0jjaXx9tmVGJM1D2VcEO\",\n
-        \         \"size\" : 1884695,\n          \"wrappingKey\" : \"Aj375aJi6sEmqgJPj64+7Q==\",\n
+        \         \"size\" : 161,\n          \"wrappingKey\" : \"Aj375aJi6sEmqgJPj64+7Q==\",\n
         \         \"referenceChecksum\" : \"AfUMnLhKAW8bwnMCwMMXLMKCslue\",\n          \"downloadURL\"
         : \"https://cvws.icloud-content.com/B/AY6c-BsE0jjaXx9tmVGJM1D2VcEOAfUMnLhKAW8bwnMCwMMXLMKCslue/${f}?o=Ai7aJAyHfwftjSjEUZUly0UQWlCGQJLWjedI3fGj1Df0&v=1&x=3&a=Bw-O4l_UpI23JBfLD0wf_ZNwTumeA1LaRAEAAAMW2kQ&e=1533044225&k=Aj375aJi6sEmqgJPj64-7Q&fl=&r=02b17a96-ee7c-4379-aecf-532ffda2c021-1&ckc=com.apple.photos.cloud&ckz=PrimarySync&y=1&p=10&s=P8uy4YD0X_YWXH9e8C4b9amf2CQ\"\n
         \       },\n        \"type\" : \"ASSETID\"\n      },\n      \"resVidSmallFileType\"
@@ -11080,6 +11080,7 @@ interactions:
     body:
       string: !!binary |
         /9j/4T/+RXhpZgAATU0AKgAAAAgACwEPAAIAAAAGAAAAkgEQAAIAAAAKAAAAmAESAAMAAAABAAYA
+        Upxn5RjbnJoJxhs4am1Yq4m4qCHy2KeHUEMneo25BZec0h4QFc59aSuxEu4n535PpQuG7c/ypwUA
         nPzJwaISASc4BpivYeu1lDMvIpAcsVPPHNKcCQ7zhR92mg/KCePmOfpRcbZ//9k=
     headers:
       Accept-Ranges: [bytes]
@@ -11090,7 +11091,7 @@ interactions:
       Apple-Originating-System: [UnknownOriginatingSystem]
       Connection: [keep-alive]
       Content-Disposition: [attachment; filename="%24%7Bf%7D"; filename*=UTF-8''%24%7Bf%7D]
-      Content-Length: ['1884695']
+      Content-Length: ['161']
       Content-Type: [application/octet-stream]
       Date: ['Tue, 31 Jul 2018 12:37:09 GMT']
       Server: [AppleHttpServer/2f080fc0]
