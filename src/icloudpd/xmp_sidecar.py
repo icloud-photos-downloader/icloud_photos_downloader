@@ -104,14 +104,11 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
         is_not_bplist = not_(startswith("YnBsaXN0MD"))
 
         if is_not_crdt(data_value) and is_not_bplist(data_value):  # not "crdt" and not "bplist00"
-            adjustments = json.loads(
-                zlib.decompress(
-                    base64.b64decode(asset_record["fields"]["adjustmentSimpleDataEnc"]["value"]),
-                    -zlib.MAX_WBITS,
-                )
+            adjustments = try_decompress_json(data_value)
+
+            orientation = (
+                adjustments.get("metadata", {}).get("orientation") if adjustments else None
             )
-            if "metadata" in adjustments and "orientation" in adjustments["metadata"]:
-                orientation = adjustments["metadata"]["orientation"]
 
     make, digital_source_type = None, None
     if (
@@ -188,6 +185,25 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
         CreateDate=create_date,
         Rating=rating,
     )
+
+
+def try_decompress_json(data_value: str) -> dict[str, Any] | None:
+    """
+    Attempts to decode base64-encoded, zlib-compressed JSON data.
+
+    Args:
+        data_value: Base64-encoded string
+
+    Returns:
+        Decoded JSON dictionary or None on error
+    """
+    try:
+        decoded = base64.b64decode(data_value)
+        decompressed = zlib.decompress(decoded, -zlib.MAX_WBITS)
+        data: dict[str, Any] = json.loads(decompressed)
+        return data
+    except (zlib.error, json.JSONDecodeError, Exception):
+        return None
 
 
 def generate_xml(metadata: XMPMetadata) -> ElementTree.Element:

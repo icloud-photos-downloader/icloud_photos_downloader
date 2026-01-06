@@ -12,6 +12,16 @@ from tzlocal import get_localzone
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.response_types import (
+    AutodeleteResult,
+    AutodeleteSuccess,
+    PhotoIterationComplete,
+    PhotoIterationSuccess,
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
+)
 from pyicloud_ipd.services.photos import PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
@@ -39,7 +49,7 @@ def autodelete_photos(
     _sizes: Sequence[AssetVersionSize],
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
-) -> None:
+) -> AutodeleteResult:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
     from the download directory.
@@ -49,7 +59,20 @@ def autodelete_photos(
 
     recently_deleted = library_object.recently_deleted
 
-    for media in recently_deleted:
+    for media_result in recently_deleted:
+        match media_result:
+            case PhotoIterationComplete():
+                break
+            case PhotoIterationSuccess(media):
+                pass
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return media_result
+
         try:
             created_date = media.created.astimezone(get_localzone())
         except (ValueError, OSError):
@@ -114,3 +137,5 @@ def autodelete_photos(
                 logger.debug("Deleting %s...", path)
                 delete_local = delete_file_dry_run if dry_run else delete_file
                 delete_local(logger, path)
+
+    return AutodeleteSuccess()

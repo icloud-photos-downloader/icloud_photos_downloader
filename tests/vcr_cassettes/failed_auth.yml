@@ -1,5 +1,68 @@
 interactions:
 - request:
+    body: 'null'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['4']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+      User-Agent: ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36']
+    method: POST
+    uri: https://setup.icloud.com/setup/ws/1/validate
+  response:
+    body: 
+      string: !!python/unicode '
+        {
+          "success": false,
+          "requestInfo": [
+            {
+              "country": "US",
+              "timeZone": "PST",
+              "region": "CA"
+            }
+          ],
+          "configBag": {
+              "urls": {
+                  "accountLoginUI": "https://idmsa.apple.com/appleauth/auth/signin?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
+                  "accountLogin": "https://setup.icloud.com/setup/ws/1/accountLogin",
+                  "accountRepairUI": "https://appleid.apple.com/widget/account/?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d#!repair",
+                  "downloadICloudTerms": "https://setup.icloud.com/setup/ws/1/downloadLiteTerms",
+                  "repairDone": "https://setup.icloud.com/setup/ws/1/repairDone",
+                  "accountCreate": "https://setup.icloud.com/setup/ws/1/createLiteAccount",
+                  "getICloudTerms": "https://setup.icloud.com/setup/ws/1/getTerms",
+                  "vettingUrlForPhone": "https://id.apple.com/IDMSEmailVetting/vetSharePhone",
+                  "accountCreateUI": "https://appleid.apple.com/widget/account/?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d#!create",
+                  "accountVerifyUI": "https://id.apple.com/identity?widgetKey=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
+                  "accountAuthorizeUI": "https://idmsa.apple.com/appleauth/auth/authorize/signin?client_id=d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d",
+                  "vettingUrlForEmail": "https://id.apple.com/IDMSEmailVetting/vetShareEmail",
+                  "eventGatewayV1": "https://gateway.icloud.com/rsvp/events/v1"
+              },
+              "accountCreateEnabled": true
+          },
+          "error": "Missing X-APPLE-WEBAUTH-TOKEN cookie"
+        }'
+    headers:
+      Access-Control-Allow-Credentials: ['true']
+      Access-Control-Allow-Origin: ['https://www.icloud.com']
+      Cache-Control: ['no-cache, no-store, private']
+      Connection: ['keep-alive']
+      Content-Type: ['application/json; charset=UTF-8']
+      Date: ['Wed, 13 Dec 2023 05:06:31 GMT']
+      Server: ['AppleHttpServer/78689afb4479']
+      Strict-Transport-Security: ['max-age=31536000; includeSubDomains']
+      X-Apple-Edge-Response-Time: ['501']
+      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
+      X-Responding-Instance: ['setupservice:33200401:mr55p32ic-qukt01202301:7001:2404B363:5934c9004de5']
+      access-control-expose-headers: ['X-Apple-Request-UUID,Via']
+      content-length: ['5758']
+      via: ['via-123456789012345678901234567890']
+      x-apple-user-partition: ['32']
+    status:
+      code: 421
+      message: Misdirected Request
+- request:
     body: !!python/unicode '{"accountName": "bad_username", "protocols": ["s2k", "s2k_fo"]}'
     headers:
       Accept: ['*/*']

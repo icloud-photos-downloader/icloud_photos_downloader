@@ -12,10 +12,19 @@ from requests import Response
 from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
-from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.response_types import (
+    DownloadMediaResult,
+    DownloadMediaSuccess,
+    DownloadSuccess,
+    PhotoLibraryNotFinishedIndexing,
+    PhotosServiceAccessSuccess,
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
+)
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
@@ -112,12 +121,12 @@ def download_media(
     version: AssetVersion,
     size: VersionSize,
     filename_builder: Callable[[PhotoAsset], str],
-) -> bool:
+) -> DownloadMediaResult:
     """Download the photo to path, with retries and error handling"""
 
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
     if not mkdirs_local(logger, download_path):
-        return False
+        return ResponseAPIError("Could not create folder", "MKDIR_FAILED")
 
     checksum = base64.b64decode(version.checksum)
     checksum32 = base64.b32encode(checksum).decode()
@@ -128,19 +137,40 @@ def download_media(
         partial(download_response_to_path_dry_run, logger) if dry_run else download_response_to_path
     )
 
-    retries = 0
-    while True:
-        try:
-            append_mode = os.path.exists(temp_download_path)
-            current_size = os.path.getsize(temp_download_path) if append_mode else 0
-            if append_mode:
-                logger.debug(f"Resuming downloading of {download_path} from {current_size}")
+    append_mode = os.path.exists(temp_download_path)
+    current_size = os.path.getsize(temp_download_path) if append_mode else 0
+    if append_mode:
+        logger.debug(f"Resuming downloading of {download_path} from {current_size}")
 
-            photo_response = photo.download(icloud.photos.session, version.url, current_size)
+    # Get photos service to access session
+    photos_service_result = icloud.get_photos_service()
+
+    match photos_service_result:
+        case PhotosServiceAccessSuccess(photos_service):
+            download_result = photo.download(photos_service.session, version.url, current_size)
+        case PhotoLibraryNotFinishedIndexing():
+            # Photo library is still indexing, return as service error
+            return ResponseServiceNotActivated(
+                "Photo library has not finished indexing", "INDEXING"
+            )
+        case (
+            Response2SARequired()
+            | ResponseServiceNotActivated()
+            | ResponseAPIError()
+            | ResponseServiceUnavailable() as error
+        ):
+            # These errors are already part of DownloadMediaResult
+            return error
+    match download_result:
+        case DownloadSuccess(photo_response):
             if photo_response.ok:
-                return download_local(
+                success = download_local(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 )
+                if success:
+                    return DownloadMediaSuccess()
+                else:
+                    return ResponseAPIError("Failed to save file", "SAVE_FAILED")
             else:
                 # Use the standard original filename generator for error logging
                 from icloudpd.base import lp_filename_original as simple_lp_filename_generator
@@ -155,49 +185,12 @@ def download_media(
                     version_filename,
                     size.value,
                 )
-                break
-
-        except PyiCloudAPIResponseException as ex:
-            if "Invalid global session" in str(ex):
-                logger.error("Session error, re-authenticating...")
-                if retries > 0:
-                    # If the first re-authentication attempt failed,
-                    # start waiting a few seconds before retrying in case
-                    # there are some issues with the Apple servers
-                    time.sleep(constants.WAIT_SECONDS)
-
-                icloud.authenticate()
-            else:
-                # short circuiting 0 retries
-                if retries == constants.MAX_RETRIES:
-                    break
-                # you end up here when p.e. throttling by Apple happens
-                wait_time = (retries + 1) * constants.WAIT_SECONDS
-                # Get the proper filename for error messages
-                error_filename = filename_builder(photo)
-                logger.error(
-                    "Error downloading %s, retrying after %s seconds...", error_filename, wait_time
-                )
-                time.sleep(wait_time)
-
-        except OSError:
-            logger.error(
-                "IOError while writing file to %s. "
-                + "You might have run out of disk space, or the file "
-                + "might be too large for your OS. "
-                + "Skipping this file...",
-                download_path,
-            )
-            break
-        retries = retries + 1
-        if retries >= constants.MAX_RETRIES:
-            break
-    if retries >= constants.MAX_RETRIES:
-        # Get the proper filename for error messages
-        error_filename = filename_builder(photo)
-        logger.error(
-            "Could not download %s. Please try again later.",
-            error_filename,
-        )
-
-    return False
+                return ResponseAPIError(f"Could not find URL for size {size.value}", "NO_URL")
+        case (
+            Response2SARequired(_)
+            | ResponseServiceNotActivated(_, _)
+            | ResponseAPIError(_, _)
+            | ResponseServiceUnavailable(_)
+        ):
+            # Propagate the error ADT directly
+            return download_result

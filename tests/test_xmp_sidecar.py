@@ -74,6 +74,27 @@ class BuildXMPMetadata(TestCase):
         metadata = build_metadata(assetRecordStub)
         assert metadata.Orientation is None
 
+        # - a zlib compressed JSON without "metadata" key (lines 101-113 coverage)
+        assetRecordStub["fields"]["adjustmentSimpleDataEnc"]["value"] = (
+            "q1Yqzs9N9S/JSC3yTq1UslJQKkvMKU1VqgUA"
+        )
+        metadata = build_metadata(assetRecordStub)
+        assert metadata.Orientation is None
+
+        # - a zlib compressed JSON with "metadata" key but no "orientation" key (lines 101-113 coverage)
+        assetRecordStub["fields"]["adjustmentSimpleDataEnc"]["value"] = (
+            "q1bKTS1JTEksSVSyUqhWKs7PTfUvyUgt8k6tBAoolSXmlKYq1dYCAA=="
+        )
+        metadata = build_metadata(assetRecordStub)
+        assert metadata.Orientation is None
+
+        # - invalid data that fails decompression (lines 101-113 coverage)
+        assetRecordStub["fields"]["adjustmentSimpleDataEnc"]["value"] = (
+            "aW52YWxpZCBkYXRhIHRoYXQgd2lsbCBmYWlsIGRlY29tcHJlc3Npb24="
+        )
+        metadata = build_metadata(assetRecordStub)
+        assert metadata.Orientation is None
+
         # Test Screenshot Tagging
         assetRecordStub["fields"]["assetSubtypeV2"]["value"] = 3
         metadata = build_metadata(assetRecordStub)
