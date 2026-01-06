@@ -29,6 +29,9 @@ class StatusExchange:
         self._user_configs: Sequence[UserConfig] = []
         self._current_user: str | None = None
         self._progress = Progress()
+        self._force_full_sync = False
+        self._manual_sync = False  # True if sync was triggered manually via Telegram
+        self._telegram_bot = None  # Reference to Telegram bot for auth requests
 
     def get_status(self) -> Status:
         with self.lock:
@@ -121,3 +124,29 @@ class StatusExchange:
     def clear_current_user(self) -> None:
         with self.lock:
             self._current_user = None
+
+    def set_force_full_sync(self, force: bool) -> None:
+        with self.lock:
+            self._force_full_sync = force
+
+    def get_force_full_sync(self) -> bool:
+        with self.lock:
+            return self._force_full_sync
+
+    def set_manual_sync(self, manual: bool) -> None:
+        with self.lock:
+            self._manual_sync = manual
+
+    def get_manual_sync(self) -> bool:
+        with self.lock:
+            return self._manual_sync
+
+    def set_telegram_bot(self, telegram_bot) -> None:
+        """Set Telegram bot reference for authentication requests"""
+        with self.lock:
+            self._telegram_bot = telegram_bot
+
+    def get_telegram_bot(self):
+        """Get Telegram bot reference"""
+        with self.lock:
+            return self._telegram_bot

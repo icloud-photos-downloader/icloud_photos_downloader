@@ -1,0 +1,40 @@
+# Dockerfile para construir desde GitHub
+# Clona el repositorio y construye los binarios
+FROM python:3.13-alpine3.19 AS builder
+WORKDIR /app
+
+# Instalar git y dependencias de compilación
+RUN apk update && \
+    apk add git curl binutils gcc libc-dev libffi-dev zlib-dev openssl-dev tzdata bash patchelf python3-dev musl-dev pkgconfig cargo
+
+# Clonar el repositorio desde GitHub
+# Usa tu fork o el repositorio oficial según prefieras
+ARG GIT_REPO=https://github.com/jibanez-staticduo/icloud_photos_downloader.git
+ARG GIT_BRANCH=master
+RUN git clone --depth 1 --branch ${GIT_BRANCH} ${GIT_REPO} /app
+
+# Construir los binarios
+RUN python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && \
+    pip3 install --disable-pip-version-check . --group dev --group devlinux
+RUN . .venv/bin/activate && \
+    scripts/build_bin1 icloudpd && \
+    scripts/build_bin1 icloud
+
+# Imagen final
+FROM alpine:3.18
+ENV MUSL_LOCPATH="/usr/share/i18n/locales/musl"
+RUN apk update && apk add --no-cache tzdata musl-locales musl-locales-lang
+WORKDIR /app
+COPY --from=builder /app/dist/icloud icloud
+COPY --from=builder /app/dist/icloudpd icloudpd
+RUN chmod +x /app/icloud /app/icloudpd
+
+# Copiar el entrypoint wrapper desde el repositorio clonado
+COPY --from=builder /app/entrypoint-wrapper.sh /app/entrypoint.sh
+RUN chmod +x /app/entrypoint.sh
+ENV TZ=UTC
+EXPOSE 8080
+ENTRYPOINT ["/app/entrypoint.sh"]
+

@@ -281,6 +281,7 @@ def parse_mfa_provider(provider: str) -> MFAProvider:
     provider_map = {
         "console": MFAProvider.CONSOLE,
         "webui": MFAProvider.WEBUI,
+        "telegram": MFAProvider.TELEGRAM,
     }
 
     normalized_provider = lower(provider)
@@ -343,6 +344,42 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         default=None,
     )
     cloned.add_argument(
+        "--telegram-token",
+        help="Telegram bot token for notifications and remote control",
+        default=None,
+        type=str,
+    )
+    cloned.add_argument(
+        "--telegram-chat-id",
+        help="Telegram chat ID for notifications and remote control",
+        default=None,
+        type=str,
+    )
+    cloned.add_argument(
+        "--telegram-polling",
+        action="store_true",
+        help="Enable Telegram bot polling for remote control commands",
+        default=False,
+    )
+    cloned.add_argument(
+        "--telegram-polling-interval",
+        help="Interval in seconds for Telegram bot polling (default: 30 seconds)",
+        default=30,
+        type=int,
+    )
+    cloned.add_argument(
+        "--telegram-webhook-url",
+        help="Webhook URL for Telegram bot (push notifications). If not set, uses polling.",
+        default=None,
+        type=str,
+    )
+    cloned.add_argument(
+        "--telegram-webhook-port",
+        help="Port for Telegram webhook server (default: 48080)",
+        default=48080,
+        type=int,
+    )
+    cloned.add_argument(
         "--password-provider",
         dest="password_providers",
         help="Specify password providers to check in the given order. Default: [`parameter`, `keyring`, `console`]",
@@ -354,7 +391,7 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
     cloned.add_argument(
         "--mfa-provider",
         help="Specify where to get the MFA code from",
-        choices=["console", "webui"],
+        choices=["console", "webui", "telegram"],
         default="console",
         type=lower,
     )
@@ -528,6 +565,12 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
+            telegram_token=global_ns.telegram_token,
+            telegram_chat_id=global_ns.telegram_chat_id,
+            telegram_polling=global_ns.telegram_polling,
+            telegram_polling_interval=global_ns.telegram_polling_interval,
+            telegram_webhook_url=global_ns.telegram_webhook_url,
+            telegram_webhook_port=global_ns.telegram_webhook_port,
         ),
         user_nses,
     )

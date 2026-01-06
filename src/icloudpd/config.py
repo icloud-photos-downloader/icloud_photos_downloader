@@ -71,3 +71,9 @@ class GlobalConfig:
     watch_with_interval: int | None
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
+    telegram_token: str | None = None
+    telegram_chat_id: str | None = None
+    telegram_polling: bool = False
+    telegram_polling_interval: int = 30
+    telegram_webhook_url: str | None = None
+    telegram_webhook_port: int = 48080

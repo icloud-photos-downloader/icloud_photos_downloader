@@ -23,6 +23,7 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    Optional,
     Sequence,
     Tuple,
 )
@@ -45,6 +46,7 @@ from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
+from icloudpd.file_cache import FileCache
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
@@ -56,6 +58,7 @@ from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
+    PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
     PyiCloudConnectionErrorException,
     PyiCloudFailedLoginException,
@@ -247,18 +250,55 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         provider == PasswordProvider.WEBUI for provider in global_config.password_providers
     )
 
+    # Start Telegram bot if configured (before web server to pass it if needed)
+    telegram_bot = None
+    if global_config.telegram_polling and global_config.telegram_token and global_config.telegram_chat_id:
+        from icloudpd.telegram_bot import TelegramBot
+        telegram_bot = TelegramBot(
+            logger,
+            global_config.telegram_token,
+            global_config.telegram_chat_id,
+            shared_status_exchange,
+            global_config.telegram_polling_interval,
+            global_config.telegram_webhook_url,
+        )
+        telegram_bot.start_polling()
+        # Store telegram bot reference in status_exchange for auth requests
+        shared_status_exchange.set_telegram_bot(telegram_bot)
+
     # Start web server ONCE if needed, outside all loops
-    if needs_web_server:
-        logger.info("Starting web server for WebUI authentication...")
-        server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange])
+    # Pass telegram_bot if available for webhook support
+    # Use webhook port if Telegram webhook is configured, otherwise default port 8080
+    webhook_port = (
+        global_config.telegram_webhook_port
+        if telegram_bot and telegram_bot.webhook_url
+        else 8080
+    )
+    if needs_web_server or telegram_bot:
+        if needs_web_server:
+            logger.info(f"Starting web server for WebUI authentication on port {webhook_port}...")
+        if telegram_bot and telegram_bot.webhook_url:
+            logger.info(f"Starting web server for Telegram webhooks on port {webhook_port}...")
+        server_thread = Thread(
+            target=serve_app,
+            daemon=True,
+            args=[logger, shared_status_exchange, telegram_bot, webhook_port],
+        )
         server_thread.start()
 
     # Check if we're in watch mode
     watch_interval = global_config.watch_with_interval
+    
+    # Set watch_interval in progress for status messages (even before first sync)
+    if watch_interval:
+        shared_status_exchange.get_progress().watch_interval = watch_interval
+        # Set initial sync time to now so we can calculate time until first sync
+        import time
+        shared_status_exchange.get_progress().last_sync_time = time.time()
 
     if not watch_interval:
         # No watch mode - process each user once and exit
-        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange, telegram_bot)
     else:
         # Watch mode - infinite loop processing all users, then wait
         skip_bar = not os.environ.get("FORCE_TQDM") and (
@@ -268,9 +308,14 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         )
 
         while True:
+            # Check if resume was requested before processing (might have been set while waiting)
+            if shared_status_exchange.get_progress().resume:
+                logger.info("Sync requested, starting immediately...")
+                shared_status_exchange.get_progress().resume = False  # Clear resume flag
+            
             # Process all user configs in this iteration
             result = _process_all_users_once(
-                global_config, user_configs, logger, shared_status_exchange
+                global_config, user_configs, logger, shared_status_exchange, telegram_bot
             )
 
             # If any critical operation (auth-only, list commands) succeeded, exit
@@ -304,9 +349,16 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
                 # Update shared status exchange with wait progress
                 shared_status_exchange.get_progress().waiting = watch_interval - counter
                 if shared_status_exchange.get_progress().resume:
-                    shared_status_exchange.get_progress().reset()
+                    logger.info("Sync requested, breaking wait loop...")
+                    shared_status_exchange.get_progress().resume = False  # Clear resume flag
+                    shared_status_exchange.get_progress().waiting = 0  # Clear waiting
                     break
                 time.sleep(1)
+            
+            # Check if resume was requested (might have been set while processing)
+            if shared_status_exchange.get_progress().resume:
+                logger.info("Sync requested, starting immediately...")
+                shared_status_exchange.get_progress().resume = False  # Clear resume flag
 
 
 def _process_all_users_once(
@@ -314,6 +366,7 @@ def _process_all_users_once(
     user_configs: Sequence[UserConfig],
     logger: logging.Logger,
     shared_status_exchange: StatusExchange,
+    telegram_bot: Optional[Any] = None,
 ) -> int:
     """Process all user configs once (used by both single run and watch mode)"""
 
@@ -396,8 +449,22 @@ def _process_all_users_once(
                 filename_builder,
             )
 
-            downloader = (
-                partial(
+            # Initialize file cache only for sync date tracking (not for file caching)
+            file_cache: FileCache | None = None
+            if user_config.directory is not None:
+                # Create cache database path in the cookie directory or config directory
+                # We only use it for storing last sync date, not for file caching
+                cache_dir = user_config.cookie_directory or os.path.dirname(user_config.directory)
+                cache_db_path = os.path.join(cache_dir, "file_cache.db")
+                file_cache = FileCache(cache_db_path, logger)
+                
+                # Reset force_full_sync flag after checking
+                status_exchange.set_force_full_sync(False)
+
+            # Create downloader partial - file_cache and use_cache will be passed later
+            # We need to create a wrapper that captures file_cache and use_cache
+            if user_config.directory is not None:
+                download_builder_partial = partial(
                     download_builder,
                     logger,
                     user_config.folder_structure,
@@ -415,9 +482,13 @@ def _process_all_users_once(
                     filename_builder,
                     user_config.align_raw,
                 )
-                if user_config.directory is not None
-                else (lambda _s, _c, _p: False)
-            )
+                # Create a wrapper (file_cache no longer used for file caching, only for sync date)
+                # total_photos and start_time will be set later when we know the actual count
+                def downloader_wrapper(icloud: PyiCloudService, counter: Counter, photo: PhotoAsset, total_photos: int | None = None, start_time: float | None = None) -> bool:
+                    return download_builder_partial(icloud, counter, photo, file_cache=None, total_photos=total_photos, start_time=start_time)
+                downloader = downloader_wrapper
+            else:
+                downloader = lambda _s, _c, _p: False
 
             notificator = partial(
                 notificator_builder,
@@ -445,6 +516,9 @@ def _process_all_users_once(
                 downloader,
                 notificator,
                 lp_filename_generator,
+                file_cache,  # Only used for sync date tracking, not for file caching
+                filename_builder,
+                telegram_bot,
             )
 
             # If any user config fails and we're not in watch mode, return the error code
@@ -580,6 +654,9 @@ def download_builder(
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
+    file_cache: FileCache | None = None,  # Not used anymore, kept for compatibility
+    total_photos: int | None = None,  # Total photos to process (for counter display)
+    start_time: float | None = None,  # Start time for rate calculation
 ) -> bool:
     """function for actually downloading the photos"""
 
@@ -662,6 +739,7 @@ def download_builder(
         download_path = local_download_path(filename, download_dir)
 
         original_download_path = None
+        # Check if file exists using os.path.isfile() (no cache)
         file_exists = os.path.isfile(download_path)
         if not file_exists and download_size == AssetVersionSize.ORIGINAL:
             # Deprecation - We used to download files like IMG_1234-original.jpg,
@@ -671,6 +749,7 @@ def download_builder(
             file_exists = os.path.isfile(original_download_path)
 
         if file_exists:
+            # Only do additional checks for deduplication
             if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
                 # for later: this crashes if download-size medium is specified
                 file_size = os.stat(original_download_path or download_path).st_size
@@ -678,10 +757,18 @@ def download_builder(
                 if file_size != photo_size:
                     download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
+                    # Check again with os.path.isfile() (not using cache here)
                     file_exists = os.path.isfile(download_path)
             if file_exists:
                 counter.increment()
-                logger.debug("%s already exists", truncate_middle(download_path, 96))
+                # Only show "already exists" when using is_file (not cache)
+                current_count = counter.value()
+                counter_text = ""
+                if total_photos is not None and start_time is not None:
+                    elapsed = time.time() - start_time
+                    rate = current_count / elapsed if elapsed > 0 else 0.0
+                    counter_text = f" ({current_count}/{total_photos}) (Rate: {rate:.2f} items/s)"
+                logger.debug("%s already exists%s", truncate_middle(download_path, 96), counter_text)
 
         if not file_exists:
             counter.reset()
@@ -754,7 +841,16 @@ def download_builder(
                 pass
             lp_download_path = os.path.join(download_dir, lp_filename)
 
-            lp_file_exists = os.path.isfile(lp_download_path)
+            # Use cache if available and enabled, otherwise use os.path.isfile()
+            # verify_disk=True only when use_cache=False (e.g., /syncall command)
+            if file_cache is not None and use_cache:
+                lp_file_exists = file_cache.file_exists(lp_download_path, verify_disk=False)
+                # If file not in cache but exists on disk, add it to cache silently
+                if not lp_file_exists and os.path.isfile(lp_download_path):
+                    file_cache.add_file(lp_download_path)
+                    lp_file_exists = True
+            else:
+                lp_file_exists = os.path.isfile(lp_download_path)
 
             if only_print_filenames:
                 if not lp_file_exists:
@@ -775,6 +871,7 @@ def download_builder(
                         print(lp_download_path)
             else:
                 if lp_file_exists:
+                    # Only do additional checks for deduplication
                     if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
                         lp_file_size = os.stat(lp_download_path).st_size
                         lp_photo_size = version.size
@@ -783,9 +880,17 @@ def download_builder(
                                 lp_download_path.rsplit(".", 1)
                             )
                             logger.debug("%s deduplicated", truncate_middle(lp_download_path, 96))
+                            # Check again with os.path.isfile()
                             lp_file_exists = os.path.isfile(lp_download_path)
                     if lp_file_exists:
-                        logger.debug("%s already exists", truncate_middle(lp_download_path, 96))
+                        # For live photos, use the same counter and rate info
+                        current_count = counter.value()
+                        counter_text = ""
+                        if total_photos is not None and start_time is not None:
+                            elapsed = time.time() - start_time
+                            rate = current_count / elapsed if elapsed > 0 else 0.0
+                            counter_text = f" ({current_count}/{total_photos}) (Rate: {rate:.2f} items/s)"
+                        logger.debug("%s already exists%s", truncate_middle(lp_download_path, 96), counter_text)
                 if not lp_file_exists:
                     truncated_path = truncate_middle(lp_download_path, 96)
                     logger.debug("Downloading %s...", truncated_path)
@@ -884,6 +989,10 @@ def core_single_run(
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
+    file_cache: FileCache | None = None,
+    use_cache: bool = True,
+    filename_builder: Callable[[PhotoAsset], str] | None = None,
+    telegram_bot: Optional[Any] = None,
 ) -> int:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
@@ -899,6 +1008,25 @@ def core_single_run(
             captured.append(response)
 
         try:
+            # Check if authentication was requested via Telegram /auth command
+            # If so, delete cookies to force re-authentication
+            if telegram_bot and hasattr(telegram_bot, '_auth_requested') and telegram_bot._auth_requested:
+                telegram_bot._auth_requested = False  # Reset flag
+                cookie_dir = user_config.cookie_directory or os.path.expanduser("~/.pyicloud")
+                # Delete cookie and session files to force re-authentication
+                # Cookie file name is based on username (alphanumeric characters only)
+                import re
+                cookie_filename = "".join([c for c in user_config.username if re.match(r'\w', c)])
+                cookie_path = os.path.join(cookie_dir, cookie_filename)
+                session_path = cookie_path + ".session"
+                for file_path in [cookie_path, session_path]:
+                    if os.path.exists(file_path):
+                        try:
+                            os.remove(file_path)
+                            logger.info(f"Deleted {file_path} to force re-authentication")
+                        except OSError as e:
+                            logger.warning(f"Could not delete {file_path}: {e}")
+            
             icloud = authenticator(
                 logger,
                 global_config.domain,
@@ -960,6 +1088,14 @@ def core_single_run(
                         pass
 
                     directory = os.path.normpath(user_config.directory)
+                    
+                    # Create filename_builder if not provided (for backward compatibility)
+                    if filename_builder is None:
+                        from icloudpd.filename_policies import build_filename_cleaner, create_filename_builder
+                        filename_cleaner = build_filename_cleaner(user_config.keep_unicode_in_filenames)
+                        filename_builder = create_filename_builder(
+                            user_config.file_match_policy, filename_cleaner
+                        )
 
                     if user_config.skip_photos or user_config.skip_videos:
                         photo_video_phrase = "photos" if user_config.skip_videos else "videos"
@@ -987,11 +1123,77 @@ def core_single_run(
                         return sum(inp)
 
                     photos_count: int | None = compose(sum_, album_lengths)(albums)
+                    total_photos_in_icloud = photos_count if photos_count is not None else 0
+                    logger.info(f"Found {total_photos_in_icloud} total photos in iCloud")
+                    
                     for photo_album in albums:
+                        # OPTIMIZATION: Increase page_size to reduce number of HTTP requests
+                        # Default is 100, which means 200 records per request (page_size * 2)
+                        # Increasing to 500 means 1000 records per request, reducing HTTP calls by 5x
+                        if hasattr(photo_album, 'page_size'):
+                            original_page_size = photo_album.page_size
+                            photo_album.page_size = 500  # Increase from 100 to 500 (1000 records per request)
+                            logger.debug(f"Increased page_size from {original_page_size} to {photo_album.page_size} for faster loading")
+                        
+                        # OPTIMIZATION: Filter by addedDate if not doing full sync and we have a last sync date
+                        # This dramatically reduces the number of photos to process
+                        # Use 1 day margin to account for timing differences (photo added to device vs uploaded to iCloud)
+                        if file_cache is not None and not status_exchange.get_force_full_sync():
+                            last_sync_timestamp = file_cache.get_last_sync_date()
+                            if last_sync_timestamp:
+                                # Subtract 1 day (86400 seconds) as margin for timing differences
+                                margin_seconds = 86400  # 1 day
+                                last_sync_with_margin = last_sync_timestamp - margin_seconds
+                                
+                                # Add filter for addedDate >= (last_sync_date - 1 day)
+                                # Convert timestamp (seconds) to milliseconds (what iCloud uses)
+                                added_date_ms = int(last_sync_with_margin * 1000)
+                                
+                                # Create or extend query_filter
+                                added_date_filter = {
+                                    "fieldName": "addedDate",
+                                    "fieldValue": {"type": "INT64", "value": added_date_ms},
+                                    "comparator": "GREATER_THAN_OR_EQUALS",
+                                }
+                                
+                                if photo_album.query_filter is None:
+                                    photo_album.query_filter = [added_date_filter]
+                                else:
+                                    # Add to existing filters
+                                    photo_album.query_filter = list(photo_album.query_filter) + [added_date_filter]
+                                
+                                last_sync_readable = datetime.datetime.fromtimestamp(last_sync_timestamp).strftime("%Y-%m-%d %H:%M:%S")
+                                margin_readable = datetime.datetime.fromtimestamp(last_sync_with_margin).strftime("%Y-%m-%d %H:%M:%S")
+                                logger.info(f"🔄 INCREMENTAL SYNC: Filtering photos added since {margin_readable} (last sync: {last_sync_readable}, 1 day margin)")
+                                logger.info(f"   This will only process NEW photos, not all {total_photos_in_icloud} photos")
+                            else:
+                                logger.info("🔄 FULL SYNC: No previous sync date found, processing all photos (first sync)")
+                        
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
+                        
+                        # Note: photos_count is calculated before filter, so it shows total
+                        # The actual number of photos returned by Apple after filter will be less
+                        # We'll update photos_to_download as we process them
+                        photos_to_download = photos_count if photos_count is not None else 0
+                        
+                        progress = status_exchange.get_progress()
+                        progress.total_photos_in_icloud = total_photos_in_icloud
+                        progress.photos_to_download = photos_to_download
+                        
+                        # Send initial message if manual sync
+                        if telegram_bot and status_exchange.get_manual_sync():
+                            telegram_bot.send_sync_start_message(photos_to_download, total_photos_in_icloud)
+                            # Mark that we should send progress updates
+                            progress.last_progress_message_time = time.time()
+                            # Reset manual sync flag after sending initial message
+                            status_exchange.set_manual_sync(False)
 
                         # Optional: Only download the x most recent photos.
                         if user_config.recent is not None:
+                            # Adjust photos_to_download if using recent limit
+                            photos_to_download = min(photos_to_download, user_config.recent)
+                            progress = status_exchange.get_progress()
+                            progress.photos_to_download = photos_to_download
                             photos_count = user_config.recent
                             photos_top: Iterable[PhotoAsset] = itertools.islice(
                                 photos_enumerator, user_config.recent
@@ -1001,6 +1203,9 @@ def core_single_run(
 
                         if user_config.until_found is not None:
                             photos_count = None
+                            # Can't know photos_to_download in advance with until_found
+                            progress = status_exchange.get_progress()
+                            progress.photos_to_download = 0  # Will be updated dynamically
                             # ensure photos iterator doesn't have a known length
                             # photos_enumerator = (p for p in photos_enumerator)
 
@@ -1059,15 +1264,27 @@ def core_single_run(
                                 and counter.value() >= user_config.until_found
                             )
 
-                        status_exchange.get_progress().photos_count = (
-                            0 if photos_count is None else photos_count
-                        )
+                        # For cache mode, we don't know exact count upfront, so start with 0
+                        # It will be updated as we process photos
+                        progress = status_exchange.get_progress()
+                        if file_cache is not None and use_cache:
+                            # Start with 0, will be updated dynamically
+                            progress.photos_count = 0
+                        else:
+                            progress.photos_count = photos_to_download
                         photos_counter = 0
+                        photos_downloaded = 0  # Track photos actually downloaded in this iteration
+                        # Initialize photos_checked for status tracking
+                        progress.photos_checked = 0
 
                         now = datetime.datetime.now(get_localzone())
-                        # photos_iterator = iter(photos_enumerator)
-
-                        download_photo = partial(downloader, icloud)
+                        last_progress_message_time = time.time()  # Track last progress message time
+                        loop_start_time = time.time()  # Track start time for rate calculation
+                        # Store processing start time in progress for status messages
+                        progress.processing_start_time = loop_start_time
+                        # Create download_photo with total_photos and start_time for counter display
+                        # Use lambda to pass keyword arguments correctly
+                        download_photo = lambda counter, photo: downloader(icloud, counter, photo, total_photos=photos_to_download, start_time=loop_start_time)
 
                         for item in photos_bar:
                             try:
@@ -1080,10 +1297,33 @@ def core_single_run(
                                 # item = next(photos_iterator)
                                 should_delete = False
 
+                                # Update photos_checked for status tracking (every photo we process)
+                                progress = status_exchange.get_progress()
+                                progress.photos_checked += 1
+
                                 passer_result = passer(item)
                                 download_result = passer_result and download_photo(
                                     consecutive_files_found, item
                                 )
+                                
+                                # Count photos that were actually downloaded
+                                if download_result:
+                                    photos_downloaded += 1
+                                    photos_counter += 1
+                                    status_exchange.get_progress().photos_counter = photos_counter
+                                    
+                                    # Send progress update every minute if manual sync was triggered
+                                    current_time = time.time()
+                                    if telegram_bot and progress.last_progress_message_time > 0:
+                                        # Manual sync was triggered, send updates every minute
+                                        if (current_time - last_progress_message_time) >= 60:
+                                            telegram_bot.send_progress_update()
+                                            last_progress_message_time = current_time
+                                            progress.last_progress_message_time = current_time
+                                elif passer_result:
+                                    # Photo passed filters but was already downloaded
+                                    photos_counter += 1
+                                    status_exchange.get_progress().photos_counter = photos_counter
                                 if download_result and user_config.delete_after_download:
                                     should_delete = True
 
@@ -1142,8 +1382,6 @@ def core_single_run(
                                     # retrier(delete_local, error_handler)
                                     photo_album.increment_offset(-1)
 
-                                photos_counter += 1
-                                status_exchange.get_progress().photos_counter = photos_counter
 
                                 if status_exchange.get_progress().cancel:
                                     break
@@ -1171,7 +1409,33 @@ def core_single_run(
                             message = f"All {photo_video_phrase} have been downloaded"
                             logger.info(message)
                             status_exchange.get_progress().photos_last_message = message
-                        status_exchange.get_progress().reset()
+                            
+                            # Send final message via Telegram
+                            # Only send if manual sync was triggered (last_progress_message_time > 0)
+                            # OR if it's a periodic sync (always send final message for periodic)
+                            progress = status_exchange.get_progress()
+                            if telegram_bot:
+                                watch_interval = global_config.watch_with_interval or 0
+                                # Send final message if manual sync OR if periodic (last_progress_message_time == 0 means periodic)
+                                if progress.last_progress_message_time > 0:
+                                    # Manual sync - send final message
+                                    telegram_bot.send_sync_complete_message(photos_downloaded, watch_interval)
+                                elif watch_interval > 0:
+                                    # Periodic sync - send final message (but no initial or progress messages)
+                                    telegram_bot.send_sync_complete_message(photos_downloaded, watch_interval)
+                        
+                        # Update last sync time and watch interval before reset
+                        progress = status_exchange.get_progress()
+                        current_time = time.time()
+                        if global_config.watch_with_interval:
+                            progress.watch_interval = global_config.watch_with_interval
+                            progress.last_sync_time = current_time
+                        # Always save last sync date to cache for incremental syncs (even without watch mode)
+                        # This allows subsequent runs to only process new photos
+                        if file_cache is not None:
+                            file_cache.set_last_sync_date(current_time)
+                            logger.info(f"Saved last sync date: {datetime.datetime.fromtimestamp(current_time).strftime('%Y-%m-%d %H:%M:%S')} (next sync will only process new photos)")
+                        progress.reset()
 
                     if user_config.auto_delete:
                         autodelete_photos(
@@ -1200,8 +1464,20 @@ def core_single_run(
             if global_config.mfa_provider == MFAProvider.WEBUI:
                 update_auth_error_in_webui(status_exchange, str(error))
                 continue
+            elif global_config.mfa_provider == MFAProvider.TELEGRAM and telegram_bot:
+                # Error already handled in request_2fa_telegram, just continue
+                continue
             else:
                 return 1
+        except PyiCloud2SARequiredException as error:
+            logger.info(str(error))
+            dump_responses(logger.debug, captured_responses)
+            # Notify via Telegram if available
+            if telegram_bot:
+                username = user_config.username
+                telegram_bot.notify_auth_required(username)
+            # Continue to retry authentication (will detect requires_2fa and use Telegram if configured)
+            continue
         except (
             PyiCloudServiceNotActivatedException,
             PyiCloudServiceUnavailableException,
@@ -1210,6 +1486,15 @@ def core_single_run(
         ) as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
+            # Check if it's an authentication error (421, 450, 500)
+            if isinstance(error, PyiCloudAPIResponseException) and str(error.code) in ["421", "450", "500"]:
+                # Authentication required - notify via Telegram if available
+                if telegram_bot:
+                    username = user_config.username
+                    telegram_bot.notify_auth_required(username)
+                # Continue to retry authentication (will detect requires_2fa and use Telegram if configured)
+                if global_config.mfa_provider == MFAProvider.TELEGRAM and telegram_bot:
+                    continue
             # webui will display error and wait for password again
             if (
                 PasswordProvider.WEBUI in global_config.password_providers

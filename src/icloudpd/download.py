@@ -160,6 +160,8 @@ def download_media(
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
+                # Note: re-authentication will be handled by the main loop
+                # which will detect requires_2fa and trigger MFA flow
                 if retries > 0:
                     # If the first re-authentication attempt failed,
                     # start waiting a few seconds before retrying in case

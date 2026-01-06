@@ -1,0 +1,25 @@
+# Simplified build Dockerfile that doesn't require BuildKit
+FROM python:3.13-alpine3.19
+WORKDIR /app
+RUN apk update && \
+    apk add git curl binutils gcc libc-dev libffi-dev zlib-dev openssl-dev tzdata bash patchelf python3-dev musl-dev pkgconfig cargo
+COPY LICENSE.md .
+COPY README_PYPI.md .
+COPY requirements-pip.txt .
+COPY scripts scripts/
+COPY binary_dist binary_dist/
+COPY pyproject.toml .
+COPY src src/
+RUN python3 -m venv .venv && \
+    . .venv/bin/activate && \
+    python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && \
+    pip3 install --disable-pip-version-check . --group dev --group devlinux
+RUN . .venv/bin/activate && \
+    scripts/build_bin1 icloudpd && \
+    scripts/build_bin1 icloud
+# Copy binaries to a known location
+RUN mkdir -p /output && \
+    cp /app/dist/icloudpd-*-linux-musl-amd64 /output/icloudpd && \
+    cp /app/dist/icloud-*-linux-musl-amd64 /output/icloud && \
+    chmod +x /output/icloudpd /output/icloud
+
