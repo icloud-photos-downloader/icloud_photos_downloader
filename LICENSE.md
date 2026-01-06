@@ -1,6 +1,7 @@
 The MIT License (MIT)
 
 Copyright (c) 2016 Nathan Broadbent
+Copyright (c) 2016-2025 The iCloud Photo Downloader Authors
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -19,3 +20,12 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+---
+
+This is a fork of the original iCloud Photos Downloader project:
+https://github.com/icloud-photos-downloader/icloud_photos_downloader
+
+This fork includes additional features such as Telegram bot integration for
+remote control and authentication. All modifications are also licensed under
+the MIT License.
