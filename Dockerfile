@@ -25,29 +25,9 @@ EXPOSE 8080
 WORKDIR /app
 RUN chmod +x /app/icloud /app/icloudpd
 
-# Use a shell script to allow command selection
-COPY <<EOF /app/entrypoint.sh
-#!/bin/sh
-# If first argument is 'icloud' or 'icloudpd', run the corresponding binary
-case "\$1" in
-    icloud)
-        shift
-        exec /app/icloud "\$@"
-        ;;
-    icloudpd)
-        shift
-        exec /app/icloudpd "\$@"
-        ;;
-    *)
-        echo "Error: You must specify either 'icloud' or 'icloudpd' as the first argument."
-        echo "Usage: docker run <image> icloudpd [options]"
-        echo "   or: docker run <image> icloud [options]"
-        exit 1
-        ;;
-esac
-EOF
-
+# Use a shell script to allow command selection and environment variable conversion
+COPY entrypoint-wrapper.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
 
-# Default entrypoint allows command selection
+# Default entrypoint allows command selection and env var conversion
 ENTRYPOINT ["/app/entrypoint.sh"]
