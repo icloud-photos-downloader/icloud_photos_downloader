@@ -19,7 +19,10 @@ from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePoli
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
+    add_cloned_master_cookie_dir,
+    calc_vcr_dir,
     path_from_project_root,
+    run_cassette,
     run_icloudpd_test,
     run_main,
 )
@@ -212,6 +215,9 @@ class CliTestCase(TestCase):
                         skip_videos=False,
                         skip_live_photos=False,
                         xmp_sidecar=False,
+                        favorite_to_rating=None,
+                        process_existing_favorites=False,
+                        metadata_overwrite=False,
                         force_size=False,
                         auto_delete=False,
                         folder_structure="{:%Y/%m/%d}",
@@ -252,6 +258,9 @@ class CliTestCase(TestCase):
                         skip_videos=False,
                         skip_live_photos=False,
                         xmp_sidecar=False,
+                        favorite_to_rating=None,
+                        process_existing_favorites=False,
+                        metadata_overwrite=False,
                         force_size=False,
                         auto_delete=False,
                         folder_structure="{:%Y/%m/%d}",
@@ -328,6 +337,9 @@ class CliTestCase(TestCase):
                         skip_videos=False,
                         skip_live_photos=False,
                         xmp_sidecar=False,
+                        favorite_to_rating=None,
+                        process_existing_favorites=False,
+                        metadata_overwrite=False,
                         force_size=False,
                         auto_delete=False,
                         folder_structure="{:%Y/%m/%d}",
@@ -356,6 +368,142 @@ class CliTestCase(TestCase):
                 ],
             ),
             "valid skip-created parsed",
+        )
+        self.assertEqual(
+            parse(["--username", "abc", "--favorite-to-rating"]),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                ),
+                [
+                    UserConfig(
+                        directory=None,
+                        username="abc",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=[AssetVersionSize.ORIGINAL],
+                        live_photo_size=LivePhotoVersionSize.ORIGINAL,
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        favorite_to_rating=5,
+                        process_existing_favorites=False,
+                        metadata_overwrite=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
+                        align_raw=RawTreatmentPolicy.AS_IS,
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    )
+                ],
+            ),
+            "Favorite-to-rating is default if no parameter",
+        )
+        self.assertEqual(
+            parse(["--username", "abc", "--favorite-to-rating", "1"]),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                ),
+                [
+                    UserConfig(
+                        directory=None,
+                        username="abc",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=[AssetVersionSize.ORIGINAL],
+                        live_photo_size=LivePhotoVersionSize.ORIGINAL,
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        favorite_to_rating=1,
+                        process_existing_favorites=False,
+                        metadata_overwrite=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
+                        align_raw=RawTreatmentPolicy.AS_IS,
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    )
+                ],
+            ),
+            "Favorite-to-rating accepts parameter",
         )
         with pytest.raises(
             ArgumentError,
@@ -389,10 +537,165 @@ class CliTestCase(TestCase):
                     "2",
                 ]
             )
+        # Test --process-existing-favorites flag
+        self.assertEqual(
+            parse(
+                ["--username", "abc", "--process-existing-favorites", "--favorite-to-rating", "5"]
+            ),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                ),
+                [
+                    UserConfig(
+                        directory=None,
+                        username="abc",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=[AssetVersionSize.ORIGINAL],
+                        live_photo_size=LivePhotoVersionSize.ORIGINAL,
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        favorite_to_rating=5,
+                        process_existing_favorites=True,
+                        metadata_overwrite=False,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
+                        align_raw=RawTreatmentPolicy.AS_IS,
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    )
+                ],
+            ),
+            "--process-existing-favorites flag parsing",
+        )
+        # Test --metadata-overwrite flag
+        self.assertEqual(
+            parse(["--username", "abc", "--metadata-overwrite"]),
+            (
+                GlobalConfig(
+                    help=False,
+                    version=False,
+                    use_os_locale=False,
+                    only_print_filenames=False,
+                    log_level=LogLevel.DEBUG,
+                    no_progress_bar=False,
+                    threads_num=1,
+                    domain="com",
+                    watch_with_interval=None,
+                    password_providers=[
+                        PasswordProvider.PARAMETER,
+                        PasswordProvider.KEYRING,
+                        PasswordProvider.CONSOLE,
+                    ],
+                    mfa_provider=MFAProvider.CONSOLE,
+                ),
+                [
+                    UserConfig(
+                        directory=None,
+                        username="abc",
+                        auth_only=False,
+                        cookie_directory="~/.pyicloud",
+                        password=None,
+                        sizes=[AssetVersionSize.ORIGINAL],
+                        live_photo_size=LivePhotoVersionSize.ORIGINAL,
+                        recent=None,
+                        until_found=None,
+                        albums=[],
+                        list_albums=False,
+                        library="PrimarySync",
+                        list_libraries=False,
+                        skip_videos=False,
+                        skip_live_photos=False,
+                        xmp_sidecar=False,
+                        favorite_to_rating=None,
+                        process_existing_favorites=False,
+                        metadata_overwrite=True,
+                        force_size=False,
+                        auto_delete=False,
+                        folder_structure="{:%Y/%m/%d}",
+                        set_exif_datetime=False,
+                        smtp_username=None,
+                        smtp_password=None,
+                        smtp_host="smtp.gmail.com",
+                        smtp_port=587,
+                        smtp_no_tls=False,
+                        notification_email=None,
+                        notification_email_from=None,
+                        notification_script=None,
+                        delete_after_download=False,
+                        keep_icloud_recent_days=None,
+                        dry_run=False,
+                        keep_unicode_in_filenames=False,
+                        live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
+                        align_raw=RawTreatmentPolicy.AS_IS,
+                        file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                        skip_created_before=None,
+                        skip_created_after=None,
+                        skip_photos=False,
+                    )
+                ],
+            ),
+            "--metadata-overwrite flag parsing",
+        )
 
     def test_cli(self) -> None:
         result = run_main(["--help"])
         self.assertEqual(result.exit_code, 0, "exit code")
+
+    def test_process_existing_favorites_requires_favorite_to_rating(self) -> None:
+        """Test that --process-existing-favorites requires --favorite-to-rating."""
+        result = run_main(
+            [
+                "--username",
+                "test@example.com",
+                "-d",
+                "/tmp",
+                "--process-existing-favorites",
+            ]
+        )
+        self.assertEqual(result.exit_code, 2, "Should exit with code 2")
+        stderr_text = result.stderr_bytes.decode("utf-8") if result.stderr_bytes else ""
+        self.assertIn("favorite-to-rating", stderr_text.lower())
 
     def test_log_levels(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -475,79 +778,121 @@ class CliTestCase(TestCase):
 
     def test_missing_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
         # need path removed
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
 
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "--recent",
-                "0",
-                "--log-level",
-                "info",
-                "-d",
+        sub_dir = os.path.join(base_dir, "dummy")
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        self.assertFalse(os.path.exists(sub_dir), f"{sub_dir} exists")
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
                 base_dir,
-            ],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--log-level",
+                    "info",
+                    "-d",
+                    sub_dir,
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
 
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+        self.assertFalse(os.path.exists(sub_dir), f"{sub_dir} exists")
 
     def test_missing_directory_param(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "--recent",
-                "0",
-                "--log-level",
-                "info",
-            ],
+
+        # Clean up any existing directory
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
+                base_dir,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--log-level",
+                    "info",
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
-
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
     def test_conflict_options_delete_after_download_and_auto_delete(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "-d",
-                "/tmp",
-                "--delete-after-download",
-                "--auto-delete",
-            ],
+
+        # Clean up any existing directory
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
+                base_dir,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "-d",
+                    "/tmp",
+                    "--delete-after-download",
+                    "--auto-delete",
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
-
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
     def test_conflict_options_delete_after_download_and_keep_icloud_recent_days(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "-d",
-                "/tmp",
-                "--delete-after-download",
-                "--keep-icloud-recent-days",
-                "1",
-            ],
+
+        # Clean up any existing directory
+        if os.path.exists(base_dir):
+            shutil.rmtree(base_dir)
+
+        vcr_path = calc_vcr_dir(self.root_path)
+
+        result = run_cassette(
+            os.path.join(vcr_path, "min_auth.yml"),
+            add_cloned_master_cookie_dir(
+                self.root_path,
+                base_dir,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "-d",
+                    "/tmp",
+                    "--delete-after-download",
+                    "--keep-icloud-recent-days",
+                    "1",
+                ],
+            ),
         )
         self.assertEqual(result.exit_code, 2, "exit code")
-
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")

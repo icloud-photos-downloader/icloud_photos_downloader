@@ -1,25 +1,16 @@
 interactions:
 - request:
-    body: !!python/unicode '{"accountName": "whatever_username", "protocols": ["s2k", "s2k_fo"]}'
+    body: 'null'
     headers:
       Accept: ['*/*']
       Accept-Encoding: ['gzip, deflate']
       Connection: ['keep-alive']
-      Content-Length: ['98']
-      Content-Type: ['application/json']
+      Content-Length: ['4']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36']
-      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
-      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
-      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
-      X-Apple-OAuth-Require-Grant-Code: ['true']
-      X-Apple-OAuth-Response-Mode: ['web_message']
-      X-Apple-OAuth-Response-Type: ['code']
-      X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
-      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
     method: POST
-    uri: https://idmsa.apple.com/appleauth/auth/signin/init
+    uri: https://setup.icloud.com/setup/ws/1/validate
   response:
     body: {string: 'Service Temporary Unavailable'}
     headers:
@@ -46,26 +37,17 @@ interactions:
       code: 503
       message: 'Service Temporary Unavailable'
 - request:
-    body: !!python/unicode '{"accountName": "whatever_username", "protocols": ["s2k", "s2k_fo"]}'
+    body: 'null'
     headers:
       Accept: ['*/*']
       Accept-Encoding: ['gzip, deflate']
       Connection: ['keep-alive']
-      Content-Length: ['98']
-      Content-Type: ['application/json']
+      Content-Length: ['4']
       Origin: ['https://www.icloud.com']
       Referer: ['https://www.icloud.com/']
       User-Agent: ['Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36']
-      X-Apple-OAuth-Client-Id: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
-      X-Apple-OAuth-Client-Type: ['firstPartyAuth']
-      X-Apple-OAuth-Redirect-URI: ['https://www.icloud.com']
-      X-Apple-OAuth-Require-Grant-Code: ['true']
-      X-Apple-OAuth-Response-Mode: ['web_message']
-      X-Apple-OAuth-Response-Type: ['code']
-      X-Apple-OAuth-State: ['EC5646DE-9423-11E8-BF21-14109FE0B321']
-      X-Apple-Widget-Key: ['d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d']
     method: POST
-    uri: https://idmsa.apple.com/appleauth/auth/signin/init
+    uri: https://setup.icloud.com/setup/ws/1/validate
   response:
     body: {string: 'Service Temporary Unavailable'}
     headers:

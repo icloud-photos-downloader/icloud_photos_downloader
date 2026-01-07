@@ -1,6 +1,7 @@
 import argparse
 import copy
 import datetime
+import os
 import pathlib
 import sys
 from itertools import dropwhile
@@ -117,6 +118,25 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     cloned.add_argument(
         "--xmp-sidecar",
         help="Export additional data as XMP sidecar files (default: don't export)",
+        action="store_true",
+    )
+    cloned.add_argument(
+        "--favorite-to-rating",
+        help="Set EXIF (and/or XMP sidecar if enabled) Rating for favorited photos (0-5). Default: %(const)s if no value specified",
+        nargs="?",
+        const=5,
+        default=None,
+        type=int,
+        choices=[0, 1, 2, 3, 4, 5],
+    )
+    cloned.add_argument(
+        "--process-existing-favorites",
+        help="Process existing files to add/update favorite ratings. Requires --favorite-to-rating. Use with --recent or --until-found for efficiency.",
+        action="store_true",
+    )
+    cloned.add_argument(
+        "--metadata-overwrite",
+        help="Overwrite existing metadata values (rating, datetime) when processing files. Default: preserve existing values",
         action="store_true",
     )
     cloned.add_argument(
@@ -429,6 +449,16 @@ def format_help() -> str:
 
 
 def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
+    # Validate --process-existing-favorites requires --favorite-to-rating
+    if user_ns.process_existing_favorites and user_ns.favorite_to_rating is None:
+        import sys
+
+        print(
+            "Error: --process-existing-favorites requires --favorite-to-rating to be set",
+            file=sys.stderr,
+        )
+        sys.exit(2)
+
     return UserConfig(
         username=user_ns.username,
         password=user_ns.password,
@@ -448,6 +478,9 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_videos=user_ns.skip_videos,
         skip_live_photos=user_ns.skip_live_photos,
         xmp_sidecar=user_ns.xmp_sidecar,
+        favorite_to_rating=user_ns.favorite_to_rating,
+        process_existing_favorites=user_ns.process_existing_favorites,
+        metadata_overwrite=user_ns.metadata_overwrite,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
         folder_structure=user_ns.folder_structure,
@@ -604,6 +637,20 @@ def cli() -> int:
             print(
                 "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, and --auth-only"
             )
+            return 2
+
+        # Validate that directories exist for configurations that need them
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.directory and not os.path.exists(user_ns.directory)
+        ]:
+            invalid_dirs = [
+                user_ns.directory
+                for user_ns in user_nses
+                if user_ns.directory and not os.path.exists(user_ns.directory)
+            ]
+            print(f"Directory does not exist: {invalid_dirs[0]}")
             return 2
         else:
             return run_with_configs(global_ns, user_nses)
