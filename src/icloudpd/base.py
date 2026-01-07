@@ -650,13 +650,20 @@ def download_builder(
 
         version = versions[download_size]
         photo_filename = filename_builder(photo)
+        filename_override = filename_overrides.get(download_size)
+
+        if file_match_policy == FileMatchPolicy.NAME_ID7_VERSIONED and download_size in (AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE):
+            ext = os.path.splitext(photo.calculate_version_filename(version, download_size, lp_filename_generator))[1]
+            stem = os.path.splitext(photo_filename)[0]
+            filename_override = f"{stem}-{download_size.value}{ext}"
+
         filename = calculate_version_filename(
             photo_filename,
             version,
             download_size,
             lp_filename_generator,
             photo.item_type,
-            filename_overrides.get(download_size),
+            filename_override,
         )
 
         download_path = local_download_path(filename, download_dir)
@@ -1209,6 +1216,10 @@ def core_single_run(
             PyiCloudConnectionErrorException,
         ) as error:
             logger.info(error)
+            if isinstance(error, PyiCloudAPIResponseException) and "Invalid global session" in str(
+                error
+            ):
+                continue
             dump_responses(logger.debug, captured_responses)
             # webui will display error and wait for password again
             if (
@@ -1234,6 +1245,10 @@ def core_single_run(
             logger.debug("Retrying...")
             # these errors we can safely retry
             continue
+        except OSError as error:
+            logger.error("IOError during file operations: %s", error)
+            dump_responses(logger.debug, captured_responses)
+            return 1
         except Exception:
             dump_responses(logger.debug, captured_responses)
             raise
