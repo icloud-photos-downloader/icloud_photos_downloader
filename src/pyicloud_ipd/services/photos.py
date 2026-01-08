@@ -1,7 +1,6 @@
 import base64
 import copy
 import json
-import logging
 import re
 import typing
 from datetime import datetime
@@ -9,7 +8,7 @@ from typing import Any, Callable, Dict, Generator, Sequence, Tuple, cast
 from urllib.parse import urlencode
 
 import pytz
-from requests import Response, Session
+from requests import Session
 from tzlocal import get_localzone
 
 from foundation import bytes_decode, wrap_param_in_exception
@@ -22,12 +21,38 @@ from pyicloud_ipd.asset_version import (
     add_suffix_to_filename,
     calculate_version_filename,
 )
-from pyicloud_ipd.exceptions import (
-    PyiCloudServiceNotActivatedException,
-)
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.response_types import (
+    AlbumLengthResult,
+    AlbumLengthSuccess,
+    AlbumsFetchResult,
+    AlbumsFetchSuccess,
+    DownloadResult,
+    DownloadSuccess,
+    FoldersFetchResult,
+    FoldersFetchSuccess,
+    LibrariesAccessResult,
+    LibrariesAccessSuccess,
+    LibrariesFetchResult,
+    LibrariesFetchSuccess,
+    PhotoIterationComplete,
+    PhotoIterationResult,
+    PhotoIterationSuccess,
+    PhotoLibraryInitResult,
+    PhotoLibraryInitSuccess,
+    PhotoLibraryNotFinishedIndexing,
+    PhotosRequestResult,
+    PhotosRequestSuccess,
+    PhotosServiceInitResult,
+    PhotosServiceInitSuccess,
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
+    ResponseSuccess,
+)
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -109,10 +134,7 @@ def filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[
     return fromMaybe(fallback)
 
 
-logger = logging.getLogger(__name__)
-
-
-def download_asset(session: Session, url: str, start: int = 0) -> Response:
+def download_asset(session: Session | PyiCloudSession, url: str, start: int = 0) -> DownloadResult:
     """
     Download an asset from the given URL using the provided session.
 
@@ -122,10 +144,53 @@ def download_asset(session: Session, url: str, start: int = 0) -> Response:
         start: The byte offset to start downloading from (for resume capability)
 
     Returns:
-        The HTTP response for the download request
+        DownloadResult ADT indicating success or failure
     """
     headers = {"Range": f"bytes={start}-"}
-    return session.get(url, headers=headers, stream=True)
+    response = session.get(url, headers=headers, stream=True)
+    # Check if this is a PyiCloudSession and evaluate the response
+    if hasattr(session, "evaluate_response"):
+        result = session.evaluate_response(response)
+        match result:
+            case ResponseSuccess(resp):
+                response = resp
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
+    return DownloadSuccess(response)
+
+
+def photos_request(
+    service_endpoint: str,
+    params: Dict[str, Any],
+    session: Session | PyiCloudSession,
+    query_data: str,
+) -> PhotosRequestResult:
+    """Module-level implementation of photos_request for easier testing"""
+    url = (f"{service_endpoint}/records/query?") + urlencode(params)
+    response = session.post(
+        url,
+        data=query_data,
+        headers={"Content-type": "text/plain"},
+    )
+    # Check if this is a PyiCloudSession and evaluate the response
+    if hasattr(session, "evaluate_response"):
+        result = session.evaluate_response(response)
+        match result:
+            case ResponseSuccess(resp):
+                response = resp
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
+    return PhotosRequestSuccess(response)
 
 
 def apply_raw_policy(
@@ -274,7 +339,7 @@ class PhotoLibrary:
         self,
         service_endpoint: str,
         params: Dict[str, Any],
-        session: Session,
+        session: PyiCloudSession,
         zone_id: Dict[str, Any],
         library_type: str,
     ):
@@ -284,24 +349,53 @@ class PhotoLibrary:
         self.zone_id = zone_id
         self.library_type = library_type
 
-        url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
+    @classmethod
+    def check_and_create(
+        cls,
+        service_endpoint: str,
+        params: Dict[str, Any],
+        session: PyiCloudSession,
+        zone_id: Dict[str, Any],
+        library_type: str,
+    ) -> PhotoLibraryInitResult:
+        """Check indexing state and create PhotoLibrary if successful."""
+        url = f"{service_endpoint}/records/query?{urlencode(params)}"
         json_data = json.dumps(
             {
                 "query": {"recordType": "CheckIndexingState"},
-                "zoneID": self.zone_id,
+                "zoneID": zone_id,
             }
         )
 
-        request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+        request = session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+        result = session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
         response = request.json()
         indexing_state = response["records"][0]["fields"]["state"]["value"]
         if indexing_state != "FINISHED":
-            raise PyiCloudServiceNotActivatedException(
-                ("Apple iCloud Photo Library has not finished indexing yet"), None
-            )
+            return PhotoLibraryNotFinishedIndexing()
 
-    @property
-    def albums(self) -> Dict[str, "PhotoAlbum"]:
+        # Create and return the library
+        library = cls(
+            service_endpoint=service_endpoint,
+            params=params,
+            session=session,
+            zone_id=zone_id,
+            library_type=library_type,
+        )
+        return PhotoLibraryInitSuccess(library)
+
+    def get_albums(self) -> AlbumsFetchResult:
+        """Get albums for this library, returns ADT result."""
         albums = {
             name: PhotoAlbum(
                 self.params,
@@ -314,43 +408,56 @@ class PhotoLibrary:
             for (name, props) in self.SMART_FOLDERS.items()
         }
 
-        for folder in self._fetch_folders():
-            # FIXME: Handle subfolders
-            if folder["recordName"] in ("----Root-Folder----", "----Project-Root-Folder----") or (
-                folder["fields"].get("isDeleted") and folder["fields"]["isDeleted"]["value"]
+        folders_result = self._fetch_folders()
+        match folders_result:
+            case FoldersFetchSuccess(folders):
+                for folder in folders:
+                    # FIXME: Handle subfolders
+                    if folder["recordName"] in (
+                        "----Root-Folder----",
+                        "----Project-Root-Folder----",
+                    ) or (
+                        folder["fields"].get("isDeleted") and folder["fields"]["isDeleted"]["value"]
+                    ):
+                        continue
+
+                    folder_id = folder["recordName"]
+                    folder_obj_type = f"CPLContainerRelationNotDeletedByAssetDate:{folder_id}"
+                    folder_name = base64.b64decode(
+                        folder["fields"]["albumNameEnc"]["value"]
+                    ).decode("utf-8")
+                    query_filter = [
+                        {
+                            "fieldName": "parentId",
+                            "comparator": "EQUALS",
+                            "fieldValue": {"type": "STRING", "value": folder_id},
+                        }
+                    ]
+
+                    album = PhotoAlbum(
+                        self.params,
+                        self.session,
+                        self.service_endpoint,
+                        folder_name,
+                        "CPLContainerRelationLiveByAssetDate",
+                        folder_obj_type,
+                        query_filter,
+                        zone_id=self.zone_id,
+                    )
+                    albums[folder_name] = album
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
             ):
-                continue
+                return folders_result
 
-            folder_id = folder["recordName"]
-            folder_obj_type = f"CPLContainerRelationNotDeletedByAssetDate:{folder_id}"
-            folder_name = base64.b64decode(folder["fields"]["albumNameEnc"]["value"]).decode(
-                "utf-8"
-            )
-            query_filter = [
-                {
-                    "fieldName": "parentId",
-                    "comparator": "EQUALS",
-                    "fieldValue": {"type": "STRING", "value": folder_id},
-                }
-            ]
+        return AlbumsFetchSuccess(albums)
 
-            album = PhotoAlbum(
-                self.params,
-                self.session,
-                self.service_endpoint,
-                folder_name,
-                "CPLContainerRelationLiveByAssetDate",
-                folder_obj_type,
-                query_filter,
-                zone_id=self.zone_id,
-            )
-            albums[folder_name] = album
-
-        return albums
-
-    def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
+    def _fetch_folders(self) -> FoldersFetchResult:
         if self.library_type == "shared":
-            return []
+            return FoldersFetchSuccess([])
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
         json_data = json.dumps(
             {
@@ -360,9 +467,20 @@ class PhotoLibrary:
         )
 
         request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
         response = request.json()
 
-        return typing.cast(Sequence[Dict[str, Any]], response["records"])
+        return FoldersFetchSuccess(typing.cast(Sequence[Dict[str, Any]], response["records"]))
 
     @property
     def all(self) -> "PhotoAlbum":
@@ -412,6 +530,44 @@ class PhotosService(PhotoLibrary):
         zone_id = {"zoneName": "PrimarySync"}
         super().__init__(service_endpoint, self.params, self.session, zone_id, "private")
 
+    @classmethod
+    def check_and_create_photos_service(
+        cls, service_root: str, session: PyiCloudSession, params: Dict[str, Any]
+    ) -> PhotosServiceInitResult:
+        """Check indexing state and create PhotosService if successful."""
+        # Create temporary service to get endpoint
+        temp_params = dict(params)
+        temp_params.update({"remapEnums": True, "getCurrentSyncToken": True})
+
+        # Get the service endpoint
+        service_endpoint = f"{service_root}/database/1/com.apple.photos.cloud/production/private"
+        zone_id = {"zoneName": "PrimarySync"}
+
+        # Use parent class method to check and create
+        result = PhotoLibrary.check_and_create(
+            service_endpoint=service_endpoint,
+            params=temp_params,
+            session=session,
+            zone_id=zone_id,
+            library_type="private",
+        )
+
+        # If successful, replace the library with PhotosService instance
+        match result:
+            case PhotoLibraryInitSuccess(_):
+                # Create the actual PhotosService
+                photos_service = cls(service_root, session, params)
+                return PhotosServiceInitSuccess(photos_service)
+            case PhotoLibraryNotFinishedIndexing():
+                return PhotoLibraryNotFinishedIndexing()
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
+
         # TODO: Does syncToken ever change?
         # self.params.update({
         #     'syncToken': response['syncToken'],
@@ -420,45 +576,88 @@ class PhotosService(PhotoLibrary):
 
         # self._photo_assets = {}
 
-    @property
-    def private_libraries(self) -> Dict[str, PhotoLibrary]:
+    def get_private_libraries(self) -> LibrariesAccessResult:
+        """Get private libraries, returns ADT result."""
         if not self._private_libraries:
-            self._private_libraries = self._fetch_libraries("private")
+            result = self._fetch_libraries("private")
+            match result:
+                case LibrariesFetchSuccess(libraries, _):
+                    self._private_libraries = libraries
+                case (
+                    Response2SARequired(_)
+                    | ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
 
-        return self._private_libraries
+        return LibrariesAccessSuccess(self._private_libraries)
 
-    @property
-    def shared_libraries(self) -> Dict[str, PhotoLibrary]:
+    def get_shared_libraries(self) -> LibrariesAccessResult:
+        """Get shared libraries, returns ADT result."""
         if not self._shared_libraries:
-            self._shared_libraries = self._fetch_libraries("shared")
+            result = self._fetch_libraries("shared")
+            match result:
+                case LibrariesFetchSuccess(libraries, _):
+                    self._shared_libraries = libraries
+                case (
+                    Response2SARequired(_)
+                    | ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    return result
 
-        return self._shared_libraries
+        return LibrariesAccessSuccess(self._shared_libraries)
 
-    def _fetch_libraries(self, library_type: str) -> Dict[str, PhotoLibrary]:
-        try:
-            libraries = {}
-            service_endpoint = self.get_service_endpoint(library_type)
-            url = f"{service_endpoint}/zones/list"
-            request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
-            response = request.json()
-            for zone in response["zones"]:
-                if not zone.get("deleted"):
-                    zone_name = zone["zoneID"]["zoneName"]
-                    service_endpoint = self.get_service_endpoint(library_type)
-                    libraries[zone_name] = PhotoLibrary(
-                        service_endpoint,
-                        self.params,
-                        self.session,
-                        zone_id=zone["zoneID"],
-                        library_type=library_type,
-                    )
-                    # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
-                    # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
-                    # direction="ASCENDING", query_filter=None,
-                    # zone_id=zone['zoneID'])
-        except Exception as e:
-            logger.error(f"library exception: {str(e)}")
-        return libraries
+    def _fetch_libraries(self, library_type: str) -> LibrariesFetchResult:
+        libraries: Dict[str, PhotoLibrary] = {}
+        skipped: Dict[str, str] = {}
+
+        service_endpoint = self.get_service_endpoint(library_type)
+        url = f"{service_endpoint}/zones/list"
+
+        request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
+
+        response = request.json()
+        for zone in response["zones"]:
+            if not zone.get("deleted"):
+                zone_name = zone["zoneID"]["zoneName"]
+                service_endpoint = self.get_service_endpoint(library_type)
+                # Use check_and_create to verify indexing state
+                lib_result = PhotoLibrary.check_and_create(
+                    service_endpoint,
+                    self.params,
+                    self.session,
+                    zone_id=zone["zoneID"],
+                    library_type=library_type,
+                )
+                match lib_result:
+                    case PhotoLibraryInitSuccess(library):
+                        libraries[zone_name] = library
+                    case PhotoLibraryNotFinishedIndexing():
+                        skipped[zone_name] = "Not finished indexing"
+                    case Response2SARequired(account_name):
+                        skipped[zone_name] = f"2SA required: {account_name}"
+                    case ResponseServiceNotActivated(reason, _):
+                        skipped[zone_name] = f"Service not activated: {reason}"
+                    case ResponseAPIError(reason, _):
+                        skipped[zone_name] = f"API error: {reason}"
+                    case ResponseServiceUnavailable(reason):
+                        skipped[zone_name] = f"Service unavailable: {reason}"
+
+        return LibrariesFetchSuccess(libraries, skipped)
 
     def get_service_endpoint(self, library_type: str) -> str:
         return f"{self._service_root}/database/1/com.apple.photos.cloud/production/{library_type}"
@@ -468,7 +667,7 @@ class PhotoAlbum:
     def __init__(
         self,
         params: Dict[str, Any],
-        session: Session,
+        session: PyiCloudSession,
         service_endpoint: str,
         name: str,
         list_type: str,
@@ -496,46 +695,57 @@ class PhotoAlbum:
     def title(self) -> str:
         return self.name
 
-    def __iter__(self) -> Generator["PhotoAsset", Any, None]:
+    def __iter__(self) -> Generator[PhotoIterationResult, Any, None]:
         return self.photos
 
-    def __len__(self) -> int:
+    def get_album_length(self) -> AlbumLengthResult:
+        """Get the album length, returning an ADT result."""
         url = f"{self.service_endpoint}/internal/records/query/batch?{urlencode(self.params)}"
         request = self.session.post(
             url,
             data=json.dumps(self._count_query_gen(self.obj_type)),
             headers={"Content-type": "text/plain"},
         )
+        result = self.session.evaluate_response(request)
+        match result:
+            case ResponseSuccess(resp):
+                request = resp
+            case (
+                Response2SARequired(_)
+                | ResponseServiceNotActivated(_, _)
+                | ResponseAPIError(_, _)
+                | ResponseServiceUnavailable(_)
+            ):
+                return result
         response = request.json()
 
-        return int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
+        count = int(response["batch"][0]["records"][0]["fields"]["itemCount"]["value"])
+        return AlbumLengthSuccess(count)
 
     # Perform the request in a separate method so that we
     # can mock it to test session errors.
-    def photos_request(self) -> Response:
-        url = (f"{self.service_endpoint}/records/query?") + urlencode(self.params)
-        return self.session.post(
-            url,
-            data=json.dumps(self._list_query_gen(self.offset, self.list_type, self.query_filter)),
-            headers={"Content-type": "text/plain"},
-        )
 
     @property
-    def photos(self) -> Generator["PhotoAsset", Any, None]:
+    def photos(self) -> Generator[PhotoIterationResult, Any, None]:
         while True:
-            request = self.photos_request()
+            result = photos_request(
+                self.service_endpoint,
+                self.params,
+                self.session,
+                json.dumps(self._list_query_gen(self.offset, self.list_type, self.query_filter)),
+            )
 
-            #            url = ('%s/records/query?' % self.service_endpoint) + \
-            #                urlencode(self.service.params)
-            #            request = self.service.session.post(
-            #                url,
-            #                data=json.dumps(self._list_query_gen(
-            #                    offset, self.list_type, self.direction,
-            #                    self.query_filter)),
-            #                headers={'Content-type': 'text/plain'}
-            #            )
-
-            response = request.json()
+            match result:
+                case PhotosRequestSuccess(request):
+                    response = request.json()
+                case (
+                    Response2SARequired(_)
+                    | ResponseServiceNotActivated(_, _)
+                    | ResponseAPIError(_, _)
+                    | ResponseServiceUnavailable(_)
+                ):
+                    yield result
+                    return
 
             asset_records = {}
             master_records = []
@@ -550,10 +760,13 @@ class PhotoAlbum:
             if master_records_len:
                 for master_record in master_records:
                     record_name = master_record["recordName"]
-                    yield PhotoAsset(master_record, asset_records[record_name])
+                    yield PhotoIterationSuccess(
+                        PhotoAsset(master_record, asset_records[record_name])
+                    )
                     self.increment_offset(1)
             else:
-                break
+                yield PhotoIterationComplete()
+                return
 
     def increment_offset(self, value: int) -> None:
         self.offset += value
@@ -849,9 +1062,7 @@ class PhotoAsset:
         try:
             created_date = self.asset_date.astimezone(get_localzone())
         except (ValueError, OSError):
-            logger.error(
-                "Could not convert photo created date to local timezone (%s)", self.asset_date
-            )
+            # Could not convert photo created date to local timezone, use as-is
             created_date = self.asset_date
 
         return created_date
@@ -981,8 +1192,8 @@ class PhotoAsset:
         """
         return apply_raw_policy(self.versions, raw_policy)
 
-    def download(self, session: Session, url: str, start: int = 0) -> Response:
-        """Download this asset using the provided session."""
+    def download(self, session: Session, url: str, start: int = 0) -> DownloadResult:
+        """Download this asset using the provided session, returning an ADT result."""
         return download_asset(session, url, start)
 
     def __repr__(self) -> str:
