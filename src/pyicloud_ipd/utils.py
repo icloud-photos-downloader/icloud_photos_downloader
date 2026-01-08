@@ -103,7 +103,10 @@ def disambiguate_filenames(
     _sizes: Sequence[AssetVersionSize],
     photo_asset: "PhotoAsset",
     lp_filename_generator: Callable[[str], str],
+    base_filename: str | None = None,
 ) -> Tuple[Dict[AssetVersionSize, AssetVersion], Dict[AssetVersionSize, str]]:
+    from pyicloud_ipd.asset_version import calculate_version_filename
+
     _results: Dict[AssetVersionSize, AssetVersion] = {}
     _filename_overrides: Dict[AssetVersionSize, str] = {}
 
@@ -123,16 +126,33 @@ def disambiguate_filenames(
                 )
         else:
             if AssetVersionSize.ADJUSTED in _results:
-                original_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ORIGINAL],
-                    AssetVersionSize.ORIGINAL,
-                    lp_filename_generator,
-                )
-                adjusted_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ADJUSTED],
-                    AssetVersionSize.ADJUSTED,
-                    lp_filename_generator,
-                )
+                # Use base_filename if provided (with file_match_policy applied), otherwise fall back to photo_asset method
+                if base_filename is not None:
+                    original_filename = calculate_version_filename(
+                        base_filename,
+                        _results[AssetVersionSize.ORIGINAL],
+                        AssetVersionSize.ORIGINAL,
+                        lp_filename_generator,
+                        photo_asset.item_type,
+                    )
+                    adjusted_filename = calculate_version_filename(
+                        base_filename,
+                        _results[AssetVersionSize.ADJUSTED],
+                        AssetVersionSize.ADJUSTED,
+                        lp_filename_generator,
+                        photo_asset.item_type,
+                    )
+                else:
+                    original_filename = photo_asset.calculate_version_filename(
+                        _results[AssetVersionSize.ORIGINAL],
+                        AssetVersionSize.ORIGINAL,
+                        lp_filename_generator,
+                    )
+                    adjusted_filename = photo_asset.calculate_version_filename(
+                        _results[AssetVersionSize.ADJUSTED],
+                        AssetVersionSize.ADJUSTED,
+                        lp_filename_generator,
+                    )
                 if original_filename == adjusted_filename:
                     # Store filename override for adjusted version
                     _filename_overrides[AssetVersionSize.ADJUSTED] = add_suffix_to_filename(
@@ -149,26 +169,55 @@ def disambiguate_filenames(
                 )
         else:
             # Check for filename conflicts and add disambiguating suffix if needed
-            alternative_filename = photo_asset.calculate_version_filename(
-                _results[AssetVersionSize.ALTERNATIVE],
-                AssetVersionSize.ALTERNATIVE,
-                lp_filename_generator,
-            )
-            alt_adjusted_filename: str | None = None
-            alt_original_filename: str | None = None
+            # Use base_filename if provided (with file_match_policy applied), otherwise fall back to photo_asset method
+            if base_filename is not None:
+                alternative_filename = calculate_version_filename(
+                    base_filename,
+                    _results[AssetVersionSize.ALTERNATIVE],
+                    AssetVersionSize.ALTERNATIVE,
+                    lp_filename_generator,
+                    photo_asset.item_type,
+                )
+                alt_adjusted_filename: str | None = None
+                alt_original_filename: str | None = None
 
-            if AssetVersionSize.ADJUSTED in _results:
-                alt_adjusted_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ADJUSTED],
-                    AssetVersionSize.ADJUSTED,
+                if AssetVersionSize.ADJUSTED in _results:
+                    alt_adjusted_filename = calculate_version_filename(
+                        base_filename,
+                        _results[AssetVersionSize.ADJUSTED],
+                        AssetVersionSize.ADJUSTED,
+                        lp_filename_generator,
+                        photo_asset.item_type,
+                    )
+                if AssetVersionSize.ORIGINAL in _results:
+                    alt_original_filename = calculate_version_filename(
+                        base_filename,
+                        _results[AssetVersionSize.ORIGINAL],
+                        AssetVersionSize.ORIGINAL,
+                        lp_filename_generator,
+                        photo_asset.item_type,
+                    )
+            else:
+                alternative_filename = photo_asset.calculate_version_filename(
+                    _results[AssetVersionSize.ALTERNATIVE],
+                    AssetVersionSize.ALTERNATIVE,
                     lp_filename_generator,
                 )
-            if AssetVersionSize.ORIGINAL in _results:
-                alt_original_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ORIGINAL],
-                    AssetVersionSize.ORIGINAL,
-                    lp_filename_generator,
-                )
+                alt_adjusted_filename = None
+                alt_original_filename = None
+
+                if AssetVersionSize.ADJUSTED in _results:
+                    alt_adjusted_filename = photo_asset.calculate_version_filename(
+                        _results[AssetVersionSize.ADJUSTED],
+                        AssetVersionSize.ADJUSTED,
+                        lp_filename_generator,
+                    )
+                if AssetVersionSize.ORIGINAL in _results:
+                    alt_original_filename = photo_asset.calculate_version_filename(
+                        _results[AssetVersionSize.ORIGINAL],
+                        AssetVersionSize.ORIGINAL,
+                        lp_filename_generator,
+                    )
 
             if (alt_adjusted_filename and alternative_filename == alt_adjusted_filename) or (
                 alt_original_filename and alternative_filename == alt_original_filename

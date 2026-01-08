@@ -27,3 +27,5 @@ node_modules/
 .cookies/
 
 .claude/
+
+*.har
