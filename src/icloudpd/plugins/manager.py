@@ -240,6 +240,9 @@ class PluginManager:
                     plugin.configure(self.plugin_config, self.global_config, self.user_configs)
                     self._configured_plugins.add(plugin_name)
                     logger.info(f"Configured plugin: {plugin_name}")
+                    # Call post-configuration hook
+                    if hasattr(plugin, "on_configure_complete"):
+                        plugin.on_configure_complete()
                 except Exception as e:
                     logger.error(
                         f"Failed to configure plugin {plugin_name} with runtime configs: {e}",
@@ -277,14 +280,21 @@ class PluginManager:
             plugin_class = self.available[name]
             plugin = plugin_class()
 
-            # Configure the plugin with available configs
-            plugin.configure(plugin_config, self.global_config, self.user_configs)
-
-            # Mark as configured to prevent double-configuration in set_plugin_config()
-            self._configured_plugins.add(name)
-
             self.enabled[name] = plugin
-            logger.info(f"Enabled plugin: {name} (v{plugin.version})")
+
+            # Only configure if we have runtime configs available
+            # Otherwise, set_plugin_config() will configure later when runtime configs become available
+            if self.global_config is not None and self.user_configs is not None:
+                plugin.configure(plugin_config, self.global_config, self.user_configs)
+                self._configured_plugins.add(name)
+                logger.info(f"Enabled plugin: {name} (v{plugin.version})")
+                # Call post-configuration hook
+                if hasattr(plugin, "on_configure_complete"):
+                    plugin.on_configure_complete()
+            else:
+                logger.debug(
+                    f"Enabled plugin: {name} (v{plugin.version}) - waiting for runtime configs"
+                )
 
         except Exception as e:
             logger.error(f"Failed to enable plugin {name}: {e}", exc_info=True)

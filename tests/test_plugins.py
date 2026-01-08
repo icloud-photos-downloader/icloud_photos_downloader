@@ -120,6 +120,11 @@ class TestPluginManager(unittest.TestCase):
         manager = PluginManager()
         manager.available["mock"] = MockPlugin
 
+        # Set runtime configs first
+        mock_global_config = MagicMock()
+        mock_user_configs = [MagicMock()]
+        manager.set_plugin_config(Namespace(), mock_global_config, mock_user_configs)
+
         config = Namespace(mock_option="test")
         manager.enable("mock", config)
 
@@ -133,9 +138,11 @@ class TestPluginManager(unittest.TestCase):
         manager = PluginManager()
         manager.available["mock"] = MockPlugin
 
-        # Store config first
+        # Store config first with runtime configs
         config = Namespace(mock_option="from_stored")
-        manager.set_plugin_config(config)
+        mock_global_config = MagicMock()
+        mock_user_configs = [MagicMock()]
+        manager.set_plugin_config(config, mock_global_config, mock_user_configs)
 
         # Enable without passing config explicitly
         manager.enable("mock")
@@ -200,19 +207,23 @@ class TestPluginManager(unittest.TestCase):
         config = Namespace(mock_option="test")
         manager.set_plugin_config(config)
 
-        # Step 2: Enable plugin (like cli.py does) - should call configure once
+        # Step 2: Enable plugin (like cli.py does) - should NOT call configure yet (no runtime configs)
         manager.enable("mock")
 
         plugin = manager.enabled["mock"]
-        self.assertEqual(plugin.configure_count, 1)
+        self.assertEqual(
+            plugin.configure_count, 0, "Plugin should not be configured without runtime configs"
+        )
 
-        # Step 3: Provide runtime configs (like base.py does) - should NOT call configure again
+        # Step 3: Provide runtime configs (like base.py does) - should call configure now
         mock_global_config = MagicMock()
         mock_user_configs = [MagicMock()]
         manager.set_plugin_config(config, mock_global_config, mock_user_configs)
 
-        # Verify configure was still only called once
-        self.assertEqual(plugin.configure_count, 1)
+        # Verify configure was called exactly once
+        self.assertEqual(
+            plugin.configure_count, 1, "Plugin should be configured once with runtime configs"
+        )
 
     def test_add_plugin_arguments(self):
         """Test adding plugin arguments to parser"""
@@ -425,6 +436,83 @@ class TestDemoPlugin(unittest.TestCase):
         self.assertEqual(plugin.total_files_downloaded, 1)
 
 
+class TestPluginConfigPassing(unittest.TestCase):
+    """Test that user config is correctly passed to plugins end-to-end"""
+
+    def test_plugin_receives_user_config_via_cli_parse(self):
+        """Test that plugins receive UserConfig fields like process_existing_favorites"""
+        from icloudpd.cli import parse
+
+        # Create a test plugin that captures config
+        class ConfigCapturingPlugin(IcloudpdPlugin):
+            @property
+            def name(self):
+                return "config_test"
+
+            def configure(self, config, global_config=None, user_configs=None):
+                self.received_config = config
+                self.received_global_config = global_config
+                self.received_user_configs = user_configs
+
+        # Temporarily register the test plugin
+        from icloudpd.plugins.manager import PluginManager
+
+        original_discover = PluginManager.discover
+
+        def mock_discover(self):
+            original_discover(self)
+            self.available["config_test"] = ConfigCapturingPlugin
+
+        PluginManager.discover = mock_discover
+
+        try:
+            # Parse CLI args with plugin enabled and process_existing_favorites set
+            global_config, user_configs, plugin_manager = parse(
+                [
+                    "--plugin",
+                    "config_test",
+                    "--username",
+                    "test@example.com",
+                    "--directory",
+                    "/tmp/test",
+                    "--process-existing-favorites",
+                    "--favorite-to-rating",
+                    "5",
+                ]
+            )
+
+            # Enable the plugin if not already enabled (simulates cli.py behavior)
+            if "config_test" not in plugin_manager.enabled:
+                plugin_manager.enable("config_test")
+
+            # Set runtime configs (simulates base.py behavior)
+            plugin_manager.set_plugin_config(
+                plugin_manager.plugin_config, global_config, user_configs
+            )
+
+            # Verify the plugin received user_configs
+            plugin = plugin_manager.enabled["config_test"]
+            self.assertIsNotNone(plugin.received_user_configs, "Plugin should receive user_configs")
+            self.assertEqual(len(plugin.received_user_configs), 1, "Should have one user config")
+
+            # Verify process_existing_favorites is accessible
+            user_config = plugin.received_user_configs[0]
+            self.assertTrue(
+                hasattr(user_config, "process_existing_favorites"),
+                "UserConfig should have process_existing_favorites attribute",
+            )
+            self.assertEqual(
+                user_config.process_existing_favorites,
+                True,
+                "process_existing_favorites should be True",
+            )
+            self.assertEqual(user_config.favorite_to_rating, 5, "favorite_to_rating should be 5")
+
+        finally:
+            # Restore original discover method
+            PluginManager.discover = original_discover
+
+
 class TestPluginManagerErrorHandling(unittest.TestCase):
     """Test error handling in PluginManager"""
 
@@ -455,7 +543,11 @@ class TestPluginManagerErrorHandling(unittest.TestCase):
 
         manager = PluginManager()
         manager.available["failing"] = FailingConfigurePlugin
-        manager.set_plugin_config(Namespace())
+
+        # Set runtime configs so configure() will be called
+        mock_global_config = MagicMock()
+        mock_user_configs = [MagicMock()]
+        manager.set_plugin_config(Namespace(), mock_global_config, mock_user_configs)
 
         # Should raise the configuration error
         with self.assertRaises(ValueError):
@@ -541,18 +633,18 @@ class TestPluginManagerErrorHandling(unittest.TestCase):
         config = Namespace(mock_option="test")
         manager.set_plugin_config(config)
 
-        # Step 2: Enable plugin
+        # Step 2: Enable plugin - should NOT configure yet (no runtime configs)
         manager.enable("mock")
         plugin = manager.enabled["mock"]
-        self.assertEqual(plugin.configure_count, 1)
+        self.assertEqual(plugin.configure_count, 0, "Should not configure without runtime configs")
 
-        # Step 3: Set runtime configs - plugin already configured, should skip
+        # Step 3: Set runtime configs - should configure now
         mock_global_config = MagicMock()
         mock_user_configs = [MagicMock()]
         manager.set_plugin_config(config, mock_global_config, mock_user_configs)
 
-        # Should not reconfigure
-        self.assertEqual(plugin.configure_count, 1)
+        # Should be configured now
+        self.assertEqual(plugin.configure_count, 1, "Should configure once with runtime configs")
 
     def test_set_plugin_config_runtime_error(self):
         """Test error handling when runtime config causes configure error"""

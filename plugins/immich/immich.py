@@ -448,14 +448,12 @@ class ImmichPlugin(IcloudpdPlugin):
     ) -> None:
         """Configure Immich plugin from CLI arguments and runtime configs.
 
-        This is called twice:
-        1. Early (from cli.py): Only config is available
-        2. Late (from base.py): All parameters are available
+        Called once when all configuration is available (from base.py).
 
         Args:
             config: Parsed CLI arguments namespace
-            global_config: Global configuration (None on first call)
-            user_configs: List of user configurations (None on first call)
+            global_config: Global configuration
+            user_configs: List of user configurations
         """
         # Basic configuration
         self.server_url = getattr(config, "immich_server_url", None)
@@ -555,50 +553,51 @@ class ImmichPlugin(IcloudpdPlugin):
                 file=sys.stderr,
             )
 
-        # Print configuration (using print since logger isn't configured yet)
-        print("\n" + "=" * 70)
-        print("Immich Plugin: Initialized")
-        print("=" * 70)
-        print(f"  Version:                  {self.version}")
-        print(f"  Server URL:               {self.server_url}")
-        print(f"  Library ID:               {self.library_id}")
-        print(f"  Process Existing:         {self.process_existing}")
-        print(f"  Process Existing Favs:    {self.process_existing_favorites}")
-        batch_desc = (
-            "all (at end)"
-            if self.batch_size == 0
-            else ("immediate" if self.batch_size == 1 else f"every {self.batch_size} photos")
-        )
-        print(f"  Batch Processing:         {batch_desc}")
-        if self.batch_size != 1:
-            print(f"  Batch Log File:           {self.batch_log_file}")
-        print(f"  Scan Timeout:             {self.scan_timeout}s")
-        print(f"  Poll interval:            {self.poll_interval}s")
-        print(f"  Stack Media:              {self.stack_media}")
-        if self.stack_media:
-            print(f"  Stack Priority:           {', '.join(self.stack_priority)}")
-        print(
-            f"  Favorite Sizes:           {', '.join(self.favorite_sizes) if self.favorite_sizes else 'None'}"
-        )
-        print(
-            f"  Live Association:         {', '.join(self.associate_live_sizes) if self.associate_live_sizes else 'None'}"
-        )
-        print(f"  Album Rules:              {len(self.album_rules)}")
-        for rule in self.album_rules:
-            print(f"    - {rule}")
-        print("=" * 70 + "\n")
-
-        # Test Immich connection (after showing config so user knows what's being tested)
+        # Test Immich connection (validation only, output in on_configure_complete)
         if self.server_url and self.api_key:
             self._test_immich_connection()
 
-            # Validate directories when user_configs are available (second call from base.py)
+            # Validate directories when user_configs are available
             if user_configs is not None:
                 self._validate_directories(user_configs)
 
         # Load pending files from previous run if batch processing is enabled (batch_size != 1)
         if self.batch_size != 1:
             self._load_pending_files()
+
+    def on_configure_complete(self) -> None:
+        """Called after configuration is complete - display plugin status"""
+        logger.info("=" * 70)
+        logger.info("Immich Plugin: Initialized")
+        logger.info("=" * 70)
+        logger.info(f"  Version:                  {self.version}")
+        logger.info(f"  Server URL:               {self.server_url}")
+        logger.info(f"  Library ID:               {self.library_id}")
+        logger.info(f"  Process Existing:         {self.process_existing}")
+        logger.info(f"  Process Existing Favs:    {self.process_existing_favorites}")
+        batch_desc = (
+            "all (at end)"
+            if self.batch_size == 0
+            else ("immediate" if self.batch_size == 1 else f"every {self.batch_size} photos")
+        )
+        logger.info(f"  Batch Processing:         {batch_desc}")
+        if self.batch_size != 1:
+            logger.info(f"  Batch Log File:           {self.batch_log_file}")
+        logger.info(f"  Scan Timeout:             {self.scan_timeout}s")
+        logger.info(f"  Poll interval:            {self.poll_interval}s")
+        logger.info(f"  Stack Media:              {self.stack_media}")
+        if self.stack_media:
+            logger.info(f"  Stack Priority:           {', '.join(self.stack_priority)}")
+        logger.info(
+            f"  Favorite Sizes:           {', '.join(self.favorite_sizes) if self.favorite_sizes else 'None'}"
+        )
+        logger.info(
+            f"  Live Association:         {', '.join(self.associate_live_sizes) if self.associate_live_sizes else 'None'}"
+        )
+        logger.info(f"  Album Rules:              {len(self.album_rules)}")
+        for rule in self.album_rules:
+            logger.info(f"    - {rule}")
+        logger.info("=" * 70)
 
     @staticmethod
     def _strip_date_templates(path: str) -> str:

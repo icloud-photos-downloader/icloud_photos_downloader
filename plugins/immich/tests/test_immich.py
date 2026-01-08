@@ -1319,5 +1319,99 @@ class TestParseBatchSize(unittest.TestCase):
         self.assertIn("Invalid batch size", str(context.exception))
 
 
+class TestImmichConfigPassing(unittest.TestCase):
+    """Test that Immich plugin correctly receives user config"""
+
+    @patch("plugins.immich.immich.ImmichPlugin._test_immich_connection")
+    @patch("plugins.immich.immich.ImmichPlugin._validate_directories")
+    @patch("plugins.immich.immich.ImmichPlugin._load_pending_files")
+    def test_immich_receives_process_existing_favorites_via_cli_parse(
+        self, mock_load, mock_validate, mock_test_conn
+    ):
+        """Test that Immich plugin receives process_existing_favorites from user_configs"""
+        from icloudpd.cli import parse
+
+        # Parse CLI args with Immich plugin and process_existing_favorites enabled
+        global_config, user_configs, plugin_manager = parse(
+            [
+                "--plugin",
+                "immich",
+                "--username",
+                "test@example.com",
+                "--directory",
+                "/tmp/test",
+                "--immich-server-url",
+                "http://localhost:2283",
+                "--immich-api-key",
+                "test-key",
+                "--immich-library-id",
+                "test-lib",
+                "--process-existing-favorites",
+                "--favorite-to-rating",
+                "5",
+                "--immich-favorite",  # Need this with process-existing-favorites
+            ]
+        )
+
+        # Enable the plugin if not already enabled
+        if "immich" not in plugin_manager.enabled:
+            plugin_manager.enable("immich")
+
+        # Set runtime configs (simulates base.py behavior)
+        plugin_manager.set_plugin_config(plugin_manager.plugin_config, global_config, user_configs)
+
+        # Verify the plugin received process_existing_favorites
+        plugin = plugin_manager.enabled["immich"]
+        self.assertTrue(
+            plugin.process_existing_favorites,
+            "Immich plugin should receive process_existing_favorites=True from user_configs",
+        )
+
+        # Verify it came from user_configs
+        self.assertEqual(len(user_configs), 1)
+        self.assertTrue(user_configs[0].process_existing_favorites)
+        self.assertEqual(user_configs[0].favorite_to_rating, 5)
+
+    @patch("plugins.immich.immich.ImmichPlugin._test_immich_connection")
+    @patch("plugins.immich.immich.ImmichPlugin._validate_directories")
+    @patch("plugins.immich.immich.ImmichPlugin._load_pending_files")
+    def test_immich_distinguishes_process_existing_from_favorites(
+        self, mock_load, mock_validate, mock_test_conn
+    ):
+        """Test that Immich correctly handles both process_existing flags"""
+        from icloudpd.cli import parse
+
+        # Test with --immich-process-existing (plugin-specific)
+        global_config1, user_configs1, plugin_manager1 = parse(
+            [
+                "--plugin",
+                "immich",
+                "--username",
+                "test@example.com",
+                "--directory",
+                "/tmp/test",
+                "--immich-server-url",
+                "http://localhost:2283",
+                "--immich-api-key",
+                "test-key",
+                "--immich-library-id",
+                "test-lib",
+                "--immich-process-existing",  # Plugin-specific flag
+            ]
+        )
+
+        if "immich" not in plugin_manager1.enabled:
+            plugin_manager1.enable("immich")
+        plugin_manager1.set_plugin_config(
+            plugin_manager1.plugin_config, global_config1, user_configs1
+        )
+
+        plugin1 = plugin_manager1.enabled["immich"]
+        self.assertTrue(plugin1.process_existing, "Should have process_existing=True")
+        self.assertFalse(
+            plugin1.process_existing_favorites, "Should have process_existing_favorites=False"
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

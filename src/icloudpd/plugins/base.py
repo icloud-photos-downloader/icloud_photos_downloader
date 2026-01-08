@@ -96,14 +96,15 @@ class IcloudpdPlugin(ABC):
     ) -> None:
         """Configure plugin from parsed CLI arguments.
 
-        Called once during initialization with available configs.
+        Called once during initialization when all configs are available.
 
         Use this to initialize your plugin with the provided configuration.
+        Avoid printing messages here - use on_configure_complete() instead.
 
         Args:
             config: Parsed arguments namespace containing all CLI arguments
-            global_config: Global configuration object (None if not yet available)
-            user_configs: List of user configurations (None if not yet available)
+            global_config: Global configuration object
+            user_configs: List of user configurations
 
         Example:
             >>> def configure(self, config, global_config=None, user_configs=None):
@@ -113,6 +114,21 @@ class IcloudpdPlugin(ABC):
             ...     if user_configs:
             ...         directories = [uc.directory for uc in user_configs]
             ...         self.validate_directories(directories)
+        """
+        ...
+
+    def on_configure_complete(self) -> None:  # noqa: B027
+        """Called after configuration is complete.
+
+        Use this hook to print configuration messages or perform post-configuration
+        actions that should only happen once. This is called after configure()
+        when the plugin manager has all runtime configs available.
+
+        Example:
+            >>> def on_configure_complete(self):
+            ...     print(f"Immich plugin configured:")
+            ...     print(f"  Server: {self.server_url}")
+            ...     print(f"  Process existing: {self.process_existing}")
         """
         ...
 

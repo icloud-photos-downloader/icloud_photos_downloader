@@ -99,17 +99,19 @@ class DemoPlugin(IcloudpdPlugin):
         self.verbose = getattr(config, "demo_verbose", False)
         self.compact = getattr(config, "demo_compact", False)
 
+    def on_configure_complete(self) -> None:
+        """Called after configuration is complete - display plugin status"""
         if not self.compact:
-            print("\n" + "=" * 70)
-            print("🔌 Demo Plugin: Initialized")
-            print("=" * 70)
-            print(f"   Version:     {self.version}")
-            print(f"   Verbose:     {self.verbose}")
-            print(f"   Compact:     {self.compact}")
-            print("=" * 70)
-            print("\nThis plugin shows data available at each hook point.")
-            print("It accumulates files in instance variables, then reports")
-            print("when all sizes are complete.\n")
+            logger.info("=" * 70)
+            logger.info("Demo Plugin: Initialized")
+            logger.info("=" * 70)
+            logger.info(f"   Version:     {self.version}")
+            logger.info(f"   Verbose:     {self.verbose}")
+            logger.info(f"   Compact:     {self.compact}")
+            logger.info("=" * 70)
+            logger.info("This plugin shows data available at each hook point.")
+            logger.info("It accumulates files in instance variables, then reports")
+            logger.info("when all sizes are complete.")
 
     # ========================================================================
     # PER-SIZE HOOKS - Accumulate data
