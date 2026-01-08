@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Build Docker image locally with proper file naming
+# This script mimics the GitHub Actions workflow for local development
+# Usage: scripts/build_docker_local [platform]
+# Example: scripts/build_docker_local linux/amd64
+
+VERSION=$(grep '^version=' pyproject.toml | cut -d'"' -f2)
+PLATFORM=${1:-linux/amd64}
+ARCH=${PLATFORM##*/}
+
+# Map Docker platform to musl architecture naming
+case $ARCH in
+  amd64) MUSL_ARCH="amd64" ;;
+  arm64) MUSL_ARCH="arm64" ;;
+  arm/v7) MUSL_ARCH="arm32v7" ;;
+  *) echo "Unknown architecture: $ARCH"; exit 1 ;;
+esac
+
+echo "Building icloudpd version $VERSION for $PLATFORM (musl: $MUSL_ARCH)"
+
+# Build binaries using buildx
+echo "Step 1/3: Building binaries with Docker buildx..."
+docker buildx build . --platform=$PLATFORM --builder=container --progress plain -o dist -f Dockerfile.build-musl
+
+# Rename to match expected format
+echo "Step 2/3: Renaming binaries to versioned format..."
+mv dist/icloud dist/icloud-$VERSION-linux-musl-$MUSL_ARCH
+mv dist/icloudpd dist/icloudpd-$VERSION-linux-musl-$MUSL_ARCH
+
+# Build Docker image
+echo "Step 3/3: Building Docker image..."
+docker build -t icloudpd_dev .
+
+echo "Done! Image tagged as icloudpd_dev"
+echo "Test with: docker run icloudpd_dev icloudpd --version"
+echo "List plugins: docker run icloudpd_dev icloudpd --plugins-list"

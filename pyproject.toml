@@ -85,6 +85,7 @@ icloud = "pyicloud_ipd.cmdline:main"
 
 [project.entry-points."icloudpd.plugins"]
 demo = "icloudpd.plugins.demo:DemoPlugin"
+immich = "plugins.immich.immich:ImmichPlugin"
 
 [tool.pytest.ini_options]
 log_format = "%(levelname)-8s %(message)s"

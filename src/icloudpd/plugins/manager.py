@@ -49,26 +49,26 @@ class PluginManager:
         self._configured_plugins: set[str] = set()  # Track which plugins have been configured
 
     def discover(self) -> None:
-        """Discover plugins from bundled plugins/ directory and entry points.
+        """Discover plugins from multiple sources with fallback chain.
 
         Discovery order (first wins):
-        1. Bundled plugins in project-root/plugins/ directory
+        1. Plugins directory (with smart path detection)
         2. Installed plugins via entry points
 
-        Bundled plugins are package directories under plugins/ like:
-            plugins/immich/__init__.py  (exports ImmichPlugin)
+        Plugin directory detection uses fallback chain:
+        - ICLOUDPD_PLUGIN_PATH env var (highest priority)
+        - /app/plugins or /plugins (when running in PyInstaller binary)
+        - project-root/plugins (when running from source)
 
         Entry point plugins are registered in pyproject.toml like:
             [project.entry-points."icloudpd.plugins"]
             demo = "icloudpd.plugins.demo:DemoPlugin"
         """
-        # 1. Discover from project-root/plugins/ directory
+        # 1. Discover from plugins directory (with smart path detection)
         try:
-            # Navigate from src/icloudpd/plugins/ up to project root
-            project_root = Path(__file__).parent.parent.parent.parent
-            plugins_dir = project_root / "plugins"
-
-            if plugins_dir.exists() and plugins_dir.is_dir():
+            plugins_dir = self._find_plugins_directory()
+            if plugins_dir and plugins_dir.exists() and plugins_dir.is_dir():
+                logger.debug(f"Discovering plugins from directory: {plugins_dir}")
                 self._discover_from_directory(plugins_dir)
         except Exception as e:
             logger.warning(f"Failed to scan plugins directory: {e}")
@@ -92,6 +92,44 @@ class PluginManager:
                     logger.warning(f"Failed to load entry point plugin '{ep.name}': {e}")
         except Exception as e:
             logger.warning(f"Failed to discover entry point plugins: {e}")
+
+    def _find_plugins_directory(self) -> Path | None:
+        """Find plugins directory using fallback chain.
+
+        Returns:
+            Path to plugins directory, or None if not found
+        """
+        import os
+
+        # Option 1: Environment variable (highest priority)
+        if env_path := os.getenv("ICLOUDPD_PLUGIN_PATH"):
+            path = Path(env_path)
+            logger.debug(f"Using plugin path from ICLOUDPD_PLUGIN_PATH: {path}")
+            return path
+
+        # Option 2: Fixed paths for PyInstaller binary (Docker)
+        if getattr(sys, "frozen", False):
+            # Running in PyInstaller bundle
+            logger.debug("Detected PyInstaller frozen binary")
+            for path in [Path("/app/plugins"), Path("/plugins")]:
+                if path.exists():
+                    logger.debug(f"Found plugins directory in binary: {path}")
+                    return path
+            logger.debug("No fixed plugin paths found in binary")
+            return None
+
+        # Option 3: Development/source tree (calculate from __file__)
+        try:
+            project_root = Path(__file__).parent.parent.parent.parent
+            plugins_dir = project_root / "plugins"
+            if plugins_dir.exists():
+                logger.debug(f"Found plugins directory from source tree: {plugins_dir}")
+                return plugins_dir
+        except Exception as e:
+            logger.debug(f"Could not calculate plugins path from source tree: {e}")
+
+        logger.debug("No plugins directory found")
+        return None
 
     def _discover_from_directory(self, directory: Path) -> None:
         """Discover plugins from a directory by scanning for plugin packages.
