@@ -389,7 +389,7 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         help="Enable a plugin (can be used multiple times)",
     )
     plugin_group.add_argument(
-        "--list-plugins", action="store_true", help="List available plugins and exit"
+        "--plugins-list", action="store_true", help="List available plugins and exit"
     )
     plugin_group.add_argument(
         "--plugin-help", metavar="NAME", help="Show help for a specific plugin"
@@ -536,7 +536,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig], Plug
     plugin_manager = PluginManager()
     plugin_manager.discover()
 
-    if "--list-plugins" in args:
+    if "--plugins-list" in args:
         print("Available plugins:")
         if not plugin_manager.list_available():
             print("  (none installed)")

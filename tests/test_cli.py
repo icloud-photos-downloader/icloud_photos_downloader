@@ -933,7 +933,7 @@ class PluginCliTestCase(TestCase):
         # Test that plugin options are present in help
         self.assertIn("Plugin Options:", result)
         self.assertIn("--plugin", result)
-        self.assertIn("--list-plugins", result)
+        self.assertIn("--plugins-list", result)
         self.assertIn("--plugin-help", result)
         self.assertIn("Enable a plugin (can be used multiple times)", result)
         self.assertIn("List available plugins and exit", result)
@@ -1123,7 +1123,7 @@ class PluginCliTestCase(TestCase):
         self.assertEqual(info["description"], "Demo plugin showing hook context (development tool)")
 
     def test_plugin_list_plugins_exit(self) -> None:
-        result = run_main(["--list-plugins"])
+        result = run_main(["--plugins-list"])
         self.assertEqual(result.exit_code, 0, "exit code")
         self.assertIn("Available plugins:", result.output)
         self.assertIn("demo:", result.output)

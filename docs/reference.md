@@ -388,8 +388,8 @@ This is a list of all options available for the command line interface (CLI) of 
     Details on [Plugins](plugins)
     ```
 
-(list-plugins-parameter)=
-`--list-plugins`
+(plugins-list-parameter)=
+`--plugins-list`
 
 :   List available plugins and exit.
 
