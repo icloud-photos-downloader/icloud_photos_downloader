@@ -176,8 +176,8 @@ Default platform is `linux/amd64`. Other options: `linux/arm64`, `linux/arm/v7`
 Example:
 ``` sh
 scripts/build_docker_local linux/amd64
-docker run icloudpd_dev icloudpd --version
-docker run icloudpd_dev icloudpd --plugins-list
+docker run --rm icloudpd_dev icloudpd --version
+docker run --rm icloudpd_dev icloudpd --plugins-list
 ```
 
 Alternatively, you can build manually (requires renaming binaries to versioned format):

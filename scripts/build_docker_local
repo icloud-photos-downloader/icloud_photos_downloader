@@ -34,5 +34,5 @@ echo "Step 3/3: Building Docker image..."
 docker build -t icloudpd_dev .
 
 echo "Done! Image tagged as icloudpd_dev"
-echo "Test with: docker run icloudpd_dev icloudpd --version"
-echo "List plugins: docker run icloudpd_dev icloudpd --plugins-list"
+echo "Test with: docker run --rm icloudpd_dev icloudpd --version"
+echo "List plugins: docker run --rm icloudpd_dev icloudpd --plugins-list"
