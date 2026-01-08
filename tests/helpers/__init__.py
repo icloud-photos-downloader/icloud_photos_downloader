@@ -278,16 +278,10 @@ def run_main_env(
     # Create both original and cleaned output
     cleaned_output = "\n".join(cleaned_lines)
 
-    # For compatibility with old tests, adjust exit codes for specific error conditions
-    adjusted_exit_code = exit_code
-    if exit_code == 1 and "Invalid email/password combination" in raw_output:
-        # Authentication failure - old tests expect exit code 2
-        adjusted_exit_code = 2
-
     # For compatibility, provide the cleaned output as the primary output
     # but keep raw_output available if needed
     result = TestResult(
-        exit_code=adjusted_exit_code,
+        exit_code=exit_code,
         output=cleaned_output,
         exception=exception,
         stderr=stderr_capture.getvalue(),
@@ -303,15 +297,36 @@ run_main: Callable[[Sequence[str]], TestResult] = compose(
 
 
 def run_with_cassette(cassette_path: str, f: Callable[[_T_contra], _T_co], inp: _T_contra) -> _T_co:
-    with vcr.use_cassette(cassette_path):
-        return f(inp)
+    with vcr.use_cassette(cassette_path, allow_playback_repeats=False) as _cassette:
+        result = f(inp)
+        # Check that all interactions were played (optional - can be enabled per test)
+        # assert cassette.all_played, f"Not all cassette interactions were used in {cassette_path}"
+        return result
 
 
 def run_cassette(
     cassette_path: str, params: Sequence[str], input: str | bytes | IO[Any] | None = None
 ) -> TestResult:
-    with vcr.use_cassette(cassette_path):
-        return print_result_exception(run_main_env(DEFAULT_ENV, params, input))
+    with vcr.use_cassette(cassette_path, allow_playback_repeats=False) as _cassette:
+        result = print_result_exception(run_main_env(DEFAULT_ENV, params, input))
+        # Check that all interactions were played (optional - can be enabled per test)
+        # assert _cassette.all_played, f"Not all cassette interactions were used in {cassette_path}"
+        return result
+
+
+def add_cloned_master_cookie_dir(
+    root_path: str, base_dir: str, params: Sequence[str]
+) -> Sequence[str]:
+    cookie_dir = calc_cookie_dir(base_dir)
+    cookie_master_path = calc_cookie_dir(root_path)
+
+    shutil.copytree(cookie_master_path, cookie_dir)
+
+    combined_params = [
+        "--cookie-directory",
+        cookie_dir,
+    ] + list(params)
+    return combined_params
 
 
 _path_join_flipped = flip(os.path.join)
@@ -332,21 +347,32 @@ def run_icloudpd_test(
     additional_env: Mapping[str, str | None] = {},
     input: str | bytes | IO[Any] | None = None,
 ) -> Tuple[str, TestResult]:
-    cookie_dir = calc_cookie_dir(base_dir)
+    # cookie_dir = calc_cookie_dir(base_dir)
     data_dir = calc_data_dir(base_dir)
     vcr_path = calc_vcr_dir(root_path)
-    cookie_master_path = calc_cookie_dir(root_path)
+    # cookie_master_path = calc_cookie_dir(root_path)
 
     for dir in [base_dir, data_dir]:
         recreate_path(dir)
 
-    shutil.copytree(cookie_master_path, cookie_dir)
+    # shutil.copytree(cookie_master_path, cookie_dir)
 
     create_files(data_dir, files_to_create)
 
     combined_env: Mapping[str, str | None] = {**additional_env, **DEFAULT_ENV}
 
-    main_runner = compose(print_result_exception, partial(run_main_env, combined_env, input=input))
+    cookie_composer = partial_2_1(add_cloned_master_cookie_dir, root_path, base_dir)
+
+    # Break down the compose chain to help mypy type inference
+    params_to_result: Callable[[Sequence[str]], TestResult] = partial(
+        run_main_env, combined_env, input=input
+    )
+    params_with_cookies_to_result: Callable[[Sequence[str]], TestResult] = compose(
+        params_to_result, cookie_composer
+    )
+    main_runner: Callable[[Sequence[str]], TestResult] = compose(
+        print_result_exception, params_with_cookies_to_result
+    )
 
     with_cassette_main_runner = partial_2_1(
         run_with_cassette, os.path.join(vcr_path, cassette_filename), main_runner
@@ -355,8 +381,8 @@ def run_icloudpd_test(
     combined_params = [
         "-d",
         data_dir,
-        "--cookie-directory",
-        cookie_dir,
+        # "--cookie-directory",
+        # cookie_dir,
     ] + params
 
     result = with_cassette_main_runner(combined_params)
