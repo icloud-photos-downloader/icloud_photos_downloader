@@ -69,7 +69,44 @@ To independently create and authorize a session (and complete 2SA/2FA validation
 icloudpd --username my@email.address --password my_password --auth-only
 ```
 > [!TIP]
-> This feature can also be used to check and verify that the session is still authenticated. 
+> This feature can also be used to check and verify that the session is still authenticated.
+
+## Plugins
+
+icloudpd includes a plugin system that allows you to extend functionality by hooking into the download process. Plugins can respond to events like file downloads, process photos after they're downloaded, and integrate with external services.
+
+### Using Plugins
+
+Enable a plugin with the `--plugin` flag:
+
+```bash
+icloudpd --directory /photos --username me@example.com --plugin immich
+```
+
+Each plugin adds its own CLI arguments. Use `--help` to see available options:
+
+```bash
+icloudpd --plugin immich --help
+```
+
+### Built-in Plugins
+
+- **[Immich](plugins/immich/README.md)** - Integrates with [Immich](https://immich.app) photo management. Automatically registers downloaded photos, creates stacks for size variants, syncs favorites, and organizes photos into albums.
+
+- **[Demo](src/icloudpd/plugins/demo.py)** - Demonstrates the plugin system's capabilities. Use as a reference when building your own plugins:
+  ```bash
+  icloudpd --plugin demo --demo-verbose --recent 5
+  ```
+
+### Building Your Own Plugins
+
+For developers interested in creating custom plugins, see the [Plugin Development Guide](docs/plugins.md) which covers:
+
+- Available hooks and when they're called
+- How to accumulate and process photo data
+- Best practices and common gotchas
+- Testing your plugin
+- Complete code examples
 
 ## Contributing
 

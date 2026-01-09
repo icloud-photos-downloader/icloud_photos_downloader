@@ -37,8 +37,8 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
-from foundation.core import compose, identity, map_, partial_1_1
-from icloudpd import download, exif_datetime
+from foundation.core import identity
+from icloudpd import download
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
@@ -46,27 +46,54 @@ from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
+from icloudpd.metadata_management import sync_exif_metadata, sync_xmp_metadata
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
+from icloudpd.plugins.manager import PluginManager
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
-from icloudpd.xmp_sidecar import generate_xmp_file
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import (
-    PyiCloudAPIResponseException,
-    PyiCloudConnectionErrorException,
-    PyiCloudFailedLoginException,
-    PyiCloudFailedMFAException,
-    PyiCloudServiceNotActivatedException,
-    PyiCloudServiceUnavailableException,
-)
+
+# Exceptions are no longer used - we handle errors through ADT results
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.item_type import AssetItemType  # fmt: skip
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.response_types import (
+    AlbumLengthSuccess,
+    AlbumsFetchSuccess,
+    AuthAPIError,
+    AuthConnectionError,
+    AuthenticatorConnectionError,
+    AuthenticatorMFAError,
+    AuthenticatorSuccess,
+    AuthenticatorTwoSAExit,
+    AuthInvalidCredentials,
+    AuthPasswordNotProvided,
+    AuthServiceNotActivated,
+    AuthServiceUnavailable,
+    AutodeleteSuccess,
+    CoreSingleRunErrorResult,
+    DeletePhotoResult,
+    DeletePhotoSuccess,
+    DownloadMediaResult,
+    DownloadMediaSkipped,
+    DownloadMediaSuccess,
+    LibrariesAccessSuccess,
+    PhotoIterationComplete,
+    PhotoIterationResult,
+    PhotoIterationSuccess,
+    PhotoLibraryNotFinishedIndexing,
+    PhotosServiceAccessSuccess,
+    Response2SARequired,
+    ResponseAPIError,
+    ResponseServiceNotActivated,
+    ResponseServiceUnavailable,
+    ResponseSuccess,
+)
 from pyicloud_ipd.services.photos import (
     PhotoAlbum,
     PhotoAsset,
@@ -233,11 +260,23 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
     return logger
 
 
-def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserConfig]) -> int:
+def run_with_configs(
+    global_config: GlobalConfig,
+    user_configs: Sequence[UserConfig],
+    plugin_manager: PluginManager | None,
+) -> int:
     """Run the application with the new configuration system"""
 
     # Create shared logger
     logger = create_logger(global_config)
+
+    # Update plugin manager with runtime configs (if plugin manager exists)
+    if plugin_manager:
+        plugin_manager.set_plugin_config(
+            plugin_manager.plugin_config,  # Keep existing namespace
+            global_config,
+            user_configs,
+        )
 
     # Create shared status exchange for web server and progress tracking
     shared_status_exchange = StatusExchange()
@@ -258,7 +297,9 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
     if not watch_interval:
         # No watch mode - process each user once and exit
-        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+        return _process_all_users_once(
+            global_config, user_configs, logger, shared_status_exchange, plugin_manager
+        )
     else:
         # Watch mode - infinite loop processing all users, then wait
         skip_bar = not os.environ.get("FORCE_TQDM") and (
@@ -270,7 +311,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         while True:
             # Process all user configs in this iteration
             result = _process_all_users_once(
-                global_config, user_configs, logger, shared_status_exchange
+                global_config, user_configs, logger, shared_status_exchange, plugin_manager
             )
 
             # If any critical operation (auth-only, list commands) succeeded, exit
@@ -314,6 +355,7 @@ def _process_all_users_once(
     user_configs: Sequence[UserConfig],
     logger: logging.Logger,
     shared_status_exchange: StatusExchange,
+    plugin_manager: PluginManager | None,
 ) -> int:
     """Process all user configs once (used by both single run and watch mode)"""
 
@@ -400,6 +442,7 @@ def _process_all_users_once(
                 partial(
                     download_builder,
                     logger,
+                    plugin_manager,
                     user_config.folder_structure,
                     user_config.directory,
                     user_config.sizes,
@@ -414,9 +457,12 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    user_config.favorite_to_rating,
+                    user_config.process_existing_favorites,
+                    user_config.metadata_overwrite,
                 )
                 if user_config.directory is not None
-                else (lambda _s, _c, _p: False)
+                else (lambda _s, _c, _p: DownloadMediaSkipped())
             )
 
             notificator = partial(
@@ -445,12 +491,37 @@ def _process_all_users_once(
                 downloader,
                 notificator,
                 lp_filename_generator,
+                plugin_manager,
             )
 
+            # Handle the result using pattern matching
+            error_code: int = 0
+            match result:
+                case int():
+                    # Direct integer result (success or error code)
+                    error_code = result
+                case AuthConnectionError(error_message):
+                    # Connection errors are expected and should be logged
+                    error_code = 1
+                    logger.info(error_message)
+                case AuthServiceUnavailable(reason):
+                    # Special handling for AuthServiceUnavailable to maintain watch behavior
+                    error_code = 1
+                    # Log the error message like the exception handler would
+                    logger.info(reason)
+                case PhotoLibraryNotFinishedIndexing():
+                    # Special handling for PhotoLibraryNotFinishedIndexing to maintain watch behavior
+                    error_code = 1
+                    logger.info("Apple iCloud Photo Library has not finished indexing yet")
+                case _:
+                    # Other ADT error results - map to error code 1
+                    error_code = 1
+                    # These don't need special logging as they don't affect watch behavior
+
             # If any user config fails and we're not in watch mode, return the error code
-            if result != 0:
+            if error_code != 0:
                 if not global_config.watch_with_interval:
-                    return result
+                    return error_code
                 else:
                     # In watch mode, log error and continue with next user
                     logger.error(
@@ -563,6 +634,7 @@ def skip_created_after_message(
 
 def download_builder(
     logger: logging.Logger,
+    plugin_manager: PluginManager | None,
     folder_structure: str,
     directory: str,
     primary_sizes: Sequence[AssetVersionSize],
@@ -577,10 +649,13 @@ def download_builder(
     lp_filename_generator: Callable[[str], str],
     filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
+    favorite_to_rating: int | None,
+    process_existing_favorites: bool,
+    metadata_overwrite: bool,
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
-) -> bool:
+) -> DownloadMediaResult:
     """function for actually downloading the photos"""
 
     try:
@@ -610,7 +685,10 @@ def download_builder(
 
     try:
         versions, filename_overrides = disambiguate_filenames(
-            photo.versions_with_raw_policy(raw_policy), primary_sizes, photo, lp_filename_generator
+            photo.versions_with_raw_policy(raw_policy),
+            primary_sizes,
+            photo,
+            lp_filename_generator,
         )
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
@@ -629,12 +707,16 @@ def download_builder(
             "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues"
         )
         print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
-        return False
+        return ResponseAPIError(f"KeyError: {ex}", "KEY_ERROR")
 
     download_dir = os.path.normpath(os.path.join(directory, date_path))
-    success = False
+    last_result: DownloadMediaResult = (
+        DownloadMediaSkipped()
+    )  # Default to skipped for files that aren't downloaded
 
-    for download_size in primary_sizes:
+    for requested_size in primary_sizes:
+        # Keep track of what user requested vs what we actually download (after fallback)
+        download_size = requested_size
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
             if force_size:
                 error_filename = filename_builder(photo)
@@ -683,6 +765,19 @@ def download_builder(
                 counter.increment()
                 logger.debug("%s already exists", truncate_middle(download_path, 96))
 
+                # HOOK: File already exists/downloads
+                if plugin_manager:
+                    try:
+                        plugin_manager.call_hook(
+                            "on_download_exists",
+                            download_path=download_path,
+                            photo_filename=photo_filename,
+                            requested_size=requested_size,
+                            photo=photo,
+                            dry_run=dry_run,
+                        )
+                    except Exception as e:
+                        logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
         if not file_exists:
             counter.reset()
             if only_print_filenames:
@@ -701,34 +796,99 @@ def download_builder(
                     download_size,
                     filename_builder,
                 )
-                success = download_result
+                last_result = download_result
 
-                if download_result:
-                    from foundation.core import compose
-                    from foundation.string_utils import endswith, lower
+                match download_result:
+                    case DownloadMediaSuccess():
+                        logger.info("Downloaded %s", truncated_path)
 
-                    is_jpeg = compose(endswith((".jpg", ".jpeg")), lower)
-
-                    if (
-                        not dry_run
-                        and set_exif_datetime
-                        and is_jpeg(filename)
-                        and not exif_datetime.get_photo_exif(logger, download_path)
-                    ):
-                        # %Y:%m:%d looks wrong, but it's the correct format
-                        date_str = created_date.strftime("%Y-%m-%d %H:%M:%S%z")
-                        logger.debug("Setting EXIF timestamp for %s: %s", download_path, date_str)
-                        exif_datetime.set_photo_exif(
-                            logger,
-                            download_path,
-                            created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                        # Sync metadata to EXIF and XMP Sidecar for newly downloaded files
+                        # Must happen BEFORE set_utime to avoid mtime being overwritten
+                        sync_exif_metadata(
+                            logger=logger,
+                            download_path=download_path,
+                            photo=photo,
+                            created_date=created_date,
+                            favorite_to_rating=favorite_to_rating,
+                            set_exif_datetime=set_exif_datetime,
+                            process_existing_favorites=False,
+                            metadata_overwrite=metadata_overwrite,
+                            dry_run=dry_run,
+                            file_was_downloaded=True,
                         )
-                    if not dry_run:
-                        download.set_utime(download_path, created_date)
-                    logger.info("Downloaded %s", truncated_path)
 
-        if xmp_sidecar:
-            generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+                        if xmp_sidecar:
+                            sync_xmp_metadata(
+                                logger=logger,
+                                download_path=download_path,
+                                photo=photo,
+                                favorite_to_rating=favorite_to_rating,
+                                process_existing_favorites=False,
+                                metadata_overwrite=metadata_overwrite,
+                                dry_run=dry_run,
+                                file_was_downloaded=True,
+                            )
+
+                        # Set file mtime AFTER metadata writes to preserve the timestamp
+                        if not dry_run:
+                            download.set_utime(download_path, created_date)
+
+                        # HOOK: File downloaded
+                        if plugin_manager:
+                            try:
+                                plugin_manager.call_hook(
+                                    "on_download_downloaded",
+                                    download_path=download_path,
+                                    photo_filename=photo_filename,
+                                    requested_size=requested_size,
+                                    photo=photo,
+                                    dry_run=dry_run,
+                                )
+                            except Exception as e:
+                                logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+                    case _:
+                        # Error ADT - store it
+                        last_result = download_result
+        elif file_exists and process_existing_favorites:
+            # Sync metadata for existing files only when process_existing_favorites is enabled
+            sync_exif_metadata(
+                logger=logger,
+                download_path=download_path,
+                photo=photo,
+                created_date=created_date,
+                favorite_to_rating=favorite_to_rating,
+                set_exif_datetime=set_exif_datetime,
+                process_existing_favorites=True,
+                metadata_overwrite=metadata_overwrite,
+                dry_run=dry_run,
+                file_was_downloaded=False,
+            )
+
+            if xmp_sidecar:
+                sync_xmp_metadata(
+                    logger=logger,
+                    download_path=download_path,
+                    photo=photo,
+                    favorite_to_rating=favorite_to_rating,
+                    process_existing_favorites=True,
+                    metadata_overwrite=metadata_overwrite,
+                    dry_run=dry_run,
+                    file_was_downloaded=False,
+                )
+
+        # HOOK: Download complete or existing (always happens)
+        if plugin_manager:
+            try:
+                plugin_manager.call_hook(
+                    "on_download_complete",
+                    download_path=download_path,
+                    photo_filename=photo_filename,
+                    requested_size=requested_size,
+                    photo=photo,
+                    dry_run=dry_run,
+                )
+            except Exception as e:
+                logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -786,6 +946,21 @@ def download_builder(
                             lp_file_exists = os.path.isfile(lp_download_path)
                     if lp_file_exists:
                         logger.debug("%s already exists", truncate_middle(lp_download_path, 96))
+
+                        # HOOK: File exists for live photo
+                        if plugin_manager:
+                            try:
+                                plugin_manager.call_hook(
+                                    "on_download_exists_live",
+                                    download_path=lp_download_path,
+                                    photo_filename=lp_photo_filename,
+                                    requested_size=lp_size,
+                                    photo=photo,
+                                    dry_run=dry_run,
+                                )
+                            except Exception as e:
+                                logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
                 if not lp_file_exists:
                     truncated_path = truncate_middle(lp_download_path, 96)
                     logger.debug("Downloading %s...", truncated_path)
@@ -799,10 +974,68 @@ def download_builder(
                         lp_size,
                         filename_builder,
                     )
-                    success = download_result and success
-                    if download_result:
-                        logger.info("Downloaded %s", truncated_path)
-    return success
+                    match download_result:
+                        case DownloadMediaSuccess():
+                            logger.info("Downloaded %s", truncated_path)
+
+                            # HOOK: Live photo downloaded
+                            if plugin_manager:
+                                try:
+                                    plugin_manager.call_hook(
+                                        "on_download_downloaded_live",
+                                        download_path=lp_download_path,
+                                        photo_filename=lp_photo_filename,
+                                        requested_size=lp_size,
+                                        photo=photo,
+                                        dry_run=dry_run,
+                                    )
+                                except Exception as e:
+                                    logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
+                            # Update last_result to success if it was skipped
+                            match last_result:
+                                case DownloadMediaSkipped():
+                                    last_result = download_result
+                                case _:
+                                    pass
+                        case DownloadMediaSkipped():
+                            # Live photo was skipped - keep current status
+                            pass
+                        case _:
+                            # Error ADT - update last_result if it's not already an error
+                            match last_result:
+                                case DownloadMediaSuccess() | DownloadMediaSkipped():
+                                    last_result = download_result
+                                case _:
+                                    # Keep existing error
+                                    pass
+
+            # HOOK: Live photos downloaded or skipped or exist... always run
+            if plugin_manager:
+                try:
+                    plugin_manager.call_hook(
+                        "on_download_complete_live",
+                        download_path=download_path,
+                        photo_filename=photo_filename,
+                        requested_size=download_size,
+                        photo=photo,
+                        dry_run=dry_run,
+                    )
+                except Exception as e:
+                    logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
+    # HOOK: All file operations for image size sets complete
+    if plugin_manager:
+        try:
+            plugin_manager.call_hook(
+                "on_download_all_sizes_complete",
+                photo=photo,
+                dry_run=dry_run,
+            )
+        except Exception as e:
+            logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
+
+    return last_result
 
 
 def delete_photo(
@@ -810,7 +1043,7 @@ def delete_photo(
     library_object: PhotoLibrary,
     photo: PhotoAsset,
     filename_builder: Callable[[PhotoAsset], str],
-) -> None:
+) -> DeletePhotoResult:
     """Delete a photo from the iCloud account."""
     clean_filename_local = filename_builder(photo)
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
@@ -836,8 +1069,21 @@ def delete_photo(
             "zoneID": library_object.zone_id,
         }
     )
-    library_object.session.post(url, data=post_data, headers={"Content-type": "application/json"})
-    logger.info("Deleted %s in iCloud", clean_filename_local)
+    response = library_object.session.post(
+        url, data=post_data, headers={"Content-type": "application/json"}
+    )
+    result = library_object.session.evaluate_response(response)
+    match result:
+        case ResponseSuccess(_):
+            logger.info("Deleted %s in iCloud", clean_filename_local)
+            return DeletePhotoSuccess()
+        case (
+            Response2SARequired(_)
+            | ResponseServiceNotActivated(_, _)
+            | ResponseAPIError(_, _)
+            | ResponseServiceUnavailable(_)
+        ):
+            return result
 
 
 def delete_photo_dry_run(
@@ -881,10 +1127,11 @@ def core_single_run(
         PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
     ],
     passer: Callable[[PhotoAsset], bool],
-    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], DownloadMediaResult],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
-) -> int:
+    plugin_manager: PluginManager | None,
+) -> int | CoreSingleRunErrorResult:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
     skip_bar = not os.environ.get("FORCE_TQDM") and (
@@ -898,347 +1145,614 @@ def core_single_run(
         def append_response(captured: List[Mapping[str, Any]], response: Mapping[str, Any]) -> None:
             captured.append(response)
 
-        try:
-            icloud = authenticator(
-                logger,
-                global_config.domain,
-                {
-                    provider.value: functions
-                    for provider, functions in password_providers_dict.items()
-                },
-                global_config.mfa_provider,
-                status_exchange,
-                user_config.username,
-                notificator,
-                partial(append_response, captured_responses),
-                user_config.cookie_directory,
-                os.environ.get("CLIENT_ID"),
-            )
+        # Authentication - returns ADT results instead of throwing exceptions
+        auth_result = authenticator(
+            logger,
+            global_config.domain,
+            {provider.value: functions for provider, functions in password_providers_dict.items()},
+            global_config.mfa_provider,
+            status_exchange,
+            user_config.username,
+            notificator,
+            partial(append_response, captured_responses),
+            user_config.cookie_directory,
+            os.environ.get("CLIENT_ID"),
+        )
 
-            # dump captured responses for debugging
-            # dump_responses(logger.debug, captured_responses)
-
-            # turn off response capture
-            icloud.response_observer = None
-
-            if user_config.auth_only:
-                logger.info("Authentication completed successfully")
-                return 0
-
-            elif user_config.list_libraries:
-                library_names = (
-                    icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
-                )
-                print(*library_names, sep="\n")
-                return 0
-
-            else:
-                # Access to the selected library. Defaults to the primary photos object.
-                if user_config.library:
-                    if user_config.library in icloud.photos.private_libraries:
-                        library_object: PhotoLibrary = icloud.photos.private_libraries[
-                            user_config.library
-                        ]
-                    elif user_config.library in icloud.photos.shared_libraries:
-                        library_object = icloud.photos.shared_libraries[user_config.library]
-                    else:
-                        logger.error("Unknown library: %s", user_config.library)
-                        return 1
+        # Handle authentication result
+        match auth_result:
+            case AuthenticatorSuccess(service):
+                icloud = service
+            case AuthenticatorConnectionError(error):
+                raise error
+            case AuthPasswordNotProvided():
+                return auth_result  # Return ADT instead of raising exception
+            case AuthInvalidCredentials():
+                return auth_result  # Return ADT instead of raising exception
+            case AuthServiceNotActivated(reason, code):
+                return auth_result  # Return ADT instead of raising exception
+            case AuthServiceUnavailable(reason):
+                return auth_result  # Return ADT instead of raising exception
+            case AuthAPIError(reason, code):
+                return auth_result  # Return ADT instead of raising exception
+            case AuthConnectionError():
+                return auth_result  # Return ADT for connection errors
+            case AuthenticatorMFAError(error_msg):
+                # Handle MFA error - in webui mode, update status and retry
+                logger.info(error_msg)
+                dump_responses(logger.debug, captured_responses)
+                if global_config.mfa_provider == MFAProvider.WEBUI:
+                    update_auth_error_in_webui(status_exchange, error_msg)
+                    continue  # retry loop
                 else:
-                    library_object = icloud.photos
+                    return 1
+            case AuthenticatorTwoSAExit():
+                return auth_result  # Return ADT instead of sys.exit
 
-                if user_config.list_albums:
-                    print("Albums:")
-                    album_titles = [str(a) for a in library_object.albums.values()]
-                    print(*album_titles, sep="\n")
-                    return 0
-                else:
-                    if not user_config.directory:
-                        # should be checked upstream
-                        raise NotImplementedError()
-                    else:
-                        pass
+        # dump captured responses for debugging
+        # dump_responses(logger.debug, captured_responses)
 
-                    directory = os.path.normpath(user_config.directory)
+        # turn off response capture
+        icloud.response_observer = None
 
-                    if user_config.skip_photos or user_config.skip_videos:
-                        photo_video_phrase = "photos" if user_config.skip_videos else "videos"
-                    else:
-                        photo_video_phrase = "photos and videos"
-                    if len(user_config.albums) == 0:
-                        album_phrase = ""
-                    elif len(user_config.albums) == 1:
-                        album_phrase = f" from album {','.join(user_config.albums)}"
-                    else:
-                        album_phrase = f" from albums {','.join(user_config.albums)}"
+        # Remove try block - handle errors directly in each section
+        if user_config.auth_only:
+            logger.info("Authentication completed successfully")
+            return 0
 
-                    logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
+        elif user_config.list_libraries:
+            # Get photos service first
+            photos_service_result = icloud.get_photos_service()
+            match photos_service_result:
+                case PhotosServiceAccessSuccess(photos_service):
+                    pass  # Continue with photos_service
+                case PhotoLibraryNotFinishedIndexing():
+                    return PhotoLibraryNotFinishedIndexing()
+                case Response2SARequired(account_name):
+                    return Response2SARequired(account_name)
+                case ResponseServiceNotActivated(reason, code):
+                    return ResponseServiceNotActivated(reason, code)
+                case ResponseAPIError(reason, code):
+                    return ResponseAPIError(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    return ResponseServiceUnavailable(reason)
 
-                    albums: Iterable[PhotoAlbum] = (
-                        list(map_(library_object.albums.__getitem__, user_config.albums))
-                        if len(user_config.albums) > 0
-                        else [library_object.all]
-                    )
-                    album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
-                        map_, len
-                    )
+            # Get private libraries
+            private_result = photos_service.get_private_libraries()
+            match private_result:
+                case LibrariesAccessSuccess(private_libs):
+                    private_keys = private_libs.keys()
+                case Response2SARequired(account_name):
+                    return Response2SARequired(account_name)
+                case ResponseServiceNotActivated(reason, code):
+                    return ResponseServiceNotActivated(reason, code)
+                case ResponseAPIError(reason, code):
+                    return ResponseAPIError(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    return ResponseServiceUnavailable(reason)
 
-                    def sum_(inp: Iterable[int]) -> int:
-                        return sum(inp)
+            # Get shared libraries
+            shared_result = photos_service.get_shared_libraries()
+            match shared_result:
+                case LibrariesAccessSuccess(shared_libs):
+                    shared_keys = shared_libs.keys()
+                case Response2SARequired(account_name):
+                    return Response2SARequired(account_name)
+                case ResponseServiceNotActivated(reason, code):
+                    return ResponseServiceNotActivated(reason, code)
+                case ResponseAPIError(reason, code):
+                    return ResponseAPIError(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    return ResponseServiceUnavailable(reason)
 
-                    photos_count: int | None = compose(sum_, album_lengths)(albums)
-                    for photo_album in albums:
-                        photos_enumerator: Iterable[PhotoAsset] = photo_album
+            library_names = private_keys | shared_keys
+            print(*library_names, sep="\n")
+            return 0
 
-                        # Optional: Only download the x most recent photos.
-                        if user_config.recent is not None:
-                            photos_count = user_config.recent
-                            photos_top: Iterable[PhotoAsset] = itertools.islice(
-                                photos_enumerator, user_config.recent
-                            )
-                        else:
-                            photos_top = photos_enumerator
+        else:
+            # Get photos service first
+            photos_service_result = icloud.get_photos_service()
+            match photos_service_result:
+                case PhotosServiceAccessSuccess(photos_service):
+                    pass  # Continue with photos_service
+                case PhotoLibraryNotFinishedIndexing():
+                    return PhotoLibraryNotFinishedIndexing()
+                case Response2SARequired(account_name):
+                    return Response2SARequired(account_name)
+                case ResponseServiceNotActivated(reason, code):
+                    return ResponseServiceNotActivated(reason, code)
+                case ResponseAPIError(reason, code):
+                    return ResponseAPIError(reason, code)
+                case ResponseServiceUnavailable(reason):
+                    return ResponseServiceUnavailable(reason)
 
-                        if user_config.until_found is not None:
-                            photos_count = None
-                            # ensure photos iterator doesn't have a known length
-                            # photos_enumerator = (p for p in photos_enumerator)
+            # Access to the selected library. Defaults to the primary photos object.
+            if user_config.library:
+                # Try private libraries first
+                private_result = photos_service.get_private_libraries()
+                library_found = False
 
-                        # Skip the one-line progress bar if we're only printing the filenames,
-                        # or if the progress bar is explicitly disabled,
-                        # or if this is not a terminal (e.g. cron or piping output to file)
-                        if skip_bar:
-                            photos_bar: Iterable[PhotoAsset] = photos_top
-                            # logger.set_tqdm(None)
-                        else:
-                            photos_bar = tqdm(
-                                iterable=photos_top,
-                                total=photos_count,
-                                leave=False,
-                                dynamic_ncols=True,
-                                ascii=True,
-                            )
-                            # logger.set_tqdm(photos_enumerator)
+                match private_result:
+                    case LibrariesAccessSuccess(private_libs):
+                        if user_config.library in private_libs:
+                            library_object: PhotoLibrary = private_libs[user_config.library]
+                            library_found = True
+                    case Response2SARequired(account_name):
+                        return Response2SARequired(account_name)
+                    case ResponseServiceNotActivated(reason, code):
+                        return ResponseServiceNotActivated(reason, code)
+                    case ResponseAPIError(reason, code):
+                        return ResponseAPIError(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        return ResponseServiceUnavailable(reason)
 
-                        if photos_count is not None:
-                            plural_suffix = "" if photos_count == 1 else "s"
-                            photos_count_str = (
-                                "the first" if photos_count == 1 else str(photos_count)
-                            )
+                if not library_found:
+                    # Try shared libraries
+                    shared_result = photos_service.get_shared_libraries()
+                    match shared_result:
+                        case LibrariesAccessSuccess(shared_libs):
+                            if user_config.library in shared_libs:
+                                library_object = shared_libs[user_config.library]
+                                library_found = True
+                        case Response2SARequired(account_name):
+                            return Response2SARequired(account_name)
+                        case ResponseServiceNotActivated(reason, code):
+                            return ResponseServiceNotActivated(reason, code)
+                        case ResponseAPIError(reason, code):
+                            return ResponseAPIError(reason, code)
+                        case ResponseServiceUnavailable(reason):
+                            return ResponseServiceUnavailable(reason)
 
-                            if user_config.skip_photos or user_config.skip_videos:
-                                photo_video_phrase = (
-                                    "photo" if user_config.skip_videos else "video"
-                                ) + plural_suffix
-                            else:
-                                photo_video_phrase = (
-                                    "photo or video" if photos_count == 1 else "photos and videos"
-                                )
-                        else:
-                            photos_count_str = "???"
-                            if user_config.skip_photos or user_config.skip_videos:
-                                photo_video_phrase = (
-                                    "photos" if user_config.skip_videos else "videos"
-                                )
-                            else:
-                                photo_video_phrase = "photos and videos"
-                        logger.info(
-                            ("Downloading %s %s %s to %s ..."),
-                            photos_count_str,
-                            ",".join([_s.value for _s in user_config.sizes]),
-                            photo_video_phrase,
-                            directory,
-                        )
-
-                        consecutive_files_found = Counter(0)
-
-                        def should_break(counter: Counter) -> bool:
-                            """Exit if until_found condition is reached"""
-                            return (
-                                user_config.until_found is not None
-                                and counter.value() >= user_config.until_found
-                            )
-
-                        status_exchange.get_progress().photos_count = (
-                            0 if photos_count is None else photos_count
-                        )
-                        photos_counter = 0
-
-                        now = datetime.datetime.now(get_localzone())
-                        # photos_iterator = iter(photos_enumerator)
-
-                        download_photo = partial(downloader, icloud)
-
-                        for item in photos_bar:
-                            try:
-                                if should_break(consecutive_files_found):
-                                    logger.info(
-                                        "Found %s consecutive previously downloaded photos. Exiting",
-                                        user_config.until_found,
-                                    )
-                                    break
-                                # item = next(photos_iterator)
-                                should_delete = False
-
-                                passer_result = passer(item)
-                                download_result = passer_result and download_photo(
-                                    consecutive_files_found, item
-                                )
-                                if download_result and user_config.delete_after_download:
-                                    should_delete = True
-
-                                if (
-                                    passer_result
-                                    and user_config.keep_icloud_recent_days is not None
-                                ):
-                                    created_date = item.created.astimezone(get_localzone())
-                                    age_days = (now - created_date).days
-                                    logger.debug(f"Created date: {created_date}")
-                                    logger.debug(
-                                        f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
-                                    )
-                                    logger.debug(f"Age days: {age_days}")
-                                    if age_days < user_config.keep_icloud_recent_days:
-                                        # Create filename cleaner for debug message
-                                        filename_cleaner_for_debug = build_filename_cleaner(
-                                            user_config.keep_unicode_in_filenames
-                                        )
-                                        debug_filename = build_filename_with_policies(
-                                            user_config.file_match_policy,
-                                            filename_cleaner_for_debug,
-                                            item,
-                                        )
-                                        logger.debug(
-                                            "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
-                                            debug_filename,
-                                            age_days,
-                                        )
-                                    else:
-                                        should_delete = True
-
-                                if should_delete:
-                                    # Create filename cleaner and builder for delete operations
-                                    filename_cleaner_for_delete = build_filename_cleaner(
-                                        user_config.keep_unicode_in_filenames
-                                    )
-                                    filename_builder_for_delete = create_filename_builder(
-                                        user_config.file_match_policy, filename_cleaner_for_delete
-                                    )
-                                    if user_config.dry_run:
-                                        delete_photo_dry_run(
-                                            logger,
-                                            library_object,
-                                            item,
-                                            filename_builder_for_delete,
-                                        )
-                                    else:
-                                        delete_photo(
-                                            logger,
-                                            library_object,
-                                            item,
-                                            filename_builder_for_delete,
-                                        )
-
-                                    # retrier(delete_local, error_handler)
-                                    photo_album.increment_offset(-1)
-
-                                photos_counter += 1
-                                status_exchange.get_progress().photos_counter = photos_counter
-
-                                if status_exchange.get_progress().cancel:
-                                    break
-
-                            except StopIteration:
-                                break
-
-                        if global_config.only_print_filenames:
-                            return 0
-                        else:
-                            pass
-
-                        if status_exchange.get_progress().cancel:
-                            logger.info("Iteration was cancelled")
-                            status_exchange.get_progress().photos_last_message = (
-                                "Iteration was cancelled"
-                            )
-                        else:
-                            if user_config.skip_photos or user_config.skip_videos:
-                                photo_video_phrase = (
-                                    "photos" if user_config.skip_videos else "videos"
-                                )
-                            else:
-                                photo_video_phrase = "photos and videos"
-                            message = f"All {photo_video_phrase} have been downloaded"
-                            logger.info(message)
-                            status_exchange.get_progress().photos_last_message = message
-                        status_exchange.get_progress().reset()
-
-                    if user_config.auto_delete:
-                        autodelete_photos(
-                            logger,
-                            user_config.dry_run,
-                            library_object,
-                            user_config.folder_structure,
-                            directory,
-                            user_config.sizes,
-                            lp_filename_generator,
-                            user_config.align_raw,
-                        )
-                    else:
-                        pass
-        except PyiCloudFailedLoginException as error:
-            logger.info(error)
-            dump_responses(logger.debug, captured_responses)
-            if PasswordProvider.WEBUI in global_config.password_providers:
-                update_auth_error_in_webui(status_exchange, str(error))
-                continue
+                if not library_found:
+                    logger.error("Unknown library: %s", user_config.library)
+                    return 1
             else:
-                return 1
-        except PyiCloudFailedMFAException as error:
-            logger.info(str(error))
-            dump_responses(logger.debug, captured_responses)
-            if global_config.mfa_provider == MFAProvider.WEBUI:
-                update_auth_error_in_webui(status_exchange, str(error))
-                continue
+                library_object = photos_service
+
+            if user_config.list_albums:
+                print("Albums:")
+                albums_result = library_object.get_albums()
+                match albums_result:
+                    case AlbumsFetchSuccess(albums_dict):
+                        album_titles = [str(a) for a in albums_dict.values()]
+                        print(*album_titles, sep="\n")
+                        return 0
+                    case Response2SARequired(account_name):
+                        return Response2SARequired(account_name)
+                    case ResponseServiceNotActivated(reason, code):
+                        return ResponseServiceNotActivated(reason, code)
+                    case ResponseAPIError(reason, code):
+                        return ResponseAPIError(reason, code)
+                    case ResponseServiceUnavailable(reason):
+                        return ResponseServiceUnavailable(reason)
             else:
-                return 1
-        except (
-            PyiCloudServiceNotActivatedException,
-            PyiCloudServiceUnavailableException,
-            PyiCloudAPIResponseException,
-            PyiCloudConnectionErrorException,
-        ) as error:
-            logger.info(error)
-            dump_responses(logger.debug, captured_responses)
-            # webui will display error and wait for password again
-            if (
-                PasswordProvider.WEBUI in global_config.password_providers
-                or global_config.mfa_provider == MFAProvider.WEBUI
-            ):
-                if update_auth_error_in_webui(status_exchange, str(error)):
-                    # retry if it was during auth
-                    continue
+                if not user_config.directory:
+                    # should be checked upstream
+                    raise NotImplementedError()
                 else:
                     pass
-            else:
-                pass
-            # In single run mode, return error after webui retry attempts
-            return 1
-        except (
-            ChunkedEncodingError,
-            ContentDecodingError,
-            StreamConsumedError,
-            UnrewindableBodyError,
-        ) as error:
-            logger.debug(error)
-            logger.debug("Retrying...")
-            # these errors we can safely retry
-            continue
-        except Exception:
-            dump_responses(logger.debug, captured_responses)
-            raise
+
+                directory = os.path.normpath(user_config.directory)
+
+                if user_config.skip_photos or user_config.skip_videos:
+                    photo_video_phrase = "photos" if user_config.skip_videos else "videos"
+                else:
+                    photo_video_phrase = "photos and videos"
+                if len(user_config.albums) == 0:
+                    album_phrase = ""
+                elif len(user_config.albums) == 1:
+                    album_phrase = f" from album {','.join(user_config.albums)}"
+                else:
+                    album_phrase = f" from albums {','.join(user_config.albums)}"
+
+                logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
+
+                # Fetch albums if user specified album names
+                if len(user_config.albums) > 0:
+                    albums_result = library_object.get_albums()
+                    match albums_result:
+                        case AlbumsFetchSuccess(albums_dict):
+                            # Get the specified albums
+                            albums: Iterable[PhotoAlbum] = [
+                                albums_dict[album_name] for album_name in user_config.albums
+                            ]
+                        case Response2SARequired(account_name):
+                            return Response2SARequired(account_name)
+                        case ResponseServiceNotActivated(reason, code):
+                            return ResponseServiceNotActivated(reason, code)
+                        case ResponseAPIError(reason, code):
+                            return ResponseAPIError(reason, code)
+                        case ResponseServiceUnavailable(reason):
+                            return ResponseServiceUnavailable(reason)
+                else:
+                    # Use the 'all' album when no specific albums are requested
+                    albums = [library_object.all]
+
+                # Calculate total photos count across albums
+                photos_count: int | None = 0
+                should_retry_auth = False
+                for album in albums:
+                    result = album.get_album_length()
+                    match result:
+                        case AlbumLengthSuccess(count):
+                            photos_count = (photos_count or 0) + count
+                        case Response2SARequired(account_name):
+                            return Response2SARequired(account_name)
+                        case ResponseServiceNotActivated(reason, code):
+                            return ResponseServiceNotActivated(reason, code)
+                        case ResponseAPIError(reason, code):
+                            logger.info(f"{reason} ({code})")
+                            # Check if it's a session error that requires re-authentication
+                            if "Invalid global session" in reason:
+                                dump_responses(logger.debug, captured_responses)
+                                # Break from for loop to trigger retry in while loop
+                                should_retry_auth = True
+                                break
+                            dump_responses(logger.debug, captured_responses)
+                            # webui will display error and wait for password again
+                            if (
+                                PasswordProvider.WEBUI in global_config.password_providers
+                                or global_config.mfa_provider == MFAProvider.WEBUI
+                            ) and update_auth_error_in_webui(
+                                status_exchange, str(f"{reason} ({code})")
+                            ):
+                                # retry if it was during auth
+                                should_retry_auth = True
+                                break
+                            return 1
+                        case ResponseServiceUnavailable(reason):
+                            logger.info(reason)
+                            dump_responses(logger.debug, captured_responses)
+                            return 1
+
+                # If we need to retry authentication, continue the while loop
+                if should_retry_auth:
+                    continue
+
+                # Flag to track if we need to retry the whole operation
+                needs_retry = False
+                for photo_album in albums:
+                    photos_enumerator: Iterable[PhotoIterationResult] = photo_album
+
+                    # Optional: Only download the x most recent photos.
+                    if user_config.recent is not None:
+                        photos_count = user_config.recent
+                        photos_top: Iterable[PhotoIterationResult] = itertools.islice(
+                            photos_enumerator, user_config.recent
+                        )
+                    else:
+                        photos_top = photos_enumerator
+
+                    if user_config.until_found is not None:
+                        photos_count = None
+                        # ensure photos iterator doesn't have a known length
+                        # photos_enumerator = (p for p in photos_enumerator)
+
+                    # Skip the one-line progress bar if we're only printing the filenames,
+                    # or if the progress bar is explicitly disabled,
+                    # or if this is not a terminal (e.g. cron or piping output to file)
+                    if skip_bar:
+                        photos_bar: Iterable[PhotoIterationResult] = photos_top
+                        # logger.set_tqdm(None)
+                    else:
+                        photos_bar = tqdm(
+                            iterable=photos_top,
+                            total=photos_count,
+                            leave=False,
+                            dynamic_ncols=True,
+                            ascii=True,
+                        )
+                        # logger.set_tqdm(photos_enumerator)
+
+                    if photos_count is not None:
+                        plural_suffix = "" if photos_count == 1 else "s"
+                        photos_count_str = "the first" if photos_count == 1 else str(photos_count)
+
+                        if user_config.skip_photos or user_config.skip_videos:
+                            photo_video_phrase = (
+                                "photo" if user_config.skip_videos else "video"
+                            ) + plural_suffix
+                        else:
+                            photo_video_phrase = (
+                                "photo or video" if photos_count == 1 else "photos and videos"
+                            )
+                    else:
+                        photos_count_str = "???"
+                        if user_config.skip_photos or user_config.skip_videos:
+                            photo_video_phrase = "photos" if user_config.skip_videos else "videos"
+                        else:
+                            photo_video_phrase = "photos and videos"
+                    logger.info(
+                        ("Downloading %s %s %s to %s ..."),
+                        photos_count_str,
+                        ",".join([_s.value for _s in user_config.sizes]),
+                        photo_video_phrase,
+                        directory,
+                    )
+
+                    consecutive_files_found = Counter(0)
+
+                    def should_break(counter: Counter) -> bool:
+                        """Exit if until_found condition is reached"""
+                        return (
+                            user_config.until_found is not None
+                            and counter.value() >= user_config.until_found
+                        )
+
+                    status_exchange.get_progress().photos_count = (
+                        0 if photos_count is None else photos_count
+                    )
+                    photos_counter = 0
+
+                    now = datetime.datetime.now(get_localzone())
+                    # photos_iterator = iter(photos_enumerator)
+
+                    download_photo = partial(downloader, icloud)
+
+                    try:
+                        for item_result in photos_bar:
+                            match item_result:
+                                case PhotoIterationComplete():
+                                    break
+                                case PhotoIterationSuccess(item):
+                                    pass
+                                case Response2SARequired(account_name):
+                                    return Response2SARequired(account_name)
+                                case ResponseServiceNotActivated(reason, code):
+                                    return ResponseServiceNotActivated(reason, code)
+                                case ResponseAPIError(reason, code):
+                                    logger.info(f"{reason} ({code})")
+                                    # Check if it's a session error that requires re-authentication
+                                    if "Invalid global session" in reason:
+                                        dump_responses(logger.debug, captured_responses)
+                                        # Set flag to trigger retry in while loop
+                                        needs_retry = True
+                                        break
+                                    dump_responses(logger.debug, captured_responses)
+                                    # webui will display error and wait for password again
+                                    if (
+                                        PasswordProvider.WEBUI in global_config.password_providers
+                                        or global_config.mfa_provider == MFAProvider.WEBUI
+                                    ) and update_auth_error_in_webui(
+                                        status_exchange, str(f"{reason} ({code})")
+                                    ):
+                                        # retry if it was during auth
+                                        needs_retry = True
+                                        break
+                                    return 1
+                                case ResponseServiceUnavailable(reason):
+                                    logger.info(reason)
+                                    dump_responses(logger.debug, captured_responses)
+                                    return 1
+
+                            if should_break(consecutive_files_found):
+                                logger.info(
+                                    "Found %s consecutive previously downloaded photos. Exiting",
+                                    user_config.until_found,
+                                )
+                                break
+                            # item = next(photos_iterator)
+                            should_delete = False
+
+                            passer_result = passer(item)
+                            if passer_result:
+                                download_result = download_photo(consecutive_files_found, item)
+                                # Handle download result ADT
+                                match download_result:
+                                    case DownloadMediaSuccess():
+                                        # File was actually downloaded
+                                        if user_config.delete_after_download:
+                                            should_delete = True
+                                    case DownloadMediaSkipped():
+                                        # File was skipped (already exists) - don't delete
+                                        pass
+                                    case Response2SARequired(account_name):
+                                        return Response2SARequired(account_name)
+                                    case ResponseServiceNotActivated(reason, code):
+                                        return ResponseServiceNotActivated(reason, code)
+                                    case ResponseAPIError(reason, code):
+                                        # Check if it's a session error that requires re-authentication
+                                        if "Invalid global session" in reason:
+                                            logger.info(f"{reason} ({code})")
+                                            dump_responses(logger.debug, captured_responses)
+                                            needs_retry = True
+                                            break
+                                        # 500 errors indicate server problems and should stop processing
+                                        if code == "500":
+                                            logger.info(f"{reason} ({code})")
+                                            dump_responses(logger.debug, captured_responses)
+                                            return 1
+                                        # Other API errors are logged but don't stop processing
+                                        logger.error("%s (%s)", reason, code)
+                                    case ResponseServiceUnavailable(reason):
+                                        logger.info(reason)
+                                        dump_responses(logger.debug, captured_responses)
+                                        return 1
+                            else:
+                                download_result = (
+                                    DownloadMediaSkipped()
+                                )  # Filtered files are skipped
+
+                            if passer_result and user_config.keep_icloud_recent_days is not None:
+                                created_date = item.created.astimezone(get_localzone())
+                                age_days = (now - created_date).days
+                                logger.debug(f"Created date: {created_date}")
+                                logger.debug(
+                                    f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
+                                )
+                                logger.debug(f"Age days: {age_days}")
+                                if age_days < user_config.keep_icloud_recent_days:
+                                    # Create filename cleaner for debug message
+                                    filename_cleaner_for_debug = build_filename_cleaner(
+                                        user_config.keep_unicode_in_filenames
+                                    )
+                                    debug_filename = build_filename_with_policies(
+                                        user_config.file_match_policy,
+                                        filename_cleaner_for_debug,
+                                        item,
+                                    )
+                                    logger.debug(
+                                        "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
+                                        debug_filename,
+                                        age_days,
+                                    )
+                                else:
+                                    should_delete = True
+
+                            if should_delete:
+                                # Create filename cleaner and builder for delete operations
+                                filename_cleaner_for_delete = build_filename_cleaner(
+                                    user_config.keep_unicode_in_filenames
+                                )
+                                filename_builder_for_delete = create_filename_builder(
+                                    user_config.file_match_policy, filename_cleaner_for_delete
+                                )
+                                if user_config.dry_run:
+                                    delete_photo_dry_run(
+                                        logger,
+                                        library_object,
+                                        item,
+                                        filename_builder_for_delete,
+                                    )
+                                else:
+                                    delete_result = delete_photo(
+                                        logger,
+                                        library_object,
+                                        item,
+                                        filename_builder_for_delete,
+                                    )
+                                    match delete_result:
+                                        case DeletePhotoSuccess():
+                                            pass  # Success, continue
+                                        case Response2SARequired(account_name):
+                                            return Response2SARequired(account_name)
+                                        case ResponseServiceNotActivated(reason, code):
+                                            return ResponseServiceNotActivated(reason, code)
+                                        case ResponseAPIError(reason, code):
+                                            # Check if it's a session error that requires re-authentication
+                                            if "Invalid global session" in reason:
+                                                logger.info(f"{reason} ({code})")
+                                                dump_responses(logger.debug, captured_responses)
+                                                needs_retry = True
+                                                break
+                                            # 500 errors should cause exit for delete operations
+                                            if code == "500":
+                                                logger.info(f"{reason} ({code})")
+                                                dump_responses(logger.debug, captured_responses)
+                                                return 1
+                                            # Log other API errors but continue processing
+                                            logger.error("%s (%s)", reason, code)
+                                        case ResponseServiceUnavailable(reason):
+                                            logger.info(reason)
+                                            dump_responses(logger.debug, captured_responses)
+                                            return 1
+
+                                # retrier(delete_local, error_handler)
+                                photo_album.increment_offset(-1)
+
+                            photos_counter += 1
+                            status_exchange.get_progress().photos_counter = photos_counter
+
+                            if status_exchange.get_progress().cancel:
+                                break
+                    except (
+                        ChunkedEncodingError,
+                        ContentDecodingError,
+                        StreamConsumedError,
+                        UnrewindableBodyError,
+                    ) as error:
+                        logger.debug(error)
+                        logger.debug("Retrying...")
+                        # these errors we can safely retry - set flag and break
+                        needs_retry = True
+                    except OSError as error:
+                        logger.error("IOError during file operations: %s", error)
+                        dump_responses(logger.debug, captured_responses)
+                        return 1
+
+                    # If we need to retry, break from the albums loop
+                    if needs_retry:
+                        break
+
+                    if global_config.only_print_filenames:
+                        return 0
+                    else:
+                        pass
+
+                    if status_exchange.get_progress().cancel:
+                        logger.info("Iteration was cancelled")
+                        status_exchange.get_progress().photos_last_message = (
+                            "Iteration was cancelled"
+                        )
+                    else:
+                        if user_config.skip_photos or user_config.skip_videos:
+                            photo_video_phrase = "photos" if user_config.skip_videos else "videos"
+                        else:
+                            photo_video_phrase = "photos and videos"
+                        message = f"All {photo_video_phrase} have been downloaded"
+                        logger.info(message)
+                        status_exchange.get_progress().photos_last_message = message
+                    status_exchange.get_progress().reset()
+
+                # If we need to retry the whole operation, continue the while loop
+                if needs_retry:
+                    continue
+
+                if user_config.auto_delete:
+                    autodelete_result = autodelete_photos(
+                        logger,
+                        user_config.dry_run,
+                        library_object,
+                        user_config.folder_structure,
+                        directory,
+                        user_config.sizes,
+                        lp_filename_generator,
+                        user_config.align_raw,
+                    )
+                    match autodelete_result:
+                        case AutodeleteSuccess():
+                            pass  # Success, continue
+                        case Response2SARequired(account_name):
+                            return Response2SARequired(account_name)
+                        case ResponseServiceNotActivated(reason, code):
+                            return ResponseServiceNotActivated(reason, code)
+                        case ResponseAPIError(reason, code):
+                            logger.info(f"{reason} ({code})")
+                            # Check if it's a session error that requires re-authentication
+                            if "Invalid global session" in reason:
+                                dump_responses(logger.debug, captured_responses)
+                                # For autodelete, we'll continue the while loop for retry
+                                continue
+                            dump_responses(logger.debug, captured_responses)
+                            # webui will display error and wait for password again
+                            if (
+                                PasswordProvider.WEBUI in global_config.password_providers
+                                or global_config.mfa_provider == MFAProvider.WEBUI
+                            ) and update_auth_error_in_webui(
+                                status_exchange, str(f"{reason} ({code})")
+                            ):
+                                # retry if it was during auth
+                                continue
+                            return 1
+                        case ResponseServiceUnavailable(reason):
+                            logger.info(reason)
+                            dump_responses(logger.debug, captured_responses)
+                            return 1
+                else:
+                    pass
 
         # In single run mode, we don't handle watch intervals - that's done at higher level
         break
+
+    # HOOK: Run completed
+    if plugin_manager:
+        try:
+            plugin_manager.call_hook(
+                "on_run_completed",
+                dry_run=user_config.dry_run,
+            )
+            plugin_manager.cleanup_all()
+        except Exception as e:
+            logger.error(f"Error in plugin cleanup: {e}", exc_info=True)
 
     return 0

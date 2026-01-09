@@ -83,13 +83,17 @@ Homepage="https://github.com/icloud-photos-downloader/icloud_photos_downloader"
 icloudpd = "icloudpd.cli:cli"
 icloud = "pyicloud_ipd.cmdline:main"
 
+[project.entry-points."icloudpd.plugins"]
+demo = "icloudpd.plugins.demo:DemoPlugin"
+immich = "plugins.immich.immich:ImmichPlugin"
+
 [tool.pytest.ini_options]
 log_format = "%(levelname)-8s %(message)s"
 log_date_format = "%Y-%m-%d %H:%M:%S"
 timeout = 300
 testpaths = [
     "tests",
-    "src" # needed for doctests    
+    "src"     # needed for doctests
 ]
 pythonpath = [
     "src"
@@ -132,5 +136,25 @@ ignore = [
     "UP006",
     # deprecated typing namespace
     "UP035",
+]
+
+[tool.coverage.run]
+source = ["src/icloudpd", "plugins"]
+omit = [
+    "*/tests/*",
+    "*/test_*.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "^\\s*\\.\\.\\.$",
 ]
 

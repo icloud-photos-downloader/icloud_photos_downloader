@@ -160,10 +160,33 @@ For `musl` binaries, use `Dockerfile.build-musl`
 
 ### Building the Docker
 
+For local development, use the helper script that handles the complete build process:
+
 ``` sh
-docker build -t icloudpd_dev_ .
+scripts/build_docker_local [platform]
 ```
-Note: command packs existing musl binaries from dist folder
+
+This script:
+1. Builds musl binaries using Docker buildx
+2. Renames them to the versioned format expected by the Dockerfile
+3. Builds the Docker image tagged as `icloudpd_dev`
+
+Default platform is `linux/amd64`. Other options: `linux/arm64`, `linux/arm/v7`
+
+Example:
+``` sh
+scripts/build_docker_local linux/amd64
+docker run --rm icloudpd_dev icloudpd --version
+docker run --rm icloudpd_dev icloudpd --plugins-list
+```
+
+Alternatively, you can build manually (requires renaming binaries to versioned format):
+
+``` sh
+docker build -t icloudpd_dev .
+```
+Note: command packs existing musl binaries from dist folder with versioned names
+(e.g., `icloud-1.32.2-linux-musl-amd64`, `icloudpd-1.32.2-linux-musl-amd64`)
 
 ### Developing Documentation
 

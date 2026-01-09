@@ -17,5 +17,6 @@ size
 raw
 webui
 nas
+plugins
 reference
 ```
