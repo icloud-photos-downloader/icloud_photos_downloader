@@ -374,3 +374,71 @@ This is a list of all options available for the command line interface (CLI) of 
     ```{note}
     The date is when the asset was created, not when it was added to iCloud.
     ```
+
+(metrics-backend-parameter)=
+`--metrics-backend X`
+
+:   Specifies the metrics backend to use for observability. Available options: `none` (default), `prometheus`, `statsd`, or `both`.
+
+    When set to `prometheus`, an HTTP server is started that exposes metrics at `/metrics`.
+    When set to `statsd`, metrics are pushed via UDP to a StatsD server.
+    When set to `both`, both backends are enabled simultaneously.
+
+    ```{versionadded} 1.33.0
+    ```
+
+    ```{seealso}
+    Details on [Metrics](metrics)
+    ```
+
+(prometheus-port-parameter)=
+`--prometheus-port X`
+
+:   Port for the Prometheus metrics HTTP server. Default: 9090.
+
+    ```{versionadded} 1.33.0
+    ```
+
+(prometheus-host-parameter)=
+`--prometheus-host X`
+
+:   Host to bind the Prometheus metrics HTTP server. Default: 0.0.0.0.
+
+    ```{versionadded} 1.33.0
+    ```
+
+(statsd-host-parameter)=
+`--statsd-host X`
+
+:   StatsD server host. Default: localhost.
+
+    ```{versionadded} 1.33.0
+    ```
+
+(statsd-port-parameter)=
+`--statsd-port X`
+
+:   StatsD server port. Default: 8125.
+
+    ```{versionadded} 1.33.0
+    ```
+
+(statsd-prefix-parameter)=
+`--statsd-prefix X`
+
+:   Prefix for StatsD metric names. Default: icloudpd.
+
+    ```{versionadded} 1.33.0
+    ```
+
+(metrics-instance-parameter)=
+`--metrics-instance X`
+
+:   Instance label to add to all metrics for identifying this icloudpd instance. Useful when running multiple instances (e.g., for different users).
+
+    ```{versionadded} 1.33.0
+    ```
+
+    ```{seealso}
+    Details on [Metrics](metrics)
+    ```

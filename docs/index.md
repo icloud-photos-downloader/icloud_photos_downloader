@@ -15,6 +15,7 @@ naming
 mode
 size
 raw
+metrics
 webui
 nas
 reference

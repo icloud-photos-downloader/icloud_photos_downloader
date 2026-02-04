@@ -22,6 +22,7 @@ COPY dist/icloudpd-*.*.*-linux-musl-arm32v7 icloudpd
 FROM runtime_${TARGETARCH}_${TARGETVARIANT:-none} AS runtime
 ENV TZ=UTC
 EXPOSE 8080
+EXPOSE 9090
 WORKDIR /app
 RUN chmod +x /app/icloud /app/icloudpd
 

@@ -41,11 +41,12 @@ from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
-from icloudpd.config import GlobalConfig, UserConfig
+from icloudpd.config import GlobalConfig, MetricsBackend, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
+from icloudpd.metrics import MetricsCollector, create_metrics_collector
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
@@ -239,6 +240,24 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
     # Create shared logger
     logger = create_logger(global_config)
 
+    # Create metrics collector based on configuration
+    metrics = create_metrics_collector(
+        backend=global_config.metrics.backend.value,
+        prometheus_host=global_config.metrics.prometheus_host,
+        prometheus_port=global_config.metrics.prometheus_port,
+        statsd_host=global_config.metrics.statsd_host,
+        statsd_port=global_config.metrics.statsd_port,
+        statsd_prefix=global_config.metrics.statsd_prefix,
+        instance=global_config.metrics.instance,
+    )
+
+    # Start metrics server if using Prometheus
+    if global_config.metrics.backend in (MetricsBackend.PROMETHEUS, MetricsBackend.BOTH):
+        metrics.start_server()
+
+    # Set up gauge to indicate the service is running
+    metrics.set("up", 1)
+
     # Create shared status exchange for web server and progress tracking
     shared_status_exchange = StatusExchange()
 
@@ -258,7 +277,9 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
     if not watch_interval:
         # No watch mode - process each user once and exit
-        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+        return _process_all_users_once(
+            global_config, user_configs, logger, shared_status_exchange, metrics
+        )
     else:
         # Watch mode - infinite loop processing all users, then wait
         skip_bar = not os.environ.get("FORCE_TQDM") and (
@@ -270,7 +291,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         while True:
             # Process all user configs in this iteration
             result = _process_all_users_once(
-                global_config, user_configs, logger, shared_status_exchange
+                global_config, user_configs, logger, shared_status_exchange, metrics
             )
 
             # If any critical operation (auth-only, list commands) succeeded, exit
@@ -314,6 +335,7 @@ def _process_all_users_once(
     user_configs: Sequence[UserConfig],
     logger: logging.Logger,
     shared_status_exchange: StatusExchange,
+    metrics: MetricsCollector,
 ) -> int:
     """Process all user configs once (used by both single run and watch mode)"""
 
@@ -414,6 +436,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    metrics,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -445,6 +468,7 @@ def _process_all_users_once(
                 downloader,
                 notificator,
                 lp_filename_generator,
+                metrics,
             )
 
             # If any user config fails and we're not in watch mode, return the error code
@@ -577,6 +601,7 @@ def download_builder(
     lp_filename_generator: Callable[[str], str],
     filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
+    metrics: MetricsCollector,
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
@@ -700,6 +725,7 @@ def download_builder(
                     version,
                     download_size,
                     filename_builder,
+                    metrics,
                 )
                 success = download_result
 
@@ -798,6 +824,7 @@ def download_builder(
                         version,
                         lp_size,
                         filename_builder,
+                        metrics,
                     )
                     success = download_result and success
                     if download_result:
@@ -884,6 +911,7 @@ def core_single_run(
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
+    metrics: MetricsCollector,
 ) -> int:
     """Download all iCloud photos to a local directory for a single execution (no watch loop)"""
 
@@ -913,6 +941,7 @@ def core_single_run(
                 partial(append_response, captured_responses),
                 user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
+                metrics,
             )
 
             # dump captured responses for debugging
@@ -1069,6 +1098,9 @@ def core_single_run(
 
                         download_photo = partial(downloader, icloud)
 
+                        # Track sync timing
+                        sync_start_time = time.perf_counter()
+
                         for item in photos_bar:
                             try:
                                 if should_break(consecutive_files_found):
@@ -1081,9 +1113,25 @@ def core_single_run(
                                 should_delete = False
 
                                 passer_result = passer(item)
+                                # Determine metric name based on asset type
+                                asset_metric = (
+                                    "videos_processed_total"
+                                    if item.item_type == AssetItemType.MOVIE
+                                    else "photos_processed_total"
+                                )
+                                if not passer_result:
+                                    # Photo/video was skipped by filter
+                                    metrics.inc(asset_metric, labels={"action": "skipped"})
+
                                 download_result = passer_result and download_photo(
                                     consecutive_files_found, item
                                 )
+                                if download_result:
+                                    metrics.inc(asset_metric, labels={"action": "downloaded"})
+                                elif passer_result:
+                                    # Passed filter but not downloaded (already exists or failed)
+                                    metrics.inc(asset_metric, labels={"action": "skipped"})
+
                                 if download_result and user_config.delete_after_download:
                                     should_delete = True
 
@@ -1138,6 +1186,7 @@ def core_single_run(
                                             item,
                                             filename_builder_for_delete,
                                         )
+                                    metrics.inc(asset_metric, labels={"action": "deleted"})
 
                                     # retrier(delete_local, error_handler)
                                     photo_album.increment_offset(-1)
@@ -1145,11 +1194,20 @@ def core_single_run(
                                 photos_counter += 1
                                 status_exchange.get_progress().photos_counter = photos_counter
 
+                                # Update progress gauge
+                                if photos_count and photos_count > 0:
+                                    progress_pct = (photos_counter / photos_count) * 100
+                                    metrics.set("current_progress", progress_pct)
+
                                 if status_exchange.get_progress().cancel:
                                     break
 
                             except StopIteration:
                                 break
+
+                        # Record sync duration
+                        sync_duration = time.perf_counter() - sync_start_time
+                        metrics.observe("sync_duration_seconds", sync_duration)
 
                         if global_config.only_print_filenames:
                             return 0
@@ -1161,6 +1219,7 @@ def core_single_run(
                             status_exchange.get_progress().photos_last_message = (
                                 "Iteration was cancelled"
                             )
+                            metrics.inc("sync_runs_total", labels={"status": "cancelled"})
                         else:
                             if user_config.skip_photos or user_config.skip_videos:
                                 photo_video_phrase = (
@@ -1171,7 +1230,9 @@ def core_single_run(
                             message = f"All {photo_video_phrase} have been downloaded"
                             logger.info(message)
                             status_exchange.get_progress().photos_last_message = message
+                            metrics.inc("sync_runs_total", labels={"status": "success"})
                         status_exchange.get_progress().reset()
+                        metrics.set("current_progress", 0)
 
                     if user_config.auto_delete:
                         autodelete_photos(
@@ -1189,6 +1250,8 @@ def core_single_run(
         except PyiCloudFailedLoginException as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
+            metrics.inc("sync_runs_total", labels={"status": "failure"})
+            metrics.inc("api_errors_total", labels={"error_type": "login_failed"})
             if PasswordProvider.WEBUI in global_config.password_providers:
                 update_auth_error_in_webui(status_exchange, str(error))
                 continue
@@ -1197,6 +1260,8 @@ def core_single_run(
         except PyiCloudFailedMFAException as error:
             logger.info(str(error))
             dump_responses(logger.debug, captured_responses)
+            metrics.inc("sync_runs_total", labels={"status": "failure"})
+            metrics.inc("api_errors_total", labels={"error_type": "mfa_failed"})
             if global_config.mfa_provider == MFAProvider.WEBUI:
                 update_auth_error_in_webui(status_exchange, str(error))
                 continue
@@ -1210,6 +1275,8 @@ def core_single_run(
         ) as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
+            metrics.inc("sync_runs_total", labels={"status": "failure"})
+            metrics.inc("api_errors_total", labels={"error_type": "api_error"})
             # webui will display error and wait for password again
             if (
                 PasswordProvider.WEBUI in global_config.password_providers
@@ -1232,10 +1299,13 @@ def core_single_run(
         ) as error:
             logger.debug(error)
             logger.debug("Retrying...")
+            metrics.inc("api_errors_total", labels={"error_type": "connection_error"})
             # these errors we can safely retry
             continue
         except Exception:
             dump_responses(logger.debug, captured_responses)
+            metrics.inc("sync_runs_total", labels={"status": "failure"})
+            metrics.inc("api_errors_total", labels={"error_type": "unknown"})
             raise
 
         # In single run mode, we don't handle watch intervals - that's done at higher level

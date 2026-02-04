@@ -6,6 +6,7 @@ import time
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Tuple
 
+from icloudpd.metrics import MetricsCollector, NoOpCollector
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
@@ -69,9 +70,14 @@ def authenticator(
     response_observer: Callable[[Mapping[str, Any]], None] | None = None,
     cookie_directory: str | None = None,
     client_id: str | None = None,
+    metrics: MetricsCollector | None = None,
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
+
+    if metrics is None:
+        metrics = NoOpCollector()
+
     valid_password: List[str] = []
 
     def password_provider(username: str, valid_password: List[str]) -> str | None:
@@ -83,6 +89,9 @@ def authenticator(
                 return password
         return None
 
+    # Track auth attempt
+    metrics.inc("auth_attempts_total", labels={"result": "started", "method": "password"})
+
     icloud = PyiCloudService(
         domain,
         username,
@@ -90,9 +99,11 @@ def authenticator(
         response_observer,
         cookie_directory=cookie_directory,
         client_id=client_id,
+        metrics=metrics,
     )
 
     if not icloud:
+        metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "password"})
         raise NotImplementedError("None of providers gave password")
 
     if valid_password:
@@ -103,22 +114,32 @@ def authenticator(
 
     if icloud.requires_2fa:
         logger.info("Two-factor authentication is required (2fa)")
+        metrics.inc("auth_mfa_requests_total", labels={"type": "2fa"})
         notificator()
         if mfa_provider == MFAProvider.WEBUI:
-            request_2fa_web(icloud, logger, status_exchange)
+            request_2fa_web(icloud, logger, status_exchange, metrics)
         else:
-            request_2fa(icloud, logger)
+            request_2fa(icloud, logger, metrics)
 
     elif icloud.requires_2sa:
         logger.info("Two-step authentication is required (2sa)")
+        metrics.inc("auth_mfa_requests_total", labels={"type": "2sa"})
         notificator()
-        request_2sa(icloud, logger)
+        request_2sa(icloud, logger, metrics)
+    else:
+        # Successful auth without MFA
+        metrics.inc("auth_attempts_total", labels={"result": "success", "method": "password"})
 
     return icloud
 
 
-def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
+def request_2sa(
+    icloud: PyiCloudService, logger: logging.Logger, metrics: MetricsCollector | None = None
+) -> None:
     """Request two-step authentication. Prompts for SMS or device"""
+    if metrics is None:
+        metrics = NoOpCollector()
+
     devices = icloud.trusted_devices
     devices_count = len(devices)
     device_index: int = 0
@@ -134,12 +155,15 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     device = devices[device_index]
     if not icloud.send_verification_code(device):
         logger.error("Failed to send two-step authentication code")
+        metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2sa"})
         sys.exit(1)
 
     code = prompt_string("Please enter two-step authentication code")
     if not icloud.validate_verification_code(device, code):
         logger.error("Failed to verify two-step authentication code")
+        metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2sa"})
         sys.exit(1)
+    metrics.inc("auth_attempts_total", labels={"result": "success", "method": "2sa"})
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2SA expires.\n"
@@ -149,13 +173,19 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     )
 
 
-def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
+def request_2fa(
+    icloud: PyiCloudService, logger: logging.Logger, metrics: MetricsCollector | None = None
+) -> None:
     """Request two-factor authentication."""
+    if metrics is None:
+        metrics = NoOpCollector()
+
     devices = icloud.get_trusted_phone_numbers()
     devices_count = len(devices)
     device_index_alphabet = "abcdefghijklmnopqrstuvwxyz"
     if devices_count > 0:
         if devices_count > len(device_index_alphabet):
+            metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa"})
             raise PyiCloudFailedMFAException("Too many trusted devices for authentication")
 
         for i, device in enumerate(devices):
@@ -200,6 +230,7 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
             device_index = device_index_alphabet.index(index_or_code)
             device = devices[device_index]
             if not icloud.send_2fa_code_sms(device.id):
+                metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa"})
                 raise PyiCloudFailedMFAException("Failed to send two-factor authentication code")
             while True:
                 from foundation.string_utils import strip
@@ -214,9 +245,11 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 echo("Invalid code, should be six digits. Try again")
 
             if not icloud.validate_2fa_code_sms(device.id, code):
+                metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa"})
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
         else:
             if not icloud.validate_2fa_code(index_or_code):
+                metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa"})
                 raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
     else:
         while True:
@@ -227,7 +260,9 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
                 break
             echo("Invalid code, should be six digits. Try again")
         if not icloud.validate_2fa_code(code):
+            metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa"})
             raise PyiCloudFailedMFAException("Failed to verify two-factor authentication code")
+    metrics.inc("auth_attempts_total", labels={"result": "success", "method": "2fa"})
     logger.info(
         "Great, you're all set up. The script can now be run without "
         "user interaction until 2FA expires.\n"
@@ -238,10 +273,17 @@ def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
 
 
 def request_2fa_web(
-    icloud: PyiCloudService, logger: logging.Logger, status_exchange: StatusExchange
+    icloud: PyiCloudService,
+    logger: logging.Logger,
+    status_exchange: StatusExchange,
+    metrics: MetricsCollector | None = None,
 ) -> None:
     """Request two-factor authentication through Webui."""
+    if metrics is None:
+        metrics = NoOpCollector()
+
     if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_MFA):
+        metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa_web"})
         raise PyiCloudFailedMFAException(
             f"Expected NO_INPUT_NEEDED, but got {status_exchange.get_status()}"
         )
@@ -258,6 +300,9 @@ def request_2fa_web(
         if status_exchange.replace_status(Status.SUPPLIED_MFA, Status.CHECKING_MFA):
             code = status_exchange.get_payload()
             if not code:
+                metrics.inc(
+                    "auth_attempts_total", labels={"result": "failure", "method": "2fa_web"}
+                )
                 raise PyiCloudFailedMFAException(
                     "Internal error: did not get code for SUPPLIED_MFA status"
                 )
@@ -268,9 +313,15 @@ def request_2fa_web(
                     # TODO give user an option to restart auth in case they missed code
                     continue
                 else:
+                    metrics.inc(
+                        "auth_attempts_total", labels={"result": "failure", "method": "2fa_web"}
+                    )
                     raise PyiCloudFailedMFAException("Failed to chage status of invalid code")
             else:
                 status_exchange.replace_status(Status.CHECKING_MFA, Status.NO_INPUT_NEEDED)  # done
+                metrics.inc(
+                    "auth_attempts_total", labels={"result": "success", "method": "2fa_web"}
+                )
 
                 logger.info(
                     "Great, you're all set up. The script can now be run without "
@@ -280,4 +331,5 @@ def request_2fa_web(
                     "(Use --help to view information about SMTP options.)"
                 )
         else:
+            metrics.inc("auth_attempts_total", labels={"result": "failure", "method": "2fa_web"})
             raise PyiCloudFailedMFAException("Failed to change status")

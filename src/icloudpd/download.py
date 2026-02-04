@@ -13,6 +13,7 @@ from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
 from icloudpd import constants
+from icloudpd.metrics import MetricsCollector, NoOpCollector
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
@@ -112,11 +113,19 @@ def download_media(
     version: AssetVersion,
     size: VersionSize,
     filename_builder: Callable[[PhotoAsset], str],
+    metrics: MetricsCollector | None = None,
 ) -> bool:
     """Download the photo to path, with retries and error handling"""
 
+    # Use NoOpCollector if no metrics provided for backwards compatibility
+    if metrics is None:
+        metrics = NoOpCollector()
+
+    size_label = size.value if hasattr(size, "value") else str(size)
+
     mkdirs_local = mkdirs_for_path_dry_run if dry_run else mkdirs_for_path
     if not mkdirs_local(logger, download_path):
+        metrics.inc("downloads_total", labels={"status": "failure", "size": size_label})
         return False
 
     checksum = base64.b64decode(version.checksum)
@@ -129,6 +138,7 @@ def download_media(
     )
 
     retries = 0
+    download_start_time = time.perf_counter()
     while True:
         try:
             append_mode = os.path.exists(temp_download_path)
@@ -138,9 +148,24 @@ def download_media(
 
             photo_response = photo.download(icloud.photos.session, version.url, current_size)
             if photo_response.ok:
-                return download_local(
+                result = download_local(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 )
+                if result:
+                    # Record successful download metrics
+                    download_duration = time.perf_counter() - download_start_time
+                    metrics.observe(
+                        "download_duration_seconds", download_duration, labels={"size": size_label}
+                    )
+                    metrics.inc("downloads_total", labels={"status": "success", "size": size_label})
+                    # Track bytes downloaded (version.size is the file size)
+                    if hasattr(version, "size") and version.size:
+                        metrics.inc(
+                            "download_bytes_total",
+                            value=float(version.size),
+                            labels={"size": size_label},
+                        )
+                return result
             else:
                 # Use the standard original filename generator for error logging
                 from icloudpd.base import lp_filename_original as simple_lp_filename_generator
@@ -155,11 +180,13 @@ def download_media(
                     version_filename,
                     size.value,
                 )
+                metrics.inc("downloads_total", labels={"status": "failure", "size": size_label})
                 break
 
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
+                metrics.inc("download_retries_total", labels={"reason": "session"})
                 if retries > 0:
                     # If the first re-authentication attempt failed,
                     # start waiting a few seconds before retrying in case
@@ -172,6 +199,7 @@ def download_media(
                 if retries == constants.MAX_RETRIES:
                     break
                 # you end up here when p.e. throttling by Apple happens
+                metrics.inc("download_retries_total", labels={"reason": "throttle"})
                 wait_time = (retries + 1) * constants.WAIT_SECONDS
                 # Get the proper filename for error messages
                 error_filename = filename_builder(photo)
@@ -188,6 +216,8 @@ def download_media(
                 + "Skipping this file...",
                 download_path,
             )
+            metrics.inc("download_retries_total", labels={"reason": "io"})
+            metrics.inc("downloads_total", labels={"status": "failure", "size": size_label})
             break
         retries = retries + 1
         if retries >= constants.MAX_RETRIES:
@@ -199,5 +229,6 @@ def download_media(
             "Could not download %s. Please try again later.",
             error_filename,
         )
+        metrics.inc("downloads_total", labels={"status": "failure", "size": size_label})
 
     return False

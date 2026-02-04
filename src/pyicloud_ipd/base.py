@@ -86,6 +86,7 @@ class PyiCloudService:
         client_id: str | None = None,
         with_family: bool = True,
         http_timeout: float = 30.0,
+        metrics: Any = None,
     ):
         self.apple_id = apple_id
         self.password_provider: Callable[[], str | None] = password_provider
@@ -96,6 +97,7 @@ class PyiCloudService:
         self.http_timeout = http_timeout
         self.response_observer = response_observer
         self.observer_rules: Sequence[Rule] = []
+        self._metrics = metrics
 
         # set it when we get password
         self.password_filter: PyiCloudPasswordFilter | None = None
@@ -146,7 +148,7 @@ class PyiCloudService:
                 self.response_observer(apply_rules("", self.observer_rules, response))
 
         self.session: PyiCloudSession = PyiCloudSession(
-            self, apply_rules_and_observe if self.response_observer else None
+            self, apply_rules_and_observe if self.response_observer else None, self._metrics
         )
         self.session.verify = verify
         self.session.headers.update(
