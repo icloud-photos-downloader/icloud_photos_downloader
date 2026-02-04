@@ -13,7 +13,7 @@ import foundation
 from foundation.core import chain_from_iterable, compose, map_, partial_1_1, skip
 from foundation.string_utils import lower
 from icloudpd.base import ensure_tzinfo, run_with_configs
-from icloudpd.config import GlobalConfig, UserConfig
+from icloudpd.config import GlobalConfig, MetricsBackend, MetricsConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
@@ -358,6 +358,47 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         default="console",
         type=lower,
     )
+    # Metrics configuration
+    cloned.add_argument(
+        "--metrics-backend",
+        help="Metrics backend to use for observability. Default: %(default)s",
+        choices=["none", "prometheus", "statsd", "both"],
+        default="none",
+        type=lower,
+    )
+    cloned.add_argument(
+        "--prometheus-port",
+        help="Port for Prometheus metrics HTTP server. Default: %(default)i",
+        type=int,
+        default=9090,
+    )
+    cloned.add_argument(
+        "--prometheus-host",
+        help="Host to bind Prometheus metrics HTTP server. Default: %(default)s",
+        default="0.0.0.0",
+    )
+    cloned.add_argument(
+        "--statsd-host",
+        help="StatsD server host. Default: %(default)s",
+        default="localhost",
+    )
+    cloned.add_argument(
+        "--statsd-port",
+        help="StatsD server port. Default: %(default)i",
+        type=int,
+        default=8125,
+    )
+    cloned.add_argument(
+        "--statsd-prefix",
+        help="Prefix for StatsD metric names. Default: %(default)s",
+        default="icloudpd",
+    )
+    cloned.add_argument(
+        "--metrics-instance",
+        help="Instance label to add to all metrics for identifying this icloudpd instance. "
+        "Useful when running multiple instances (e.g., for different users).",
+        default=None,
+    )
     return cloned
 
 
@@ -528,6 +569,15 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
+            metrics=MetricsConfig(
+                backend=MetricsBackend(global_ns.metrics_backend),
+                prometheus_host=global_ns.prometheus_host,
+                prometheus_port=global_ns.prometheus_port,
+                statsd_host=global_ns.statsd_host,
+                statsd_port=global_ns.statsd_port,
+                statsd_prefix=global_ns.statsd_prefix,
+                instance=global_ns.metrics_instance,
+            ),
         ),
         user_nses,
     )

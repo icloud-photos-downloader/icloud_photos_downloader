@@ -10,7 +10,7 @@ from unittest import TestCase
 import pytest
 
 from icloudpd.cli import format_help, parse
-from icloudpd.config import GlobalConfig, UserConfig
+from icloudpd.config import GlobalConfig, MetricsBackend, MetricsConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
@@ -22,6 +22,17 @@ from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
     run_main,
+)
+
+# Default metrics config used in tests
+DEFAULT_METRICS_CONFIG = MetricsConfig(
+    backend=MetricsBackend.NONE,
+    prometheus_host="0.0.0.0",
+    prometheus_port=9090,
+    statsd_host="localhost",
+    statsd_port=8125,
+    statsd_prefix="icloudpd",
+    instance=None,
 )
 
 
@@ -90,6 +101,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    metrics=DEFAULT_METRICS_CONFIG,
                 ),
                 [],
             ),
@@ -114,6 +126,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.WEBUI,
+                    metrics=DEFAULT_METRICS_CONFIG,
                 ),
                 [],
             ),
@@ -143,6 +156,7 @@ class CliTestCase(TestCase):
                     watch_with_interval=None,
                     password_providers=[PasswordProvider.WEBUI, PasswordProvider.CONSOLE],
                     mfa_provider=MFAProvider.CONSOLE,
+                    metrics=DEFAULT_METRICS_CONFIG,
                 ),
                 [],
             ),
@@ -167,6 +181,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    metrics=DEFAULT_METRICS_CONFIG,
                 ),
                 [],
             ),
@@ -193,6 +208,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    metrics=DEFAULT_METRICS_CONFIG,
                 ),
                 [
                     UserConfig(
@@ -309,6 +325,7 @@ class CliTestCase(TestCase):
                         PasswordProvider.CONSOLE,
                     ],
                     mfa_provider=MFAProvider.CONSOLE,
+                    metrics=DEFAULT_METRICS_CONFIG,
                 ),
                 [
                     UserConfig(

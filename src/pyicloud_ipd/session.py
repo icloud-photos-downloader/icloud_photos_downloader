@@ -1,6 +1,7 @@
 import inspect
 import json
 import logging
+import time
 import typing
 from typing import Any, Callable, Dict, Mapping, NoReturn, Sequence
 
@@ -8,6 +9,7 @@ from requests import Response, Session
 from typing_extensions import override
 
 from foundation.http import response_to_har_entry
+from icloudpd.metrics import MetricsCollector, NoOpCollector
 from pyicloud_ipd.exceptions import (
     PyiCloud2SARequiredException,
     PyiCloudAPIResponseException,
@@ -47,10 +49,14 @@ class PyiCloudSession(Session):
     """iCloud session."""
 
     def __init__(
-        self, service: Any, response_observer: Callable[[Mapping[str, Any]], None] | None = None
+        self,
+        service: Any,
+        response_observer: Callable[[Mapping[str, Any]], None] | None = None,
+        metrics: MetricsCollector | None = None,
     ):
         self.service = service
         self.response_observer = response_observer
+        self.metrics = metrics if metrics is not None else NoOpCollector()
         super().__init__()
 
     def observe(self, response: Response) -> Response:
@@ -74,8 +80,21 @@ class PyiCloudSession(Session):
 
         if "timeout" not in kwargs and self.service.http_timeout is not None:
             kwargs["timeout"] = self.service.http_timeout
+
+        # Track API request timing
+        request_start_time = time.perf_counter()
         response = throw_on_503(
             self.observe(handle_connection_error(super().request)(method, url, **kwargs))
+        )
+        request_duration = time.perf_counter() - request_start_time
+
+        # Record API metrics
+        self.metrics.observe(
+            "api_request_duration_seconds", request_duration, labels={"method": method}
+        )
+        self.metrics.inc(
+            "api_requests_total",
+            labels={"method": method, "status_code": str(response.status_code)},
         )
 
         content_type = response.headers.get("Content-Type", "").split(";")[0]
@@ -152,6 +171,9 @@ class PyiCloudSession(Session):
         return response
 
     def _raise_error(self, code: str, reason: str) -> NoReturn:
+        # Track API error
+        self.metrics.inc("api_errors_total", labels={"error_type": code})
+
         if self.service.requires_2sa and reason == "Missing X-APPLE-WEBAUTH-TOKEN cookie":
             raise PyiCloud2SARequiredException(self.service.user["accountName"])
         if code in ("ZONE_NOT_FOUND", "AUTHENTICATION_FAILED"):

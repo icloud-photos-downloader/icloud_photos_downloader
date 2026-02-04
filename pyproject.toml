@@ -38,6 +38,9 @@ dependencies = [
     "keyring==25.6.0",
     "keyrings-alt==5.0.2",
     "srp==1.0.22",
+    # metrics
+    "prometheus_client>=0.20.0",
+    "statsd>=4.0.1",
 ]
 
 [dependency-groups]

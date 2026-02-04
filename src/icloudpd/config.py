@@ -1,6 +1,7 @@
 import datetime
 import pathlib
 from dataclasses import dataclass
+from enum import Enum
 from typing import Sequence
 
 from icloudpd.log_level import LogLevel
@@ -10,6 +11,28 @@ from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
+
+
+class MetricsBackend(Enum):
+    """Available metrics backends"""
+
+    NONE = "none"
+    PROMETHEUS = "prometheus"
+    STATSD = "statsd"
+    BOTH = "both"
+
+
+@dataclass(kw_only=True)
+class MetricsConfig:
+    """Configuration for metrics collection"""
+
+    backend: MetricsBackend
+    prometheus_host: str
+    prometheus_port: int
+    statsd_host: str
+    statsd_port: int
+    statsd_prefix: str
+    instance: str | None
 
 
 @dataclass(kw_only=True)
@@ -71,3 +94,4 @@ class GlobalConfig:
     watch_with_interval: int | None
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
+    metrics: MetricsConfig
