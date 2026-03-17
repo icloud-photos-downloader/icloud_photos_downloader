@@ -36,18 +36,14 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
     - uses: actions/checkout@v4
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
       with:
-        python-version: ${{ matrix.python-version }}
-    - name: Install Test dependencies
-      run: >
-        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
-        pip3 install --disable-pip-version-check . --group test
-
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --python ${{ matrix.python-version }} --group test
     - name: Lint
-      run: |
-        scripts/lint
+      run: uv run scripts/lint
 
   type_check: 
     needs: skip_check
@@ -58,18 +54,14 @@ jobs:
         python-version: ['3.10', '3.11', '3.12', '3.13']
     steps: 
     - uses: actions/checkout@v4 
-    - name: Set up Python ${{ matrix.python-version }} 
-      uses: actions/setup-python@v5 
-      with: 
-        python-version: ${{ matrix.python-version }} 
-        cache: 'pip' 
-    - name: Install Test dependencies 
-      run: > 
-        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
-        pip3 install --disable-pip-version-check . --group test
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --python ${{ matrix.python-version }} --group test
     - name: Type Check 
-      run: | 
-        scripts/type_check 
+      run: uv run scripts/type_check
 
   patch_version:
     needs: skip_check
@@ -97,20 +89,14 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python ${{ matrix.python-version }} 
-      uses: actions/setup-python@v5 
-      with: 
-        python-version: ${{ matrix.python-version }} 
-        cache: 'pip' 
-    
-    - name: Install Test dependencies 
-      run: >
-        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt && 
-        pip3 install --disable-pip-version-check . --group test
- 
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --python ${{ matrix.python-version }} --group test
     - name: Test
-      run: |
-        scripts/test
+      run: uv run scripts/test
 
   test_non_linux: 
     needs: [skip_check, patch_version]
@@ -139,20 +125,14 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python ${{ matrix.python-version }} 
-      uses: actions/setup-python@v5 
-      with: 
-        python-version: ${{ matrix.python-version }} 
-        cache: 'pip' 
-    
-    - name: Install Test dependencies 
-      run: > 
-        python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
-        pip3 install --disable-pip-version-check . --group test
- 
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    - name: Install dependencies
+      run: uv sync --python ${{ matrix.python-version }} --group test
     - name: Test
-      run: |
-        scripts/test
+      run: uv run scripts/test
 
   get_version:
     needs: skip_check

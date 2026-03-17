@@ -90,14 +90,13 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
         with:
-          python-version: '3.13'
-      
+          enable-cache: true
+
       - name: Install Dev dependencies
-        run: |
-          pip3 install --group dev
+        run: uv sync --python 3.13 --group dev
 
       - name: Download artifacts (src)
         uses: actions/download-artifact@v4
@@ -120,7 +119,7 @@ jobs:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
           TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
         run: |
-          python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
+          uv run python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
 
   gh_release:
     runs-on: ubuntu-22.04
