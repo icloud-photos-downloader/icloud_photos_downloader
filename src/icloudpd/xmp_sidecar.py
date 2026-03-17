@@ -68,7 +68,7 @@ def generate_xmp_file(
     # json.dump(asset_record["fields"],         open(download_path + ".ar.json", "w"),         indent=4,        default=str,        sort_keys=True)
 
     if can_write_file:
-        xmp_metadata: XMPMetadata = build_metadata(asset_record)
+        xmp_metadata: XMPMetadata = build_metadata(logger, asset_record)
         xml_doc: ElementTree.Element = generate_xml(xmp_metadata)
         if not dry_run:
             # Write the XML to the file
@@ -76,18 +76,28 @@ def generate_xmp_file(
                 f.write(ElementTree.tostring(xml_doc, encoding="utf-8", xml_declaration=True))
 
 
-def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
+def build_metadata(logger: logging.Logger, asset_record: dict[str, Any]) -> XMPMetadata:
     """Build XMP metadata from asset record"""
 
     title = None
     if "captionEnc" in asset_record["fields"]:
-        title = base64.b64decode(asset_record["fields"]["captionEnc"]["value"]).decode("utf-8")
+        caption_value = asset_record["fields"]["captionEnc"].get("value", "")
+        if caption_value:
+            try:
+                title = base64.b64decode(caption_value).decode("utf-8")
+            except (ValueError, TypeError, UnicodeDecodeError) as e:
+                logger.warning("Error decoding caption: %s", e)
+                title = None
 
     description = None
     if "extendedDescEnc" in asset_record["fields"]:
-        description = base64.b64decode(asset_record["fields"]["extendedDescEnc"]["value"]).decode(
-            "utf-8"
-        )
+        desc_value = asset_record["fields"]["extendedDescEnc"].get("value", "")
+        if desc_value:
+            try:
+                description = base64.b64decode(desc_value).decode("utf-8")
+            except (ValueError, TypeError, UnicodeDecodeError) as e:
+                logger.warning("Error decoding description: %s", e)
+                description = None
 
     # adjustementSimpleDataEnc can be one of three formats:
     # - a binary plist - starting with 'bplist00' ( YnBsaXN0MD once encoded), seemingly used for some videos metadata (slow motion range etc)
@@ -122,22 +132,38 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
         digital_source_type = "screenCapture"
 
     keywords = None
-    if "keywordsEnc" in asset_record["fields"] and len(asset_record["fields"]["keywordsEnc"]) > 0:
-        keywords = plistlib.loads(
-            base64.b64decode(asset_record["fields"]["keywordsEnc"]["value"]),
-        )
+    if "keywordsEnc" in asset_record["fields"]:
+        kw_value = asset_record["fields"]["keywordsEnc"].get("value", "")
+        if kw_value:
+            try:
+                keywords = plistlib.loads(base64.b64decode(kw_value))
+            except (plistlib.InvalidFileException, ValueError, TypeError, AttributeError) as e:
+                logger.warning("Error decoding keywords: %s", e)
+                keywords = None
 
     if "locationEnc" in asset_record["fields"]:
-        location = plistlib.loads(
-            base64.b64decode(asset_record["fields"]["locationEnc"]["value"]),
-        )
-        gps_altitude = location.get("alt")
-        gps_latitude = location.get("lat")
-        gps_longitude = location.get("lon")
-        gps_speed = location.get("speed")
-        gps_timestamp = (
-            location.get("timestamp") if isinstance(location.get("timestamp"), datetime) else None
-        )
+        loc_value = asset_record["fields"]["locationEnc"].get("value", "")
+        if loc_value:
+            try:
+                location = plistlib.loads(base64.b64decode(loc_value))
+                gps_altitude = location.get("alt")
+                gps_latitude = location.get("lat")
+                gps_longitude = location.get("lon")
+                gps_speed = location.get("speed")
+                gps_timestamp = (
+                    location.get("timestamp")
+                    if isinstance(location.get("timestamp"), datetime)
+                    else None
+                )
+            except (plistlib.InvalidFileException, ValueError, TypeError, AttributeError) as e:
+                logger.warning("Error decoding location: %s", e)
+                gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
+                    None, None, None, None, None,
+                )
+        else:
+            gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
+                None, None, None, None, None,
+            )
     else:
         gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
             None,
