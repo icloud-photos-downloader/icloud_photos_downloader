@@ -213,3 +213,91 @@ class BuildXMPMetadataErrorPaths(TestCase):
         # Should not crash; GPS fields should be None since list has no .get()
         self.assertIsNone(metadata.GPSLatitude)
         self.assertIsNone(metadata.GPSLongitude)
+
+
+class TestGenerateXmpFile(TestCase):
+    """Test generate_xmp_file() with dir_cache integration."""
+
+    def setUp(self) -> None:
+        import tempfile
+        self._tmpdir = tempfile.mkdtemp()
+
+    def tearDown(self) -> None:
+        import shutil
+        shutil.rmtree(self._tmpdir)
+
+    def test_generates_xmp_sidecar_with_dir_cache(self) -> None:
+        import os
+
+        from icloudpd.dir_cache import DirCache
+        from icloudpd.xmp_sidecar import generate_xmp_file
+
+        photo_path = os.path.join(self._tmpdir, "IMG_0001.JPG")
+        with open(photo_path, "wb") as f:
+            f.write(b"\x00" * 100)
+
+        asset_record: Dict[str, Any] = {
+            "fields": {
+                "assetDate": {"value": 1532951050176, "type": "TIMESTAMP"},
+                "isHidden": {"value": 0, "type": "INT64"},
+                "isDeleted": {"value": 0, "type": "INT64"},
+                "isFavorite": {"value": 1, "type": "INT64"},
+            }
+        }
+
+        dir_cache = DirCache()
+        generate_xmp_file(_test_logger, photo_path, asset_record, False, dir_cache)
+
+        xmp_path = photo_path + ".xmp"
+        self.assertTrue(os.path.isfile(xmp_path), "XMP sidecar should be created")
+        self.assertTrue(dir_cache.exists(xmp_path), "dir_cache should track the XMP file")
+
+    def test_does_not_overwrite_non_icloudpd_xmp(self) -> None:
+        import os
+
+        from icloudpd.dir_cache import DirCache
+        from icloudpd.xmp_sidecar import generate_xmp_file
+
+        photo_path = os.path.join(self._tmpdir, "IMG_0002.JPG")
+        with open(photo_path, "wb") as f:
+            f.write(b"\x00" * 100)
+
+        xmp_path = photo_path + ".xmp"
+        with open(xmp_path, "w") as f:
+            f.write('<?xml version="1.0"?><x:xml_doc xmlns:x="adobe:ns:meta/" '
+                    'x:xmptk="Adobe Lightroom 12.0"/>')
+
+        asset_record: Dict[str, Any] = {
+            "fields": {
+                "assetDate": {"value": 1532951050176, "type": "TIMESTAMP"},
+            }
+        }
+
+        dir_cache = DirCache()
+        generate_xmp_file(_test_logger, photo_path, asset_record, False, dir_cache)
+
+        with open(xmp_path) as f:
+            content = f.read()
+        self.assertIn("Adobe Lightroom", content)
+
+    def test_dry_run_does_not_create_xmp(self) -> None:
+        import os
+
+        from icloudpd.dir_cache import DirCache
+        from icloudpd.xmp_sidecar import generate_xmp_file
+
+        photo_path = os.path.join(self._tmpdir, "IMG_0003.JPG")
+        with open(photo_path, "wb") as f:
+            f.write(b"\x00" * 100)
+
+        asset_record: Dict[str, Any] = {
+            "fields": {
+                "assetDate": {"value": 1532951050176, "type": "TIMESTAMP"},
+            }
+        }
+
+        dir_cache = DirCache()
+        generate_xmp_file(_test_logger, photo_path, asset_record, True, dir_cache)
+
+        xmp_path = photo_path + ".xmp"
+        self.assertFalse(os.path.isfile(xmp_path), "Dry run should not create XMP")

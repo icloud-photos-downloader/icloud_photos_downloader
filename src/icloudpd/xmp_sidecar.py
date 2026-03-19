@@ -13,6 +13,7 @@ from typing import Any, NamedTuple
 from xml.etree import ElementTree
 
 from foundation import version_info
+from icloudpd.dir_cache import DirCache
 
 exif_tool = None
 
@@ -35,11 +36,23 @@ class XMPMetadata(NamedTuple):
 
 
 def generate_xmp_file(
-    logger: logging.Logger, download_path: str, asset_record: dict[str, Any], dry_run: bool
+    logger: logging.Logger,
+    download_path: str,
+    asset_record: dict[str, Any],
+    dry_run: bool,
+    dir_cache: DirCache | None = None,
 ) -> None:
     sidecar_path: str = download_path + ".xmp"
+
+    # Use dir_cache for existence/size checks to avoid per-file network stat calls
+    sidecar_exists = dir_cache.exists(sidecar_path) if dir_cache else os.path.exists(sidecar_path)
+    sidecar_size = 0
+    if sidecar_exists:
+        sidecar_size = dir_cache.getsize(sidecar_path) if dir_cache else os.path.getsize(sidecar_path)
+
     can_write_file: bool = True
-    if os.path.exists(sidecar_path) and os.path.getsize(sidecar_path) != 0:
+    if sidecar_exists and sidecar_size != 0:
+        # Sidecar exists — check if it was created by icloudpd before overwriting
         can_write_file = False
         try:
             root = ElementTree.parse(sidecar_path).getroot()
@@ -67,18 +80,6 @@ def generate_xmp_file(
             except OSError:
                 logger.info(f"Not overwriting XMP file {sidecar_path} due to parser error: {e}")
 
-    # decode asset record fields
-    # for k in asset_record['fields']:
-    #    if asset_record["fields"][k]['type'] == "ENCRYPTED_BYTES":
-    #         try:
-    #             asset_record["fields"][k]['decoded'] = plistlib.loads(base64.b64decode(asset_record['fields'][k]['value']), fmt=plistlib.FMT_BINARY)
-    #         except plistlib.InvalidFileException:
-    #             try:
-    #                 asset_record["fields"][k]['decoded'] =  json.loads(zlib.decompress(base64.b64decode(asset_record['fields'][k]['value']),-zlib.MAX_WBITS))
-    #             except Exception as e:
-    #                 asset_record["fields"][k]['decoded'] = base64.b64decode(asset_record['fields'][k]['value']).decode("utf-8")
-    # json.dump(asset_record["fields"],         open(download_path + ".ar.json", "w"),         indent=4,        default=str,        sort_keys=True)
-
     if can_write_file:
         xmp_metadata: XMPMetadata = build_metadata(logger, asset_record)
         xml_doc: ElementTree.Element = generate_xml(xmp_metadata)
@@ -89,6 +90,8 @@ def generate_xmp_file(
             with open(tmp_path, "wb") as f:
                 f.write(new_content)
             os.replace(tmp_path, sidecar_path)
+            if dir_cache:
+                dir_cache.notify_new_file(sidecar_path, len(new_content))
 
 
 def build_metadata(logger: logging.Logger, asset_record: dict[str, Any]) -> XMPMetadata:

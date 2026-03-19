@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
+import contextlib
 import datetime
 import getpass
 import itertools
@@ -43,6 +44,7 @@ from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
+from icloudpd.dir_cache import DirCache
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
@@ -396,6 +398,7 @@ def _process_all_users_once(
                 filename_builder,
             )
 
+            dir_cache = DirCache()
             downloader = (
                 partial(
                     download_builder,
@@ -414,6 +417,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    dir_cache,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -577,6 +581,7 @@ def download_builder(
     lp_filename_generator: Callable[[str], str],
     filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
+    dir_cache: DirCache,
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
@@ -662,23 +667,23 @@ def download_builder(
         download_path = local_download_path(filename, download_dir)
 
         original_download_path = None
-        file_exists = os.path.isfile(download_path)
+        file_exists = dir_cache.isfile(download_path)
         if not file_exists and download_size == AssetVersionSize.ORIGINAL:
             # Deprecation - We used to download files like IMG_1234-original.jpg,
             # so we need to check for these.
             # Now we match the behavior of iCloud for Windows: IMG_1234.jpg
             original_download_path = add_suffix_to_filename("-original", download_path)
-            file_exists = os.path.isfile(original_download_path)
+            file_exists = dir_cache.isfile(original_download_path)
 
         if file_exists:
             if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
                 # for later: this crashes if download-size medium is specified
-                file_size = os.stat(original_download_path or download_path).st_size
+                file_size = dir_cache.stat_size(original_download_path or download_path)
                 photo_size = version.size
                 if file_size != photo_size:
                     download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
-                    file_exists = os.path.isfile(download_path)
+                    file_exists = dir_cache.isfile(download_path)
             if file_exists:
                 counter.increment()
                 logger.debug("%s already exists", truncate_middle(download_path, 96))
@@ -725,10 +730,12 @@ def download_builder(
                         )
                     if not dry_run:
                         download.set_utime(download_path, created_date)
+                        with contextlib.suppress(OSError):
+                            dir_cache.notify_new_file(download_path, os.stat(download_path).st_size)
                     logger.info("Downloaded %s", truncated_path)
 
         if xmp_sidecar:
-            generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+            generate_xmp_file(logger, download_path, photo._asset_record, dry_run, dir_cache)
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -754,7 +761,7 @@ def download_builder(
                 pass
             lp_download_path = os.path.join(download_dir, lp_filename)
 
-            lp_file_exists = os.path.isfile(lp_download_path)
+            lp_file_exists = dir_cache.isfile(lp_download_path)
 
             if only_print_filenames:
                 if not lp_file_exists:
@@ -764,7 +771,7 @@ def download_builder(
                     lp_file_exists
                     and file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
                 ):
-                    lp_file_size = os.stat(lp_download_path).st_size
+                    lp_file_size = dir_cache.stat_size(lp_download_path)
                     lp_photo_size = version.size
                     if lp_file_size != lp_photo_size:
                         lp_download_path = (f"-{lp_photo_size}.").join(
@@ -776,14 +783,14 @@ def download_builder(
             else:
                 if lp_file_exists:
                     if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
-                        lp_file_size = os.stat(lp_download_path).st_size
+                        lp_file_size = dir_cache.stat_size(lp_download_path)
                         lp_photo_size = version.size
                         if lp_file_size != lp_photo_size:
                             lp_download_path = (f"-{lp_photo_size}.").join(
                                 lp_download_path.rsplit(".", 1)
                             )
                             logger.debug("%s deduplicated", truncate_middle(lp_download_path, 96))
-                            lp_file_exists = os.path.isfile(lp_download_path)
+                            lp_file_exists = dir_cache.isfile(lp_download_path)
                     if lp_file_exists:
                         logger.debug("%s already exists", truncate_middle(lp_download_path, 96))
                 if not lp_file_exists:
@@ -801,6 +808,9 @@ def download_builder(
                     )
                     success = download_result and success
                     if download_result:
+                        if not dry_run:
+                            with contextlib.suppress(OSError):
+                                dir_cache.notify_new_file(lp_download_path, os.stat(lp_download_path).st_size)
                         logger.info("Downloaded %s", truncated_path)
     return success
 
