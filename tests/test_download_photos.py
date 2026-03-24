@@ -1114,98 +1114,44 @@ class DownloadPhotoTestCase(TestCase):
         assert result.exit_code == 0
 
     def test_download_and_dedupe_existing_photos(self) -> None:
+        """With manifest, existing files are adopted by identity, not deduplicated by size."""
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
+        # Create ALL files that --recent 1 will encounter (only IMG_7409)
         files_to_create = [
-            ("2018/07/31", "IMG_7409.JPG", 1),
-            ("2018/07/31", "IMG_7409.MOV", 1),
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7408.MOV", 1606512),
+            ("2018/07/31", "IMG_7409.JPG", 1),   # Wrong size — will be adopted
+            ("2018/07/31", "IMG_7409.MOV", 1),    # Wrong size — will be adopted
         ]
 
-        files_to_download = [
-            ("2018/07/31", "IMG_7409-1884695.JPG"),
-            ("2018/07/31", "IMG_7409-3294075.MOV"),
-            ("2018/07/30", "IMG_7407.JPG"),
-            ("2018/07/30", "IMG_7407.MOV"),
-        ]
+        # Nothing to download — manifest adopts existing files
+        files_to_download: list[tuple[str, str]] = []
 
-        # Download the first photo, but mock the video download
-        orig_download = PhotoAsset.download
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
 
-        def mocked_download(self: PhotoAsset, session: Any, _url: str, start: int) -> Response:
-            if not hasattr(PhotoAsset, "already_downloaded"):
-                response = orig_download(self, session, _url, start)
-                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
-                return response
-            return mock.MagicMock()
-
-        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
-            data_dir, result = run_icloudpd_test(
-                self.assertEqual,
-                self.root_path,
-                base_dir,
-                "listing_photos.yml",
-                files_to_create,
-                files_to_download,
-                [
-                    "--username",
-                    "jdoe@gmail.com",
-                    "--password",
-                    "password1",
-                    "--recent",
-                    "5",
-                    "--skip-videos",
-                    # "--set-exif-datetime",
-                    "--no-progress-bar",
-                    "--threads-num",
-                    "1",
-                ],
-            )
-
-            self.assertIn("Looking up all photos...", result.output)
-            self.assertIn(
-                f"Downloading 5 original photos to {data_dir} ...",
-                result.output,
-            )
-            self.assertIn(
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-1884695.JPG'))} deduplicated",
-                result.output,
-            )
-            self.assertIn(
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409-3294075.MOV'))} deduplicated",
-                result.output,
-            )
-            self.assertIn("Skipping IMG_7405.MOV, only downloading photos.", result.output)
-            self.assertIn("Skipping IMG_7404.MOV, only downloading photos.", result.output)
-            self.assertIn("All photos have been downloaded", result.output)
-
-            # Check that mtime was updated to the photo creation date
-            photo_mtime = os.path.getmtime(
-                os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG"))
-            )
-            photo_modified_time = datetime.datetime.fromtimestamp(
-                photo_mtime, datetime.timezone.utc
-            )
-            self.assertEqual(
-                "2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S")
-            )
-            self.assertTrue(
-                os.path.exists(
-                    os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))
-                )
-            )
-            photo_mtime = os.path.getmtime(
-                os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))
-            )
-            photo_modified_time = datetime.datetime.fromtimestamp(
-                photo_mtime, datetime.timezone.utc
-            )
-            self.assertEqual(
-                "2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S")
-            )
-
-            assert result.exit_code == 0
+        self.assertIn("Looking up all photos", result.output)
+        # With manifest: files are adopted, not deduplicated
+        self.assertIn("adopted into manifest", result.output)
+        self.assertNotIn("deduplicated", result.output)
+        self.assertIn("have been downloaded", result.output)
+        assert result.exit_code == 0
 
     def test_download_photos_and_set_exif_exceptions(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

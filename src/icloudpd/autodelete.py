@@ -9,6 +9,7 @@ from typing import Callable, Sequence, Set
 
 from tzlocal import get_localzone
 
+from icloudpd.manifest import ManifestDB
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -39,6 +40,7 @@ def autodelete_photos(
     _sizes: Sequence[AssetVersionSize],
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
+    manifest: ManifestDB | None = None,
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -111,6 +113,17 @@ def autodelete_photos(
                 )
         for path in paths:
             if os.path.exists(path):
+                if manifest is not None and not path.endswith(".xmp"):
+                    rel_path = os.path.relpath(path, directory)
+                    # Guard: don't delete files shared by multiple assets
+                    if manifest.count_by_path(rel_path) > 1:
+                        logger.debug(
+                            "Keeping %s — other assets still reference it",
+                            path,
+                        )
+                        continue
                 logger.debug("Deleting %s...", path)
                 delete_local = delete_file_dry_run if dry_run else delete_file
-                delete_local(logger, path)
+                if delete_local(logger, path) and manifest is not None and not path.endswith(".xmp"):
+                    rel_path = os.path.relpath(path, directory)
+                    manifest.remove_by_path(rel_path)

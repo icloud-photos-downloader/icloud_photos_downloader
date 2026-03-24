@@ -85,6 +85,8 @@ class Issue1220OnlyPrintFilenamesDeduplicationBugTest(TestCase):
         actual_files = []
         for root, _dirs, files in os.walk(data_dir):
             for file in files:
+                if file.startswith(".icloudpd"):
+                    continue
                 rel_path = os.path.relpath(os.path.join(root, file), data_dir)
                 actual_files.append(rel_path)
 

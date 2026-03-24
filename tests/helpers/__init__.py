@@ -101,7 +101,10 @@ class AssertEquality(Protocol):
 def assert_files(
     assert_equal: AssertEquality, data_dir: str, files_to_assert: Sequence[Tuple[str, str]]
 ) -> None:
-    files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
+    files_in_result = [
+        f for f in glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
+        if not os.path.basename(f).startswith(".icloudpd")
+    ]
 
     assert_equal(sum(1 for _ in files_in_result), len(files_to_assert), "File count does not match")
 
