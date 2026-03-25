@@ -65,12 +65,17 @@ def parse_trusted_phone_numbers_payload(content: str) -> Sequence[TrustedDevice]
     parser = _SMSParser()
     parser.feed(content)
     parser.close()
+    twoSV = parser.sms_data.get("direct", {}).get("twoSV", {})
+    # Apple moved trustedPhoneNumbers into bridgeInitiateData.phoneNumberVerification (2026+)
     numbers: Sequence[Mapping[str, Any]] = (
-        parser.sms_data.get("direct", {})
-        .get("twoSV", {})
-        .get("phoneNumberVerification", {})
-        .get("trustedPhoneNumbers", [])
+        twoSV.get("phoneNumberVerification", {}).get("trustedPhoneNumbers", [])
     )
+    if not numbers:
+        numbers = (
+            twoSV.get("bridgeInitiateData", {})
+            .get("phoneNumberVerification", {})
+            .get("trustedPhoneNumbers", [])
+        )
     return list(item for item in map(_map_to_trusted_device, numbers) if item is not None)
 
 
@@ -209,3 +214,39 @@ def build_verify_sms_code_request(
         json=json,
     )
     return req
+
+def build_trigger_push_notification_request(context: _TrustedPhoneContextProvider) -> Request:
+    """Builds a request to trigger push notification to trusted devices for 2FA"""
+    import time
+    import uuid
+    import secrets
+
+    url = _auth_url(context.domain).replace("/auth", "/auth/bridge/step/0")
+
+    # Generate client-side bridge session values
+    # sessionUUID format: {uuid}-{timestamp_ms}
+    session_uuid = f"{str(uuid.uuid4())}-{int(time.time() * 1000)}"
+    # ptkn: 128-char hex string (64 bytes)
+    ptkn = secrets.token_hex(64)
+
+    json_payload = {
+        "sessionUUID": session_uuid,
+        "ptkn": ptkn
+    }
+
+    req = _InternalRequest(
+        method="POST",
+        url=url,
+        headers={
+            **_oauth_const_headers(),
+            **_oauth_redirect_header(context.domain),
+            **_oauth_headers(context.oauth_session),
+            **{"Content-type": "application/json; charset=utf-8"},
+            **{"Accept": "application/json, text/plain, */*"},
+            **{"X-Apple-App-Id": "d39ba9916b7251055b22c7f910e2ea796ee65e98b2ddecea8f5dde8d9d1a815d"},
+            **{"X-Apple-Domain-Id": "3"},
+        },
+        json=json_payload,
+    )
+    return req
+

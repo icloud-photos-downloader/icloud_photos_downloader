@@ -694,6 +694,45 @@ class PyiCloudService:
 
         return parse_trusted_phone_numbers_response(response)
 
+    def trigger_push_notification(self) -> bool:
+        """Triggers a push notification to trusted devices for 2FA code entry
+        
+        This should be called after get_trusted_phone_numbers() to enable
+        push notifications on trusted Apple devices (iPhone, iPad, Mac).
+        Returns True if the request was successful.
+        """
+        from pyicloud_ipd.sms import build_trigger_push_notification_request
+
+        oauth_session = self.get_oauth_session()
+        context = TrustedPhoneContextProvider(domain=self.domain, oauth_session=oauth_session)
+
+        req = build_trigger_push_notification_request(context)
+        request = Request(
+            method=req.method,
+            url=req.url,
+            headers=req.headers,
+            data=req.data,
+            json=req.json,
+        ).prepare()
+
+        if self.response_observer:
+            rules = list(
+                chain(
+                    self.cookie_obfuscate_rules,
+                    self.header_obfuscate_rules,
+                    self.header_pass_rules,
+                    self.header_drop_rules,
+                )
+            )
+        else:
+            rules = []
+
+        with self.use_rules(rules):
+            response = self.send_request(request)
+
+        # Successful response is 200 with no body, but treat any 200 response as success
+        return response.status_code == 200
+    
     def send_2fa_code_sms(self, device_id: int) -> bool:
         """Requests that a verification code is sent to the given device"""
 
