@@ -14,7 +14,7 @@ on:
 jobs:
   skip_check:
     # continue-on-error: true # Uncomment once integration is finished
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     # Map a step output to a job output
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -30,9 +30,9 @@ jobs:
   get_version:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Retrieve version
       id: get_version

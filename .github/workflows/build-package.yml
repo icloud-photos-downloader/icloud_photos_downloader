@@ -11,23 +11,23 @@ on:
 jobs:
 
   build_src:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -41,7 +41,7 @@ jobs:
         scripts/build
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-src
         if-no-files-found: error
@@ -49,23 +49,23 @@ jobs:
           dist/icloudpd*.whl
 
   get_version_thumbprint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -82,7 +82,7 @@ jobs:
         icloudpd --version | tee dist/icloudpd-version-thumbprint.txt
           
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-version-thumbprint
         if-no-files-found: error
@@ -90,23 +90,23 @@ jobs:
           dist/icloudpd-version-thumbprint.txt
           
   get_expected_version_linux_apt:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -129,16 +129,16 @@ jobs:
       expected_version: ${{steps.get_version.outputs.expected_version}}
 
   get_expected_version_linux_apk:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
@@ -178,17 +178,17 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -210,7 +210,7 @@ jobs:
   
   build_linux_apt:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: Build Linux ${{ matrix.platform[1] }} Debian
     strategy:
       fail-fast: false
@@ -229,10 +229,10 @@ jobs:
             "arm32v7",
           ]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
@@ -240,11 +240,11 @@ jobs:
 
     # ARM32v7 runs natively on ARM64 runners - no QEMU needed
 
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
       id: setup
 
     - name: Cache Build
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
@@ -274,7 +274,7 @@ jobs:
           }
 
     - name: Build
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         push: false
         platforms: ${{ matrix.platform[0] }}
@@ -291,7 +291,7 @@ jobs:
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-bin-linux-${{ matrix.platform[1] }}-apt
         if-no-files-found: error
@@ -299,7 +299,7 @@ jobs:
           dist/icloud*
   
   clone_src_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - build_src
     defaults:
@@ -307,17 +307,17 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download src
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-src
         path: |
           dist
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -331,7 +331,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-dummywhl-src
         if-no-files-found: error
@@ -339,7 +339,7 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
 
   clone_linux_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - build_linux_apt
       - build_linux_apk
@@ -348,10 +348,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download bin
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
@@ -359,7 +359,7 @@ jobs:
           dist
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -373,7 +373,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-dummywhl-linux
         if-no-files-found: error
@@ -381,7 +381,7 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
         
   clone_macos_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - build_macos
     defaults:
@@ -389,10 +389,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download bin
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: icloudpd-bin-macos-*
         merge-multiple: true
@@ -400,7 +400,7 @@ jobs:
           dist
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -414,7 +414,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-dummywhl-macos
         if-no-files-found: error
@@ -422,7 +422,7 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
   
   clone_windows_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs:
       - build_windows
     defaults:
@@ -430,10 +430,10 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download bin
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         pattern: icloudpd-bin-windows-*
         merge-multiple: true
@@ -441,7 +441,7 @@ jobs:
           dist
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -455,7 +455,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-dummywhl-windows
         if-no-files-found: error
@@ -464,7 +464,7 @@ jobs:
         
   build_linux_apk:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     name: Build Linux ${{ matrix.platform[1] }} Alpine
     strategy:
       fail-fast: false
@@ -483,10 +483,10 @@ jobs:
             "arm32v7",
           ]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
@@ -494,11 +494,11 @@ jobs:
 
     # ARM32v7 runs natively on ARM64 runners - no QEMU needed
 
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
       id: setup
     
     - name: Cache Folders Build
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
@@ -522,7 +522,7 @@ jobs:
           }
               
     - name: Build
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         push: false
         platforms: ${{ matrix.platform[0] }}
@@ -539,7 +539,7 @@ jobs:
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-bin-linux-${{ matrix.platform[1] }}-apk
         if-no-files-found: error
@@ -554,17 +554,17 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -585,7 +585,7 @@ jobs:
         scripts/build_binary_dist_macos ${{inputs.icloudpd_version}}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-bin-macos-amd64
         if-no-files-found: error
@@ -600,17 +600,17 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v6
       with:
         python-version: '3.13'
     
@@ -631,7 +631,7 @@ jobs:
         scripts/build_binary_dist_windows ${{inputs.icloudpd_version}}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-bin-windows-amd64
         if-no-files-found: error
@@ -639,16 +639,16 @@ jobs:
           dist/icloud*
 
   build_docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: 
       # - build_linux_apt
       - build_linux_apk # docker is musl only
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
 
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with: 
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
@@ -656,10 +656,10 @@ jobs:
           dist 
  
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
       with:
         version: v0.12.0
 
@@ -678,7 +678,7 @@ jobs:
         #   icloudpd/icloudpd:commit-${{ github.sha }} 
  
     - name: Upload artifacts 
-      uses: actions/upload-artifact@v4 
+      uses: actions/upload-artifact@v5 
       with: 
         name: icloudpd-oci 
         if-no-files-found: error 
@@ -686,7 +686,7 @@ jobs:
           dist/icloud*.tar
 
   build_npm:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: 
       - build_linux_apt
       # - build_linux_apk npm is glibc only
@@ -694,16 +694,16 @@ jobs:
       - build_windows
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: icloudpd-bin-*
           merge-multiple: true
@@ -715,7 +715,7 @@ jobs:
           scripts/build_npm ${{inputs.icloudpd_version}}
 
       - name: Upload artifacts 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-npm
           if-no-files-found: error 
@@ -810,7 +810,7 @@ jobs:
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
           ]
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs:
       - clone_linux_whl
       - clone_src_whl
@@ -837,7 +837,7 @@ jobs:
   
       - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-src
           path: |
@@ -845,7 +845,7 @@ jobs:
 
       - name: Download artifacts (whl)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-linux
           path: |
@@ -854,9 +854,9 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3
+      #   uses: docker/setup-qemu-action@v4
 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed
 
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: steps.get_image.outputs.digest != '' 
@@ -892,7 +892,7 @@ jobs:
 
       - name: Upload compatibility result
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error
@@ -931,7 +931,7 @@ jobs:
     
       - name: Upload tzlc result
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error
@@ -1016,7 +1016,7 @@ jobs:
             "arm/v7",  # platform spec
             "arm32v7/",  # image prefix
           ]
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: 
       - clone_linux_whl
       - clone_src_whl
@@ -1043,7 +1043,7 @@ jobs:
   
       - name: Download artifacts (src)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-src
           path: |
@@ -1051,7 +1051,7 @@ jobs:
 
       - name: Download artifacts (linux)
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-linux
           path: |
@@ -1059,9 +1059,9 @@ jobs:
 
       # - name: Set up QEMU
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3
+      #   uses: docker/setup-qemu-action@v4
 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed
 
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
         if: steps.get_image.outputs.digest != '' 
@@ -1096,7 +1096,7 @@ jobs:
 
       - name: Upload compatibility result
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error
@@ -1134,7 +1134,7 @@ jobs:
 
       - name: Upload tzlc result
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error
@@ -1171,14 +1171,14 @@ jobs:
           mkdir tzlc
   
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-src
           path: |
             dist
 
       - name: Download artifacts (macos)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-macos
           path: |
@@ -1206,7 +1206,7 @@ jobs:
           touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail
 
       - name: Upload compatibility result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-compatibility-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
@@ -1235,7 +1235,7 @@ jobs:
           touch tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail
 
       - name: Upload tzlc result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-tzlc-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
@@ -1260,14 +1260,14 @@ jobs:
           mkdir compatibility
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-src
           path: |
             dist
 
       - name: Download artifacts (windows)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-dummywhl-windows
           path: |
@@ -1294,7 +1294,7 @@ jobs:
           touch compatibility/pip.${{ matrix.os }}.amd64.fail
 
       - name: Upload compatibility result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-compatibility-windows-pip-${{ matrix.os }}-amd64
           if-no-files-found: error
@@ -1379,7 +1379,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }} 
     needs: 
       - build_linux_apt
       # - build_linux_apk
@@ -1406,7 +1406,7 @@ jobs:
    
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           pattern: icloudpd-bin-linux-*
           merge-multiple: true
@@ -1416,9 +1416,9 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
+      #   uses: docker/setup-qemu-action@v4 
  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -1447,7 +1447,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -1482,7 +1482,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -1567,7 +1567,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }} 
     needs: 
       # - build_linux_apt
       - build_linux_apk
@@ -1594,7 +1594,7 @@ jobs:
    
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           pattern: icloudpd-bin-linux-*
           merge-multiple: true
@@ -1604,9 +1604,9 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
+      #   uses: docker/setup-qemu-action@v4 
  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -1635,7 +1635,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -1670,7 +1670,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -1752,7 +1752,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: 
       - build_linux_apt
       # - build_linux_apk
@@ -1779,7 +1779,7 @@ jobs:
     
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           pattern: icloudpd-bin-linux-*
           merge-multiple: true
@@ -1789,9 +1789,9 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
+      #   uses: docker/setup-qemu-action@v4 
   
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -1820,7 +1820,7 @@ jobs:
   
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -1856,7 +1856,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -1938,7 +1938,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: 
       # - build_linux_apt
       - build_linux_apk
@@ -1965,7 +1965,7 @@ jobs:
     
       - name: Download artifacts
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           pattern: icloudpd-bin-linux-*
           merge-multiple: true
@@ -1975,9 +1975,9 @@ jobs:
       # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
+      #   uses: docker/setup-qemu-action@v4 
   
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2006,7 +2006,7 @@ jobs:
   
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -2042,7 +2042,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -2078,7 +2078,7 @@ jobs:
           mkdir tzlc 
    
       - name: Download artifacts 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-bin-macos-amd64
           path: | 
@@ -2103,7 +2103,7 @@ jobs:
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -2128,7 +2128,7 @@ jobs:
           touch tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -2160,7 +2160,7 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-bin-windows-amd64 
           path: | 
@@ -2183,7 +2183,7 @@ jobs:
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-windows-bin-${{ matrix.prop[0] }}-amd64
           if-no-files-found: error 
@@ -2216,7 +2216,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     needs: [ build_docker ] 
     defaults: 
       run: 
@@ -2254,7 +2254,7 @@ jobs:
  
       - name: Download artifacts 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-oci
           path: | 
@@ -2283,9 +2283,9 @@ jobs:
   
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
+      #   uses: docker/setup-qemu-action@v4 
  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure'
@@ -2307,7 +2307,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
@@ -2334,7 +2334,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
@@ -2424,7 +2424,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }} 
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -2439,7 +2439,7 @@ jobs:
 
       - name: Setup Node for Registry Server
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -2482,7 +2482,7 @@ jobs:
    
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
@@ -2490,7 +2490,7 @@ jobs:
 
       - name: Setup Node for Test
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -2510,7 +2510,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2536,7 +2536,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -2568,7 +2568,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -2657,7 +2657,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-24.04 
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -2672,11 +2672,11 @@ jobs:
 
       - name: Checkout code
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node for Registry Server
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -2719,7 +2719,7 @@ jobs:
    
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
@@ -2727,7 +2727,7 @@ jobs:
 
       - name: Setup Node for Test
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -2747,7 +2747,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2770,7 +2770,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -2798,7 +2798,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -2869,7 +2869,7 @@ jobs:
           #   "arm/v7",  # platform spec 
           #   "arm32v7/",  # image prefix 
           # ] 
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-24.04 
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -2884,7 +2884,7 @@ jobs:
 
       - name: Setup Node for Registry Server
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -2927,7 +2927,7 @@ jobs:
             
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
@@ -2935,7 +2935,7 @@ jobs:
 
       - name: Setup Node for Test
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -2955,7 +2955,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -2981,7 +2981,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -3014,7 +3014,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
           if-no-files-found: error 
@@ -3084,7 +3084,7 @@ jobs:
           #   "arm/v7",  # platform spec 
           #   "arm32v7/",  # image prefix 
           # ] 
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-24.04 
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3099,7 +3099,7 @@ jobs:
 
       - name: Setup Node for Registry Server
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -3142,7 +3142,7 @@ jobs:
             
       - name: Download artifacts
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
@@ -3150,7 +3150,7 @@ jobs:
 
       - name: Setup Node for Test
         if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3170,7 +3170,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: "fake"
 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
   
       - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
         if: steps.get_image.outputs.digest != ''  
@@ -3195,7 +3195,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -3227,7 +3227,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
           if-no-files-found: error 
@@ -3299,7 +3299,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ubuntu-22.04 
+    runs-on: ubuntu-24.04 
     defaults: 
       run: 
         shell: bash 
@@ -3320,7 +3320,7 @@ jobs:
           touch compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
           if-no-files-found: error 
@@ -3333,7 +3333,7 @@ jobs:
           touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
           if-no-files-found: error 
@@ -3363,7 +3363,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -3400,14 +3400,14 @@ jobs:
           mkdir tzlc             
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3440,7 +3440,7 @@ jobs:
           touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3462,7 +3462,7 @@ jobs:
           touch tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3492,7 +3492,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -3529,14 +3529,14 @@ jobs:
           mkdir tzlc 
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3568,7 +3568,7 @@ jobs:
           touch compatibility/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3589,7 +3589,7 @@ jobs:
           touch tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-tzlc-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3613,7 +3613,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -3646,14 +3646,14 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3687,7 +3687,7 @@ jobs:
           touch compatibility/npm.${{ matrix.os }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-windows-npm-${{ matrix.os }}-amd64
           if-no-files-found: error 
@@ -3711,7 +3711,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
 
@@ -3744,14 +3744,14 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3784,7 +3784,7 @@ jobs:
           touch compatibility/npx.${{ matrix.os }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v5 
         with: 
           name: icloudpd-compatibility-windows-npx-${{ matrix.os }}-amd64
           if-no-files-found: error 
@@ -3794,7 +3794,7 @@ jobs:
   compatibility_report:
     name: "Build Compatibility Report"
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     needs: 
       - compatibility_macos_pip
       - compatibility_windows_pip
@@ -3827,10 +3827,10 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
         with:
           python-version: '3.13'
     
@@ -3839,7 +3839,7 @@ jobs:
           mkdir dist
 
       - name: Download Compatibility Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: icloudpd-compatibility-*
           merge-multiple: true
@@ -3847,7 +3847,7 @@ jobs:
             compatibility
 
       - name: Download tzlc Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: icloudpd-tzlc-*
           merge-multiple: true
@@ -3855,7 +3855,7 @@ jobs:
             tzlc
 
       - name: Download Version
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: icloudpd-version-thumbprint
           merge-multiple: true
@@ -3868,7 +3868,7 @@ jobs:
           scripts/compile_compatibility.py dist/icloudpd-version-thumbprint.txt compatibility | tee dist/compatibility-${{inputs.icloudpd_version}}.md
 
       - name: Upload compatibility report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-compatibility
           if-no-files-found: error
@@ -3881,7 +3881,7 @@ jobs:
           scripts/compile_tzlc.py dist/icloudpd-version-thumbprint.txt tzlc "${{needs.get_expected_version_linux_apt.outputs.expected_version}}" "${{needs.get_expected_version_linux_apk.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}" | tee dist/tzlc-${{inputs.icloudpd_version}}.md
 
       - name: Upload tzlc report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: icloudpd-tzlc
           if-no-files-found: error

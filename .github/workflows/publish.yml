@@ -24,14 +24,14 @@ name: Publish Release
 jobs:
 
   docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Download artifacts 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v5 
         with: 
           name: icloudpd-oci
           path: | 
@@ -48,7 +48,7 @@ jobs:
             (skopeo copy --preserve-digests --src-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --dest-creds=${{ secrets.DOCKERHUB_USERNAME }}:${{ secrets.DOCKERHUB_PASSWORD }} --all docker://docker.io/icloudpd/icloudpd:${{inputs.icloudpd_version}} docker://docker.io/icloudpd/icloudpd:latest)
   
       - name: Update repo description
-        uses: peter-evans/dockerhub-description@v3
+        uses: peter-evans/dockerhub-description@v5
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -57,16 +57,16 @@ jobs:
           short-description: ${{ github.event.repository.description }}
 
   npm:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-npm
           path: |
@@ -85,10 +85,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   pypi:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Set up uv
         uses: astral-sh/setup-uv@v5
@@ -99,14 +99,14 @@ jobs:
         run: uv sync --python 3.13 --group dev
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-src
           path: |
             dist
 
       - name: Download artifacts (bin)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: icloudpd-bin-*
           merge-multiple: true
@@ -122,18 +122,18 @@ jobs:
           uv run python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
 
   gh_release:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-src
           path: |
             dist
 
       - name: Download artifacts (bin)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           pattern: icloudpd-bin-*
           merge-multiple: true
@@ -141,28 +141,28 @@ jobs:
             dist
 
       - name: Download artifacts (docker)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-oci
           path: |
             dist
 
       - name: Download artifacts (compatibility)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-compatibility
           path: |
             dist
 
       - name: Download artifacts (tzlc compatibility)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-tzlc
           path: |
             dist
 
       - name: Download artifacts (notes)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: icloudpd-notes
           path: |

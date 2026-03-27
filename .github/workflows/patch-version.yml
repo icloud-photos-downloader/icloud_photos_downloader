@@ -7,17 +7,17 @@ on:
 jobs:
 
   patch_version:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
 
-    - uses: actions/checkout@v4 
+    - uses: actions/checkout@v6 
 
     - name: Patch Version
       run: |
         scripts/patch_version
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: icloudpd-version-info
         if-no-files-found: error
