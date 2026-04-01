@@ -236,6 +236,235 @@ class TestManifestMigration(TestCase):
             shutil.rmtree(tmpdir)
 
 
+_V1_SCHEMA = """\
+CREATE TABLE manifest (
+    asset_id TEXT NOT NULL,
+    zone_id TEXT NOT NULL DEFAULT '',
+    local_path TEXT NOT NULL,
+    version_size INTEGER NOT NULL,
+    version_checksum TEXT,
+    change_tag TEXT,
+    downloaded_at TEXT NOT NULL,
+    last_updated_at TEXT NOT NULL,
+    item_type TEXT,
+    filename TEXT,
+    asset_date TEXT,
+    added_date TEXT,
+    is_favorite INTEGER DEFAULT 0,
+    is_hidden INTEGER DEFAULT 0,
+    is_deleted INTEGER DEFAULT 0,
+    original_width INTEGER,
+    original_height INTEGER,
+    duration INTEGER,
+    orientation INTEGER,
+    title TEXT,
+    description TEXT,
+    keywords TEXT,
+    gps_latitude REAL,
+    gps_longitude REAL,
+    gps_altitude REAL,
+    PRIMARY KEY (asset_id, zone_id, local_path)
+);
+CREATE INDEX IF NOT EXISTS idx_manifest_path ON manifest(local_path);
+"""
+
+_V2_NEW_COLUMNS = [
+    "gps_speed",
+    "gps_timestamp",
+    "timezone_offset",
+    "asset_subtype",
+    "hdr_type",
+    "burst_flags",
+    "burst_flags_ext",
+    "burst_id",
+    "original_orientation",
+    "raw_fields",
+]
+
+
+class TestManifestV2Migration(TestCase):
+    """Tests for v1 -> v2 schema migration (10 new columns)."""
+
+    def _create_v1_db(self, tmpdir: str) -> str:
+        db_path = os.path.join(tmpdir, ".icloudpd.db")
+        conn = sqlite3.connect(db_path)
+        conn.executescript(_V1_SCHEMA)
+        conn.execute("PRAGMA user_version=1")
+        conn.commit()
+        conn.close()
+        return db_path
+
+    def test_v1_to_v2_migration(self) -> None:
+        """Opening a v1 DB should migrate it to v2, adding all 10 new columns."""
+        tmpdir = tempfile.mkdtemp()
+        try:
+            db_path = self._create_v1_db(tmpdir)
+
+            # Seed a row before migration
+            conn = sqlite3.connect(db_path)
+            conn.execute(
+                "INSERT INTO manifest "
+                "(asset_id, zone_id, local_path, version_size, downloaded_at, "
+                "last_updated_at, title) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                ("V1ROW", "z", "photo.jpg", 512, "2025-01-01T00:00:00+00:00",
+                 "2025-01-01T00:00:00+00:00", "old title"),
+            )
+            conn.commit()
+            conn.close()
+
+            db = ManifestDB(tmpdir)
+            db.open()
+
+            # PRAGMA user_version should now be 2
+            version = db._db.execute("PRAGMA user_version").fetchone()[0]
+            self.assertEqual(version, 4)
+
+            # All 10 new columns must exist
+            cols = {
+                row[1]
+                for row in db._db.execute("PRAGMA table_info(manifest)").fetchall()
+            }
+            for col in _V2_NEW_COLUMNS:
+                self.assertIn(col, cols, f"Column '{col}' missing after migration")
+
+            # Existing data preserved
+            row = db.lookup("V1ROW", "z", "resOriginal")
+            assert row is not None
+            self.assertEqual(row.asset_id, "V1ROW")
+            self.assertEqual(row.version_size, 512)
+            self.assertEqual(row.title, "old title")
+
+            db.close()
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_fresh_db_has_v2_columns(self) -> None:
+        """A brand-new ManifestDB should contain all 35 columns."""
+        tmpdir = tempfile.mkdtemp()
+        try:
+            db = ManifestDB(tmpdir)
+            db.open()
+
+            cols = [
+                row[1]
+                for row in db._db.execute("PRAGMA table_info(manifest)").fetchall()
+            ]
+            self.assertEqual(len(cols), 37)
+            for col in _V2_NEW_COLUMNS:
+                self.assertIn(col, cols)
+
+            db.close()
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_upsert_with_new_columns(self) -> None:
+        """All v2 fields should round-trip through upsert/lookup."""
+        tmpdir = tempfile.mkdtemp()
+        try:
+            db = ManifestDB(tmpdir)
+            db.open()
+
+            raw = json.dumps({"customKey": 42})
+            db.upsert(
+                asset_id="V2FULL",
+                zone_id="z",
+                local_path="v2.jpg",
+                version_size=1024,
+                gps_speed=12.5,
+                gps_timestamp="2025-06-01T08:30:00Z",
+                timezone_offset=39600,
+                asset_subtype=2,
+                hdr_type=1,
+                burst_flags=7,
+                burst_flags_ext=15,
+                burst_id="B-001",
+                original_orientation=3,
+                raw_fields=raw,
+            )
+
+            row = db.lookup("V2FULL", "z", "resOriginal")
+            assert row is not None
+            assert row.gps_speed is not None
+            self.assertAlmostEqual(row.gps_speed, 12.5, places=1)
+            self.assertEqual(row.gps_timestamp, "2025-06-01T08:30:00Z")
+            self.assertEqual(row.timezone_offset, 39600)
+            self.assertEqual(row.asset_subtype, 2)
+            self.assertEqual(row.hdr_type, 1)
+            self.assertEqual(row.burst_flags, 7)
+            self.assertEqual(row.burst_flags_ext, 15)
+            self.assertEqual(row.burst_id, "B-001")
+            self.assertEqual(row.original_orientation, 3)
+            assert row.raw_fields is not None
+            self.assertEqual(json.loads(row.raw_fields), {"customKey": 42})
+
+            db.close()
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_new_columns_default_to_none(self) -> None:
+        """Inserting without v2 fields should leave them as None."""
+        tmpdir = tempfile.mkdtemp()
+        try:
+            db = ManifestDB(tmpdir)
+            db.open()
+
+            db.upsert("MINIMAL", "z", "min.jpg", 100)
+
+            row = db.lookup("MINIMAL", "z", "resOriginal")
+            assert row is not None
+            self.assertIsNone(row.gps_speed)
+            self.assertIsNone(row.gps_timestamp)
+            self.assertIsNone(row.timezone_offset)
+            self.assertIsNone(row.asset_subtype)
+            self.assertIsNone(row.hdr_type)
+            self.assertIsNone(row.burst_flags)
+            self.assertIsNone(row.burst_flags_ext)
+            self.assertIsNone(row.burst_id)
+            self.assertIsNone(row.original_orientation)
+            self.assertIsNone(row.raw_fields)
+
+            db.close()
+        finally:
+            shutil.rmtree(tmpdir)
+
+    def test_v1_migration_preserves_existing_gps(self) -> None:
+        """GPS data from v1 rows must survive migration; new GPS columns are None."""
+        tmpdir = tempfile.mkdtemp()
+        try:
+            db_path = self._create_v1_db(tmpdir)
+
+            conn = sqlite3.connect(db_path)
+            conn.execute(
+                "INSERT INTO manifest "
+                "(asset_id, zone_id, local_path, version_size, downloaded_at, "
+                "last_updated_at, gps_latitude, gps_longitude, gps_altitude) "
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                ("GPS1", "z", "geo.jpg", 256, "2025-01-01T00:00:00+00:00",
+                 "2025-01-01T00:00:00+00:00", -33.7, 151.2, 10.0),
+            )
+            conn.commit()
+            conn.close()
+
+            db = ManifestDB(tmpdir)
+            db.open()
+
+            row = db.lookup("GPS1", "z", "resOriginal")
+            assert row is not None
+            assert row.gps_latitude is not None
+            assert row.gps_longitude is not None
+            assert row.gps_altitude is not None
+            self.assertAlmostEqual(row.gps_latitude, -33.7, places=1)
+            self.assertAlmostEqual(row.gps_longitude, 151.2, places=1)
+            self.assertAlmostEqual(row.gps_altitude, 10.0, places=1)
+            self.assertIsNone(row.gps_speed)
+            self.assertIsNone(row.gps_timestamp)
+
+            db.close()
+        finally:
+            shutil.rmtree(tmpdir)
+
+
 class TestManifestDedup(TestCase):
     """Tests for multi-asset dedup support in manifest."""
 

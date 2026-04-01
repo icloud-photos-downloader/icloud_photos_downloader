@@ -8,9 +8,11 @@ Supported formats: HEIC, JPEG, PNG, MOV, MP4.
 Requires exiftool to be installed on the system.
 """
 
+import base64
 import json
 import logging
 import os
+import plistlib
 import subprocess
 from dataclasses import dataclass
 from typing import Any
@@ -27,7 +29,11 @@ class MetadataUpdate:
     description: str | None = None
     keywords: list[str] | None = None
     orientation: int | None = None
-    timezone_offset: str | None = None  # e.g. "+11:00", "-05:00"
+    gps_latitude: float | None = None
+    gps_longitude: float | None = None
+    gps_altitude: float | None = None
+    gps_h_accuracy: float | None = None
+    created_date: str | None = None  # format: "YYYY:MM:DD HH:MM:SS"
 
 
 class ExiftoolNotFoundError(RuntimeError):
@@ -53,20 +59,38 @@ def check_exiftool() -> str:
     )
 
 
+_VIDEO_EXTENSIONS = frozenset({".mov", ".mp4", ".m4v", ".avi"})
+
+_GIF_EXTENSIONS = frozenset({".gif"})
+
+
+def _is_video(file_path: str) -> bool:
+    """Check if a file is a video based on extension."""
+    return os.path.splitext(file_path.lower())[1] in _VIDEO_EXTENSIONS
+
+
+def _is_gif(file_path: str) -> bool:
+    """Check if a file is a GIF based on extension."""
+    return os.path.splitext(file_path.lower())[1] in _GIF_EXTENSIONS
+
+
 def build_exiftool_args(
-    update: MetadataUpdate, config: set[str]
+    update: MetadataUpdate, config: set[str], file_path: str = ""
 ) -> list[str]:
     """Build exiftool command-line arguments for the given metadata update.
 
     Args:
         update: The metadata to write.
         config: Set of enabled field categories ('rating', 'keywords',
-                'title', 'dates', 'all').
+                'title', 'orientation', 'location', 'all').
+                Note: 'dates' is accepted but deprecated (no-op).
 
     Returns:
         List of exiftool arguments (e.g. ['-Rating=5', '-XPTitle=...'])
     """
     args: list[str] = []
+    if _is_gif(file_path):
+        return args  # GIF doesn't support EXIF; metadata goes in XMP sidecar only
     write_all = "all" in config
 
     if (write_all or "rating" in config) and update.rating is not None:
@@ -88,15 +112,77 @@ def build_exiftool_args(
             args.append(f"-XMP:Subject+={kw}")
             args.append(f"-IPTC:Keywords+={kw}")
 
-    if (write_all or "orientation" in config) and update.orientation is not None:
+    # orientation=0 is not a valid EXIF value (valid: 1-8); skip it
+    # Orientation is not meaningful for videos or PNG files
+    if (
+        (write_all or "orientation" in config)
+        and update.orientation is not None
+        and update.orientation != 0
+        and not _is_video(file_path)
+        and os.path.splitext(file_path.lower())[1] != ".png"
+    ):
         args.append(f"-Orientation#={update.orientation}")
 
-    if (write_all or "dates" in config) and update.timezone_offset is not None:
-        args.append(f"-OffsetTimeOriginal={update.timezone_offset}")
-        args.append(f"-OffsetTimeDigitized={update.timezone_offset}")
-        args.append(f"-OffsetTime={update.timezone_offset}")
+    if (write_all or "location" in config) and update.gps_latitude is not None and update.gps_longitude is not None:
+        if _is_video(file_path):
+            # QuickTime native GPS format (ISO 6709): "+DD.DDDDDD+DDD.DDDDDD+AAA.AAA/"
+            alt = update.gps_altitude if update.gps_altitude is not None else 0.0
+            args.append(f"-Keys:GPSCoordinates={update.gps_latitude:+.6f}{update.gps_longitude:+.6f}{alt:+.3f}/")
+            if update.gps_h_accuracy is not None and update.gps_h_accuracy > 0:
+                args.append(f"-Keys:LocationAccuracyHorizontal={update.gps_h_accuracy}")
+            # Strip legacy XMP-exif GPS tags (3KB overhead, replaced by native Keys)
+            args.extend([
+                "-XMP-exif:GPSLatitude=",
+                "-XMP-exif:GPSLongitude=",
+                "-XMP-exif:GPSAltitude=",
+                "-XMP-exif:GPSAltitudeRef=",
+                "-XMP-exif:GPSHPositioningError=",
+            ])
+        else:
+            lat_ref = "S" if update.gps_latitude < 0 else "N"
+            lon_ref = "W" if update.gps_longitude < 0 else "E"
+            # Use signed values (works for XMP) plus Ref tags (needed for EXIF longitude)
+            args.append(f"-GPSLatitude={update.gps_latitude}")
+            args.append(f"-GPSLatitudeRef={lat_ref}")
+            args.append(f"-GPSLongitude={update.gps_longitude}")
+            args.append(f"-GPSLongitudeRef={lon_ref}")
+            if update.gps_altitude is not None:
+                alt_ref = 1 if update.gps_altitude < 0 else 0
+                args.append(f"-GPSAltitude={update.gps_altitude}")
+                args.append(f"-GPSAltitudeRef#={alt_ref}")
+            if update.gps_h_accuracy is not None and update.gps_h_accuracy > 0:
+                args.append(f"-GPSHPositioningError={update.gps_h_accuracy}")
+
+    if (write_all or "datetime" in config or "dates" in config) and update.created_date is not None:
+        if _is_video(file_path):
+            args.append(f"-QuickTime:CreateDate={update.created_date}")
+        else:
+            args.append(f"-EXIF:DateTimeOriginal={update.created_date}")
+            args.append(f"-EXIF:CreateDate={update.created_date}")
+
+    if (write_all or "dates" in config) and update.created_date is not None:
+        if _is_video(file_path):
+            args.append(f"-QuickTime:ModifyDate={update.created_date}")
+        else:
+            args.append(f"-EXIF:ModifyDate={update.created_date}")
 
     return args
+
+
+def _extract_h_accuracy(asset_record: dict[str, Any]) -> float | None:
+    """Extract GPS horizontal accuracy from locationEnc plist blob."""
+    fields = asset_record.get("fields", {})
+    loc_enc = fields.get("locationEnc", {}).get("value", "")
+    if not loc_enc:
+        return None
+    try:
+        location = plistlib.loads(base64.b64decode(loc_enc))
+        h_acc = location.get("horzAcc")
+        if h_acc is not None and h_acc > 0:
+            return float(h_acc)
+    except (plistlib.InvalidFileException, ValueError, TypeError, AttributeError):
+        pass
+    return None
 
 
 def extract_metadata_update(
@@ -119,22 +205,28 @@ def extract_metadata_update(
         keywords = xmp_metadata.Keywords if xmp_metadata.Keywords else None
         title = xmp_metadata.Title if xmp_metadata.Title else None
         description = xmp_metadata.Description if xmp_metadata.Description else None
+        # orientation=0 from iCloud means "no override"; falsy check naturally skips it
         orientation = xmp_metadata.Orientation if xmp_metadata.Orientation else None
-        timezone_offset = None
-        if xmp_metadata.CreateDate is not None and xmp_metadata.CreateDate.utcoffset() is not None:
-            offset = xmp_metadata.CreateDate.utcoffset()
-            total_seconds = int(offset.total_seconds())
-            sign = "+" if total_seconds >= 0 else "-"
-            hours, remainder = divmod(abs(total_seconds), 3600)
-            minutes = remainder // 60
-            timezone_offset = f"{sign}{hours:02d}:{minutes:02d}"
+        gps_latitude = xmp_metadata.GPSLatitude if xmp_metadata.GPSLatitude is not None else None
+        gps_longitude = xmp_metadata.GPSLongitude if xmp_metadata.GPSLongitude is not None else None
+        gps_altitude = xmp_metadata.GPSAltitude if xmp_metadata.GPSAltitude is not None else None
+        # horzAcc is not in XMPMetadata — extract from raw locationEnc
+        gps_h_accuracy = _extract_h_accuracy(asset_record)
+        # Extract created_date for datetime/dates categories
+        created_date_val = None
+        if xmp_metadata.CreateDate:
+            created_date_val = xmp_metadata.CreateDate.strftime("%Y:%m:%d %H:%M:%S")
         return MetadataUpdate(
             rating=rating,
             title=title,
             description=description,
             keywords=keywords,
             orientation=orientation,
-            timezone_offset=timezone_offset,
+            gps_latitude=gps_latitude,
+            gps_longitude=gps_longitude,
+            gps_altitude=gps_altitude,
+            gps_h_accuracy=gps_h_accuracy,
+            created_date=created_date_val,
         )
 
     # Fallback: extract from raw asset_record (same logic as xmp_sidecar.build_metadata)
@@ -145,15 +237,28 @@ def extract_metadata_update(
     elif fields.get("isHidden", {}).get("value") == 1 or fields.get("isDeleted", {}).get("value") == 1:
         rating = -1
 
-    return MetadataUpdate(rating=rating)
+    return MetadataUpdate(rating=rating, gps_h_accuracy=_extract_h_accuracy(asset_record))
 
 
 def _read_existing_metadata(file_path: str) -> dict[str, str]:
-    """Read current metadata values using exiftool for comparison."""
+    """Read current metadata values using exiftool for comparison.
+
+    Uses -G to get group-prefixed keys, then normalises to unprefixed names.
+    For GPS, prefers XMP values (where we write for videos) over Composite
+    values (which read from QuickTime Keys and may differ in precision).
+    """
     cmd = [
-        "exiftool", "-json", "-s",
+        "exiftool", "-json", "-s", "-n", "-G",
         "-Rating", "-XPTitle", "-XPKeywords", "-ImageDescription",
-        "-Orientation#", "-OffsetTimeOriginal",
+        "-Orientation#",
+        "-GPSLatitude", "-GPSLongitude", "-GPSAltitude",
+        "-GPSHPositioningError",
+        "-XMP-exif:GPSLatitude", "-XMP-exif:GPSLongitude",
+        "-XMP-exif:GPSAltitude", "-XMP-exif:GPSHPositioningError",
+        "-Keys:GPSCoordinates",
+        "-Keys:LocationAccuracyHorizontal",
+        "-EXIF:DateTimeOriginal",
+        "-QuickTime:CreateDate",
         file_path,
     ]
     try:
@@ -162,42 +267,125 @@ def _read_existing_metadata(file_path: str) -> dict[str, str]:
             logger.debug("exiftool read failed for %s: %s", file_path, result.stderr.strip())
             return {}
         data = json.loads(result.stdout)
-        return data[0] if data else {}
+        if not data:
+            return {}
+        raw = data[0]
+        # Normalise: strip group prefix. Priority for GPS comparison:
+        # XMP > Composite > EXIF. XMP has our written values for videos.
+        # Composite has correctly-signed values. EXIF GPS stores unsigned
+        # values with separate Ref tags, so is unreliable for comparison.
+        priority = {"EXIF": 0, "Composite": 1, "XMP": 2}
+        sorted_items = sorted(
+            raw.items(),
+            key=lambda kv: priority.get(kv[0].split(":")[0], 1)
+        )
+        meta: dict[str, Any] = {}
+        for key, val in sorted_items:
+            if key == "SourceFile":
+                continue
+            parts = key.split(":", 1)
+            tag = parts[-1]
+            meta[tag] = val
+        # Parse Keys:GPSCoordinates into lat/lon for comparison
+        gps_coords = meta.pop("GPSCoordinates", None)
+        if gps_coords is not None and isinstance(gps_coords, str):
+            # Space-separated format from exiftool -n: "-33.86 151.21 50"
+            parts = gps_coords.replace("/", "").split()
+            if len(parts) >= 2:
+                try:
+                    meta.setdefault("GPSLatitude", float(parts[0]))
+                    meta.setdefault("GPSLongitude", float(parts[1]))
+                except ValueError:
+                    pass
+        # Map LocationAccuracyHorizontal to GPSHPositioningError for uniform comparison
+        loc_acc = meta.pop("LocationAccuracyHorizontal", None)
+        if loc_acc is not None:
+            meta.setdefault("GPSHPositioningError", loc_acc)
+        # Detect stale XMP-exif GPS on videos (should use native Keys instead)
+        if _is_video(file_path):
+            for key in raw:
+                if key.startswith("XMP:GPS"):
+                    meta["_has_stale_xmp_gps"] = True
+                    break
+        return meta
     except (subprocess.TimeoutExpired, FileNotFoundError, ValueError) as e:
         logger.debug("Could not read existing metadata from %s: %s", file_path, e)
         return {}
 
 
+def _gps_close(a: float | None, b: float | None, tol: float = 1e-5) -> bool:
+    """Check if two GPS coordinates are close enough (~1 metre)."""
+    if a is None or b is None:
+        return a is b
+    return abs(a - b) < tol
+
+
 def _needs_update(
-    update: MetadataUpdate, config: set[str], existing: dict[str, Any], is_video: bool = False
+    update: MetadataUpdate, config: set[str], existing: dict[str, Any],
+    file_path: str = "",
 ) -> bool:
     """Check if the file already has the correct metadata values."""
     write_all = "all" in config
 
     if (write_all or "rating" in config) and update.rating is not None and existing.get("Rating") != update.rating:
+        logger.debug("needs_update: %s: rating (existing=%s, update=%s)", file_path, existing.get("Rating"), update.rating)
         return True
 
     if (write_all or "title" in config) and update.title is not None and existing.get("XPTitle") != update.title:
+        logger.debug("needs_update: %s: title (existing=%s, update=%s)", file_path, existing.get("XPTitle"), update.title)
         return True
 
     if (write_all or "title" in config) and update.description is not None and existing.get("ImageDescription") != update.description:
+        logger.debug("needs_update: %s: description (existing=%s, update=%s)", file_path, existing.get("ImageDescription"), update.description)
         return True
 
     if (write_all or "keywords" in config) and update.keywords:
         xp_kw = "; ".join(update.keywords)
         if existing.get("XPKeywords") != xp_kw:
+            logger.debug("needs_update: %s: keywords", file_path)
             return True
 
-    if (write_all or "orientation" in config) and update.orientation is not None and existing.get("Orientation") != update.orientation:
+    # Orientation is not meaningful for videos or PNG — matches build_exiftool_args
+    if (
+        (write_all or "orientation" in config)
+        and update.orientation is not None
+        and not _is_video(file_path)
+        and os.path.splitext(file_path.lower())[1] != ".png"
+        and existing.get("Orientation") != update.orientation
+    ):
+        logger.debug("needs_update: %s: orientation (existing=%s, update=%s)", file_path, existing.get("Orientation"), update.orientation)
         return True
 
-    # OffsetTime is EXIF-only — skip for video files (QuickTime doesn't support it)
-    return (
-        not is_video
-        and (write_all or "dates" in config)
-        and update.timezone_offset is not None
-        and existing.get("OffsetTimeOriginal") != update.timezone_offset
-    )
+    if (write_all or "location" in config) and update.gps_latitude is not None and update.gps_longitude is not None:
+        # exiftool -n returns already-signed GPS values
+        if not _gps_close(existing.get("GPSLatitude"), update.gps_latitude):
+            logger.debug("needs_update: %s: gps_latitude (existing=%s, update=%s)", file_path, existing.get("GPSLatitude"), update.gps_latitude)
+            return True
+        if not _gps_close(existing.get("GPSLongitude"), update.gps_longitude):
+            logger.debug("needs_update: %s: gps_longitude", file_path)
+            return True
+        if update.gps_h_accuracy is not None and update.gps_h_accuracy > 0 and not _gps_close(existing.get("GPSHPositioningError"), update.gps_h_accuracy, tol=0.1):
+            logger.debug("needs_update: %s: gps_h_accuracy", file_path)
+            return True
+        # Strip legacy XMP-exif GPS from videos (replaced by native Keys)
+        if existing.get("_has_stale_xmp_gps"):
+            logger.debug("needs_update: %s: stale XMP GPS", file_path)
+            return True
+
+    if (write_all or "datetime" in config or "dates" in config) and update.created_date is not None and not _has_valid_date(existing):
+        logger.debug("needs_update: %s: datetime", file_path)
+        return True
+
+    return False
+
+
+_ZERO_DATE = "0000:00:00 00:00:00"
+
+
+def _has_valid_date(existing: dict[str, Any]) -> bool:
+    """Check if the file has a valid (non-zero) date tag."""
+    dt = existing.get("DateTimeOriginal") or existing.get("CreateDate")
+    return dt is not None and dt != _ZERO_DATE
 
 
 def write_metadata(
@@ -221,22 +409,26 @@ def write_metadata(
         True if metadata was written (or would be written in dry-run), False if
         no changes were needed or an error occurred.
     """
-    # Video files (MOV/MP4) use QuickTime metadata, not EXIF.
-    # OffsetTimeOriginal is an EXIF tag that doesn't apply to video containers.
-    ext = os.path.splitext(file_path)[1].lower()
-    is_video = ext in (".mov", ".mp4", ".m4v")
-
-    args = build_exiftool_args(update, config)
-    if is_video:
-        # Remove EXIF-only tags that QuickTime doesn't support
-        args = [a for a in args if not a.startswith("-OffsetTime")]
+    args = build_exiftool_args(update, config, file_path)
     if not args:
         return False
 
     # Check existing values to avoid unnecessary writes
     existing = _read_existing_metadata(file_path)
-    if existing and not _needs_update(update, config, existing, is_video=is_video):
+    if existing and not _needs_update(update, config, existing, file_path=file_path):
         return False
+
+    # Don't overwrite existing dates — the camera's value is ground truth;
+    # iCloud's assetDate may differ due to timezone/rounding.
+    # Check both EXIF (images) and QuickTime (videos) date tags.
+    if existing and _has_valid_date(existing):
+        args = [a for a in args if not a.startswith("-EXIF:DateTimeOriginal=")
+                and not a.startswith("-EXIF:CreateDate=")
+                and not a.startswith("-EXIF:ModifyDate=")
+                and not a.startswith("-QuickTime:CreateDate=")
+                and not a.startswith("-QuickTime:ModifyDate=")]
+        if not args:
+            return False
 
     if dry_run:
         logger.info(
@@ -249,7 +441,7 @@ def write_metadata(
     cmd = ["exiftool", "-overwrite_original"] + args + [file_path]
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=120
+            cmd, capture_output=True, text=True, timeout=1200
         )
         if result.returncode == 0 and "1 image files updated" in result.stdout:
             # Check for corrupt XMP even on success — exiftool may have written
@@ -261,11 +453,11 @@ def write_metadata(
                 )
                 strip_result = subprocess.run(
                     ["exiftool", "-overwrite_original", "-XMP:all=", file_path],
-                    capture_output=True, text=True, timeout=600,
+                    capture_output=True, text=True, timeout=1200,
                 )
                 if "1 image files updated" in strip_result.stdout:
                     retry = subprocess.run(
-                        cmd, capture_output=True, text=True, timeout=600
+                        cmd, capture_output=True, text=True, timeout=1200
                     )
                     if "1 image files updated" in retry.stdout:
                         logger.info("Wrote metadata to %s (after XMP repair)", file_path)
@@ -277,7 +469,38 @@ def write_metadata(
             logger.info("Wrote metadata to %s", file_path)
             return True
         if "0 image files updated" in result.stdout:
-            logger.debug("No metadata changes needed for %s", file_path)
+            # Check for corrupt XMP — auto-repair by stripping and retrying
+            if "Duplicate XMP property" in result.stderr:
+                logger.warning(
+                    "Corrupt XMP in %s — stripping XMP and retrying",
+                    file_path,
+                )
+                if not dry_run:
+                    strip_result = subprocess.run(
+                        ["exiftool", "-overwrite_original", "-XMP:all=", file_path],
+                        capture_output=True, text=True, timeout=1200,
+                    )
+                    if "1 image files updated" in strip_result.stdout:
+                        retry = subprocess.run(
+                            cmd, capture_output=True, text=True, timeout=1200
+                        )
+                        if "1 image files updated" in retry.stdout:
+                            logger.info("Wrote metadata to %s (after XMP repair)", file_path)
+                            return True
+                logger.warning(
+                    "Metadata write failed for %s even after XMP repair", file_path
+                )
+                return False
+            if result.returncode == 1:
+                logger.warning(
+                    "Metadata write failed for %s: %s",
+                    file_path, result.stderr.strip()[:200],
+                )
+            else:
+                logger.warning(
+                    "Metadata write had no effect on %s (file may have corrupt metadata)",
+                    file_path,
+                )
             return False
         logger.warning(
             "exiftool returned unexpected output for %s: %s %s",

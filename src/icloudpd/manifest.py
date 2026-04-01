@@ -13,14 +13,15 @@ The manifest lives at {download_dir}/.icloudpd.db and travels with the library.
 import logging
 import os
 import sqlite3
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 
 logger = logging.getLogger(__name__)
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 4
 
-_SCHEMA_V1 = """\
+_FRESH_SCHEMA = """\
 CREATE TABLE IF NOT EXISTS manifest (
     asset_id TEXT NOT NULL,
     zone_id TEXT NOT NULL DEFAULT '',
@@ -47,7 +48,18 @@ CREATE TABLE IF NOT EXISTS manifest (
     gps_latitude REAL,
     gps_longitude REAL,
     gps_altitude REAL,
-    PRIMARY KEY (asset_id, zone_id, local_path)
+    gps_speed REAL,
+    gps_timestamp TEXT,
+    timezone_offset INTEGER,
+    asset_subtype INTEGER,
+    hdr_type INTEGER,
+    burst_flags INTEGER,
+    burst_flags_ext INTEGER,
+    burst_id TEXT,
+    original_orientation INTEGER,
+    raw_fields TEXT,
+    file_mtime REAL,
+    PRIMARY KEY (asset_id, zone_id, asset_resource)
 );
 CREATE INDEX IF NOT EXISTS idx_manifest_path ON manifest(local_path);
 """
@@ -55,8 +67,18 @@ CREATE INDEX IF NOT EXISTS idx_manifest_path ON manifest(local_path);
 # Columns added between schema versions, for migration from older DBs.
 # Each entry: (version_introduced, ALTER TABLE statement)
 _MIGRATIONS: list[tuple[int, str]] = [
-    # Future migrations go here, e.g.:
-    # (2, "ALTER TABLE manifest ADD COLUMN new_field TEXT DEFAULT NULL"),
+    (2, "ALTER TABLE manifest ADD COLUMN gps_speed REAL"),
+    (2, "ALTER TABLE manifest ADD COLUMN gps_timestamp TEXT"),
+    (2, "ALTER TABLE manifest ADD COLUMN timezone_offset INTEGER"),
+    (2, "ALTER TABLE manifest ADD COLUMN asset_subtype INTEGER"),
+    (2, "ALTER TABLE manifest ADD COLUMN hdr_type INTEGER"),
+    (2, "ALTER TABLE manifest ADD COLUMN burst_flags INTEGER"),
+    (2, "ALTER TABLE manifest ADD COLUMN burst_flags_ext INTEGER"),
+    (2, "ALTER TABLE manifest ADD COLUMN burst_id TEXT"),
+    (2, "ALTER TABLE manifest ADD COLUMN original_orientation INTEGER"),
+    (2, "ALTER TABLE manifest ADD COLUMN raw_fields TEXT"),
+    (3, "ALTER TABLE manifest ADD COLUMN asset_resource TEXT NOT NULL DEFAULT 'resOriginal'"),
+    (4, "ALTER TABLE manifest ADD COLUMN file_mtime REAL"),
 ]
 
 
@@ -89,6 +111,17 @@ class ManifestRow:
     gps_latitude: float | None
     gps_longitude: float | None
     gps_altitude: float | None
+    gps_speed: float | None
+    gps_timestamp: str | None
+    timezone_offset: int | None
+    asset_subtype: int | None
+    hdr_type: int | None
+    burst_flags: int | None
+    burst_flags_ext: int | None
+    burst_id: str | None
+    original_orientation: int | None
+    raw_fields: str | None
+    file_mtime: float | None
 
 
 _ALL_COLUMNS = (
@@ -96,12 +129,18 @@ _ALL_COLUMNS = (
     "change_tag, downloaded_at, last_updated_at, item_type, filename, "
     "asset_date, added_date, is_favorite, is_hidden, is_deleted, "
     "original_width, original_height, duration, orientation, "
-    "title, description, keywords, gps_latitude, gps_longitude, gps_altitude"
+    "title, description, keywords, gps_latitude, gps_longitude, gps_altitude, "
+    "gps_speed, gps_timestamp, timezone_offset, asset_subtype, hdr_type, "
+    "burst_flags, burst_flags_ext, burst_id, original_orientation, raw_fields, "
+    "file_mtime"
 )
 
 
 class ManifestDB:
     """SQLite-backed asset manifest for tracking downloaded files."""
+
+    _MAX_WRITE_RETRIES = 3
+    _RETRY_BASE_DELAY = 0.1
 
     def __init__(self, download_dir: str) -> None:
         self._db_path = os.path.join(download_dir, ".icloudpd.db")
@@ -133,7 +172,7 @@ class ManifestDB:
             ).fetchone()
             if tables is None:
                 # Brand new DB
-                self._conn.executescript(_SCHEMA_V1)
+                self._conn.executescript(_FRESH_SCHEMA)
             else:
                 # Pre-versioned DB (has table but no user_version) — migrate
                 self._migrate_from_v0()
@@ -167,6 +206,18 @@ class ManifestDB:
             ("gps_latitude", "REAL"),
             ("gps_longitude", "REAL"),
             ("gps_altitude", "REAL"),
+            ("gps_speed", "REAL"),
+            ("gps_timestamp", "TEXT"),
+            ("timezone_offset", "INTEGER"),
+            ("asset_subtype", "INTEGER"),
+            ("hdr_type", "INTEGER"),
+            ("burst_flags", "INTEGER"),
+            ("burst_flags_ext", "INTEGER"),
+            ("burst_id", "TEXT"),
+            ("original_orientation", "INTEGER"),
+            ("raw_fields", "TEXT"),
+            ("asset_resource", "TEXT NOT NULL DEFAULT 'resOriginal'"),
+            ("file_mtime", "REAL"),
         ]
         for col_name, col_def in new_columns:
             if col_name not in existing:
@@ -189,7 +240,13 @@ class ManifestDB:
         """Close the manifest DB, committing any pending writes."""
         if self._conn:
             if self._dirty:
-                self._conn.commit()
+                try:
+                    self._conn.commit()
+                except sqlite3.OperationalError as e:
+                    if "locked" in str(e):
+                        logger.warning("Manifest commit on close failed: %s", e)
+                    else:
+                        raise
                 self._dirty = False
                 self._pending_count = 0
             self._conn.close()
@@ -198,9 +255,15 @@ class ManifestDB:
     def flush(self) -> None:
         """Commit pending writes without closing."""
         if self._conn and self._dirty:
-            self._conn.commit()
-            self._dirty = False
-            self._pending_count = 0
+            try:
+                self._conn.commit()
+                self._dirty = False
+                self._pending_count = 0
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e):
+                    logger.warning("Manifest flush failed: %s", e)
+                else:
+                    raise
 
     def __enter__(self) -> "ManifestDB":
         self.open()
@@ -256,59 +319,134 @@ class ManifestDB:
         gps_latitude: float | None = None,
         gps_longitude: float | None = None,
         gps_altitude: float | None = None,
+        gps_speed: float | None = None,
+        gps_timestamp: str | None = None,
+        timezone_offset: int | None = None,
+        asset_subtype: int | None = None,
+        hdr_type: int | None = None,
+        burst_flags: int | None = None,
+        burst_flags_ext: int | None = None,
+        burst_id: str | None = None,
+        original_orientation: int | None = None,
+        raw_fields: str | None = None,
     ) -> None:
         """Insert or update a manifest entry. Auto-flushes every 500 writes."""
-        try:
-            now = datetime.now(tz=timezone.utc).isoformat()
-            self._db.execute(
-                f"INSERT INTO manifest ({_ALL_COLUMNS}) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
-                "ON CONFLICT(asset_id, zone_id, local_path) DO UPDATE SET "
-                "version_size=excluded.version_size, "
-                "version_checksum=excluded.version_checksum, "
-                "change_tag=excluded.change_tag, "
-                "last_updated_at=excluded.last_updated_at, "
-                "item_type=excluded.item_type, "
-                "filename=excluded.filename, "
-                "asset_date=excluded.asset_date, "
-                "added_date=excluded.added_date, "
-                "is_favorite=excluded.is_favorite, "
-                "is_hidden=excluded.is_hidden, "
-                "is_deleted=excluded.is_deleted, "
-                "original_width=excluded.original_width, "
-                "original_height=excluded.original_height, "
-                "duration=excluded.duration, "
-                "orientation=excluded.orientation, "
-                "title=excluded.title, "
-                "description=excluded.description, "
-                "keywords=excluded.keywords, "
-                "gps_latitude=excluded.gps_latitude, "
-                "gps_longitude=excluded.gps_longitude, "
-                "gps_altitude=excluded.gps_altitude",
-                (
-                    asset_id, zone_id, local_path, version_size, version_checksum,
-                    change_tag, now, now, item_type, filename,
-                    asset_date, added_date, is_favorite, is_hidden, is_deleted,
-                    original_width, original_height, duration, orientation,
-                    title, description, keywords, gps_latitude, gps_longitude, gps_altitude,
-                ),
-            )
-            self._dirty = True
-            self._pending_count += 1
-            if self._pending_count >= self._flush_interval:
-                self.flush()
-        except sqlite3.Error as e:
-            logger.warning("Manifest write failed for %s: %s", local_path, e)
+        now = datetime.now(tz=timezone.utc).isoformat()
+        params = (
+            asset_id, zone_id, local_path, version_size, version_checksum,
+            change_tag, now, now, item_type, filename,
+            asset_date, added_date, is_favorite, is_hidden, is_deleted,
+            original_width, original_height, duration, orientation,
+            title, description, keywords, gps_latitude, gps_longitude, gps_altitude,
+            gps_speed, gps_timestamp, timezone_offset, asset_subtype, hdr_type,
+            burst_flags, burst_flags_ext, burst_id, original_orientation, raw_fields,
+            None,  # file_mtime: NULL for new rows, preserved on conflict
+        )
+        sql = (
+            f"INSERT INTO manifest ({_ALL_COLUMNS}) "
+            "VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) "
+            "ON CONFLICT(asset_id, zone_id, asset_resource) DO UPDATE SET "
+            "local_path=excluded.local_path, "
+            "version_size=excluded.version_size, "
+            "version_checksum=excluded.version_checksum, "
+            "change_tag=excluded.change_tag, "
+            "last_updated_at=excluded.last_updated_at, "
+            "item_type=excluded.item_type, "
+            "filename=excluded.filename, "
+            "asset_date=excluded.asset_date, "
+            "added_date=excluded.added_date, "
+            "is_favorite=excluded.is_favorite, "
+            "is_hidden=excluded.is_hidden, "
+            "is_deleted=excluded.is_deleted, "
+            "original_width=excluded.original_width, "
+            "original_height=excluded.original_height, "
+            "duration=excluded.duration, "
+            "orientation=excluded.orientation, "
+            "title=excluded.title, "
+            "description=excluded.description, "
+            "keywords=excluded.keywords, "
+            "gps_latitude=excluded.gps_latitude, "
+            "gps_longitude=excluded.gps_longitude, "
+            "gps_altitude=excluded.gps_altitude, "
+            "gps_speed=excluded.gps_speed, "
+            "gps_timestamp=excluded.gps_timestamp, "
+            "timezone_offset=excluded.timezone_offset, "
+            "asset_subtype=excluded.asset_subtype, "
+            "hdr_type=excluded.hdr_type, "
+            "burst_flags=excluded.burst_flags, "
+            "burst_flags_ext=excluded.burst_flags_ext, "
+            "burst_id=excluded.burst_id, "
+            "original_orientation=excluded.original_orientation, "
+            "raw_fields=excluded.raw_fields"
+            # file_mtime deliberately NOT updated — only set via update_file_mtime()
+        )
+        for attempt in range(self._MAX_WRITE_RETRIES):
+            try:
+                self._db.execute(sql, params)
+                self._dirty = True
+                self._pending_count += 1
+                if self._pending_count >= self._flush_interval:
+                    self.flush()
+                return
+            except sqlite3.OperationalError as e:
+                if "locked" in str(e) and attempt < self._MAX_WRITE_RETRIES - 1:
+                    logger.debug(
+                        "Manifest write retry %d for %s: %s",
+                        attempt + 1, local_path, e,
+                    )
+                    time.sleep(self._RETRY_BASE_DELAY * (attempt + 1))
+                else:
+                    logger.warning("Manifest write failed for %s: %s", local_path, e)
+                    return
+            except sqlite3.Error as e:
+                logger.warning("Manifest write failed for %s: %s", local_path, e)
+                return
 
     def update_path(self, asset_id: str, zone_id: str, old_path: str, new_path: str) -> None:
         """Update local_path for an existing manifest entry."""
-        self._db.execute(
-            "UPDATE manifest SET local_path = ?, last_updated_at = ? "
-            "WHERE asset_id = ? AND zone_id = ? AND local_path = ?",
-            (new_path, datetime.now(tz=timezone.utc).isoformat(),
-             asset_id, zone_id, old_path),
-        )
-        self._dirty = True
+        try:
+            self._db.execute(
+                "UPDATE manifest SET local_path = ?, last_updated_at = ? "
+                "WHERE asset_id = ? AND zone_id = ? AND local_path = ?",
+                (new_path, datetime.now(tz=timezone.utc).isoformat(),
+                 asset_id, zone_id, old_path),
+            )
+            self._dirty = True
+            self._pending_count += 1
+        except sqlite3.Error as e:
+            logger.warning(
+                "Manifest path update failed for %s -> %s: %s",
+                old_path, new_path, e,
+            )
+
+    def update_file_mtime(
+        self, asset_id: str, zone_id: str, asset_resource: str, mtime: float
+    ) -> None:
+        """Record file mtime after successful metadata write."""
+        try:
+            self._db.execute(
+                "UPDATE manifest SET file_mtime = ? "
+                "WHERE asset_id = ? AND zone_id = ? AND asset_resource = ?",
+                (mtime, asset_id, zone_id, asset_resource),
+            )
+            self._dirty = True
+            self._pending_count += 1
+        except sqlite3.Error as e:
+            logger.warning("Manifest mtime update failed: %s", e)
+
+    def clear_file_mtime(
+        self, asset_id: str, zone_id: str, asset_resource: str
+    ) -> None:
+        """Clear file_mtime (e.g. after re-download invalidates cached metadata)."""
+        try:
+            self._db.execute(
+                "UPDATE manifest SET file_mtime = NULL "
+                "WHERE asset_id = ? AND zone_id = ? AND asset_resource = ?",
+                (asset_id, zone_id, asset_resource),
+            )
+            self._dirty = True
+        except sqlite3.Error as e:
+            logger.warning("Manifest mtime clear failed: %s", e)
 
     def count_by_path(self, local_path: str) -> int:
         """Count how many manifest entries reference a given local path."""

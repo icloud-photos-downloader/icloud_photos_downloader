@@ -34,7 +34,7 @@ def map_align_raw_to_enum(align_raw_str: str) -> RawTreatmentPolicy:
     return mapping[align_raw_str]
 
 
-_VALID_WRITE_METADATA = {"all", "rating", "keywords", "title", "dates", "orientation"}
+_VALID_WRITE_METADATA = {"all", "rating", "keywords", "title", "dates", "datetime", "orientation", "location"}
 
 
 def _parse_write_metadata(value: str | None) -> frozenset[str]:

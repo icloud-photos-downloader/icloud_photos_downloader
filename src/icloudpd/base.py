@@ -49,7 +49,8 @@ from icloudpd.dir_cache import DirCache
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
-from icloudpd.manifest import ManifestDB
+from icloudpd.manifest import ManifestDB, ManifestRow
+from icloudpd.metadata_writer import MetadataUpdate
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
@@ -57,11 +58,6 @@ from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 from icloudpd.xmp_sidecar import build_metadata, generate_xmp_file
-from icloudpd.metadata_writer import (
-    MetadataUpdate,
-    extract_metadata_update,
-    write_metadata as write_file_metadata,
-)
 from pyicloud_ipd.asset_version import (
     AssetVersion,
     add_suffix_to_filename,
@@ -292,7 +288,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
     # Check exiftool availability if any user has --write-metadata
     if any(uc.write_metadata for uc in user_configs):
-        from icloudpd.metadata_writer import check_exiftool, ExiftoolNotFoundError
+        from icloudpd.metadata_writer import ExiftoolNotFoundError, check_exiftool
         try:
             ver = check_exiftool()
             logger.info("exiftool %s found for --write-metadata", ver)
@@ -706,11 +702,59 @@ def _extract_manifest_metadata(photo: PhotoAsset, version: AssetVersion) -> Dict
         gps_latitude = xmp.GPSLatitude
         gps_longitude = xmp.GPSLongitude
         gps_altitude = xmp.GPSAltitude
+        gps_speed = xmp.GPSSpeed
+        gps_timestamp = xmp.GPSTimeStamp.isoformat() if xmp.GPSTimeStamp else None
         orientation = xmp.Orientation
     except Exception:
         title = description = keywords = None
         gps_latitude = gps_longitude = gps_altitude = None
+        gps_speed = None
+        gps_timestamp = None
         orientation = None
+
+    # Timezone offset
+    timezone_offset = fields.get("timeZoneOffset", {}).get("value")
+    if timezone_offset is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            timezone_offset = int(timezone_offset)
+
+    # Asset subtype / HDR / burst metadata
+    asset_subtype = fields.get("assetSubtypeV2", {}).get("value")
+    if asset_subtype is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            asset_subtype = int(asset_subtype)
+
+    hdr_type = fields.get("assetHDRType", {}).get("value")
+    if hdr_type is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            hdr_type = int(hdr_type)
+
+    burst_flags = fields.get("burstFlags", {}).get("value")
+    if burst_flags is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            burst_flags = int(burst_flags)
+
+    burst_flags_ext = fields.get("burstFlagsExt", {}).get("value")
+    if burst_flags_ext is not None:
+        with contextlib.suppress(ValueError, TypeError):
+            burst_flags_ext = int(burst_flags_ext)
+
+    burst_id = fields.get("burstId", {}).get("value")
+    if burst_id is not None:
+        burst_id = str(burst_id)
+
+    # Original orientation from master record
+    original_orientation = None
+    try:
+        master_fields = photo._master_record.get("fields", {})
+        oo_val = master_fields.get("originalOrientation", {}).get("value")
+        if oo_val is not None:
+            original_orientation = int(oo_val)
+    except (KeyError, TypeError, ValueError):
+        pass
+
+    # Full asset record fields as JSON blob
+    raw_fields = _json.dumps(photo._asset_record.get("fields", {}), default=str)
 
     return {
         "version_checksum": version.checksum,
@@ -732,7 +776,104 @@ def _extract_manifest_metadata(photo: PhotoAsset, version: AssetVersion) -> Dict
         "gps_latitude": gps_latitude,
         "gps_longitude": gps_longitude,
         "gps_altitude": gps_altitude,
+        "gps_speed": gps_speed,
+        "gps_timestamp": gps_timestamp,
+        "timezone_offset": timezone_offset,
+        "asset_subtype": asset_subtype,
+        "hdr_type": hdr_type,
+        "burst_flags": burst_flags,
+        "burst_flags_ext": burst_flags_ext,
+        "burst_id": burst_id,
+        "original_orientation": original_orientation,
+        "raw_fields": raw_fields,
     }
+
+
+def _metadata_matches_manifest(
+    manifest_row: ManifestRow,
+    update: MetadataUpdate,
+) -> bool:
+    """Check if API metadata matches what's stored in the manifest.
+
+    Used for the optimistic mtime skip: if the API values haven't changed
+    since the last run, and the file hasn't been modified, we can skip
+    the exiftool read+write entirely.
+    """
+    if update.rating is not None and update.rating != (5 if manifest_row.is_favorite else 0):
+        return False
+    if update.title is not None and update.title != (manifest_row.title or ""):
+        return False
+    if update.description is not None and update.description != (manifest_row.description or ""):
+        return False
+    if update.orientation is not None and update.orientation != manifest_row.orientation:
+        return False
+    if update.gps_latitude is not None and manifest_row.gps_latitude is not None:
+        if abs(update.gps_latitude - manifest_row.gps_latitude) > 1e-5:
+            return False
+    elif update.gps_latitude is not None or manifest_row.gps_latitude is not None:
+        return False
+    if update.gps_longitude is not None and manifest_row.gps_longitude is not None:
+        if abs(update.gps_longitude - manifest_row.gps_longitude) > 1e-5:
+            return False
+    elif update.gps_longitude is not None or manifest_row.gps_longitude is not None:
+        return False
+    if update.gps_altitude is not None and manifest_row.gps_altitude is not None:
+        if abs(update.gps_altitude - manifest_row.gps_altitude) > 0.1:
+            return False
+    elif update.gps_altitude is not None or manifest_row.gps_altitude is not None:
+        return False
+    if update.keywords is not None:
+        import json
+        manifest_kw = json.loads(manifest_row.keywords) if manifest_row.keywords else []
+        if sorted(update.keywords) != sorted(manifest_kw):
+            return False
+    return True
+
+
+def _write_exif_with_mtime_check(
+    logger: logging.Logger,
+    manifest: "ManifestDB | None",
+    photo: "PhotoAsset",
+    file_path: str,
+    write_metadata_exif: frozenset[str],
+    dry_run: bool,
+    asset_resource: str,
+) -> None:
+    """Write EXIF metadata with optimistic mtime-based skip.
+
+    If the file's mtime matches the stored value and API metadata hasn't
+    changed, skip the exiftool invocation entirely.
+    """
+    from icloudpd.metadata_writer import (
+        extract_metadata_update,
+    )
+    from icloudpd.metadata_writer import (
+        write_metadata as write_file_metadata,
+    )
+
+    xmp_meta = build_metadata(logger, photo._asset_record)
+    update = extract_metadata_update(photo._asset_record, xmp_meta)
+
+    # Optimistic skip: if we've previously written metadata and nothing changed
+    if manifest is not None:
+        manifest_row = manifest.lookup(photo.id, manifest.zone_id, asset_resource)
+        if manifest_row is not None and manifest_row.file_mtime is not None:
+            try:
+                current_mtime = os.stat(file_path).st_mtime
+            except OSError:
+                current_mtime = None
+            if current_mtime is not None and current_mtime == manifest_row.file_mtime and _metadata_matches_manifest(manifest_row, update):
+                    return  # Skip — file untouched and metadata unchanged
+
+    write_file_metadata(file_path, update, set(write_metadata_exif), dry_run)
+
+    # Record mtime after successful write so we can skip next run
+    if wrote and not dry_run and manifest is not None:
+        try:
+            mtime = os.stat(file_path).st_mtime
+            manifest.update_file_mtime(photo.id, manifest.zone_id, asset_resource, mtime)
+        except OSError:
+            pass
 
 
 def download_builder(
@@ -1000,13 +1141,13 @@ def download_builder(
         if xmp_sidecar:
             generate_xmp_file(logger, download_path, photo._asset_record, dry_run, dir_cache)
 
-        if write_metadata_config:
+        if write_metadata_config and os.path.splitext(download_path.lower())[1] not in (".mov", ".mp4", ".m4v", ".avi"):
             # Skip in-file metadata for videos — XMP sidecar is the canonical source.
             # QuickTime Keys metadata is redundant when the sidecar exists.
-            if os.path.splitext(download_path.lower())[1] not in (".mov", ".mp4", ".m4v", ".avi"):
-                xmp_meta = build_metadata(logger, photo._asset_record)
-                update = extract_metadata_update(photo._asset_record, xmp_meta)
-                write_file_metadata(download_path, update, set(write_metadata_config), dry_run)
+            _write_exif_with_mtime_check(
+                logger, manifest, photo, download_path, write_metadata_exif,
+                dry_run, asset_res,
+            )
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -1161,9 +1302,8 @@ def download_builder(
                         logger.info("Downloaded %s", truncated_path)
 
             # Write metadata to the live photo MOV (mirrors main photo at lines 1077-1083)
-            if not only_print_filenames and dir_cache.isfile(lp_download_path):
-                if write_metadata_xmp:
-                    generate_xmp_file(logger, lp_download_path, photo._asset_record, dry_run, dir_cache)
+            if not only_print_filenames and dir_cache.isfile(lp_download_path) and write_metadata_xmp:
+                generate_xmp_file(logger, lp_download_path, photo._asset_record, dry_run, dir_cache)
 
                 # Live photo companion MOVs: XMP sidecar is the canonical metadata
                 # source. In-file QuickTime Keys metadata is redundant — skip exiftool.
