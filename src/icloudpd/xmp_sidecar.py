@@ -53,7 +53,19 @@ def generate_xmp_file(
             else:
                 can_write_file = True
         except ElementTree.ParseError as e:
-            logger.info(f"Not overwriting XMP file {sidecar_path} due to parser error: {e}")
+            # If the corrupt file was created by icloudpd, regenerate it
+            try:
+                with open(sidecar_path, "rb") as f:
+                    raw = f.read()
+                if b"icloudpd" in raw:
+                    logger.info(f"Regenerating corrupt icloudpd XMP file {sidecar_path}: {e}")
+                    can_write_file = True
+                else:
+                    logger.info(
+                        f"Not overwriting XMP file {sidecar_path} due to parser error: {e}"
+                    )
+            except OSError:
+                logger.info(f"Not overwriting XMP file {sidecar_path} due to parser error: {e}")
 
     # decode asset record fields
     # for k in asset_record['fields']:
@@ -71,9 +83,12 @@ def generate_xmp_file(
         xmp_metadata: XMPMetadata = build_metadata(logger, asset_record)
         xml_doc: ElementTree.Element = generate_xml(xmp_metadata)
         if not dry_run:
-            # Write the XML to the file
-            with open(sidecar_path, "wb") as f:
-                f.write(ElementTree.tostring(xml_doc, encoding="utf-8", xml_declaration=True))
+            # Write the XML to the file atomically
+            new_content = ElementTree.tostring(xml_doc, encoding="utf-8", xml_declaration=True)
+            tmp_path = sidecar_path + ".tmp"
+            with open(tmp_path, "wb") as f:
+                f.write(new_content)
+            os.replace(tmp_path, sidecar_path)
 
 
 def build_metadata(logger: logging.Logger, asset_record: dict[str, Any]) -> XMPMetadata:

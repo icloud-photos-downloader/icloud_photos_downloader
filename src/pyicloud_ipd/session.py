@@ -1,6 +1,7 @@
 import inspect
 import json
 import logging
+import os
 import typing
 from typing import Any, Callable, Dict, Mapping, NoReturn, Sequence
 
@@ -89,12 +90,21 @@ class PyiCloudSession(Session):
                 self.service.session_data.update({session_arg: response.headers.get(header)})
 
         # Save session_data to file
-        with open(self.service.session_path, "w", encoding="utf-8") as outfile:
+        tmp_session_path = self.service.session_path + ".tmp"
+        with open(tmp_session_path, "w", encoding="utf-8") as outfile:
             json.dump(self.service.session_data, outfile)
-            LOGGER.debug("Saved session data to file")
+        os.replace(tmp_session_path, self.service.session_path)
+        LOGGER.debug("Saved session data to file")
 
         # Save cookies to file
-        self.cookies.save(ignore_discard=True, ignore_expires=True)  # type: ignore[attr-defined]
+        tmp_cookie_path = self.service.cookiejar_path + ".tmp"
+        self.cookies.save(  # type: ignore[attr-defined]
+            filename=tmp_cookie_path,
+            ignore_discard=True,
+            ignore_expires=True,
+        )
+        if os.path.exists(tmp_cookie_path):
+            os.replace(tmp_cookie_path, self.service.cookiejar_path)
         LOGGER.debug("Cookies saved to %s", self.service.cookiejar_path)
 
         if not response.ok and (
