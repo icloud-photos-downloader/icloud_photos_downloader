@@ -72,7 +72,7 @@ def autodelete_photos(
                 # e.g. ValueError: year=5 is before 1900
                 # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
                 # Just use the Unix epoch
-                created_date = datetime.datetime.fromtimestamp(0)
+                created_date = datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc)
                 date_path = folder_structure.format(created_date)
 
         download_dir = os.path.join(directory, date_path)

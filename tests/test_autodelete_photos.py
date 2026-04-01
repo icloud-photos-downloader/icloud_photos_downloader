@@ -911,14 +911,17 @@ class AutodeletePhotosTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
+        files_to_create = [
+            f"{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7407.JPG",
+            f"{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7407-original.JPG",
+        ]
 
         files_to_delete = [
-            "2018/07/30/IMG_7406.MOV",
-            "2018/07/26/IMG_7383.PNG",
-            "2018/07/12/IMG_7190.JPG",
-            "2018/07/12/IMG_7190-medium.JPG",
-            "2018/07/12/IMG_7190.MOV",  # Live Photo for JPG
+            f"{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7406.MOV",
+            f"{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7383.PNG",
+            f"{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7190.JPG",
+            f"{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7190-medium.JPG",
+            f"{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7190.MOV",  # Live Photo for JPG
         ]
 
         # create some empty files
@@ -1003,14 +1006,17 @@ class AutodeletePhotosTestCase(TestCase):
 
         shutil.copytree(cookie_master_path, cookie_dir)
 
-        files_to_create = ["2018/07/30/IMG_7407.JPG", "2018/07/30/IMG_7407-original.JPG"]
+        files_to_create = [
+            f"{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7407.JPG",
+            f"{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7407-original.JPG",
+        ]
 
         files_to_delete = [
-            "2018/07/30/IMG_7406.MOV",
-            "2018/07/26/IMG_7383.PNG",
-            "2018/07/12/IMG_7190.HEIC",  # SU1HXzcxOTAuSlBH -> SU1HXzcxOTAuSEVJQw==
-            "2018/07/12/IMG_7190-medium.JPG",
-            "2018/07/12/IMG_7190_HEVC.MOV",  # Live Photo for HEIC
+            f"{datetime.datetime.fromtimestamp(1532940539000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7406.MOV",
+            f"{datetime.datetime.fromtimestamp(1532618424000.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7383.PNG",
+            f"{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7190.HEIC",  # SU1HXzcxOTAuSlBH -> SU1HXzcxOTAuSEVJQw==
+            f"{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7190-medium.JPG",
+            f"{datetime.datetime.fromtimestamp(1531371164630.0 / 1000.0, tz=pytz.utc).astimezone(get_localzone()):%Y/%m/%d}/IMG_7190_HEVC.MOV",  # Live Photo for HEIC
         ]
 
         # create some empty files

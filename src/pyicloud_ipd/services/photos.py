@@ -863,7 +863,7 @@ class PhotoAsset:
                 self._asset_record["fields"]["assetDate"]["value"] / 1000.0, tz=pytz.utc
             )
         except (KeyError, TypeError, ValueError):
-            dt = datetime.fromtimestamp(0)
+            dt = datetime.fromtimestamp(0, tz=pytz.utc)
         return dt
 
     @property

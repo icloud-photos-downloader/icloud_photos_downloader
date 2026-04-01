@@ -1,9 +1,12 @@
+import datetime
 import inspect
 import json
 import os
 from unittest import TestCase, mock
 
 import pytest
+import pytz
+from tzlocal import get_localzone
 
 from tests.helpers import (
     path_from_project_root,
@@ -43,30 +46,37 @@ class ListingRecentPhotosTestCase(TestCase):
 
         filenames = result.output.splitlines()
 
+        _lz = get_localzone()
+        _d7409 = datetime.datetime.fromtimestamp(1533021744816 / 1000.0, tz=pytz.utc).astimezone(_lz).strftime("%Y/%m/%d")
+        _d7408 = datetime.datetime.fromtimestamp(1532951050176 / 1000.0, tz=pytz.utc).astimezone(_lz).strftime("%Y/%m/%d")
+        _d7407 = datetime.datetime.fromtimestamp(1532951045108 / 1000.0, tz=pytz.utc).astimezone(_lz).strftime("%Y/%m/%d")
+        _d7405 = datetime.datetime.fromtimestamp(1532950655469 / 1000.0, tz=pytz.utc).astimezone(_lz).strftime("%Y/%m/%d")
+        _d7404 = datetime.datetime.fromtimestamp(1532950654855 / 1000.0, tz=pytz.utc).astimezone(_lz).strftime("%Y/%m/%d")
+
         self.assertEqual(len(filenames), 8)
         self.assertIn(
-            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG")), filenames[0]
+            os.path.join(data_dir, os.path.normpath(f"{_d7409}/IMG_7409.JPG")), filenames[0]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.MOV")), filenames[1]
+            os.path.join(data_dir, os.path.normpath(f"{_d7409}/IMG_7409.MOV")), filenames[1]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7408.JPG")), filenames[2]
+            os.path.join(data_dir, os.path.normpath(f"{_d7408}/IMG_7408.JPG")), filenames[2]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7408.MOV")), filenames[3]
+            os.path.join(data_dir, os.path.normpath(f"{_d7408}/IMG_7408.MOV")), filenames[3]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7407.JPG")), filenames[4]
+            os.path.join(data_dir, os.path.normpath(f"{_d7407}/IMG_7407.JPG")), filenames[4]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7407.MOV")), filenames[5]
+            os.path.join(data_dir, os.path.normpath(f"{_d7407}/IMG_7407.MOV")), filenames[5]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7405.MOV")), filenames[6]
+            os.path.join(data_dir, os.path.normpath(f"{_d7405}/IMG_7405.MOV")), filenames[6]
         )
         self.assertEqual(
-            os.path.join(data_dir, os.path.normpath("2018/07/30/IMG_7404.MOV")), filenames[7]
+            os.path.join(data_dir, os.path.normpath(f"{_d7404}/IMG_7404.MOV")), filenames[7]
         )
 
     def test_listing_photos_does_not_create_folders(self) -> None:
