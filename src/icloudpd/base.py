@@ -56,7 +56,12 @@ from icloudpd.paths import local_download_path, remove_unicode_chars
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
-from icloudpd.xmp_sidecar import generate_xmp_file
+from icloudpd.xmp_sidecar import build_metadata, generate_xmp_file
+from icloudpd.metadata_writer import (
+    MetadataUpdate,
+    extract_metadata_update,
+    write_metadata as write_file_metadata,
+)
 from pyicloud_ipd.asset_version import (
     AssetVersion,
     add_suffix_to_filename,
@@ -285,6 +290,16 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
     # Create shared logger
     logger = create_logger(global_config)
 
+    # Check exiftool availability if any user has --write-metadata
+    if any(uc.write_metadata for uc in user_configs):
+        from icloudpd.metadata_writer import check_exiftool, ExiftoolNotFoundError
+        try:
+            ver = check_exiftool()
+            logger.info("exiftool %s found for --write-metadata", ver)
+        except ExiftoolNotFoundError as e:
+            logger.error(str(e))
+            return 1
+
     # Create shared status exchange for web server and progress tracking
     shared_status_exchange = StatusExchange()
 
@@ -457,6 +472,7 @@ def _process_all_users_once(
                     user_config.force_size,
                     global_config.only_print_filenames,
                     user_config.set_exif_datetime,
+                    user_config.write_metadata,
                     user_config.skip_live_photos,
                     user_config.live_photo_size,
                     user_config.dry_run,
@@ -727,6 +743,7 @@ def download_builder(
     force_size: bool,
     only_print_filenames: bool,
     set_exif_datetime: bool,
+    write_metadata_config: frozenset[str],
     skip_live_photos: bool,
     live_photo_size: LivePhotoVersionSize,
     dry_run: bool,
@@ -983,6 +1000,14 @@ def download_builder(
         if xmp_sidecar:
             generate_xmp_file(logger, download_path, photo._asset_record, dry_run, dir_cache)
 
+        if write_metadata_config:
+            # Skip in-file metadata for videos — XMP sidecar is the canonical source.
+            # QuickTime Keys metadata is redundant when the sidecar exists.
+            if os.path.splitext(download_path.lower())[1] not in (".mov", ".mp4", ".m4v", ".avi"):
+                xmp_meta = build_metadata(logger, photo._asset_record)
+                update = extract_metadata_update(photo._asset_record, xmp_meta)
+                write_file_metadata(download_path, update, set(write_metadata_config), dry_run)
+
     # Also download the live photo if present
     if not skip_live_photos:
         lp_size = live_photo_size
@@ -1134,6 +1159,15 @@ def download_builder(
                                     **meta,
                                 )
                         logger.info("Downloaded %s", truncated_path)
+
+            # Write metadata to the live photo MOV (mirrors main photo at lines 1077-1083)
+            if not only_print_filenames and dir_cache.isfile(lp_download_path):
+                if write_metadata_xmp:
+                    generate_xmp_file(logger, lp_download_path, photo._asset_record, dry_run, dir_cache)
+
+                # Live photo companion MOVs: XMP sidecar is the canonical metadata
+                # source. In-file QuickTime Keys metadata is redundant — skip exiftool.
+
     return success
 
 

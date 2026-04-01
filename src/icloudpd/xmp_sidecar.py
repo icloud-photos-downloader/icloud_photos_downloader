@@ -30,6 +30,7 @@ class XMPMetadata(NamedTuple):
     GPSLatitude: float | None
     GPSLongitude: float | None
     GPSSpeed: float | None
+    GPSHPositioningError: float | None
     GPSTimeStamp: datetime | None
     CreateDate: datetime | None
     Rating: int | None
@@ -168,6 +169,8 @@ def build_metadata(logger: logging.Logger, asset_record: dict[str, Any]) -> XMPM
                 gps_latitude = location.get("lat")
                 gps_longitude = location.get("lon")
                 gps_speed = location.get("speed")
+                h_acc = location.get("horzAcc")
+                gps_h_accuracy = float(h_acc) if h_acc is not None and h_acc > 0 else None
                 gps_timestamp = (
                     location.get("timestamp")
                     if isinstance(location.get("timestamp"), datetime)
@@ -175,15 +178,16 @@ def build_metadata(logger: logging.Logger, asset_record: dict[str, Any]) -> XMPM
                 )
             except (plistlib.InvalidFileException, ValueError, TypeError, AttributeError) as e:
                 logger.warning("Error decoding location: %s", e)
-                gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
-                    None, None, None, None, None,
+                gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_h_accuracy, gps_timestamp = (
+                    None, None, None, None, None, None,
                 )
         else:
-            gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
-                None, None, None, None, None,
+            gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_h_accuracy, gps_timestamp = (
+                None, None, None, None, None, None,
             )
     else:
-        gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
+        gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_h_accuracy, gps_timestamp = (
+            None,
             None,
             None,
             None,
@@ -228,6 +232,7 @@ def build_metadata(logger: logging.Logger, asset_record: dict[str, Any]) -> XMPM
         GPSLatitude=gps_latitude,
         GPSLongitude=gps_longitude,
         GPSSpeed=gps_speed,
+        GPSHPositioningError=gps_h_accuracy,
         GPSTimeStamp=gps_timestamp,
         CreateDate=create_date,
         Rating=rating,
@@ -310,20 +315,24 @@ def generate_xml(metadata: XMPMetadata) -> ElementTree.Element:
         for keyword in metadata.Keywords:
             ElementTree.SubElement(seq, "rdf:li").text = keyword
 
-    if metadata.GPSAltitude:
+    if metadata.GPSAltitude is not None:
         ElementTree.SubElement(description_exif, "exif:GPSAltitude").text = str(
             metadata.GPSAltitude
         )
-    if metadata.GPSLatitude:
+    if metadata.GPSLatitude is not None:
         ElementTree.SubElement(description_exif, "exif:GPSLatitude").text = str(
             metadata.GPSLatitude
         )
-    if metadata.GPSLongitude:
+    if metadata.GPSLongitude is not None:
         ElementTree.SubElement(description_exif, "exif:GPSLongitude").text = str(
             metadata.GPSLongitude
         )
-    if metadata.GPSSpeed:
+    if metadata.GPSSpeed is not None:
         ElementTree.SubElement(description_exif, "exif:GPSSpeed").text = str(metadata.GPSSpeed)
+    if metadata.GPSHPositioningError is not None:
+        ElementTree.SubElement(description_exif, "exif:GPSHPositioningError").text = str(
+            metadata.GPSHPositioningError
+        )
     if metadata.GPSTimeStamp:
         ElementTree.SubElement(
             description_exif, "exif:GPSTimeStamp"

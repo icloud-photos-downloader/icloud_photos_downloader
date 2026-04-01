@@ -74,9 +74,9 @@ jobs:
     env:
       UV_PYTHON: ${{ matrix.python-version }}
     steps:
-    - name: Install Locales for Tests
+    - name: Install system dependencies
       run: |
-        sudo apt-get update && sudo apt-get -y install locales locales-all
+        sudo apt-get update && sudo apt-get -y install locales locales-all libimage-exiftool-perl
     - uses: actions/checkout@v6
     - name: Download version info
       uses: actions/download-artifact@v5
@@ -118,6 +118,13 @@ jobs:
         name: icloudpd-version-info
         path: |
           src/foundation
+    - name: Install exiftool
+      run: |
+        if [ "$RUNNER_OS" = "macOS" ]; then
+          brew install exiftool
+        elif [ "$RUNNER_OS" = "Windows" ]; then
+          choco install exiftool -y
+        fi
     - uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true

@@ -76,12 +76,22 @@ def download_response_to_path(
     append_mode: bool,
     download_path: str,
     created_date: datetime.datetime,
+    expected_size: int = 0,
 ) -> bool:
     """Saves response content into file with desired created date"""
     with open(temp_download_path, ("ab" if append_mode else "wb")) as file_obj:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 file_obj.write(chunk)
+    # Verify downloaded size matches expected before atomic rename
+    if expected_size > 0:
+        actual_size = os.path.getsize(temp_download_path)
+        if actual_size != expected_size:
+            logger = logging.getLogger(__name__)
+            logger.warning(
+                "Download size mismatch for %s: got %d bytes, expected %d",
+                download_path, actual_size, expected_size,
+            )
     os.rename(temp_download_path, download_path)
     update_mtime(created_date, download_path)
     return True
@@ -125,7 +135,8 @@ def download_media(
     temp_download_path = os.path.join(download_dir, checksum32) + ".part"
 
     download_local = (
-        partial(download_response_to_path_dry_run, logger) if dry_run else download_response_to_path
+        partial(download_response_to_path_dry_run, logger) if dry_run
+        else partial(download_response_to_path, expected_size=version.size)
     )
 
     retries = 0

@@ -34,6 +34,23 @@ def map_align_raw_to_enum(align_raw_str: str) -> RawTreatmentPolicy:
     return mapping[align_raw_str]
 
 
+_VALID_WRITE_METADATA = {"all", "rating", "keywords", "title", "dates", "orientation"}
+
+
+def _parse_write_metadata(value: str | None) -> frozenset[str]:
+    """Parse --write-metadata comma-separated values into a frozenset."""
+    if value is None:
+        return frozenset()
+    categories = frozenset(s.strip().lower() for s in value.split(",") if s.strip())
+    invalid = categories - _VALID_WRITE_METADATA
+    if invalid:
+        raise argparse.ArgumentTypeError(
+            f"Invalid --write-metadata categories: {', '.join(sorted(invalid))}. "
+            f"Valid options: {', '.join(sorted(_VALID_WRITE_METADATA))}"
+        )
+    return categories
+
+
 def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
     cloned = copy.deepcopy(parser)
     cloned.add_argument(
@@ -140,6 +157,16 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "--set-exif-datetime",
         help="Write the DateTimeOriginal EXIF tag from file creation date, if it doesn't exist.",
         action="store_true",
+    )
+    cloned.add_argument(
+        "--write-metadata",
+        help=(
+            "Write iCloud metadata into file EXIF/XMP using exiftool. "
+            "Comma-separated list of field categories: "
+            "all, rating, keywords, title, dates, orientation. "
+            "Requires exiftool to be installed. Default: disabled."
+        ),
+        default=None,
     )
 
     cloned.add_argument(
@@ -452,6 +479,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         auto_delete=user_ns.auto_delete,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
+        write_metadata=_parse_write_metadata(user_ns.write_metadata),
         smtp_username=user_ns.smtp_username,
         smtp_password=user_ns.smtp_password,
         smtp_host=user_ns.smtp_host,

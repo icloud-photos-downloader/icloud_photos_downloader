@@ -51,6 +51,7 @@ class BuildXMPMetadata(TestCase):
                 GPSLatitude=18.82285,
                 GPSLongitude=98.96340333333333,
                 GPSSpeed=0.0,
+                GPSHPositioningError=None,
                 GPSTimeStamp=datetime.strptime(
                     "2001:01:01 00:00:00.000000+00:00", "%Y:%m:%d %H:%M:%S.%f%z"
                 ).replace(tzinfo=None),

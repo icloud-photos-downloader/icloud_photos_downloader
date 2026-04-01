@@ -32,6 +32,7 @@ class _DefaultConfig:
     auto_delete: bool
     folder_structure: str
     set_exif_datetime: bool
+    write_metadata: frozenset[str]
     smtp_username: str | None
     smtp_password: str | None
     smtp_host: str
