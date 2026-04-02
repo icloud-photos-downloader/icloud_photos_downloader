@@ -286,8 +286,8 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
     # Create shared logger
     logger = create_logger(global_config)
 
-    # Check exiftool availability if any user has --write-metadata
-    if any(uc.write_metadata for uc in user_configs):
+    # Check exiftool availability if any user has --write-metadata-exif
+    if any(uc.write_metadata_exif for uc in user_configs):
         from icloudpd.metadata_writer import ExiftoolNotFoundError, check_exiftool
         try:
             ver = check_exiftool()
@@ -468,12 +468,12 @@ def _process_all_users_once(
                     user_config.force_size,
                     global_config.only_print_filenames,
                     user_config.set_exif_datetime,
-                    user_config.write_metadata,
+                    user_config.write_metadata_exif,
                     user_config.skip_live_photos,
                     user_config.live_photo_size,
                     user_config.dry_run,
                     user_config.file_match_policy,
-                    user_config.xmp_sidecar,
+                    user_config.write_metadata_xmp,
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
@@ -884,12 +884,12 @@ def download_builder(
     force_size: bool,
     only_print_filenames: bool,
     set_exif_datetime: bool,
-    write_metadata_config: frozenset[str],
+    write_metadata_exif: frozenset[str],
     skip_live_photos: bool,
     live_photo_size: LivePhotoVersionSize,
     dry_run: bool,
     file_match_policy: FileMatchPolicy,
-    xmp_sidecar: bool,
+    write_metadata_xmp: frozenset[str],
     lp_filename_generator: Callable[[str], str],
     filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
@@ -1138,10 +1138,10 @@ def download_builder(
                             )
                     logger.info("Downloaded %s", truncated_path)
 
-        if xmp_sidecar:
-            generate_xmp_file(logger, download_path, photo._asset_record, dry_run, dir_cache)
+        if write_metadata_xmp:
+                        generate_xmp_file(logger, download_path, photo._asset_record, dry_run, dir_cache)
 
-        if write_metadata_config and os.path.splitext(download_path.lower())[1] not in (".mov", ".mp4", ".m4v", ".avi"):
+        if write_metadata_exif and os.path.splitext(download_path.lower())[1] not in (".mov", ".mp4", ".m4v", ".avi"):
             # Skip in-file metadata for videos — XMP sidecar is the canonical source.
             # QuickTime Keys metadata is redundant when the sidecar exists.
             _write_exif_with_mtime_check(

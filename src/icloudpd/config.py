@@ -27,12 +27,12 @@ class _DefaultConfig:
     list_libraries: bool
     skip_videos: bool
     skip_live_photos: bool
-    xmp_sidecar: bool
     force_size: bool
     auto_delete: bool
     folder_structure: str
     set_exif_datetime: bool
-    write_metadata: frozenset[str]
+    write_metadata_xmp: frozenset[str]
+    write_metadata_exif: frozenset[str]
     smtp_username: str | None
     smtp_password: str | None
     smtp_host: str

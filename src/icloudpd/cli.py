@@ -34,7 +34,7 @@ def map_align_raw_to_enum(align_raw_str: str) -> RawTreatmentPolicy:
     return mapping[align_raw_str]
 
 
-_VALID_WRITE_METADATA = {"all", "rating", "keywords", "title", "dates", "datetime", "orientation", "location"}
+_VALID_WRITE_METADATA = {"all", "rating", "keywords", "title", "dates", "orientation", "location", "datetime"}
 
 
 def _parse_write_metadata(value: str | None) -> frozenset[str]:
@@ -161,11 +161,40 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     cloned.add_argument(
         "--write-metadata",
         help=(
-            "Write iCloud metadata into file EXIF/XMP using exiftool. "
+            "Write iCloud metadata as both XMP sidecars and EXIF tags. "
+            "Shorthand for --write-metadata-xmp and --write-metadata-exif. "
             "Comma-separated list of field categories: "
-            "all, rating, keywords, title, dates, orientation. "
-            "Requires exiftool to be installed. Default: disabled."
+            "all, rating, keywords, title, datetime, dates, orientation, location. "
+            "Requires exiftool to be installed. "
+            "Default when specified without value: all."
         ),
+        nargs="?",
+        const="all",
+        default=None,
+    )
+    cloned.add_argument(
+        "--write-metadata-xmp",
+        help=(
+            "Write iCloud metadata as XMP sidecar files. "
+            "Comma-separated list of field categories: "
+            "all, rating, keywords, title, datetime, dates, orientation, location. "
+            "Default when specified without value: all."
+        ),
+        nargs="?",
+        const="all",
+        default=None,
+    )
+    cloned.add_argument(
+        "--write-metadata-exif",
+        help=(
+            "Write iCloud metadata into file EXIF/XMP tags using exiftool. "
+            "Comma-separated list of field categories: "
+            "all, rating, keywords, title, datetime, dates, orientation, location. "
+            "Requires exiftool to be installed. "
+            "Default when specified without value: all."
+        ),
+        nargs="?",
+        const="all",
         default=None,
     )
 
@@ -456,6 +485,37 @@ def format_help() -> str:
 
 
 def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
+    # Resolve write-metadata flags
+    write_metadata_base = _parse_write_metadata(user_ns.write_metadata)
+    write_metadata_xmp = _parse_write_metadata(user_ns.write_metadata_xmp)
+    write_metadata_exif = _parse_write_metadata(user_ns.write_metadata_exif)
+
+    # --write-metadata sets both if specific variants not given
+    if write_metadata_base:
+        if not write_metadata_xmp:
+            write_metadata_xmp = write_metadata_base
+        if not write_metadata_exif:
+            write_metadata_exif = write_metadata_base
+
+    # --xmp-sidecar is deprecated alias for --write-metadata-xmp all
+    if user_ns.xmp_sidecar:
+        import logging
+
+        logging.getLogger("icloudpd").warning(
+            "--xmp-sidecar is deprecated, use --write-metadata-xmp instead"
+        )
+        if not write_metadata_xmp:
+            write_metadata_xmp = frozenset({"all"})
+
+    # --set-exif-datetime adds datetime to exif set
+    if user_ns.set_exif_datetime:
+        import logging
+
+        logging.getLogger("icloudpd").warning(
+            "--set-exif-datetime is deprecated, use --write-metadata-exif datetime instead"
+        )
+        write_metadata_exif = write_metadata_exif | frozenset({"datetime"})
+
     return UserConfig(
         username=user_ns.username,
         password=user_ns.password,
@@ -474,12 +534,12 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         list_libraries=user_ns.list_libraries,
         skip_videos=user_ns.skip_videos,
         skip_live_photos=user_ns.skip_live_photos,
-        xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
-        write_metadata=_parse_write_metadata(user_ns.write_metadata),
+        write_metadata_xmp=write_metadata_xmp,
+        write_metadata_exif=write_metadata_exif,
         smtp_username=user_ns.smtp_username,
         smtp_password=user_ns.smtp_password,
         smtp_host=user_ns.smtp_host,
