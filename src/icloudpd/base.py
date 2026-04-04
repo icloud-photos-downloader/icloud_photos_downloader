@@ -479,6 +479,7 @@ def _process_all_users_once(
                     user_config.align_raw,
                     dir_cache,
                     manifest,
+                    user_config.accept_apple_changes,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -895,6 +896,7 @@ def download_builder(
     raw_policy: RawTreatmentPolicy,
     dir_cache: DirCache,
     manifest: "ManifestDB | None",
+    accept_apple_changes: bool,
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
@@ -1005,15 +1007,24 @@ def download_builder(
                     )
                     dedup_download = dedup_suffix is not None and not file_exists
                     if dedup_suffix is None and manifest_row.version_size != version.size:
-                        # iCloud has a different version — re-download to the canonical path
-                        file_exists = False
-                        rel_path = os.path.relpath(download_path, directory)
-                        logger.debug(
-                            "%s version changed (manifest: %d, iCloud: %d), re-downloading",
-                            truncate_middle(download_path, 96),
-                            manifest_row.version_size,
-                            version.size,
-                        )
+                        # iCloud has a different version
+                        if accept_apple_changes:
+                            file_exists = False
+                            rel_path = os.path.relpath(download_path, directory)
+                            logger.info(
+                                "%s version changed (manifest: %d, iCloud: %d), re-downloading",
+                                truncate_middle(download_path, 96),
+                                manifest_row.version_size,
+                                version.size,
+                            )
+                        else:
+                            logger.warning(
+                                "%s version changed (manifest: %d, iCloud: %d), "
+                                "use --accept-apple-changes to re-download",
+                                truncate_middle(download_path, 96),
+                                manifest_row.version_size,
+                                version.size,
+                            )
                     elif dedup_suffix is None:
                         # No collision, version matches — update metadata if needed
                         meta = _extract_manifest_metadata(photo, version)

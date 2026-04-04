@@ -312,6 +312,15 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="Don't download any photos (default: download all photos and videos)",
         action="store_true",
     )
+    cloned.add_argument(
+        "--accept-apple-changes",
+        help=(
+            "Re-download files when iCloud reports a different version. "
+            "Without this flag, version changes are logged as warnings. "
+            "Metadata updates from iCloud are always applied regardless."
+        ),
+        action="store_true",
+    )
     return cloned
 
 
@@ -560,6 +569,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
+        accept_apple_changes=user_ns.accept_apple_changes,
     )
 
 

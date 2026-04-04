@@ -51,6 +51,7 @@ class _DefaultConfig:
     skip_created_before: datetime.datetime | datetime.timedelta | None
     skip_created_after: datetime.datetime | datetime.timedelta | None
     skip_photos: bool
+    accept_apple_changes: bool
 
 
 @dataclass(kw_only=True)

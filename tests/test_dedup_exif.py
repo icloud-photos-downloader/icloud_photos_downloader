@@ -175,6 +175,7 @@ class ManifestDedupTest(TestCase):
                 "--set-exif-datetime",
                 "--no-progress-bar",
                 "--threads-num", "1",
+                "--accept-apple-changes",
             ])
 
         self.assertIn("version changed", result.output)
