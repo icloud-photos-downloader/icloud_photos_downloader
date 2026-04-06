@@ -550,13 +550,13 @@ class TestExtractMetadataUpdate(TestCase):
         XMP = namedtuple("XMP", [
             "XMPToolkit", "Title", "Description", "Orientation", "Make",
             "DigitalSourceType", "Keywords", "GPSAltitude", "GPSLatitude",
-            "GPSLongitude", "GPSSpeed", "GPSTimeStamp", "CreateDate", "Rating",
+            "GPSLongitude", "GPSSpeed", "GPSHPositioningError", "GPSTimeStamp", "CreateDate", "Rating",
         ])
         xmp = XMP(
             XMPToolkit="icloudpd", Title="Beach Day", Description="Fun day",
             Orientation=6, Make="Apple", DigitalSourceType=None,
             Keywords=["holiday", "beach"], GPSAltitude=10.0, GPSLatitude=-33.7,
-            GPSLongitude=151.2, GPSSpeed=0.0, GPSTimeStamp=None,
+            GPSLongitude=151.2, GPSSpeed=0.0, GPSHPositioningError=None, GPSTimeStamp=None,
             CreateDate=datetime(2025, 6, 15, 10, 30, tzinfo=timezone(timedelta(hours=11))),
             Rating=5,
         )
@@ -572,13 +572,13 @@ class TestExtractMetadataUpdate(TestCase):
         XMP = namedtuple("XMP", [
             "XMPToolkit", "Title", "Description", "Orientation", "Make",
             "DigitalSourceType", "Keywords", "GPSAltitude", "GPSLatitude",
-            "GPSLongitude", "GPSSpeed", "GPSTimeStamp", "CreateDate", "Rating",
+            "GPSLongitude", "GPSSpeed", "GPSHPositioningError", "GPSTimeStamp", "CreateDate", "Rating",
         ])
         xmp = XMP(
             XMPToolkit="icloudpd", Title=None, Description=None,
             Orientation=None, Make=None, DigitalSourceType=None,
             Keywords=None, GPSAltitude=None, GPSLatitude=None,
-            GPSLongitude=None, GPSSpeed=None, GPSTimeStamp=None,
+            GPSLongitude=None, GPSSpeed=None, GPSHPositioningError=None, GPSTimeStamp=None,
             CreateDate=None, Rating=None,
         )
         update = extract_metadata_update({}, xmp)
@@ -593,13 +593,13 @@ class TestExtractMetadataUpdate(TestCase):
         XMP = namedtuple("XMP", [
             "XMPToolkit", "Title", "Description", "Orientation", "Make",
             "DigitalSourceType", "Keywords", "GPSAltitude", "GPSLatitude",
-            "GPSLongitude", "GPSSpeed", "GPSTimeStamp", "CreateDate", "Rating",
+            "GPSLongitude", "GPSSpeed", "GPSHPositioningError", "GPSTimeStamp", "CreateDate", "Rating",
         ])
         xmp = XMP(
             XMPToolkit="icloudpd", Title=None, Description=None,
             Orientation=None, Make=None, DigitalSourceType=None,
             Keywords=None, GPSAltitude=None, GPSLatitude=None,
-            GPSLongitude=None, GPSSpeed=None, GPSTimeStamp=None,
+            GPSLongitude=None, GPSSpeed=None, GPSHPositioningError=None, GPSTimeStamp=None,
             CreateDate=datetime(2025, 1, 1, 8, 0, tzinfo=timezone(timedelta(hours=-8))),
             Rating=None,
         )
@@ -900,14 +900,14 @@ class TestExtractGps(TestCase):
             "XMPToolkit": "icloudpd", "Title": None, "Description": None,
             "Orientation": None, "Make": None, "DigitalSourceType": None,
             "Keywords": None, "GPSAltitude": None, "GPSLatitude": None,
-            "GPSLongitude": None, "GPSSpeed": None, "GPSTimeStamp": None,
+            "GPSLongitude": None, "GPSSpeed": None, "GPSHPositioningError": None, "GPSTimeStamp": None,
             "CreateDate": None, "Rating": None,
         }
         defaults.update(overrides)
         XMP = namedtuple("XMP", (
             "XMPToolkit", "Title", "Description", "Orientation", "Make",
             "DigitalSourceType", "Keywords", "GPSAltitude", "GPSLatitude",
-            "GPSLongitude", "GPSSpeed", "GPSTimeStamp", "CreateDate", "Rating",
+            "GPSLongitude", "GPSSpeed", "GPSHPositioningError", "GPSTimeStamp", "CreateDate", "Rating",
         ))
         return XMP(**defaults)
 
@@ -1232,13 +1232,13 @@ class TestWriteDatetimeReal(TestCase):
         XMP = namedtuple("XMP", [
             "XMPToolkit", "Title", "Description", "Orientation", "Make",
             "DigitalSourceType", "Keywords", "GPSAltitude", "GPSLatitude",
-            "GPSLongitude", "GPSSpeed", "GPSTimeStamp", "CreateDate", "Rating",
+            "GPSLongitude", "GPSSpeed", "GPSHPositioningError", "GPSTimeStamp", "CreateDate", "Rating",
         ])
         xmp = XMP(
             XMPToolkit="icloudpd", Title="Beach", Description=None,
             Orientation=None, Make=None, DigitalSourceType=None,
             Keywords=None, GPSAltitude=None, GPSLatitude=None,
-            GPSLongitude=None, GPSSpeed=None, GPSTimeStamp=None,
+            GPSLongitude=None, GPSSpeed=None, GPSHPositioningError=None, GPSTimeStamp=None,
             CreateDate=datetime(2025, 6, 15, 10, 30, tzinfo=timezone(timedelta(hours=11))),
             Rating=5,
         )
@@ -1252,13 +1252,13 @@ class TestWriteDatetimeReal(TestCase):
         XMP = namedtuple("XMP", [
             "XMPToolkit", "Title", "Description", "Orientation", "Make",
             "DigitalSourceType", "Keywords", "GPSAltitude", "GPSLatitude",
-            "GPSLongitude", "GPSSpeed", "GPSTimeStamp", "CreateDate", "Rating",
+            "GPSLongitude", "GPSSpeed", "GPSHPositioningError", "GPSTimeStamp", "CreateDate", "Rating",
         ])
         xmp = XMP(
             XMPToolkit="icloudpd", Title=None, Description=None,
             Orientation=None, Make=None, DigitalSourceType=None,
             Keywords=None, GPSAltitude=None, GPSLatitude=None,
-            GPSLongitude=None, GPSSpeed=None, GPSTimeStamp=None,
+            GPSLongitude=None, GPSSpeed=None, GPSHPositioningError=None, GPSTimeStamp=None,
             CreateDate=None, Rating=None,
         )
         update = extract_metadata_update({}, xmp)

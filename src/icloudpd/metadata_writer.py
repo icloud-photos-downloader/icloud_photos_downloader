@@ -210,8 +210,7 @@ def extract_metadata_update(
         gps_latitude = xmp_metadata.GPSLatitude if xmp_metadata.GPSLatitude is not None else None
         gps_longitude = xmp_metadata.GPSLongitude if xmp_metadata.GPSLongitude is not None else None
         gps_altitude = xmp_metadata.GPSAltitude if xmp_metadata.GPSAltitude is not None else None
-        # horzAcc is not in XMPMetadata — extract from raw locationEnc
-        gps_h_accuracy = _extract_h_accuracy(asset_record)
+        gps_h_accuracy = xmp_metadata.GPSHPositioningError
         # Extract created_date for datetime/dates categories
         created_date_val = None
         if xmp_metadata.CreateDate:

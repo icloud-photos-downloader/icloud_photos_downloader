@@ -87,7 +87,7 @@ from pyicloud_ipd.utils import (
     size_to_suffix,
     store_password_in_keyring,
 )
-from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, version_to_resource
 
 freeze_support()  # fmt: skip # fixing tqdm on macos
 
@@ -123,6 +123,7 @@ def _check_collision(
     directory: str,
     dir_cache: "DirCache",
     logger: Logger,
+    asset_resource: str = "resOriginal",
 ) -> tuple[str, str, bool, str | None]:
     """Check if another asset owns this path and self-heal if needed.
 
@@ -135,7 +136,7 @@ def _check_collision(
         dedup_suffix = f"_{suffix}"
         new_download_path = add_suffix_to_filename(dedup_suffix, download_path)
         new_rel_path = os.path.relpath(new_download_path, directory)
-        manifest.update_path(photo_id, manifest.zone_id, rel_path, new_rel_path)
+        manifest.update_path(photo_id, manifest.zone_id, asset_resource, new_rel_path)
         file_exists = dir_cache.isfile(new_download_path)
         logger.debug(
             "Collision on %s (owned by %s), deduping %s to %s",
@@ -868,8 +869,9 @@ def _write_exif_with_mtime_check(
 
     write_file_metadata(file_path, update, set(write_metadata_exif), dry_run)
 
-    # Record mtime after successful write so we can skip next run
-    if wrote and not dry_run and manifest is not None:
+    # Record mtime so we can skip exiftool on subsequent runs.
+    # Set after both successful writes AND confirmed no-ops (metadata already correct).
+    if not dry_run and manifest is not None:
         try:
             mtime = os.stat(file_path).st_mtime
             manifest.update_file_mtime(photo.id, manifest.zone_id, asset_resource, mtime)
@@ -994,16 +996,18 @@ def download_builder(
         # Compute relative path for manifest — use the actual file path on disk
         actual_path = original_download_path if original_download_path and file_exists else download_path
         rel_path = os.path.relpath(actual_path, directory) if manifest else ""
+        asset_res = version_to_resource(download_size)
 
         dedup_download = False
         if file_exists:
             if manifest is not None:
                 # Identity-based matching: check manifest for this asset
-                manifest_row = manifest.lookup(photo.id, manifest.zone_id, rel_path)
+                manifest_row = manifest.lookup(photo.id, manifest.zone_id, asset_res)
                 if manifest_row is not None:
                     # Check if this asset actually owns the file
                     rel_path, download_path, file_exists, dedup_suffix = _check_collision(
                         manifest, photo.id, rel_path, download_path, directory, dir_cache, logger,
+                        asset_resource=asset_res,
                     )
                     dedup_download = dedup_suffix is not None and not file_exists
                     if dedup_suffix is None and manifest_row.version_size != version.size:
@@ -1033,6 +1037,7 @@ def download_builder(
                             zone_id=manifest.zone_id,
                             local_path=rel_path,
                             version_size=version.size,
+                            asset_resource=asset_res,
                             **meta,
                         )
                 else:
@@ -1053,6 +1058,7 @@ def download_builder(
                                 zone_id=manifest.zone_id,
                                 local_path=rel_path,
                                 version_size=version.size,
+                                asset_resource=asset_res,
                                 **meta,
                             )
                             logger.debug(
@@ -1069,6 +1075,7 @@ def download_builder(
                             zone_id=manifest.zone_id,
                             local_path=rel_path,
                             version_size=version.size,
+                            asset_resource=asset_res,
                             **meta,
                         )
                         logger.debug(
@@ -1145,6 +1152,7 @@ def download_builder(
                                 zone_id=manifest.zone_id,
                                 local_path=rel_path,
                                 version_size=version.size,
+                                asset_resource=asset_res,
                                 **meta,
                             )
                     logger.info("Downloaded %s", truncated_path)
@@ -1163,6 +1171,7 @@ def download_builder(
     # Also download the live photo if present
     if not skip_live_photos:
         lp_size = live_photo_size
+        lp_res = version_to_resource(lp_size)
         photo_versions_with_policy = photo.versions_with_raw_policy(raw_policy)
         if lp_size in photo_versions_with_policy:
             version = photo_versions_with_policy[lp_size]
@@ -1193,7 +1202,7 @@ def download_builder(
             if only_print_filenames:
                 if lp_file_exists and manifest is not None:
                     # Check if version changed — need to print the filename for re-download
-                    lp_manifest_row = manifest.lookup(photo.id, manifest.zone_id, lp_rel_path)
+                    lp_manifest_row = manifest.lookup(photo.id, manifest.zone_id, lp_res)
                     if lp_manifest_row is not None and lp_manifest_row.version_size != version.size:
                         lp_file_exists = False
                 if not lp_file_exists:
@@ -1212,11 +1221,12 @@ def download_builder(
             else:
                 if lp_file_exists:
                     if manifest is not None:
-                        lp_manifest_row = manifest.lookup(photo.id, manifest.zone_id, lp_rel_path)
+                        lp_manifest_row = manifest.lookup(photo.id, manifest.zone_id, lp_res)
                         if lp_manifest_row is not None:
                             # Check if this asset owns the LP file
                             lp_rel_path, lp_download_path, lp_file_exists, lp_dedup = _check_collision(
                                 manifest, photo.id, lp_rel_path, lp_download_path, directory, dir_cache, logger,
+                                asset_resource=lp_res,
                             )
                             if lp_dedup is not None:
                                 # Collision handled — propagate suffix
@@ -1238,6 +1248,7 @@ def download_builder(
                                     zone_id=manifest.zone_id,
                                     local_path=lp_rel_path,
                                     version_size=version.size,
+                                    asset_resource=lp_res,
                                     **meta,
                                 )
                         else:
@@ -1256,6 +1267,7 @@ def download_builder(
                                         zone_id=manifest.zone_id,
                                         local_path=lp_rel_path,
                                         version_size=version.size,
+                                        asset_resource=lp_res,
                                         **meta,
                                     )
                                     logger.debug(
@@ -1270,6 +1282,7 @@ def download_builder(
                                     zone_id=manifest.zone_id,
                                     local_path=lp_rel_path,
                                     version_size=version.size,
+                                    asset_resource=lp_res,
                                     **meta,
                                 )
                     elif file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
@@ -1308,6 +1321,7 @@ def download_builder(
                                     zone_id=manifest.zone_id,
                                     local_path=lp_rel_path,
                                     version_size=version.size,
+                                    asset_resource=lp_res,
                                     **meta,
                                 )
                         logger.info("Downloaded %s", truncated_path)

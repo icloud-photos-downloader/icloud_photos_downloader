@@ -58,7 +58,7 @@ class TestManifestDB(TestCase):
             gps_longitude=-0.124625,
             gps_altitude=12.5,
         )
-        row = self._db.lookup("ABC123", "PrimarySync", "2024-01/IMG_0001.JPG")
+        row = self._db.lookup("ABC123", "PrimarySync", "resOriginal")
         self.assertIsNotNone(row)
         assert row is not None
         self.assertEqual(row.asset_id, "ABC123")
@@ -83,34 +83,34 @@ class TestManifestDB(TestCase):
         self.assertIsNotNone(row.last_updated_at)
 
     def test_lookup_missing_returns_none(self) -> None:
-        self.assertIsNone(self._db.lookup("MISSING", "z", "x.jpg"))
+        self.assertIsNone(self._db.lookup("MISSING", "z", "resOriginal"))
 
     def test_upsert_updates_existing_row(self) -> None:
         self._db.upsert("ABC", "z", "a.jpg", 100, title="old")
         self._db.upsert("ABC", "z", "a.jpg", 200, title="new")
         self.assertEqual(self._db.count(), 1)
-        row = self._db.lookup("ABC", "z", "a.jpg")
+        row = self._db.lookup("ABC", "z", "resOriginal")
         assert row is not None
         self.assertEqual(row.version_size, 200)
         self.assertEqual(row.title, "new")
 
     def test_last_updated_at_changes_on_update(self) -> None:
         self._db.upsert("ABC", "z", "a.jpg", 100)
-        row1 = self._db.lookup("ABC", "z", "a.jpg")
+        row1 = self._db.lookup("ABC", "z", "resOriginal")
         assert row1 is not None
         import time
         time.sleep(0.01)
         self._db.upsert("ABC", "z", "a.jpg", 100, title="updated")
-        row2 = self._db.lookup("ABC", "z", "a.jpg")
+        row2 = self._db.lookup("ABC", "z", "resOriginal")
         assert row2 is not None
         self.assertEqual(row1.downloaded_at, row1.last_updated_at)
         # last_updated_at should change, downloaded_at should not
         self.assertNotEqual(row1.last_updated_at, row2.last_updated_at)
 
     def test_same_asset_different_paths(self) -> None:
-        """Live photo: one asset produces JPEG + MOV."""
-        self._db.upsert("LIVE1", "z", "2024-01/IMG_0001.JPG", 1000)
-        self._db.upsert("LIVE1", "z", "2024-01/IMG_0001.MOV", 5000)
+        """Live photo: one asset produces JPEG + MOV with different resources."""
+        self._db.upsert("LIVE1", "z", "2024-01/IMG_0001.JPG", 1000, asset_resource="resOriginal")
+        self._db.upsert("LIVE1", "z", "2024-01/IMG_0001.MOV", 5000, asset_resource="resOriginalVidCompl")
         self.assertEqual(self._db.count(), 2)
 
     def test_same_asset_different_zones(self) -> None:
@@ -126,7 +126,7 @@ class TestManifestDB(TestCase):
 
     def test_remove(self) -> None:
         self._db.upsert("ABC", "z", "a.jpg", 100)
-        self._db.remove("ABC", "z", "a.jpg")
+        self._db.remove("ABC", "z", "resOriginal")
         self.assertEqual(self._db.count(), 0)
 
     def test_remove_by_path(self) -> None:
@@ -149,14 +149,14 @@ class TestManifestDB(TestCase):
         self._db.upsert("PERSIST", "z", "p.jpg", 42, title="hello")
         self._db.close()
         self._db.open()
-        row = self._db.lookup("PERSIST", "z", "p.jpg")
+        row = self._db.lookup("PERSIST", "z", "resOriginal")
         assert row is not None
         self.assertEqual(row.version_size, 42)
         self.assertEqual(row.title, "hello")
 
     def test_nullable_metadata_fields(self) -> None:
         self._db.upsert("ABC", "z", "a.jpg", 100)
-        row = self._db.lookup("ABC", "z", "a.jpg")
+        row = self._db.lookup("ABC", "z", "resOriginal")
         assert row is not None
         self.assertIsNone(row.version_checksum)
         self.assertIsNone(row.title)
@@ -167,7 +167,7 @@ class TestManifestDB(TestCase):
     def test_keywords_stored_as_json(self) -> None:
         kw = ["sunset", "beach"]
         self._db.upsert("ABC", "z", "a.jpg", 100, keywords=json.dumps(kw))
-        row = self._db.lookup("ABC", "z", "a.jpg")
+        row = self._db.lookup("ABC", "z", "resOriginal")
         assert row is not None
         assert row.keywords is not None
         self.assertEqual(json.loads(row.keywords), kw)
@@ -216,7 +216,7 @@ class TestManifestMigration(TestCase):
             self.assertIn("idx_manifest_path", index_names)
 
             # Verify old row survived with new columns as defaults
-            row = db.lookup("OLD1", "z", "old.jpg")
+            row = db.lookup("OLD1", "z", "resOriginal")
             assert row is not None
             self.assertEqual(row.asset_id, "OLD1")
             self.assertEqual(row.version_size, 999)
@@ -226,7 +226,7 @@ class TestManifestMigration(TestCase):
 
             # Verify new columns are writable
             db.upsert("NEW1", "z", "new.jpg", 500, title="test", is_favorite=1)
-            row2 = db.lookup("NEW1", "z", "new.jpg")
+            row2 = db.lookup("NEW1", "z", "resOriginal")
             assert row2 is not None
             self.assertEqual(row2.title, "test")
             self.assertEqual(row2.is_favorite, 1)
@@ -318,7 +318,7 @@ class TestManifestV2Migration(TestCase):
 
             # PRAGMA user_version should now be 2
             version = db._db.execute("PRAGMA user_version").fetchone()[0]
-            self.assertEqual(version, 4)
+            self.assertEqual(version, SCHEMA_VERSION)
 
             # All 10 new columns must exist
             cols = {
@@ -496,15 +496,15 @@ class TestManifestDedup(TestCase):
 
     def test_update_path_basic(self) -> None:
         self._db.upsert(asset_id="a1", zone_id="z", local_path="old.jpg", version_size=100)
-        self._db.update_path("a1", "z", "old.jpg", "new.jpg")
-        self.assertIsNone(self._db.lookup("a1", "z", "old.jpg"))
-        result = self._db.lookup("a1", "z", "new.jpg")
+        self._db.update_path("a1", "z", "resOriginal", "new.jpg")
+        result = self._db.lookup("a1", "z", "resOriginal")
         self.assertIsNotNone(result)
         assert result is not None
+        self.assertEqual(result.local_path, "new.jpg")
         self.assertEqual(result.version_size, 100)
 
     def test_update_path_nonexistent(self) -> None:
-        self._db.update_path("missing", "z", "old.jpg", "new.jpg")
+        self._db.update_path("missing", "z", "resOriginal", "new.jpg")
         # No error, no effect
         self.assertIsNone(self._db.lookup_by_path("new.jpg"))
 
@@ -513,8 +513,132 @@ class TestManifestDedup(TestCase):
         self._db.upsert(asset_id="a1", zone_id="z", local_path="shared.jpg", version_size=1)
         self._db.upsert(asset_id="a2", zone_id="z", local_path="shared.jpg", version_size=2)
         owner = self._db.lookup_by_path("shared.jpg")
-        self.assertIsNotNone(owner)
+        assert owner is not None
         self.assertEqual(owner.asset_id, "a1")  # earliest download wins
+
+
+class TestManifestAssetResource(TestCase):
+    """Tests for the asset_resource-based PK (replaces local_path in PK)."""
+
+    def setUp(self) -> None:
+        self._tmpdir = tempfile.mkdtemp()
+        self._db = ManifestDB(self._tmpdir)
+        self._db.open()
+
+    def tearDown(self) -> None:
+        self._db.close()
+        shutil.rmtree(self._tmpdir)
+
+    def test_upsert_with_asset_resource(self) -> None:
+        """asset_resource is stored and retrievable via lookup."""
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="2024-01/IMG.JPG", version_size=1000,
+        )
+        row = self._db.lookup("A1", "z", "resOriginal")
+        assert row is not None
+        self.assertEqual(row.asset_id, "A1")
+        self.assertEqual(row.asset_resource, "resOriginal")
+        self.assertEqual(row.local_path, "2024-01/IMG.JPG")
+
+    def test_same_asset_different_resources(self) -> None:
+        """Live photo: one asset produces photo + video with different resources."""
+        self._db.upsert(
+            asset_id="LIVE1", zone_id="z", asset_resource="resOriginal",
+            local_path="2024-01/IMG_0001.HEIC", version_size=5000,
+        )
+        self._db.upsert(
+            asset_id="LIVE1", zone_id="z", asset_resource="resOriginalVidCompl",
+            local_path="2024-01/IMG_0001_HEVC.MOV", version_size=7000,
+        )
+        self.assertEqual(self._db.count(), 2)
+        photo = self._db.lookup("LIVE1", "z", "resOriginal")
+        video = self._db.lookup("LIVE1", "z", "resOriginalVidCompl")
+        assert photo is not None
+        assert video is not None
+        self.assertEqual(photo.local_path, "2024-01/IMG_0001.HEIC")
+        self.assertEqual(video.local_path, "2024-01/IMG_0001_HEVC.MOV")
+
+    def test_path_change_updates_row_not_duplicates(self) -> None:
+        """Upserting same (asset_id, zone_id, asset_resource) with different local_path
+        updates the row instead of creating a duplicate."""
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="2024-01/old-name.JPG", version_size=1000,
+        )
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="2024-01/new-name.JPG", version_size=1000,
+        )
+        self.assertEqual(self._db.count(), 1)
+        row = self._db.lookup("A1", "z", "resOriginal")
+        assert row is not None
+        self.assertEqual(row.local_path, "2024-01/new-name.JPG")
+
+    def test_path_change_preserves_metadata(self) -> None:
+        """All metadata is preserved when local_path changes via upsert."""
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="old.jpg", version_size=1000,
+            title="My Photo", gps_latitude=-33.8688, orientation=6,
+        )
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="new.jpg", version_size=1000,
+            title="My Photo", gps_latitude=-33.8688, orientation=6,
+        )
+        row = self._db.lookup("A1", "z", "resOriginal")
+        assert row is not None
+        self.assertEqual(row.local_path, "new.jpg")
+        self.assertEqual(row.title, "My Photo")
+        assert row.gps_latitude is not None
+        self.assertAlmostEqual(row.gps_latitude, -33.8688, places=4)
+        self.assertEqual(row.orientation, 6)
+
+    def test_all_resource_slot_types(self) -> None:
+        """All 8 Apple resource slot types can be stored and retrieved."""
+        resources = [
+            "resOriginal", "resOriginalAlt", "resJPEGFull",
+            "resJPEGMed", "resJPEGThumb",
+            "resOriginalVidCompl", "resVidMed", "resVidSmall",
+        ]
+        for i, res in enumerate(resources):
+            self._db.upsert(
+                asset_id="MULTI", zone_id="z", asset_resource=res,
+                local_path=f"2024-01/file_{i}.dat", version_size=i * 100,
+            )
+        self.assertEqual(self._db.count(), 8)
+        for i, res in enumerate(resources):
+            row = self._db.lookup("MULTI", "z", res)
+            assert row is not None, f"Missing row for {res}"
+            self.assertEqual(row.asset_resource, res)
+            self.assertEqual(row.version_size, i * 100)
+
+    def test_lookup_uses_asset_resource_not_path(self) -> None:
+        """lookup() uses asset_resource as identity, not local_path."""
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="photo.jpg", version_size=1000,
+        )
+        # Looking up with wrong resource returns None even though asset_id matches
+        self.assertIsNone(self._db.lookup("A1", "z", "resOriginalVidCompl"))
+        # Looking up with correct resource works
+        self.assertIsNotNone(self._db.lookup("A1", "z", "resOriginal"))
+
+    def test_remove_uses_asset_resource(self) -> None:
+        """remove() identifies rows by (asset_id, zone_id, asset_resource)."""
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
+            local_path="photo.jpg", version_size=1000,
+        )
+        self._db.upsert(
+            asset_id="A1", zone_id="z", asset_resource="resOriginalVidCompl",
+            local_path="video.mov", version_size=5000,
+        )
+        self._db.remove("A1", "z", "resOriginal")
+        self.assertEqual(self._db.count(), 1)
+        self.assertIsNone(self._db.lookup("A1", "z", "resOriginal"))
+        self.assertIsNotNone(self._db.lookup("A1", "z", "resOriginalVidCompl"))
 
 class TestManifestJournalMode(TestCase):
     """Tests for DELETE journal mode (replacing WAL)."""
@@ -539,7 +663,7 @@ class TestManifestJournalMode(TestCase):
     def test_no_wal_shm_files_created(self) -> None:
         db_path = os.path.join(self._tmpdir, ".icloudpd.db")
         self._db.upsert(
-            asset_id="A1", zone_id="z",
+            asset_id="A1", zone_id="z", asset_resource="resOriginal",
             local_path="test.jpg", version_size=100,
         )
         self._db.flush()
@@ -558,7 +682,7 @@ class TestManifestJournalMode(TestCase):
 
     def test_data_survives_wal_to_delete_conversion(self) -> None:
         self._db.upsert(
-            asset_id="X", zone_id="z",
+            asset_id="X", zone_id="z", asset_resource="resOriginal",
             local_path="x.jpg", version_size=100, title="survive",
         )
         self._db.close()
@@ -566,6 +690,6 @@ class TestManifestJournalMode(TestCase):
         conn.execute("PRAGMA journal_mode=WAL")
         conn.close()
         self._db.open()
-        row = self._db.lookup("X", "z")
+        row = self._db.lookup("X", "z", "resOriginal")
         assert row is not None
         self.assertEqual(row.title, "survive")

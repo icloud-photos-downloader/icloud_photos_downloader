@@ -10,6 +10,7 @@ XMP are independent — XMP generation does not read from the DB.
 The manifest lives at {download_dir}/.icloudpd.db and travels with the library.
 """
 
+import contextlib
 import logging
 import os
 import sqlite3
@@ -25,6 +26,7 @@ _FRESH_SCHEMA = """\
 CREATE TABLE IF NOT EXISTS manifest (
     asset_id TEXT NOT NULL,
     zone_id TEXT NOT NULL DEFAULT '',
+    asset_resource TEXT NOT NULL DEFAULT 'resOriginal',
     local_path TEXT NOT NULL,
     version_size INTEGER NOT NULL,
     version_checksum TEXT,
@@ -88,6 +90,7 @@ class ManifestRow:
 
     asset_id: str
     zone_id: str
+    asset_resource: str
     local_path: str
     version_size: int
     version_checksum: str | None
@@ -125,7 +128,7 @@ class ManifestRow:
 
 
 _ALL_COLUMNS = (
-    "asset_id, zone_id, local_path, version_size, version_checksum, "
+    "asset_id, zone_id, asset_resource, local_path, version_size, version_checksum, "
     "change_tag, downloaded_at, last_updated_at, item_type, filename, "
     "asset_date, added_date, is_favorite, is_hidden, is_deleted, "
     "original_width, original_height, duration, orientation, "
@@ -224,6 +227,7 @@ class ManifestDB:
                 self._conn.execute(f"ALTER TABLE manifest ADD COLUMN {col_name} {col_def}")  # type: ignore[union-attr]
         logger.info("Migrated manifest DB from v0 to v%d (%d columns added)",
                      SCHEMA_VERSION, sum(1 for c, _ in new_columns if c not in existing))
+        self._rebuild_pk()
         self._conn.execute(  # type: ignore[union-attr]
             "CREATE INDEX IF NOT EXISTS idx_manifest_path ON manifest(local_path)"
         )
@@ -232,9 +236,27 @@ class ManifestDB:
         """Run incremental migrations from from_version to SCHEMA_VERSION."""
         for version, sql in _MIGRATIONS:
             if version > from_version:
-                self._conn.execute(sql)  # type: ignore[union-attr]
+                with contextlib.suppress(sqlite3.OperationalError):
+                    self._conn.execute(sql)  # type: ignore[union-attr]
+        if from_version < 3:
+            self._rebuild_pk()
         self._conn.execute(f"PRAGMA user_version={SCHEMA_VERSION}")  # type: ignore[union-attr]
         self._conn.commit()  # type: ignore[union-attr]
+
+    def _rebuild_pk(self) -> None:
+        """Rebuild the manifest table with the correct PK (asset_id, zone_id, asset_resource)."""
+        conn = self._conn
+        assert conn is not None
+        conn.execute("ALTER TABLE manifest RENAME TO manifest_old")
+        conn.executescript(_FRESH_SCHEMA)
+        # Copy data, keeping only one row per (asset_id, zone_id, asset_resource)
+        cols = _ALL_COLUMNS
+        conn.execute(
+            f"INSERT OR IGNORE INTO manifest ({cols}) "
+            f"SELECT {cols} FROM manifest_old"
+        )
+        conn.execute("DROP TABLE manifest_old")
+        conn.commit()
 
     def close(self) -> None:
         """Close the manifest DB, committing any pending writes."""
@@ -272,12 +294,12 @@ class ManifestDB:
     def __exit__(self, *_: object) -> None:
         self.close()
 
-    def lookup(self, asset_id: str, zone_id: str, local_path: str) -> ManifestRow | None:
+    def lookup(self, asset_id: str, zone_id: str, asset_resource: str) -> ManifestRow | None:
         """Look up a manifest entry by identity."""
         row = self._db.execute(
             f"SELECT {_ALL_COLUMNS} FROM manifest "
-            "WHERE asset_id = ? AND zone_id = ? AND local_path = ?",
-            (asset_id, zone_id, local_path),
+            "WHERE asset_id = ? AND zone_id = ? AND asset_resource = ?",
+            (asset_id, zone_id, asset_resource),
         ).fetchone()
         if row is None:
             return None
@@ -300,6 +322,7 @@ class ManifestDB:
         zone_id: str,
         local_path: str,
         version_size: int,
+        asset_resource: str = "resOriginal",
         version_checksum: str | None = None,
         change_tag: str | None = None,
         item_type: str | None = None,
@@ -333,7 +356,7 @@ class ManifestDB:
         """Insert or update a manifest entry. Auto-flushes every 500 writes."""
         now = datetime.now(tz=timezone.utc).isoformat()
         params = (
-            asset_id, zone_id, local_path, version_size, version_checksum,
+            asset_id, zone_id, asset_resource, local_path, version_size, version_checksum,
             change_tag, now, now, item_type, filename,
             asset_date, added_date, is_favorite, is_hidden, is_deleted,
             original_width, original_height, duration, orientation,
@@ -402,21 +425,21 @@ class ManifestDB:
                 logger.warning("Manifest write failed for %s: %s", local_path, e)
                 return
 
-    def update_path(self, asset_id: str, zone_id: str, old_path: str, new_path: str) -> None:
+    def update_path(self, asset_id: str, zone_id: str, asset_resource: str, new_path: str) -> None:
         """Update local_path for an existing manifest entry."""
         try:
             self._db.execute(
                 "UPDATE manifest SET local_path = ?, last_updated_at = ? "
-                "WHERE asset_id = ? AND zone_id = ? AND local_path = ?",
+                "WHERE asset_id = ? AND zone_id = ? AND asset_resource = ?",
                 (new_path, datetime.now(tz=timezone.utc).isoformat(),
-                 asset_id, zone_id, old_path),
+                 asset_id, zone_id, asset_resource),
             )
             self._dirty = True
             self._pending_count += 1
         except sqlite3.Error as e:
             logger.warning(
                 "Manifest path update failed for %s -> %s: %s",
-                old_path, new_path, e,
+                asset_resource, new_path, e,
             )
 
     def update_file_mtime(
@@ -434,20 +457,6 @@ class ManifestDB:
         except sqlite3.Error as e:
             logger.warning("Manifest mtime update failed: %s", e)
 
-    def clear_file_mtime(
-        self, asset_id: str, zone_id: str, asset_resource: str
-    ) -> None:
-        """Clear file_mtime (e.g. after re-download invalidates cached metadata)."""
-        try:
-            self._db.execute(
-                "UPDATE manifest SET file_mtime = NULL "
-                "WHERE asset_id = ? AND zone_id = ? AND asset_resource = ?",
-                (asset_id, zone_id, asset_resource),
-            )
-            self._dirty = True
-        except sqlite3.Error as e:
-            logger.warning("Manifest mtime clear failed: %s", e)
-
     def count_by_path(self, local_path: str) -> int:
         """Count how many manifest entries reference a given local path."""
         row = self._db.execute(
@@ -456,11 +465,11 @@ class ManifestDB:
         ).fetchone()
         return row[0] if row else 0
 
-    def remove(self, asset_id: str, zone_id: str, local_path: str) -> None:
+    def remove(self, asset_id: str, zone_id: str, asset_resource: str) -> None:
         """Remove a manifest entry."""
         self._db.execute(
-            "DELETE FROM manifest WHERE asset_id = ? AND zone_id = ? AND local_path = ?",
-            (asset_id, zone_id, local_path),
+            "DELETE FROM manifest WHERE asset_id = ? AND zone_id = ? AND asset_resource = ?",
+            (asset_id, zone_id, asset_resource),
         )
         self._dirty = True
 
