@@ -1403,6 +1403,57 @@ def asset_type_skip_message(
     return f"Skipping {filename}, only downloading {photo_video_phrase}. (Item type was: {photo.item_type})"
 
 
+def delete_orphaned(
+    logger: logging.Logger,
+    manifest: "ManifestDB",
+    directory: str,
+    seen_asset_ids: set[str],
+    delete: bool,
+    dry_run: bool,
+) -> None:
+    """Check for orphaned manifest entries and optionally delete them."""
+    orphans = manifest.find_orphaned(seen_asset_ids)
+    if not orphans:
+        return
+
+    orphan_count = len(orphans)
+    unique_assets = len({o.asset_id for o in orphans})
+
+    if not delete:
+        logger.warning(
+            "Found %d orphaned files (%d assets) not in iCloud library. "
+            "Use --delete-orphaned to clean up.",
+            orphan_count,
+            unique_assets,
+        )
+        return
+
+    logger.info(
+        "Deleting %d orphaned files (%d assets) not in iCloud library...",
+        orphan_count,
+        unique_assets,
+    )
+    deleted = 0
+    for orphan in orphans:
+        file_path = os.path.join(directory, orphan.local_path)
+        xmp_path = file_path + ".xmp"
+        if dry_run:
+            logger.info("[DRY RUN] Would delete orphaned %s", file_path)
+        else:
+            for path in (file_path, xmp_path):
+                if os.path.exists(path):
+                    try:
+                        os.remove(path)
+                        logger.info("Deleted orphaned %s", path)
+                    except OSError as e:
+                        logger.warning("Failed to delete %s: %s", path, e)
+            manifest.remove(orphan.asset_id, orphan.zone_id, orphan.asset_resource)
+            deleted += 1
+    if not dry_run:
+        manifest.flush()
+        logger.info("Orphan cleanup complete: %d entries removed", deleted)
+
+
 def core_single_run(
     logger: logging.Logger,
     status_exchange: StatusExchange,
@@ -1523,6 +1574,8 @@ def core_single_run(
                         return sum(inp)
 
                     photos_count: int | None = compose(sum_, album_lengths)(albums)
+                    seen_asset_ids: set[str] = set()
+                    iteration_complete = False
                     for photo_album in albums:
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
@@ -1607,6 +1660,7 @@ def core_single_run(
 
                         for item in photos_bar:
                             try:
+                                seen_asset_ids.add(item.id)
                                 if should_break(consecutive_files_found):
                                     logger.info(
                                         "Found %s consecutive previously downloaded photos. Exiting",
@@ -1712,6 +1766,8 @@ def core_single_run(
                         if manifest is not None:
                             manifest.flush()
 
+                    iteration_complete = not status_exchange.get_progress().cancel
+
                     if user_config.auto_delete:
                         autodelete_photos(
                             logger,
@@ -1726,6 +1782,16 @@ def core_single_run(
                         )
                     else:
                         pass
+
+                    if manifest is not None and iteration_complete:
+                        delete_orphaned(
+                            logger,
+                            manifest,
+                            directory,
+                            seen_asset_ids,
+                            delete=user_config.delete_orphaned,
+                            dry_run=user_config.dry_run,
+                        )
         except PyiCloudFailedLoginException as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)

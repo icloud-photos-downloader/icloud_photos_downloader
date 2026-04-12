@@ -485,3 +485,18 @@ class ManifestDB:
         """Return the total number of manifest entries."""
         row = self._db.execute("SELECT COUNT(*) FROM manifest").fetchone()
         return row[0] if row else 0
+
+    def find_orphaned(self, seen_asset_ids: set[str]) -> list[ManifestRow]:
+        """Return manifest rows whose asset_id is not in the seen set."""
+        all_rows = self._db.execute(
+            "SELECT * FROM manifest"
+        ).fetchall()
+        col_names = [desc[0] for desc in self._db.execute(
+            "SELECT * FROM manifest LIMIT 0"
+        ).description or []]
+        orphans: list[ManifestRow] = []
+        for row in all_rows:
+            row_dict = dict(zip(col_names, row, strict=False))
+            if row_dict["asset_id"] not in seen_asset_ids:
+                orphans.append(ManifestRow(**row_dict))
+        return orphans

@@ -148,6 +148,12 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--delete-orphaned",
+        help="Delete local files that are no longer in the iCloud library "
+        + "(e.g. deleted from iCloud or moved to another library).",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--folder-structure",
         help="Folder structure. If set to `none`, all photos will be placed into the download directory. Default: %(default)s",
         default="{:%Y/%m/%d}",
@@ -545,6 +551,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_live_photos=user_ns.skip_live_photos,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
+        delete_orphaned=user_ns.delete_orphaned,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
         write_metadata_xmp=write_metadata_xmp,

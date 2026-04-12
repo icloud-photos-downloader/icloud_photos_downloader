@@ -29,6 +29,7 @@ class _DefaultConfig:
     skip_live_photos: bool
     force_size: bool
     auto_delete: bool
+    delete_orphaned: bool
     folder_structure: str
     set_exif_datetime: bool
     write_metadata_xmp: frozenset[str]
