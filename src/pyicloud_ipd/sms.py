@@ -65,9 +65,10 @@ def parse_trusted_phone_numbers_payload(content: str) -> Sequence[TrustedDevice]
     parser = _SMSParser()
     parser.feed(content)
     parser.close()
+    two_sv = parser.sms_data.get("direct", {}).get("twoSV", {})
     numbers: Sequence[Mapping[str, Any]] = (
-        parser.sms_data.get("direct", {})
-        .get("twoSV", {})
+        two_sv.get("phoneNumberVerification", {}).get("trustedPhoneNumbers", [])
+        or two_sv.get("bridgeInitiateData", {})
         .get("phoneNumberVerification", {})
         .get("trustedPhoneNumbers", [])
     )

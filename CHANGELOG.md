@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: parse SMS trusted phone numbers from Apple's `bridgeInitiateData` payload
+
 ## 1.32.2 (2025-09-01)
 
 - fix: HTTP response content not captured for authentication and non-streaming requests [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)

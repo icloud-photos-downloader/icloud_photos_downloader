@@ -202,6 +202,13 @@ class AuthenticationTestCase(TestCase):
         self.assertEqual(1, len(result), "number of numbers parsed")
         self.assertEqual(expected, result[0], "parsed number")
 
+    def test_parse_trusted_phone_numbers_payload_bridge_initiate_data(self) -> None:
+        html = '<script type="application/json" class="boot_args">{"direct":{"twoSV":{"bridgeInitiateData":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]}},"authInitialRoute":"auth/verify/phone"}}}</script>'  # noqa: E501
+        expected = _TrustedDevice(id=1, obfuscated_number="(***) ***-**81")
+        result = parse_trusted_phone_numbers_payload(html)
+        self.assertEqual(1, len(result), "number of numbers parsed")
+        self.assertEqual(expected, result[0], "parsed number")
+
     def test_parse_trusted_phone_numbers_payload_missing_node0(self) -> None:
         html = '<script type="application/json" class="boot_args">{"MISSINGdirect":{"twoSV":{"phoneNumberVerification":{"trustedPhoneNumbers":[{"numberWithDialCode":"+1 (•••) •••-••81","pushMode":"sms","obfuscatedNumber":"(•••) •••-••81","lastTwoDigits":"81","id":1}]},"authInitialRoute":"auth/verify/phone"}}}</script>'  # noqa: E501
         result = parse_trusted_phone_numbers_payload(html)
