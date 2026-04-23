@@ -1,13 +1,15 @@
-# !!!! [Looking for MAINTAINER for this project](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1305) !!!!
-
 # iCloud Photos Downloader [![Quality Checks](https://github.com/icloud-photos-downloader/icloud_photos_downloader/workflows/Quality%20Checks/badge.svg)](https://github.com/icloud-photos-downloader/icloud_photos_downloader/actions/workflows/quality-checks.yml) [![Build and Package](https://github.com/icloud-photos-downloader/icloud_photos_downloader/workflows/Produce%20Artifacts/badge.svg)](https://github.com/icloud-photos-downloader/icloud_photos_downloader/actions/workflows/produce-artifacts.yml) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-- A command-line tool to download all your iCloud photos.
+A command-line tool to download all your iCloud photos.
+
 - Works on Linux, Windows, and macOS; laptop, desktop, and NAS
 - Available as an executable for direct downloading and through package managers/ecosystems ([Docker](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#docker), [PyPI](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#pypi), [AUR](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#aur), [npm](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#npm))
-- Developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md)). 
+- Developed and maintained by volunteers (we are always looking for [help](CONTRIBUTING.md))
 
-See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details. Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues)
+See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details. Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues).
+
+> [!IMPORTANT]
+> The project is currently looking for a maintainer. See [issue #1305](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1305).
 
 We aim to release new versions once a week (Friday), if there is something worth delivering.
 
