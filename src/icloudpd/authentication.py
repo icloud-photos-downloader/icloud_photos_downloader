@@ -152,6 +152,17 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
 def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     """Request two-factor authentication."""
     devices = icloud.get_trusted_phone_numbers()
+    
+    # Trigger push notification to trusted devices
+    try:
+        if icloud.trigger_push_notification():
+            logger.debug("Push notification triggered successfully")
+        else:
+            logger.debug("Failed to trigger push notification")
+    except Exception as e:
+        logger.debug(f"Exception while triggering push notification: {e}")
+    
+
     devices_count = len(devices)
     device_index_alphabet = "abcdefghijklmnopqrstuvwxyz"
     if devices_count > 0:
