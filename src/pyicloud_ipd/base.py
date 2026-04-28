@@ -85,7 +85,7 @@ class PyiCloudService:
         verify: bool = True,
         client_id: str | None = None,
         with_family: bool = True,
-        http_timeout: float = 30.0,
+        http_timeout: float = 120.0,
     ):
         self.apple_id = apple_id
         self.password_provider: Callable[[], str | None] = password_provider
@@ -867,7 +867,13 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params)
+            try:
+                sharedstreams_service_root = self._get_webservice_url("sharedstreams")
+            except PyiCloudServiceNotActivatedException:
+                sharedstreams_service_root = None
+            self._photos = PhotosService(
+                service_root, self.session, self.params, sharedstreams_service_root
+            )
         return self._photos
 
     def __unicode__(self) -> str:
