@@ -928,24 +928,39 @@ def core_single_run(
             elif user_config.list_libraries:
                 library_names = (
                     icloud.photos.private_libraries.keys() | icloud.photos.shared_libraries.keys()
-                )
+                ) | icloud.photos.shared_album_libraries.keys()
                 print(*library_names, sep="\n")
                 return 0
 
             else:
                 # Access to the selected library. Defaults to the primary photos object.
+                library_object: Any
                 if user_config.library:
                     if user_config.library in icloud.photos.private_libraries:
-                        library_object: PhotoLibrary = icloud.photos.private_libraries[
-                            user_config.library
-                        ]
+                        library_object = icloud.photos.private_libraries[user_config.library]
                     elif user_config.library in icloud.photos.shared_libraries:
                         library_object = icloud.photos.shared_libraries[user_config.library]
+                    elif user_config.library in icloud.photos.shared_album_libraries:
+                        library_object = icloud.photos.shared_album_libraries[user_config.library]
                     else:
                         logger.error("Unknown library: %s", user_config.library)
                         return 1
                 else:
                     library_object = icloud.photos
+
+                is_shared_album_library = (
+                    user_config.library in icloud.photos.shared_album_libraries
+                )
+
+                if is_shared_album_library and (
+                    user_config.auto_delete
+                    or user_config.delete_after_download
+                    or user_config.keep_icloud_recent_days is not None
+                ):
+                    logger.error(
+                        "--auto-delete, --delete-after-download, and --keep-icloud-recent-days are not supported for shared albums"
+                    )
+                    return 2
 
                 if user_config.list_albums:
                     print("Albums:")
@@ -974,11 +989,20 @@ def core_single_run(
 
                     logger.debug(f"Looking up all {photo_video_phrase}{album_phrase}...")
 
-                    albums: Iterable[PhotoAlbum] = (
-                        list(map_(library_object.albums.__getitem__, user_config.albums))
-                        if len(user_config.albums) > 0
-                        else [library_object.all]
-                    )
+                    if len(user_config.albums) > 0:
+                        available_albums = library_object.albums
+                        missing = [a for a in user_config.albums if a not in available_albums]
+                        if missing:
+                            logger.error(
+                                "Unknown album(s): %s. Use --list-albums to see available albums.",
+                                ", ".join(missing),
+                            )
+                            return 1
+                        albums: Iterable[PhotoAlbum] = [
+                            available_albums[a] for a in user_config.albums
+                        ]
+                    else:
+                        albums = [library_object.all]
                     album_lengths: Callable[[Iterable[PhotoAlbum]], Iterable[int]] = partial_1_1(
                         map_, len
                     )

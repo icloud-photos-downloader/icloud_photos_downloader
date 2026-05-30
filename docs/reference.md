@@ -57,6 +57,11 @@ This is a list of all options available for the command line interface (CLI) of 
     Shared library support added for iOS 16 shared libraries
     ```
 
+    iCloud Shared Albums are exposed through a pseudo-library named `SharedAlbums`.
+    Use `--library SharedAlbums --list-albums` to list them and
+    `--library SharedAlbums --album X` to download a specific shared album.
+    Shared Albums are read-only; options that delete from iCloud are not supported.
+
 (list-libraries-parameter)=
 `--list-libraries`
     
@@ -65,6 +70,8 @@ This is a list of all options available for the command line interface (CLI) of 
     ```{versionadded} 1.16.0
     Shared library support added for iOS 16 shared libraries
     ``` 
+
+    If the account has the Shared Albums service, `SharedAlbums` is included in this list.
 
 (watch-with-interval-parameter)=
 `--watch-with-interval X`

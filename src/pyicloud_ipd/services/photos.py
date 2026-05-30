@@ -5,7 +5,7 @@ import logging
 import re
 import typing
 from datetime import datetime
-from typing import Any, Callable, Dict, Generator, Sequence, Tuple, cast
+from typing import Any, Callable, Dict, Generator, Iterable, Sequence, Tuple, cast
 from urllib.parse import urlencode
 
 import pytz
@@ -397,13 +397,23 @@ class PhotosService(PhotoLibrary):
     This also acts as a way to access the user's primary library.
     """
 
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any]):
+    SHARED_ALBUMS_LIBRARY_NAME = "SharedAlbums"
+
+    def __init__(
+        self,
+        service_root: str,
+        session: PyiCloudSession,
+        params: Dict[str, Any],
+        sharedstreams_service_root: str | None = None,
+    ):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
+        self._sharedstreams_service_root = sharedstreams_service_root
 
         self._private_libraries: Dict[str, PhotoLibrary] | None = None
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
+        self._shared_album_libraries: Dict[str, SharedStreamsLibrary] | None = None
 
         self.params.update({"remapEnums": True, "getCurrentSyncToken": True})
 
@@ -434,6 +444,23 @@ class PhotosService(PhotoLibrary):
 
         return self._shared_libraries
 
+    @property
+    def shared_album_libraries(self) -> Dict[str, "SharedStreamsLibrary"]:
+        if self._shared_album_libraries is None:
+            if self._sharedstreams_service_root is None:
+                self._shared_album_libraries = {}
+            else:
+                self._shared_album_libraries = {
+                    self.SHARED_ALBUMS_LIBRARY_NAME: SharedStreamsLibrary(
+                        self._sharedstreams_service_root,
+                        self.params,
+                        self.session,
+                        self.SHARED_ALBUMS_LIBRARY_NAME,
+                    )
+                }
+
+        return self._shared_album_libraries
+
     def _fetch_libraries(self, library_type: str) -> Dict[str, PhotoLibrary]:
         try:
             libraries = {}
@@ -462,6 +489,171 @@ class PhotosService(PhotoLibrary):
 
     def get_service_endpoint(self, library_type: str) -> str:
         return f"{self._service_root}/database/1/com.apple.photos.cloud/production/{library_type}"
+
+
+def sharedstreams_params(params: Dict[str, Any]) -> Dict[str, Any]:
+    sharedstreams_param_keys = (
+        "clientBuildNumber",
+        "clientMasteringNumber",
+        "clientId",
+        "dsid",
+    )
+    return {key: params[key] for key in sharedstreams_param_keys if key in params}
+
+
+class SharedStreamsLibrary:
+    def __init__(
+        self,
+        service_root: str,
+        params: Dict[str, Any],
+        session: Session,
+        name: str,
+    ):
+        self.name = name
+        self.service_endpoint = service_root
+        self.params = sharedstreams_params(params)
+        self.session = session
+        self._albums: Dict[str, SharedStreamAlbum] | None = None
+
+    @property
+    def albums(self) -> Dict[str, "SharedStreamAlbum"]:
+        if self._albums is None:
+            self._albums = {}
+            for album in self._fetch_albums():
+                shared_album = SharedStreamAlbum(self.params, self.session, album)
+                self._albums[shared_album.name] = shared_album
+
+        return self._albums
+
+    @property
+    def all(self) -> "CombinedSharedStreamAlbum":
+        return CombinedSharedStreamAlbum(self.albums.values())
+
+    def _fetch_albums(self) -> Sequence[Dict[str, Any]]:
+        url = f"{self.service_endpoint}/{self.params['dsid']}/sharedstreams/webgetalbumslist?{urlencode(self.params)}"
+        request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
+        response = request.json()
+        return typing.cast(Sequence[Dict[str, Any]], response.get("albums", []))
+
+    def __unicode__(self) -> str:
+        return self.name
+
+    def __str__(self) -> str:
+        return self.__unicode__()
+
+
+class CombinedSharedStreamAlbum:
+    def __init__(self, albums: Iterable["SharedStreamAlbum"]):
+        self.name = ""
+        self.albums = list(albums)
+
+    @property
+    def title(self) -> str:
+        return self.name
+
+    def __iter__(self) -> Generator["PhotoAsset", Any, None]:
+        for album in self.albums:
+            yield from album
+
+    def __len__(self) -> int:
+        return sum(len(album) for album in self.albums)
+
+    def increment_offset(self, _value: int) -> None:
+        return None
+
+
+class SharedStreamAlbum:
+    def __init__(
+        self,
+        params: Dict[str, Any],
+        session: Session,
+        album: Dict[str, Any],
+        page_size: int = 100,
+    ):
+        self.params = params
+        self.session = session
+        self.album = album
+        self.page_size = page_size
+        self.offset = 0
+        self._asset_count: int | None = None
+
+        attributes = album.get("attributes", {})
+        self.name = typing.cast(str, attributes.get("name") or album["albumguid"])
+        self.album_guid = typing.cast(str, album["albumguid"])
+        self.album_ctag = typing.cast(str | None, album.get("albumctag"))
+        self.album_location = typing.cast(str, album["albumlocation"]).rstrip("/")
+
+    @property
+    def title(self) -> str:
+        return self.name
+
+    def __iter__(self) -> Generator["PhotoAsset", Any, None]:
+        return self.photos
+
+    def __len__(self) -> int:
+        if self._asset_count is None:
+            url = f"{self.album_location}/webgetassetcount?{urlencode(self.params)}"
+            request = self.session.post(
+                url,
+                data=json.dumps({"albumguid": self.album_guid}),
+                headers={"Content-type": "text/plain"},
+            )
+            response = request.json()
+            self._asset_count = int(response["albumassetcount"])
+
+        return self._asset_count
+
+    def photos_request(self) -> Response:
+        end_offset = min(self.offset + self.page_size, len(self))
+        payload: Dict[str, Any] = {
+            "albumguid": self.album_guid,
+            "offset": str(self.offset),
+            "limit": str(end_offset),
+        }
+        if self.album_ctag is not None:
+            payload["albumctag"] = self.album_ctag
+
+        url = f"{self.album_location}/webgetassets?{urlencode(self.params)}"
+        return self.session.post(
+            url,
+            data=json.dumps(payload),
+            headers={"Content-type": "text/plain"},
+        )
+
+    @property
+    def photos(self) -> Generator["PhotoAsset", Any, None]:
+        while self.offset < len(self):
+            request = self.photos_request()
+            response = request.json()
+
+            asset_records = {}
+            master_records = []
+            for rec in response["records"]:
+                if rec["recordType"] == "CPLAsset":
+                    master_id = rec["fields"]["masterRef"]["value"]["recordName"]
+                    asset_records[master_id] = rec
+                elif rec["recordType"] == "CPLMaster":
+                    master_records.append(rec)
+
+            if not master_records:
+                break
+
+            for master_record in master_records:
+                record_name = master_record["recordName"]
+                yield PhotoAsset(master_record, asset_records[record_name])
+                self.increment_offset(1)
+
+    def increment_offset(self, value: int) -> None:
+        self.offset += value
+
+    def __unicode__(self) -> str:
+        return self.title
+
+    def __str__(self) -> str:
+        return self.__unicode__()
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__}: '{self}'>"
 
 
 class PhotoAlbum:
@@ -733,6 +925,7 @@ class PhotoAsset:
         "public.heif": AssetItemType.IMAGE,
         "public.jpeg": AssetItemType.IMAGE,
         "public.png": AssetItemType.IMAGE,
+        "public.mpeg-4": AssetItemType.MOVIE,
         "com.apple.quicktime-movie": AssetItemType.MOVIE,
         "com.adobe.raw-image": AssetItemType.IMAGE,
         "com.canon.cr2-raw-image": AssetItemType.IMAGE,
@@ -769,6 +962,17 @@ class PhotoAsset:
     def id(self) -> str:
         return typing.cast(str, self._master_record["recordName"])
 
+    def _master_field_value(self, key: str) -> Any:
+        return self._master_record["fields"][key]["value"]
+
+    def _item_type_value(self) -> str | None:
+        fields = self._master_record["fields"]
+        if "itemType" in fields and "value" in fields["itemType"]:
+            return typing.cast(str, fields["itemType"]["value"])
+        if "resOriginalFileType" in fields and "value" in fields["resOriginalFileType"]:
+            return typing.cast(str, fields["resOriginalFileType"]["value"])
+        return None
+
     def calculate_filename(self) -> str | None:
         """
         Calculate the raw filename for this asset from filenameEnc if present.
@@ -794,7 +998,7 @@ class PhotoAsset:
                 def _internal(type: str) -> Callable[[str], str]:
                     if type == "STRING":
                         return string_parser
-                    elif type == "ENCRYPTED_BYTES":
+                    elif type in ("BYTES", "ENCRYPTED_BYTES"):
                         return base64_parser
                     else:
                         raise ValueError(f"Unsupported filename encoding {type}")
@@ -842,7 +1046,10 @@ class PhotoAsset:
 
     @property
     def size(self) -> int:
-        return typing.cast(int, self._master_record["fields"]["resOriginalRes"]["value"]["size"])
+        size = typing.cast(int, self._master_record["fields"]["resOriginalRes"]["value"]["size"])
+        if size == 0 and "resOriginalFileSize" in self._master_record["fields"]:
+            return typing.cast(int, self._master_field_value("resOriginalFileSize"))
+        return size
 
     @property
     def created(self) -> datetime:
@@ -863,7 +1070,18 @@ class PhotoAsset:
                 self._asset_record["fields"]["assetDate"]["value"] / 1000.0, tz=pytz.utc
             )
         except (KeyError, TypeError, ValueError):
-            dt = datetime.fromtimestamp(0)
+            try:
+                dt = datetime.fromtimestamp(
+                    self._master_record["fields"]["originalCreationDate"]["value"] / 1000.0,
+                    tz=pytz.utc,
+                )
+            except (KeyError, TypeError, ValueError):
+                try:
+                    dt = datetime.fromtimestamp(
+                        self._asset_record["fields"]["addedDate"]["value"] / 1000.0, tz=pytz.utc
+                    )
+                except (KeyError, TypeError, ValueError):
+                    dt = datetime.fromtimestamp(0)
         return dt
 
     @property
@@ -882,15 +1100,9 @@ class PhotoAsset:
 
     @property
     def item_type(self) -> AssetItemType | None:
-        fields = self._master_record["fields"]
-        if "itemType" not in fields:
-            # raise ValueError(f"Cannot find itemType in {fields!r}")
+        item_type = self._item_type_value()
+        if item_type is None:
             return None
-        item_type_field = fields["itemType"]
-        if "value" not in item_type_field:
-            # raise ValueError(f"Cannot find value in itemType {item_type_field!r}")
-            return None
-        item_type = item_type_field["value"]
         if item_type in self.ITEM_TYPES:
             return self.ITEM_TYPES[item_type]
         from foundation.core import compose
@@ -904,10 +1116,9 @@ class PhotoAsset:
 
     @property
     def item_type_extension(self) -> str:
-        fields = self._master_record["fields"]
-        if "itemType" not in fields or "value" not in fields["itemType"]:
+        item_type = self._item_type_value()
+        if item_type is None:
             return "unknown"
-        item_type = self._master_record["fields"]["itemType"]["value"]
         if item_type in ITEM_TYPE_EXTENSIONS:
             return ITEM_TYPE_EXTENSIONS[item_type]
         return "unknown"
@@ -950,6 +1161,8 @@ class PhotoAsset:
                     size_entry = f.get(f"{prefix}Res")
                     if size_entry:
                         size = size_entry["value"]["size"]
+                        if size == 0:
+                            size = f.get(f"{prefix}FileSize", {}).get("value", 0)
                         url = size_entry["value"]["downloadURL"]
                         checksum = size_entry["value"]["fileChecksum"]
                     else:
