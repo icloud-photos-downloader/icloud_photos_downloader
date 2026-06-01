@@ -15,7 +15,7 @@ from tzlocal import get_localzone
 from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException, PyiCloudConnectionErrorException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
@@ -156,6 +156,28 @@ def download_media(
                     size.value,
                 )
                 break
+
+        except PyiCloudConnectionErrorException as ex:
+            # Connection error - retry with backoff, then skip if still failing
+            # Use at least 3 retries for connection errors regardless of MAX_RETRIES setting
+            connection_max_retries = max(3, constants.MAX_RETRIES)
+            if retries >= connection_max_retries:
+                error_filename = filename_builder(photo)
+                logger.warning(
+                    "Connection error downloading %s after %d retries, skipping: %s",
+                    error_filename,
+                    retries,
+                    str(ex),
+                )
+                break
+            wait_time = (retries + 1) * constants.WAIT_SECONDS
+            error_filename = filename_builder(photo)
+            logger.warning(
+                "Connection error downloading %s, retrying after %s seconds...",
+                error_filename,
+                wait_time,
+            )
+            time.sleep(wait_time)
 
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
