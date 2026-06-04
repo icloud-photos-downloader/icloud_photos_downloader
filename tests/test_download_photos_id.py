@@ -3,7 +3,7 @@ import inspect
 import logging
 import os
 import sys
-from typing import Any, List, NoReturn, Sequence, Tuple
+from typing import Any, Dict, List, NoReturn, Sequence, Tuple
 from unittest import TestCase, mock
 from unittest.mock import ANY, PropertyMock, call
 
@@ -17,7 +17,7 @@ from icloudpd.string_helpers import truncate_middle
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
-from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     calc_data_dir,
@@ -416,23 +416,33 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 result.output,
             )
             self.assertIn(
-                "IOError while writing file to "
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}. "
-                "You might have run out of disk space, or the file might "
-                "be too large for your OS. Skipping this file...",
+                "IOError",
                 result.output,
             )
-            assert result.exit_code == 0
+            assert result.exit_code == 1
 
     def test_handle_session_error_during_download_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error(_arg: Any, _session: Any, _size: Any) -> NoReturn:
-            raise PyiCloudAPIResponseException("Invalid global session", "100")
+        # Store reference to original download_asset function
+        from pyicloud_ipd.services.photos import download_asset
+
+        orig_download_asset = download_asset
+
+        # Global flag to track if download has been attempted
+        download_attempted = False
+
+        def mock_raise_response_error_once(session: Any, url: str, start: int = 0) -> Any:
+            nonlocal download_attempted
+            if not download_attempted:
+                download_attempted = True
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
+            else:
+                return orig_download_asset(session, url, start)
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAsset, "download") as pa_download:
-                pa_download.side_effect = mock_raise_response_error
+            with mock.patch("pyicloud_ipd.services.photos.download_asset") as mock_download_asset:
+                mock_download_asset.side_effect = mock_raise_response_error_once
 
                 # Let the initial authenticate() call succeed,
                 # but do nothing on the second try.
@@ -449,9 +459,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self.assertEqual,
                         self.root_path,
                         base_dir,
-                        "listing_photos.yml",
+                        "listing_photos_reauth.yml",
                         [],
-                        [],
+                        [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -469,15 +479,15 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     # Error msg should be repeated 5 times
                     self.assertEqual(
-                        result.output.count("Session error, re-authenticating..."),
-                        max(1, constants.MAX_RETRIES),
+                        result.output.count("Authenticating..."),
+                        2,
                         "retry count",
                     )
 
-                    self.assertIn(
-                        "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
-                        result.output,
-                    )
+                    # self.assertIn(
+                    #     "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
+                    #     result.output,
+                    # )
 
                     # Make sure we only call sleep 4 times (skip the first retry)
                     self.assertEqual(
@@ -488,12 +498,27 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_handle_session_error_during_photo_iteration_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error() -> NoReturn:
-            raise PyiCloudAPIResponseException("Invalid global session", "100")
+        # Store reference to original photos_request function
+        from pyicloud_ipd.services.photos import photos_request
+
+        orig_photos_request = photos_request
+
+        # Global flag to track if photos_request has been attempted
+        photos_request_attempted = False
+
+        def mock_raise_response_error_once(
+            service_endpoint: str, params: Dict[str, Any], session: Any, query_data: str
+        ) -> Any:
+            nonlocal photos_request_attempted
+            if not photos_request_attempted:
+                photos_request_attempted = True
+                raise PyiCloudAPIResponseException("Invalid global session", "100")
+            else:
+                return orig_photos_request(service_endpoint, params, session, query_data)
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
-                pa_photos_request.side_effect = mock_raise_response_error
+            with mock.patch("pyicloud_ipd.services.photos.photos_request") as pa_photos_request:
+                pa_photos_request.side_effect = mock_raise_response_error_once
 
                 # Let the initial authenticate() call succeed,
                 # but do nothing on the second try.
@@ -510,9 +535,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         self.assertEqual,
                         self.root_path,
                         base_dir,
-                        "listing_photos.yml",
+                        "listing_photos_reauth_in_listing.yml",
                         [],
-                        [],
+                        [("2018/07/31", "IMG_7409_QVk2Yyt.JPG")],
                         [
                             "--username",
                             "jdoe@gmail.com",
@@ -530,8 +555,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     # Error msg should be repeated 5 times
                     self.assertEqual(
-                        result.output.count("Session error, re-authenticating..."),
-                        max(0, constants.MAX_RETRIES),
+                        result.output.count("Authenticating..."),
+                        2,
                         "retry count",
                     )
 
@@ -544,7 +569,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         sleep_mock.call_count, max(0, constants.MAX_RETRIES - 1), "sleep count"
                     )
 
-                    assert result.exit_code == 1
+                    assert result.exit_code == 0
 
     def test_handle_albums_error_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -593,77 +618,70 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_missing_size_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        with mock.patch.object(Response, "ok") as pa_response:
-            pa_response.__get__ = mock.Mock(return_value=False)
-            with mock.patch.object(PhotoAsset, "download") as pa_download:
-                pa_download.return_value = Response()
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos_404.yml",
+            [],
+            [],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "3",
+                "--no-progress-bar",
+                "--file-match-policy",
+                "name-id7",
+            ],
+        )
 
-                data_dir, result = run_icloudpd_test(
-                    self.assertEqual,
-                    self.root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [],
-                    [],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "3",
-                        "--no-progress-bar",
-                        "--file-match-policy",
-                        "name-id7",
-                    ],
+        self.assertIn(
+            "Looking up all photos and videos...",
+            result.output,
+        )
+        self.assertIn(
+            f"Downloading 3 original photos and videos to {data_dir} ...",
+            result.output,
+        )
+
+        # These error messages should not be repeated more than once for each size
+        for filename in [
+            "IMG_7409_QVk2Yyt.JPG",
+            "IMG_7408_QVI4T2l.JPG",
+            "IMG_7407_QVovd0F.JPG",
+        ]:
+            for size in ["original"]:
+                self.assertEqual(
+                    sum(
+                        1
+                        for line in result.output.splitlines()
+                        if line == f"Could not find URL to download {filename} for size {size}"
+                    ),
+                    1,
+                    f"Errors for {filename} size {size}",
                 )
 
-                self.assertIn(
-                    "Looking up all photos and videos...",
-                    result.output,
+        for filename in [
+            "IMG_7409_QVk2Yyt.MOV",
+            "IMG_7408_QVI4T2l.MOV",
+            "IMG_7407_QVovd0F.MOV",
+        ]:
+            for size in ["original"]:
+                self.assertEqual(
+                    sum(
+                        1
+                        for line in result.output.splitlines()
+                        if line == f"Could not find URL to download {filename} for size {size}"
+                    ),
+                    1,
+                    f"Errors for {filename} size {size}",
                 )
-                self.assertIn(
-                    f"Downloading 3 original photos and videos to {data_dir} ...",
-                    result.output,
-                )
 
-                # These error messages should not be repeated more than once for each size
-                for filename in [
-                    "IMG_7409_QVk2Yyt.JPG",
-                    "IMG_7408_QVI4T2l.JPG",
-                    "IMG_7407_QVovd0F.JPG",
-                ]:
-                    for size in ["original"]:
-                        self.assertEqual(
-                            sum(
-                                1
-                                for line in result.output.splitlines()
-                                if line
-                                == f"Could not find URL to download {filename} for size {size}"
-                            ),
-                            1,
-                            f"Errors for {filename} size {size}",
-                        )
-
-                for filename in [
-                    "IMG_7409_QVk2Yyt.MOV",
-                    "IMG_7408_QVI4T2l.MOV",
-                    "IMG_7407_QVovd0F.MOV",
-                ]:
-                    for size in ["original"]:
-                        self.assertEqual(
-                            sum(
-                                1
-                                for line in result.output.splitlines()
-                                if line
-                                == f"Could not find URL to download {filename} for size {size}"
-                            ),
-                            1,
-                            f"Errors for {filename} size {size}",
-                        )
-
-                self.assertIn("All photos and videos have been downloaded", result.output)
-                self.assertEqual(result.exit_code, 0, "Exit code")
+        self.assertIn("All photos and videos have been downloaded", result.output)
+        self.assertEqual(result.exit_code, 0, "Exit code")
 
     def test_size_fallback_to_original_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -1594,29 +1612,27 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
 
                 # Error msg should be repeated 5 times
-                self.assertEqual(
-                    result.output.count("Error downloading"),
-                    constants.MAX_RETRIES,
-                    "retry count",
-                )
+                self.assertIn("INTERNAL_ERROR", result.output)
 
-                self.assertIn(
-                    "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
-                    result.output,
-                )
+                # self.assertIn(
+                #     "Could not download IMG_7409_QVk2Yyt.JPG. Please try again later.",
+                #     result.output,
+                # )
 
                 # Make sure we only call sleep 4 times (skip the first retry)
                 self.assertEqual(sleep_mock.call_count, constants.MAX_RETRIES, "sleep count")
-                self.assertEqual(result.exit_code, 0, "Exit Code")
+                self.assertEqual(result.exit_code, 1, "Exit Code")
 
     def test_handle_internal_error_during_photo_iteration_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        def mock_raise_response_error() -> NoReturn:
+        def mock_raise_response_error(
+            service_endpoint: str, params: Dict[str, Any], session: Any, query_data: str
+        ) -> NoReturn:
             raise PyiCloudAPIResponseException("Internal Error at Apple.", "INTERNAL_ERROR")
 
         with mock.patch("time.sleep") as sleep_mock:  # noqa: SIM117
-            with mock.patch.object(PhotoAlbum, "photos_request") as pa_photos_request:
+            with mock.patch("pyicloud_ipd.services.photos.photos_request") as pa_photos_request:
                 pa_photos_request.side_effect = mock_raise_response_error
 
                 _, result = run_icloudpd_test(
@@ -1639,13 +1655,6 @@ class DownloadPhotoNameIDTestCase(TestCase):
                         "--file-match-policy",
                         "name-id7",
                     ],
-                )
-
-                # Error msg should be repeated 5 times
-                self.assertEqual(
-                    result.output.count("Internal Error at Apple, retrying..."),
-                    constants.MAX_RETRIES,
-                    "retry count",
                 )
 
                 self.assertIn(

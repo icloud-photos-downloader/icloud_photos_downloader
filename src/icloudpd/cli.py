@@ -1,6 +1,7 @@
 import argparse
 import copy
 import datetime
+import os
 import pathlib
 import sys
 from itertools import dropwhile
@@ -234,8 +235,8 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--file-match-policy",
-        help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to de-duplicate. `name-id7` adds asset ID from iCloud to all filenames and does not de-duplicate. Default: %(default)s",
-        choices=["name-size-dedup-with-suffix", "name-id7"],
+        help="Policy to identify existing files and de-duplicate. `name-size-dedup-with-suffix` appends file size to de-duplicate. `name-id7` adds asset ID from iCloud to all filenames and does not de-duplicate. `name-id7-versioned` is similar to `name-id7`, but adds asset ID from iCloud even on `adjusted` and `alternative`. Default: %(default)s",
+        choices=["name-size-dedup-with-suffix", "name-id7", "name-id7-versioned"],
         default="name-size-dedup-with-suffix",
         type=lower,
     )
@@ -604,6 +605,20 @@ def cli() -> int:
             print(
                 "--watch-with-interval is not compatible with --list-albums, --list-libraries, --only-print-filenames, and --auth-only"
             )
+            return 2
+
+        # Validate that directories exist for configurations that need them
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.directory and not os.path.exists(user_ns.directory)
+        ]:
+            invalid_dirs = [
+                user_ns.directory
+                for user_ns in user_nses
+                if user_ns.directory and not os.path.exists(user_ns.directory)
+            ]
+            print(f"Directory does not exist: {invalid_dirs[0]}")
             return 2
         else:
             return run_with_configs(global_ns, user_nses)
