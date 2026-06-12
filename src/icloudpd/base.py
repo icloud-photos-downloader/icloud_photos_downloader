@@ -40,7 +40,11 @@ from tzlocal import get_localzone
 from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
-from icloudpd.autodelete import LocalDownloadPathConfig, autodelete_photos
+from icloudpd.autodelete import (
+    LocalDownloadPathConfig,
+    autodelete_photos,
+    prune_orphaned_photos,
+)
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
@@ -1194,8 +1198,14 @@ def core_single_run(
                             library_object,
                             local_path_config,
                         )
-                    else:
-                        pass
+
+                    if user_config.prune_orphans:
+                        prune_orphaned_photos(
+                            logger,
+                            user_config.dry_run,
+                            library_object,
+                            local_path_config,
+                        )
         except PyiCloudFailedLoginException as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)

@@ -33,6 +33,9 @@ def delete_file_dry_run(logger: logging.Logger, path: str) -> bool:
     return True
 
 
+_PART_EXTENSION: str = ".part"
+
+
 @dataclass(frozen=True)
 class LocalDownloadPathConfig:
     folder_structure: str
@@ -168,6 +171,44 @@ def local_download_paths_for_media(
 def _is_size_dedup_path(path: str) -> bool:
     stem, extension = os.path.splitext(path)
     return extension != "" and stem.rsplit("-", 1)[-1].isdigit()
+
+
+def prune_orphaned_photos(
+    logger: logging.Logger,
+    dry_run: bool,
+    library_object: PhotoLibrary,
+    path_config: LocalDownloadPathConfig,
+) -> None:
+    """
+    Delete local files for photos that no longer exist in the library.
+
+    This handles the case where photos are moved from a shared library
+    to a personal library -- they disappear from the library's listing
+    without ever appearing in "Recently Deleted".
+    """
+    logger.info("Pruning local files for photos no longer in library...")
+
+    expected_paths: Set[str] = set()
+
+    for media in library_object.all:
+        expected_paths.update(local_download_paths_for_media(logger, media, path_config))
+
+    orphaned_count = 0
+    for root, _dirs, files in os.walk(path_config.directory):
+        for f in files:
+            if f.endswith(_PART_EXTENSION):
+                continue
+            filepath = os.path.normpath(os.path.join(root, f))
+            if filepath not in expected_paths:
+                orphaned_count += 1
+                logger.debug("Pruning orphaned file %s...", filepath)
+                delete_local = delete_file_dry_run if dry_run else delete_file
+                delete_local(logger, filepath)
+
+    if orphaned_count == 0:
+        logger.info("No orphaned files found.")
+    else:
+        logger.info("Pruned %d orphaned file(s).", orphaned_count)
 
 
 def autodelete_photos(
