@@ -131,6 +131,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--prune-orphans",
+        help="Delete local files for photos that no longer exist in the library. "
+        + "Useful for shared libraries: when the owner moves photos to their personal "
+        + "library, those photos disappear without appearing in Recently Deleted.",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--folder-structure",
         help="Folder structure. If set to `none`, all photos will be placed into the download directory. Default: %(default)s",
         default="{:%Y/%m/%d}",
@@ -450,6 +457,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
+        prune_orphans=user_ns.prune_orphans,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
         smtp_username=user_ns.smtp_username,

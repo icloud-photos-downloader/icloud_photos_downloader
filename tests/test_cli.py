@@ -2,12 +2,12 @@ import datetime
 import inspect
 import os
 import shutil
-import zoneinfo
 from argparse import ArgumentError
 from typing import Sequence, Tuple
 from unittest import TestCase
 
 import pytest
+from tzlocal import get_localzone
 
 from icloudpd.cli import format_help, parse
 from icloudpd.config import GlobalConfig, UserConfig
@@ -214,6 +214,7 @@ class CliTestCase(TestCase):
                         xmp_sidecar=False,
                         force_size=False,
                         auto_delete=False,
+                        prune_orphans=False,
                         folder_structure="{:%Y/%m/%d}",
                         set_exif_datetime=False,
                         smtp_username=None,
@@ -254,6 +255,7 @@ class CliTestCase(TestCase):
                         xmp_sidecar=False,
                         force_size=False,
                         auto_delete=False,
+                        prune_orphans=False,
                         folder_structure="{:%Y/%m/%d}",
                         set_exif_datetime=False,
                         smtp_username=None,
@@ -330,6 +332,7 @@ class CliTestCase(TestCase):
                         xmp_sidecar=False,
                         force_size=False,
                         auto_delete=False,
+                        prune_orphans=False,
                         folder_structure="{:%Y/%m/%d}",
                         set_exif_datetime=False,
                         smtp_username=None,
@@ -348,7 +351,7 @@ class CliTestCase(TestCase):
                         align_raw=RawTreatmentPolicy.AS_IS,
                         file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                         skip_created_before=datetime.datetime(
-                            year=2025, month=1, day=2, tzinfo=zoneinfo.ZoneInfo(key="Etc/UTC")
+                            year=2025, month=1, day=2, tzinfo=get_localzone()
                         ),
                         skip_created_after=datetime.timedelta(days=2),
                         skip_photos=False,

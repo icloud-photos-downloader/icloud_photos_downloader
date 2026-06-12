@@ -4,6 +4,7 @@ import inspect
 import logging
 import os
 import shutil
+import tempfile
 from typing import Any, NoReturn
 from unittest import TestCase, mock
 
@@ -13,9 +14,20 @@ from tzlocal import get_localzone
 from vcr import VCR
 
 from icloudpd import constants
+from icloudpd.autodelete import (
+    LocalDownloadPathConfig,
+    local_download_paths_for_media,
+    prune_orphaned_photos,
+)
+from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.item_type import AssetItemType
+from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary, PhotosService
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     path_from_project_root,
     recreate_path,
@@ -140,6 +152,105 @@ class AutodeletePhotosTestCase(TestCase):
                 assert not os.path.exists(os.path.join(data_dir, file_name)), (
                     f"{file_name} not expected, but present"
                 )
+
+    def _photo(self) -> mock.MagicMock:
+        photo = mock.MagicMock()
+        photo.filename = "IMG_1234.JPG"
+        photo.item_type = AssetItemType.IMAGE
+        photo.created = datetime.datetime(2023, 1, 15, 12, 0, 0).astimezone(get_localzone())
+        photo.versions_with_raw_policy.return_value = {
+            AssetVersionSize.ORIGINAL: AssetVersion(
+                size=1000,
+                url="http://example.com/photo",
+                type="public.jpeg",
+                checksum="dGVzdA==",
+            ),
+            LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                size=2000,
+                url="http://example.com/live-photo",
+                type="com.apple.quicktime-movie",
+                checksum="bGl2ZQ==",
+            ),
+        }
+        return photo
+
+    def _path_config(self, directory: str, **overrides: Any) -> LocalDownloadPathConfig:
+        values = {
+            "folder_structure": "none",
+            "directory": directory,
+            "sizes": [AssetVersionSize.ORIGINAL],
+            "force_size": False,
+            "xmp_sidecar": False,
+            "skip_live_photos": True,
+            "live_photo_size": LivePhotoVersionSize.ORIGINAL,
+            "live_photo_mov_filename_policy": LivePhotoMovFilenamePolicy.SUFFIX,
+            "file_match_policy": FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+            "lp_filename_generator": lambda f: f.replace(".JPG", ".MOV"),
+            "raw_policy": RawTreatmentPolicy.AS_IS,
+        }
+        values.update(overrides)
+        return LocalDownloadPathConfig(**values)
+
+    def test_local_download_paths_for_media_matches_download_policy(self) -> None:
+        with tempfile.TemporaryDirectory() as data_dir:
+            paths = local_download_paths_for_media(
+                logging.getLogger("icloudpd"),
+                self._photo(),
+                self._path_config(data_dir, xmp_sidecar=True, skip_live_photos=False),
+            )
+
+            self.assertIn(os.path.join(data_dir, "IMG_1234.JPG"), paths)
+            self.assertIn(os.path.join(data_dir, "IMG_1234-1000.JPG"), paths)
+            self.assertIn(os.path.join(data_dir, "IMG_1234.JPG.xmp"), paths)
+            self.assertIn(os.path.join(data_dir, "IMG_1234.MOV"), paths)
+
+    def test_prune_orphaned_photos_deletes_only_files_outside_current_library(self) -> None:
+        logger = logging.getLogger("icloudpd")
+
+        with tempfile.TemporaryDirectory() as data_dir:
+            expected_file = os.path.join(data_dir, "IMG_1234.JPG")
+            orphan_file = os.path.join(data_dir, "ORPHAN_5678.JPG")
+            part_file = os.path.join(data_dir, "ABCD1234.part")
+            disabled_xmp_file = os.path.join(data_dir, "IMG_1234.JPG.xmp")
+            for path in [expected_file, orphan_file, part_file, disabled_xmp_file]:
+                open(path, "a").close()
+
+            mock_library = mock.MagicMock(spec=PhotoLibrary)
+            mock_library.all.__iter__.return_value = iter([self._photo()])
+
+            prune_orphaned_photos(
+                logger,
+                False,
+                mock_library,
+                self._path_config(data_dir),
+            )
+
+            self.assertTrue(os.path.exists(expected_file), "Expected file should still exist")
+            self.assertFalse(os.path.exists(orphan_file), "Orphaned file should be deleted")
+            self.assertFalse(os.path.exists(disabled_xmp_file), "Disabled XMP should be pruned")
+            self.assertTrue(os.path.exists(part_file), ".part files should be skipped")
+
+    def test_prune_orphaned_photos_dry_run(self) -> None:
+        logger = logging.getLogger("icloudpd")
+
+        with tempfile.TemporaryDirectory() as data_dir:
+            expected_file = os.path.join(data_dir, "IMG_1234.JPG")
+            orphan_file = os.path.join(data_dir, "ORPHAN_5678.JPG")
+            open(expected_file, "a").close()
+            open(orphan_file, "a").close()
+
+            mock_library = mock.MagicMock(spec=PhotoLibrary)
+            mock_library.all.__iter__.return_value = iter([self._photo()])
+
+            prune_orphaned_photos(
+                logger,
+                True,
+                mock_library,
+                self._path_config(data_dir),
+            )
+
+            self.assertTrue(os.path.exists(expected_file), "Expected file should still exist")
+            self.assertTrue(os.path.exists(orphan_file), "Dry run should not delete orphans")
 
     def test_download_autodelete_photos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

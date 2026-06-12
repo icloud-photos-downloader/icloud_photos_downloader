@@ -40,7 +40,11 @@ from tzlocal import get_localzone
 from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
-from icloudpd.autodelete import autodelete_photos
+from icloudpd.autodelete import (
+    LocalDownloadPathConfig,
+    autodelete_photos,
+    prune_orphaned_photos,
+)
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
@@ -1173,19 +1177,35 @@ def core_single_run(
                             status_exchange.get_progress().photos_last_message = message
                         status_exchange.get_progress().reset()
 
+                    local_path_config = LocalDownloadPathConfig(
+                        folder_structure=user_config.folder_structure,
+                        directory=directory,
+                        sizes=user_config.sizes,
+                        force_size=user_config.force_size,
+                        xmp_sidecar=user_config.xmp_sidecar,
+                        skip_live_photos=user_config.skip_live_photos,
+                        live_photo_size=user_config.live_photo_size,
+                        live_photo_mov_filename_policy=user_config.live_photo_mov_filename_policy,
+                        file_match_policy=user_config.file_match_policy,
+                        lp_filename_generator=lp_filename_generator,
+                        raw_policy=user_config.align_raw,
+                    )
+
                     if user_config.auto_delete:
                         autodelete_photos(
                             logger,
                             user_config.dry_run,
                             library_object,
-                            user_config.folder_structure,
-                            directory,
-                            user_config.sizes,
-                            lp_filename_generator,
-                            user_config.align_raw,
+                            local_path_config,
                         )
-                    else:
-                        pass
+
+                    if user_config.prune_orphans:
+                        prune_orphaned_photos(
+                            logger,
+                            user_config.dry_run,
+                            library_object,
+                            local_path_config,
+                        )
         except PyiCloudFailedLoginException as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)
