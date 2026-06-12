@@ -174,11 +174,7 @@ def autodelete_photos(
     logger: logging.Logger,
     dry_run: bool,
     library_object: PhotoLibrary,
-    folder_structure: str,
-    directory: str,
-    _sizes: Sequence[AssetVersionSize],
-    lp_filename_generator: Callable[[str], str],
-    raw_policy: RawTreatmentPolicy,
+    path_config: LocalDownloadPathConfig,
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -190,65 +186,9 @@ def autodelete_photos(
     recently_deleted = library_object.recently_deleted
 
     for media in recently_deleted:
-        try:
-            created_date = media.created.astimezone(get_localzone())
-        except (ValueError, OSError):
-            logger.error("Could not convert media created date to local timezone %s", media.created)
-            created_date = media.created
-
-        from foundation.core import compose
-        from foundation.string_utils import eq, lower
-
-        is_none_folder = compose(eq("none"), lower)
-
-        if is_none_folder(folder_structure):
-            date_path = ""
-        else:
-            try:
-                date_path = folder_structure.format(created_date)
-            except ValueError:  # pragma: no cover
-                # This error only seems to happen in Python 2
-                logger.error("Photo created date was not valid (%s)", created_date)
-                # e.g. ValueError: year=5 is before 1900
-                # (https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/122)
-                # Just use the Unix epoch
-                created_date = datetime.datetime.fromtimestamp(0)
-                date_path = folder_structure.format(created_date)
-
-        download_dir = os.path.join(directory, date_path)
-
-        paths: Set[str] = set({})
-        _size: VersionSize
-        versions, filename_overrides = disambiguate_filenames(
-            media.versions_with_raw_policy(raw_policy), _sizes, media, lp_filename_generator
+        paths = local_download_paths_for_media(
+            logger, media, path_config, include_all_versions=True
         )
-        for _size, _version in versions.items():
-            if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
-                version_filename = calculate_version_filename(
-                    media.filename,
-                    _version,
-                    _size,
-                    lp_filename_generator,
-                    media.item_type,
-                    filename_overrides.get(_size),
-                )
-                paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))
-                paths.add(
-                    os.path.normpath(local_download_path(version_filename, download_dir)) + ".xmp"
-                )
-        for _size, _version in media.versions_with_raw_policy(raw_policy).items():
-            if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
-                version_filename = calculate_version_filename(
-                    media.filename,
-                    _version,
-                    _size,
-                    lp_filename_generator,
-                    media.item_type,
-                )
-                paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))
-                paths.add(
-                    os.path.normpath(local_download_path(version_filename, download_dir)) + ".xmp"
-                )
         for path in paths:
             if os.path.exists(path):
                 logger.debug("Deleting %s...", path)
