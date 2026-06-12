@@ -5,16 +5,19 @@ Delete any files found in "Recently Deleted"
 import datetime
 import logging
 import os
+from dataclasses import dataclass
 from typing import Callable, Sequence, Set
 
 from tzlocal import get_localzone
 
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
+from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.photos import PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
-from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 
 def delete_file(logger: logging.Logger, path: str) -> bool:
@@ -28,6 +31,51 @@ def delete_file_dry_run(logger: logging.Logger, path: str) -> bool:
     """Dry run deletion of files"""
     logger.info("[DRY RUN] Would delete %s", path)
     return True
+
+
+@dataclass(frozen=True)
+class LocalDownloadPathConfig:
+    folder_structure: str
+    directory: str
+    sizes: Sequence[AssetVersionSize]
+    force_size: bool
+    xmp_sidecar: bool
+    skip_live_photos: bool
+    live_photo_size: LivePhotoVersionSize
+    live_photo_mov_filename_policy: LivePhotoMovFilenamePolicy
+    file_match_policy: FileMatchPolicy
+    lp_filename_generator: Callable[[str], str]
+    raw_policy: RawTreatmentPolicy
+
+
+def _download_dir_for_media(
+    logger: logging.Logger,
+    folder_structure: str,
+    directory: str,
+    media: PhotoAsset,
+) -> str:
+    try:
+        created_date = media.created.astimezone(get_localzone())
+    except (ValueError, OSError):
+        logger.error("Could not convert media created date to local timezone %s", media.created)
+        created_date = media.created
+
+    from foundation.core import compose
+    from foundation.string_utils import eq, lower
+
+    is_none_folder = compose(eq("none"), lower)
+
+    if is_none_folder(folder_structure):
+        date_path = ""
+    else:
+        try:
+            date_path = folder_structure.format(created_date)
+        except ValueError:  # pragma: no cover
+            logger.error("Photo created date was not valid (%s)", media.created)
+            created_date = datetime.datetime.fromtimestamp(0)
+            date_path = folder_structure.format(created_date)
+
+    return os.path.normpath(os.path.join(directory, date_path))
 
 
 def autodelete_photos(
