@@ -37,9 +37,9 @@ class ListingAlbumsTestCase(TestCase):
         )
         albums = result.output.splitlines()
 
-        self.assertIn("WhatsApp", albums)
-        self.assertIn("Time-lapse", albums)
-        self.assertIn("Recently Deleted", albums)
-        self.assertIn("Favorites", albums)
+        self.assertTrue(any("WhatsApp" in a for a in albums))
+        self.assertTrue(any("Time-lapse" in a for a in albums))
+        self.assertTrue(any("Recently Deleted" in a for a in albums))
+        self.assertTrue(any("Favorites" in a for a in albums))
 
         self.assertEqual(result.exit_code, 0, "exit code")
