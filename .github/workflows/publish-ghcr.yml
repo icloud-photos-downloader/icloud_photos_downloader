@@ -1,0 +1,155 @@
+name: Publish Docker Image (GHCR)
+
+# Builds the musl binaries the root Dockerfile expects in dist/, then packages
+# and pushes a multi-arch image to ghcr.io/<owner>/<repo>.
+
+on:
+  push:
+    branches:
+      - master
+      - feat/shared-albums
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: publish-ghcr-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build_binaries:
+    name: Build musl binaries (${{ matrix.platform[1] }})
+    runs-on: ${{ matrix.platform[1] == 'arm64' && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - ["linux/amd64", "amd64"]
+          - ["linux/arm64", "arm64"]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Retrieve version
+      id: version
+      run: |
+        echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+
+    # Stamps version/sha/timestamp into src/foundation/__init__.py before it is
+    # copied into the build context, so `icloudpd --version` is accurate.
+    - name: Patch version
+      run: |
+        scripts/patch_version
+
+    - uses: docker/setup-buildx-action@v3
+
+    - name: Cache Folders Build
+      uses: actions/cache@v4
+      with:
+        path: .cache
+        key: build-musl-${{ matrix.platform[1] }}-${{ hashFiles('pyproject.toml','Dockerfile.build-musl') }}
+        restore-keys: |
+          build-musl-${{ matrix.platform[1] }}-
+
+    - name: Create folders on cache miss
+      run: |
+        mkdir -p .cache/var/cache/apk
+        mkdir -p .cache/root/.cache/pip
+
+    - name: Inject docker cache
+      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      with:
+        cache-map: |
+          {
+            ".cache/var/cache/apk": "/var/cache/apk",
+            ".cache/root/.cache/pip": "/root/.cache/pip"
+          }
+
+    - name: Build
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: Dockerfile.build-musl
+        platforms: ${{ matrix.platform[0] }}
+        push: false
+        provenance: false
+        outputs: type=local,dest=dist
+
+    # The root Dockerfile globs dist/icloudpd-*.*.*-linux-musl-<arch>
+    - name: Reorg contents
+      run: |
+        mv dist/icloud dist/icloud-${{steps.version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+        mv dist/icloudpd dist/icloudpd-${{steps.version.outputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: icloudpd-bin-linux-${{ matrix.platform[1] }}
+        if-no-files-found: error
+        path: |
+          dist/icloud*-linux-musl-*
+
+  publish:
+    name: Package and push image
+    runs-on: ubuntu-22.04
+    needs:
+      - build_binaries
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download artifacts
+      uses: actions/download-artifact@v4
+      with:
+        pattern: icloudpd-bin-linux-*
+        merge-multiple: true
+        path: |
+          dist
+
+    - name: Retrieve version
+      id: version
+      run: |
+        echo icloudpd_version=$(cat pyproject.toml | grep version= | cut -d'"' -f 2) >> $GITHUB_OUTPUT
+
+    - name: Compute tags
+      id: meta
+      run: |
+        image="ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')"
+        ref_slug=$(echo "${GITHUB_REF_NAME}" | tr '/' '-' | tr '[:upper:]' '[:lower:]')
+        {
+          echo "tags<<EOF"
+          echo "${image}:latest"
+          echo "${image}:${ref_slug}"
+          echo "${image}:${{steps.version.outputs.icloudpd_version}}-${ref_slug}"
+          echo "${image}:sha-${GITHUB_SHA::7}"
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
+
+    - name: Set up QEMU
+      uses: docker/setup-qemu-action@v3
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Log in to GHCR
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push
+      uses: docker/build-push-action@v6
+      with:
+        context: .
+        file: ./Dockerfile
+        platforms: linux/amd64,linux/arm64
+        push: true
+        provenance: false
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: |
+          org.opencontainers.image.source=${{ github.server_url }}/${{ github.repository }}
+          org.opencontainers.image.revision=${{ github.sha }}
+          org.opencontainers.image.version=${{steps.version.outputs.icloudpd_version}}
