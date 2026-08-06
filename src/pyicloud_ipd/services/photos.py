@@ -404,12 +404,28 @@ class PhotosService(PhotoLibrary):
 
         self._private_libraries: Dict[str, PhotoLibrary] | None = None
         self._shared_libraries: Dict[str, PhotoLibrary] | None = None
+        self._private_zone_ids: Sequence[Dict[str, Any]] | None = None
 
         self.params.update({"remapEnums": True, "getCurrentSyncToken": True})
 
-        # Initialize as primary library
+        # Apple does not guarantee that the primary library zone is named
+        # exactly "PrimarySync". Discover the active zone first so migrated
+        # accounts using names such as "PrimarySync1" can be initialized.
         service_endpoint = self.get_service_endpoint("private")
-        zone_id = {"zoneName": "PrimarySync"}
+        private_zone_ids = self._fetch_zone_ids("private")
+        self._private_zone_ids = private_zone_ids
+        zone_id = next(
+            (
+                candidate
+                for candidate in private_zone_ids
+                if candidate.get("zoneName", "").startswith("PrimarySync")
+            ),
+            None,
+        )
+        if zone_id is None:
+            raise PyiCloudServiceNotActivatedException(
+                "Apple iCloud Photo Library primary zone was not found", None
+            )
         super().__init__(service_endpoint, self.params, self.session, zone_id, "private")
 
         # TODO: Does syncToken ever change?
@@ -438,27 +454,30 @@ class PhotosService(PhotoLibrary):
         try:
             libraries = {}
             service_endpoint = self.get_service_endpoint(library_type)
-            url = f"{service_endpoint}/zones/list"
-            request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
-            response = request.json()
-            for zone in response["zones"]:
-                if not zone.get("deleted"):
-                    zone_name = zone["zoneID"]["zoneName"]
-                    service_endpoint = self.get_service_endpoint(library_type)
-                    libraries[zone_name] = PhotoLibrary(
-                        service_endpoint,
-                        self.params,
-                        self.session,
-                        zone_id=zone["zoneID"],
-                        library_type=library_type,
-                    )
-                    # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
-                    # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
-                    # direction="ASCENDING", query_filter=None,
-                    # zone_id=zone['zoneID'])
+            zone_ids = (
+                self._private_zone_ids
+                if library_type == "private" and self._private_zone_ids is not None
+                else self._fetch_zone_ids(library_type)
+            )
+            for zone_id in zone_ids:
+                zone_name = zone_id["zoneName"]
+                libraries[zone_name] = PhotoLibrary(
+                    service_endpoint,
+                    self.params,
+                    self.session,
+                    zone_id=zone_id,
+                    library_type=library_type,
+                )
         except Exception as e:
             logger.error(f"library exception: {str(e)}")
         return libraries
+
+    def _fetch_zone_ids(self, library_type: str) -> Sequence[Dict[str, Any]]:
+        service_endpoint = self.get_service_endpoint(library_type)
+        url = f"{service_endpoint}/zones/list"
+        request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
+        response = request.json()
+        return [zone["zoneID"] for zone in response["zones"] if not zone.get("deleted")]
 
     def get_service_endpoint(self, library_type: str) -> str:
         return f"{self._service_root}/database/1/com.apple.photos.cloud/production/{library_type}"
