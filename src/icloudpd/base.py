@@ -939,6 +939,12 @@ def core_single_run(
                         library_object: PhotoLibrary = icloud.photos.private_libraries[
                             user_config.library
                         ]
+                    elif user_config.library == "PrimarySync" and icloud.photos.zone_id.get(
+                        "zoneName", ""
+                    ).startswith("PrimarySync"):
+                        # Preserve the historical CLI default for accounts whose
+                        # primary zone has been migrated to names such as PrimarySync1.
+                        library_object = icloud.photos
                     elif user_config.library in icloud.photos.shared_libraries:
                         library_object = icloud.photos.shared_libraries[user_config.library]
                     else:
