@@ -5,7 +5,7 @@ from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.services.photos import PhotosService
 
 
-def response(payload: dict) -> Mock:
+def response(payload: dict[str, object]) -> Mock:
     result = Mock()
     result.json.return_value = payload
     return result
