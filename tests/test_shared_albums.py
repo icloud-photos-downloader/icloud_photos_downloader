@@ -140,3 +140,31 @@ def test_shared_streams_library_lists_and_reads_assets() -> None:
         "limit": "1",
         "albumctag": "album-ctag",
     }
+
+
+def test_xmp_sidecar_generation_with_iso_coordinates(tmp_path) -> None:
+    import logging
+    import os
+    from icloudpd.xmp_sidecar import generate_xmp_file
+    from xml.etree import ElementTree
+
+    logger = logging.getLogger("test")
+    download_path = str(tmp_path / "test_photo.jpg")
+
+    asset_record = {
+        "fields": {
+            "locationISO6709Enc": {
+                "value": "KzMzLjIxODgtMDk2LjcwNTYrMDAwLjAwMC8="  # +33.2188-096.7056+000.000/
+            }
+        }
+    }
+
+    generate_xmp_file(logger, download_path, asset_record, dry_run=False)
+
+    xmp_file = download_path + ".xmp"
+    assert os.path.exists(xmp_file)
+
+    root = ElementTree.parse(xmp_file).getroot()
+    xml_str = ElementTree.tostring(root).decode()
+    assert "33.2188" in xml_str
+    assert "-96.7056" in xml_str

@@ -138,6 +138,26 @@ def build_metadata(asset_record: dict[str, Any]) -> XMPMetadata:
         gps_timestamp = (
             location.get("timestamp") if isinstance(location.get("timestamp"), datetime) else None
         )
+    elif "locationISO6709Enc" in asset_record["fields"]:
+        import re
+        try:
+            iso_bytes = base64.b64decode(asset_record["fields"]["locationISO6709Enc"]["value"])
+            iso_str = iso_bytes.decode("utf-8")
+            coord_match = re.match(r"^([+-]\d+\.\d+)([+-]\d+\.\d+)", iso_str)
+            if coord_match:
+                gps_latitude = float(coord_match.group(1))
+                gps_longitude = float(coord_match.group(2))
+            else:
+                gps_latitude, gps_longitude = None, None
+            gps_altitude, gps_speed, gps_timestamp = None, None, None
+        except Exception:
+            gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
     else:
         gps_altitude, gps_latitude, gps_longitude, gps_speed, gps_timestamp = (
             None,
