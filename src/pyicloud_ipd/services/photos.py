@@ -1,7 +1,10 @@
 import base64
 import copy
+import hashlib
 import json
 import logging
+import os
+from pathlib import Path
 import re
 import typing
 from datetime import datetime
@@ -487,6 +490,22 @@ class PhotoAlbum:
         self.query_filter = query_filter
         self.page_size = page_size
 
+        self._checkpoint_path: Path | None = None
+        checkpoint_dir = os.environ.get("ICLOUDPD_CHECKPOINT_DIR")
+        if checkpoint_dir:
+            key = json.dumps(
+                [service_endpoint, zone_id, obj_type, list_type, query_filter],
+                sort_keys=True,
+                default=str,
+            ).encode()
+            self._checkpoint_path = Path(checkpoint_dir) / (hashlib.sha256(key).hexdigest() + ".json")
+            try:
+                saved = json.loads(self._checkpoint_path.read_text())
+                self.offset = int(saved["offset"])
+                logger.info("Resuming photo scan from offset %s", self.offset)
+            except (FileNotFoundError, OSError, ValueError, KeyError, json.JSONDecodeError):
+                pass
+
         if zone_id:
             self._zone_id: Dict[str, Any] = zone_id
         else:
@@ -557,6 +576,11 @@ class PhotoAlbum:
 
     def increment_offset(self, value: int) -> None:
         self.offset += value
+        if self._checkpoint_path:
+            self._checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+            temp_path = self._checkpoint_path.with_suffix(".tmp")
+            temp_path.write_text(json.dumps({"offset": self.offset}))
+            temp_path.replace(self._checkpoint_path)
 
     def _count_query_gen(self, obj_type: str) -> Dict[str, Any]:
         query = {
