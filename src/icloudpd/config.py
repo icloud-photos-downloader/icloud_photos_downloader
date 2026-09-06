@@ -30,6 +30,7 @@ class _DefaultConfig:
     xmp_sidecar: bool
     force_size: bool
     auto_delete: bool
+    auto_delete_directory: str | None = None
     folder_structure: str
     set_exif_datetime: bool
     smtp_username: str | None

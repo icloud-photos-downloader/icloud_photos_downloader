@@ -551,3 +551,53 @@ class CliTestCase(TestCase):
         self.assertEqual(result.exit_code, 2, "exit code")
 
         self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+
+    def test_auto_delete_directory_requires_auto_delete(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        result = run_main(
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--auto-delete-directory",
+                "/tmp/quarantine",
+            ],
+        )
+        self.assertEqual(result.exit_code, 2, "exit code")
+        self.assertIn("--auto-delete-directory requires --auto-delete", result.output)
+
+        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+
+    def test_auto_delete_rejects_partial_scans(self) -> None:
+        incompatible_options = [
+            ["--recent", "1"],
+            ["--until-found", "1"],
+            ["--album", "Favorites"],
+            ["--skip-created-before", "2025-01-01"],
+            ["--skip-created-after", "2025-01-01"],
+            ["--skip-photos"],
+            ["--skip-videos"],
+            ["--only-print-filenames"],
+        ]
+        for options in incompatible_options:
+            with self.subTest(options=options):
+                result = run_main(
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "-d",
+                        "/tmp",
+                        "--auto-delete",
+                        *options,
+                    ],
+                )
+                self.assertEqual(result.exit_code, 2, "exit code")
+                self.assertIn(
+                    "--auto-delete requires a complete unfiltered active-library scan",
+                    result.output,
+                )

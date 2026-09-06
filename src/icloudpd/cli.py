@@ -131,6 +131,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--auto-delete-directory",
+        metavar="DIRECTORY",
+        help="Move safely eligible files to this directory instead of deleting them. "
+        + "Requires --auto-delete.",
+        default=None,
+    )
+    cloned.add_argument(
         "--folder-structure",
         help="Folder structure. If set to `none`, all photos will be placed into the download directory. Default: %(default)s",
         default="{:%Y/%m/%d}",
@@ -450,6 +457,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
+        auto_delete_directory=user_ns.auto_delete_directory,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
         smtp_username=user_ns.smtp_username,
@@ -581,6 +589,32 @@ def cli() -> int:
             print(
                 "--auto-delete and --delete-after-download are mutually exclusive per configuration"
             )
+            return 2
+
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.auto_delete
+            and (
+                global_ns.only_print_filenames
+                or user_ns.recent is not None
+                or user_ns.until_found is not None
+                or user_ns.albums
+                or user_ns.skip_created_before is not None
+                or user_ns.skip_created_after is not None
+                or user_ns.skip_photos
+                or user_ns.skip_videos
+            )
+        ]:
+            print("--auto-delete requires a complete unfiltered active-library scan")
+            return 2
+
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.auto_delete_directory and not user_ns.auto_delete
+        ]:
+            print("--auto-delete-directory requires --auto-delete")
             return 2
 
         elif [
