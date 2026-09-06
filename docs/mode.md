@@ -12,9 +12,14 @@ Copy
     This is the default mode
 
 Sync
-:   Download assets from iCloud that are not in the local storage (same as Copy). In addition, delete local files that were removed in iCloud (moved into the "Recently Deleted" album)
+:   Download assets from iCloud that are not in the local storage (same as Copy).
+    In addition, remove local files whose stable asset ID is absent from two
+    consecutive complete active-library scans and present in the "Recently Deleted"
+    album. The first run initializes the safety manifest and removes nothing.
 
-    This mode is selected with [`--auto-delete`](auto-delete-parameter) parameter
+    This mode is selected with the [`--auto-delete`](auto-delete-parameter) parameter.
+    Use [`--auto-delete-directory`](auto-delete-directory-parameter) to quarantine
+    eligible files instead of deleting them.
 
 Move
 :   Download assets from iCloud that are not in the local storage (same as Copy). Then delete assets in iCloud that are in local storage, optionally leaving recent ones in iCloud

@@ -207,12 +207,23 @@ This is a list of all options available for the command line interface (CLI) of 
 
 (auto-delete-parameter)=
 `--auto-delete`
-    
-:   If specified, assets deleted in iCloud (actually moved to the Recently Deleted album) will also be deleted locally.
+
+:   If specified, assets deleted in iCloud (actually moved to the Recently Deleted
+    album) will also be deleted locally. Auto-delete requires complete, unfiltered
+    active-library scans. A local file becomes eligible only after its stable iCloud
+    asset ID is absent from two consecutive complete scans and is present in Recently
+    Deleted. The first run only initializes the safety manifest.
 
     ```{seealso}
     [Modes of operation](mode)
     ```
+
+(auto-delete-directory-parameter)=
+`--auto-delete-directory DIRECTORY`
+
+:   Move safely eligible files to a sibling quarantine directory instead of deleting
+    them. The relative directory structure is preserved, existing files are never
+    overwritten, and this option requires [`--auto-delete`](auto-delete-parameter).
 
 (delete-after-download-parameter)=
 `--delete-after-download`

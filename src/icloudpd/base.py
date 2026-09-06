@@ -15,6 +15,7 @@ import urllib
 from functools import partial, singledispatch
 from logging import Logger
 from multiprocessing import freeze_support
+from pathlib import Path
 from threading import Thread
 from typing import (
     Any,
@@ -40,7 +41,8 @@ from tzlocal import get_localzone
 from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
-from icloudpd.autodelete import autodelete_photos
+from icloudpd.autodelete import autodelete_photos, validate_quarantine_root
+from icloudpd.autodelete_manifest import AutoDeleteManifest
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
@@ -385,6 +387,38 @@ def _process_all_users_once(
                 user_config.file_match_policy, filename_cleaner
             )
 
+            auto_delete_manifest = None
+            if user_config.auto_delete:
+                if (
+                    global_config.only_print_filenames
+                    or user_config.recent is not None
+                    or user_config.until_found is not None
+                    or user_config.albums
+                    or user_config.skip_created_before is not None
+                    or user_config.skip_created_after is not None
+                    or user_config.skip_photos
+                    or user_config.skip_videos
+                    or user_config.directory is None
+                ):
+                    raise ValueError(
+                        "--auto-delete requires a complete unfiltered active-library scan"
+                    )
+                manifest_root = Path(user_config.directory)
+                if user_config.auto_delete_directory:
+                    validate_quarantine_root(
+                        user_config.directory, user_config.auto_delete_directory
+                    )
+                cookie_directory = Path(user_config.cookie_directory)
+                manifest_path = AutoDeleteManifest.path_for(
+                    cookie_directory, user_config.username, manifest_root
+                )
+                legacy_path = cookie_directory / "auto-delete-manifest.json"
+                if not manifest_path.exists() and len(user_configs) == 1 and legacy_path.exists():
+                    auto_delete_manifest = AutoDeleteManifest.load(legacy_path, manifest_root)
+                    auto_delete_manifest.path = manifest_path
+                else:
+                    auto_delete_manifest = AutoDeleteManifest.load(manifest_path, manifest_root)
+
             # Set up function builders
             passer = partial(
                 where_builder,
@@ -414,6 +448,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    auto_delete_manifest,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: False)
@@ -443,6 +478,7 @@ def _process_all_users_once(
                 password_providers_dict,
                 passer,
                 downloader,
+                auto_delete_manifest,
                 notificator,
                 lp_filename_generator,
             )
@@ -577,11 +613,15 @@ def download_builder(
     lp_filename_generator: Callable[[str], str],
     filename_builder: Callable[[PhotoAsset], str],
     raw_policy: RawTreatmentPolicy,
+    auto_delete_manifest: AutoDeleteManifest | None,
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
 ) -> bool:
     """function for actually downloading the photos"""
+
+    if auto_delete_manifest is not None:
+        auto_delete_manifest.record_active(str(photo.id), [])
 
     try:
         created_date = photo.created.astimezone(get_localzone())
@@ -633,6 +673,7 @@ def download_builder(
 
     download_dir = os.path.normpath(os.path.join(directory, date_path))
     success = False
+    materialized_paths: set[str] = set()
 
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
@@ -676,6 +717,10 @@ def download_builder(
                 file_size = os.stat(original_download_path or download_path).st_size
                 photo_size = version.size
                 if file_size != photo_size:
+                    # The legacy -original file is a different local object when its
+                    # size does not match this asset. Do not record it as owned by the
+                    # current stable ID after switching to the deduplicated path.
+                    original_download_path = None
                     download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
                     file_exists = os.path.isfile(download_path)
@@ -729,6 +774,11 @@ def download_builder(
 
         if xmp_sidecar:
             generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+        for path in (download_path, original_download_path):
+            if path and os.path.isfile(path):
+                materialized_paths.add(path)
+        if xmp_sidecar and os.path.isfile(download_path + ".xmp"):
+            materialized_paths.add(download_path + ".xmp")
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -802,6 +852,10 @@ def download_builder(
                     success = download_result and success
                     if download_result:
                         logger.info("Downloaded %s", truncated_path)
+            if os.path.isfile(lp_download_path):
+                materialized_paths.add(lp_download_path)
+    if auto_delete_manifest is not None:
+        auto_delete_manifest.record_active(str(photo.id), materialized_paths)
     return success
 
 
@@ -882,6 +936,7 @@ def core_single_run(
     ],
     passer: Callable[[PhotoAsset], bool],
     downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    auto_delete_manifest: AutoDeleteManifest | None,
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
 ) -> int:
@@ -987,6 +1042,7 @@ def core_single_run(
                         return sum(inp)
 
                     photos_count: int | None = compose(sum_, album_lengths)(albums)
+                    scan_cancelled = False
                     for photo_album in albums:
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
@@ -1156,7 +1212,8 @@ def core_single_run(
                         else:
                             pass
 
-                        if status_exchange.get_progress().cancel:
+                        scan_cancelled = status_exchange.get_progress().cancel
+                        if scan_cancelled:
                             logger.info("Iteration was cancelled")
                             status_exchange.get_progress().photos_last_message = (
                                 "Iteration was cancelled"
@@ -1174,16 +1231,24 @@ def core_single_run(
                         status_exchange.get_progress().reset()
 
                     if user_config.auto_delete:
+                        assert auto_delete_manifest is not None
+                        if scan_cancelled:
+                            logger.error("Skipping auto-delete: active-library scan was cancelled")
+                            return 1
                         autodelete_photos(
                             logger,
                             user_config.dry_run,
                             library_object,
-                            user_config.folder_structure,
                             directory,
+                            auto_delete_manifest,
                             user_config.sizes,
                             lp_filename_generator,
                             user_config.align_raw,
+                            user_config.auto_delete_directory,
                         )
+                        if not user_config.dry_run:
+                            auto_delete_manifest.commit_generation()
+                            auto_delete_manifest.save()
                     else:
                         pass
         except PyiCloudFailedLoginException as error:
