@@ -31,6 +31,7 @@ class _DefaultConfig:
     xmp_sidecar: bool
     force_size: bool
     auto_delete: bool
+    auto_delete_directory: str | None = None
     prune_orphans: bool = False
     prune_orphans_adopt_existing: bool = False
     folder_structure: str

@@ -34,7 +34,8 @@ See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_dow
 
 - Three modes of operation:
   - **Copy** - download new photos from iCloud (default mode)
-  - **Sync** - download new photos from iCloud and delete local files that were removed in iCloud (`--auto-delete` option)
+  - **Sync** - download new photos from iCloud and safely remove or quarantine local
+    files whose stable asset IDs were removed in iCloud (`--auto-delete` option)
   - **Move** - download new photos from iCloud and delete photos in iCloud (`--keep-icloud-recent-days` option)
 - Support for Live Photos (image and video as separate files) and RAW images (including RAW+JPEG)
 - Automatic de-duplication of photos with the same name

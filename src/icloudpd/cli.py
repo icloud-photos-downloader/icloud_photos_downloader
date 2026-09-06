@@ -137,6 +137,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--auto-delete-directory",
+        metavar="DIRECTORY",
+        help="Move safely eligible files to this directory instead of deleting them. "
+        + "Requires --auto-delete.",
+        default=None,
+    )
+    cloned.add_argument(
         "--prune-orphans",
         help="Move tracked downloads that disappeared from a shared library into .icloudpd-pruned/. "
         + "Newly written files are tracked by default; existing files require explicit adoption. "
@@ -471,6 +478,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
+        auto_delete_directory=user_ns.auto_delete_directory,
         prune_orphans=user_ns.prune_orphans,
         prune_orphans_adopt_existing=user_ns.prune_orphans_adopt_existing,
         folder_structure=user_ns.folder_structure,
@@ -668,6 +676,10 @@ def cli() -> int:
             print(
                 "--auto-delete and --delete-after-download are mutually exclusive per configuration"
             )
+            return 2
+
+        elif any(ns.auto_delete_directory and not ns.auto_delete for ns in user_nses):
+            print("--auto-delete-directory requires --auto-delete")
             return 2
 
         elif [
