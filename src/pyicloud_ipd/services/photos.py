@@ -857,20 +857,35 @@ class PhotoAsset:
         return created_date
 
     @property
+    def added(self) -> datetime:
+        try:
+            added_date = self.added_date.astimezone(get_localzone())
+        except (ValueError, OSError):
+            logger.error(
+                "Could not convert photo added date to local timezone (%s)", self.added_date
+            )
+            added_date = self.added_date
+
+        return added_date
+
+    @property
     def asset_date(self) -> datetime:
         try:
             dt = datetime.fromtimestamp(
                 self._asset_record["fields"]["assetDate"]["value"] / 1000.0, tz=pytz.utc
             )
-        except (KeyError, TypeError, ValueError):
+        except (KeyError, TypeError, ValueError, OverflowError, OSError):
             dt = datetime.fromtimestamp(0)
         return dt
 
     @property
     def added_date(self) -> datetime:
-        dt = datetime.fromtimestamp(
-            self._asset_record["fields"]["addedDate"]["value"] / 1000.0, tz=pytz.utc
-        )
+        try:
+            dt = datetime.fromtimestamp(
+                self._asset_record["fields"]["addedDate"]["value"] / 1000.0, tz=pytz.utc
+            )
+        except (KeyError, TypeError, ValueError, OverflowError, OSError):
+            dt = datetime.fromtimestamp(0)
         return dt
 
     @property

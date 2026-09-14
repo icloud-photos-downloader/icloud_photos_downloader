@@ -236,9 +236,14 @@ This is a list of all options available for the command line interface (CLI) of 
 
 :   If any filters are used, e.g., [`--skip-videos`](skip-videos-parameter), then assets excluded from processing by filters are not subject to deletion from iCloud. For example, running icloudpd with [`--skip-videos`](skip-videos-parameter) on a huge iCloud collection of videos will download and delete nothing.
 
-:   The timestamp when the asset was taken (aka "created date") as reported by iCloud is used for calculating the age of the asset. For example, an asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. The same timestamp is used for the folder structure in the current system.
+:   By default, the timestamp when the asset was taken (aka "created date") as reported by iCloud is used for calculating the age of the asset. For example, an asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. The same timestamp is used for the folder structure in the current system. See [`--keep-icloud-recent-days-basis`](keep-icloud-recent-days-basis-parameter) to compute the age from the date the asset was added to iCloud instead.
 
 :   If the parameter is not specified, then nothing is deleted from iCloud.
+
+(keep-icloud-recent-days-basis-parameter)=
+`--keep-icloud-recent-days-basis {created,added}`
+    
+:   Which date [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) uses to compute an asset's age: `created` (default) is the asset's capture date, `added` is the date it was added to the iCloud library. `added` is useful when importing old assets (e.g., scanned photos) into iCloud, since their capture date does not reflect how long they have been in iCloud.
 
     ```{versionadded} 1.26.0
     ```

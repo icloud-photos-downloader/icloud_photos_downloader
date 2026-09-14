@@ -18,6 +18,7 @@ from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, splitlines
+from pyicloud_ipd.asset_date_basis import AssetDateBasis
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -205,6 +206,15 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         + "If set to 0, all photos will be deleted from iCloud.",
         type=int,
         default=None,
+    )
+    cloned.add_argument(
+        "--keep-icloud-recent-days-basis",
+        help="Which date `--keep-icloud-recent-days` uses to compute an item's age: "
+        "`created` is the photo's capture date, `added` is when it was added "
+        "to the iCloud library. Default: %(default)s",
+        choices=["created", "added"],
+        type=lower,
+        default="created",
     )
     cloned.add_argument(
         "--dry-run",
@@ -462,6 +472,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         notification_script=user_ns.notification_script,
         delete_after_download=user_ns.delete_after_download,
         keep_icloud_recent_days=user_ns.keep_icloud_recent_days,
+        keep_icloud_recent_days_basis=AssetDateBasis(user_ns.keep_icloud_recent_days_basis),
         dry_run=user_ns.dry_run,
         keep_unicode_in_filenames=user_ns.keep_unicode_in_filenames,
         live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy(
