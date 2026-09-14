@@ -1096,16 +1096,7 @@ def core_single_run(
                                     if user_config.keep_icloud_recent_days_basis == AssetDateBasis.ADDED:
                                         predicate_date = item.added
 
-                                    age_days = (now - predicate_date).days
-                                    logger.debug(
-                                        f"{str(user_config.keep_icloud_recent_days_basis).capitalize()} date: {predicate_date}"
-                                    )
-                                    logger.debug(
-                                        f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
-                                    )
-                                    logger.debug(f"Age days: {age_days}")
-                                    if age_days < user_config.keep_icloud_recent_days:
-                                        # Create filename cleaner for debug message
+                                    if predicate_date.timestamp() <= 0:
                                         filename_cleaner_for_debug = build_filename_cleaner(
                                             user_config.keep_unicode_in_filenames
                                         )
@@ -1114,13 +1105,37 @@ def core_single_run(
                                             filename_cleaner_for_debug,
                                             item,
                                         )
-                                        logger.debug(
-                                            "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
+                                        logger.warning(
+                                            "Could not determine %s date for %s; skipping deletion to be safe",
+                                            str(user_config.keep_icloud_recent_days_basis).lower(),
                                             debug_filename,
-                                            age_days,
                                         )
                                     else:
-                                        should_delete = True
+                                        age_days = (now - predicate_date).days
+                                        logger.debug(
+                                            f"{str(user_config.keep_icloud_recent_days_basis).capitalize()} date: {predicate_date}"
+                                        )
+                                        logger.debug(
+                                            f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
+                                        )
+                                        logger.debug(f"Age days: {age_days}")
+                                        if age_days < user_config.keep_icloud_recent_days:
+                                            # Create filename cleaner for debug message
+                                            filename_cleaner_for_debug = build_filename_cleaner(
+                                                user_config.keep_unicode_in_filenames
+                                            )
+                                            debug_filename = build_filename_with_policies(
+                                                user_config.file_match_policy,
+                                                filename_cleaner_for_debug,
+                                                item,
+                                            )
+                                            logger.debug(
+                                                "Skipping deletion of %s as it is within the keep_icloud_recent_days period (%d days old)",
+                                                debug_filename,
+                                                age_days,
+                                            )
+                                        else:
+                                            should_delete = True
 
                                 if should_delete:
                                     # Create filename cleaner and builder for delete operations

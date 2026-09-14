@@ -507,3 +507,99 @@ class KeepICloudModeTestCases(TestCase):
             )
             self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
+
+    def test_keep_icloud_recent_days_basis_added_protects_item_on_missing_added_date(
+        self,
+    ) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            dt_mock.now.return_value = datetime.datetime(
+                2019, 2, 20, 12, 0, 0, tzinfo=datetime.timezone.utc
+            )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days_missing_added_date.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "100",
+                    "--keep-icloud-recent-days-basis",
+                    "added",
+                ],
+            )
+
+            self.assertIn(
+                "Could not determine added date for IMG_7409.JPG; skipping deletion to be safe",
+                result.output,
+            )
+            self.assertNotIn(
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
+            )
+            self.assertIn("All photos have been downloaded", result.output)
+            assert result.exit_code == 0
+
+    def test_keep_icloud_recent_days_basis_created_protects_item_on_missing_asset_date(
+        self,
+    ) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        # Folder structure is also derived from the (here, missing) capture date,
+        # so a missing assetDate lands the file under the epoch folder.
+        files_to_download = [("1970/01/01", "IMG_7409.JPG")]
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            dt_mock.now.return_value = datetime.datetime(
+                2018, 8, 1, tzinfo=datetime.timezone.utc
+            )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days_missing_asset_date.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "1",
+                ],
+            )
+
+            self.assertIn(
+                "Could not determine created date for IMG_7409.JPG; skipping deletion to be safe",
+                result.output,
+            )
+            self.assertNotIn(
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
+            )
+            self.assertIn("All photos have been downloaded", result.output)
+            assert result.exit_code == 0
