@@ -53,6 +53,7 @@ from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
 from icloudpd.xmp_sidecar import generate_xmp_file
+from pyicloud_ipd.asset_date_basis import AssetDateBasis
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import (
@@ -1091,9 +1092,14 @@ def core_single_run(
                                     passer_result
                                     and user_config.keep_icloud_recent_days is not None
                                 ):
-                                    created_date = item.created.astimezone(get_localzone())
-                                    age_days = (now - created_date).days
-                                    logger.debug(f"Created date: {created_date}")
+                                    predicate_date = item.created
+                                    if user_config.keep_icloud_recent_days_basis == AssetDateBasis.ADDED:
+                                        predicate_date = item.added
+
+                                    age_days = (now - predicate_date).days
+                                    logger.debug(
+                                        f"{str(user_config.keep_icloud_recent_days_basis).capitalize()} date: {predicate_date}"
+                                    )
                                     logger.debug(
                                         f"Keep iCloud recent days: {user_config.keep_icloud_recent_days}"
                                     )

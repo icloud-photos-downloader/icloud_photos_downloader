@@ -6,6 +6,7 @@ from typing import Sequence
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
+from pyicloud_ipd.asset_date_basis import AssetDateBasis
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -42,6 +43,7 @@ class _DefaultConfig:
     notification_script: pathlib.Path | None
     delete_after_download: bool
     keep_icloud_recent_days: int | None
+    keep_icloud_recent_days_basis: AssetDateBasis
     dry_run: bool
     keep_unicode_in_filenames: bool
     live_photo_mov_filename_policy: LivePhotoMovFilenamePolicy

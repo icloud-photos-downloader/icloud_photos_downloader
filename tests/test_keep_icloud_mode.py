@@ -409,3 +409,101 @@ class KeepICloudModeTestCases(TestCase):
             )
             self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
+
+    def test_keep_icloud_recent_days_basis_created_deletes_old_capture_recently_added(
+        self,
+    ) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            dt_mock.now.return_value = datetime.datetime(
+                2019, 2, 20, 12, 0, 0, tzinfo=datetime.timezone.utc
+            )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days_added_basis.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "100",
+                    "--keep-icloud-recent-days-basis",
+                    "created",
+                ],
+            )
+
+            self.assertIn("Looking up all photos...", result.output)
+            self.assertIn(
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
+            )
+            self.assertIn(
+                "Deleted IMG_7409.JPG in iCloud",
+                result.output,
+            )
+            self.assertIn("All photos have been downloaded", result.output)
+            assert result.exit_code == 0
+
+    def test_keep_icloud_recent_days_basis_added_keeps_old_capture_recently_added(
+        self,
+    ) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            dt_mock.now.return_value = datetime.datetime(
+                2019, 2, 20, 12, 0, 0, tzinfo=datetime.timezone.utc
+            )
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days_added_basis.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "100",
+                    "--keep-icloud-recent-days-basis",
+                    "added",
+                ],
+            )
+
+            self.assertIn("Looking up all photos...", result.output)
+            self.assertIn(
+                f"Downloading the first original photo to {data_dir} ...",
+                result.output,
+            )
+            self.assertIn(
+                "Skipping deletion of IMG_7409.JPG as it is within the keep_icloud_recent_days period (4 days old)",
+                result.output,
+            )
+            self.assertIn("All photos have been downloaded", result.output)
+            assert result.exit_code == 0

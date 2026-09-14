@@ -857,6 +857,18 @@ class PhotoAsset:
         return created_date
 
     @property
+    def added(self) -> datetime:
+        try:
+            added_date = self.added_date.astimezone(get_localzone())
+        except (ValueError, OSError):
+            logger.error(
+                "Could not convert photo added date to local timezone (%s)", self.added_date
+            )
+            added_date = self.added_date
+
+        return added_date
+
+    @property
     def asset_date(self) -> datetime:
         try:
             dt = datetime.fromtimestamp(

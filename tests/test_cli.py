@@ -14,6 +14,7 @@ from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
+from pyicloud_ipd.asset_date_basis import AssetDateBasis
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
@@ -226,6 +227,7 @@ class CliTestCase(TestCase):
                         notification_script=None,
                         delete_after_download=False,
                         keep_icloud_recent_days=None,
+                        keep_icloud_recent_days_basis=AssetDateBasis.CREATED,
                         dry_run=False,
                         keep_unicode_in_filenames=False,
                         live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
@@ -266,6 +268,7 @@ class CliTestCase(TestCase):
                         notification_script=None,
                         delete_after_download=False,
                         keep_icloud_recent_days=None,
+                        keep_icloud_recent_days_basis=AssetDateBasis.CREATED,
                         dry_run=False,
                         keep_unicode_in_filenames=False,
                         live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
@@ -342,6 +345,7 @@ class CliTestCase(TestCase):
                         notification_script=None,
                         delete_after_download=False,
                         keep_icloud_recent_days=None,
+                        keep_icloud_recent_days_basis=AssetDateBasis.CREATED,
                         dry_run=False,
                         keep_unicode_in_filenames=False,
                         live_photo_mov_filename_policy=LivePhotoMovFilenamePolicy.SUFFIX,
