@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: executables always exit with code 0, even after errors [#1372](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1372)
 - fix: `icloud` and `icloudpd` crashed with `ZoneInfoNotFoundError` on systems without a time zone database (e.g. minimal containers such as `ubuntu:xenial`); the time zone data is now included through the `tzdata` package [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
 - fix: assets sharing one original (e.g. created with Photos' "Duplicate") were skipped while their neighbour was listed twice, so the download count did not match iCloud's [#1393](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1393)
 - fix: retry the library indexing state check before failing with "Apple iCloud Photo Library has not finished indexing yet" [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
