@@ -1,11 +1,12 @@
 import datetime
 import inspect
 import os
+import runpy
 import shutil
 import zoneinfo
 from argparse import ArgumentError
 from typing import Sequence, Tuple
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import pytest
 
@@ -551,3 +552,26 @@ class CliTestCase(TestCase):
         self.assertEqual(result.exit_code, 2, "exit code")
 
         self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+
+    def test_starter_propagates_exit_code(self) -> None:
+        """Entry script used for binaries must pass cli() return code to sys.exit"""
+        starter_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), os.pardir, "src", "starters", "icloudpd.py"
+        )
+        with (
+            mock.patch(
+                "sys.argv",
+                [
+                    "icloudpd",
+                    "--username",
+                    "jdoe@gmail.com",
+                    "-d",
+                    "/tmp",
+                    "--skip-videos",
+                    "--skip-photos",
+                ],
+            ),
+            self.assertRaises(SystemExit) as context,
+        ):
+            runpy.run_path(starter_path, run_name="__main__")
+        self.assertEqual(context.exception.code, 2, "exit code")
