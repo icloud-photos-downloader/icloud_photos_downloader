@@ -12,7 +12,7 @@ from tzlocal import get_localzone
 import foundation
 from foundation.core import chain_from_iterable, compose, map_, partial_1_1, skip
 from foundation.string_utils import lower
-from icloudpd.base import ensure_tzinfo, run_with_configs
+from icloudpd.base import ensure_tzinfo, offset_to_datetime, run_with_configs
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
@@ -590,6 +590,19 @@ def cli() -> int:
         ]:
             print(
                 "--keep-icloud-recent-days and --delete-after-download should not be used together in one configuration"
+            )
+            return 2
+
+        elif [
+            user_ns
+            for user_ns in user_nses
+            if user_ns.skip_created_before is not None
+            and user_ns.skip_created_after is not None
+            and offset_to_datetime(user_ns.skip_created_before)
+            > offset_to_datetime(user_ns.skip_created_after)
+        ]:
+            print(
+                "--skip-created-before must be earlier than --skip-created-after, otherwise no assets can match"
             )
             return 2
 

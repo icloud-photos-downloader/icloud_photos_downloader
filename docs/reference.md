@@ -372,5 +372,9 @@ This is a list of all options available for the command line interface (CLI) of 
     ```
 
     ```{note}
+    To process a date range, combine it with `--skip-created-before`, which sets the start of the range: `--skip-created-before 2025-04-01 --skip-created-after 2025-10-01` processes assets created between April 1 and October 1, 2025. `--skip-created-before` must be earlier than `--skip-created-after`.
+    ```
+
+    ```{note}
     The date is when the asset was created, not when it was added to iCloud.
     ```
