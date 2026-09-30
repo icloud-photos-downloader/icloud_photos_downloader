@@ -307,7 +307,11 @@ class PyiCloudService:
             password = self.password_provider()
             if not password:
                 LOGGER.debug("Password Provider did not give any data")
-                return None
+                raise PyiCloudFailedLoginException(
+                    f"Cannot log in as {self.apple_id}: the saved session is missing or no "
+                    "longer valid, and no password was provided. Run icloudpd with a password "
+                    "provider that can supply the password to sign in again."
+                )
             # set logging filter
             self.password_filter = PyiCloudPasswordFilter(password)
             LOGGER.addFilter(self.password_filter)
@@ -639,9 +643,9 @@ class PyiCloudService:
     def requires_2fa(self) -> bool:
         """Returns True if two-factor authentication is required."""
         return (
-            self.data["dsInfo"].get("hsaVersion", 0) == 2
+            self.data.get("dsInfo", {}).get("hsaVersion", 0) == 2
             and (self.data.get("hsaChallengeRequired", False) or not self.is_trusted_session)
-            and self.data["dsInfo"].get("hasICloudQualifyingDevice", False)
+            and self.data.get("dsInfo", {}).get("hasICloudQualifyingDevice", False)
         )
 
     @property

@@ -1,0 +1,27 @@
+interactions:
+- request:
+    body: 'null'
+    headers:
+      Accept: ['*/*']
+      Accept-Encoding: ['gzip, deflate']
+      Connection: ['keep-alive']
+      Content-Length: ['4']
+      Origin: ['https://www.icloud.com']
+      Referer: ['https://www.icloud.com/']
+    method: POST
+    uri: https://setup.icloud.com/setup/ws/1/validate
+  response:
+    body:
+      string: '{"success":false,"requestInfo":{"country":"US","timeZone":"EST","region":"NC"},
+        "trustTokens":["HSARMTKNSRVXWFla1234567890"],"error":"Missing X-APPLE-WEBAUTH-TOKEN cookie"}'
+    headers:
+      Cache-Control: ['no-cache, no-store, private']
+      Connection: ['keep-alive']
+      Content-Type: ['application/json; charset=UTF-8']
+      Date: ['Tue, 29 Jul 2026 22:47:37 GMT']
+      Server: ['AppleHttpServer/78689afb4479']
+      X-Apple-Request-UUID: ['12345678-1234-1234-1234-123456789012']
+    status:
+      code: 421
+      message: Misdirected Request
+version: 1

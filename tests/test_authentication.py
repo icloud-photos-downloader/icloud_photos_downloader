@@ -111,6 +111,51 @@ class AuthenticationTestCase(TestCase):
         self.assertIn("Authentication completed successfully", result.output)
         self.assertEqual(result.exit_code, 0, "exit code")
 
+    def test_invalid_session_without_password(self) -> None:
+        """Expired session and no password gives a login error, not KeyError: 'dsInfo' (#1363)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
+
+        recreate_path(base_dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
+
+        result = run_cassette(
+            os.path.join(self.vcr_path, "auth_invalid_session_421.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password-provider",
+                "parameter",
+                "--no-progress-bar",
+                "--cookie-directory",
+                cookie_dir,
+                "--auth-only",
+            ],
+        )
+        self.assertIn(
+            "Cannot log in as jdoe@gmail.com: the saved session is missing or no longer valid, "
+            "and no password was provided.",
+            result.output,
+        )
+        self.assertNotIn("KeyError", result.output)
+        self.assertEqual(result.exit_code, 1, "exit code")
+
+    def test_requires_2fa_without_ds_info(self) -> None:
+        """requires_2fa and requires_2sa are False when there is no dsInfo in the auth data"""
+        with mock.patch.object(pyicloud_ipd.base.PyiCloudService, "authenticate"):
+            icloud = pyicloud_ipd.base.PyiCloudService(
+                "com",
+                "jdoe@gmail.com",
+                lambda: None,
+                None,
+                cookie_directory=os.path.join(self.fixtures_path, inspect.stack()[0][3]),
+            )
+        icloud.data = {"success": False, "error": "Missing X-APPLE-WEBAUTH-TOKEN cookie"}
+        self.assertFalse(icloud.requires_2fa)
+        self.assertFalse(icloud.requires_2sa)
+
     def test_password_prompt_2sa(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
