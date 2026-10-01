@@ -26,6 +26,28 @@ The choice can be made with [`--mfa-provider`](mfa-provider-parameter) parameter
 Default: *console*
 Other options: *webui*
 
+(login-confirmation)=
+## Login Confirmation
+
+```{versionadded} 1.33.0
+```
+
+When the iCloud session is missing or has expired, `icloudpd` signs in again using the password from the [password providers](password-providers), and Apple immediately sends a sign-in request to your trusted devices. When `icloudpd` runs unattended, e.g., with [`--watch-with-interval`](watch-with-interval-parameter), that request arrives at an arbitrary moment, and you cannot tell whether it came from `icloudpd` or from someone else trying to sign in to your account.
+
+With [`--login-confirmation webui`](login-confirmation-parameter), `icloudpd` does not contact Apple with your credentials until you allow it:
+
+1. `icloudpd` finds that a fresh sign-in is needed and shows *Session for &lt;user&gt; expired. Start sign-in?* in the [Web UI](webui)
+1. Notifications are sent the same way as for expired MFA ([email](smtp-parameter) and/or [script](notification-script-parameter))
+1. `icloudpd` waits until you press *Start*
+1. Only then does `icloudpd` read the password, sign in, and continue with the usual MFA flow
+
+As a result, a sign-in request from Apple only arrives right after you press *Start*. A valid session is used as before, without asking for confirmation.
+
+The web server is started automatically when this option is used.
+
+Default: *none*
+Other options: *webui*
+
 ## Access from Mainland China
 
 Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with the [`--domain cn`](domain-parameter) parameter to support downloading iCloud Photos from mainland China; however, people have reported mixed results with that parameter.

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: `--login-confirmation webui` asks for confirmation in the Web UI before signing in to iCloud, so MFA requests only arrive when expected
+
 ## 1.32.3 (2026-05-29)
 
 - fix: restore 2FA for Apple's updated auth flow (2026+) [#1322]https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1322

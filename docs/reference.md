@@ -328,6 +328,18 @@ This is a list of all options available for the command line interface (CLI) of 
     Details in the [MFA providers](authentication) section.
     ```
 
+(login-confirmation-parameter)=
+`--login-confirmation X`
+    
+:   Asks for confirmation in the Web UI before signing in to iCloud when the session is missing or expired, so that Apple's sign-in request only arrives when expected.
+
+    ```{versionadded} 1.33.0
+    ```
+
+    ```{seealso}
+    Details in the [Login Confirmation](login-confirmation) section.
+    ```
+
 (xmp-sidecar-parameter)=
 `--xmp-sidecar`
 

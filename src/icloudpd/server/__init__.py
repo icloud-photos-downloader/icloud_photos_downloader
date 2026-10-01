@@ -44,6 +44,8 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
             return render_template("code.html", error=_error, current_user=_current_user)
         if _status == Status.NEED_PASSWORD:
             return render_template("password.html", error=_error, current_user=_current_user)
+        if _status == Status.NEED_LOGIN_CONFIRMATION:
+            return render_template("login_confirm.html", error=_error, current_user=_current_user)
         return render_template("status.html", status=_status)
 
     @app.route("/code", methods=["POST"])
@@ -77,6 +79,13 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
             render_template("auth_error.html", type="password", current_user=_current_user),
             400,
         )  # incorrect code
+
+    @app.route("/login/confirm", methods=["POST"])
+    def confirm_login() -> Response | str:
+        _current_user = _status_exchange.get_current_user()
+        if _status_exchange.confirm_login():
+            return render_template("login_confirmed.html", current_user=_current_user)
+        return make_response("Sign-in is not waiting for confirmation", 409)
 
     @app.route("/resume", methods=["POST"])
     def resume() -> Response | str:
