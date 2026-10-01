@@ -116,9 +116,16 @@ def authenticator(
             _, writer = _pair
             writer(username, valid_password[0])
 
+    def notify_mfa_required() -> None:
+        if login_confirmed:
+            # user was notified before sign-in and is waiting for the MFA prompt now
+            logger.debug("Sign-in was confirmed in WebUI, skipping notification")
+        else:
+            notificator()
+
     if icloud.requires_2fa:
         logger.info("Two-factor authentication is required (2fa)")
-        notificator()
+        notify_mfa_required()
         if mfa_provider == MFAProvider.WEBUI:
             request_2fa_web(icloud, logger, status_exchange)
         else:
@@ -126,7 +133,7 @@ def authenticator(
 
     elif icloud.requires_2sa:
         logger.info("Two-step authentication is required (2sa)")
-        notificator()
+        notify_mfa_required()
         request_2sa(icloud, logger)
 
     return icloud

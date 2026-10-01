@@ -41,7 +41,7 @@ With [`--login-confirmation webui`](login-confirmation-parameter), `icloudpd` do
 1. `icloudpd` waits until you press *Start*
 1. Only then does `icloudpd` read the password, sign in, and continue with the usual MFA flow
 
-As a result, a sign-in request from Apple only arrives right after you press *Start*. A valid session is used as before, without asking for confirmation.
+As a result, a sign-in request from Apple only arrives right after you press *Start*. Since you have just been notified and are at the Web UI, no second notification is sent when Apple then asks for the MFA code. A valid session is used as before, without asking for confirmation.
 
 The web server is started automatically when this option is used.
 

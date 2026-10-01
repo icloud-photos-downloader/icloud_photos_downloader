@@ -613,6 +613,40 @@ class AuthenticationTestCase(TestCase):
         password_reader.assert_not_called()
         notificator.assert_not_called()
 
+    def _assert_login_confirmation_notifies_once(self, cassette: str, mfa_request: str) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[1][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        status_exchange = StatusExchange()
+        password_reader = mock.Mock(return_value="dummy")
+        notificator = mock.Mock()
+
+        with (
+            mock.patch(f"icloudpd.authentication.{mfa_request}") as request_mfa,
+            vcr.use_cassette(os.path.join(self.vcr_path, cassette)),
+        ):
+            background = self._login_confirmation_authenticator(
+                setup_logger(), status_exchange, password_reader, notificator, cookie_dir
+            )
+            background.wait_for_status(status_exchange, Status.NEED_LOGIN_CONFIRMATION)
+            notificator.assert_called_once()
+
+            self.assertTrue(status_exchange.confirm_login())
+            background.join()
+
+        # MFA is requested right after the user confirmed sign-in, so there is no second notification
+        request_mfa.assert_called_once()
+        notificator.assert_called_once()
+
+    def test_login_confirmation_webui_notifies_once_for_2fa(self) -> None:
+        self._assert_login_confirmation_notifies_once("auth_requires_2fa.yml", "request_2fa")
+
+    def test_login_confirmation_webui_notifies_once_for_2sa(self) -> None:
+        self._assert_login_confirmation_notifies_once("2sa_flow_valid_code.yml", "request_2sa")
+
     def test_login_confirmation_webui_cli_absent_session(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
