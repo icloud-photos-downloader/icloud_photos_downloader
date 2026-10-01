@@ -6,10 +6,11 @@ import time
 from functools import partial
 from typing import Any, Callable, Dict, List, Mapping, Tuple
 
+from icloudpd.login_confirmation import LoginConfirmation
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
+from pyicloud_ipd.exceptions import PyiCloudFailedLoginException, PyiCloudFailedMFAException
 
 
 def prompt_int_range(message: str, default: str, min_val: int, max_val: int) -> int:
@@ -69,10 +70,12 @@ def authenticator(
     response_observer: Callable[[Mapping[str, Any]], None] | None = None,
     cookie_directory: str | None = None,
     client_id: str | None = None,
+    login_confirmation: LoginConfirmation = LoginConfirmation.NONE,
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
     valid_password: List[str] = []
+    login_confirmed: List[bool] = []
 
     def password_provider(username: str, valid_password: List[str]) -> str | None:
         for _, _pair in password_providers.items():
@@ -83,10 +86,22 @@ def authenticator(
                 return password
         return None
 
+    def confirmed_password_provider(
+        username: str, valid_password: List[str], login_confirmed: List[bool]
+    ) -> str | None:
+        # PyiCloudService asks for the password only when a fresh login is needed,
+        # so this is the last moment before credentials are sent to Apple
+        if not login_confirmed:
+            request_login_confirmation_web(logger, status_exchange, username, notificator)
+            login_confirmed.append(True)
+        return password_provider(username, valid_password)
+
     icloud = PyiCloudService(
         domain,
         username,
-        partial(password_provider, username, valid_password),
+        partial(confirmed_password_provider, username, valid_password, login_confirmed)
+        if login_confirmation == LoginConfirmation.WEBUI
+        else partial(password_provider, username, valid_password),
         response_observer,
         cookie_directory=cookie_directory,
         client_id=client_id,
@@ -101,9 +116,16 @@ def authenticator(
             _, writer = _pair
             writer(username, valid_password[0])
 
+    def notify_mfa_required() -> None:
+        if login_confirmed:
+            # user was notified before sign-in and is waiting for the MFA prompt now
+            logger.debug("Sign-in was confirmed in WebUI, skipping notification")
+        else:
+            notificator()
+
     if icloud.requires_2fa:
         logger.info("Two-factor authentication is required (2fa)")
-        notificator()
+        notify_mfa_required()
         if mfa_provider == MFAProvider.WEBUI:
             request_2fa_web(icloud, logger, status_exchange)
         else:
@@ -111,10 +133,30 @@ def authenticator(
 
     elif icloud.requires_2sa:
         logger.info("Two-step authentication is required (2sa)")
-        notificator()
+        notify_mfa_required()
         request_2sa(icloud, logger)
 
     return icloud
+
+
+def request_login_confirmation_web(
+    logger: logging.Logger,
+    status_exchange: StatusExchange,
+    username: str,
+    notificator: Callable[[], None],
+) -> None:
+    """Wait for the user to start sign-in from Webui, so MFA prompts only arrive when expected."""
+    logger.info(f"Session expired for {username}, waiting for sign-in confirmation in WebUI")
+    if not status_exchange.replace_status(Status.NO_INPUT_NEEDED, Status.NEED_LOGIN_CONFIRMATION):
+        raise PyiCloudFailedLoginException(
+            f"Expected NO_INPUT_NEEDED, but got {status_exchange.get_status()}"
+        )
+    notificator()
+
+    # wait for input
+    while not status_exchange.replace_status(Status.LOGIN_CONFIRMED, Status.NO_INPUT_NEEDED):
+        time.sleep(1)
+    logger.info("Sign-in confirmed in WebUI")
 
 
 def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:

@@ -15,6 +15,7 @@ from foundation.string_utils import lower
 from icloudpd.base import ensure_tzinfo, run_with_configs
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
+from icloudpd.login_confirmation import LoginConfirmation
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, splitlines
@@ -358,6 +359,14 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         default="console",
         type=lower,
     )
+    cloned.add_argument(
+        "--login-confirmation",
+        help="Ask for confirmation before signing in to iCloud when the session is missing or expired. "
+        "`webui` waits for the Start button in the WebUI. Default: %(default)s",
+        choices=["none", "webui"],
+        default="none",
+        type=lower,
+    )
     return cloned
 
 
@@ -528,6 +537,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
+            login_confirmation=LoginConfirmation(global_ns.login_confirmation),
         ),
         user_nses,
     )

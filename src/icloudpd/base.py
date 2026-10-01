@@ -46,6 +46,7 @@ from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
 from icloudpd.filename_policies import build_filename_with_policies, create_filename_builder
 from icloudpd.log_level import LogLevel
+from icloudpd.login_confirmation import LoginConfirmation
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
@@ -242,9 +243,11 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
     # Create shared status exchange for web server and progress tracking
     shared_status_exchange = StatusExchange()
 
-    # Check if any user needs web server (webui for MFA or passwords)
-    needs_web_server = global_config.mfa_provider == MFAProvider.WEBUI or any(
-        provider == PasswordProvider.WEBUI for provider in global_config.password_providers
+    # Check if any user needs web server (webui for MFA, passwords, or login confirmation)
+    needs_web_server = (
+        global_config.mfa_provider == MFAProvider.WEBUI
+        or global_config.login_confirmation == LoginConfirmation.WEBUI
+        or any(provider == PasswordProvider.WEBUI for provider in global_config.password_providers)
     )
 
     # Start web server ONCE if needed, outside all loops
@@ -913,6 +916,7 @@ def core_single_run(
                 partial(append_response, captured_responses),
                 user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
+                global_config.login_confirmation,
             )
 
             # dump captured responses for debugging
