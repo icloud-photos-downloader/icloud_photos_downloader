@@ -59,6 +59,7 @@ class CliTestCase(TestCase):
         self.assertIn("--size", result)
         self.assertIn("--live-photo-size", result)
         self.assertIn("--auth-only", result)
+        self.assertIn("--adp-web-access", result)
         self.assertIn("--dry-run", result)
 
         # Test that option descriptions are present
@@ -203,6 +204,7 @@ class CliTestCase(TestCase):
                         directory="abc",
                         username="u1",
                         auth_only=False,
+                        adp_web_access=False,
                         cookie_directory="~/.pyicloud",
                         password=None,
                         sizes=[AssetVersionSize.ORIGINAL],
@@ -242,6 +244,7 @@ class CliTestCase(TestCase):
                     UserConfig(
                         directory="def",
                         auth_only=False,
+                        adp_web_access=False,
                         cookie_directory="~/.pyicloud",
                         username="u2",
                         password=None,
@@ -319,6 +322,7 @@ class CliTestCase(TestCase):
                         directory="abc",
                         username="u1",
                         auth_only=False,
+                        adp_web_access=False,
                         cookie_directory="~/.pyicloud",
                         password=None,
                         sizes=[AssetVersionSize.ORIGINAL],
