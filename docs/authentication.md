@@ -36,7 +36,11 @@ Authentication to iCloud with hardware keys (FIDO) is not supported.
 
 ## ADP
 
-Advanced Data Protection (ADP) for iCloud accounts is not supported because `icloudpd` simulates web access, which is disabled with ADP.
+Accounts with Advanced Data Protection (ADP) can be used with the [`--adp-web-access`](adp-web-access-parameter) parameter. It replays the consent sequence that icloud.com performs before showing photos, so it requires `Settings > Apple ID > iCloud > Access iCloud Data on the Web` to be enabled on the Apple device.
+
+The first run sends an approval notification to your Apple devices and waits up to two minutes for it to be accepted. Once approved, later runs (including from other machines or cookie directories) do not ask again.
+
+Without the parameter, an ADP account fails with `ACCESS_DENIED`.
 
 ## Occasional Errors
 

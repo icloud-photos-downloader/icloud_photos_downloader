@@ -4,6 +4,7 @@ import hashlib
 import http.cookiejar as cookielib
 import json
 import logging
+import time
 import typing
 from contextlib import contextmanager
 from functools import partial
@@ -12,7 +13,7 @@ from os import mkdir, path
 from re import Pattern, match
 from tempfile import gettempdir
 from typing import Any, Callable, Dict, Generator, List, Mapping, NamedTuple, Sequence
-from uuid import uuid1
+from uuid import uuid1, uuid4
 
 import srp
 from requests import PreparedRequest, Request, Response
@@ -884,6 +885,59 @@ class PyiCloudService:
         except PyiCloudAPIResponseException:
             LOGGER.error("Session trust failed.")
             return False
+
+    def request_pcs_consent(self, app_name: str = "photos", timeout_seconds: int = 120) -> None:
+        """Replay the icloud.com sequence that unlocks PCS protected data (Advanced Data Protection).
+
+        Needs "Access iCloud Data on the Web" enabled on the account. The first call sends a
+        notification to the user's Apple devices that must be approved; once consented, later
+        calls skip straight to requestPCS.
+        """
+        workflow = {"workflowUuid": str(uuid4()).upper()}
+        params = {**self.params, "clientId": self.client_id}
+
+        def call(method: str, name: str, body: Dict[str, Any] | None = None) -> Dict[str, Any]:
+            response = self.session.request(
+                method,
+                f"{self.SETUP_ENDPOINT}/{name}",
+                params=params,
+                headers={"Content-Type": "text/plain;charset=UTF-8"},
+                **({"data": json.dumps(body)} if body is not None else {}),
+            )
+            return typing.cast(Dict[str, Any], response.json())
+
+        state = call("POST", "requestWebAccessState", workflow)
+        if not state.get("isWebAccessAllowed"):
+            raise PyiCloudFailedLoginException(
+                "Web access to iCloud data is disabled: "
+                "enable 'Access iCloud Data on the Web' on your Apple device"
+            )
+        if not state.get("isDeviceConsentedForPCS"):
+            call("POST", "enableDeviceConsentForPCS", workflow)
+            LOGGER.info(
+                "Approve the iCloud web access request on your Apple device (waiting %ss)",
+                timeout_seconds,
+            )
+            deadline = time.monotonic() + timeout_seconds
+            while not state.get("isDeviceConsentedForPCS"):
+                if time.monotonic() > deadline:
+                    raise PyiCloudFailedLoginException(
+                        "Timed out waiting for the iCloud web access approval"
+                    )
+                time.sleep(3)
+                state = call("POST", "requestWebAccessState", workflow)
+        call("GET", "generateSessionIdToken")
+
+        pcs = {"appName": app_name, "isFinalAttempt": False, **workflow}
+        result = call("POST", "requestPCS", {"derivedFromUserAction": True, **pcs})
+        for _ in range(10):
+            if result.get("status") == "success":
+                break
+            time.sleep(3)
+            result = call("POST", "requestPCS", {"derivedFromUserAction": False, **pcs})
+        LOGGER.debug(
+            "requestPCS: status=%s message=%s", result.get("status"), result.get("message")
+        )
 
     def _get_webservice_url(self, ws_key: str) -> str:
         """Get webservice URL, raise an exception if not exists."""

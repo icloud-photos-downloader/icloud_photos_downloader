@@ -46,6 +46,12 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         "--auth-only", action="store_true", help="Create/update cookie and session tokens only."
     )
     cloned.add_argument(
+        "--adp-web-access",
+        action="store_true",
+        help="Request iCloud web access consent for accounts with Advanced Data Protection (ADP). "
+        "Requires approving a notification on an Apple device the first time.",
+    )
+    cloned.add_argument(
         "--cookie-directory",
         help="Directory to store cookies for authentication. Default: %(default)s",
         default="~/.pyicloud",
@@ -434,6 +440,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         password=user_ns.password,
         directory=user_ns.directory,
         auth_only=user_ns.auth_only,
+        adp_web_access=user_ns.adp_web_access,
         cookie_directory=user_ns.cookie_directory,
         sizes=list(
             map_(AssetVersionSize, foundation.unique_sequence(user_ns.sizes or ["original"]))
