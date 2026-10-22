@@ -16,7 +16,7 @@ We aim to release new versions once a week (Friday), if there is something worth
 To make iCloud Photo Downloader work, ensure the iCloud account is configured with the following settings, otherwise Apple Servers will return an ACCESS_DENIED error:
 
 - **Enable Access iCloud Data on the Web:** On your iPhone / iPad, enable `Settings > Apple ID > iCloud > Access iCloud Data on the Web`
-- **Disable Advanced Data Protection:** On your iPhone /iPad disable `Settings > Apple ID > iCloud > Advanced Data Protection`
+- **Advanced Data Protection (ADP):** either disable `Settings > Apple ID > iCloud > Advanced Data Protection` on your iPhone / iPad, or keep it enabled and run with `--adp-web-access` (see [Authentication](https://icloud-photos-downloader.github.io/icloud_photos_downloader/authentication.html#adp))
 
 
 ## Install and Run

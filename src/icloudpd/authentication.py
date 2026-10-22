@@ -69,6 +69,7 @@ def authenticator(
     response_observer: Callable[[Mapping[str, Any]], None] | None = None,
     cookie_directory: str | None = None,
     client_id: str | None = None,
+    adp_web_access: bool = False,
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
@@ -113,6 +114,9 @@ def authenticator(
         logger.info("Two-step authentication is required (2sa)")
         notificator()
         request_2sa(icloud, logger)
+
+    if adp_web_access:
+        icloud.request_pcs_consent("photos")
 
     return icloud
 

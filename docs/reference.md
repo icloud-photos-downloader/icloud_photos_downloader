@@ -150,6 +150,11 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Specifies the AppleID (email address) used for authenticating to iCloud. May be used multiple times to introduce different configurations and/or accounts. See [Using Multiple Accounts and Config](multiple-accounts-and-configs).
 
+(adp-web-access-parameter)=
+`--adp-web-access`
+    
+:   Requests iCloud web access consent after authentication, which is required for accounts with Advanced Data Protection (ADP). Needs `Access iCloud Data on the Web` enabled on the account. The first run asks you to approve a notification on an Apple device. See [ADP](authentication.md).
+
 (auth-only-parameter)=
 `--auth-only`
     
