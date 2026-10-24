@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: assets sharing one original (e.g. created with Photos' "Duplicate") were skipped while their neighbour was listed twice, so the download count did not match iCloud's [#1393](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1393)
+
 ## 1.32.3 (2026-05-29)
 
 - fix: restore 2FA for Apple's updated auth flow (2026+) [#1322]https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1322
