@@ -42,10 +42,10 @@ dependencies = [
 
 [dependency-groups]
 doc = [
-    "furo==2024.8.6",
-    "Sphinx==7.4.7",
-    "sphinx-autobuild==2024.10.3",
-    "myst-parser==3.0.1"
+    "furo==2025.12.19",
+    "Sphinx==9.2.0",
+    "sphinx-autobuild==2025.8.25",
+    "myst-parser==5.1.0"
 ]
 dev = [
     "twine==7.0.0",
