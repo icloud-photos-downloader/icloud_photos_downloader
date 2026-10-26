@@ -1,6 +1,7 @@
 import datetime
 import inspect
 import os
+from typing import Any, List, Tuple
 from unittest import TestCase, mock
 
 import pytest
@@ -409,3 +410,74 @@ class KeepICloudModeTestCases(TestCase):
             )
             self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
+
+    def _run_keep_recent_days_0(
+        self,
+        base_dir: str,
+        files_to_create: List[Tuple[str, str, int]],
+        extra_params: List[str],
+    ) -> Tuple[str, Any]:
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
+            dt_mock.now.return_value = mock_now + datetime.timedelta(days=10)
+            return run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "3",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "0",
+                    *extra_params,
+                ],
+            )
+
+    def test_keep_icloud_recent_days_keeps_photos_that_failed_to_download(self) -> None:
+        """A photo is only deleted from iCloud when it is present locally (#1312)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with mock.patch("icloudpd.download.download_media", return_value=False):
+            _, result = self._run_keep_recent_days_0(base_dir, [], [])
+
+        self.assertNotIn("in iCloud", result.output)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_deletes_only_photos_present_locally(self) -> None:
+        """Already downloaded photos are still deleted; ones that failed to download are kept"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with mock.patch("icloudpd.download.download_media", return_value=False):
+            _, result = self._run_keep_recent_days_0(
+                base_dir, [("2018/07/31", "IMG_7409.JPG", 1884695)], []
+            )
+
+        self.assertIn("Deleted IMG_7409.JPG in iCloud", result.output)
+        self.assertNotIn("Deleted IMG_7408.JPG in iCloud", result.output)
+        self.assertNotIn("Deleted IMG_7407.JPG in iCloud", result.output)
+        self.assertIn(
+            "Not deleting IMG_7408.JPG from iCloud: it is not present locally", result.output
+        )
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_does_not_delete_when_only_printing_filenames(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        # logging is off in this mode, so check the delete call itself
+        with mock.patch("icloudpd.base.delete_photo") as delete_photo:
+            _, result = self._run_keep_recent_days_0(base_dir, [], ["--only-print-filenames"])
+
+        delete_photo.assert_not_called()
+        self.assertEqual(result.exit_code, 0)

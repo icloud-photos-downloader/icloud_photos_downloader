@@ -23,6 +23,7 @@ from typing import (
     Iterable,
     List,
     Mapping,
+    NamedTuple,
     Sequence,
     Tuple,
 )
@@ -416,7 +417,7 @@ def _process_all_users_once(
                     user_config.align_raw,
                 )
                 if user_config.directory is not None
-                else (lambda _s, _c, _p: False)
+                else (lambda _s, _c, _p: NOT_DOWNLOADED)
             )
 
             notificator = partial(
@@ -561,6 +562,16 @@ def skip_created_after_message(
     return f"Skipping {filename}, as it was created {photo.created}, after {target_created_date}."
 
 
+class DownloadResult(NamedTuple):
+    downloaded: bool
+    """a file was downloaded in this run (what --delete-after-download acts on)"""
+    present: bool
+    """every requested file is on disk now, downloaded earlier or in this run"""
+
+
+NOT_DOWNLOADED = DownloadResult(downloaded=False, present=False)
+
+
 def download_builder(
     logger: logging.Logger,
     folder_structure: str,
@@ -580,7 +591,7 @@ def download_builder(
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
-) -> bool:
+) -> DownloadResult:
     """function for actually downloading the photos"""
 
     try:
@@ -629,10 +640,12 @@ def download_builder(
             "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues"
         )
         print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
-        return False
+        return NOT_DOWNLOADED
 
     download_dir = os.path.normpath(os.path.join(directory, date_path))
     success = False
+    # nothing is written in --only-print-filenames mode
+    present = not only_print_filenames
 
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
@@ -702,6 +715,7 @@ def download_builder(
                     filename_builder,
                 )
                 success = download_result
+                present = present and download_result
 
                 if download_result:
                     from foundation.core import compose
@@ -800,9 +814,10 @@ def download_builder(
                         filename_builder,
                     )
                     success = download_result and success
+                    present = present and download_result
                     if download_result:
                         logger.info("Downloaded %s", truncated_path)
-    return success
+    return DownloadResult(downloaded=success, present=present)
 
 
 def delete_photo(
@@ -881,7 +896,7 @@ def core_single_run(
         PasswordProvider, Tuple[Callable[[str], str | None], Callable[[str, str], None]]
     ],
     passer: Callable[[PhotoAsset], bool],
-    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], bool],
+    downloader: Callable[[PyiCloudService, Counter, PhotoAsset], DownloadResult],
     notificator: Callable[[], None],
     lp_filename_generator: Callable[[str], str],
 ) -> int:
@@ -1081,10 +1096,12 @@ def core_single_run(
                                 should_delete = False
 
                                 passer_result = passer(item)
-                                download_result = passer_result and download_photo(
-                                    consecutive_files_found, item
+                                download_result = (
+                                    download_photo(consecutive_files_found, item)
+                                    if passer_result
+                                    else NOT_DOWNLOADED
                                 )
-                                if download_result and user_config.delete_after_download:
+                                if download_result.downloaded and user_config.delete_after_download:
                                     should_delete = True
 
                                 if (
@@ -1113,8 +1130,19 @@ def core_single_run(
                                             debug_filename,
                                             age_days,
                                         )
-                                    else:
+                                    elif download_result.present:
                                         should_delete = True
+                                    elif not global_config.only_print_filenames:
+                                        logger.warning(
+                                            "Not deleting %s from iCloud: it is not present locally",
+                                            build_filename_with_policies(
+                                                user_config.file_match_policy,
+                                                build_filename_cleaner(
+                                                    user_config.keep_unicode_in_filenames
+                                                ),
+                                                item,
+                                            ),
+                                        )
 
                                 if should_delete:
                                     # Create filename cleaner and builder for delete operations
