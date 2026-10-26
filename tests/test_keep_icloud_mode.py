@@ -6,6 +6,9 @@ from unittest import TestCase, mock
 
 import pytest
 
+from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import path_from_project_root, run_icloudpd_test
 
 
@@ -416,6 +419,8 @@ class KeepICloudModeTestCases(TestCase):
         base_dir: str,
         files_to_create: List[Tuple[str, str, int]],
         extra_params: List[str],
+        files_to_download: List[Tuple[str, str]] | None = None,
+        skip_live_photos: bool = True,
     ) -> Tuple[str, Any]:
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
@@ -426,7 +431,7 @@ class KeepICloudModeTestCases(TestCase):
                 base_dir,
                 "listing_photos_keep_icloud_recent_days.yml",
                 files_to_create,
-                [],
+                files_to_download or [],
                 [
                     "--username",
                     "jdoe@gmail.com",
@@ -435,7 +440,7 @@ class KeepICloudModeTestCases(TestCase):
                     "--recent",
                     "3",
                     "--skip-videos",
-                    "--skip-live-photos",
+                    *(["--skip-live-photos"] if skip_live_photos else []),
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -478,6 +483,65 @@ class KeepICloudModeTestCases(TestCase):
         # logging is off in this mode, so check the delete call itself
         with mock.patch("icloudpd.base.delete_photo") as delete_photo:
             _, result = self._run_keep_recent_days_0(base_dir, [], ["--only-print-filenames"])
+
+        delete_photo.assert_not_called()
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_keeps_photos_without_the_forced_size(self) -> None:
+        """--force-size skips photos without that size; nothing is on disk, so keep them"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with (
+            mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as versions,
+            mock.patch("icloudpd.base.delete_photo") as delete_photo,
+        ):
+            versions.return_value = {
+                AssetVersionSize.ORIGINAL: AssetVersion(
+                    1, "https://example.com", "public.jpeg", "x"
+                )
+            }
+            _, result = self._run_keep_recent_days_0(
+                base_dir, [], ["--size", "medium", "--force-size"]
+            )
+
+        self.assertIn("medium size does not exist for IMG_7409.JPG. Skipping...", result.output)
+        delete_photo.assert_not_called()
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_keeps_live_photo_without_the_video_size(self) -> None:
+        """The still is on disk but the live photo video size is missing: keep it in iCloud"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        def fake_download(*args: Any) -> bool:
+            path = args[4]
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            open(path, "wb").close()
+            return True
+
+        with (
+            mock.patch.object(PhotoAsset, "versions", new_callable=mock.PropertyMock) as versions,
+            mock.patch("icloudpd.download.download_media", side_effect=fake_download),
+            mock.patch("icloudpd.base.delete_photo") as delete_photo,
+        ):
+            versions.return_value = {
+                AssetVersionSize.ORIGINAL: AssetVersion(
+                    1, "https://example.com", "public.jpeg", "x"
+                ),
+                LivePhotoVersionSize.ORIGINAL: AssetVersion(
+                    2, "https://example.com", "com.apple.quicktime-movie", "y"
+                ),
+            }
+            _, result = self._run_keep_recent_days_0(
+                base_dir,
+                [],
+                ["--live-photo-size", "medium"],
+                files_to_download=[
+                    ("2018/07/31", "IMG_7409.JPG"),
+                    ("2018/07/30", "IMG_7408.JPG"),
+                    ("2018/07/30", "IMG_7407.JPG"),
+                ],
+                skip_live_photos=False,
+            )
 
         delete_photo.assert_not_called()
         self.assertEqual(result.exit_code, 0)

@@ -656,6 +656,8 @@ def download_builder(
                     download_size.value,
                     error_filename,
                 )
+                # a requested size is not kept locally
+                present = False
                 continue
             if AssetVersionSize.ORIGINAL in primary_sizes:
                 continue  # that should avoid double download for original
@@ -817,6 +819,9 @@ def download_builder(
                     present = present and download_result
                     if download_result:
                         logger.info("Downloaded %s", truncated_path)
+        elif any(isinstance(size, LivePhotoVersionSize) for size in photo_versions_with_policy):
+            # a live photo without the requested video size: the video is not kept locally
+            present = False
     return DownloadResult(downloaded=success, present=present)
 
 
