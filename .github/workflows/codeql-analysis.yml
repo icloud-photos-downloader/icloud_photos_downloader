@@ -25,6 +25,11 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-22.04
+    # upload results to code scanning; don't rely on the repo's default token permissions
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
     strategy:
       fail-fast: false
