@@ -11,6 +11,11 @@ on:
     # branches: [ master ]
   workflow_dispatch:
 
+# a newer run for the same branch or PR replaces an older one that is still running
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   skip_check:
     # continue-on-error: true # Uncomment once integration is finished
