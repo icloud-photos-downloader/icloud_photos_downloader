@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools==80.9.0",
-    "wheel==0.45.1",
+    "setuptools==84.2.1",
+    "wheel==0.48.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -12,7 +12,8 @@ description = "icloudpd is a command-line tool to download photos and videos fro
 readme = "README_PYPI.md"
 requires-python = ">=3.11,<3.15"
 keywords = ["icloud", "photo"]
-license = {file="LICENSE.md"}
+license = "MIT"
+license-files = ["LICENSE.md"]
 authors=[
     {name = "The iCloud Photo Downloader Authors"}
 ]
@@ -20,7 +21,6 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
     "requests==2.34.2",
@@ -48,14 +48,14 @@ doc = [
     "myst-parser==3.0.1"
 ]
 dev = [
-    "twine==6.1.0",
+    "twine==7.0.0",
     "pyinstaller==6.22.3",
-    "wheel==0.45.1",
+    "wheel==0.48.0",
 ]
 devlinux = [
-    "auditwheel==6.4.0",
+    "auditwheel==6.8.2",
     #"staticx==0.14.1",
-    "scons==4.9.1"
+    "scons==4.11.1"
 ]
 test = [
     "pytest==9.1.1",
