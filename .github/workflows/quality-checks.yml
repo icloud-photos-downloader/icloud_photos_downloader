@@ -41,7 +41,7 @@ jobs:
     strategy:
       matrix:
         # Supported Python versions; keep in sync with requires-python in pyproject.toml
-        python-version: &supported-pythons ['3.11', '3.12', '3.13', '3.14']
+        python-version: &supported-pythons ['3.11', '3.12', '3.13', '3.14', '3.15']
     steps:
     - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
@@ -134,7 +134,7 @@ jobs:
     strategy: 
       fail-fast: false
       matrix: 
-        python-version: ['3.14']
+        python-version: ['3.15']
         os: 
           - "macos-15"
           - "windows-2025"

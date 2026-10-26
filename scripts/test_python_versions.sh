@@ -3,7 +3,7 @@ set -e
 
 # Script to test icloudpd across multiple Python versions using Docker
 
-SUPPORTED_VERSIONS=("3.11" "3.12" "3.13" "3.14")
+SUPPORTED_VERSIONS=("3.11" "3.12" "3.13" "3.14" "3.15")
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCKERFILE_TEMPLATE="$SCRIPT_DIR/Dockerfile.test-template"
 
@@ -197,7 +197,7 @@ main() {
                 echo "Test icloudpd across multiple Python versions using Docker"
                 echo ""
                 echo "Options:"
-                echo "  --version VERSION    Test specific Python version (e.g., 3.11, 3.12, 3.13, 3.14)"
+                echo "  --version VERSION    Test specific Python version (e.g., 3.11, 3.12, 3.13, 3.14, 3.15)"
                 echo "  --module MODULE      Test specific module (e.g., test_cli.py)"
                 echo "  --full               Run full test suite including tests/ and src/ with doctests"
                 echo "  --no-doctests        Skip doctest execution"
@@ -209,7 +209,7 @@ main() {
                 echo "  $0 --version 3.11            # Test only Python 3.11"
                 echo "  $0 --module test_cli.py      # Test CLI module across all versions"
                 echo "  $0 --version 3.11 --module test_cli.py  # Test CLI on Python 3.11"
-                echo "  $0 --full --version 3.14     # Full test suite on Python 3.14"
+                echo "  $0 --full --version 3.15     # Full test suite on Python 3.15"
                 exit 0
                 ;;
             *)
