@@ -172,7 +172,7 @@ jobs:
 
 
   get_expected_version_macos:
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         shell: bash
@@ -548,7 +548,7 @@ jobs:
   
   build_macos:
     # earliest possible mac for better compatibility
-    runs-on: macos-14
+    runs-on: macos-15
     defaults:
       run:
         shell: bash
@@ -1148,11 +1148,11 @@ jobs:
       matrix: 
         prop: 
           - [
-            "macos-14",  # os
+            "macos-15",  # os
             "amd64",  # platform spec
           ]
           - [
-            "macos-14",  # os
+            "macos-15",  # os
             "arm64",  # platform spec
           ]
     runs-on: ${{ matrix.prop[0] }}
@@ -2056,11 +2056,11 @@ jobs:
       matrix:  
         prop:  
           - [ 
-            "macos-14", 
+            "macos-15", 
             "amd64", 
             ] 
           - [ 
-            "macos-14", 
+            "macos-15", 
             "arm64", 
             ] 
  
@@ -3347,11 +3347,11 @@ jobs:
       matrix: 
         prop:  
           - [ 
-            "macos-14", 
+            "macos-15", 
             "amd64", 
             ] 
           - [ 
-            "macos-14", 
+            "macos-15", 
             "arm64", 
             ] 
     runs-on: ${{ matrix.prop[0] }} 
@@ -3476,11 +3476,11 @@ jobs:
       matrix: 
         prop:  
           - [ 
-            "macos-14", 
+            "macos-15", 
             "amd64", 
             ] 
           - [ 
-            "macos-14", 
+            "macos-15", 
             "arm64", 
             ] 
     runs-on: ${{ matrix.prop[0] }} 
