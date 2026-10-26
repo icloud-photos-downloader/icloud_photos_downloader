@@ -35,9 +35,9 @@ jobs:
       matrix:
         python-version: ['3.10', '3.11', '3.12', '3.13']
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: ${{ matrix.python-version }}
     - name: Install Test dependencies
@@ -57,9 +57,9 @@ jobs:
       matrix: 
         python-version: ['3.10', '3.11', '3.12', '3.13']
     steps: 
-    - uses: actions/checkout@v4 
+    - uses: actions/checkout@v7 
     - name: Set up Python ${{ matrix.python-version }} 
-      uses: actions/setup-python@v5 
+      uses: actions/setup-python@v7 
       with: 
         python-version: ${{ matrix.python-version }} 
         cache: 'pip' 
@@ -88,17 +88,17 @@ jobs:
       run: | 
         sudo apt-get update && sudo apt-get -y install locales locales-all
 
-    - uses: actions/checkout@v4 
+    - uses: actions/checkout@v7 
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python ${{ matrix.python-version }} 
-      uses: actions/setup-python@v5 
+      uses: actions/setup-python@v7 
       with: 
         python-version: ${{ matrix.python-version }} 
         cache: 'pip' 
@@ -124,22 +124,22 @@ jobs:
       matrix: 
         python-version: [3.13]
         os: 
-          - "macos-14"
+          - "macos-15"
           - "windows-2025"
           - "windows-2022"
     steps: 
 
-    - uses: actions/checkout@v4 
+    - uses: actions/checkout@v7 
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
     - name: Set up Python ${{ matrix.python-version }} 
-      uses: actions/setup-python@v5 
+      uses: actions/setup-python@v7 
       with: 
         python-version: ${{ matrix.python-version }} 
         cache: 'pip' 
@@ -158,7 +158,7 @@ jobs:
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Retrieve version
       id: get_version

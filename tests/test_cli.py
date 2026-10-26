@@ -20,6 +20,8 @@ from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     path_from_project_root,
+    recreate_path,
+    run_cassette,
     run_icloudpd_test,
     run_main,
 )
@@ -31,6 +33,7 @@ class CliTestCase(TestCase):
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_cli_help(self) -> None:
         result = format_help()
@@ -478,8 +481,13 @@ class CliTestCase(TestCase):
         # need path removed
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
+        # keep cookies out of base_dir (and out of ~/.pyicloud)
+        cookie_dir = base_dir + "_cookie"
+        recreate_path(cookie_dir)
 
-        result = run_main(
+        # replay a failed login instead of signing in to Apple's real servers
+        result = run_cassette(
+            os.path.join(self.vcr_path, "failed_auth.yml"),
             [
                 "--username",
                 "jdoe@gmail.com",
@@ -489,6 +497,8 @@ class CliTestCase(TestCase):
                 "0",
                 "--log-level",
                 "info",
+                "--cookie-directory",
+                cookie_dir,
                 "-d",
                 base_dir,
             ],
