@@ -58,21 +58,21 @@ devlinux = [
     "scons==4.9.1"
 ]
 test = [
-    "pytest==8.4.0",
+    "pytest==9.1.1",
     "mock==5.2.0",
-    "freezegun==1.5.2",
-    "vcrpy==7.0.0",
-    "pytest-cov==6.2.1",
+    "freezegun==1.5.5",
+    "vcrpy==9.2.0",
+    "pytest-cov==7.1.0",
     "ruff==0.11.13",
     "pytest-timeout==2.4.0",
-    "pytest-xdist==3.7.0",
-    "mypy==1.16.0",
+    "pytest-xdist==3.8.0",
+    "mypy==2.4.0",
     "types-pytz==2026.5.0.20261006",
     "types-tzlocal==5.1.0.1",
     "types-requests==2.33.0.20261006",
     "types-tqdm==4.70.0.20260906",
-    "types-mock==5.2.0.20250516",
-    "types-waitress==3.0.1.20241117",
+    "types-mock==5.2.0.20260518",
+    "types-waitress==3.0.1.20260724",
 ]
 
 [project.urls]
