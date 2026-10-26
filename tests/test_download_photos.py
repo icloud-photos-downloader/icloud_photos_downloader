@@ -955,7 +955,9 @@ class DownloadPhotoTestCase(TestCase):
     def test_creation_date_without_century(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [("5/01/01", "IMG_7409.JPG")]
+        # Python 3.14 zero-pads %Y on Linux too, like macOS and Windows already did
+        year_folder = "5/01/01" if sys.version_info < (3, 14) else "0005/01/01"
+        files_to_download = [(year_folder, "IMG_7409.JPG")]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
@@ -1002,7 +1004,7 @@ class DownloadPhotoTestCase(TestCase):
             #     result.output,
             # )
             self.assertIn(
-                f"Downloading {os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409.JPG'))}",
+                f"Downloading {os.path.join(data_dir, os.path.normpath(f'{year_folder}/IMG_7409.JPG'))}",
                 result.output,
             )
             self.assertIn("All photos and videos have been downloaded", result.output)
