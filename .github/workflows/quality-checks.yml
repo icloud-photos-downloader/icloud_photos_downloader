@@ -20,6 +20,7 @@ jobs:
   skip_check:
     # continue-on-error: true # Uncomment once integration is finished
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     # Map a step output to a job output
     outputs:
       should_skip: ${{ steps.skip_check.outputs.should_skip }}
@@ -36,6 +37,7 @@ jobs:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     strategy:
       matrix:
         # Supported Python versions; keep in sync with requires-python in pyproject.toml
@@ -59,6 +61,7 @@ jobs:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     strategy: 
       matrix: 
         python-version: *supported-pythons
@@ -86,13 +89,15 @@ jobs:
     needs: [skip_check, patch_version]
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     strategy: 
       matrix: 
         python-version: *supported-pythons
     steps: 
-    - name: Install Locales for Tests
-      run: | 
-        sudo apt-get update && sudo apt-get -y install locales locales-all
+    - name: Generate Locales for Tests
+      # only de_DE is used by the tests; locale-gen needs no download, unlike installing locales-all
+      run: |
+        sudo locale-gen de_DE.UTF-8
 
     - uses: actions/checkout@v7 
 
@@ -122,6 +127,7 @@ jobs:
     needs: [skip_check, patch_version]
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ${{ matrix.os }} 
+    timeout-minutes: 15
     defaults:
       run:
         shell: bash
@@ -163,6 +169,7 @@ jobs:
     needs: skip_check
     if: needs.skip_check.outputs.should_skip != 'true'
     runs-on: ubuntu-22.04
+    timeout-minutes: 15
     steps:
     - uses: actions/checkout@v7
 
