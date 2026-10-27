@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- feature: support Python 3.14; drop Python 3.10, which reached end of life. Binaries and Docker images are built with Python 3.14
+- note: on Linux, photos dated before year 1000 now go into zero-padded year folders (e.g. `0005/01/01`), the same as on macOS and Windows
+
 ## 1.32.3 (2026-05-29)
 
 - fix: restore 2FA for Apple's updated auth flow (2026+) [#1322]https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1322
