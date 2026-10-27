@@ -111,7 +111,7 @@ class DownloadPhotoTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
     def test_download_photos_and_set_exif(self) -> None:
@@ -181,7 +181,7 @@ class DownloadPhotoTestCase(TestCase):
         )
         # 2018:07:31 07:22:24 utc
         expectedDatetime = (
-            datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+            datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.UTC)
             .astimezone()
             .strftime("%Y-%m-%d %H:%M:%S%z")
         )
@@ -1183,9 +1183,7 @@ class DownloadPhotoTestCase(TestCase):
             photo_mtime = os.path.getmtime(
                 os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG"))
             )
-            photo_modified_time = datetime.datetime.fromtimestamp(
-                photo_mtime, datetime.timezone.utc
-            )
+            photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
             self.assertEqual(
                 "2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S")
             )
@@ -1197,9 +1195,7 @@ class DownloadPhotoTestCase(TestCase):
             photo_mtime = os.path.getmtime(
                 os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-3294075.MOV"))
             )
-            photo_modified_time = datetime.datetime.fromtimestamp(
-                photo_mtime, datetime.timezone.utc
-            )
+            photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
             self.assertEqual(
                 "2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S")
             )
@@ -1245,7 +1241,7 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 # 2018:07:31 07:22:24 utc
                 expectedDatetime = (
-                    datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+                    datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.UTC)
                     .astimezone()
                     .strftime("%Y-%m-%d %H:%M:%S%z")
                 )
@@ -1303,7 +1299,7 @@ class DownloadPhotoTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         assert result.exit_code == 0
@@ -1596,7 +1592,7 @@ class DownloadPhotoTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         assert result.exit_code == 0
@@ -2380,7 +2376,7 @@ class DownloadPhotoTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
     def test_download_and_skip_new(self) -> None:
@@ -2504,7 +2500,7 @@ class DownloadPhotoTestCase(TestCase):
         # Check that file was downloaded
         # Check that mtime was updated to the photo creation date
         photo_mtime = os.path.getmtime(out_path)
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual(
             "2018-07-31 07:22:24",
             photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"),

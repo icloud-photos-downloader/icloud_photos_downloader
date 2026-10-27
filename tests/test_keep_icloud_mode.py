@@ -21,7 +21,7 @@ class KeepICloudModeTestCases(TestCase):
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             # 90 days in the future
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now + datetime.timedelta(days=90)
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -65,7 +65,7 @@ class KeepICloudModeTestCases(TestCase):
         files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
-            mock_now = datetime.datetime(2018, 8, 1, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 8, 1, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -110,7 +110,7 @@ class KeepICloudModeTestCases(TestCase):
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 10
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -154,7 +154,7 @@ class KeepICloudModeTestCases(TestCase):
         files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
-            mock_now = datetime.datetime(2018, 7, 31, 23, 59, 59, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, 23, 59, 59, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -202,7 +202,7 @@ class KeepICloudModeTestCases(TestCase):
         ]
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 10
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -258,7 +258,7 @@ class KeepICloudModeTestCases(TestCase):
         ]
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 1
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -311,7 +311,7 @@ class KeepICloudModeTestCases(TestCase):
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 10
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -360,7 +360,7 @@ class KeepICloudModeTestCases(TestCase):
         ]
         with mock.patch("datetime.datetime", side_effect=datetime.datetime) as dt_mock:
             days_old = 1
-            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.timezone.utc)
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
             dt_mock.now.return_value = mock_now + datetime.timedelta(days=days_old)
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
