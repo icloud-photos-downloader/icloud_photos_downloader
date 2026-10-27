@@ -14,6 +14,8 @@ class Status(Enum):
     NEED_PASSWORD = "need_password"
     SUPPLIED_PASSWORD = "supplied_password"
     CHECKING_PASSWORD = "checking_password"
+    NEED_LOGIN_CONFIRMATION = "need_login_confirmation"
+    LOGIN_CONFIRMED = "login_confirmed"
 
     def __str__(self) -> str:
         return self.name
@@ -41,6 +43,9 @@ class StatusExchange:
                 return True
             else:
                 return False
+
+    def confirm_login(self) -> bool:
+        return self.replace_status(Status.NEED_LOGIN_CONFIRMATION, Status.LOGIN_CONFIRMED)
 
     def set_payload(self, payload: str) -> bool:
         with self.lock:
@@ -85,6 +90,7 @@ class StatusExchange:
                 Status.NO_INPUT_NEEDED,
                 Status.NEED_PASSWORD,
                 Status.NEED_MFA,
+                Status.NEED_LOGIN_CONFIRMATION,
             ]:
                 return None
 

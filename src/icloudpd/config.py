@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import Sequence
 
 from icloudpd.log_level import LogLevel
+from icloudpd.login_confirmation import LoginConfirmation
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -71,3 +72,4 @@ class GlobalConfig:
     watch_with_interval: int | None
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
+    login_confirmation: LoginConfirmation = LoginConfirmation.NONE

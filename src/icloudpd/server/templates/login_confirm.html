@@ -1,0 +1,19 @@
+<form hx-post="/login/confirm" hx-swap="outerHTML" class="row align-items-center" hx-target-error="#toast-content">
+    <fieldset>
+        <legend>Authentication{% if current_user %} - {{ current_user }}{% endif %}</legend>
+        {% if error %}
+        <ul class="list-group list-group-flush">
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+                <div class="fw-bold">{{ error }}</div>
+            </li>
+        </ul>
+        {% endif %}
+        <div class="col-12 mb-3">
+          <p class="mb-1">Session for {{ current_user if current_user else 'iCloud account' }} expired. Start sign-in?</p>
+          <div class="form-text">Apple will send a sign-in request to your trusted devices only after you press Start.</div>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Start</button>
+        </div>
+    </fieldset>
+</form>

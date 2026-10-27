@@ -12,6 +12,7 @@ import pytest
 from icloudpd.cli import format_help, parse
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
+from icloudpd.login_confirmation import LoginConfirmation
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from pyicloud_ipd.file_match import FileMatchPolicy
@@ -392,6 +393,17 @@ class CliTestCase(TestCase):
                     "2",
                 ]
             )
+
+    def test_cli_parser_login_confirmation(self) -> None:
+        global_config, _ = parse(["--username", "u1", "--auth-only"])
+        self.assertEqual(LoginConfirmation.NONE, global_config.login_confirmation, "default")
+
+        global_config, _ = parse(
+            ["--username", "u1", "--auth-only", "--login-confirmation", "weBui"]
+        )
+        self.assertEqual(LoginConfirmation.WEBUI, global_config.login_confirmation, "webui")
+
+        self.assertIn("--login-confirmation", format_help())
 
     def test_cli(self) -> None:
         result = run_main(["--help"])
