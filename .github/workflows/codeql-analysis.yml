@@ -25,6 +25,7 @@ jobs:
   analyze:
     name: Analyze
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     # upload results to code scanning; don't rely on the repo's default token permissions
     permissions:
       actions: read

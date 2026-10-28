@@ -12,6 +12,7 @@ jobs:
 
   extract_changelog:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
     - uses: actions/checkout@v7
 
