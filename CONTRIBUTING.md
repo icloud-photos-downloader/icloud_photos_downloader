@@ -202,7 +202,7 @@ When testing a bug fix it is important to test the faulty behavior and also the 
 
 ## How to release
 
-We have GitHub actions taking care for building, testing, and releasing software. Building and testing are happening automatically on git pushed, pull requests, and merges. For releases the following steps are manual:
+We have GitHub actions taking care for building, testing, and releasing software (see [.github/workflows/README.md](.github/workflows/README.md) for how they are set up). Building and testing are happening automatically on git pushed, pull requests, and merges. For releases the following steps are manual:
 - Bump version in all files, including all source files
 - Update CHANGELOG.md with release changes if they were not added with commits
 - Update CHANGELOG.md with date of the release
