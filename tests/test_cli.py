@@ -1,11 +1,12 @@
 import datetime
 import inspect
+import locale
 import os
 import shutil
 import zoneinfo
 from argparse import ArgumentError
 from typing import Sequence, Tuple
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import pytest
 
@@ -475,6 +476,23 @@ class CliTestCase(TestCase):
             ],
         )
         self.assertEqual(result.exit_code, 0, "exit code")
+
+    def test_use_os_locale_applies_the_system_locale(self) -> None:
+        with mock.patch("locale.setlocale") as setlocale:
+            result = run_main(["--use-os-locale", "--version"])
+        setlocale.assert_called_once_with(locale.LC_ALL, "")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_use_os_locale_with_missing_locale(self) -> None:
+        """A LANG/LC_ALL that isn't installed gives a warning, not a crash (#1400)"""
+        with mock.patch("locale.setlocale", side_effect=locale.Error("unsupported locale setting")):
+            result = run_main(["--use-os-locale", "--version"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("version:", result.output)
+        self.assertIn(
+            "Cannot use the system locale (unsupported locale setting), using the default locale",
+            result.stderr_bytes.decode("utf-8"),
+        )
 
     def test_missing_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
