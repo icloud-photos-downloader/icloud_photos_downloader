@@ -8,6 +8,10 @@ on:
         required: true
         type: string
 
+env:
+  # Python used to build and package icloudpd (also passed to Dockerfile.build*)
+  PYTHON_VERSION: '3.14'
+
 jobs:
 
   build_src:
@@ -26,10 +30,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -64,10 +68,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install
       run: >
@@ -105,10 +109,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -147,7 +151,7 @@ jobs:
     - name: Run version
       uses: addnab/docker-run-action@v3
       with:
-        image: python:3.13-alpine3.23
+        image: python:${{ env.PYTHON_VERSION }}-alpine3.23
         shell: sh
         options: -v ${{ github.workspace }}:/work 
         run: >
@@ -187,10 +191,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: |
@@ -280,6 +284,7 @@ jobs:
         platforms: ${{ matrix.platform[0] }}
         # do not cache layers
         file: Dockerfile.build
+        build-args: PYTHON_VERSION=${{ env.PYTHON_VERSION }}
         outputs: type=local,dest=dist
         provenance: false
         context: .
@@ -316,10 +321,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -358,10 +363,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -399,10 +404,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -440,10 +445,10 @@ jobs:
         path: |
           dist
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -528,6 +533,7 @@ jobs:
         platforms: ${{ matrix.platform[0] }}
         # do not cache layers
         file: Dockerfile.build-musl
+        build-args: PYTHON_VERSION=${{ env.PYTHON_VERSION }}
         outputs: type=local,dest=dist
         provenance: false
         context: .
@@ -563,10 +569,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -609,10 +615,10 @@ jobs:
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
       uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -729,8 +735,8 @@ jobs:
       matrix:
         image: 
           - [ 
-            "python3_13", #variant name
-            "python:3.13", #image
+            "python3_14", #variant name
+            "python:3.14", #image
             ] 
           # apt-get does not work for debian 6 anymore
           # - [ 
@@ -3829,10 +3835,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v7
 
-      - name: Set up Python 3.13
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@v7
         with:
-          python-version: '3.13'
+          python-version: ${{ env.PYTHON_VERSION }}
     
       - name: Make folder for artifacts
         run: |

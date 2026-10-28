@@ -70,7 +70,7 @@ class ParseTimestampeOrTimeDeltaTestCase(TestCase):
     def test_aware_311plus(self) -> None:
         #  short
         assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.0006Z") == datetime.datetime(
-            2025, 1, 2, 3, 4, 5, 600, datetime.timezone.utc
+            2025, 1, 2, 3, 4, 5, 600, datetime.UTC
         )
         assert parse_timestamp_or_timedelta("2025-01-02T03:04:05.0006+08:00") == datetime.datetime(
             2025, 1, 2, 3, 4, 5, 600, datetime.timezone(datetime.timedelta(hours=8))

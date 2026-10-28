@@ -107,7 +107,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
     def test_download_photos_and_set_exif_name_id7(self) -> None:
@@ -177,7 +177,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         )
         # 2018:07:31 07:22:24 utc
         expectedDatetime = (
-            datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+            datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.UTC)
             .astimezone()
             .strftime("%Y-%m-%d %H:%M:%S%z")
         )
@@ -894,7 +894,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
     def test_creation_date_without_century_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_download = [("5/01/01", "IMG_7409_QVk2Yyt.JPG")]
+        # Python 3.14 zero-pads %Y on Linux too, like macOS and Windows already did
+        year_folder = "5/01/01" if sys.version_info < (3, 14) else "0005/01/01"
+        files_to_download = [(year_folder, "IMG_7409_QVk2Yyt.JPG")]
 
         with mock.patch.object(PhotoAsset, "created", new_callable=mock.PropertyMock) as dt_mock:
             # Can't mock `astimezone` because it's a readonly property, so have to
@@ -939,7 +941,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 result.output,
             )
             self.assertIn(
-                f"Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath('5/01/01/IMG_7409_QVk2Yyt.JPG')), 96)}",
+                f"Downloading {truncate_middle(os.path.join(data_dir, os.path.normpath(f'{year_folder}/IMG_7409_QVk2Yyt.JPG')), 96)}",
                 result.output,
             )
             self.assertIn("All photos and videos have been downloaded", result.output)
@@ -1163,7 +1165,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 )
                 # 2018:07:31 07:22:24 utc
                 expectedDatetime = (
-                    datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.timezone.utc)
+                    datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.UTC)
                     .astimezone()
                     .strftime("%Y-%m-%d %H:%M:%S%z")
                 )
@@ -1221,7 +1223,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         assert result.exit_code == 0
@@ -1516,7 +1518,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
         assert result.exit_code == 0
@@ -2277,7 +2279,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         photo_mtime = os.path.getmtime(
             os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409_QVk2Yyt.JPG"))
         )
-        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.timezone.utc)
+        photo_modified_time = datetime.datetime.fromtimestamp(photo_mtime, datetime.UTC)
         self.assertEqual("2018-07-31 07:22:24", photo_modified_time.strftime("%Y-%m-%d %H:%M:%S"))
 
     def test_download_and_skip_new_name_id7(self) -> None:

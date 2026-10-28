@@ -3,7 +3,7 @@ set -e
 
 # Script to test icloudpd across multiple Python versions using Docker
 
-SUPPORTED_VERSIONS=("3.10" "3.11" "3.12" "3.13")
+SUPPORTED_VERSIONS=("3.11" "3.12" "3.13" "3.14")
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DOCKERFILE_TEMPLATE="$SCRIPT_DIR/Dockerfile.test-template"
 
@@ -62,10 +62,6 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements-pip.txt
 RUN pip install . --group dev --group test
 
-# Install additional packages for Python < 3.11 timezone support
-RUN if [ "\$(python -c 'import sys; print(sys.version_info.minor < 11 and sys.version_info.major == 3)')" = "True" ]; then \\
-        pip install tzdata; \\
-    fi
 
 # Run tests  
 CMD $test_cmd
@@ -201,7 +197,7 @@ main() {
                 echo "Test icloudpd across multiple Python versions using Docker"
                 echo ""
                 echo "Options:"
-                echo "  --version VERSION    Test specific Python version (e.g., 3.10, 3.11, 3.12, 3.13)"
+                echo "  --version VERSION    Test specific Python version (e.g., 3.11, 3.12, 3.13, 3.14)"
                 echo "  --module MODULE      Test specific module (e.g., test_cli.py)"
                 echo "  --full               Run full test suite including tests/ and src/ with doctests"
                 echo "  --no-doctests        Skip doctest execution"
@@ -210,10 +206,10 @@ main() {
                 echo "Examples:"
                 echo "  $0                           # Test all supported versions (tests only)"
                 echo "  $0 --full                    # Full test suite with doctests across all versions"
-                echo "  $0 --version 3.10            # Test only Python 3.10"
+                echo "  $0 --version 3.11            # Test only Python 3.11"
                 echo "  $0 --module test_cli.py      # Test CLI module across all versions"
                 echo "  $0 --version 3.11 --module test_cli.py  # Test CLI on Python 3.11"
-                echo "  $0 --full --version 3.13     # Full test suite on Python 3.13"
+                echo "  $0 --full --version 3.14     # Full test suite on Python 3.14"
                 exit 0
                 ;;
             *)
