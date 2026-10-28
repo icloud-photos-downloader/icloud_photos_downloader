@@ -1,0 +1,172 @@
+#!/usr/bin/env bash
+# Run one compatibility test kind on many container images (used by build-package.yml).
+#
+# usage: scripts/compat_test KIND ARCH PLATFORM PREFIX VERSION < images
+#   KIND      test kind, e.g. pip-apt, bin_musl-apk, npx-apt (see the table below)
+#   ARCH      arch name used in result file names: amd64, arm64, arm32v7
+#   PLATFORM  docker platform: amd64, arm64, arm/v7
+#   PREFIX    image prefix, e.g. "arm32v7/" or ""
+#   VERSION   icloudpd version under test
+#   images    lines of "<variant> <image>", e.g. "debian_10_buster debian:buster"
+#
+# For each image this does what the per-image jobs did: pull it (skip if it does not exist
+# for the platform), run the test and the tzlc test in the container, and write
+# compatibility/<name>.pass|.fail and tzlc/<name>.pass|.fail. Each image gets its own work
+# folder mounted at /work, so images can run in parallel (COMPAT_JOBS, default 4).
+set -uo pipefail
+
+kind=$1 arch=$2 platform=$3 prefix=$4 version=$5
+jobs=${COMPAT_JOBS:-4}
+workspace=${GITHUB_WORKSPACE:-$PWD}
+work_root=${RUNNER_TEMP:-/tmp}/compat-$kind-$arch
+
+case "$kind" in
+    pip-apt)
+        shell=bash
+        test_cmd='echo "install default python..." && export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv && echo "create venv and active..." && cd /work && python3 -m venv .venv && . .venv/bin/activate && echo "install icloudpd..." && pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 && echo "test icloud..." && icloud --version && echo "test icloudpd..." && icloudpd --version && echo "check if src..." && (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.__VARIANT__.__ARCH__.pass)'
+        test_fail='pip.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install default python, tzdata, locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv tzdata locales-all && echo "create venv and active..." && cd /work && python3 -m venv .venv && . .venv/bin/activate && echo "install icloudpd..." && pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 && echo "test icloud..." && icloud --version && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/pip.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='pip.__VARIANT__.__ARCH__.fail'
+        ;;
+    pip-apk)
+        shell=sh
+        test_cmd='echo "install default python..." && apk update && apk add python3 && echo "create venv and active..." && cd /work && python3 -m venv .venv && . .venv/bin/activate && echo "install icloudpd..." && pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 && echo "test icloud..." && icloud --version && echo "test icloudpd..." && icloudpd --version && echo "check if src..." && (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.__VARIANT__.__ARCH__.pass)'
+        test_fail='pip.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install default python, tz, locale..." && export MUSL_LOCPATH="/usr/share/i18n/locales/musl" && apk update && apk add python3 tzdata musl-locales musl-locales-lang && echo "create venv and active..." && cd /work && python3 -m venv .venv && . .venv/bin/activate && echo "install icloudpd..." && pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/pip.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='pip.__VARIANT__.__ARCH__.fail'
+        ;;
+    bin-apt)
+        shell=sh
+        test_cmd='echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-__ARCH__ && echo "test icloud..." && dist/icloud-__VERSION__-linux-__ARCH__ --version && echo "test icloudpd..." && dist/icloudpd-__VERSION__-linux-__ARCH__ --version && touch /work/compatibility/bin.__VARIANT__.__ARCH__.pass'
+        test_fail='bin.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install tzdata and locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all && echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-__ARCH__ && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-__VERSION__-linux-__ARCH__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/bin.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='bin.__VARIANT__.__ARCH__.fail'
+        ;;
+    bin_musl-apt)
+        shell=sh
+        test_cmd='echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-musl-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-musl-__ARCH__ && echo "test icloud..." && dist/icloud-__VERSION__-linux-musl-__ARCH__ --version && echo "test icloudpd..." && dist/icloudpd-__VERSION__-linux-musl-__ARCH__ --version && touch /work/compatibility/bin-musl.__VARIANT__.__ARCH__.pass'
+        test_fail='bin-musl.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install tzdata and locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all && echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-musl-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-musl-__ARCH__ && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-__VERSION__-linux-musl-__ARCH__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/bin-musl.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='bin-musl.__VARIANT__.__ARCH__.fail'
+        ;;
+    bin-apk)
+        shell=sh
+        test_cmd='echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-__ARCH__ && echo "test icloud..." && dist/icloud-__VERSION__-linux-__ARCH__ --version && echo "test icloudpd..." && dist/icloudpd-__VERSION__-linux-__ARCH__ --version && touch /work/compatibility/bin.__VARIANT__.__ARCH__.pass'
+        test_fail='bin.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install tzdata and locales ..." && export MUSL_LOCPATH="/usr/share/i18n/locales/musl" && apk update && apk add tzdata musl-locales musl-locales-lang && echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-__ARCH__ && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-__VERSION__-linux-__ARCH__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/bin.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='bin.__VARIANT__.__ARCH__.fail'
+        ;;
+    bin_musl-apk)
+        shell=sh
+        test_cmd='echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-musl-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-musl-__ARCH__ && echo "test icloud..." && dist/icloud-__VERSION__-linux-musl-__ARCH__ --version && echo "test icloudpd..." && dist/icloudpd-__VERSION__-linux-musl-__ARCH__ --version && touch /work/compatibility/bin-musl.__VARIANT__.__ARCH__.pass'
+        test_fail='bin-musl.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install tzdata and locales ..." && export MUSL_LOCPATH="/usr/share/i18n/locales/musl" && apk update && apk add tzdata musl-locales musl-locales-lang && echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-musl-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-musl-__ARCH__ && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-__VERSION__-linux-musl-__ARCH__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/bin-musl.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='bin-musl.__VARIANT__.__ARCH__.fail'
+        ;;
+    npm-apt)
+        shell=sh
+        test_cmd='echo "install npm..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm && echo "test icloudpd..." && npm install -g --registry http://172.17.0.1:4873 icloudpd@__VERSION__ && icloudpd --version && touch /work/compatibility/npm.__VARIANT__.__ARCH__.pass'
+        test_fail='npm.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install npm, tzdata, locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all&& echo "test icloudpd..." && npm install -g --registry http://172.17.0.1:4873 icloudpd@__VERSION__ && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/npm.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='npm.__VARIANT__.__ARCH__.fail'
+        ;;
+    npx-apt)
+        shell=bash
+        test_cmd='echo "install npm..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm && /work/scripts/npx_optional_touch /work/compatibility/npx.__VARIANT__.__ARCH__.pass /work/compatibility/npx.__VARIANT__.__ARCH__.na -y --registry http://172.17.0.1:4873 icloudpd@__VERSION__ --version'
+        test_fail='npx.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install npm, tzdata, locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /work/scripts/npx_optional /work/tzlc/npx.__VARIANT__.__ARCH__.pass /work/tzlc/npx.__VARIANT__.__ARCH__.na -y --registry http://172.17.0.1:4873 icloudpd@__VERSION__ --use-os-locale --version'
+        tzlc_fail='npx.__VARIANT__.__ARCH__.fail'
+        ;;
+    npm-apk)
+        shell=sh
+        test_cmd='echo "install npm..." && apk update && apk add npm && echo "test icloudpd..." && npm install -g --registry http://172.17.0.1:4873 icloudpd@__VERSION__ && icloudpd --version && touch /work/compatibility/npm.__VARIANT__.__ARCH__.pass'
+        test_fail='npm.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install npm, tzdata, locales..." && export MUSL_LOCPATH="/usr/share/i18n/locales/musl" && apk update && apk add npm tzdata musl-locales musl-locales-lang && echo "test icloudpd..." && npm install -g --registry http://172.17.0.1:4873 icloudpd@__VERSION__ && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/npm.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='npm.__VARIANT__.__ARCH__.fail'
+        ;;
+    npx-apk)
+        shell=sh
+        test_cmd='echo "install npm..." && apk update && apk add npm && echo "test icloudpd..." && npx -y --registry http://172.17.0.1:4873 icloudpd@__VERSION__ --version && touch /work/compatibility/npx.__VARIANT__.__ARCH__.pass'
+        test_fail='npx.__VARIANT__.__ARCH__.fail'
+        tzlc_cmd='echo "install npm, tzdata, locales..." && export MUSL_LOCPATH="/usr/share/i18n/locales/musl" && apk update && apk add npm tzdata musl-locales musl-locales-lang && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@__VERSION__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/npx.__VARIANT__.__ARCH__.pass'
+        tzlc_fail='npx.__VARIANT__.__ARCH__.fail'
+        ;;
+    *)
+        echo "unknown kind: $kind" >&2
+        exit 2
+        ;;
+esac
+
+fill() {
+    local s=$1
+    s=${s//__VARIANT__/$2}
+    s=${s//__ARCH__/$arch}
+    s=${s//__VERSION__/$version}
+    printf '%s' "$s"
+}
+
+run_in() {
+    # run_in IMAGE WORK_DIR COMMAND: like the old docker-run-action steps, /work is the work dir
+    docker run --rm --platform "linux/$platform" \
+        -v "$2:/work" -v "$workspace/dist:/work/dist" -v "$workspace/scripts:/work/scripts:ro" \
+        "$1" "$shell" -c "$3"
+}
+
+result() {
+    # result DIR: pass, fail or "-" for the result file an image left in DIR
+    local f
+    for f in "$1"/*; do
+        case "$f" in
+            *.pass) echo pass; return ;;
+            *.fail) echo fail; return ;;
+        esac
+    done
+    echo -
+}
+
+run_image() {
+    local variant=$1 image=$2
+    local ref="$prefix$image"
+    local work="$work_root/$variant"
+    local log="$work_root/$variant.log"
+    local digest status
+    mkdir -p "$work/compatibility" "$work/tzlc"
+    {
+        digest=$(docker pull --platform "linux/$platform" "$ref" | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ')
+        if [ -z "$digest" ]; then
+            echo "$ref is not available for linux/$platform, skipping"
+        else
+            echo "== test $ref"
+            if ! run_in "$ref" "$work" "$(fill "$test_cmd" "$variant")"; then
+                touch "$work/compatibility/$(fill "$test_fail" "$variant")"
+            fi
+            echo "== tzlc $ref"
+            if ! run_in "$ref" "$work" "$(fill "$tzlc_cmd" "$variant")"; then
+                touch "$work/tzlc/$(fill "$tzlc_fail" "$variant")"
+            fi
+        fi
+    } >"$log" 2>&1
+    cp -p "$work"/compatibility/* "$workspace/compatibility/" 2>/dev/null
+    cp -p "$work"/tzlc/* "$workspace/tzlc/" 2>/dev/null
+    if [ -z "$digest" ]; then
+        status="skipped (not available)"
+    else
+        status="test $(result "$work/compatibility"), tzlc $(result "$work/tzlc")"
+    fi
+    echo "$status" >"$work_root/$variant.status"
+    echo "done: $ref: $status"
+}
+
+export -f fill run_in result run_image
+export kind arch platform prefix version workspace work_root shell test_cmd test_fail tzlc_cmd tzlc_fail
+
+mkdir -p "$work_root" "$workspace/compatibility" "$workspace/tzlc"
+images=$(grep -v '^[[:space:]]*$')
+echo "$images" | xargs -P "$jobs" -L 1 bash -c 'run_image "$1" "$2"' _
+
+# full logs, one group per image, in list order
+echo "$images" | while read -r variant image; do
+    echo "::group::$prefix$image: $(cat "$work_root/$variant.status")"
+    cat "$work_root/$variant.log"
+    echo "::endgroup::"
+done
