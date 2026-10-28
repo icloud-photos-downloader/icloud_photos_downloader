@@ -30,6 +30,8 @@ Each test kind (for example "binary on apk-based images") runs as **one job per 
 2. runs the test command and the tzlc command in the container,
 3. writes `compatibility/<kind>.<image>.<arch>.pass|fail` and `tzlc/...` result files.
 
+A failing test does not fail the job (many failures are expected, for example a musl binary on a glibc distribution), so `scripts/compat_test` makes them visible instead: the job summary gets a table with the test and tzlc result per image, and each job adds a warning annotation listing the images where a test failed.
+
 The image lists are in the job's `Run tests on ... images` step. To add or drop a distribution, edit that list.
 
 You can run a kind locally with Docker, for example with binaries in `dist/`:

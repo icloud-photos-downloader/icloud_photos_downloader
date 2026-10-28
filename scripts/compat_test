@@ -170,3 +170,44 @@ echo "$images" | while read -r variant image; do
     cat "$work_root/$variant.log"
     echo "::endgroup::"
 done
+
+# Failures don't fail the job (many are known, e.g. on old distributions), so make them
+# visible: a table in the job summary and one warning annotation per test that failed.
+mark() {
+    case "$1" in
+        pass) echo "✅ pass" ;;
+        fail) echo "❌ fail" ;;
+        *) echo "$1" ;;
+    esac
+}
+total=0 tested=0 test_failed="" tzlc_failed=""
+rows=""
+while read -r variant image; do
+    total=$((total + 1))
+    ref="$prefix$image"
+    if grep -q '^skipped' "$work_root/$variant.status"; then
+        rows+="| \`$ref\` | not available | not available |"$'\n'
+        continue
+    fi
+    tested=$((tested + 1))
+    test_result=$(result "$work_root/$variant/compatibility")
+    tzlc_result=$(result "$work_root/$variant/tzlc")
+    [ "$test_result" = fail ] && test_failed+="${test_failed:+, }$ref"
+    [ "$tzlc_result" = fail ] && tzlc_failed+="${tzlc_failed:+, }$ref"
+    rows+="| \`$ref\` | $(mark "$test_result") | $(mark "$tzlc_result") |"$'\n'
+done <<<"$images"
+
+count() { [ -z "$1" ] && echo 0 || echo "$1" | tr ',' '\n' | wc -l | tr -d ' '; }
+title="Compat $kind $arch"
+{
+    echo "### $title"
+    echo
+    echo "$tested of $total images available; test failed on $(count "$test_failed"), tzlc failed on $(count "$tzlc_failed")."
+    echo
+    echo "| Image | test | tzlc |"
+    echo "|---|---|---|"
+    printf '%s' "$rows"
+} >>"${GITHUB_STEP_SUMMARY:-/dev/null}"
+[ -n "$test_failed" ] && echo "::warning title=$title::test failed on $(count "$test_failed") of $tested images: $test_failed"
+[ -n "$tzlc_failed" ] && echo "::warning title=$title::tzlc failed on $(count "$tzlc_failed") of $tested images: $tzlc_failed"
+exit 0
