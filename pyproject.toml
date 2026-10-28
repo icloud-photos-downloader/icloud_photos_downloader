@@ -34,7 +34,7 @@ dependencies = [
     # from pyicloud_ipd
     "tzlocal==5.3.1",
     "pytz==2025.2",
-    "certifi==2025.4.26",
+    "certifi==2026.10.23",
     "keyring==25.6.0",
     "keyrings-alt==5.0.2",
     "srp==1.0.22",
