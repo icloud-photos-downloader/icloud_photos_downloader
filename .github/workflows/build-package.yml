@@ -15,7 +15,7 @@ env:
 jobs:
 
   build_src:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     defaults:
       run:
@@ -54,7 +54,7 @@ jobs:
           dist/icloudpd*.whl
 
   get_version_thumbprint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -96,7 +96,7 @@ jobs:
           dist/icloudpd-version-thumbprint.txt
           
   get_expected_version_linux_apt:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -136,7 +136,7 @@ jobs:
       expected_version: ${{steps.get_version.outputs.expected_version}}
 
   get_expected_version_linux_apk:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -219,7 +219,7 @@ jobs:
   
   build_linux_apt:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 60
     name: Build Linux ${{ matrix.platform[1] }} Debian
     strategy:
@@ -310,7 +310,7 @@ jobs:
           dist/icloud*
   
   clone_src_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs:
       - build_src
@@ -351,7 +351,7 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
 
   clone_linux_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs:
       - build_linux_apt
@@ -394,7 +394,7 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
         
   clone_macos_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs:
       - build_macos
@@ -436,7 +436,7 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
   
   clone_windows_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs:
       - build_windows
@@ -479,7 +479,7 @@ jobs:
         
   build_linux_apk:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 60
     name: Build Linux ${{ matrix.platform[1] }} Alpine
     strategy:
@@ -658,7 +658,7 @@ jobs:
           dist/icloud*
 
   build_docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs: 
       # - build_linux_apt
@@ -706,7 +706,7 @@ jobs:
           dist/icloud*.tar
 
   build_npm:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 60
     needs: 
       - build_linux_apt
@@ -758,7 +758,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - clone_linux_whl
@@ -824,7 +824,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - clone_linux_whl
@@ -1054,7 +1054,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_linux_apt
@@ -1118,7 +1118,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_linux_apk
@@ -1182,7 +1182,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_linux_apt
@@ -1245,7 +1245,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_linux_apk
@@ -1462,7 +1462,7 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs: [ build_docker ] 
     defaults: 
@@ -1532,7 +1532,7 @@ jobs:
       #   if: matrix.prop[1] != 'amd64'
       #   uses: docker/setup-qemu-action@v4 
  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure'
@@ -1604,7 +1604,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_npm
@@ -1707,7 +1707,7 @@ jobs:
         - - arm32v7
           - arm/v7
           - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_npm
@@ -1807,7 +1807,7 @@ jobs:
         - - arm64
           - arm64
           - ''
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_npm
@@ -1907,7 +1907,7 @@ jobs:
         - - arm64
           - arm64
           - ''
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
     timeout-minutes: 30
     needs:
     - build_npm
@@ -1997,7 +1997,7 @@ jobs:
 
   compatibility_linux_npm_apk_fail:
     name: Compat NPM/NPX arm/v7 apk failures
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     defaults:
       run:
@@ -2484,7 +2484,7 @@ jobs:
   compatibility_report:
     name: "Build Compatibility Report"
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     needs: 
       - compatibility_macos_pip
