@@ -25,6 +25,7 @@ jobs:
 
   docker:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
 
     steps:
       - name: Checkout code
@@ -58,6 +59,7 @@ jobs:
 
   npm:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Setup Node
         uses: actions/setup-node@v7
@@ -86,6 +88,7 @@ jobs:
 
   pypi:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v7
@@ -124,6 +127,7 @@ jobs:
 
   gh_release:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     steps:
 
       - name: Download artifacts (src)

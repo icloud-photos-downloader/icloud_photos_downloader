@@ -16,6 +16,7 @@ jobs:
 
   build_src:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
@@ -54,6 +55,7 @@ jobs:
 
   get_version_thumbprint:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -75,7 +77,7 @@ jobs:
     
     - name: Install
       run: >
-        export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
+        sudo locale-gen ru_RU.UTF-8 &&
         python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
         pip3 install --disable-pip-version-check -e .
 
@@ -95,6 +97,7 @@ jobs:
           
   get_expected_version_linux_apt:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -116,7 +119,7 @@ jobs:
     
     - name: Install Dev dependencies
       run: >
-        export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
+        sudo locale-gen ru_RU.UTF-8 &&
         python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
         pip3 install --disable-pip-version-check -e .
 
@@ -134,6 +137,7 @@ jobs:
 
   get_expected_version_linux_apk:
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -177,6 +181,7 @@ jobs:
 
   get_expected_version_macos:
     runs-on: macos-15
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
@@ -215,6 +220,7 @@ jobs:
   build_linux_apt:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 60
     name: Build Linux ${{ matrix.platform[1] }} Debian
     strategy:
       fail-fast: false
@@ -305,6 +311,7 @@ jobs:
   
   clone_src_whl:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs:
       - build_src
     defaults:
@@ -345,6 +352,7 @@ jobs:
 
   clone_linux_whl:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs:
       - build_linux_apt
       - build_linux_apk
@@ -387,6 +395,7 @@ jobs:
         
   clone_macos_whl:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs:
       - build_macos
     defaults:
@@ -428,6 +437,7 @@ jobs:
   
   clone_windows_whl:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs:
       - build_windows
     defaults:
@@ -470,6 +480,7 @@ jobs:
   build_linux_apk:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
     runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 60
     name: Build Linux ${{ matrix.platform[1] }} Alpine
     strategy:
       fail-fast: false
@@ -555,6 +566,7 @@ jobs:
   build_macos:
     # earliest possible mac for better compatibility
     runs-on: macos-15
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
@@ -601,6 +613,7 @@ jobs:
   build_windows:
     # earliest possible win for better compatibility
     runs-on: windows-2022
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
@@ -646,6 +659,7 @@ jobs:
 
   build_docker:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs: 
       # - build_linux_apt
       - build_linux_apk # docker is musl only
@@ -693,6 +707,7 @@ jobs:
 
   build_npm:
     runs-on: ubuntu-22.04
+    timeout-minutes: 60
     needs: 
       - build_linux_apt
       # - build_linux_apk npm is glibc only
@@ -817,6 +832,7 @@ jobs:
             "arm32v7/",  # image prefix
           ]
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 30
     needs:
       - clone_linux_whl
       - clone_src_whl
@@ -1023,6 +1039,7 @@ jobs:
             "arm32v7/",  # image prefix
           ]
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 30
     needs: 
       - clone_linux_whl
       - clone_src_whl
@@ -1162,6 +1179,7 @@ jobs:
             "arm64",  # platform spec
           ]
     runs-on: ${{ matrix.prop[0] }}
+    timeout-minutes: 30
     needs: 
       - clone_macos_whl
       - clone_src_whl
@@ -1255,6 +1273,7 @@ jobs:
       matrix: 
         os: [ "windows-2025", "windows-2022" ]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     needs: 
       - clone_windows_whl
       - clone_src_whl
@@ -1386,6 +1405,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
+    timeout-minutes: 30
     needs: 
       - build_linux_apt
       # - build_linux_apk
@@ -1574,6 +1594,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
+    timeout-minutes: 30
     needs: 
       # - build_linux_apt
       - build_linux_apk
@@ -1759,6 +1780,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 30
     needs: 
       - build_linux_apt
       # - build_linux_apk
@@ -1945,6 +1967,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 30
     needs: 
       # - build_linux_apt
       - build_linux_apk
@@ -2071,6 +2094,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_macos ] 
  
     steps: 
@@ -2157,6 +2181,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_windows ] 
  
     steps: 
@@ -2223,6 +2248,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    timeout-minutes: 30
     needs: [ build_docker ] 
     defaults: 
       run: 
@@ -2431,6 +2457,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -2664,6 +2691,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ubuntu-22.04 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -2876,6 +2904,7 @@ jobs:
           #   "arm32v7/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3091,6 +3120,7 @@ jobs:
           #   "arm32v7/",  # image prefix 
           # ] 
     runs-on: ubuntu-22.04 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3306,6 +3336,7 @@ jobs:
             "arm32v7/",  # image prefix 
           ] 
     runs-on: ubuntu-22.04 
+    timeout-minutes: 30
     defaults: 
       run: 
         shell: bash 
@@ -3361,6 +3392,7 @@ jobs:
             "arm64", 
             ] 
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3490,6 +3522,7 @@ jobs:
             "arm64", 
             ] 
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3611,6 +3644,7 @@ jobs:
           - "windows-2025"
           - "windows-2022"
     runs-on: ${{ matrix.os }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3709,6 +3743,7 @@ jobs:
           - "windows-2025"
           - "windows-2022"
     runs-on: ${{ matrix.os }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3801,6 +3836,7 @@ jobs:
     name: "Build Compatibility Report"
 
     runs-on: ubuntu-22.04
+    timeout-minutes: 30
     needs: 
       - compatibility_macos_pip
       - compatibility_windows_pip
