@@ -4,6 +4,7 @@
 
 - fix: `--use-os-locale` crashed with `locale.Error: unsupported locale setting` when `LANG`/`LC_ALL` names a locale that isn't installed; icloudpd now warns and continues with the default locale [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
 - chore: run the npx (apt) and npm/npx (apk) compatibility tests for arm64 and arm/v7 on Arm runners; on x64 runners their Arm containers couldn't start, so the compatibility table reported them as failing without testing them [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
+- chore: run the Linux compatibility tests as one job per test kind and architecture (376 → 73 jobs per full build) and move CI to ubuntu-24.04; see [.github/workflows/README.md](.github/workflows/README.md)
 - chore: CI cancels superseded runs, has a timeout on every job, and generates only the test locales it needs instead of installing `locales-all`
 - fix: bump certifi to 2026.10.23; earlier versions bundle emSign root CAs with compromised intermediate keys ([GHSA-6q48-6c7w-9gw2](https://github.com/advisories/GHSA-6q48-6c7w-9gw2))
 - feature: support Python 3.14; drop Python 3.10, which reached end of life. Binaries and Docker images are built with Python 3.14
