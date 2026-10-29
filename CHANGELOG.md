@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: retry the library indexing state check before failing with "Apple iCloud Photo Library has not finished indexing yet" [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
 - fix: `KeyError: 'dsInfo'` when the saved session is no longer valid and no password is available; icloudpd now reports a login error and exits with code 1 [#1363](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1363)
 - fix: a locked or unavailable system keyring (e.g. on a headless Linux machine) crashed login with `KeyringLocked`; icloudpd now logs a warning and tries the next password provider [#1032](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1032)
 - fix: `--xmp-sidecar` stopped the whole run when an asset had adjustment, keyword or location data in an unexpected format (`zlib.error`, `JSONDecodeError`, `InvalidFileException`); such fields are now left out of the sidecar, and any other sidecar error is logged as a warning [#1063](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1063) [#1056](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1056) [#1277](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1277)

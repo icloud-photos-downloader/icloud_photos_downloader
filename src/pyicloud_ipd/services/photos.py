@@ -3,6 +3,7 @@ import copy
 import json
 import logging
 import re
+import time
 import typing
 from datetime import datetime
 from typing import Any, Callable, Dict, Generator, Sequence, Tuple, cast
@@ -110,6 +111,9 @@ def filename_with_fallback(asset_id: str, item_type_extension: str) -> Callable[
 
 
 logger = logging.getLogger(__name__)
+
+INDEXING_STATE_ATTEMPTS = 15
+INDEXING_STATE_RETRY_DELAY_SECONDS = 4
 
 
 def download_asset(session: Session, url: str, start: int = 0) -> Response:
@@ -292,10 +296,24 @@ class PhotoLibrary:
             }
         )
 
-        request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
-        response = request.json()
-        indexing_state = response["records"][0]["fields"]["state"]["value"]
-        if indexing_state != "FINISHED":
+        # Apple may report RUNNING for a library that is ready, flipping to
+        # FINISHED only on some calls, so re-check before giving up (#1387)
+        for attempt in range(1, INDEXING_STATE_ATTEMPTS + 1):
+            request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
+            response = request.json()
+            indexing_state = response["records"][0]["fields"]["state"]["value"]
+            if indexing_state == "FINISHED":
+                break
+            if attempt < INDEXING_STATE_ATTEMPTS:
+                logger.debug(
+                    "Library indexing state is %s (attempt %d/%d), retrying in %ds",
+                    indexing_state,
+                    attempt,
+                    INDEXING_STATE_ATTEMPTS,
+                    INDEXING_STATE_RETRY_DELAY_SECONDS,
+                )
+                time.sleep(INDEXING_STATE_RETRY_DELAY_SECONDS)
+        else:
             raise PyiCloudServiceNotActivatedException(
                 ("Apple iCloud Photo Library has not finished indexing yet"), None
             )
