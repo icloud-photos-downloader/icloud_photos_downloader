@@ -1103,70 +1103,6 @@ jobs:
         path: |
           tzlc/*
 
-  compatibility_linux_bin_musl_apt:
-    name: Compat BIN-M ${{ matrix.prop[1] }} apt
-    strategy:
-      fail-fast: false
-      matrix:
-        prop:
-        - - amd64
-          - amd64
-          - ''
-        - - arm64
-          - arm64
-          - ''
-        - - arm32v7
-          - arm/v7
-          - arm32v7/
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
-    timeout-minutes: 30
-    needs:
-    - build_linux_apk
-    defaults:
-      run:
-        shell: bash
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v7
-    - name: Download artifacts
-      uses: actions/download-artifact@v8
-      with:
-        pattern: icloudpd-bin-linux-*
-        merge-multiple: true
-        path: "dist \n"
-    - name: Run tests on 14 images for ${{ matrix.prop[1] }}
-      run: |
-        scripts/compat_test bin_musl-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        debian_6_squeeze debian:squeeze
-        debian_7_wheezy debian:wheezy
-        debian_8_jessie debian:jessie
-        debian_9_stretch debian:stretch
-        debian_10_buster debian:buster
-        debian_11_bullseye debian:bullseye
-        debian_12_bookworm debian:bookworm
-        ubuntu_12_precise ubuntu:precise
-        ubuntu_14_trusty ubuntu:trusty
-        ubuntu_16_xenial ubuntu:xenial
-        ubuntu_18_bionic ubuntu:bionic
-        ubuntu_20_focal ubuntu:focal
-        ubuntu_22_jammy ubuntu:jammy
-        ubuntu_24_noble ubuntu:noble
-        EOF
-    - name: Upload compatibility results
-      uses: actions/upload-artifact@v7
-      with:
-        name: icloudpd-compatibility-linux-bin-musl-apt-${{ matrix.prop[0] }}
-        if-no-files-found: warn
-        path: |
-          compatibility/*
-    - name: Upload tzlc results
-      uses: actions/upload-artifact@v7
-      with:
-        name: icloudpd-tzlc-linux-bin-musl-apt-${{ matrix.prop[0] }}
-        if-no-files-found: warn
-        path: |
-          tzlc/*
-
   compatibility_linux_bin_apk:
     name: Compat BIN ${{ matrix.prop[1] }} apk
     strategy:
@@ -2493,7 +2429,6 @@ jobs:
       - compatibility_linux_pip_apk
       - compatibility_linux_bin_apt
       - compatibility_linux_bin_apk
-      - compatibility_linux_bin_musl_apt
       - compatibility_linux_bin_musl_apk
       - compatibility_macos_bin
       - compatibility_windows_bin

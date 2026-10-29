@@ -22,6 +22,13 @@ jobs:
         path: |
           dist
 
+    - name: Download artifacts (tzlc compatibility)
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-tzlc
+        path: |
+          dist
+
     - name: Download artifacts (changelog)
       uses: actions/download-artifact@v8
       with:
@@ -33,6 +40,7 @@ jobs:
       run: |
         cat dist/changelog-*.md > dist/notes-${{inputs.icloudpd_version}}.md
         cat dist/compatibility-*.md >> dist/notes-${{inputs.icloudpd_version}}.md
+        cat dist/tzlc-*.md >> dist/notes-${{inputs.icloudpd_version}}.md
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v7
