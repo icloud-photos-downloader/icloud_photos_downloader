@@ -245,6 +245,8 @@ This is a list of all options available for the command line interface (CLI) of 
 
 :   If the parameter is not specified, then nothing is deleted from iCloud.
 
+:   Only assets that the run looks at are considered for deletion. With [`--recent`](recent-parameter), assets beyond the first X are not checked, and with [`--until-found`](until-found-parameter), assets after the point where the run stops are not checked, so they stay in iCloud. icloudpd logs a warning at startup when these are combined.
+
     ```{versionadded} 1.26.0
     ```
 
