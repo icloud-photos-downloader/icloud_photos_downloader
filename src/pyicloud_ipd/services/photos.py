@@ -540,6 +540,7 @@ class PhotoAlbum:
 
     @property
     def photos(self) -> Generator["PhotoAsset", Any, None]:
+        previous_master_records: Dict[str, Any] = {}
         while True:
             request = self.photos_request()
 
@@ -555,23 +556,36 @@ class PhotoAlbum:
 
             response = request.json()
 
-            asset_records = {}
-            master_records = []
+            # Iterate per CPLAsset, not per CPLMaster: several assets can share one master (e.g. Photos'
+            # "Duplicate", which copies the asset but not the original file). Apple then returns the master
+            # once and each asset separately, and startRank counts assets. Keying assets by master id kept only
+            # the last asset of such a group (the others were never yielded), and advancing the offset by the
+            # number of masters made the next page start inside this one (one asset yielded twice).
+            asset_records = []
+            master_records: Dict[str, Any] = {}
             for rec in response["records"]:
                 if rec["recordType"] == "CPLAsset":
-                    master_id = rec["fields"]["masterRef"]["value"]["recordName"]
-                    asset_records[master_id] = rec
+                    asset_records.append(rec)
                 elif rec["recordType"] == "CPLMaster":
-                    master_records.append(rec)
+                    master_records[rec["recordName"]] = rec
 
-            master_records_len = len(master_records)
-            if master_records_len:
-                for master_record in master_records:
-                    record_name = master_record["recordName"]
-                    yield PhotoAsset(master_record, asset_records[record_name])
-                    self.increment_offset(1)
-            else:
+            if not asset_records:
                 break
+            for asset_record in asset_records:
+                master_id = asset_record["fields"]["masterRef"]["value"]["recordName"]
+                master_record = master_records.get(master_id) or previous_master_records.get(
+                    master_id
+                )
+                if master_record is None:
+                    logger.warning(
+                        "Skipping asset %s: its master record %s was not returned",
+                        asset_record.get("recordName"),
+                        master_id,
+                    )
+                else:
+                    yield PhotoAsset(master_record, asset_record)
+                self.increment_offset(1)
+            previous_master_records = master_records
 
     def increment_offset(self, value: int) -> None:
         self.offset += value
