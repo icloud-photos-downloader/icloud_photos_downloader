@@ -102,6 +102,15 @@ class RequestPcsConsentTestCase(TestCase):
         self.assertEqual(["requestPCS"] * 3, called_endpoints(service)[2:])
         self.assertEqual(2, self.sleep.call_count)
 
+    def test_warns_when_request_pcs_never_succeeds(self) -> None:
+        service = make_service([CONSENTED, {}] + [{"status": "pending"}] * 11)
+
+        with self.assertLogs("pyicloud_ipd.base", level="WARNING") as logs:
+            PyiCloudService.request_pcs_consent(service)  # type: ignore[arg-type]
+
+        self.assertEqual(["requestPCS"] * 11, called_endpoints(service)[2:])
+        self.assertIn("did not confirm web access to photos data", logs.output[0])
+
 
 class AuthenticatorAdpTestCase(TestCase):
     def authenticate(self, adp_web_access: bool) -> mock.Mock:

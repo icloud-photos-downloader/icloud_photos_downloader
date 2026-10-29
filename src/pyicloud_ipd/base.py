@@ -942,6 +942,13 @@ class PyiCloudService:
         LOGGER.debug(
             "requestPCS: status=%s message=%s", result.get("status"), result.get("message")
         )
+        if result.get("status") != "success":
+            LOGGER.warning(
+                "iCloud did not confirm web access to %s data (status=%s); "
+                "downloads may fail with ACCESS_DENIED",
+                app_name,
+                result.get("status"),
+            )
 
     def _get_webservice_url(self, ws_key: str) -> str:
         """Get webservice URL, raise an exception if not exists."""
