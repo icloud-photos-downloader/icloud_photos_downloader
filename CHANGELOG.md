@@ -18,6 +18,7 @@
 - fix: bump certifi to 2026.10.23; earlier versions bundle emSign root CAs with compromised intermediate keys ([GHSA-6q48-6c7w-9gw2](https://github.com/advisories/GHSA-6q48-6c7w-9gw2))
 - feature: support Python 3.14 and 3.15; drop Python 3.10, which reached end of life. Binaries and Docker images are built with Python 3.15
 - note: on Linux, photos dated before year 1000 now go into zero-padded year folders (e.g. `0005/01/01`), the same as on macOS and Windows
+- note: the musl binaries (and the musl wheels that contain them) need musl 1.2.5 or newer, i.e. Alpine 3.20+, since 1.32.3; this is now documented [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
 - feat: add `--adp-web-access` to download from accounts with Advanced Data Protection (ADP) [#687](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/687) [#1024](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1024)
 
 ## 1.32.3 (2026-05-29)

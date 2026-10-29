@@ -101,6 +101,15 @@ yay -S icloudpd-bin
 npx --yes icloudpd --directory /data --username my@email.address --watch-with-interval 3600
 ```
 
+## Linux binaries
+
+Linux binaries are available for amd64, arm64 and arm32v7, in two variants:
+
+- `icloudpd-<version>-linux-<arch>` for distributions based on glibc, e.g. Debian, Ubuntu, Fedora
+- `icloudpd-<version>-linux-musl-<arch>` for distributions based on musl, e.g. Alpine
+
+The musl variant needs musl 1.2.5 or newer, which is Alpine 3.20 and newer. On older Alpine releases it fails to start (`Error relocating ...` or a segmentation fault). The same applies to the musl wheels on PyPI (`musllinux`), which contain the same binary.
+
 ## macOS binary
 
 `icloudpd` is available as an Intel 64-bit binary for macOS, but works on ARM Macs too (M1, M2, M3).
