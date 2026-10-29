@@ -34,6 +34,8 @@ dependencies = [
     # from pyicloud_ipd
     "tzlocal==5.4.5",
     "pytz==2026.5",
+    # time zone data for systems without a time zone database (e.g. minimal containers)
+    "tzdata==2026.5",
     "certifi==2026.10.23",
     "keyring==25.7.0",
     "keyrings-alt==5.0.2",
