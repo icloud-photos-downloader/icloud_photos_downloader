@@ -1,11 +1,13 @@
 import datetime
 import inspect
 import os
+from types import SimpleNamespace
 from typing import Any, List, Tuple
 from unittest import TestCase, mock
 
 import pytest
 
+from icloudpd.base import keep_icloud_recent_days_warnings
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
@@ -51,6 +53,10 @@ class KeepICloudModeTestCases(TestCase):
                 ],
             )
 
+            self.assertIn(
+                "--keep-icloud-recent-days is used with --recent 1: only the first 1 assets are checked, older assets are not deleted from iCloud",
+                result.output,
+            )
             self.assertIn("Looking up all photos...", result.output)
             self.assertIn(
                 f"Downloading the first original photo to {data_dir} ...",
@@ -545,3 +551,26 @@ class KeepICloudModeTestCases(TestCase):
 
         delete_photo.assert_not_called()
         self.assertEqual(result.exit_code, 0)
+
+
+class KeepICloudRecentDaysWarningsTestCase(TestCase):
+    def warnings(self, keep: int | None, recent: int | None, until_found: int | None) -> List[str]:
+        config = SimpleNamespace(
+            keep_icloud_recent_days=keep, recent=recent, until_found=until_found
+        )
+        return keep_icloud_recent_days_warnings(config)  # type: ignore[arg-type]
+
+    def test_no_warning_without_keep_icloud_recent_days(self) -> None:
+        self.assertEqual([], self.warnings(None, 10, 5))
+
+    def test_no_warning_without_recent_or_until_found(self) -> None:
+        self.assertEqual([], self.warnings(0, None, None))
+
+    def test_warns_for_recent_and_until_found(self) -> None:
+        self.assertEqual(
+            [
+                "--keep-icloud-recent-days is used with --recent 10: only the first 10 assets are checked, older assets are not deleted from iCloud",
+                "--keep-icloud-recent-days is used with --until-found 5: assets after the point where the run stops are not deleted from iCloud",
+            ],
+            self.warnings(0, 10, 5),
+        )

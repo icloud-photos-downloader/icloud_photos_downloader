@@ -267,6 +267,10 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange])
         server_thread.start()
 
+    for user_config in user_configs:
+        for warning in keep_icloud_recent_days_warnings(user_config):
+            logger.warning(warning)
+
     # Check if we're in watch mode
     watch_interval = global_config.watch_with_interval
 
@@ -472,6 +476,24 @@ def _process_all_users_once(
                     )
 
     return 0
+
+
+def keep_icloud_recent_days_warnings(user_config: UserConfig) -> List[str]:
+    """Options that stop the run early leave the remaining assets unchecked for deletion"""
+    if user_config.keep_icloud_recent_days is None:
+        return []
+    warnings = []
+    if user_config.recent is not None:
+        warnings.append(
+            f"--keep-icloud-recent-days is used with --recent {user_config.recent}: "
+            f"only the first {user_config.recent} assets are checked, older assets are not deleted from iCloud"
+        )
+    if user_config.until_found is not None:
+        warnings.append(
+            f"--keep-icloud-recent-days is used with --until-found {user_config.until_found}: "
+            "assets after the point where the run stops are not deleted from iCloud"
+        )
+    return warnings
 
 
 def notificator_builder(
