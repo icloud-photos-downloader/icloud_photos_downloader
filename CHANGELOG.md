@@ -3,6 +3,17 @@
 ## Unreleased
 
 - fix: `KeyError: 'dsInfo'` when the saved session is no longer valid and no password is available; icloudpd now reports a login error and exits with code 1 [#1363](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1363)
+- fix: a locked or unavailable system keyring (e.g. on a headless Linux machine) crashed login with `KeyringLocked`; icloudpd now logs a warning and tries the next password provider [#1032](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1032)
+- fix: `--xmp-sidecar` stopped the whole run when an asset had adjustment, keyword or location data in an unexpected format (`zlib.error`, `JSONDecodeError`, `InvalidFileException`); such fields are now left out of the sidecar, and any other sidecar error is logged as a warning [#1063](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1063) [#1056](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1056) [#1277](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1277)
+- chore: update dependencies, including urllib3 1.26 → 2.8 and requests 2.34
+- fix: `--use-os-locale` crashed with `locale.Error: unsupported locale setting` when `LANG`/`LC_ALL` names a locale that isn't installed; icloudpd now warns and continues with the default locale [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
+- chore: run the npx (apt) and npm/npx (apk) compatibility tests for arm64 and arm/v7 on Arm runners; on x64 runners their Arm containers couldn't start, so the compatibility table reported them as failing without testing them [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
+- chore: run the Linux compatibility tests as one job per test kind and architecture (376 → 73 jobs per full build) and move CI to ubuntu-24.04; see [.github/workflows/README.md](.github/workflows/README.md)
+- chore: CI cancels superseded runs, has a timeout on every job, and generates only the test locales it needs instead of installing `locales-all`
+- fix: `--keep-icloud-recent-days` deleted photos from iCloud even when they failed to download, with `--only-print-filenames` when nothing was downloaded, or with `--force-size` when the size did not exist; photos are now only deleted when every requested file (including the live photo video) is present locally [#1312](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1312)
+- fix: bump certifi to 2026.10.23; earlier versions bundle emSign root CAs with compromised intermediate keys ([GHSA-6q48-6c7w-9gw2](https://github.com/advisories/GHSA-6q48-6c7w-9gw2))
+- feature: support Python 3.14 and 3.15; drop Python 3.10, which reached end of life. Binaries and Docker images are built with Python 3.15
+- note: on Linux, photos dated before year 1000 now go into zero-padded year folders (e.g. `0005/01/01`), the same as on macOS and Windows
 
 ## 1.32.3 (2026-05-29)
 

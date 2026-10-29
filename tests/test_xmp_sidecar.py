@@ -1,9 +1,14 @@
+import base64
+import logging
+import os
+import tempfile
+import zlib
 from datetime import datetime
 from typing import Any, Dict
-from unittest import TestCase
+from unittest import TestCase, mock
 
 from foundation import version_info
-from icloudpd.xmp_sidecar import XMPMetadata, build_metadata
+from icloudpd.xmp_sidecar import XMPMetadata, build_metadata, generate_xmp_file
 
 
 class BuildXMPMetadata(TestCase):
@@ -118,3 +123,67 @@ class BuildXMPMetadata(TestCase):
             50.09418333333333,
             datetime.fromisoformat("2020-02-29T18:35:49"),
         )
+
+
+def _raw_deflate(data: bytes) -> bytes:
+    compressor = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+    return compressor.compress(data) + compressor.flush()
+
+
+def _b64(data: bytes) -> str:
+    return base64.b64encode(data).decode("ascii")
+
+
+class UndecodableXMPFields(TestCase):
+    """Fields that cannot be decoded are left out instead of failing the run (#1063, #1056, #1277)"""
+
+    def asset_record(self, **fields: str) -> Dict[str, Dict[str, Any]]:
+        record: Dict[str, Dict[str, Any]] = {
+            "fields": {
+                "captionEnc": {"value": _b64(b"Title Here"), "type": "ENCRYPTED_BYTES"},
+                "assetDate": {"value": 1532951050176, "type": "TIMESTAMP"},
+            }
+        }
+        for name, value in fields.items():
+            record["fields"][name] = {"value": value, "type": "ENCRYPTED_BYTES"}
+        return record
+
+    def test_adjustments_that_are_not_deflate_data(self) -> None:
+        metadata = build_metadata(
+            self.asset_record(adjustmentSimpleDataEnc=_b64(b"definitely not deflate data"))
+        )
+        self.assertIsNone(metadata.Orientation)
+        self.assertEqual(metadata.Title, "Title Here")
+
+    def test_adjustments_that_are_not_json(self) -> None:
+        metadata = build_metadata(
+            self.asset_record(adjustmentSimpleDataEnc=_b64(_raw_deflate(b"not json")))
+        )
+        self.assertIsNone(metadata.Orientation)
+        self.assertEqual(metadata.Title, "Title Here")
+
+    def test_keywords_and_location_that_are_not_plists(self) -> None:
+        metadata = build_metadata(
+            self.asset_record(
+                keywordsEnc=_b64(b"not a plist"), locationEnc=_b64(b"not a plist either")
+            )
+        )
+        self.assertIsNone(metadata.Keywords)
+        self.assertIsNone(metadata.GPSLatitude)
+        self.assertIsNone(metadata.GPSLongitude)
+        self.assertEqual(metadata.Title, "Title Here")
+
+    def test_sidecar_failure_does_not_stop_the_download(self) -> None:
+        logger = logging.getLogger("test_xmp_sidecar")
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            mock.patch(
+                "icloudpd.xmp_sidecar.build_metadata", side_effect=RuntimeError("unexpected")
+            ),
+            self.assertLogs(logger, level="WARNING") as logs,
+        ):
+            download_path = os.path.join(directory, "IMG_0001.JPG")
+            generate_xmp_file(logger, download_path, self.asset_record(), False)
+            self.assertFalse(os.path.exists(download_path + ".xmp"))
+        self.assertIn("Could not write XMP sidecar", logs.output[0])
+        self.assertIn("unexpected", logs.output[0])

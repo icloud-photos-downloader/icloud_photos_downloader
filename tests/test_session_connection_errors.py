@@ -12,6 +12,7 @@ from unittest.mock import MagicMock, patch
 
 from requests import Timeout
 from requests.exceptions import ConnectionError
+from urllib3.connection import HTTPConnection
 from urllib3.exceptions import NewConnectionError
 
 from pyicloud_ipd.exceptions import PyiCloudConnectionErrorException
@@ -153,7 +154,9 @@ class TestPyiCloudSessionConnectionErrors(unittest.TestCase):
         with patch.object(
             self.session.__class__.__bases__[0],
             "request",
-            side_effect=NewConnectionError(None, "Test new connection error"),
+            side_effect=NewConnectionError(
+                HTTPConnection("localhost"), "Test new connection error"
+            ),
         ):
             with self.assertRaises(PyiCloudConnectionErrorException) as context:
                 self.session.get(self.base_url)
