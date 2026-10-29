@@ -71,6 +71,22 @@ class SharedMasterAssetsTestCase(TestCase):
         got = self.yielded(25, {10: 9}, 10)
         self.assertEqual(got, [f"A{i}" for i in range(25)])
 
+    def test_missing_master_is_skipped(self) -> None:
+        album = FakeAlbum(make_library(25, {}), 10)
+        original_request = album.photos_request
+
+        def request_without_m7() -> Any:
+            response = original_request()
+            records = response.payload["records"]
+            response.payload["records"] = [r for r in records if r["recordName"] != "M7"]
+            return response
+
+        album.photos_request = request_without_m7  # type: ignore[method-assign]
+        with self.assertLogs("pyicloud_ipd.services.photos", level="WARNING") as logs:
+            got = [p._asset_record["recordName"] for p in album.photos]
+        self.assertEqual(got, [f"A{i}" for i in range(25) if i != 7])
+        self.assertIn("Skipping asset A7: its master record M7 was not returned", logs.output[0])
+
     def test_three_assets_one_master(self) -> None:
         got = self.yielded(30, {5: 4, 6: 4, 20: 19}, 10)
         self.assertEqual(got, [f"A{i}" for i in range(30)])
