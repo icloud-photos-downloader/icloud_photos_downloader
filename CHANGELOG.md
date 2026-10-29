@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: a locked or unavailable system keyring (e.g. on a headless Linux machine) crashed login with `KeyringLocked`; icloudpd now logs a warning and tries the next password provider [#1032](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1032)
 - fix: `--xmp-sidecar` stopped the whole run when an asset had adjustment, keyword or location data in an unexpected format (`zlib.error`, `JSONDecodeError`, `InvalidFileException`); such fields are now left out of the sidecar, and any other sidecar error is logged as a warning [#1063](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1063) [#1056](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1056) [#1277](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1277)
 - chore: update dependencies, including urllib3 1.26 → 2.8 and requests 2.34
 - fix: `--use-os-locale` crashed with `locale.Error: unsupported locale setting` when `LANG`/`LC_ALL` names a locale that isn't installed; icloudpd now warns and continues with the default locale [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)

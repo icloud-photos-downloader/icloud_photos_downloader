@@ -4,6 +4,7 @@ import shutil
 from typing import NamedTuple, NoReturn
 from unittest import TestCase, mock
 
+import keyring.errors
 import pytest
 from requests import Timeout
 from requests.exceptions import ConnectionError
@@ -12,7 +13,7 @@ from vcr import VCR
 import pyicloud_ipd
 from foundation.core import constant
 from icloudpd.authentication import authenticator
-from icloudpd.base import dummy_password_writter
+from icloudpd.base import dummy_password_writter, keyring_password_reader
 from icloudpd.logger import setup_logger
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import StatusExchange
@@ -110,6 +111,54 @@ class AuthenticationTestCase(TestCase):
         )
         self.assertIn("Authentication completed successfully", result.output)
         self.assertEqual(result.exit_code, 0, "exit code")
+
+    def test_locked_keyring_falls_back_to_next_provider(self) -> None:
+        """A locked keyring (e.g. headless Linux) is skipped instead of crashing login (#1032)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+
+        # no saved session, so login has to ask the password providers
+        for dir in [base_dir, cookie_dir]:
+            recreate_path(dir)
+
+        with mock.patch(
+            "keyring.get_password", side_effect=keyring.errors.KeyringLocked("Keyring is locked")
+        ):
+            result = run_cassette(
+                os.path.join(self.vcr_path, "auth_non_2fa.yml"),
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password-provider",
+                    "keyring",
+                    "--password-provider",
+                    "parameter",
+                    "--password",
+                    "dummy",
+                    "--no-progress-bar",
+                    "--cookie-directory",
+                    cookie_dir,
+                    "--auth-only",
+                ],
+            )
+        self.assertIn(
+            "Could not read password from keyring: KeyringLocked: Keyring is locked",
+            result.output,
+        )
+        self.assertIn("Authentication completed successfully", result.output)
+        self.assertNotIn("Traceback", result.output)
+        self.assertEqual(result.exit_code, 0, "exit code")
+
+    def test_keyring_password_reader(self) -> None:
+        logger = setup_logger()
+        with mock.patch("keyring.get_password", return_value="from keyring"):
+            self.assertEqual(keyring_password_reader(logger)("jdoe@gmail.com"), "from keyring")
+        with (
+            mock.patch("keyring.get_password", side_effect=keyring.errors.NoKeyringError()),
+            self.assertLogs(logger, level="WARNING") as logs,
+        ):
+            self.assertIsNone(keyring_password_reader(logger)("jdoe@gmail.com"))
+        self.assertIn("Could not read password from keyring: NoKeyringError", logs.output[0])
 
     def test_password_prompt_2sa(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

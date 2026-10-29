@@ -28,6 +28,7 @@ from typing import (
     Tuple,
 )
 
+from keyring.errors import KeyringError
 from requests.exceptions import (
     ChunkedEncodingError,
     ContentDecodingError,
@@ -174,6 +175,18 @@ def update_auth_error_in_webui(status_exchange: StatusExchange, error: str) -> b
 
 def dummy_password_writter(_u: str, _p: str) -> None:
     pass
+
+
+def keyring_password_reader(logger: Logger) -> Callable[[str], str | None]:
+    def _intern(username: str) -> str | None:
+        try:
+            return get_password_from_keyring(username)
+        except KeyringError as e:
+            # e.g. a locked or missing keyring on a headless machine: try the next provider
+            logger.warning(f"Could not read password from keyring: {type(e).__name__}: {e}")
+            return None
+
+    return _intern
 
 
 def keyring_password_writter(logger: Logger) -> Callable[[str, str], None]:
@@ -345,7 +358,7 @@ def _process_all_users_once(
                     )
                 elif provider == PasswordProvider.KEYRING:
                     password_providers_dict[provider] = (
-                        get_password_from_keyring,
+                        keyring_password_reader(logger),
                         keyring_password_writter(logger),
                     )
                 elif provider == PasswordProvider.PARAMETER:
