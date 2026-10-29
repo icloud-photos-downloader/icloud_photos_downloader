@@ -26,7 +26,7 @@ class LoggerTestCase(TestCase):
         output = string_io.getvalue().strip()
         # 2018:01:01 00:00:00 utc
         expectedDatetime = (
-            datetime.datetime(2018, 1, 1, 0, 0, 0, tzinfo=datetime.timezone.utc)
+            datetime.datetime(2018, 1, 1, 0, 0, 0, tzinfo=datetime.UTC)
             .astimezone()
             .strftime("%Y-%m-%d %H:%M:%S")
         )

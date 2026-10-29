@@ -24,7 +24,13 @@ on:
 jobs:
   analyze:
     name: Analyze
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    # upload results to code scanning; don't rely on the repo's default token permissions
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
 
     strategy:
       fail-fast: false
@@ -36,11 +42,11 @@ jobs:
 
     steps:
     - name: Checkout repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action/init@v2
+      uses: github/codeql-action/init@v4
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -51,7 +57,7 @@ jobs:
     # Autobuild attempts to build any compiled languages  (C/C++, C#, or Java).
     # If this step fails, then you should remove it and run the build manually (see below)
     - name: Autobuild
-      uses: github/codeql-action/autobuild@v2
+      uses: github/codeql-action/autobuild@v4
 
     # ℹ️ Command-line programs to run using the OS shell.
     # 📚 https://git.io/JvXDl
@@ -65,4 +71,4 @@ jobs:
     #   make release
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action/analyze@v2
+      uses: github/codeql-action/analyze@v4

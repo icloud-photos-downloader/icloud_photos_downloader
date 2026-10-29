@@ -540,9 +540,16 @@ def cli() -> int:
         print(error)
         return 2
     if global_ns.use_os_locale:
-        from locale import LC_ALL, setlocale
+        from locale import LC_ALL, Error, setlocale
 
-        setlocale(LC_ALL, "")
+        try:
+            setlocale(LC_ALL, "")
+        except Error as error:
+            # e.g. LANG/LC_ALL names a locale that isn't installed (common in containers)
+            print(
+                f"Cannot use the system locale ({error}), using the default locale",
+                file=sys.stderr,
+            )
     else:
         pass
     if global_ns.help:
