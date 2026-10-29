@@ -3,7 +3,7 @@ from functools import partial
 from http.cookiejar import Cookie
 from http.cookies import SimpleCookie
 from operator import eq, not_
-from typing import Any, Callable, Iterable, Mapping, Tuple
+from typing import Any, Callable, Iterable, Mapping, Tuple, cast
 
 from requests import PreparedRequest, Response
 
@@ -93,7 +93,8 @@ def response_to_har_entry(response: Response) -> Mapping[str, Any]:
         "response": {
             "status_code": response.status_code,
             "headers": dict(not_response_cookie_headers(response.headers.items())),
-            "cookies": dict(jar_to_pairs(response.cookies)),
+            # iterating a RequestsCookieJar yields Cookie objects (CookieJar.__iter__)
+            "cookies": dict(jar_to_pairs(cast(Iterable[Cookie], response.cookies))),
             "content": response_body(response),
         },
     }
