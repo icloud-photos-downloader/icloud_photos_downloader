@@ -22,15 +22,15 @@ How CI is set up for icloudpd: what runs when, and why it is set up this way.
 
 ## Compatibility tests
 
-`build-package.yml` checks that icloudpd installs and runs (`--version`, and again with a non-default time zone and locale: "tzlc") on many Linux distributions and architectures, through pip, the standalone binaries (glibc and musl), npm/npx and Docker. `scripts/compile_compatibility.py` turns the results into the compatibility table in the release notes.
+`build-package.yml` checks that icloudpd installs and runs (`--version`, and again with a non-default time zone and locale: "tzlc") on many Linux distributions and architectures, through pip, the standalone binaries (glibc and musl), npm/npx and Docker. `scripts/compile_compatibility.py` and `scripts/compile_tzlc.py` turn the results into the two compatibility tables in the release notes. The musl binary is only tested on Alpine: it can't run on glibc distributions, while the glibc binary is tested on both.
 
 Each test kind (for example "binary on apk-based images") runs as **one job per architecture**. The job calls `scripts/compat_test`, which loops over that job's list of images, a few at a time, and for each image:
 
-1. pulls it, and skips it if it does not exist for the platform,
+1. pulls it, and skips it if it does not exist for the platform (Docker pulls an image that only exists for another platform, e.g. `ubuntu:precise` on arm64, but can't run it, so the image's platform is checked too),
 2. runs the test command and the tzlc command in the container,
 3. writes `compatibility/<kind>.<image>.<arch>.pass|fail` and `tzlc/...` result files.
 
-A failing test does not fail the job (many failures are expected, for example a musl binary on a glibc distribution), so `scripts/compat_test` makes them visible instead: the job summary gets a table with the test and tzlc result per image, and each job adds a warning annotation listing the images where a test failed.
+A failing test does not fail the job (many failures are expected, for example on end-of-life distributions), so `scripts/compat_test` makes them visible instead: the job summary gets a table with the test and tzlc result per image, and each job adds a warning annotation listing the images where a test failed.
 
 The image lists are in the job's `Run tests on ... images` step. To add or drop a distribution, edit that list.
 

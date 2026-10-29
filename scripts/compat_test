@@ -42,13 +42,6 @@ case "$kind" in
         tzlc_cmd='echo "install tzdata and locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all && echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-__ARCH__ && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-__VERSION__-linux-__ARCH__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/bin.__VARIANT__.__ARCH__.pass'
         tzlc_fail='bin.__VARIANT__.__ARCH__.fail'
         ;;
-    bin_musl-apt)
-        shell=sh
-        test_cmd='echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-musl-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-musl-__ARCH__ && echo "test icloud..." && dist/icloud-__VERSION__-linux-musl-__ARCH__ --version && echo "test icloudpd..." && dist/icloudpd-__VERSION__-linux-musl-__ARCH__ --version && touch /work/compatibility/bin-musl.__VARIANT__.__ARCH__.pass'
-        test_fail='bin-musl.__VARIANT__.__ARCH__.fail'
-        tzlc_cmd='echo "install tzdata and locales..." && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all && echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-musl-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-musl-__ARCH__ && echo "test icloudpd..." && TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-__VERSION__-linux-musl-__ARCH__ --use-os-locale --version 1>.result && cat .result && mv .result /work/tzlc/bin-musl.__VARIANT__.__ARCH__.pass'
-        tzlc_fail='bin-musl.__VARIANT__.__ARCH__.fail'
-        ;;
     bin-apk)
         shell=sh
         test_cmd='echo "prep test..." && cd /work && chmod +x dist/icloud-__VERSION__-linux-__ARCH__ && chmod +x dist/icloudpd-__VERSION__-linux-__ARCH__ && echo "test icloud..." && dist/icloud-__VERSION__-linux-__ARCH__ --version && echo "test icloudpd..." && dist/icloudpd-__VERSION__-linux-__ARCH__ --version && touch /work/compatibility/bin.__VARIANT__.__ARCH__.pass'
@@ -124,6 +117,14 @@ result() {
     echo -
 }
 
+platform_matches() {
+    # platform_matches IMAGE: whether the pulled image is for $platform (arm64 images may report
+    # arm64/v8, and old arm32v7 images report arm without a variant)
+    local actual
+    actual=$(docker image inspect --format '{{.Architecture}}{{if .Variant}}/{{.Variant}}{{end}}' "$1")
+    [ "$actual" = "$platform" ] || [ "${actual%%/*}" = "$platform" ] || [ "$actual/v7" = "$platform" ]
+}
+
 run_image() {
     local variant=$1 image=$2
     local ref="$prefix$image"
@@ -133,6 +134,11 @@ run_image() {
     mkdir -p "$work/compatibility" "$work/tzlc"
     {
         digest=$(docker pull --platform "linux/$platform" "$ref" | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ')
+        if [ -n "$digest" ] && ! platform_matches "$ref"; then
+            # e.g. ubuntu:precise only exists for amd64: docker pulls it anyway, but can't run it
+            echo "$ref exists, but not for linux/$platform"
+            digest=""
+        fi
         if [ -z "$digest" ]; then
             echo "$ref is not available for linux/$platform, skipping"
         else
@@ -157,7 +163,7 @@ run_image() {
     echo "done: $ref: $status"
 }
 
-export -f fill run_in result run_image
+export -f fill run_in result platform_matches run_image
 export kind arch platform prefix version workspace work_root shell test_cmd test_fail tzlc_cmd tzlc_fail
 
 mkdir -p "$work_root" "$workspace/compatibility" "$workspace/tzlc"
