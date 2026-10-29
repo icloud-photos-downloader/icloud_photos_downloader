@@ -8,28 +8,33 @@ on:
         required: true
         type: string
 
+env:
+  # Python used to build and package icloudpd (also passed to Dockerfile.build*)
+  PYTHON_VERSION: '3.15'
+
 jobs:
 
   build_src:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -41,7 +46,7 @@ jobs:
         scripts/build
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-src
         if-no-files-found: error
@@ -49,29 +54,30 @@ jobs:
           dist/icloudpd*.whl
 
   get_version_thumbprint:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install
       run: >
-        export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
+        sudo locale-gen ru_RU.UTF-8 &&
         python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
         pip3 install --disable-pip-version-check -e .
 
@@ -82,7 +88,7 @@ jobs:
         icloudpd --version | tee dist/icloudpd-version-thumbprint.txt
           
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-version-thumbprint
         if-no-files-found: error
@@ -90,29 +96,30 @@ jobs:
           dist/icloudpd-version-thumbprint.txt
           
   get_expected_version_linux_apt:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
-        export DEBIAN_FRONTEND=noninteractive && sudo apt-get update && sudo apt-get install -y tzdata locales-all &&
+        sudo locale-gen ru_RU.UTF-8 &&
         python3 -m pip install --disable-pip-version-check -r requirements-pip.txt &&
         pip3 install --disable-pip-version-check -e .
 
@@ -129,16 +136,17 @@ jobs:
       expected_version: ${{steps.get_version.outputs.expected_version}}
 
   get_expected_version_linux_apk:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
@@ -147,7 +155,7 @@ jobs:
     - name: Run version
       uses: addnab/docker-run-action@v3
       with:
-        image: python:3.13-alpine3.23
+        image: python:${{ env.PYTHON_VERSION }}-alpine3.23
         shell: sh
         options: -v ${{ github.workspace }}:/work 
         run: >
@@ -172,25 +180,26 @@ jobs:
 
 
   get_expected_version_macos:
-    runs-on: macos-14
+    runs-on: macos-15
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: |
@@ -210,7 +219,8 @@ jobs:
   
   build_linux_apt:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 60
     name: Build Linux ${{ matrix.platform[1] }} Debian
     strategy:
       fail-fast: false
@@ -229,10 +239,10 @@ jobs:
             "arm32v7",
           ]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
@@ -240,11 +250,11 @@ jobs:
 
     # ARM32v7 runs natively on ARM64 runners - no QEMU needed
 
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
       id: setup
 
     - name: Cache Build
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
@@ -262,7 +272,7 @@ jobs:
         mkdir -p .cache/root/.cargo/registry
       
     - name: Inject docker cache
-      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      uses: reproducible-containers/buildkit-cache-dance@v3.4.0
       with:
         cache-map: |
           {
@@ -274,12 +284,13 @@ jobs:
           }
 
     - name: Build
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         push: false
         platforms: ${{ matrix.platform[0] }}
         # do not cache layers
         file: Dockerfile.build
+        build-args: PYTHON_VERSION=${{ env.PYTHON_VERSION }}
         outputs: type=local,dest=dist
         provenance: false
         context: .
@@ -291,7 +302,7 @@ jobs:
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-bin-linux-${{ matrix.platform[1] }}-apt
         if-no-files-found: error
@@ -299,7 +310,8 @@ jobs:
           dist/icloud*
   
   clone_src_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - build_src
     defaults:
@@ -307,19 +319,19 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download src
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-src
         path: |
           dist
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -331,7 +343,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-dummywhl-src
         if-no-files-found: error
@@ -339,7 +351,8 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
 
   clone_linux_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - build_linux_apt
       - build_linux_apk
@@ -348,20 +361,20 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download bin
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
         path: |
           dist
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -373,7 +386,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-dummywhl-linux
         if-no-files-found: error
@@ -381,7 +394,8 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
         
   clone_macos_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - build_macos
     defaults:
@@ -389,20 +403,20 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download bin
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: icloudpd-bin-macos-*
         merge-multiple: true
         path: |
           dist
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -414,7 +428,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-dummywhl-macos
         if-no-files-found: error
@@ -422,7 +436,8 @@ jobs:
           dist/icloudpd-0.0.1234567890-*.whl
   
   clone_windows_whl:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs:
       - build_windows
     defaults:
@@ -430,20 +445,20 @@ jobs:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download bin
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         pattern: icloudpd-bin-windows-*
         merge-multiple: true
         path: |
           dist
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -455,7 +470,7 @@ jobs:
         scripts/clone_whl_version ${{inputs.icloudpd_version}} 0.0.1234567890
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-dummywhl-windows
         if-no-files-found: error
@@ -464,7 +479,8 @@ jobs:
         
   build_linux_apk:
     # 24.02 gives futex error during apt: https://github.com/actions/runner-images/issues/9977
-    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.platform[1] == 'arm64' || matrix.platform[1] == 'arm32v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 60
     name: Build Linux ${{ matrix.platform[1] }} Alpine
     strategy:
       fail-fast: false
@@ -483,10 +499,10 @@ jobs:
             "arm32v7",
           ]
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
@@ -494,11 +510,11 @@ jobs:
 
     # ARM32v7 runs natively on ARM64 runners - no QEMU needed
 
-    - uses: docker/setup-buildx-action@v3
+    - uses: docker/setup-buildx-action@v4
       id: setup
     
     - name: Cache Folders Build
-      uses: actions/cache@v4
+      uses: actions/cache@v6
       id: cache
       with:
         # if the list or anything in these folders expected to change, then cache needs to be cleared and rebuilt, because it is keyed only by pyproject.toml hash
@@ -513,7 +529,7 @@ jobs:
         mkdir -p .cache/root/.cache/pip
       
     - name: Inject docker cache
-      uses: reproducible-containers/buildkit-cache-dance@v3.1.2
+      uses: reproducible-containers/buildkit-cache-dance@v3.4.0
       with:
         cache-map: |
           {
@@ -522,12 +538,13 @@ jobs:
           }
               
     - name: Build
-      uses: docker/build-push-action@v6
+      uses: docker/build-push-action@v7
       with:
         push: false
         platforms: ${{ matrix.platform[0] }}
         # do not cache layers
         file: Dockerfile.build-musl
+        build-args: PYTHON_VERSION=${{ env.PYTHON_VERSION }}
         outputs: type=local,dest=dist
         provenance: false
         context: .
@@ -539,7 +556,7 @@ jobs:
         mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.platform[1] }}
         
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-bin-linux-${{ matrix.platform[1] }}-apk
         if-no-files-found: error
@@ -548,25 +565,26 @@ jobs:
   
   build_macos:
     # earliest possible mac for better compatibility
-    runs-on: macos-14
+    runs-on: macos-15
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -585,7 +603,7 @@ jobs:
         scripts/build_binary_dist_macos ${{inputs.icloudpd_version}}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-bin-macos-amd64
         if-no-files-found: error
@@ -595,24 +613,25 @@ jobs:
   build_windows:
     # earliest possible win for better compatibility
     runs-on: windows-2022
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download version info
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with:
         name: icloudpd-version-info
         path: |
           src/foundation
 
-    - name: Set up Python 3.13
-      uses: actions/setup-python@v5
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v7
       with:
-        python-version: '3.13'
+        python-version: ${{ env.PYTHON_VERSION }}
     
     - name: Install Dev dependencies
       run: >
@@ -631,7 +650,7 @@ jobs:
         scripts/build_binary_dist_windows ${{inputs.icloudpd_version}}
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: icloudpd-bin-windows-amd64
         if-no-files-found: error
@@ -639,16 +658,17 @@ jobs:
           dist/icloud*
 
   build_docker:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs: 
       # - build_linux_apt
       - build_linux_apk # docker is musl only
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v7
 
     - name: Download artifacts
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v8
       with: 
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
@@ -656,15 +676,15 @@ jobs:
           dist 
  
     - name: Set up QEMU
-      uses: docker/setup-qemu-action@v3
+      uses: docker/setup-qemu-action@v4
 
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
       with:
         version: v0.12.0
 
     - name: Build Release Docker
-      uses: docker/build-push-action@v5
+      uses: docker/build-push-action@v7
       with:
         context: .
         file: ./Dockerfile
@@ -678,7 +698,7 @@ jobs:
         #   icloudpd/icloudpd:commit-${{ github.sha }} 
  
     - name: Upload artifacts 
-      uses: actions/upload-artifact@v4 
+      uses: actions/upload-artifact@v7 
       with: 
         name: icloudpd-oci 
         if-no-files-found: error 
@@ -686,7 +706,8 @@ jobs:
           dist/icloud*.tar
 
   build_npm:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
     needs: 
       - build_linux_apt
       # - build_linux_apk npm is glibc only
@@ -694,16 +715,16 @@ jobs:
       - build_windows
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: icloudpd-bin-*
           merge-multiple: true
@@ -715,7 +736,7 @@ jobs:
           scripts/build_npm ${{inputs.icloudpd_version}}
 
       - name: Upload artifacts 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-npm
           if-no-files-found: error 
@@ -723,423 +744,138 @@ jobs:
             dist/npm/
 
   compatibility_linux_pip_apt:
-    name: "Compat PIP ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt"
-    strategy: 
+    name: Compat PIP ${{ matrix.prop[1] }} apt
+    strategy:
       fail-fast: false
       matrix:
-        image: 
-          - [ 
-            "python3_13", #variant name
-            "python:3.13", #image
-            ] 
-          # apt-get does not work for debian 6 anymore
-          # - [ 
-          #   "debian_6_squeeze", #variant name
-          #   "debian:squeeze", #image
-          #   ] 
-          # apt-get does not work for debian 7 anymore
-          # - [ 
-          #   "debian_7_wheezy", #variant name
-          #   "debian:wheezy", #image
-          #   ] 
-          # apt-get does not work for debian 8 anymore
-          # - [ 
-          #   "debian_8_jessie", #variant name
-          #   "debian:jessie", #image
-          #   ] 
-          # apt-get does not work for debian 7 anymore
-          # - [ 
-          #   "debian_9_stretch", #variant name
-          #   "debian:stretch", #image
-          #   ] 
-          - [ 
-            "debian_10_buster", #variant name
-            "debian:buster", #image
-            ] 
-          - [ 
-            "debian_11_bullseye", #variant name
-            "debian:bullseye", #image
-            ] 
-          - [ 
-            "debian_12_bookworm", #variant name
-            "debian:bookworm", #image
-            ] 
-          # apt-get does not work for ubuntu 12 anymore
-          # - [ 
-          #   "ubuntu_12_precise", #variant name
-          #   "ubuntu:precise", #image
-          #   ] 
-          # apt-get does not work have venv for ubuntu 14 -- TBD
-          # - [ 
-          #   "ubuntu_14_trusty", #variant name
-          #   "ubuntu:trusty", #image
-          #   ] 
-          - [ 
-            "ubuntu_16_xenial", #variant name
-            "ubuntu:xenial", #image
-            ] 
-          - [ 
-            "ubuntu_18_bionic", #variant name
-            "ubuntu:bionic", #image
-            ] 
-          - [ 
-            "ubuntu_20_focal", #variant name
-            "ubuntu:focal", #image
-            ] 
-          - [ 
-            "ubuntu_22_jammy", #variant name
-            "ubuntu:jammy", #image
-            ] 
-          - [ 
-            "ubuntu_24_noble", #variant name
-            "ubuntu:noble", #image
-            ] 
-        prop: 
-          - [
-            "amd64",  # variant name
-            "amd64",  # platform spec
-            "",  # image prefix
-          ]
-          - [
-            "arm64",  # variant name
-            "arm64",  # platform spec
-            "",  # image prefix
-          ]
-          - [
-            "arm32v7",  # variant name
-            "arm/v7",  # platform spec
-            "arm32v7/",  # image prefix
-          ]
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
     needs:
-      - clone_linux_whl
-      - clone_src_whl
+    - clone_linux_whl
+    - clone_src_whl
     defaults:
       run:
         shell: bash
-
     steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Download artifacts (src)
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-dummywhl-src
+        path: |
+          dist
+    - name: Download artifacts (whl)
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-dummywhl-linux
+        path: |
+          dist
+    - name: Run tests on 9 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test pip-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        python3_15 python:3.15
+        debian_10_buster debian:buster
+        debian_11_bullseye debian:bullseye
+        debian_12_bookworm debian:bookworm
+        ubuntu_16_xenial ubuntu:xenial
+        ubuntu_18_bionic ubuntu:bionic
+        ubuntu_20_focal ubuntu:focal
+        ubuntu_22_jammy ubuntu:jammy
+        ubuntu_24_noble ubuntu:noble
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-pip-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-pip-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-      - name: Get image
-        id: get_image 
-        run: | 
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT
- 
-      - name: Make folder for compatibility
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          mkdir compatibility
-
-      - name: Make folder for tzlc
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          mkdir tzlc
-  
-      - name: Download artifacts (src)
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
-        with:
-          name: icloudpd-dummywhl-src
-          path: |
-            dist
-
-      - name: Download artifacts (whl)
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
-        with:
-          name: icloudpd-dummywhl-linux
-          path: |
-            dist
-
-      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64
-      # - name: Set up QEMU
-      #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3
-
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed
-
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: steps.get_image.outputs.digest != '' 
-        id: run_test
-        uses: addnab/docker-run-action@v3
-        continue-on-error: true
-        with:
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
-          shell: bash
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
-          run: >
-            echo "install default python..." &&
-            export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv &&
-            echo "create venv and active..." &&
-            cd /work &&
-            python3 -m venv .venv &&
-            . .venv/bin/activate &&
-            echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
-            echo "test icloud..." &&
-            icloud --version &&
-            echo "test icloudpd..." &&
-            icloudpd --version &&
-            echo "check if src..." &&
-            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
-
-          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: ${{ steps.run_test.outcome == 'failure' }} 
-        run: |
-          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
-
-      - name: Upload compatibility result
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
-        with:
-          name: icloudpd-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error
-          path: |
-            compatibility/*
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: steps.get_image.outputs.digest != '' 
-        id: run_tzlc
-        uses: addnab/docker-run-action@v3
-        continue-on-error: true
-        with:
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
-          shell: bash
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
-          run: >
-            echo "install default python, tzdata, locales..." &&
-            export DEBIAN_FRONTEND=noninteractive && apt-get update -y && apt-get install -y python3 python3-venv tzdata locales-all &&
-            echo "create venv and active..." &&
-            cd /work &&
-            python3 -m venv .venv &&
-            . .venv/bin/activate &&
-            echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
-            echo "test icloud..." &&
-            icloud --version &&
-            echo "test icloudpd..." &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
-            cat .result &&
-            mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-    
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: ${{ steps.run_tzlc.outcome == 'failure' }} 
-        run: |
-          touch tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
-    
-      - name: Upload tzlc result
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
-        with:
-          name: icloudpd-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error
-          path: |
-            tzlc/*
-    
   compatibility_linux_pip_apk:
-    name: "Compat PIP ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk"
-    strategy: 
+    name: Compat PIP ${{ matrix.prop[1] }} apk
+    strategy:
       fail-fast: false
       matrix:
-        image: 
-          - [ 
-            "python3_13_alpine3_19", #variant name
-            "python:3.13-alpine3.19", #image
-            ] 
-          - [ 
-            "alpine_3_22", #variant name
-            "alpine:3.22", #image
-            ] 
-          - [ 
-            "alpine_3_21", #variant name
-            "alpine:3.21", #image
-            ] 
-          - [ 
-            "alpine_3_20", #variant name
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-          # - [ 
-          #   "alpine_3_12", #variant name
-          #   "alpine:3.12", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_11", #variant name
-          #   "alpine:3.11", #image
-          #   ] 
-          # - [ 
-          #   "alpine_3_10", #variant name
-          #   "alpine:3.10", #image
-          #   ] 
-        prop: 
-          - [
-            "amd64",  # variant name
-            "amd64",  # platform spec
-            "",  # image prefix
-          ]
-          - [
-            "arm64",  # variant name
-            "arm64",  # platform spec
-            "",  # image prefix
-          ]
-          - [
-            "arm32v7",  # variant name
-            "arm/v7",  # platform spec
-            "arm32v7/",  # image prefix
-          ]
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
-    needs: 
-      - clone_linux_whl
-      - clone_src_whl
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - clone_linux_whl
+    - clone_src_whl
     defaults:
       run:
         shell: bash
-
     steps:
-
-      - name: Get image
-        id: get_image 
-        run: | 
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT
-
-      - name: Make folder for compatibility
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          mkdir compatibility
-
-      - name: Make folder for tzlc
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          mkdir tzlc
-  
-      - name: Download artifacts (src)
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
-        with:
-          name: icloudpd-dummywhl-src
-          path: |
-            dist
-
-      - name: Download artifacts (linux)
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4
-        with:
-          name: icloudpd-dummywhl-linux
-          path: |
-            dist
-
-      # - name: Set up QEMU
-      #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3
-
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed
-
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: steps.get_image.outputs.digest != '' 
-        id: run_test
-        uses: addnab/docker-run-action@v3
-        continue-on-error: true
-        with:
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
-          shell: sh
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
-          run: >
-            echo "install default python..." &&
-            apk update && apk add python3 &&
-            echo "create venv and active..." &&
-            cd /work &&
-            python3 -m venv .venv &&
-            . .venv/bin/activate &&
-            echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
-            echo "test icloud..." &&
-            icloud --version &&
-            echo "test icloudpd..." &&
-            icloudpd --version &&
-            echo "check if src..." &&
-            (pip3 list --disable-pip-version-check | grep keyring | head -n 1 > /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass)
-          # touch /work/compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: ${{ steps.run_test.outcome == 'failure' }} 
-        run: |
-          touch compatibility/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
-
-      - name: Upload compatibility result
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
-        with:
-          name: icloudpd-compatibility-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error
-          path: |
-            compatibility/*
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: steps.get_image.outputs.digest != '' 
-        id: run_tzlc
-        uses: addnab/docker-run-action@v3
-        continue-on-error: true
-        with:
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }}
-          shell: sh
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }}
-          run: >
-            echo "install default python, tz, locale..." &&
-            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add python3 tzdata musl-locales musl-locales-lang &&
-            echo "create venv and active..." &&
-            cd /work &&
-            python3 -m venv .venv &&
-            . .venv/bin/activate &&
-            echo "install icloudpd..." &&
-            pip3 install --disable-pip-version-check --find-links /work/dist icloudpd==0.0.1234567890 &&
-            echo "test icloudpd..." &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
-            cat .result &&
-            mv .result /work/tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-
-      - name: Record tzlc failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }}
-        if: ${{ steps.run_tzlc.outcome == 'failure' }} 
-        run: |
-          touch tzlc/pip.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail
-
-      - name: Upload tzlc result
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/upload-artifact@v4
-        with:
-          name: icloudpd-tzlc-linux-pip-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error
-          path: |
-            tzlc/*
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Download artifacts (src)
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-dummywhl-src
+        path: |
+          dist
+    - name: Download artifacts (linux)
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-dummywhl-linux
+        path: |
+          dist
+    - name: Run tests on 11 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test pip-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        python3_13_alpine3_19 python:3.13-alpine3.19
+        alpine_3_22 alpine:3.22
+        alpine_3_21 alpine:3.21
+        alpine_3_20 alpine:3.20
+        alpine_3_19 alpine:3.19
+        alpine_3_18 alpine:3.18
+        alpine_3_17 alpine:3.17
+        alpine_3_16 alpine:3.16
+        alpine_3_15 alpine:3.15
+        alpine_3_14 alpine:3.14
+        alpine_3_13 alpine:3.13
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-pip-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-pip-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
   compatibility_macos_pip:
     name: "Compat PIP ${{ matrix.prop[0] }} ${{ matrix.prop[1] }}"
@@ -1148,14 +884,15 @@ jobs:
       matrix: 
         prop: 
           - [
-            "macos-14",  # os
+            "macos-15",  # os
             "amd64",  # platform spec
           ]
           - [
-            "macos-14",  # os
+            "macos-15",  # os
             "arm64",  # platform spec
           ]
     runs-on: ${{ matrix.prop[0] }}
+    timeout-minutes: 30
     needs: 
       - clone_macos_whl
       - clone_src_whl
@@ -1171,14 +908,14 @@ jobs:
           mkdir tzlc
   
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: icloudpd-dummywhl-src
           path: |
             dist
 
       - name: Download artifacts (macos)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: icloudpd-dummywhl-macos
           path: |
@@ -1206,7 +943,7 @@ jobs:
           touch compatibility/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail
 
       - name: Upload compatibility result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: icloudpd-compatibility-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
@@ -1235,7 +972,7 @@ jobs:
           touch tzlc/pip.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail
 
       - name: Upload tzlc result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: icloudpd-tzlc-macos-pip-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error
@@ -1249,6 +986,7 @@ jobs:
       matrix: 
         os: [ "windows-2025", "windows-2022" ]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     needs: 
       - clone_windows_whl
       - clone_src_whl
@@ -1260,14 +998,14 @@ jobs:
           mkdir compatibility
 
       - name: Download artifacts (src)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: icloudpd-dummywhl-src
           path: |
             dist
 
       - name: Download artifacts (windows)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: icloudpd-dummywhl-windows
           path: |
@@ -1294,760 +1032,266 @@ jobs:
           touch compatibility/pip.${{ matrix.os }}.amd64.fail
 
       - name: Upload compatibility result
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: icloudpd-compatibility-windows-pip-${{ matrix.os }}-amd64
           if-no-files-found: error
           path: |
             compatibility/*
 
-  compatibility_linux_bin_apt: 
-    name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [  
-            "debian_6_squeeze", #variant name 
-            "debian:squeeze", #image 
-            ]  
-          - [  
-            "debian_7_wheezy", #variant name 
-            "debian:wheezy", #image 
-            ]  
-          - [  
-            "debian_8_jessie", #variant name 
-            "debian:jessie", #image 
-            ]  
-          - [  
-            "debian_9_stretch", #variant name 
-            "debian:stretch", #image 
-            ]  
-          - [  
-            "debian_10_buster", #variant name 
-            "debian:buster", #image 
-            ]  
-          - [  
-            "debian_11_bullseye", #variant name 
-            "debian:bullseye", #image 
-            ]  
-          - [  
-            "debian_12_bookworm", #variant name 
-            "debian:bookworm", #image 
-            ]  
-          - [  
-            "ubuntu_12_precise", #variant name 
-            "ubuntu:precise", #image 
-            ]  
-          - [  
-            "ubuntu_14_trusty", #variant name 
-            "ubuntu:trusty", #image 
-            ]  
-          - [  
-            "ubuntu_16_xenial", #variant name 
-            "ubuntu:xenial", #image 
-            ]  
-          - [  
-            "ubuntu_18_bionic", #variant name 
-            "ubuntu:bionic", #image 
-            ]  
-          - [  
-            "ubuntu_20_focal", #variant name 
-            "ubuntu:focal", #image 
-            ]  
-          - [  
-            "ubuntu_22_jammy", #variant name 
-            "ubuntu:jammy", #image 
-            ]  
-          - [  
-            "ubuntu_24_noble", #variant name 
-            "ubuntu:noble", #image 
-            ]  
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
-    needs: 
-      - build_linux_apt
-      # - build_linux_apk
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
-  
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir compatibility 
+  compatibility_linux_bin_apt:
+    name: Compat BIN ${{ matrix.prop[1] }} apt
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_linux_apt
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        pattern: icloudpd-bin-linux-*
+        merge-multiple: true
+        path: "dist \n"
+    - name: Run tests on 14 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test bin-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        debian_6_squeeze debian:squeeze
+        debian_7_wheezy debian:wheezy
+        debian_8_jessie debian:jessie
+        debian_9_stretch debian:stretch
+        debian_10_buster debian:buster
+        debian_11_bullseye debian:bullseye
+        debian_12_bookworm debian:bookworm
+        ubuntu_12_precise ubuntu:precise
+        ubuntu_14_trusty ubuntu:trusty
+        ubuntu_16_xenial ubuntu:xenial
+        ubuntu_18_bionic ubuntu:bionic
+        ubuntu_20_focal ubuntu:focal
+        ubuntu_22_jammy ubuntu:jammy
+        ubuntu_24_noble ubuntu:noble
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-bin-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-bin-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir tzlc 
-   
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
-        with: 
-          pattern: icloudpd-bin-linux-*
-          merge-multiple: true
-          path: | 
-            dist 
- 
-      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
-      # - name: Set up QEMU 
-      #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
- 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
- 
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            echo "test icloud..." && 
-            dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd..." && 
-            dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
- 
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
+  compatibility_linux_bin_musl_apt:
+    name: Compat BIN-M ${{ matrix.prop[1] }} apt
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_linux_apk
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        pattern: icloudpd-bin-linux-*
+        merge-multiple: true
+        path: "dist \n"
+    - name: Run tests on 14 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test bin_musl-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        debian_6_squeeze debian:squeeze
+        debian_7_wheezy debian:wheezy
+        debian_8_jessie debian:jessie
+        debian_9_stretch debian:stretch
+        debian_10_buster debian:buster
+        debian_11_bullseye debian:bullseye
+        debian_12_bookworm debian:bookworm
+        ubuntu_12_precise ubuntu:precise
+        ubuntu_14_trusty ubuntu:trusty
+        ubuntu_16_xenial ubuntu:xenial
+        ubuntu_18_bionic ubuntu:bionic
+        ubuntu_20_focal ubuntu:focal
+        ubuntu_22_jammy ubuntu:jammy
+        ubuntu_24_noble ubuntu:noble
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-bin-musl-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-bin-musl-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install tzdata and locales..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all &&
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
-            cat .result &&
-            mv .result /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
+  compatibility_linux_bin_apk:
+    name: Compat BIN ${{ matrix.prop[1] }} apk
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_linux_apt
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        pattern: icloudpd-bin-linux-*
+        merge-multiple: true
+        path: "dist \n"
+    - name: Run tests on 13 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test bin-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_22 alpine:3.22
+        alpine_3_21 alpine:3.21
+        alpine_3_20 alpine:3.20
+        alpine_3_19 alpine:3.19
+        alpine_3_18 alpine:3.18
+        alpine_3_17 alpine:3.17
+        alpine_3_16 alpine:3.16
+        alpine_3_15 alpine:3.15
+        alpine_3_14 alpine:3.14
+        alpine_3_13 alpine:3.13
+        alpine_3_12 alpine:3.12
+        alpine_3_11 alpine:3.11
+        alpine_3_10 alpine:3.10
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-bin-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-bin-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-  compatibility_linux_bin_musl_apt: 
-    name: "Compat BIN-M ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [  
-            "debian_6_squeeze", #variant name 
-            "debian:squeeze", #image 
-            ]  
-          - [  
-            "debian_7_wheezy", #variant name 
-            "debian:wheezy", #image 
-            ]  
-          - [  
-            "debian_8_jessie", #variant name 
-            "debian:jessie", #image 
-            ]  
-          - [  
-            "debian_9_stretch", #variant name 
-            "debian:stretch", #image 
-            ]  
-          - [  
-            "debian_10_buster", #variant name 
-            "debian:buster", #image 
-            ]  
-          - [  
-            "debian_11_bullseye", #variant name 
-            "debian:bullseye", #image 
-            ]  
-          - [  
-            "debian_12_bookworm", #variant name 
-            "debian:bookworm", #image 
-            ]  
-          - [  
-            "ubuntu_12_precise", #variant name 
-            "ubuntu:precise", #image 
-            ]  
-          - [  
-            "ubuntu_14_trusty", #variant name 
-            "ubuntu:trusty", #image 
-            ]  
-          - [  
-            "ubuntu_16_xenial", #variant name 
-            "ubuntu:xenial", #image 
-            ]  
-          - [  
-            "ubuntu_18_bionic", #variant name 
-            "ubuntu:bionic", #image 
-            ]  
-          - [  
-            "ubuntu_20_focal", #variant name 
-            "ubuntu:focal", #image 
-            ]  
-          - [  
-            "ubuntu_22_jammy", #variant name 
-            "ubuntu:jammy", #image 
-            ]  
-          - [  
-            "ubuntu_24_noble", #variant name 
-            "ubuntu:noble", #image 
-            ]  
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
-    needs: 
-      # - build_linux_apt
-      - build_linux_apk
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
-  
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir tzlc 
-   
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
-        with: 
-          pattern: icloudpd-bin-linux-*
-          merge-multiple: true
-          path: | 
-            dist 
- 
-      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
-      # - name: Set up QEMU 
-      #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
- 
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
- 
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            echo "test icloud..." && 
-            dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd..." && 
-            dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
-            touch /work/compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
- 
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install tzdata and locales..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y tzdata locales-all &&
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
-            cat .result &&
-            mv .result /work/tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-
-
-  compatibility_linux_bin_apk: 
-    name: "Compat BIN ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [ 
-            "alpine_3_22", #variant name
-            "alpine:3.22", #image
-            ] 
-          - [ 
-            "alpine_3_21", #variant name
-            "alpine:3.21", #image
-            ] 
-          - [ 
-            "alpine_3_20", #variant name
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-          - [ 
-            "alpine_3_12", #variant name
-            "alpine:3.12", #image
-            ] 
-          - [ 
-            "alpine_3_11", #variant name
-            "alpine:3.11", #image
-            ] 
-          - [ 
-            "alpine_3_10", #variant name
-            "alpine:3.10", #image
-            ] 
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
-    needs: 
-      - build_linux_apt
-      # - build_linux_apk
-    defaults: 
-      run: 
-        shell: bash 
-  
-    steps: 
-  
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
-  
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir tzlc 
-    
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
-        with: 
-          pattern: icloudpd-bin-linux-*
-          merge-multiple: true
-          path: | 
-            dist 
-  
-      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
-      # - name: Set up QEMU 
-      #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
-  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
-  
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            echo "test icloud..." && 
-            dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd..." && 
-            dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --version && 
-            touch /work/compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install tzdata and locales ..." && 
-            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add tzdata musl-locales musl-locales-lang &&
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} && 
-            echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
-            cat .result &&
-            mv .result /work/tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/bin.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-bin-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-          
-
-  compatibility_linux_bin_musl_apk: 
-    name: "Compat BIN-M ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [ 
-            "alpine_3_22", #variant name
-            "alpine:3.22", #image
-            ] 
-          - [ 
-            "alpine_3_21", #variant name
-            "alpine:3.21", #image
-            ] 
-          - [ 
-            "alpine_3_20", #variant name
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-          - [ 
-            "alpine_3_12", #variant name
-            "alpine:3.12", #image
-            ] 
-          - [ 
-            "alpine_3_11", #variant name
-            "alpine:3.11", #image
-            ] 
-          - [ 
-            "alpine_3_10", #variant name
-            "alpine:3.10", #image
-            ] 
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
-    needs: 
-      # - build_linux_apt
-      - build_linux_apk
-    defaults: 
-      run: 
-        shell: bash 
-  
-    steps: 
-  
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
-  
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != ''  
-        run: | 
-          mkdir tzlc 
-    
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/download-artifact@v4 
-        with: 
-          pattern: icloudpd-bin-linux-*
-          merge-multiple: true
-          path: | 
-            dist 
-  
-      # fails with "icloud: Failed to stat /proc/self/exe: Bad file descriptor" in bookwork arm64 
-      # - name: Set up QEMU 
-      #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
-  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
-  
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            echo "test icloud..." && 
-            dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
-            echo "test icloudpd..." && 
-            dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --version && 
-            touch /work/compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install tzdata and locales ..." && 
-            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add tzdata musl-locales musl-locales-lang &&
-            echo "prep test..." && 
-            cd /work && 
-            chmod +x dist/icloud-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} && 
-            echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-linux-musl-${{ matrix.prop[0] }} --use-os-locale --version 1>.result && 
-            cat .result &&
-            mv .result /work/tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/bin-musl.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-bin-musl-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
+  compatibility_linux_bin_musl_apk:
+    name: Compat BIN-M ${{ matrix.prop[1] }} apk
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_linux_apk
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        pattern: icloudpd-bin-linux-*
+        merge-multiple: true
+        path: "dist \n"
+    - name: Run tests on 13 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test bin_musl-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_22 alpine:3.22
+        alpine_3_21 alpine:3.21
+        alpine_3_20 alpine:3.20
+        alpine_3_19 alpine:3.19
+        alpine_3_18 alpine:3.18
+        alpine_3_17 alpine:3.17
+        alpine_3_16 alpine:3.16
+        alpine_3_15 alpine:3.15
+        alpine_3_14 alpine:3.14
+        alpine_3_13 alpine:3.13
+        alpine_3_12 alpine:3.12
+        alpine_3_11 alpine:3.11
+        alpine_3_10 alpine:3.10
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-bin-musl-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-bin-musl-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
   compatibility_macos_bin: 
     name: "Compat BIN ${{ matrix.prop[0] }} ${{ matrix.prop[1] }}" 
@@ -2056,15 +1300,16 @@ jobs:
       matrix:  
         prop:  
           - [ 
-            "macos-14", 
+            "macos-15", 
             "amd64", 
             ] 
           - [ 
-            "macos-14", 
+            "macos-15", 
             "arm64", 
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_macos ] 
  
     steps: 
@@ -2078,7 +1323,7 @@ jobs:
           mkdir tzlc 
    
       - name: Download artifacts 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-bin-macos-amd64
           path: | 
@@ -2103,7 +1348,7 @@ jobs:
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -2128,7 +1373,7 @@ jobs:
           touch tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-tzlc-macos-bin-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -2151,6 +1396,7 @@ jobs:
             ] 
  
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_windows ] 
  
     steps: 
@@ -2160,7 +1406,7 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts 
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-bin-windows-amd64 
           path: | 
@@ -2183,7 +1429,7 @@ jobs:
           touch compatibility/bin.${{ matrix.prop[0] }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-windows-bin-${{ matrix.prop[0] }}-amd64
           if-no-files-found: error 
@@ -2216,7 +1462,8 @@ jobs:
             "arm/v7",  # platform spec 
             "arm32v7/",  # image prefix 
           ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
     needs: [ build_docker ] 
     defaults: 
       run: 
@@ -2254,7 +1501,7 @@ jobs:
  
       - name: Download artifacts 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-oci
           path: | 
@@ -2283,9 +1530,9 @@ jobs:
   
       # - name: Set up QEMU 
       #   if: matrix.prop[1] != 'amd64'
-      #   uses: docker/setup-qemu-action@v3 
+      #   uses: docker/setup-qemu-action@v4 
  
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
+      # ARM runs natively on ubuntu-24.04-arm runners - no QEMU needed 
  
       - name: Run test on ${{ matrix.prop[1] }} 
         if: steps.reload_docker.outcome != 'failure'
@@ -2307,7 +1554,7 @@ jobs:
  
       - name: Upload compatibility result 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
@@ -2334,7 +1581,7 @@ jobs:
   
       - name: Upload tzlc result 
         if: steps.reload_docker.outcome != 'failure'
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-tzlc-docker-${{ matrix.image[0] }}-${{ matrix.prop[0] }}
           if-no-files-found: error 
@@ -2342,1004 +1589,443 @@ jobs:
             tzlc/* 
     
             
-  compatibility_linux_npm_apt: 
-    name: "Compat NPM ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          # apt-get does not work for debian 6 anymore
-          # - [ 
-          #   "debian_6_squeeze", #variant name
-          #   "debian:squeeze", #image
-          #   ] 
-          # apt-get does not work for debian 7 anymore
-          # - [ 
-          #   "debian_7_wheezy", #variant name
-          #   "debian:wheezy", #image
-          #   ] 
-          # apt-get does not work for debian 8 anymore
-          # - [ 
-          #   "debian_8_jessie", #variant name
-          #   "debian:jessie", #image
-          #   ] 
-          # apt-get does not work for debian 9 anymore
-          # - [ 
-          #   "debian_9_stretch", #variant name
-          #   "debian:stretch", #image
-          #   ] 
-          - [ 
-            "debian_10_buster", #variant name
-            "debian:buster", #image
-            ] 
-          - [ 
-            "debian_11_bullseye", #variant name
-            "debian:bullseye", #image
-            ] 
-          - [ 
-            "debian_12_bookworm", #variant name
-            "debian:bookworm", #image
-            ] 
-          - [ 
-            "ubuntu_12_precise", #variant name
-            "ubuntu:precise", #image
-            ] 
-          - [ 
-            "ubuntu_14_trusty", #variant name
-            "ubuntu:trusty", #image
-            ] 
-          - [ 
-            "ubuntu_16_xenial", #variant name
-            "ubuntu:xenial", #image
-            ] 
-          - [ 
-            "ubuntu_18_bionic", #variant name
-            "ubuntu:bionic", #image
-            ] 
-          - [ 
-            "ubuntu_20_focal", #variant name
-            "ubuntu:focal", #image
-            ] 
-          - [ 
-            "ubuntu_22_jammy", #variant name
-            "ubuntu:jammy", #image
-            ] 
-          - [ 
-            "ubuntu_24_noble", #variant name
-            "ubuntu:noble", #image
-            ] 
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }} 
-    needs: [ build_npm ] 
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+  compatibility_linux_npm_apt:
+    name: Compat NPM ${{ matrix.prop[1] }} apt
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_npm
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Setup Node for Registry Server
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+    - name: Create Config
+      run: |
+        touch ${{ github.workspace }}/npm_config.yaml
+        mkdir ${{ github.workspace }}/verdaccio
+        echo "
+        storage: ${{ github.workspace }}/verdaccio
+        max_body_size: 1000mb
+        log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
+        packages:
+          '**':
+            access: \$anonymous
+            publish: \$anonymous
+        listen:
+          - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
+        cat ${{ github.workspace }}/npm_config.yaml
+    - name: Install Registry
+      shell: bash
+      run: npm install -g verdaccio@5
+    - name: Start Registry
+      shell: bash
+      run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-npm
+        path: |
+          dist/npm
+    - name: Setup Node for Test
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+        registry-url: http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Publish NPM
+      run: |
+        npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test npm-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        debian_10_buster debian:buster
+        debian_11_bullseye debian:bullseye
+        debian_12_bookworm debian:bookworm
+        ubuntu_12_precise ubuntu:precise
+        ubuntu_14_trusty ubuntu:trusty
+        ubuntu_16_xenial ubuntu:xenial
+        ubuntu_18_bionic ubuntu:bionic
+        ubuntu_20_focal ubuntu:focal
+        ubuntu_22_jammy ubuntu:jammy
+        ubuntu_24_noble ubuntu:noble
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-npm-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-npm-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-      - name: Setup Node for Registry Server
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
-      - name: Create Config
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          touch ${{ github.workspace }}/npm_config.yaml
-          mkdir ${{ github.workspace }}/verdaccio
-          echo "
-          storage: ${{ github.workspace }}/verdaccio
-          max_body_size: 1000mb
-          log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
-          packages:
-            '**':
-              access: \$anonymous
-              publish: \$anonymous
-          listen:
-            - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
-          cat ${{ github.workspace }}/npm_config.yaml
-
-      - name: Install Registry
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: npm install -g verdaccio@5
-
-      - name: Start Registry 
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
-
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir tzlc 
-   
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
-        with: 
-          name: icloudpd-npm
-          path: | 
-            dist/npm
-
-      - name: Setup Node for Test
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          registry-url: 'http://localhost:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
-          
-      - name: Publish NPM
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
-        env:
-          NODE_AUTH_TOKEN: "fake"
-
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
- 
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
-            echo "test icloudpd..." && 
-            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --version  &&
-            touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
- 
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm, tzdata, locales..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all&&
-            echo "test icloudpd..." && 
-            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
-            cat .result &&
-            mv .result /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-    
-  compatibility_linux_npx_apt: 
-    name: "Compat NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apt" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          # apt-get does not work for debian 6 anymore
-          # - [ 
-          #   "debian_6_squeeze", #variant name
-          #   "debian:squeeze", #image
-          #   ] 
-          # apt-get does not work for debian 7 anymore
-          # - [ 
-          #   "debian_7_wheezy", #variant name
-          #   "debian:wheezy", #image
-          #   ] 
-          # apt-get does not work for debian 8 anymore
-          # - [ 
-          #   "debian_8_jessie", #variant name
-          #   "debian:jessie", #image
-          #   ] 
-          # apt-get does not work for debian 9 anymore
-          # - [ 
-          #   "debian_9_stretch", #variant name
-          #   "debian:stretch", #image
-          #   ] 
-          - [ 
-            "debian_10_buster", #variant name
-            "debian:buster", #image
-            ] 
-          - [ 
-            "debian_11_bullseye", #variant name
-            "debian:bullseye", #image
-            ] 
-          - [ 
-            "debian_12_bookworm", #variant name
-            "debian:bookworm", #image
-            ] 
-          - [ 
-            "ubuntu_12_precise", #variant name
-            "ubuntu:precise", #image
-            ] 
-          - [ 
-            "ubuntu_14_trusty", #variant name
-            "ubuntu:trusty", #image
-            ] 
-          - [ 
-            "ubuntu_16_xenial", #variant name
-            "ubuntu:xenial", #image
-            ] 
-          - [ 
-            "ubuntu_18_bionic", #variant name
-            "ubuntu:bionic", #image
-            ] 
-          - [ 
-            "ubuntu_20_focal", #variant name
-            "ubuntu:focal", #image
-            ] 
-          - [ 
-            "ubuntu_22_jammy", #variant name
-            "ubuntu:jammy", #image
-            ] 
-          - [ 
-            "ubuntu_24_noble", #variant name
-            "ubuntu:noble", #image
-            ] 
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ubuntu-22.04 
-    needs: [ build_npm ] 
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
-
-      - name: Checkout code
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/checkout@v4
-
-      - name: Setup Node for Registry Server
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
-      - name: Create Config
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          touch ${{ github.workspace }}/npm_config.yaml
-          mkdir ${{ github.workspace }}/verdaccio
-          echo "
-          storage: ${{ github.workspace }}/verdaccio
-          max_body_size: 1000mb
-          log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
-          packages:
-            '**':
-              access: \$anonymous
-              publish: \$anonymous
-          listen:
-            - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
-          cat ${{ github.workspace }}/npm_config.yaml
-
-      - name: Install Registry
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: npm install -g verdaccio@5
-
-      - name: Start Registry 
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
-
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir tzlc 
-   
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
-        with: 
-          name: icloudpd-npm
-          path: | 
-            dist/npm
-
-      - name: Setup Node for Test
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          registry-url: 'http://localhost:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
-          
-      - name: Publish NPM
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
-        env:
-          NODE_AUTH_TOKEN: "fake"
-
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
- 
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: bash 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm &&
-            /work/scripts/npx_optional_touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --version
- 
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: bash 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm, tzdata, locales..." && 
-            export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y npm tzdata locales-all &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 /work/scripts/npx_optional /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.na -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-    
+  compatibility_linux_npx_apt:
+    name: Compat NPX ${{ matrix.prop[1] }} apt
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+        - - arm32v7
+          - arm/v7
+          - arm32v7/
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_npm
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Setup Node for Registry Server
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+    - name: Create Config
+      run: |
+        touch ${{ github.workspace }}/npm_config.yaml
+        mkdir ${{ github.workspace }}/verdaccio
+        echo "
+        storage: ${{ github.workspace }}/verdaccio
+        max_body_size: 1000mb
+        log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
+        packages:
+          '**':
+            access: \$anonymous
+            publish: \$anonymous
+        listen:
+          - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
+        cat ${{ github.workspace }}/npm_config.yaml
+    - name: Install Registry
+      shell: bash
+      run: npm install -g verdaccio@5
+    - name: Start Registry
+      shell: bash
+      run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-npm
+        path: |
+          dist/npm
+    - name: Setup Node for Test
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+        registry-url: http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Publish NPM
+      run: |
+        npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test npx-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        debian_10_buster debian:buster
+        debian_11_bullseye debian:bullseye
+        debian_12_bookworm debian:bookworm
+        ubuntu_12_precise ubuntu:precise
+        ubuntu_14_trusty ubuntu:trusty
+        ubuntu_16_xenial ubuntu:xenial
+        ubuntu_18_bionic ubuntu:bionic
+        ubuntu_20_focal ubuntu:focal
+        ubuntu_22_jammy ubuntu:jammy
+        ubuntu_24_noble ubuntu:noble
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-npx-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-npx-apt-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
   compatibility_linux_npm_apk:
-    name: "Compat NPM ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [ 
-            "alpine_3_22", #variant name
-            "alpine:3.22", #image
-            ] 
-          - [ 
-            "alpine_3_21", #variant name
-            "alpine:3.21", #image
-            ] 
-          - [ 
-            "alpine_3_20", #variant name
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
-          # - [ 
-          #   "arm32v7",  # variant name 
-          #   "arm/v7",  # platform spec 
-          #   "arm32v7/",  # image prefix 
-          # ] 
-    runs-on: ubuntu-22.04 
-    needs: [ build_npm ] 
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+    name: Compat NPM ${{ matrix.prop[1] }} apk
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_npm
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Setup Node for Registry Server
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+    - name: Create Config
+      run: |
+        touch ${{ github.workspace }}/npm_config.yaml
+        mkdir ${{ github.workspace }}/verdaccio
+        echo "
+        storage: ${{ github.workspace }}/verdaccio
+        max_body_size: 1000mb
+        log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
+        packages:
+          '**':
+            access: \$anonymous
+            publish: \$anonymous
+        listen:
+          - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
+        cat ${{ github.workspace }}/npm_config.yaml
+    - name: Install Registry
+      shell: bash
+      run: npm install -g verdaccio@5
+    - name: Start Registry
+      shell: bash
+      run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-npm
+        path: |
+          dist/npm
+    - name: Setup Node for Test
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+        registry-url: http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Publish NPM
+      run: |
+        npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test npm-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_22 alpine:3.22
+        alpine_3_21 alpine:3.21
+        alpine_3_20 alpine:3.20
+        alpine_3_19 alpine:3.19
+        alpine_3_18 alpine:3.18
+        alpine_3_17 alpine:3.17
+        alpine_3_16 alpine:3.16
+        alpine_3_15 alpine:3.15
+        alpine_3_14 alpine:3.14
+        alpine_3_13 alpine:3.13
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-npm-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-npm-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-      - name: Setup Node for Registry Server
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
-      - name: Create Config
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          touch ${{ github.workspace }}/npm_config.yaml
-          mkdir ${{ github.workspace }}/verdaccio
-          echo "
-          storage: ${{ github.workspace }}/verdaccio
-          max_body_size: 1000mb
-          log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
-          packages:
-            '**':
-              access: \$anonymous
-              publish: \$anonymous
-          listen:
-            - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
-          cat ${{ github.workspace }}/npm_config.yaml
-
-      - name: Install Registry
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: npm install -g verdaccio@5
-
-      - name: Start Registry 
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
-
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir tzlc 
-            
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
-        with: 
-          name: icloudpd-npm
-          path: | 
-            dist/npm
-
-      - name: Setup Node for Test
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          registry-url: 'http://localhost:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
-          
-      - name: Publish NPM
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
-        env:
-          NODE_AUTH_TOKEN: "fake"
-
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
-  
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm..." && 
-            apk update && apk add npm &&
-            echo "test icloudpd..." && 
-            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            icloudpd --version  &&
-            touch /work/compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm, tzdata, locales..." && 
-            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add npm tzdata musl-locales musl-locales-lang &&
-            echo "test icloudpd..." && 
-            npm install -g --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} &&
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version 1>.result &&
-            cat .result &&
-            mv .result /work/tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass 
-
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apt
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-    
   compatibility_linux_npx_apk:
-    name: "Compat NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [ 
-            "alpine_3_22", #variant name
-            "alpine:3.22", #image
-            ] 
-          - [ 
-            "alpine_3_21", #variant name
-            "alpine:3.21", #image
-            ] 
-          - [ 
-            "alpine_3_20", #variant name
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-        prop:  
-          - [ 
-            "amd64",  # variant name 
-            "amd64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          - [ 
-            "arm64",  # variant name 
-            "arm64",  # platform spec 
-            "",  # image prefix 
-          ] 
-          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
-          # - [ 
-          #   "arm32v7",  # variant name 
-          #   "arm/v7",  # platform spec 
-          #   "arm32v7/",  # image prefix 
-          # ] 
-    runs-on: ubuntu-22.04 
-    needs: [ build_npm ] 
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Get image 
-        id: get_image  
-        run: |  
-          echo digest=$(docker pull --platform linux/${{ matrix.prop[1] }} ${{ matrix.prop[2] }}${{ matrix.image[1] }} | grep Digest | head -n 1 | cut -d: -f 2-3 | tr -d ' ') >> $GITHUB_OUTPUT 
+    name: Compat NPX ${{ matrix.prop[1] }} apk
+    strategy:
+      fail-fast: false
+      matrix:
+        prop:
+        - - amd64
+          - amd64
+          - ''
+        - - arm64
+          - arm64
+          - ''
+    runs-on: ${{ (matrix.prop[1] == 'arm64' || matrix.prop[1] == 'arm/v7') && 'ubuntu-24.04-arm' || 'ubuntu-24.04' }}
+    timeout-minutes: 30
+    needs:
+    - build_npm
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v7
+    - name: Setup Node for Registry Server
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+    - name: Create Config
+      run: |
+        touch ${{ github.workspace }}/npm_config.yaml
+        mkdir ${{ github.workspace }}/verdaccio
+        echo "
+        storage: ${{ github.workspace }}/verdaccio
+        max_body_size: 1000mb
+        log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
+        packages:
+          '**':
+            access: \$anonymous
+            publish: \$anonymous
+        listen:
+          - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
+        cat ${{ github.workspace }}/npm_config.yaml
+    - name: Install Registry
+      shell: bash
+      run: npm install -g verdaccio@5
+    - name: Start Registry
+      shell: bash
+      run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
+    - name: Download artifacts
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-npm
+        path: |
+          dist/npm
+    - name: Setup Node for Test
+      uses: actions/setup-node@v7
+      with:
+        node-version: 20.x
+        registry-url: http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Publish NPM
+      run: |
+        npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
+        npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
+        npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
+      env:
+        NODE_AUTH_TOKEN: fake
+    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+      run: |
+        scripts/compat_test npx-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_22 alpine:3.22
+        alpine_3_21 alpine:3.21
+        alpine_3_20 alpine:3.20
+        alpine_3_19 alpine:3.19
+        alpine_3_18 alpine:3.18
+        alpine_3_17 alpine:3.17
+        alpine_3_16 alpine:3.16
+        alpine_3_15 alpine:3.15
+        alpine_3_14 alpine:3.14
+        alpine_3_13 alpine:3.13
+        EOF
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-npx-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-npx-apk-${{ matrix.prop[0] }}
+        if-no-files-found: warn
+        path: |
+          tzlc/*
 
-      - name: Setup Node for Registry Server
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-
-      - name: Create Config
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          touch ${{ github.workspace }}/npm_config.yaml
-          mkdir ${{ github.workspace }}/verdaccio
-          echo "
-          storage: ${{ github.workspace }}/verdaccio
-          max_body_size: 1000mb
-          log: { type: file, format: plain, level: debug, path: ${{ github.workspace }}/verdaccio.log }
-          packages:
-            '**':
-              access: \$anonymous
-              publish: \$anonymous
-          listen:
-            - 0.0.0.0:4873" > ${{ github.workspace }}/npm_config.yaml
-          cat ${{ github.workspace }}/npm_config.yaml
-
-      - name: Install Registry
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: npm install -g verdaccio@5
-
-      - name: Start Registry 
-        if: steps.get_image.outputs.digest != '' 
-        shell: bash 
-        run: verdaccio --config ${{ github.workspace }}/npm_config.yaml &
-
-      - name: Make folder for compatibility 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir compatibility 
-
-      - name: Make folder for tzlc 
-        if: steps.get_image.outputs.digest != '' 
-        run: | 
-          mkdir tzlc 
-            
-      - name: Download artifacts
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/download-artifact@v4 
-        with: 
-          name: icloudpd-npm
-          path: | 
-            dist/npm
-
-      - name: Setup Node for Test
-        if: steps.get_image.outputs.digest != '' 
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20.x'
-          registry-url: 'http://localhost:4873'
-        env:
-          NODE_AUTH_TOKEN: "fake"
-          
-      - name: Publish NPM
-        if: steps.get_image.outputs.digest != '' 
-        run: |
-          npm publish dist/npm/@icloudpd/linux-arm --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/linux-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/win32-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-x64 --access public --registry http://localhost:4873
-          npm publish dist/npm/@icloudpd/darwin-arm64 --access public --registry http://localhost:4873
-          npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
-        env:
-          NODE_AUTH_TOKEN: "fake"
-
-      # ARM runs natively on ubuntu-22.04-arm runners - no QEMU needed 
-  
-      - name: Run test for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_test 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm..." && 
-            apk update && apk add npm &&
-            echo "test icloudpd..." && 
-            npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --version &&
-            touch /work/compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
- 
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_test.outcome == 'failure' }}  
-        run: | 
-          touch compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Run tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: steps.get_image.outputs.digest != ''  
-        id: run_tzlc 
-        uses: addnab/docker-run-action@v3 
-        continue-on-error: true 
-        with: 
-          image: ${{ matrix.prop[2] }}${{ matrix.image[1] }} 
-          shell: sh 
-          options: -v ${{ github.workspace }}:/work --platform linux/${{ matrix.prop[1] }} 
-          run: > 
-            echo "install npm, tzdata, locales..." && 
-            export MUSL_LOCPATH="/usr/share/i18n/locales/musl" &&
-            apk update && apk add npm tzdata musl-locales musl-locales-lang &&
-            echo "test icloudpd..." && 
-            TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 npx -y --registry http://172.17.0.1:4873 icloudpd@${{inputs.icloudpd_version}} --use-os-locale --version 1>.result &&
-            cat .result &&
-            mv .result /work/tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.pass
-  
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        if: ${{ steps.run_tzlc.outcome == 'failure' }}  
-        run: | 
-          touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        if: steps.get_image.outputs.digest != ''  
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-npx-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-    
-
-  # record QEMU failures for completeness
   compatibility_linux_npm_apk_fail:
-    name: "Compat NPM/NPX ${{ matrix.image[1] }} ${{ matrix.prop[1] }} apk failures" 
-    strategy:  
-      fail-fast: false 
-      matrix: 
-        image:  
-          - [ 
-            "alpine_3_22", #variant name
-            "alpine:3.22", #image
-            ] 
-          - [ 
-            "alpine_3_21", #variant name
-            "alpine:3.21", #image
-            ] 
-          - [ 
-            "alpine_3_20", #variant name - TODO Test
-            "alpine:3.20", #image
-            ] 
-          - [ 
-            "alpine_3_19", #variant name
-            "alpine:3.19", #image
-            ] 
-          - [ 
-            "alpine_3_18", #variant name
-            "alpine:3.18", #image
-            ] 
-          - [ 
-            "alpine_3_17", #variant name
-            "alpine:3.17", #image
-            ] 
-          - [ 
-            "alpine_3_16", #variant name
-            "alpine:3.16", #image
-            ] 
-          - [ 
-            "alpine_3_15", #variant name
-            "alpine:3.15", #image
-            ] 
-          - [ 
-            "alpine_3_14", #variant name
-            "alpine:3.14", #image
-            ] 
-          - [ 
-            "alpine_3_13", #variant name
-            "alpine:3.13", #image
-            ] 
-        prop:  
-          # - [ 
-          #   "amd64",  # variant name 
-          #   "amd64",  # platform spec 
-          #   "",  # image prefix 
-          # ] 
-          # - [ 
-          #   "arm64",  # variant name 
-          #   "arm64",  # platform spec 
-          #   "",  # image prefix 
-          # ] 
-          # hangs with QEMU https://github.com/nodejs/docker-node/issues/1973
-          - [ 
-            "arm32v7",  # variant name 
-            "arm/v7",  # platform spec 
-            "arm32v7/",  # image prefix 
-          ] 
-    runs-on: ubuntu-22.04 
-    defaults: 
-      run: 
-        shell: bash 
- 
-    steps: 
- 
-      - name: Make folder for compatibility 
-        run: | 
-          mkdir compatibility 
+    name: Compat NPM/NPX arm/v7 apk failures
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+    steps:
+    - name: Record known failures
+      run: |
+        mkdir -p compatibility tzlc
+        for variant in alpine_3_22 alpine_3_21 alpine_3_20 alpine_3_19 alpine_3_18 alpine_3_17 alpine_3_16 alpine_3_15 alpine_3_14 alpine_3_13; do
+          for kind in npm npx; do
+            touch compatibility/$kind.$variant.arm32v7.fail tzlc/$kind.$variant.arm32v7.fail
+          done
+        done
+    - name: Upload compatibility results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-compatibility-linux-npm-apk-fail-arm32v7
+        if-no-files-found: error
+        path: |
+          compatibility/*
+    - name: Upload tzlc results
+      uses: actions/upload-artifact@v7
+      with:
+        name: icloudpd-tzlc-linux-npm-apk-fail-arm32v7
+        if-no-files-found: error
+        path: |
+          tzlc/*
 
-      - name: Make folder for tzlc 
-        run: | 
-          mkdir tzlc 
-  
-      - name: Record failure for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        run: | 
-          touch compatibility/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-          touch compatibility/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
- 
-      - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-compatibility-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
-          if-no-files-found: error 
-          path: | 
-            compatibility/* 
-
-      - name: Record failure tzlc for ${{ matrix.prop[2] }}${{ matrix.image[1] }} on ${{ matrix.prop[1] }} 
-        run: | 
-          touch tzlc/npm.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-          touch tzlc/npx.${{ matrix.image[0] }}.${{ matrix.prop[0] }}.fail 
-  
-      - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
-        with: 
-          name: icloudpd-tzlc-linux-npm-${{ matrix.image[0] }}-${{ matrix.prop[0] }}-apk-fail
-          if-no-files-found: error 
-          path: | 
-            tzlc/* 
-    
   compatibility_macos_npm:
     name: "Compat NPM ${{ matrix.prop[0] }} ${{ matrix.prop[1] }}" 
     strategy:  
@@ -3347,14 +2033,15 @@ jobs:
       matrix: 
         prop:  
           - [ 
-            "macos-14", 
+            "macos-15", 
             "amd64", 
             ] 
           - [ 
-            "macos-14", 
+            "macos-15", 
             "arm64", 
             ] 
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3363,7 +2050,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
 
@@ -3400,14 +2087,14 @@ jobs:
           mkdir tzlc             
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3440,7 +2127,7 @@ jobs:
           touch compatibility/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3462,7 +2149,7 @@ jobs:
           touch tzlc/npm.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-tzlc-macos-npm-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3476,14 +2163,15 @@ jobs:
       matrix: 
         prop:  
           - [ 
-            "macos-14", 
+            "macos-15", 
             "amd64", 
             ] 
           - [ 
-            "macos-14", 
+            "macos-15", 
             "arm64", 
             ] 
     runs-on: ${{ matrix.prop[0] }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3492,7 +2180,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
 
@@ -3529,14 +2217,14 @@ jobs:
           mkdir tzlc 
 
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3568,7 +2256,7 @@ jobs:
           touch compatibility/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3589,7 +2277,7 @@ jobs:
           touch tzlc/npx.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
   
       - name: Upload tzlc result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-tzlc-macos-npx-${{ matrix.prop[0] }}-${{ matrix.prop[1] }}
           if-no-files-found: error 
@@ -3605,6 +2293,7 @@ jobs:
           - "windows-2025"
           - "windows-2022"
     runs-on: ${{ matrix.os }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3613,7 +2302,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
 
@@ -3646,14 +2335,14 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3687,7 +2376,7 @@ jobs:
           touch compatibility/npm.${{ matrix.os }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-windows-npm-${{ matrix.os }}-amd64
           if-no-files-found: error 
@@ -3703,6 +2392,7 @@ jobs:
           - "windows-2025"
           - "windows-2022"
     runs-on: ${{ matrix.os }} 
+    timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
       run: 
@@ -3711,7 +2401,7 @@ jobs:
     steps: 
  
       - name: Setup Node for Registry Server
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
 
@@ -3744,14 +2434,14 @@ jobs:
           mkdir compatibility 
  
       - name: Download artifacts
-        uses: actions/download-artifact@v4 
+        uses: actions/download-artifact@v8 
         with: 
           name: icloudpd-npm
           path: | 
             dist/npm
 
       - name: Setup Node for Test
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '20.x'
           registry-url: 'http://localhost:4873'
@@ -3784,7 +2474,7 @@ jobs:
           touch compatibility/npx.${{ matrix.os }}.amd64.fail 
  
       - name: Upload compatibility result 
-        uses: actions/upload-artifact@v4 
+        uses: actions/upload-artifact@v7 
         with: 
           name: icloudpd-compatibility-windows-npx-${{ matrix.os }}-amd64
           if-no-files-found: error 
@@ -3794,7 +2484,8 @@ jobs:
   compatibility_report:
     name: "Build Compatibility Report"
 
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     needs: 
       - compatibility_macos_pip
       - compatibility_windows_pip
@@ -3827,19 +2518,19 @@ jobs:
     steps:
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
-      - name: Set up Python 3.13
-        uses: actions/setup-python@v5
+      - name: Set up Python ${{ env.PYTHON_VERSION }}
+        uses: actions/setup-python@v7
         with:
-          python-version: '3.13'
+          python-version: ${{ env.PYTHON_VERSION }}
     
       - name: Make folder for artifacts
         run: |
           mkdir dist
 
       - name: Download Compatibility Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: icloudpd-compatibility-*
           merge-multiple: true
@@ -3847,7 +2538,7 @@ jobs:
             compatibility
 
       - name: Download tzlc Results
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: icloudpd-tzlc-*
           merge-multiple: true
@@ -3855,7 +2546,7 @@ jobs:
             tzlc
 
       - name: Download Version
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           pattern: icloudpd-version-thumbprint
           merge-multiple: true
@@ -3868,7 +2559,7 @@ jobs:
           scripts/compile_compatibility.py dist/icloudpd-version-thumbprint.txt compatibility | tee dist/compatibility-${{inputs.icloudpd_version}}.md
 
       - name: Upload compatibility report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: icloudpd-compatibility
           if-no-files-found: error
@@ -3881,7 +2572,7 @@ jobs:
           scripts/compile_tzlc.py dist/icloudpd-version-thumbprint.txt tzlc "${{needs.get_expected_version_linux_apt.outputs.expected_version}}" "${{needs.get_expected_version_linux_apk.outputs.expected_version}}" "${{needs.get_expected_version_macos.outputs.expected_version}}" | tee dist/tzlc-${{inputs.icloudpd_version}}.md
 
       - name: Upload tzlc report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: icloudpd-tzlc
           if-no-files-found: error

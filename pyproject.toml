@@ -1,7 +1,7 @@
 [build-system]
 requires = [
-    "setuptools==80.9.0",
-    "wheel==0.45.1",
+    "setuptools==84.2.1",
+    "wheel==0.48.0",
 ]
 build-backend = "setuptools.build_meta"
 
@@ -10,9 +10,10 @@ version="1.32.3"
 name = "icloudpd"
 description = "icloudpd is a command-line tool to download photos and videos from iCloud."
 readme = "README_PYPI.md"
-requires-python = ">=3.10,<3.14"
+requires-python = ">=3.11,<3.16"
 keywords = ["icloud", "photo"]
-license = {file="LICENSE.md"}
+license = "MIT"
+license-files = ["LICENSE.md"]
 authors=[
     {name = "The iCloud Photo Downloader Authors"}
 ]
@@ -20,60 +21,58 @@ classifiers = [
     "Intended Audience :: End Users/Desktop",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "License :: OSI Approved :: MIT License",
 ]
 dependencies = [
-    "requests==2.32.3",
-    "schema==0.7.7",
-    "tqdm==4.67.1",
+    "requests==2.34.2",
+    "schema==0.7.8",
+    "tqdm==4.70.1",
     "piexif==1.1.3",
-    "urllib3==1.26.20",
-    "typing_extensions==4.14.0",
-    "Flask==3.1.1",
+    "urllib3==2.8.0",
+    "typing_extensions==4.16.0",
+    "Flask==3.1.3",
     "waitress==3.0.2",
     # from pyicloud_ipd
-    "tzlocal==5.3.1",
-    "pytz==2025.2",
-    "certifi==2025.4.26",
-    "keyring==25.6.0",
+    "tzlocal==5.4.5",
+    "pytz==2026.5",
+    "certifi==2026.10.23",
+    "keyring==25.7.0",
     "keyrings-alt==5.0.2",
     "srp==1.0.22",
 ]
 
 [dependency-groups]
 doc = [
-    "furo==2024.8.6",
-    "Sphinx==7.4.7",
-    "sphinx-autobuild==2024.10.3",
-    "myst-parser==3.0.1"
+    "furo==2025.12.19",
+    "Sphinx==9.2.0",
+    "sphinx-autobuild==2025.8.25",
+    "myst-parser==5.1.0"
 ]
 dev = [
-    "twine==6.1.0",
-    "pyinstaller==6.14.0",
-    "wheel==0.45.1",
+    "twine==7.0.0",
+    "pyinstaller==6.22.3",
+    "wheel==0.48.0",
 ]
 devlinux = [
-    "auditwheel==6.4.0",
+    "auditwheel==6.8.2",
     #"staticx==0.14.1",
-    "scons==4.9.1"
+    "scons==4.11.1"
 ]
 test = [
-    "pytest==8.4.0",
+    "pytest==9.1.1",
     "mock==5.2.0",
-    "freezegun==1.5.2",
-    "vcrpy==7.0.0",
-    "pytest-cov==6.2.1",
-    "ruff==0.11.13",
+    "freezegun==1.5.5",
+    "vcrpy==9.2.0",
+    "pytest-cov==7.1.0",
+    "ruff==0.17.2",
     "pytest-timeout==2.4.0",
-    "pytest-xdist==3.7.0",
-    "mypy==1.16.0",
-    "types-pytz==2025.2.0.20250516",
+    "pytest-xdist==3.8.0",
+    "mypy==2.4.0",
+    "types-pytz==2026.5.0.20261006",
     "types-tzlocal==5.1.0.1",
-    "types-requests==2.31.0.2",
-    "types-urllib3==1.26.25.14",
-    "types-tqdm==4.67.0.20250516",
-    "types-mock==5.2.0.20250516",
-    "types-waitress==3.0.1.20241117",
+    "types-requests==2.33.0.20261006",
+    "types-tqdm==4.70.0.20260906",
+    "types-mock==5.2.0.20260518",
+    "types-waitress==3.0.1.20260724",
 ]
 
 [project.urls]

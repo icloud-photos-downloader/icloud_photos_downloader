@@ -1,11 +1,12 @@
 import datetime
 import inspect
+import locale
 import os
 import shutil
 import zoneinfo
 from argparse import ArgumentError
 from typing import Sequence, Tuple
-from unittest import TestCase
+from unittest import TestCase, mock
 
 import pytest
 
@@ -20,6 +21,8 @@ from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
     path_from_project_root,
+    recreate_path,
+    run_cassette,
     run_icloudpd_test,
     run_main,
 )
@@ -31,6 +34,7 @@ class CliTestCase(TestCase):
         self._caplog = caplog
         self.root_path = path_from_project_root(__file__)
         self.fixtures_path = os.path.join(self.root_path, "fixtures")
+        self.vcr_path = os.path.join(self.root_path, "vcr_cassettes")
 
     def test_cli_help(self) -> None:
         result = format_help()
@@ -55,6 +59,7 @@ class CliTestCase(TestCase):
         self.assertIn("--size", result)
         self.assertIn("--live-photo-size", result)
         self.assertIn("--auth-only", result)
+        self.assertIn("--adp-web-access", result)
         self.assertIn("--dry-run", result)
 
         # Test that option descriptions are present
@@ -199,6 +204,7 @@ class CliTestCase(TestCase):
                         directory="abc",
                         username="u1",
                         auth_only=False,
+                        adp_web_access=False,
                         cookie_directory="~/.pyicloud",
                         password=None,
                         sizes=[AssetVersionSize.ORIGINAL],
@@ -238,6 +244,7 @@ class CliTestCase(TestCase):
                     UserConfig(
                         directory="def",
                         auth_only=False,
+                        adp_web_access=False,
                         cookie_directory="~/.pyicloud",
                         username="u2",
                         password=None,
@@ -315,6 +322,7 @@ class CliTestCase(TestCase):
                         directory="abc",
                         username="u1",
                         auth_only=False,
+                        adp_web_access=False,
                         cookie_directory="~/.pyicloud",
                         password=None,
                         sizes=[AssetVersionSize.ORIGINAL],
@@ -473,13 +481,35 @@ class CliTestCase(TestCase):
         )
         self.assertEqual(result.exit_code, 0, "exit code")
 
+    def test_use_os_locale_applies_the_system_locale(self) -> None:
+        with mock.patch("locale.setlocale") as setlocale:
+            result = run_main(["--use-os-locale", "--version"])
+        setlocale.assert_called_once_with(locale.LC_ALL, "")
+        self.assertEqual(result.exit_code, 0)
+
+    def test_use_os_locale_with_missing_locale(self) -> None:
+        """A LANG/LC_ALL that isn't installed gives a warning, not a crash (#1400)"""
+        with mock.patch("locale.setlocale", side_effect=locale.Error("unsupported locale setting")):
+            result = run_main(["--use-os-locale", "--version"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("version:", result.output)
+        self.assertIn(
+            "Cannot use the system locale (unsupported locale setting), using the default locale",
+            result.stderr_bytes.decode("utf-8"),
+        )
+
     def test_missing_directory(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         # need path removed
         if os.path.exists(base_dir):
             shutil.rmtree(base_dir)
+        # keep cookies out of base_dir (and out of ~/.pyicloud)
+        cookie_dir = base_dir + "_cookie"
+        recreate_path(cookie_dir)
 
-        result = run_main(
+        # replay a failed login instead of signing in to Apple's real servers
+        result = run_cassette(
+            os.path.join(self.vcr_path, "failed_auth.yml"),
             [
                 "--username",
                 "jdoe@gmail.com",
@@ -489,6 +519,8 @@ class CliTestCase(TestCase):
                 "0",
                 "--log-level",
                 "info",
+                "--cookie-directory",
+                cookie_dir,
                 "-d",
                 base_dir,
             ],
