@@ -10,6 +10,7 @@ ITEM_TYPE_EXTENSIONS = {
     "public.heif": "HEIF",
     "public.jpeg": "JPG",
     "public.png": "PNG",
+    "public.mpeg-4": "MP4",
     "com.apple.quicktime-movie": "MOV",
     "com.adobe.raw-image": "DNG",
     "com.canon.cr2-raw-image": "CR2",
