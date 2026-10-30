@@ -53,8 +53,7 @@ jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/darwin-x64/package
 
 # macos arm64
 mkdir -p dist/npm/@icloudpd/darwin-arm64/bin
-# using Intel binary for now
-cp dist/icloudpd-$1-macos-amd64 dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
+cp dist/icloudpd-$1-macos-arm64 dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
 chmod +x dist/npm/@icloudpd/darwin-arm64/bin/icloudpd
 cp LICENSE.md dist/npm/@icloudpd/darwin-arm64/
 jq --arg version $1 --from-file jq/version.jq < npm/@icloudpd/darwin-arm64/package.json > dist/npm/@icloudpd/darwin-arm64/package.json

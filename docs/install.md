@@ -112,17 +112,21 @@ The musl variant needs musl 1.2.5 or newer, which is Alpine 3.20 and newer. On o
 
 ## macOS binary
 
-`icloudpd` is available as an Intel 64-bit binary for macOS, but works on ARM Macs too (M1, M2, M3).
+`icloudpd` is available as a binary for Apple Silicon Macs (`icloudpd-<version>-macos-arm64`) and for Intel Macs (`icloudpd-<version>-macos-amd64`). The Intel binary is built for as long as GitHub provides Intel macOS build machines; on Intel Macs after that, use [Docker](#docker) or [PyPI](#pypi).
 
-Here are the steps to make it work:
+```{note}
+In 1.32.3, `icloudpd-1.32.3-macos-amd64` was built for Apple Silicon by mistake and does not run on Intel Macs (`bad CPU type in executable`). Use 1.32.2 or a later release on Intel Macs.
+```
+
+Here are the steps to make it work (the examples use the Apple Silicon binary):
 - Download the binary from GitHub [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into the desired local folder
-- Add the executable flag by running `chmod +x icloudpd-1.32.3-macos-amd64`
-- Start it from the terminal: `icloudpd-1.32.3-macos-amd64`
+- Add the executable flag by running `chmod +x icloudpd-1.32.3-macos-arm64`
+- Start it from the terminal: `icloudpd-1.32.3-macos-arm64`
 - Apple will tell you that it cannot check for malicious software and refuse to run the app; click "OK"
-- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.32.3-macos-amd64` as a blocked app; click "Allow"
-- Start `icloudpd-1.32.3-macos-amd64` from the terminal again
+- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.32.3-macos-arm64` as a blocked app; click "Allow"
+- Start `icloudpd-1.32.3-macos-arm64` from the terminal again
 - Apple will show another warning; click "Open"
-- After that, you can run `icloudpd-1.32.3-macos-amd64 --help` or any other supported command/option
+- After that, you can run `icloudpd-1.32.3-macos-arm64 --help` or any other supported command/option
 
 ## Error on the First Run
 

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: the `macos-amd64` binary in 1.32.3 was built for Apple Silicon and didn't run on Intel Macs (`bad CPU type in executable`), and the macOS wheel and npm `darwin-x64` package contained the same binary; the macOS binaries are now built on Apple Silicon (`macos-arm64`, new) and Intel (`macos-amd64`), each wheel and npm package gets the matching one [#1352](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1352)
 - fix: `icloud` and `icloudpd` crashed with `ZoneInfoNotFoundError` on systems without a time zone database (e.g. minimal containers such as `ubuntu:xenial`); the time zone data is now included through the `tzdata` package [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
 - fix: assets sharing one original (e.g. created with Photos' "Duplicate") were skipped while their neighbour was listed twice, so the download count did not match iCloud's [#1393](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1393)
 - fix: retry the library indexing state check before failing with "Apple iCloud Photo Library has not finished indexing yet" [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
