@@ -585,6 +585,48 @@ class CliTestCase(TestCase):
 
         self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
+    def test_conflict_options_skip_created_before_later_than_after(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        result = run_main(
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--skip-created-before",
+                "2025-10-01",
+                "--skip-created-after",
+                "2025-04-01",
+            ],
+        )
+        self.assertEqual(result.exit_code, 2, "exit code")
+        self.assertIn(
+            "--skip-created-before must be earlier than --skip-created-after", result.output
+        )
+
+        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+
+    def test_conflict_options_skip_created_before_later_than_after_interval(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        result = run_main(
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "-d",
+                "/tmp",
+                "--skip-created-before",
+                "10d",
+                "--skip-created-after",
+                "20d",
+            ],
+        )
+        self.assertEqual(result.exit_code, 2, "exit code")
+
+        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
     def test_starter_propagates_exit_code(self) -> None:
         """Entry script used for binaries must pass cli() return code to sys.exit"""
         starter_path = os.path.join(

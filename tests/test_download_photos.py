@@ -2449,6 +2449,53 @@ class DownloadPhotoTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
 
+    def test_download_and_skip_outside_created_range(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create: List[Tuple[str, str, int]] = []
+
+        files_to_download = [("2018/07/31", "IMG_7409.JPG")]
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            files_to_create,
+            files_to_download,
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "5",
+                "--skip-videos",
+                "--skip-live-photos",
+                "--no-progress-bar",
+                "--skip-created-before",
+                "2018-07-31T00:00:00+00:00",
+                "--skip-created-after",
+                "2018-08-01T00:00:00+00:00",
+            ],
+        )
+
+        assert result.exit_code == 0
+
+        self.assertIn(
+            f"Downloading {os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}",
+            result.output,
+        )
+        self.assertRegex(
+            result.output,
+            r"Skipping IMG_7408\.JPG, as it was created .*, before 2018-07-31 00:00:00\+00:00\.",
+        )
+        self.assertRegex(
+            result.output,
+            r"Skipping IMG_7407\.JPG, as it was created .*, before 2018-07-31 00:00:00\+00:00\.",
+        )
+        self.assertIn("All photos have been downloaded", result.output)
+
     def test_resume_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         cookie_dir = os.path.join(base_dir, "cookie")
