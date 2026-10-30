@@ -18,7 +18,7 @@ How CI is set up for icloudpd: what runs when, and why it is set up this way.
 
 - **Python used for builds:** `PYTHON_VERSION` at the top of `build-package.yml`. It is passed to `Dockerfile.build*` as a build argument; the Dockerfiles default to the same version for local builds.
 - **Supported Python versions tested:** the `&supported-pythons` list in `quality-checks.yml` (keep it in sync with `requires-python` in `pyproject.toml`).
-- **Runners:** `ubuntu-24.04` / `ubuntu-24.04-arm`, `macos-15` and `windows-2022` / `windows-2025`. Binaries and Docker images are built inside `python:<version>` containers, so the runner OS does not change what is built.
+- **Runners:** `ubuntu-24.04` / `ubuntu-24.04-arm`, `macos-15` / `macos-15-intel` and `windows-2022` / `windows-2025`. Linux binaries and Docker images are built inside `python:<version>` containers, so the runner OS does not change what is built. macOS binaries are built natively: `macos-15` (Apple Silicon) builds `macos-arm64` and `macos-15-intel` builds `macos-amd64`, and the macOS tests run the amd64 entries on `macos-15-intel`. When GitHub retires `macos-15-intel`, the macOS 26 Intel runner can take its place.
 
 ## Compatibility tests
 
