@@ -765,6 +765,7 @@ class PhotoAsset:
         "public.heif": AssetItemType.IMAGE,
         "public.jpeg": AssetItemType.IMAGE,
         "public.png": AssetItemType.IMAGE,
+        "public.jpeg-xl": AssetItemType.IMAGE,
         "com.apple.quicktime-movie": AssetItemType.MOVIE,
         "com.adobe.raw-image": AssetItemType.IMAGE,
         "com.canon.cr2-raw-image": AssetItemType.IMAGE,
@@ -928,7 +929,26 @@ class PhotoAsset:
         from foundation.core import compose
         from foundation.string_utils import endswith, lower
 
-        is_image_ext = compose(endswith((".heic", ".png", ".jpg", ".jpeg")), lower)
+        is_image_ext = compose(
+            endswith(
+                (
+                    ".heic",
+                    ".heif",
+                    ".png",
+                    ".jpg",
+                    ".jpeg",
+                    ".jxl",
+                    ".webp",
+                    ".gif",
+                    ".tif",
+                    ".tiff",
+                    ".avif",
+                    ".bmp",
+                    ".dng",
+                )
+            ),
+            lower,
+        )
 
         if is_image_ext(self.filename):
             return AssetItemType.IMAGE

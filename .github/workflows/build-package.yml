@@ -564,8 +564,18 @@ jobs:
           dist/icloud*
   
   build_macos:
-    # earliest possible mac for better compatibility
-    runs-on: macos-15
+    name: "build_macos (${{ matrix.arch }})"
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-15 runners are Apple Silicon; macos-15-intel builds the x86_64 binary for
+          # Intel Macs, for as long as GitHub provides Intel runners
+          - runner: macos-15
+            arch: arm64
+          - runner: macos-15-intel
+            arch: amd64
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     defaults:
       run:
@@ -595,17 +605,22 @@ jobs:
       run: |
         scripts/build_bin1 icloudpd && \
         scripts/build_bin1 icloud && \
-        mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && \
-        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64
+        expected=$([ "${{ matrix.arch }}" = amd64 ] && echo x86_64 || echo arm64) && \
+        for bin in dist/icloudpd dist/icloud; do \
+          actual=$(lipo -archs $bin) && echo "$bin: $actual" && \
+          [ "$actual" = "$expected" ] || { echo "::error::$bin is built for $actual, expected $expected"; exit 1; }; \
+        done && \
+        mv dist/icloud dist/icloud-${{inputs.icloudpd_version}}-macos-${{ matrix.arch }} && \
+        mv dist/icloudpd dist/icloudpd-${{inputs.icloudpd_version}}-macos-${{ matrix.arch }}
 
     - name: Build Python Binary Wheel
       run: |
-        scripts/build_binary_dist_macos ${{inputs.icloudpd_version}}
+        scripts/build_binary_dist_macos ${{inputs.icloudpd_version}} ${{ matrix.arch }}
 
     - name: Upload artifacts
       uses: actions/upload-artifact@v7
       with:
-        name: icloudpd-bin-macos-amd64
+        name: icloudpd-bin-macos-${{ matrix.arch }}
         if-no-files-found: error
         path: |
           dist/icloud*
@@ -891,7 +906,7 @@ jobs:
             "macos-15",  # os
             "arm64",  # platform spec
           ]
-    runs-on: ${{ matrix.prop[0] }}
+    runs-on: ${{ matrix.prop[1] == 'amd64' && 'macos-15-intel' || matrix.prop[0] }}
     timeout-minutes: 30
     needs: 
       - clone_macos_whl
@@ -1244,7 +1259,7 @@ jobs:
             "arm64", 
             ] 
  
-    runs-on: ${{ matrix.prop[0] }} 
+    runs-on: ${{ matrix.prop[1] == 'amd64' && 'macos-15-intel' || matrix.prop[0] }} 
     timeout-minutes: 30
     needs: [ build_macos ] 
  
@@ -1261,24 +1276,24 @@ jobs:
       - name: Download artifacts 
         uses: actions/download-artifact@v8 
         with: 
-          name: icloudpd-bin-macos-amd64
+          name: icloudpd-bin-macos-${{ matrix.prop[1] }}
           path: | 
             dist 
  
-      - name: Run test for ${{ matrix.prop[0] }} on amd64 
+      - name: Run test for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} 
         id: run_test 
         continue-on-error: true 
         run: > 
           echo "prep test..." && 
-          chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
-          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
+          chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} && 
+          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} && 
           echo "test icloud..." && 
-          dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 --version && 
+          dist/icloud-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} --version && 
           echo "test icloudpd..." && 
-          dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --version && 
+          dist/icloudpd-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} --version && 
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
  
-      - name: Record failure for ${{ matrix.prop[0] }} on amd64 
+      - name: Record failure for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_test.outcome == 'failure' }}  
         run: | 
           touch compatibility/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
@@ -1291,19 +1306,19 @@ jobs:
           path: | 
             compatibility/* 
 
-      - name: Run tzlc for ${{ matrix.prop[0] }} on amd64 
+      - name: Run tzlc for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} 
         id: run_tzlc 
         continue-on-error: true 
         run: > 
           echo "prep test..." && 
-          chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-amd64 && 
-          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 && 
+          chmod +x dist/icloud-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} && 
+          chmod +x dist/icloudpd-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} && 
           echo "test icloudpd..." && 
-          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-amd64 --use-os-locale --version 1>.result && 
+          TZ=America/Los_Angeles LC_ALL=ru_RU.UTF-8 dist/icloudpd-${{inputs.icloudpd_version}}-macos-${{ matrix.prop[1] }} --use-os-locale --version 1>.result && 
           cat .result &&
           mv .result tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.pass 
   
-      - name: Record failure tzlc for ${{ matrix.prop[0] }} on amd64 
+      - name: Record failure tzlc for ${{ matrix.prop[0] }} on ${{ matrix.prop[1] }} 
         if: ${{ steps.run_tzlc.outcome == 'failure' }}  
         run: | 
           touch tzlc/bin.${{ matrix.prop[0] }}.${{ matrix.prop[1] }}.fail 
@@ -1976,7 +1991,7 @@ jobs:
             "macos-15", 
             "arm64", 
             ] 
-    runs-on: ${{ matrix.prop[0] }} 
+    runs-on: ${{ matrix.prop[1] == 'amd64' && 'macos-15-intel' || matrix.prop[0] }} 
     timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
@@ -2106,7 +2121,7 @@ jobs:
             "macos-15", 
             "arm64", 
             ] 
-    runs-on: ${{ matrix.prop[0] }} 
+    runs-on: ${{ matrix.prop[1] == 'amd64' && 'macos-15-intel' || matrix.prop[0] }} 
     timeout-minutes: 30
     needs: [ build_npm ] 
     defaults: 
