@@ -262,6 +262,20 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="Don't download any photos (default: download all photos and videos)",
         action="store_true",
     )
+    cloned.add_argument(
+        "--delete-list",
+        help="Path to a file with assets to delete from iCloud, one `FILENAME<TAB>SIZE` per line. "
+        "Only matching assets are deleted (they go to Recently Deleted); nothing is downloaded. "
+        "Use with --dry-run first",
+        default=None,
+        type=pathlib.Path,
+    )
+    cloned.add_argument(
+        "--delete-list-max",
+        help="Refuse to run if --delete-list has more entries than this. Default: %(default)i",
+        default=50,
+        type=int,
+    )
     return cloned
 
 
@@ -363,6 +377,11 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         choices=["console", "webui"],
         default="console",
         type=lower,
+    )
+    cloned.add_argument(
+        "--webui-host",
+        help="Host/interface the WebUI server binds to. Use 127.0.0.1 to allow local access only. Default: %(default)s",
+        default="0.0.0.0",
     )
     return cloned
 
@@ -479,6 +498,8 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
+        delete_list=user_ns.delete_list,
+        delete_list_max=user_ns.delete_list_max,
     )
 
 
@@ -535,6 +556,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
+            webui_host=global_ns.webui_host,
         ),
         user_nses,
     )

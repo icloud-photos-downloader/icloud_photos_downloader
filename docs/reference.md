@@ -335,6 +335,25 @@ This is a list of all options available for the command line interface (CLI) of 
     Details in the [MFA providers](authentication) section.
     ```
 
+(webui-host-parameter)=
+`--webui-host X`
+
+:   Address the [web UI](webui) server listens on. Default: `0.0.0.0` (all network interfaces). Use `127.0.0.1` to allow access from this computer only; the web UI is not password protected.
+
+(delete-list-parameter)=
+`--delete-list FILE`
+
+:   Delete from iCloud the assets listed in `FILE`, and download nothing. Every line is `FILENAME<TAB>SIZE` or `FILENAME<TAB>SIZE<TAB>DATE`, with `SIZE` in bytes and `DATE` a unix timestamp or an ISO 8601 date (the creation date of the asset). An asset matches when its original file name and size are equal; with `--file-match-policy name-id7` the name may also carry the id suffix. Lines starting with `#` are ignored.
+
+    With a `DATE`, `icloudpd` looks at the newest 100 assets first and then searches by date, so even a large library is checked within seconds. Without it, the whole library is read.
+
+    Deleted assets go to *Recently Deleted* in iCloud and can be restored there for about 30 days. Assets that are not found or are ambiguous are reported and skipped. Combine with [`--dry-run`](dry-run-parameter) to see what would be deleted.
+
+(delete-list-max-parameter)=
+`--delete-list-max N`
+
+:   Refuse to run if the file given with `--delete-list` has more than `N` entries. Default: 50.
+
 (xmp-sidecar-parameter)=
 `--xmp-sidecar`
 

@@ -51,6 +51,8 @@ class _DefaultConfig:
     skip_created_before: datetime.datetime | datetime.timedelta | None
     skip_created_after: datetime.datetime | datetime.timedelta | None
     skip_photos: bool
+    delete_list: pathlib.Path | None = None
+    delete_list_max: int = 50
 
 
 @dataclass(kw_only=True)
@@ -72,3 +74,4 @@ class GlobalConfig:
     watch_with_interval: int | None
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
+    webui_host: str = "0.0.0.0"

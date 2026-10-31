@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- feature: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file, matched by original file name (also with the `name-id7` suffix), size and optionally date; recent assets are found with one request and older ones with a search by date
+- feature: `--webui-host` sets the address the web UI listens on, for example `127.0.0.1`
+- feature: the web UI server answers `GET /api/status` and `GET /api/activity` with JSON (state, progress, the files downloaded by the running process)
+- feature: [`menubar_app`](menubar_app/README.md), a macOS menu bar app (Photos Sync) around `icloudpd` that shows the sync state, imports downloads into Photos, and mirrors deletions made in Photos to iCloud and the disk
 - fix: reject `--skip-created-before` later than `--skip-created-after` instead of silently skipping all assets [#1370](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1370)
 - fix: executables always exit with code 0, even after errors [#1372](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1372)
 - fix: the `macos-amd64` binary in 1.32.3 was built for Apple Silicon and didn't run on Intel Macs (`bad CPU type in executable`), and the macOS wheel and npm `darwin-x64` package contained the same binary; the macOS binaries are now built on Apple Silicon (`macos-arm64`, new) and Intel (`macos-amd64`), each wheel and npm package gets the matching one [#1352](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1352)
