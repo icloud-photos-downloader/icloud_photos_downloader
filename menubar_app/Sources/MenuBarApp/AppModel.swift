@@ -59,6 +59,9 @@ final class AppModel: ObservableObject {
     private var logOffset: UInt64 = 0
     private var retries = 0
     private var lastFailureAt: Date?
+    /// false from the moment a problem is shown until a sync pass ends without an error; until then the
+    /// problem stays in the header (icloudpd itself just reports "waiting" again after a failed pass)
+    private var problemCleared = true
     private var lastLogTriggerAt = Date.distantPast
     private var recoveryTask: Task<Void, Never>?
     private let retryDelays: [UInt64] = [30, 120, 300]
@@ -310,7 +313,12 @@ final class AppModel: ObservableObject {
             let finished = status.state == "waiting" && progress.waitingSeconds > waitingAtRequest
             if status.state != "syncing", !finished, Date().timeIntervalSince(requested) < 90 { return }
         }
-        if state == .recovering, status.state == "waiting" || status.state == "idle" { return }  // let recovery finish
+        switch state {
+        case .recovering, .error:
+            // keep showing the problem until a pass has worked
+            if !problemCleared, status.state == "waiting" || status.state == "idle" { return }
+        default: break
+        }
         switch status.state {
         case "idle": set(.idle)
         case "syncing":
@@ -328,6 +336,10 @@ final class AppModel: ObservableObject {
     /// next interval), so the log is the only place where such failures show up.
     private func checkLogForFailure() {
         let text = newLogText()
+        if text.contains("have been downloaded") {  // a pass that ended without an error
+            problemCleared = true
+            retries = 0
+        }
         guard text.contains("Error processing user") || text.contains("Traceback (most recent call last)"),
               Date().timeIntervalSince(lastLogTriggerAt) > 20 else { return }
         lastLogTriggerAt = Date()
@@ -872,6 +884,14 @@ final class AppModel: ObservableObject {
         guard new != state else { return }
         let old = state
         state = new
+        switch new {
+        case .recovering, .error:
+            switch old {
+            case .recovering, .error: break
+            default: problemCleared = false
+            }
+        default: break
+        }
         if case .waiting = new {
             if case .waiting = old {} else {  // a sync pass just finished
                 runSerialized { await self.autoDeletePass() }
