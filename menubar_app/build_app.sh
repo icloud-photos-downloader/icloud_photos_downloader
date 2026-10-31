@@ -35,6 +35,10 @@ else
     iconutil -c icns "$ICONSET" -o "$APP/Contents/Resources/AppIcon.icns"
 fi
 
+# the icloudpd of this repository (it has the status API and --delete-list the app needs)
+mkdir -p "$APP/Contents/Resources/icloudpd-src"
+rsync -a --exclude '__pycache__' --exclude '*.pyc' --exclude '*.egg-info' ../src/ "$APP/Contents/Resources/icloudpd-src/"
+
 cat > "$APP/Contents/Info.plist" <<'PLIST'
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

@@ -39,16 +39,15 @@ delete from iCloud (and the disk) the photos you delete in Photos.
 ## Requirements
 
 - macOS 13 or newer (developed and tested on macOS 26).
-- The **`icloudpd` of this repository**. The app talks to it through a small local API (`/api/status`,
-  `/api/activity`) and uses the options `--webui-host` and `--delete-list`, which are not in the upstream release yet.
-  With a plain upstream `icloudpd` the app does not start the sync.
+- An installed `icloudpd`, for example `brew install icloudpd`. The app uses its Python and its libraries, but runs the
+  **`icloudpd` of this repository**, which it carries inside (the `src` folder is copied into the app when it is built).
+  That version has the small local API (`/api/status`, `/api/activity`) and the options `--webui-host` and
+  `--delete-list`, which the upstream release does not have yet.
 - Swift command line tools to build the app (`xcode-select --install`). Full Xcode is not needed.
 
 ## Install
 
-1. Get `icloudpd` running from this repository. The app starts it with a Python of your choice and the `src` folder of
-   this checkout, so the simplest way is to install upstream `icloudpd` (for example with Homebrew, which brings all
-   dependencies) and point the app to the sources of this repository (step 3).
+1. Install `icloudpd` so that its Python and libraries are there (for example `brew install icloudpd`).
 2. Build and copy the app:
 
    ```bash
@@ -58,10 +57,8 @@ delete from iCloud (and the disk) the photos you delete in Photos.
    open "$HOME/Applications/Photos Sync.app"
    ```
 
-3. Open **Settings, Advanced** and set
-   - **Python**: the interpreter that runs `icloudpd`. It is detected from the `icloudpd` launcher (for example
-     Homebrew's), otherwise `/usr/bin/python3`.
-   - **icloudpd sources (src folder)**: the `src` folder of this repository.
+The app finds the Python of the installed `icloudpd` by itself. Only if you want another Python or another `icloudpd`
+is there **Settings, Advanced, Use another icloudpd**.
 
 The app is signed ad hoc, so macOS may ask again for the permissions below after you rebuild it.
 
@@ -114,13 +111,12 @@ Every option is passed to `icloudpd` only when it differs from its own default. 
 
 | Category | What you can set |
 |---|---|
-| **General** | Apple ID and link status; how often to check (5 min to 24 h); how many of the newest photos each sync looks at (10 to 1,000, or all); start syncing when the app opens; open at login |
+| **General** | Apple ID and link status; how often to check (5 seconds to 24 hours); how many of the newest photos each sync looks at (10 to 1,000, or all); start syncing when the app opens; open at login |
 | **Download** | photos, videos, Live Photos (Live Photos are **off** by default); photo size and Live Photo video size; albums; library; skip photos created before/after a date |
-| **Files & folders** | download folder; folder structure; how existing files are recognised (`name-size-dedup-with-suffix` or `name-id7`); Live Photo video name; RAW and JPEG handling; Unicode in names; XMP sidecars; EXIF date |
-| **Apple Photos** | [import](#import-into-photos); [automatic deletion](#deleting-what-you-deleted-in-photos) from iCloud and from the disk; the confirmation limit |
-| **iCloud deletions** | how long ago a photo must have been deleted before it is offered; a hard limit for the review window; the path of the Photos library |
+| **Files & folders** | download folder; folder structure; how existing files are recognised (`name-size-dedup-with-suffix` or `name-id7`); Live Photo video name (by default the same as the photo, so that Photos pairs them); RAW and JPEG handling; Unicode in names; XMP sidecars; EXIF date |
+| **Apple Photos** | [import](#import-into-photos); [deleting what you delete in Photos](#deleting-what-you-deleted-in-photos) (from iCloud and from the disk) and [what you delete in iCloud](#deleting-what-you-deleted-in-icloud) (from the disk and from Photos); how long to wait after deleting; the confirmation limit; the path of the Photos library |
 | **Notifications** | notify when a code or password is needed, and when syncing fails |
-| **Advanced** | extra early stop after N known photos in a row; Python and sources; log level |
+| **Advanced** | extra early stop after N known photos in a row; log level; another Python or `icloudpd` (normally nothing to change here) |
 
 <table>
 <tr>
@@ -129,11 +125,7 @@ Every option is passed to `icloudpd` only when it differs from its own default. 
 </tr>
 <tr>
 <td><img src="docs/images/settings-apple-photos.png" width="420" alt="Apple Photos"></td>
-<td><img src="docs/images/settings-deletions.png" width="420" alt="iCloud deletions"></td>
-</tr>
-<tr>
 <td><img src="docs/images/settings-advanced.png" width="420" alt="Advanced"></td>
-<td></td>
 </tr>
 </table>
 
@@ -177,8 +169,7 @@ confirm. You get a notification with *Delete* and *Not now* buttons, and the pan
 The limit can be switched off with the parent switch *Ask for confirmation when many photos are deleted at once*; then any
 number is deleted without asking. Further safeguards:
 
-- an optional minimum age (deleted at least N days ago);
-- a hard limit for the review window (default 100);
+- an optional wait (deleted at least N days ago);
 - if the iCloud deletion fails, the files on the disk are kept;
 - every dry run and deletion is appended to `~/Library/Logs/icloudpd-menubar/deletions.log`.
 

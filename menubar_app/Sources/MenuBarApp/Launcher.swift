@@ -66,7 +66,7 @@ enum Launcher {
     static func watchArgs() -> [String] {
         let d = UserDefaults.standard
         var args = commonArgs() + downloadArgs() + [
-            "--watch-with-interval", "\(max(60, d.integer(forKey: Prefs.intervalSeconds)))",
+            "--watch-with-interval", "\(max(5, d.integer(forKey: Prefs.intervalSeconds)))",
             "--password-provider", "keyring", "--password-provider", "webui",
             "--mfa-provider", "webui", "--webui-host", "127.0.0.1",
         ]

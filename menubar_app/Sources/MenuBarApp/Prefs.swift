@@ -10,7 +10,6 @@ enum Prefs {
     static let sourcePath = "sourcePath"
     static let photosLibrary = "photosLibrary"
     static let minAgeDays = "minAgeDays"
-    static let maxCandidates = "maxCandidates"
     static let startWatchingAtLaunch = "startWatchingAtLaunch"
     // download
     static let size = "size"
@@ -46,6 +45,13 @@ enum Prefs {
     /// the Apple ID that was signed in successfully (no default)
     static let linkedAccount = "linkedAccount"
 
+    /// The icloudpd sources copied into the app when it was built; empty when this build has none.
+    static func bundledSource() -> String {
+        guard let url = Bundle.main.resourceURL?.appendingPathComponent("icloudpd-src"),
+              FileManager.default.fileExists(atPath: url.appendingPathComponent("icloudpd").path) else { return "" }
+        return url.path
+    }
+
     /// The Python that runs the installed `icloudpd` (read from its launcher script), or the system one.
     static func detectPython() -> String {
         let home = NSHomeDirectory()
@@ -66,17 +72,16 @@ enum Prefs {
             intervalSeconds: 3600,
             untilFound: 0,  // extra early stop after N known photos; 0 = off
             pythonPath: detectPython(),
-            sourcePath: "",  // empty: use the icloudpd that is installed for that Python
+            sourcePath: bundledSource(),  // the icloudpd that comes with the app
             photosLibrary: "\(home)/Pictures/Photos Library.photoslibrary",
             minAgeDays: 0,
-            maxCandidates: 100,  // hard limit; the confirmation threshold (20) is the everyday safeguard
             startWatchingAtLaunch: true,
             size: "original", livePhotoSize: "original",
             skipVideos: false, skipPhotos: false, skipLivePhotos: true, forceSize: false,
             recent: 20,  // each sync only looks at the N newest photos; 0 = whole library
             albums: "", library: "", skipCreatedBefore: "", skipCreatedAfter: "",
             folderStructure: "{:%Y/%m/%d}", fileMatchPolicy: "name-size-dedup-with-suffix",
-            livePhotoMovPolicy: "suffix", keepUnicode: false, alignRaw: "as-is",
+            livePhotoMovPolicy: "original", keepUnicode: false, alignRaw: "as-is",
             xmpSidecar: false, setExifDatetime: false,
             notifyOnInput: true, notifyOnError: true, logLevel: "info",
             autoImportToPhotos: false,
@@ -92,7 +97,7 @@ enum Prefs {
             libraryPath: d.string(forKey: photosLibrary) ?? "",
             stagingPath: d.string(forKey: directory) ?? "",
             minAgeDays: d.double(forKey: minAgeDays),
-            maxCandidates: d.integer(forKey: maxCandidates))
+            maxCandidates: 10_000)  // no extra hard limit: the review window asks for every deletion
     }
 }
 

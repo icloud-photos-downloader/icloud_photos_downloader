@@ -10,7 +10,6 @@ enum SettingsCategory: String, CaseIterable, Identifiable {
     case download = "Download"
     case files = "Files & folders"
     case photos = "Apple Photos"
-    case deletions = "iCloud deletions"
     case notifications = "Notifications"
     case advanced = "Advanced"
 
@@ -21,7 +20,6 @@ enum SettingsCategory: String, CaseIterable, Identifiable {
         case .download: return "icloud.and.arrow.down"
         case .files: return "folder"
         case .photos: return "photo.on.rectangle"
-        case .deletions: return "trash"
         case .notifications: return "bell"
         case .advanced: return "wrench.and.screwdriver"
         }
@@ -35,7 +33,7 @@ final class SettingsNav: ObservableObject {
     private static func initialSelection() -> SettingsCategory {
         let keys: [String: SettingsCategory] = [
             "general": .general, "download": .download, "files": .files, "photos": .photos,
-            "deletions": .deletions, "notifications": .notifications, "advanced": .advanced,
+            "deletions": .photos, "notifications": .notifications, "advanced": .advanced,
         ]
         let doc = DocMode.value
         guard doc.hasPrefix("settings:") else { return .general }
@@ -65,7 +63,6 @@ struct SettingsView: View {
                 case .download: DownloadPane()
                 case .files: FilesPane()
                 case .photos: PhotosPane()
-                case .deletions: DeletionsPane()
                 case .notifications: NotificationsPane()
                 case .advanced: AdvancedPane()
                 }
@@ -94,7 +91,26 @@ private struct IntPicker: View {
     }
 }
 
-private func minutes(_ seconds: Int) -> String { "\(seconds / 60) min" }
+private func minutes(_ seconds: Int) -> String {
+    seconds < 60 ? "\(seconds) seconds" : "\(seconds / 60) min"
+}
+
+/// A text input that looks like one: bordered, with an example as the placeholder. (A bare TextField in a
+/// grouped form shows nothing but its label while it is empty, so it looks as if it cannot be edited.)
+private struct LabeledField: View {
+    let title: String
+    @Binding var text: String
+    let prompt: String
+
+    var body: some View {
+        LabeledContent(title) {
+            TextField(title, text: $text, prompt: Text(prompt))
+                .textFieldStyle(.roundedBorder)
+                .labelsHidden()
+                .frame(maxWidth: 340)
+        }
+    }
+}
 
 // MARK: - Panes
 
@@ -109,7 +125,7 @@ private struct GeneralPane: View {
             AccountSection()
             Section("Sync") {
                 IntPicker(title: "Check iCloud every", value: $interval, options: [
-                    (300, "5 minutes"), (900, "15 minutes"), (1800, "30 minutes"), (3600, "1 hour"),
+                    (5, "5 seconds"), (60, "1 minute"), (300, "5 minutes"), (900, "15 minutes"), (1800, "30 minutes"), (3600, "1 hour"),
                     (7200, "2 hours"), (14_400, "4 hours"), (21_600, "6 hours"), (43_200, "12 hours"),
                     (86_400, "24 hours"),
                 ], custom: minutes)
@@ -118,6 +134,10 @@ private struct GeneralPane: View {
                     (200, "200 photos"), (500, "500 photos"), (1000, "1,000 photos"),
                     (0, "All photos (slow)"),
                 ], custom: { "\($0) photos" })
+                if interval < 300 {
+                    Text("Every check signs in to iCloud again. Very short intervals keep the app busy all the time, and Apple may start refusing connections.")
+                        .font(.caption).foregroundStyle(.orange)
+                }
                 Text("Only photos that are not downloaded yet are fetched, so after taking pictures use “Sync now”. Pick a number at least as high as the pictures you take between syncs. “All photos” downloads the whole library.")
                     .font(.caption).foregroundStyle(.secondary)
                 Toggle("Start syncing when the app opens", isOn: $startAtLaunch)
@@ -176,12 +196,12 @@ private struct DownloadPane: View {
                 }
             }
             Section("Where from") {
-                TextField("Albums (comma separated, empty = everything)", text: $albums)
-                TextField("Library (empty = primary)", text: $library)
+                LabeledField(title: "Albums", text: $albums, prompt: "All albums, or names separated by commas")
+                LabeledField(title: "Library", text: $library, prompt: "Primary library")
             }
             Section("Date range") {
-                TextField("Skip photos created before (2025-01-02 or 20d)", text: $before)
-                TextField("Skip photos created after (2025-01-02 or 20d)", text: $after)
+                LabeledField(title: "Skip photos before", text: $before, prompt: "2025-01-02, or 20d for 20 days ago")
+                LabeledField(title: "Skip photos after", text: $after, prompt: "2025-01-02, or 20d for 20 days ago")
             }
         }
         .formStyle(.grouped)
@@ -192,7 +212,7 @@ private struct FilesPane: View {
     @AppStorage(Prefs.directory) private var directory = ""
     @AppStorage(Prefs.folderStructure) private var folderStructure = "{:%Y/%m/%d}"
     @AppStorage(Prefs.fileMatchPolicy) private var matchPolicy = "name-size-dedup-with-suffix"
-    @AppStorage(Prefs.livePhotoMovPolicy) private var movPolicy = "suffix"
+    @AppStorage(Prefs.livePhotoMovPolicy) private var movPolicy = "original"
     @AppStorage(Prefs.alignRaw) private var alignRaw = "as-is"
     @AppStorage(Prefs.keepUnicode) private var keepUnicode = false
     @AppStorage(Prefs.xmpSidecar) private var xmpSidecar = false
@@ -202,7 +222,7 @@ private struct FilesPane: View {
         Form {
             Section("Folder") {
                 HStack {
-                    TextField("Download folder", text: $directory)
+                    LabeledField(title: "Download folder", text: $directory, prompt: "~/Pictures/iCloud")
                     Button("Choose…") { chooseFolder() }
                 }
                 Picker("Folder structure", selection: $folderStructure) {
@@ -218,8 +238,8 @@ private struct FilesPane: View {
                     Text("Name plus iCloud ID").tag("name-id7")
                 }
                 Picker("Live Photo video name", selection: $movPolicy) {
-                    Text("Add _HEVC suffix").tag("suffix")
                     Text("Same as photo (pairs in Photos)").tag("original")
+                    Text("Add _HEVC suffix").tag("suffix")
                 }
                 Picker("RAW + JPEG", selection: $alignRaw) {
                     Text("As is").tag("as-is")
@@ -260,6 +280,8 @@ private struct PhotosPane: View {
     @AppStorage(Prefs.confirmThreshold) private var threshold = 20
     @AppStorage(Prefs.mirrorDisk) private var mirrorDisk = false
     @AppStorage(Prefs.mirrorPhotos) private var mirrorPhotos = false
+    @AppStorage(Prefs.photosLibrary) private var photosLibrary = ""
+    @AppStorage(Prefs.minAgeDays) private var minAgeDays = 0.0
     @StateObject private var state = PhotosPaneState()
 
     var body: some View {
@@ -276,6 +298,13 @@ private struct PhotosPane: View {
                 Toggle("Delete them from iCloud automatically", isOn: $autoDeleteICloud)
                 Toggle("Delete them from the disk automatically (moves the files to the Trash)", isOn: $autoDeleteDisk)
                 Text("Both switches are off by default and work separately. They run after every sync and shortly after something changes in Photos, for photos that are in Photos “Recently Deleted” and match a downloaded file. A photo deleted only from the disk can be downloaded again while it is among the newest photos in iCloud.")
+                    .font(.caption).foregroundStyle(.secondary)
+                IntPicker(title: "Wait after deleting", value: Binding(
+                    get: { Int(minAgeDays) }, set: { minAgeDays = Double($0) }
+                ), options: [
+                    (0, "Don't wait"), (1, "1 day"), (3, "3 days"), (7, "7 days"), (14, "14 days"), (30, "30 days"),
+                ], custom: { "\($0) days" })
+                Text("Photos are only deleted from iCloud this long after you deleted them in Photos. This also applies to “Review iCloud deletions”, where you confirm every deletion yourself.")
                     .font(.caption).foregroundStyle(.secondary)
                 if !app.deletionStatus.isEmpty {
                     Text(app.deletionStatus).font(.callout).foregroundStyle(.secondary)
@@ -300,6 +329,12 @@ private struct PhotosPane: View {
                      ? "You get a notification with a Delete button, and the panel shows the waiting photos. Set notifications for Photos Sync to “Alerts” in System Settings so the buttons stay visible."
                      : "Confirmation is off: any number of photos is deleted without asking.")
                     .font(.caption).foregroundStyle(confirmLarge ? Color.secondary : Color.orange)
+            }
+            Section("Photos library") {
+                LabeledField(title: "Library", text: $photosLibrary, prompt: "~/Pictures/Photos Library.photoslibrary")
+                Text("Read to find out what you deleted in Photos (it needs Full Disk Access) and never modified.")
+                    .font(.caption).foregroundStyle(.secondary)
+                Button("Open deletion log") { NSWorkspace.shared.open(URL(fileURLWithPath: auditLogPath())) }
             }
             Section("Files downloaded so far") {
                 HStack {
@@ -326,42 +361,6 @@ private struct PhotosPane: View {
             Text("They are added to the library that Photos has open.")
         }
         .onAppear { state.pendingCount = app.notImportedFiles().count }
-    }
-}
-
-private struct DeletionsPane: View {
-    @AppStorage(Prefs.photosLibrary) private var photosLibrary = ""
-    @AppStorage(Prefs.minAgeDays) private var minAgeDays = 0.0
-    @AppStorage(Prefs.maxCandidates) private var maxCandidates = 10
-
-    var body: some View {
-        Form {
-            Section("Safeguards") {
-                Text("Photos you delete in the Photos app are offered for deletion from iCloud when they are still in “Recently Deleted” and match a downloaded file. In the review window you confirm every deletion yourself; automatic deletion is set under Apple Photos.")
-                    .font(.callout).foregroundStyle(.secondary)
-                IntPicker(title: "Offer photos deleted", value: Binding(
-                    get: { Int(minAgeDays) }, set: { minAgeDays = Double($0) }
-                ), options: [
-                    (0, "Immediately"), (1, "At least 1 day ago"), (3, "At least 3 days ago"),
-                    (7, "At least 7 days ago"), (14, "At least 14 days ago"), (30, "At least 30 days ago"),
-                ], custom: { "At least \($0) days ago" })
-                IntPicker(title: "Hard limit", value: $maxCandidates, options: [
-                    (10, "10 photos at once"), (25, "25 photos at once"), (50, "50 photos at once"),
-                    (100, "100 photos at once"), (250, "250 photos at once"), (1000, "1,000 photos at once"),
-                ], custom: { "\($0) photos at once" })
-                Text("The review window offers no more than this many photos. The confirmation limit under Apple Photos applies to automatic deletion.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Section("Photos library") {
-                TextField("Library path", text: $photosLibrary)
-                Text("The app needs Full Disk Access to read it. The library is only read, never modified.")
-                    .font(.caption).foregroundStyle(.secondary)
-            }
-            Section {
-                Button("Open audit log") { NSWorkspace.shared.open(URL(fileURLWithPath: auditLogPath())) }
-            }
-        }
-        .formStyle(.grouped)
     }
 }
 
@@ -401,10 +400,14 @@ private struct AdvancedPane: View {
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("icloudpd") {
-                TextField("Python", text: $pythonPath)
-                TextField("icloudpd sources (src folder)", text: $sourcePath)
-                Text("The progress icon needs the repository version of icloudpd (it adds /api/status).")
-                    .font(.caption).foregroundStyle(.secondary)
+                Text(Prefs.bundledSource().isEmpty
+                     ? "This build has no icloudpd of its own. Set the folder with the icloudpd sources (the src folder of the repository) below."
+                     : "The app brings its own icloudpd (a version with the status API it needs) and uses the Python of your installed icloudpd. You normally do not need to change anything here.")
+                    .font(.callout).foregroundStyle(.secondary)
+                DisclosureGroup("Use another icloudpd") {
+                    LabeledField(title: "Python", text: $pythonPath, prompt: "Python that runs icloudpd")
+                    LabeledField(title: "icloudpd sources", text: $sourcePath, prompt: "Empty = the one bundled with the app")
+                }
             }
             Section("Logging") {
                 Picker("Log level", selection: $logLevel) {
