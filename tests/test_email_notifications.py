@@ -58,7 +58,7 @@ class EmailNotificationsTestCase(TestCase):
                 "From: iCloud Photos Downloader <jdoe+smtp@gmail.com>\n"
                 "To: jdoe+notifications@gmail.com\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
-                "Date: 01/01/2018 00:00\n\nHello,\n\n"
+                "Date: Mon, 01 Jan 2018 00:00:00 +0000\n\nHello,\n\n"
                 "jdoe@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
@@ -102,7 +102,7 @@ class EmailNotificationsTestCase(TestCase):
                 "From: jdoe+notifications@gmail.com\n"
                 "To: jdoe+notifications@gmail.com\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
-                "Date: 01/01/2018 00:00\n\nHello,\n\n"
+                "Date: Mon, 01 Jan 2018 00:00:00 +0000\n\nHello,\n\n"
                 "jdoe@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",
@@ -180,7 +180,7 @@ class EmailNotificationsTestCase(TestCase):
                 "From: JD <jdoe+notifications+from@gmail.com>\n"
                 "To: JD <jdoe+notifications@gmail.com>\n"
                 "Subject: icloud_photos_downloader: Two step authentication has expired\n"
-                "Date: 01/01/2018 00:00\n\nHello,\n\n"
+                "Date: Mon, 01 Jan 2018 00:00:00 +0000\n\nHello,\n\n"
                 "jdoe@gmail.com's two-step authentication has expired for the icloud_photos_downloader script.\n"
                 "Please log in to your server and run the script manually to update two-step "
                 "authentication.",

@@ -3,6 +3,7 @@
 import datetime
 import logging
 import smtplib
+from email.utils import format_datetime
 from typing import cast
 
 
@@ -37,7 +38,8 @@ def send_2sa_notification(
         smtp.login(smtp_email, smtp_password)
 
     subj = "icloud_photos_downloader: Two step authentication has expired"
-    date = datetime.datetime.now().strftime("%d/%m/%Y %H:%M")
+    # RFC 5322 date with a numeric zone; strftime would use the locale's day and month names
+    date = format_datetime(datetime.datetime.now(datetime.UTC))
 
     message_text = f"""Hello,
 
