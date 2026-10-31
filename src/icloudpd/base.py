@@ -605,6 +605,7 @@ class DownloadResult(NamedTuple):
     present: bool
     """every requested file is on disk now, downloaded earlier or in this run"""
     created_paths: tuple[str, ...] = ()
+    expected_paths: tuple[str, ...] = ()
 
 
 NOT_DOWNLOADED = DownloadResult(downloaded=False, present=False)
@@ -629,8 +630,10 @@ def download_builder(
     icloud: PyiCloudService,
     counter: Counter,
     photo: PhotoAsset,
+    *,
+    inspect_only: bool = False,
 ) -> DownloadResult:
-    """function for actually downloading the photos"""
+    """Download files, or inspect their selected paths without writing or fetching media."""
 
     try:
         created_date = photo.created.astimezone(get_localzone())
@@ -666,6 +669,8 @@ def download_builder(
             filename_builder(photo),
         )
     except KeyError as ex:
+        if inspect_only:
+            raise ValueError("Cannot determine existing mirror filenames") from ex
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
         with open(file="icloudpd-photo-error.json", mode="w", encoding="utf8") as outfile:
             json.dump(
@@ -687,8 +692,9 @@ def download_builder(
     download_dir = os.path.normpath(os.path.join(directory, date_path))
     success = False
     created_paths: list[str] = []
+    expected_paths: list[str] = []
     # nothing is written in --only-print-filenames mode
-    present = not only_print_filenames
+    present = not only_print_filenames and not inspect_only
 
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
@@ -719,6 +725,13 @@ def download_builder(
 
         download_path = local_download_path(filename, download_dir)
 
+        if inspect_only:
+            expected_paths.append(download_path)
+            if download_size == AssetVersionSize.ORIGINAL:
+                expected_paths.append(add_suffix_to_filename("-original", download_path))
+            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+                expected_paths.append((f"-{version.size}.").join(download_path.rsplit(".", 1)))
+
         original_download_path = None
         file_exists = os.path.isfile(download_path)
         if not file_exists and download_size == AssetVersionSize.ORIGINAL:
@@ -735,13 +748,18 @@ def download_builder(
                 photo_size = version.size
                 if file_size != photo_size:
                     download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
+                    original_download_path = None
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
                     file_exists = os.path.isfile(download_path)
             if file_exists:
                 counter.increment()
                 logger.debug("%s already exists", truncate_middle(download_path, 96))
 
-        if not file_exists:
+        expected_paths.append(
+            original_download_path if file_exists and original_download_path else download_path
+        )
+
+        if not file_exists and not inspect_only:
             counter.reset()
             if only_print_filenames:
                 print(download_path)
@@ -789,10 +807,12 @@ def download_builder(
                         created_paths.append(download_path)
 
         if xmp_sidecar and not only_print_filenames:
-            sidecar_existed = os.path.lexists(download_path + ".xmp")
-            generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
-            if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
-                created_paths.append(download_path + ".xmp")
+            expected_paths.append(download_path + ".xmp")
+            if not inspect_only:
+                sidecar_existed = os.path.lexists(download_path + ".xmp")
+                generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+                if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
+                    created_paths.append(download_path + ".xmp")
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -817,6 +837,13 @@ def download_builder(
             else:
                 pass
             lp_download_path = os.path.join(download_dir, lp_filename)
+
+            if inspect_only:
+                expected_paths.append(lp_download_path)
+                if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+                    expected_paths.append(
+                        (f"-{version.size}.").join(lp_download_path.rsplit(".", 1))
+                    )
 
             lp_file_exists = os.path.isfile(lp_download_path)
 
@@ -850,7 +877,7 @@ def download_builder(
                             lp_file_exists = os.path.isfile(lp_download_path)
                     if lp_file_exists:
                         logger.debug("%s already exists", truncate_middle(lp_download_path, 96))
-                if not lp_file_exists:
+                if not lp_file_exists and not inspect_only:
                     truncated_path = truncate_middle(lp_download_path, 96)
                     logger.debug("Downloading %s...", truncated_path)
                     download_result = download.download_media(
@@ -869,10 +896,16 @@ def download_builder(
                         logger.info("Downloaded %s", truncated_path)
                         if not dry_run:
                             created_paths.append(lp_download_path)
+                expected_paths.append(lp_download_path)
         elif any(isinstance(size, LivePhotoVersionSize) for size in photo_versions_with_policy):
             # a live photo without the requested video size: the video is not kept locally
             present = False
-    return DownloadResult(downloaded=success, present=present, created_paths=tuple(created_paths))
+    return DownloadResult(
+        downloaded=success,
+        present=present,
+        created_paths=tuple(created_paths),
+        expected_paths=tuple(dict.fromkeys(expected_paths)),
+    )
 
 
 def delete_photo(
@@ -1329,11 +1362,48 @@ def core_single_run(
                     if prune_snapshot is not None:
                         if prune_complete:
                             try:
+
+                                def inspect_existing(
+                                    item: PhotoAsset,
+                                    *,
+                                    destination: str = directory,
+                                    service: PyiCloudService = icloud,
+                                ) -> tuple[str, ...]:
+                                    return download_builder(
+                                        logger=logger,
+                                        folder_structure=user_config.folder_structure,
+                                        directory=destination,
+                                        primary_sizes=user_config.sizes,
+                                        force_size=user_config.force_size,
+                                        only_print_filenames=False,
+                                        set_exif_datetime=user_config.set_exif_datetime,
+                                        skip_live_photos=user_config.skip_live_photos,
+                                        live_photo_size=user_config.live_photo_size,
+                                        dry_run=True,
+                                        file_match_policy=user_config.file_match_policy,
+                                        xmp_sidecar=user_config.xmp_sidecar,
+                                        lp_filename_generator=lp_filename_generator,
+                                        filename_builder=create_filename_builder(
+                                            user_config.file_match_policy,
+                                            build_filename_cleaner(
+                                                user_config.keep_unicode_in_filenames
+                                            ),
+                                        ),
+                                        raw_policy=user_config.align_raw,
+                                        icloud=service,
+                                        counter=Counter(),
+                                        photo=item,
+                                        inspect_only=True,
+                                    ).expected_paths
+
                                 prune_snapshot.finish(
                                     logger,
                                     library_object,
                                     user_config.dry_run,
                                     lambda: status_exchange.get_progress().cancel,
+                                    inspect_existing
+                                    if user_config.prune_orphans_adopt_existing
+                                    else None,
                                 )
                             except Exception as error:
                                 logger.warning("Skipping orphan pruning: %s", error)

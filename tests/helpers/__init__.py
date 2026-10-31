@@ -139,6 +139,7 @@ def clean_boolean_args(params: Sequence[str]) -> list[str]:
         "--force-size",
         "--auto-delete",
         "--prune-orphans",
+        "--prune-orphans-adopt-existing",
         "--set-exif-datetime",
         "--smtp-no-tls",
         "--delete-after-download",

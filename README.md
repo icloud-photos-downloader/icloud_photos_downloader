@@ -71,9 +71,10 @@ icloudpd --directory /data/shared --username my@email.address \
   --library 'SharedSync-YOUR-LIBRARY-ID' --prune-orphans
 ```
 
-Tracking starts with newly written files and the first successful run only
-establishes a baseline. Existing untracked files, including old orphans predating
-tracking, are preserved. Cleaning those existing mirrors is a separate feature.
+By default, tracking starts with newly written files and the first successful run
+only establishes a baseline. To also clean old orphans in an existing dedicated
+flat, original-size mirror, explicitly opt in to the one-time
+`--prune-orphans-adopt-existing` bootstrap and preview it with `--dry-run` first.
 
 Pruned files are moved into `.icloudpd-pruned/`, never permanently deleted: even
 consistent counts cannot prove Apple's listing is complete. Exclude that folder

@@ -10,7 +10,25 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, mkdtemp
 from typing import BinaryIO, TypedDict
 
-from pyicloud_ipd.services.photos import PhotoLibrary
+from pyicloud_ipd.asset_version import ITEM_TYPE_EXTENSIONS
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
+
+MEDIA_EXTENSIONS = {f".{extension.lower()}" for extension in ITEM_TYPE_EXTENSIONS.values()} | {
+    ".jpeg",
+    ".gif",
+    ".tif",
+    ".tiff",
+    ".bmp",
+    ".webp",
+    ".avif",
+    ".mp4",
+    ".m4v",
+    ".avi",
+    ".3gp",
+    ".3g2",
+    ".mpeg",
+    ".mpg",
+}
 
 
 class FileRecord(TypedDict):
@@ -36,7 +54,9 @@ def lock_file(handle: BinaryIO) -> None:
         fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
 
 
-def library_photo_ids(library: PhotoLibrary) -> set[str]:
+def library_photo_ids(
+    library: PhotoLibrary, inspect: Callable[[PhotoAsset], None] | None = None
+) -> set[str]:
     """Validate asset counts, retaining originals referenced by any visible or hidden asset."""
     inventory: set[str] = set()
     seen_assets: set[str] = set()
@@ -47,6 +67,8 @@ def library_photo_ids(library: PhotoLibrary) -> set[str]:
         for photo in album:
             asset_ids.append(str(photo._asset_record["recordName"]))
             inventory.add(photo.id)
+            if inspect is not None:
+                inspect(photo)
         if len(asset_ids) != len(set(asset_ids)) or len(asset_ids) != expected:
             raise ValueError("Incomplete or changing library listing; skipping orphan pruning")
         if seen_assets.intersection(asset_ids):
@@ -60,7 +82,7 @@ def library_photo_ids(library: PhotoLibrary) -> set[str]:
 
 
 class PruneSnapshot:
-    """One destination, one configuration, and only files written while tracking."""
+    """One destination and configuration, with explicit ownership before pruning."""
 
     filename = ".icloudpd-prune.json"
     quarantine = ".icloudpd-pruned"
@@ -82,7 +104,8 @@ class PruneSnapshot:
                 lock_file(self.lock_handle)
             if self.path.is_symlink():
                 raise ValueError("Pruning snapshot must not be a symlink")
-            if self.path.exists():
+            self.initial = not self.path.exists()
+            if not self.initial:
                 self._load()
             self.previous_ids = set(self.files)
         except Exception:
@@ -146,16 +169,54 @@ class PruneSnapshot:
             path = self._local_path(relative)
             self.files.setdefault(asset_id, {})[relative] = file_record(path)
 
+    def _adopt(self, planned: dict[str, set[str]]) -> dict[str, FileRecord]:
+        retained: set[str] = set()
+        for asset_id, paths in planned.items():
+            for planned_path in paths:
+                absolute = Path(planned_path).parent.resolve() / Path(planned_path).name
+                relative = str(absolute.relative_to(self.directory))
+                path = self._local_path(relative)
+                retained.add(relative)
+                if path.is_file() and relative not in self.files.get(asset_id, {}):
+                    self.record(asset_id, (str(path),))
+        candidates = {}
+        for path in sorted(self.directory.iterdir()) if self.directory.exists() else []:
+            extension = path.suffix.lower()
+            media = extension in MEDIA_EXTENSIONS or (
+                extension == ".xmp" and Path(path.stem).suffix.lower() in MEDIA_EXTENSIONS
+            )
+            if media and not path.is_dir() and path.name not in retained:
+                candidates[path.name] = file_record(self._local_path(path.name))
+        return candidates
+
     def finish(
         self,
         logger: logging.Logger,
         library: PhotoLibrary,
         dry_run: bool,
         cancelled: Callable[[], bool] | None = None,
+        adopt_existing: Callable[[PhotoAsset], tuple[str, ...]] | None = None,
     ) -> None:
-        inventory = library_photo_ids(library)
+        planned: dict[str, set[str]] = {}
+
+        def inspect(photo: PhotoAsset) -> None:
+            if adopt_existing is not None:
+                paths = set(adopt_existing(photo))
+                paths.update(f"{path}.xmp" for path in list(paths) if not path.endswith(".xmp"))
+                planned.setdefault(photo.id, set()).update(paths)
+
+        adopting = adopt_existing is not None and self.initial
+        inventory = library_photo_ids(library, inspect if adopting else None)
         if cancelled is not None and cancelled():
             raise ValueError("Orphan pruning was cancelled")
+        candidates = self._adopt(planned) if adopting else {}
+        if adopting:
+            logger.info(
+                "%sExisting-mirror bootstrap: %d current files, %d unmatched media candidates",
+                "[DRY RUN] " if dry_run else "",
+                sum(len(paths) for paths in self.files.values()),
+                len(candidates),
+            )
         retained_paths = {
             relative
             for asset_id, paths in self.files.items()
@@ -166,33 +227,34 @@ class PruneSnapshot:
         for asset_id in list(self.files):
             if asset_id in inventory or asset_id not in self.previous_ids:
                 continue
-            for relative, expected in self.files[asset_id].items():
-                if cancelled is not None and cancelled():
-                    raise ValueError("Orphan pruning was cancelled")
-                path = self._local_path(relative)
-                if relative in retained_paths or not path.exists():
-                    continue
-                if not path.is_file() or file_record(path) != expected:
-                    logger.warning("Keeping changed tracked file %s", path)
-                elif dry_run:
-                    logger.info("[DRY RUN] Would quarantine %s", path)
-                else:
-                    if batch is None:
-                        quarantine = self.directory / self.quarantine
-                        if quarantine.resolve() != quarantine:
-                            raise ValueError("Pruning quarantine must not contain symlinks")
-                        quarantine.mkdir(exist_ok=True)
-                        batch = Path(
-                            mkdtemp(
-                                prefix=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-"),
-                                dir=quarantine,
-                            )
-                        )
-                    destination = batch / relative
-                    destination.parent.mkdir(parents=True, exist_ok=True)
-                    path.rename(destination)
-                    logger.info("Quarantined %s to %s", path, destination)
+            candidates.update(self.files[asset_id])
             del self.files[asset_id]
+        for relative, expected in candidates.items():
+            if cancelled is not None and cancelled():
+                raise ValueError("Orphan pruning was cancelled")
+            path = self._local_path(relative)
+            if relative in retained_paths or not path.exists():
+                continue
+            if not path.is_file() or file_record(path) != expected:
+                logger.warning("Keeping changed file %s", path)
+            elif dry_run:
+                logger.info("[DRY RUN] Would quarantine %s", path)
+            else:
+                if batch is None:
+                    quarantine = self.directory / self.quarantine
+                    if quarantine.resolve() != quarantine:
+                        raise ValueError("Pruning quarantine must not contain symlinks")
+                    quarantine.mkdir(exist_ok=True)
+                    batch = Path(
+                        mkdtemp(
+                            prefix=datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ-"),
+                            dir=quarantine,
+                        )
+                    )
+                destination = batch / relative
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                path.rename(destination)
+                logger.info("Quarantined %s to %s", path, destination)
         if not dry_run:
             with NamedTemporaryFile(
                 mode="w",
