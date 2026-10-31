@@ -1256,6 +1256,10 @@ def core_single_run(
                             user_config.sizes,
                             lp_filename_generator,
                             user_config.align_raw,
+                            create_filename_builder(
+                                user_config.file_match_policy,
+                                build_filename_cleaner(user_config.keep_unicode_in_filenames),
+                            ),
                         )
                     else:
                         pass
