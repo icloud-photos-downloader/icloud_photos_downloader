@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: add opt-in `--prune-orphans` for shared libraries, removing only unchanged tracked downloads after a complete, nonempty inventory confirms their photos have disappeared; existing untracked files are preserved [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
+
 - feat: sign in with a security key (FIDO, e.g. YubiKey) on accounts that use them instead of six-digit codes [#583](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/583)
 - fix: `--skip-created-before`/`--skip-created-after` dates are read in the same time zone icloudpd uses for folders and EXIF dates; they used the system clock's zone, which differs on Windows when `TZ` is set
 - fix: reject `--skip-created-before` later than `--skip-created-after` instead of silently skipping all assets [#1370](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1370)

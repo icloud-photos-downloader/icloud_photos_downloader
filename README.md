@@ -63,6 +63,21 @@ icloudpd --directory /data --username my@email.address --watch-with-interval 360
 > [!TIP]
 > Synchronization logic can be adjusted with command-line parameters. Run `icloudpd --help` to get full list.
 
+To remove tracked local copies when photos leave a shared library (including moves
+back to a participant's personal library), use a dedicated download directory:
+
+```bash
+icloudpd --directory /data/shared --username my@email.address \
+  --library 'SharedSync-YOUR-LIBRARY-ID' --prune-orphans
+```
+
+Tracking starts with files written while this option is enabled. The first
+successful run establishes a baseline; later runs remove unchanged tracked files
+whose photos are no longer in that shared library. Existing untracked files and
+files modified locally are preserved. Empty or incomplete listings never trigger
+pruning. See [the option reference](docs/reference.md#prune-orphans-parameter)
+for limitations and recovery instructions.
+
 To independently create and authorize a session (and complete 2SA/2FA validation if needed) on your local system:
 
 ```

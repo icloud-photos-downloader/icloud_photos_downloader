@@ -57,6 +57,50 @@ This is a list of all options available for the command line interface (CLI) of 
     Shared library support added for iOS 16 shared libraries
     ```
 
+(prune-orphans-parameter)=
+`--prune-orphans`
+
+:   Removes unchanged, tracked local downloads when their photos disappear from
+    the selected shared library, including photos moved to a participant's
+    personal library without entering Recently Deleted. This is separate from
+    `--auto-delete`, whose behavior is unchanged.
+
+    Use `--library` to select a shared library and a dedicated `--directory` that
+    is not shared with other accounts, libraries, or downloader processes.
+    Overlapping destinations in the same command are rejected.
+
+    Files are tracked only when icloudpd writes them while this option is enabled.
+    The first successful run saves a baseline in `.icloudpd-prune.json`; it does
+    not delete anything. Later runs compare the library's current photo IDs with
+    the recorded IDs and remove only recorded files whose content has not changed.
+    Actual download paths are recorded, including deduplicated filenames, Live
+    Photo videos and newly created XMP sidecars. Existing untracked files are
+    never adopted or deleted, even if they match a current photo's filename.
+    Consequently, old orphans predating tracking require manual cleanup.
+
+    A separate, full inventory is read even when downloads are limited by
+    `--recent`, `--until-found`, albums or date/type filters. Hidden photos count
+    as present, and files are retained while any asset referencing the same
+    original remains in the library. Empty, incomplete or changing-count listings,
+    cancellation and failed downloads prevent pruning and baseline updates.
+    `--dry-run` reports candidates without changing files or tracking state.
+
+    The snapshot is bound to the account, library, time zone and download settings.
+    Changes to that context are refused rather than migrated. Use a new dedicated
+    directory for a different context. Removing the snapshot explicitly resets
+    tracking, but previously downloaded files then become untracked and are kept.
+    Do not edit the snapshot or run other downloaders against its destination.
+
+    The option cannot be combined with `--delete-after-download`,
+    `--keep-icloud-recent-days` or `--only-print-filenames`. An empty shared library
+    is deliberately not pruned; remove its local files manually if intended.
+
+    A `.icloudpd-prune.lock` file prevents overlapping pruning runs. After an
+    interrupted process, remove a leftover lock only after verifying that no
+    downloader is still using the directory. The snapshot is atomically replaced
+    only after a successful run. Interrupted or failed runs can leave new files
+    untracked; these are preserved rather than guessed to be safe to delete.
+
 (list-libraries-parameter)=
 `--list-libraries`
     

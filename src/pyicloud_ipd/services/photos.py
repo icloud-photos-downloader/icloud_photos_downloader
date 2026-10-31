@@ -396,6 +396,18 @@ class PhotoLibrary:
         )
 
     @property
+    def hidden(self) -> "PhotoAlbum":
+        return PhotoAlbum(
+            self.params,
+            self.session,
+            self.service_endpoint,
+            "Hidden",
+            "CPLAssetAndMasterHiddenByAssetDate",
+            "CPLAssetHiddenByAssetDate",
+            zone_id=self.zone_id,
+        )
+
+    @property
     def recently_deleted(self) -> "PhotoAlbum":
         return PhotoAlbum(
             self.params,

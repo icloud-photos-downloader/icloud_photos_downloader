@@ -137,6 +137,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--prune-orphans",
+        help="Remove tracked downloads that disappeared from a shared library. "
+        + "Only newly written files are tracked; existing untracked files are preserved. "
+        + "Requires a dedicated directory and a complete, nonempty library listing.",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--folder-structure",
         help="Folder structure. If set to `none`, all photos will be placed into the download directory. Default: %(default)s",
         default="{:%Y/%m/%d}",
@@ -457,6 +464,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
+        prune_orphans=user_ns.prune_orphans,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
         smtp_username=user_ns.smtp_username,
@@ -585,6 +593,41 @@ def cli() -> int:
             print(
                 "--auth-only, --directory, --list-libraries, or --list-albums are required for each configuration"
             )
+            return 2
+
+        elif any(
+            user_ns.prune_orphans
+            and (
+                user_ns.library == "PrimarySync"
+                or user_ns.delete_after_download
+                or user_ns.keep_icloud_recent_days is not None
+                or global_ns.only_print_filenames
+            )
+            for user_ns in user_nses
+        ):
+            print(
+                "--prune-orphans requires --library and cannot be combined with "
+                "--delete-after-download, --keep-icloud-recent-days or --only-print-filenames"
+            )
+            return 2
+
+        elif any(
+            first.prune_orphans
+            and first.directory
+            and second.directory
+            and (
+                pathlib.Path(first.directory)
+                .resolve()
+                .is_relative_to(pathlib.Path(second.directory).resolve())
+                or pathlib.Path(second.directory)
+                .resolve()
+                .is_relative_to(pathlib.Path(first.directory).resolve())
+            )
+            for first in user_nses
+            for second in user_nses
+            if first is not second
+        ):
+            print("--prune-orphans requires a dedicated, non-overlapping download directory")
             return 2
 
         elif [
