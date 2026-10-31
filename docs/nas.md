@@ -18,7 +18,7 @@ Portal Configuration/Enable Portal Configuration | checked |
 Portal Configuration/Portal Name | `icloudpd` | 
 Portal Configuration/Protocol to Portal | `HTTP Protocol` | 
 Portal Configuration/Use Node IP for Portal IP/Domain | checked | 
-Portal Configuration/Port | `9090` | Same as "Port Forwarding/Host Port" above
+Portal Configuration/Port | `9090` | Same as "Network Configuration/Host Port" above
 Storage Configuration/Type | Host Path
 Storage Configuration/Mount Path | /data 
 Storage Configuration/Host Path | /mnt/my_pool/photos | or another location on your host
