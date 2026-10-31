@@ -1,4 +1,5 @@
 import inspect
+import locale
 import os
 import sys
 from typing import List, Tuple
@@ -10,6 +11,17 @@ from tests.helpers import (
     path_from_project_root,
     run_icloudpd_test,
 )
+
+
+def locale_available(name: str) -> bool:
+    current = locale.setlocale(locale.LC_ALL)
+    try:
+        locale.setlocale(locale.LC_ALL, name)
+        return True
+    except locale.Error:
+        return False
+    finally:
+        locale.setlocale(locale.LC_ALL, current)
 
 
 class FolderStructureTestCase(TestCase):
@@ -122,6 +134,7 @@ class FolderStructureTestCase(TestCase):
         self.assertEqual(os.path.join(data_dir, os.path.normpath("IMG_7404.MOV")), filenames[7])
 
     @pytest.mark.skipif(sys.platform == "win32", reason="local strings are not working on windows")
+    @pytest.mark.skipif(not locale_available("de_DE.UTF-8"), reason="de_DE.UTF-8 is not installed")
     def test_folder_structure_de_posix(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
