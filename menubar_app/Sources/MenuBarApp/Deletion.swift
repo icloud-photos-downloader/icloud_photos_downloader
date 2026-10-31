@@ -25,6 +25,26 @@ enum Deletion {
         return (code == 0, text + (code == 0 ? "" : "\n(exit code \(code))"))
     }
 
+    /// Local files of photos that were deleted in iCloud. icloudpd's own auto-delete finds them (it knows the
+    /// folder structure and file names); in a dry run it only reports them, so the app can move them to the
+    /// Trash instead of deleting them for good. Looks at the whole iCloud "Recently Deleted".
+    static func findDeletedInICloud() async -> (ok: Bool, items: [TrashCandidate], output: String) {
+        let args = Launcher.commonArgs() + Launcher.downloadArgs(includeRecent: false) + [
+            "--recent", "1", "--auto-delete", "--dry-run", "--password-provider", "keyring",
+        ]
+        let (code, text) = await Launcher.runOnce(args: args, timeout: 300)
+        guard code == 0 else { return (false, [], text) }
+        let items = parseWouldDelete(text).map { path -> TrashCandidate in
+            let attributes = try? FileManager.default.attributesOfItem(atPath: path)
+            let size = (attributes?[.size] as? NSNumber)?.int64Value ?? 0
+            // icloudpd sets the modification date of a file to the date the photo was taken
+            let date = (attributes?[.modificationDate] as? Date)?.timeIntervalSince1970 ?? 0
+            return TrashCandidate(name: URL(fileURLWithPath: path).lastPathComponent, size: size,
+                                  createdUnix: Int64(date), trashedUnix: 0, path: path)
+        }
+        return (true, items, text)
+    }
+
     /// Moves the downloaded files to the Trash, so they can still be restored from there.
     static func moveToTrash(_ items: [TrashCandidate]) -> (moved: Int, failures: [String]) {
         var moved = 0

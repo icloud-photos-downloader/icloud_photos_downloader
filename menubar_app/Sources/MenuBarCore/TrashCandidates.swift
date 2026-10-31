@@ -9,6 +9,14 @@ public struct TrashCandidate: Codable, Hashable, Identifiable {
     public let createdUnix: Int64
     public let trashedUnix: Int64
     public let path: String
+
+    public init(name: String, size: Int64, createdUnix: Int64, trashedUnix: Int64, path: String) {
+        self.name = name
+        self.size = size
+        self.createdUnix = createdUnix
+        self.trashedUnix = trashedUnix
+        self.path = path
+    }
 }
 
 public struct ScanOptions {

@@ -1,4 +1,5 @@
 import AppKit
+import MenuBarCore
 import SwiftUI
 
 @main
@@ -90,6 +91,10 @@ struct PanelView: View {
             if !model.pendingDeletion.isEmpty {
                 PanelButton(title: "\(model.pendingDeletion.count) photos wait for deletion…",
                             icon: "exclamationmark.triangle") { show("review") }
+            }
+            if !model.pendingMirror.isEmpty {
+                PanelButton(title: "\(model.pendingMirror.filter { !isSidecar($0.path) }.count) iCloud deletions wait…",
+                            icon: "exclamationmark.triangle") { model.confirmMirrorInteractively() }
             }
             if model.needsInput {
                 PanelButton(title: model.state == .needsMFA ? "Enter code…" : "Enter password…",

@@ -41,6 +41,8 @@ enum Prefs {
     static let autoDeleteDisk = "autoDeleteDisk"
     static let confirmLargeDeletes = "confirmLargeDeletes"
     static let confirmThreshold = "confirmThreshold"
+    static let mirrorDisk = "mirrorDiskFromICloud"
+    static let mirrorPhotos = "mirrorPhotosFromICloud"
     /// the Apple ID that was signed in successfully (no default)
     static let linkedAccount = "linkedAccount"
 
@@ -80,6 +82,7 @@ enum Prefs {
             autoImportToPhotos: false,
             autoDeleteICloud: false, autoDeleteDisk: false,
             confirmLargeDeletes: true, confirmThreshold: 20,
+            mirrorDisk: false, mirrorPhotos: false,
         ])
     }
 

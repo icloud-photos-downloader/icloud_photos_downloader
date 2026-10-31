@@ -14,6 +14,7 @@ delete from iCloud (and the disk) the photos you delete in Photos.
 - [Settings](#settings)
 - [Import into Photos](#import-into-photos)
 - [Deleting what you deleted in Photos](#deleting-what-you-deleted-in-photos)
+- [Deleting what you deleted in iCloud](#deleting-what-you-deleted-in-icloud)
 - [When something goes wrong](#when-something-goes-wrong)
 - [Where the app keeps its data](#where-the-app-keeps-its-data)
 - [How it works](#how-it-works)
@@ -29,8 +30,9 @@ delete from iCloud (and the disk) the photos you delete in Photos.
 - **Keeps a history of synced files** (Sync Activity, like OneDrive's), where each file can be opened or revealed in
   Finder.
 - **Imports downloaded photos into Apple Photos** automatically (off by default).
-- **Mirrors deletions**: photos you delete in Photos can be deleted from iCloud, from the disk (moved to the Trash), or
-  both, by hand or automatically (all off by default, with a safety limit and a confirmation).
+- **Mirrors deletions in both directions**: photos you delete in Photos can be deleted from iCloud and from the disk
+  (moved to the Trash), and photos you delete in iCloud can be removed from the disk and from Photos. By hand or
+  automatically; everything automatic is off by default and has a safety limit with a confirmation.
 - **Fixes itself where it can** (network trouble, a leftover process holding the port) and tells you with a macOS
   notification when it cannot.
 
@@ -83,6 +85,7 @@ Permissions the app may ask for:
 | Notifications | two-factor requests, problems, deletion confirmations (set them to **Alerts** to keep the *Delete* button visible) |
 | Automation, control of Photos | importing into Photos |
 | Full Disk Access | reading the Photos library to see what you deleted there (it is only read) |
+| Photos | removing photos from Photos that you deleted in iCloud (macOS also asks for confirmation every time) |
 
 ## The menu
 
@@ -176,6 +179,29 @@ number is deleted without asking. Further safeguards:
 - if the iCloud deletion fails, the files on the disk are kept;
 - every dry run and deletion is appended to `~/Library/Logs/icloudpd-menubar/deletions.log`.
 
+## Deleting what you deleted in iCloud
+
+The other direction. When you delete a photo in iCloud (iPhone, iCloud.com), the downloaded copy stays on the disk and
+in Photos. Two separate switches in **Apple Photos** settings, both **off** by default:
+
+- *Delete them from the disk automatically (moves the files to the Trash)*
+- *Delete them from Photos automatically (macOS asks you to confirm)*
+
+After every sync the app asks `icloudpd` which downloaded files belong to photos in iCloud's *Recently Deleted* (a dry
+run of `--auto-delete`, so nothing is deleted by `icloudpd` itself), and then:
+
+- moves those files to the Trash, and/or
+- deletes the photos from the Photos library through PhotoKit. **macOS shows its own confirmation dialog every time**,
+  so this can never happen silently, and the photos land in *Recently Deleted* in Photos. PhotoKit only sees the System
+  Photo Library, and a photo is matched by its original file name and its date.
+
+The same safety limit as in the other direction applies: above N photos (default 20) nothing happens until you confirm,
+through a notification with a *Delete* button or the row in the panel. A photo you decided about is not asked about
+again.
+
+Both directions together mean full mirroring: a photo you delete from iCloud with the review window lands in iCloud's
+*Recently Deleted*, and with these switches on it disappears from the disk and from Photos as well.
+
 ## When something goes wrong
 
 The header only says *Sync problem*; the details are written to the log (*three dots, Open log*), where the app also
@@ -198,7 +224,7 @@ minutes.
 |---|---|
 | `~/Library/Logs/icloudpd-menubar/icloudpd.log` | `icloudpd` output and the app's own messages |
 | `~/Library/Logs/icloudpd-menubar/deletions.log` | audit log of dry runs, deletions and moves to the Trash |
-| `~/Library/Application Support/icloudpd-menubar/` | `activity.json` (history), `imported.json`, `deleted-from-icloud.json` |
+| `~/Library/Application Support/icloudpd-menubar/` | `activity.json` (history), `imported.json`, `deleted-from-icloud.json`, `mirrored-from-icloud.json` |
 | `~/.pyicloud/` | the iCloud session, written by `icloudpd` |
 | macOS preferences, `com.marlo.icloudpd-menubar` | the settings |
 
@@ -212,6 +238,8 @@ Photos Sync (SwiftUI)
   ├─ acts     POST /resume (Sync now)                   ends the waiting period
   ├─ reads    Photos.sqlite (a copy)                    what is in Recently Deleted
   ├─ runs     icloudpd --delete-list FILE               deletes the matches in iCloud
+  ├─ runs     icloudpd --auto-delete --dry-run          lists the files of photos deleted in iCloud
+  ├─ deletes  PhotoKit (macOS confirms)                 photos from Photos
   └─ imports  osascript → Photos                        new downloads
 ```
 

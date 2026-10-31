@@ -28,7 +28,7 @@ enum Launcher {
     }
 
     /// What and how to download. A flag is only passed when it differs from icloudpd's own default.
-    static func downloadArgs() -> [String] {
+    static func downloadArgs(includeRecent: Bool = true) -> [String] {
         let d = UserDefaults.standard
         func text(_ key: String) -> String { (d.string(forKey: key) ?? "").trimmingCharacters(in: .whitespaces) }
         var args: [String] = []
@@ -44,7 +44,7 @@ enum Launcher {
         toggle(Prefs.skipVideos, "--skip-videos")
         toggle(Prefs.skipPhotos, "--skip-photos")
         toggle(Prefs.skipLivePhotos, "--skip-live-photos")
-        if d.integer(forKey: Prefs.recent) > 0 { args += ["--recent", "\(d.integer(forKey: Prefs.recent))"] }
+        if includeRecent, d.integer(forKey: Prefs.recent) > 0 { args += ["--recent", "\(d.integer(forKey: Prefs.recent))"] }
         for album in text(Prefs.albums).split(separator: ",") {
             let name = album.trimmingCharacters(in: .whitespaces)
             if !name.isEmpty { args += ["-a", name] }

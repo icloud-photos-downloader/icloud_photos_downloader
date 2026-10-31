@@ -258,6 +258,8 @@ private struct PhotosPane: View {
     @AppStorage(Prefs.autoDeleteDisk) private var autoDeleteDisk = false
     @AppStorage(Prefs.confirmLargeDeletes) private var confirmLarge = true
     @AppStorage(Prefs.confirmThreshold) private var threshold = 20
+    @AppStorage(Prefs.mirrorDisk) private var mirrorDisk = false
+    @AppStorage(Prefs.mirrorPhotos) private var mirrorPhotos = false
     @StateObject private var state = PhotosPaneState()
 
     var body: some View {
@@ -279,8 +281,17 @@ private struct PhotosPane: View {
                     Text(app.deletionStatus).font(.callout).foregroundStyle(.secondary)
                 }
             }
+            Section("When you delete photos in iCloud") {
+                Toggle("Delete them from the disk automatically (moves the files to the Trash)", isOn: $mirrorDisk)
+                Toggle("Delete them from Photos automatically (macOS asks you to confirm)", isOn: $mirrorPhotos)
+                Text("Both switches are off by default and work separately. After every sync, the photos in iCloud's “Recently Deleted” that you downloaded are removed here. Photos always shows its own confirmation, so that part is never silent. Photos you delete from iCloud with the review window land there too, so with these switches on they disappear from the disk and Photos as well.")
+                    .font(.caption).foregroundStyle(.secondary)
+                if !app.mirrorStatus.isEmpty {
+                    Text(app.mirrorStatus).font(.callout).foregroundStyle(.secondary)
+                }
+            }
             Section("Safety") {
-                Toggle("Ask for confirmation when many photos are deleted at once", isOn: $confirmLarge)
+                Toggle("Ask for confirmation when many photos are deleted at once (both directions)", isOn: $confirmLarge)
                 IntPicker(title: "Ask when more than", value: $threshold, options: [
                     (5, "5 photos"), (10, "10 photos"), (20, "20 photos"), (50, "50 photos"), (100, "100 photos"),
                 ], custom: { "\($0) photos" })

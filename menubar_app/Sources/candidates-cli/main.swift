@@ -16,6 +16,13 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--classify" {
     exit(0)
 }
 
+// candidates-cli --parse-would-delete FILE: the local paths found in the output of an auto-delete dry run
+if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--parse-would-delete" {
+    let text = (try? String(contentsOfFile: CommandLine.arguments[2], encoding: .utf8)) ?? ""
+    for path in parseWouldDelete(text) { print(isSidecar(path) ? "sidecar \(path)" : "photo   \(path)") }
+    exit(0)
+}
+
 var args = CommandLine.arguments.dropFirst().makeIterator()
 while let arg = args.next() {
     switch arg {

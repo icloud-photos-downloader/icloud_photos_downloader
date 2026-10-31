@@ -29,6 +29,9 @@ final class AppModel: ObservableObject {
     /// photos deleted in Photos that wait for the user's confirmation (more than the limit at once)
     @Published private(set) var pendingDeletion: [TrashCandidate] = []
     @Published private(set) var deletionStatus = ""
+    /// photos deleted in iCloud whose files / Photos copies wait for the user's confirmation
+    @Published private(set) var pendingMirror: [TrashCandidate] = []
+    @Published private(set) var mirrorStatus = ""
 
     private var process: Process?
     private var stoppedByUser = false
@@ -40,6 +43,9 @@ final class AppModel: ObservableObject {
 
     // automatic deletion (what was deleted in Photos is deleted from iCloud and/or the disk)
     private var autoDeleting = false
+    private var mirroring = false
+    private var lastMirrorSignature = ""
+    private var mirroredPaths: Set<String> = AppModel.loadMirrored()
     private var lastPendingSignature = ""
     private var deletedFromICloud: Set<String> = AppModel.loadDeletedFromICloud()
     private let notificationDelegate = NotificationDelegate()
@@ -72,6 +78,13 @@ final class AppModel: ObservableObject {
                     actions: [
                         UNNotificationAction(identifier: "confirmDelete", title: "Delete", options: [.destructive]),
                         UNNotificationAction(identifier: "skipDelete", title: "Not now", options: []),
+                    ],
+                    intentIdentifiers: [], options: []),
+                UNNotificationCategory(
+                    identifier: "CONFIRM_MIRROR",
+                    actions: [
+                        UNNotificationAction(identifier: "confirmMirror", title: "Delete", options: [.destructive]),
+                        UNNotificationAction(identifier: "skipMirror", title: "Not now", options: []),
                     ],
                     intentIdentifiers: [], options: []),
             ])
@@ -476,6 +489,8 @@ final class AppModel: ObservableObject {
         switch action {
         case "confirmDelete": Task { await confirmPendingDeletion() }
         case "skipDelete": AppLog.write("deletion skipped by the user")
+        case "confirmMirror": Task { await confirmPendingMirror() }
+        case "skipMirror": AppLog.write("deleting what was deleted in iCloud skipped by the user")
         default: break
         }
     }
@@ -528,6 +543,134 @@ final class AppModel: ObservableObject {
         lastPendingSignature = ""
         if !summary.isEmpty {
             deletionStatus = summary.joined(separator: ", ") + " at " + Date().formatted(date: .omitted, time: .shortened)
+        }
+    }
+
+    // MARK: - What was deleted in iCloud: remove it from the disk and from Photos
+
+    private static func loadMirrored() -> Set<String> {
+        guard let data = try? Data(contentsOf: supportFile("mirrored-from-icloud.json")),
+              let paths = try? JSONDecoder().decode([String].self, from: data) else { return [] }
+        return Set(paths)
+    }
+
+    private func saveMirrored() {
+        if let data = try? JSONEncoder().encode(mirroredPaths.sorted()) {
+            try? data.write(to: AppModel.supportFile("mirrored-from-icloud.json"))
+        }
+    }
+
+    /// Runs after every sync pass. Photos you deleted in iCloud (they are in its "Recently Deleted") are
+    /// removed from the disk (moved to the Trash) and/or from Photos (macOS asks you to confirm that),
+    /// depending on the two switches in Settings. Above the limit it asks first.
+    private func mirrorPass() async {
+        let d = UserDefaults.standard
+        guard d.bool(forKey: Prefs.mirrorDisk) || d.bool(forKey: Prefs.mirrorPhotos), !mirroring else { return }
+        mirroring = true
+        defer { mirroring = false }
+
+        let found = await Deletion.findDeletedInICloud()
+        guard found.ok else {
+            AppLog.write("problem: checking what was deleted in iCloud failed. \(found.output.suffix(300))")
+            return
+        }
+        mirroredPaths.formIntersection(found.items.map(\.path))  // forget files that are gone
+        let work = found.items.filter { !mirroredPaths.contains($0.path) }
+        let photoCount = work.filter { !isSidecar($0.path) }.count
+        guard photoCount > 0 else { pendingMirror = []; return }
+
+        if d.bool(forKey: Prefs.confirmLargeDeletes), photoCount > d.integer(forKey: Prefs.confirmThreshold) {
+            askToConfirmMirror(work, photoCount: photoCount)
+        } else {
+            await performMirror(work)
+        }
+    }
+
+    private func mirrorTargets() -> String {
+        let d = UserDefaults.standard
+        var targets: [String] = []
+        if d.bool(forKey: Prefs.mirrorPhotos) { targets.append("Photos") }
+        if d.bool(forKey: Prefs.mirrorDisk) { targets.append("the disk (to the Trash)") }
+        return targets.joined(separator: " and ")
+    }
+
+    private func askToConfirmMirror(_ items: [TrashCandidate], photoCount: Int) {
+        pendingMirror = items
+        let signature = items.map(\.path).sorted().joined(separator: ",")
+        guard signature != lastMirrorSignature else { return }  // already asked about exactly these
+        lastMirrorSignature = signature
+        AppLog.write("waiting for confirmation: \(photoCount) photo(s) deleted in iCloud")
+        notify(
+            "Remove \(photoCount) photos?",
+            "\(photoCount) photos were deleted in iCloud. They would be removed from \(mirrorTargets()). "
+                + "That is more than your limit of \(UserDefaults.standard.integer(forKey: Prefs.confirmThreshold)), so please confirm.",
+            category: "CONFIRM_MIRROR")
+    }
+
+    /// The panel row: a dialog instead of the notification buttons.
+    func confirmMirrorInteractively() {
+        let count = pendingMirror.filter { !isSidecar($0.path) }.count
+        let alert = NSAlert()
+        alert.messageText = "Remove \(count) photos?"
+        alert.informativeText = "These photos were deleted in iCloud. They will be removed from \(mirrorTargets()). "
+            + "Photos asks for its own confirmation, and deleted photos stay in Recently Deleted there."
+        alert.addButton(withTitle: "Remove")
+        alert.addButton(withTitle: "Cancel")
+        NSApp.activate(ignoringOtherApps: true)
+        if alert.runModal() == .alertFirstButtonReturn { Task { await confirmPendingMirror() } }
+    }
+
+    /// The user agreed: look again, because iCloud may have changed, and act on what is still deleted.
+    private func confirmPendingMirror() async {
+        guard !mirroring else { return }
+        mirroring = true
+        defer { mirroring = false }
+        let wanted = Set(pendingMirror.map(\.path))
+        let found = await Deletion.findDeletedInICloud()
+        guard found.ok else { return }
+        await performMirror(found.items.filter { wanted.contains($0.path) })
+    }
+
+    private func performMirror(_ items: [TrashCandidate]) async {
+        let d = UserDefaults.standard
+        var summary: [String] = []
+
+        if d.bool(forKey: Prefs.mirrorPhotos) {
+            mirrorStatus = "Removing from Photos…"
+            switch await PhotosDelete.delete(items) {
+            case .deleted(let count, let notInPhotos):
+                AppLog.write("deleted \(count) photo(s) from Photos (\(notInPhotos) were not in Photos)")
+                if count > 0 { summary.append("\(count) deleted from Photos") }
+            case .cancelled:
+                AppLog.write("deleting from Photos was cancelled in the system dialog")
+                summary.append("Photos: cancelled")
+            case .denied:
+                AppLog.write("problem: Photos Sync is not allowed to change the Photos library")
+                if d.bool(forKey: Prefs.notifyOnError) {
+                    notify("Photos Sync cannot delete from Photos",
+                           "Allow it in System Settings, Privacy & Security, Photos.")
+                }
+                mirrorStatus = "Not allowed to delete from Photos."
+                mirroredPaths.formUnion(items.map(\.path))  // do not ask again every hour
+                saveMirrored()
+                return
+            case .failed(let message):
+                AppLog.write("problem: deleting from Photos failed. \(message)")
+                mirrorStatus = "Deleting from Photos failed, see the log."
+                return  // not marked as done: tried again next time
+            }
+        }
+        if d.bool(forKey: Prefs.mirrorDisk) {
+            let result = Deletion.moveToTrash(items)
+            AppLog.write("moved \(result.moved) file(s) to the Trash. \(result.failures.joined(separator: "; "))")
+            if result.moved > 0 { summary.append("\(result.moved) moved to the Trash") }
+        }
+        mirroredPaths.formUnion(items.map(\.path))
+        saveMirrored()
+        pendingMirror = []
+        lastMirrorSignature = ""
+        if !summary.isEmpty {
+            mirrorStatus = summary.joined(separator: ", ") + " at " + Date().formatted(date: .omitted, time: .shortened)
         }
     }
 
@@ -643,7 +786,10 @@ final class AppModel: ObservableObject {
         let old = state
         state = new
         if case .waiting = new {
-            if case .waiting = old {} else { Task { await autoDeletePass() } }  // a sync pass just finished
+            if case .waiting = old {} else {  // a sync pass just finished
+                Task { await autoDeletePass() }
+                Task { await mirrorPass() }
+            }
         }
         switch new {
         case .idle, .syncing, .waiting:
