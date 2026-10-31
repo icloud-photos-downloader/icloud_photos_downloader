@@ -4,12 +4,12 @@ import locale
 import os
 import runpy
 import shutil
-import zoneinfo
 from argparse import ArgumentError
 from typing import Sequence, Tuple
 from unittest import TestCase, mock
 
 import pytest
+from tzlocal import get_localzone
 
 from icloudpd.cli import format_help, parse
 from icloudpd.config import GlobalConfig, UserConfig
@@ -357,7 +357,7 @@ class CliTestCase(TestCase):
                         align_raw=RawTreatmentPolicy.AS_IS,
                         file_match_policy=FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
                         skip_created_before=datetime.datetime(
-                            year=2025, month=1, day=2, tzinfo=zoneinfo.ZoneInfo(key="Etc/UTC")
+                            year=2025, month=1, day=2, tzinfo=get_localzone()
                         ),
                         skip_created_after=datetime.timedelta(days=2),
                         skip_photos=False,
@@ -627,6 +627,7 @@ class CliTestCase(TestCase):
         self.assertEqual(result.exit_code, 2, "exit code")
 
         self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+
     def test_starter_propagates_exit_code(self) -> None:
         """Entry script used for binaries must pass cli() return code to sys.exit"""
         starter_path = os.path.join(

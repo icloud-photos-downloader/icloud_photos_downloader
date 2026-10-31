@@ -215,7 +215,8 @@ def skip_created_generator(
 
 def ensure_tzinfo(tz: datetime.tzinfo, input: datetime.datetime) -> datetime.datetime:
     if input.tzinfo is None:
-        return input.astimezone(tz)
+        # attach tz; astimezone() would read the naive time in the system time zone instead
+        return input.replace(tzinfo=tz)
     return input
 
 

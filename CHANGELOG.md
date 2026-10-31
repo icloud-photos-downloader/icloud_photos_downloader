@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: sign in with a security key (FIDO, e.g. YubiKey) on accounts that use them instead of six-digit codes [#583](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/583)
+- fix: `--skip-created-before`/`--skip-created-after` dates are read in the same time zone icloudpd uses for folders and EXIF dates; they used the system clock's zone, which differs on Windows when `TZ` is set
 - fix: reject `--skip-created-before` later than `--skip-created-after` instead of silently skipping all assets [#1370](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1370)
 - fix: executables always exit with code 0, even after errors [#1372](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1372)
 - fix: the `macos-amd64` binary in 1.32.3 was built for Apple Silicon and didn't run on Intel Macs (`bad CPU type in executable`), and the macOS wheel and npm `darwin-x64` package contained the same binary; the macOS binaries are now built on Apple Silicon (`macos-arm64`, new) and Intel (`macos-amd64`), each wheel and npm package gets the matching one [#1352](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1352)
