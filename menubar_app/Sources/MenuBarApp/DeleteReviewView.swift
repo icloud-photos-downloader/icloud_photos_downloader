@@ -33,15 +33,17 @@ final class ReviewModel: ObservableObject {
     }
 
     /// Dry run, delete from iCloud, or delete from iCloud and move the downloaded files to the Trash.
-    func run(_ mode: DeleteMode) {
+    func run(_ mode: DeleteMode, app: AppModel) {
         guard let items = result?.candidates, !items.isEmpty else { return }
         working = true
         output = ""
         Task {
             let (ok, text) = await Deletion.deleteFromICloud(items, dryRun: mode == .dryRun)
             var report = text
+            if ok, mode != .dryRun { app.recordEvents(.deletedICloud, items) }
             if ok, mode == .iCloudAndDisk {
                 let trashed = Deletion.moveToTrash(items)
+                app.recordEvents(.trashedDisk, trashed.items)
                 report += "\nMoved \(trashed.moved) file(s) to the Trash."
                 if !trashed.failures.isEmpty { report += "\nNot moved: " + trashed.failures.joined(separator: "; ") }
             }
@@ -54,6 +56,7 @@ final class ReviewModel: ObservableObject {
 
 struct DeleteReviewView: View {
     @StateObject private var model = ReviewModel()
+    @EnvironmentObject var app: AppModel
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -86,7 +89,7 @@ struct DeleteReviewView: View {
                     }
                     .frame(minHeight: 120)
                     HStack {
-                        Button("Dry run") { model.run(.dryRun) }
+                        Button("Dry run") { model.run(.dryRun, app: app) }
                         Button("Delete from iCloud…", role: .destructive) { model.confirmMode = .iCloud }
                         Button("Delete from iCloud & Disk…", role: .destructive) { model.confirmMode = .iCloudAndDisk }
                         if model.working { ProgressView().controlSize(.small) }
@@ -107,9 +110,9 @@ struct DeleteReviewView: View {
             titleVisibility: .visible
         ) {
             if model.confirmMode == .iCloudAndDisk {
-                Button("Delete from iCloud and move files to Trash", role: .destructive) { model.run(.iCloudAndDisk) }
+                Button("Delete from iCloud and move files to Trash", role: .destructive) { model.run(.iCloudAndDisk, app: app) }
             } else {
-                Button("Delete from iCloud", role: .destructive) { model.run(.iCloud) }
+                Button("Delete from iCloud", role: .destructive) { model.run(.iCloud, app: app) }
             }
             Button("Cancel", role: .cancel) {}
         } message: {

@@ -1,5 +1,6 @@
 import AppKit
 import SwiftUI
+import UniformTypeIdentifiers
 
 /// "Sync Activity": the files icloudpd downloaded recently, newest first. Click a file to open it.
 struct ActivityView: View {
@@ -66,6 +67,18 @@ struct SyncBadge: View {
     }
 }
 
+/// Small red trash can on the icon of a file that was deleted.
+private struct DeletedBadge: View {
+    var body: some View {
+        Image(systemName: "trash.fill")
+            .font(.system(size: 7, weight: .bold))
+            .foregroundStyle(.white)
+            .frame(width: 14, height: 14)
+            .background(Circle().fill(Color.red))
+            .offset(x: 4, y: 4)
+    }
+}
+
 private struct ActivityRow: View {
     let file: ActivityFile
     let imported: Bool
@@ -73,9 +86,10 @@ private struct ActivityRow: View {
     var body: some View {
         let exists = FileManager.default.fileExists(atPath: file.path)
         HStack(spacing: 10) {
-            Image(nsImage: NSWorkspace.shared.icon(forFile: file.path))
+            Image(nsImage: icon(exists: exists))
                 .resizable().frame(width: 32, height: 32)
                 .opacity(exists ? 1 : 0.4)
+                .overlay(alignment: .bottomTrailing) { if file.event != .downloaded { DeletedBadge() } }
             VStack(alignment: .leading, spacing: 2) {
                 Text(file.name).lineLimit(1).truncationMode(.middle)
                 Text(subtitle(exists: exists)).font(.caption).foregroundStyle(.secondary)
@@ -96,8 +110,21 @@ private struct ActivityRow: View {
         .onTapGesture { if exists { open() } }
     }
 
+    /// A file that no longer exists has no icon of its own; use the one of its type.
+    private func icon(exists: Bool) -> NSImage {
+        if exists || file.event == .downloaded { return NSWorkspace.shared.icon(forFile: file.path) }
+        let type = UTType(filenameExtension: URL(fileURLWithPath: file.path).pathExtension) ?? .data
+        return NSWorkspace.shared.icon(for: type)
+    }
+
     private func subtitle(exists: Bool) -> String {
         let time = Date(timeIntervalSince1970: file.time).formatted(date: .abbreviated, time: .shortened)
+        switch file.event {
+        case .deletedICloud: return "Deleted from iCloud · \(time)"
+        case .deletedPhotos: return "Deleted from Photos · \(time)"
+        case .trashedDisk: return "Moved to Trash · \(time)"
+        case .downloaded: break
+        }
         guard exists else { return "\(time) · file not found" }
         let marker = imported ? " · in Photos" : ""
         guard let size = file.size else { return time + marker }

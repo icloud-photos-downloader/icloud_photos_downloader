@@ -154,12 +154,26 @@ final class AppModel: ObservableObject {
         }
     }
 
+    /// Adds the deletions the app carries out to the history (Sync Activity), next to the downloads.
+    func recordEvents(_ kind: ActivityFile.Kind, _ items: [TrashCandidate]) {
+        guard !items.isEmpty else { return }
+        let now = Date().timeIntervalSince1970
+        let events = items.enumerated().map { index, item in
+            ActivityFile(name: item.name, path: item.path, size: item.size > 0 ? item.size : nil,
+                         time: now + Double(index) * 0.001, kind: kind.rawValue)
+        }
+        activity = (events + activity).sorted { $0.time > $1.time }.prefix(200).map { $0 }
+        saveActivity()
+    }
+
+    private var downloadCount: Int { activity.filter { $0.event == .downloaded }.count }
+
     var activitySummary: String {
         if case .syncing(_, let done, let total) = state {
             return total > 0 ? "Syncing \(done) of \(total) files" : "Syncing…"
         }
         if state == .syncRequested { return "Syncing…" }
-        return activity.isEmpty ? "No files synced yet" : "\(activity.count) files synced recently"
+        return downloadCount == 0 ? "No files synced yet" : "\(downloadCount) files synced recently"
     }
 
     // MARK: - Start / stop
@@ -523,6 +537,7 @@ final class AppModel: ObservableObject {
                 if result.ok {
                     deletedFromICloud.formUnion(todo.map(\.id))
                     saveDeletedFromICloud()
+                    recordEvents(.deletedICloud, todo)
                     summary.append("\(todo.count) deleted from iCloud")
                 } else {
                     deletionStatus = "Deleting from iCloud failed, see the log."
@@ -537,6 +552,7 @@ final class AppModel: ObservableObject {
             let ready = items.filter { !wantICloud || deletedFromICloud.contains($0.id) }
             let result = Deletion.moveToTrash(ready)
             AppLog.write("moved \(result.moved) file(s) to the Trash. \(result.failures.joined(separator: "; "))")
+            recordEvents(.trashedDisk, result.items)
             if result.moved > 0 { summary.append("\(result.moved) moved to the Trash") }
         }
         pendingDeletion = []
@@ -638,8 +654,9 @@ final class AppModel: ObservableObject {
         if d.bool(forKey: Prefs.mirrorPhotos) {
             mirrorStatus = "Removing from Photos…"
             switch await PhotosDelete.delete(items) {
-            case .deleted(let count, let notInPhotos):
+            case .deleted(let count, let notInPhotos, let deleted):
                 AppLog.write("deleted \(count) photo(s) from Photos (\(notInPhotos) were not in Photos)")
+                recordEvents(.deletedPhotos, deleted)
                 if count > 0 { summary.append("\(count) deleted from Photos") }
             case .cancelled:
                 AppLog.write("deleting from Photos was cancelled in the system dialog")
@@ -663,6 +680,7 @@ final class AppModel: ObservableObject {
         if d.bool(forKey: Prefs.mirrorDisk) {
             let result = Deletion.moveToTrash(items)
             AppLog.write("moved \(result.moved) file(s) to the Trash. \(result.failures.joined(separator: "; "))")
+            recordEvents(.trashedDisk, result.items)
             if result.moved > 0 { summary.append("\(result.moved) moved to the Trash") }
         }
         mirroredPaths.formUnion(items.map(\.path))

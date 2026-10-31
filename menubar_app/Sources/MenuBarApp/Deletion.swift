@@ -46,19 +46,21 @@ enum Deletion {
     }
 
     /// Moves the downloaded files to the Trash, so they can still be restored from there.
-    static func moveToTrash(_ items: [TrashCandidate]) -> (moved: Int, failures: [String]) {
+    static func moveToTrash(_ items: [TrashCandidate]) -> (moved: Int, failures: [String], items: [TrashCandidate]) {
         var moved = 0
+        var movedItems: [TrashCandidate] = []
         var failures: [String] = []
         for item in items {
             do {
                 try FileManager.default.trashItem(at: URL(fileURLWithPath: item.path), resultingItemURL: nil)
                 moved += 1
+                movedItems.append(item)
             } catch {
                 failures.append("\(item.name): \(error.localizedDescription)")
             }
         }
         appendAudit(mode: "TRASH", items: items)
-        return (moved, failures)
+        return (moved, failures, movedItems)
     }
 }
 

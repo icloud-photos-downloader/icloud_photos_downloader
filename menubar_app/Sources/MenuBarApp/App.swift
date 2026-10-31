@@ -15,7 +15,7 @@ struct ICloudpdMenuBarApp: App {
         .menuBarExtraStyle(.window)
 
         Window("Photos Sync Settings", id: "settings") { SettingsView().environmentObject(model) }
-        Window("iCloud deletions", id: "review") { DeleteReviewView() }
+        Window("iCloud deletions", id: "review") { DeleteReviewView().environmentObject(model) }
     }
 }
 

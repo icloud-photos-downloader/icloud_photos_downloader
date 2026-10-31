@@ -7,7 +7,7 @@ import Photos
 /// PhotoKit only sees the System Photo Library.
 enum PhotosDelete {
     enum Outcome {
-        case deleted(count: Int, notInPhotos: Int)
+        case deleted(count: Int, notInPhotos: Int, items: [TrashCandidate])
         case cancelled
         case denied
         case failed(String)
@@ -21,19 +21,20 @@ enum PhotosDelete {
         guard await PHPhotoLibrary.requestAuthorization(for: .readWrite) == .authorized else { return .denied }
 
         var assets: [PHAsset] = []
+        var matched: [TrashCandidate] = []
         var missing = 0
         for item in items where !isSidecar(item.path) {
             let found = assetsNamed(item.name, around: TimeInterval(item.createdUnix))
-            if found.isEmpty { missing += 1 } else { assets += found }
+            if found.isEmpty { missing += 1 } else { assets += found; matched.append(item) }
         }
-        guard !assets.isEmpty else { return .deleted(count: 0, notInPhotos: missing) }
+        guard !assets.isEmpty else { return .deleted(count: 0, notInPhotos: missing, items: []) }
 
         NSApp.activate(ignoringOtherApps: true)  // so that the system dialog is seen
         do {
             try await PHPhotoLibrary.shared().performChanges {
                 PHAssetChangeRequest.deleteAssets(assets as NSArray)
             }
-            return .deleted(count: assets.count, notInPhotos: missing)
+            return .deleted(count: assets.count, notInPhotos: missing, items: matched)
         } catch {
             let ns = error as NSError
             if ns.domain == PHPhotosErrorDomain, ns.code == PHPhotosError.userCancelled.rawValue { return .cancelled }

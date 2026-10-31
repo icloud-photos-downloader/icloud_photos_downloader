@@ -23,7 +23,18 @@ struct ActivityFile: Codable, Identifiable, Hashable {
     let path: String
     let size: Int64?
     let time: Double
-    var id: String { "\(path)|\(time)" }
+    /// nil for a download (what icloudpd reports); the app adds the deletions it carries out
+    var kind: String? = nil
+    var id: String { "\(kind ?? "downloaded")|\(path)|\(time)" }
+
+    enum Kind: String {
+        case downloaded
+        case deletedICloud
+        case deletedPhotos
+        case trashedDisk
+    }
+
+    var event: Kind { Kind(rawValue: kind ?? "") ?? .downloaded }
 }
 
 struct ActivityResponse: Decodable {

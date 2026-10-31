@@ -27,8 +27,8 @@ delete from iCloud (and the disk) the photos you delete in Photos.
   *Sync now* checks right away. Only photos that are not downloaded yet are fetched.
 - **Shows the state in the menu bar icon and the panel**: idle, syncing with progress, up to date with the time to the
   next sync, two-factor code needed, problem.
-- **Keeps a history of synced files** (Sync Activity, like OneDrive's), where each file can be opened or revealed in
-  Finder.
+- **Keeps a history** (Sync Activity, like OneDrive's) of the files that were synced and of the deletions the app
+  carried out (from iCloud, from Photos, moved to the Trash), where each file can be opened or revealed in Finder.
 - **Imports downloaded photos into Apple Photos** automatically (off by default).
 - **Mirrors deletions in both directions**: photos you delete in Photos can be deleted from iCloud and from the disk
   (moved to the Trash), and photos you delete in iCloud can be removed from the disk and from Photos. By hand or
@@ -101,8 +101,9 @@ Permissions the app may ask for:
 - The row with the green check opens **Sync Activity**; the gear opens **Settings**; the three dots open the web UI,
   the log, and Quit.
 
-**Sync Activity** lists the files that were synced, newest first. Click a file to open it, or use the dots for *Show in
-Finder* and *Copy path*. A file that was imported is marked *in Photos*. The list survives restarts.
+**Sync Activity** lists the files that were synced, newest first, and the deletions the app carried out, marked with a red
+trash can and *Deleted from iCloud*, *Deleted from Photos* or *Moved to Trash*. Click a file to open it, or use the dots
+for *Show in Finder* and *Copy path*. A file that was imported is marked *in Photos*. The list survives restarts.
 
 <p align="center"><img src="docs/images/panel-activity.png" width="320" alt="Sync Activity"></p>
 
