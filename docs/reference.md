@@ -243,6 +243,8 @@ This is a list of all options available for the command line interface (CLI) of 
 
 :   The timestamp when the asset was taken (aka "created date") as reported by iCloud is used for calculating the age of the asset. For example, an asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. The same timestamp is used for the folder structure in the current system.
 
+:   Assets for which iCloud reports no creation date are not deleted, because their age is unknown. icloudpd logs a warning for each of them.
+
 :   If the parameter is not specified, then nothing is deleted from iCloud.
 
 :   Only assets that the run looks at are considered for deletion. With [`--recent`](recent-parameter), assets beyond the first X are not checked, and with [`--until-found`](until-found-parameter), assets after the point where the run stops are not checked, so they stay in iCloud. icloudpd logs a warning at startup when these are combined.

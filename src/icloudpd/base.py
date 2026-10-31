@@ -1153,6 +1153,22 @@ def core_single_run(
                                 if (
                                     passer_result
                                     and user_config.keep_icloud_recent_days is not None
+                                    and not item.has_asset_date
+                                ):
+                                    # the age can't be known; asset_date fell back to 1970
+                                    logger.warning(
+                                        "Not deleting %s from iCloud: it has no creation date",
+                                        build_filename_with_policies(
+                                            user_config.file_match_policy,
+                                            build_filename_cleaner(
+                                                user_config.keep_unicode_in_filenames
+                                            ),
+                                            item,
+                                        ),
+                                    )
+                                elif (
+                                    passer_result
+                                    and user_config.keep_icloud_recent_days is not None
                                 ):
                                     created_date = item.created.astimezone(get_localzone())
                                     age_days = (now - created_date).days
