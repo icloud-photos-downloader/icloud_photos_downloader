@@ -154,7 +154,7 @@ private struct GeneralPane: View {
                         }
                     }
                 if let message = login.error { Text(message).foregroundStyle(.red).font(.caption) }
-                Text("Sync changes apply after Stop and Start syncing.").font(.caption).foregroundStyle(.secondary)
+                Text("Changes to the sync settings restart the sync by themselves.").font(.caption).foregroundStyle(.secondary)
             }
         }
         .formStyle(.grouped)

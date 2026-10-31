@@ -60,6 +60,9 @@ final class AppModel: ObservableObject {
     private var logOffset: UInt64 = 0
     private var retries = 0
     private var lastFailureAt: Date?
+    /// the arguments the running icloudpd was started with; when the settings no longer give the same, it restarts
+    private var launchedArgs: [String] = []
+    private var restartTask: Task<Void, Never>?
     /// false from the moment a problem is shown until a sync pass ends without an error; until then the
     /// problem stays in the header (icloudpd itself just reports "waiting" again after a failed pass)
     private var problemCleared = true
@@ -105,6 +108,9 @@ final class AppModel: ObservableObject {
         }
         source.resume()
         termSource = source
+        NotificationCenter.default.addObserver(
+            forName: UserDefaults.didChangeNotification, object: nil, queue: .main
+        ) { [weak self] _ in MainActor.assumeIsolated { self?.settingsMayHaveChanged() } }
         startLibraryWatch()
         if UserDefaults.standard.bool(forKey: Prefs.startWatchingAtLaunch) {
             DispatchQueue.main.async { self.startWatching() }
@@ -230,7 +236,9 @@ final class AppModel: ObservableObject {
             set(.stopped)  // a normal state, not an error
             return
         }
-        let p = Launcher.makeProcess(args: Launcher.watchArgs())
+        let args = Launcher.watchArgs()
+        launchedArgs = args
+        let p = Launcher.makeProcess(args: args)
         let logURL = AppLog.url
         if !FileManager.default.fileExists(atPath: logURL.path) {
             FileManager.default.createFile(atPath: logURL.path, contents: nil)
@@ -254,6 +262,20 @@ final class AppModel: ObservableObject {
             startPolling()
         } catch {
             giveUp(Failure(kind: .other, summary: "Cannot start icloudpd", detail: error.localizedDescription))
+        }
+    }
+
+    /// A sync setting was changed while icloudpd runs: it only knows the values it was started with, so it is
+    /// restarted (after a pause, so that a few changes in a row cost one restart).
+    private func settingsMayHaveChanged() {
+        guard isRunning, Launcher.watchArgs() != launchedArgs else { return }
+        restartTask?.cancel()
+        restartTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 2_000_000_000)
+            guard !Task.isCancelled, let self, self.isRunning, Launcher.watchArgs() != self.launchedArgs else { return }
+            AppLog.write("settings changed, restarting the sync")
+            await self.stopWatchingAndWait()
+            self.startWatching()
         }
     }
 
@@ -302,6 +324,7 @@ final class AppModel: ObservableObject {
 
     private func poll() async {
         guard isRunning else { return }
+        settingsMayHaveChanged()  // also catches changes made outside the app, which send no notification
         checkLogForFailure()
         guard let status = await StatusClient.fetch() else { return }  // web server not up yet
         if let total = status.downloadedTotal, total != lastDownloadedTotal {
