@@ -107,8 +107,12 @@ class PyiCloudService:
             self.HOME_ENDPOINT = "https://www.icloud.com"
             self.SETUP_ENDPOINT = "https://setup.icloud.com/setup/ws/1"
         elif domain == "cn":
-            self.AUTH_ROOT_ENDPOINT = "https://idmsa.apple.com.cn"
-            self.AUTH_ENDPOINT = "https://idmsa.apple.com.cn/appleauth/auth"
+            # Apple serves China-region iCloud data from .com.cn, but its
+            # identity endpoint currently returns HTTP 503 on .com.cn.
+            # Keep China-region service endpoints while authenticating via
+            # the global identity endpoint, matching www.icloud.com.cn.
+            self.AUTH_ROOT_ENDPOINT = "https://idmsa.apple.com"
+            self.AUTH_ENDPOINT = "https://idmsa.apple.com/appleauth/auth"
             self.HOME_ENDPOINT = "https://www.icloud.com.cn"
             self.SETUP_ENDPOINT = "https://setup.icloud.com.cn/setup/ws/1"
         else:
