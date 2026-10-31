@@ -6,7 +6,11 @@ from requests import Response, Timeout
 from requests.exceptions import ConnectionError
 from urllib3.exceptions import NewConnectionError
 
-from pyicloud_ipd.asset_version import AssetVersion, add_suffix_to_filename
+from pyicloud_ipd.asset_version import (
+    AssetVersion,
+    add_suffix_to_filename,
+    calculate_version_filename,
+)
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
 from .exceptions import (
@@ -103,9 +107,17 @@ def disambiguate_filenames(
     _sizes: Sequence[AssetVersionSize],
     photo_asset: "PhotoAsset",
     lp_filename_generator: Callable[[str], str],
+    base_filename: str,
 ) -> Tuple[Dict[AssetVersionSize, AssetVersion], Dict[AssetVersionSize, str]]:
+    """base_filename is the asset filename as it is written locally (file match policy and
+    filename cleaner applied), so overrides keep e.g. the name-id7 suffix"""
     _results: Dict[AssetVersionSize, AssetVersion] = {}
     _filename_overrides: Dict[AssetVersionSize, str] = {}
+
+    def version_filename(version: AssetVersion, size: VersionSize) -> str:
+        return calculate_version_filename(
+            base_filename, version, size, lp_filename_generator, photo_asset.item_type
+        )
 
     # add those that were requested
     for _size in _sizes:
@@ -123,15 +135,11 @@ def disambiguate_filenames(
                 )
         else:
             if AssetVersionSize.ADJUSTED in _results:
-                original_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ORIGINAL],
-                    AssetVersionSize.ORIGINAL,
-                    lp_filename_generator,
+                original_filename = version_filename(
+                    _results[AssetVersionSize.ORIGINAL], AssetVersionSize.ORIGINAL
                 )
-                adjusted_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ADJUSTED],
-                    AssetVersionSize.ADJUSTED,
-                    lp_filename_generator,
+                adjusted_filename = version_filename(
+                    _results[AssetVersionSize.ADJUSTED], AssetVersionSize.ADJUSTED
                 )
                 if original_filename == adjusted_filename:
                     # Store filename override for adjusted version
@@ -149,25 +157,19 @@ def disambiguate_filenames(
                 )
         else:
             # Check for filename conflicts and add disambiguating suffix if needed
-            alternative_filename = photo_asset.calculate_version_filename(
-                _results[AssetVersionSize.ALTERNATIVE],
-                AssetVersionSize.ALTERNATIVE,
-                lp_filename_generator,
+            alternative_filename = version_filename(
+                _results[AssetVersionSize.ALTERNATIVE], AssetVersionSize.ALTERNATIVE
             )
             alt_adjusted_filename: str | None = None
             alt_original_filename: str | None = None
 
             if AssetVersionSize.ADJUSTED in _results:
-                alt_adjusted_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ADJUSTED],
-                    AssetVersionSize.ADJUSTED,
-                    lp_filename_generator,
+                alt_adjusted_filename = version_filename(
+                    _results[AssetVersionSize.ADJUSTED], AssetVersionSize.ADJUSTED
                 )
             if AssetVersionSize.ORIGINAL in _results:
-                alt_original_filename = photo_asset.calculate_version_filename(
-                    _results[AssetVersionSize.ORIGINAL],
-                    AssetVersionSize.ORIGINAL,
-                    lp_filename_generator,
+                alt_original_filename = version_filename(
+                    _results[AssetVersionSize.ORIGINAL], AssetVersionSize.ORIGINAL
                 )
 
             if (alt_adjusted_filename and alternative_filename == alt_adjusted_filename) or (

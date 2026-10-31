@@ -12,7 +12,7 @@ from tzlocal import get_localzone
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.photos import PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
 
@@ -39,6 +39,7 @@ def autodelete_photos(
     _sizes: Sequence[AssetVersionSize],
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
+    filename_builder: Callable[[PhotoAsset], str],
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -77,15 +78,22 @@ def autodelete_photos(
 
         download_dir = os.path.join(directory, date_path)
 
+        # the name the file was downloaded with (file match policy and filename cleaner applied)
+        base_filename = filename_builder(media)
+
         paths: Set[str] = set({})
         _size: VersionSize
         versions, filename_overrides = disambiguate_filenames(
-            media.versions_with_raw_policy(raw_policy), _sizes, media, lp_filename_generator
+            media.versions_with_raw_policy(raw_policy),
+            _sizes,
+            media,
+            lp_filename_generator,
+            base_filename,
         )
         for _size, _version in versions.items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 version_filename = calculate_version_filename(
-                    media.filename,
+                    base_filename,
                     _version,
                     _size,
                     lp_filename_generator,
@@ -99,7 +107,7 @@ def autodelete_photos(
         for _size, _version in media.versions_with_raw_policy(raw_policy).items():
             if _size not in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:
                 version_filename = calculate_version_filename(
-                    media.filename,
+                    base_filename,
                     _version,
                     _size,
                     lp_filename_generator,
