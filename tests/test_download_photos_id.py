@@ -2312,12 +2312,12 @@ class DownloadPhotoNameIDTestCase(TestCase):
         )
         # Dates are parsed as local timezone, so compare with local timezone
         local_tz = get_localzone()
-        created_7407 = datetime.datetime(
-            2018, 7, 30, 11, 44, 5, 108000, datetime.timezone.utc
-        ).astimezone(local_tz)
-        created_7408 = datetime.datetime(
-            2018, 7, 30, 11, 44, 10, 176000, datetime.timezone.utc
-        ).astimezone(local_tz)
+        created_7407 = datetime.datetime(2018, 7, 30, 11, 44, 5, 108000, datetime.UTC).astimezone(
+            local_tz
+        )
+        created_7408 = datetime.datetime(2018, 7, 30, 11, 44, 10, 176000, datetime.UTC).astimezone(
+            local_tz
+        )
         target_date = datetime.datetime(2018, 7, 31, 0, 0, 0, 0, tzinfo=local_tz)
 
         self.assertIn(
@@ -2399,9 +2399,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
         # Dates are parsed as local timezone, so compare with local timezone
         local_tz = get_localzone()
-        created_7409 = datetime.datetime(
-            2018, 7, 31, 7, 22, 24, 816000, datetime.timezone.utc
-        ).astimezone(local_tz)
+        created_7409 = datetime.datetime(2018, 7, 31, 7, 22, 24, 816000, datetime.UTC).astimezone(
+            local_tz
+        )
         target_date = datetime.datetime(2018, 7, 31, 0, 0, 0, 0, tzinfo=local_tz)
 
         self.assertIn(
