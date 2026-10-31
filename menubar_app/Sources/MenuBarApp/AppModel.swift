@@ -439,6 +439,18 @@ final class AppModel: ObservableObject {
 
     // MARK: - Automatic deletion
 
+    private var lastDeletionTask: Task<Void, Never>?
+
+    /// Deleting in both directions touches the same files, so the passes run one after another and never
+    /// at the same time.
+    private func runSerialized(_ work: @escaping @MainActor () async -> Void) {
+        let previous = lastDeletionTask
+        lastDeletionTask = Task {
+            await previous?.value
+            await work()
+        }
+    }
+
     private static func loadDeletedFromICloud() -> Set<String> {
         guard let data = try? Data(contentsOf: supportFile("deleted-from-icloud.json")),
               let ids = try? JSONDecoder().decode([String].self, from: data) else { return [] }
@@ -501,9 +513,9 @@ final class AppModel: ObservableObject {
 
     private func handleNotificationAction(_ action: String) {
         switch action {
-        case "confirmDelete": Task { await confirmPendingDeletion() }
+        case "confirmDelete": runSerialized { await self.confirmPendingDeletion() }
         case "skipDelete": AppLog.write("deletion skipped by the user")
-        case "confirmMirror": Task { await confirmPendingMirror() }
+        case "confirmMirror": runSerialized { await self.confirmPendingMirror() }
         case "skipMirror": AppLog.write("deleting what was deleted in iCloud skipped by the user")
         default: break
         }
@@ -633,7 +645,7 @@ final class AppModel: ObservableObject {
         alert.addButton(withTitle: "Remove")
         alert.addButton(withTitle: "Cancel")
         NSApp.activate(ignoringOtherApps: true)
-        if alert.runModal() == .alertFirstButtonReturn { Task { await confirmPendingMirror() } }
+        if alert.runModal() == .alertFirstButtonReturn { runSerialized { await self.confirmPendingMirror() } }
     }
 
     /// The user agreed: look again, because iCloud may have changed, and act on what is still deleted.
@@ -805,8 +817,8 @@ final class AppModel: ObservableObject {
         state = new
         if case .waiting = new {
             if case .waiting = old {} else {  // a sync pass just finished
-                Task { await autoDeletePass() }
-                Task { await mirrorPass() }
+                runSerialized { await self.autoDeletePass() }
+                runSerialized { await self.mirrorPass() }
             }
         }
         switch new {

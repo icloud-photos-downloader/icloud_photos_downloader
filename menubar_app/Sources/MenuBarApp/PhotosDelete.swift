@@ -16,20 +16,27 @@ enum PhotosDelete {
     /// How far a photo's date in Photos may differ from the modification date of the downloaded file.
     static let dateTolerance: TimeInterval = 120
 
-    @MainActor
+    /// Nothing here runs on the main thread: the first access to the Photos library can take a long time, and
+    /// the permission prompt must not freeze the app while it waits for an answer.
     static func delete(_ items: [TrashCandidate]) async -> Outcome {
+        await MainActor.run { NSApp.activate(ignoringOtherApps: true) }  // so that the permission prompt is seen
         guard await PHPhotoLibrary.requestAuthorization(for: .readWrite) == .authorized else { return .denied }
 
-        var assets: [PHAsset] = []
-        var matched: [TrashCandidate] = []
-        var missing = 0
-        for item in items where !isSidecar(item.path) {
-            let found = assetsNamed(item.name, around: TimeInterval(item.createdUnix))
-            if found.isEmpty { missing += 1 } else { assets += found; matched.append(item) }
-        }
+        let photoItems = items.filter { !isSidecar($0.path) }
+        let (assets, matched, missing) = await Task.detached(priority: .userInitiated) {
+            () -> ([PHAsset], [TrashCandidate], Int) in
+            var assets: [PHAsset] = []
+            var matched: [TrashCandidate] = []
+            var missing = 0
+            for item in photoItems {
+                let found = assetsNamed(item.name, around: TimeInterval(item.createdUnix))
+                if found.isEmpty { missing += 1 } else { assets += found; matched.append(item) }
+            }
+            return (assets, matched, missing)
+        }.value
         guard !assets.isEmpty else { return .deleted(count: 0, notInPhotos: missing, items: []) }
 
-        NSApp.activate(ignoringOtherApps: true)  // so that the system dialog is seen
+        await MainActor.run { NSApp.activate(ignoringOtherApps: true) }  // so that the confirmation dialog is seen
         do {
             try await PHPhotoLibrary.shared().performChanges {
                 PHAssetChangeRequest.deleteAssets(assets as NSArray)

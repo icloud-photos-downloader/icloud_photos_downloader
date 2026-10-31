@@ -51,6 +51,7 @@ enum Deletion {
         var movedItems: [TrashCandidate] = []
         var failures: [String] = []
         for item in items {
+            guard FileManager.default.fileExists(atPath: item.path) else { continue }  // already gone: nothing to do
             do {
                 try FileManager.default.trashItem(at: URL(fileURLWithPath: item.path), resultingItemURL: nil)
                 moved += 1
