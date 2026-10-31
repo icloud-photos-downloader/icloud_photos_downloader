@@ -32,7 +32,11 @@ Access to iCloud.com is blocked from mainland China. `icloudpd` can be used with
 
 ## FIDO
 
-Authentication to iCloud with hardware keys (FIDO) is not supported.
+Accounts with security keys (FIDO, e.g. YubiKey) don't get a six-digit code. `icloudpd` asks for one of the registered keys instead, which must be plugged into the machine running `icloudpd`.
+
+To use `icloudpd` on a machine without the key, sign in once with [`--auth-only`](auth-only-parameter) where the key is and copy the [`--cookie-directory`](cookie-directory-parameter) over.
+
+The [`webui`](mfa-provider-parameter) MFA provider does not support security keys.
 
 ## ADP
 

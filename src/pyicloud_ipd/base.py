@@ -6,12 +6,14 @@ import json
 import logging
 import time
 import typing
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import partial
 from itertools import chain
 from os import mkdir, path
 from re import Pattern, match
 from tempfile import gettempdir
+from threading import Event
 from typing import Any, Callable, Dict, Generator, List, Mapping, NamedTuple, Sequence
 from uuid import uuid1, uuid4
 
@@ -889,6 +891,129 @@ class PyiCloudService:
         except PyiCloudAPIResponseException:
             LOGGER.error("Session trust failed.")
             return False
+
+    def get_security_key_challenge(self) -> Dict[str, Any] | None:
+        """Returns the WebAuthn challenge if the account signs in with security keys (FIDO)."""
+        headers = self._get_auth_headers({"Accept": "application/json"})
+        try:
+            if self.response_observer:
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                    )
+                )
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                data = self.session.get(self.AUTH_ENDPOINT, headers=headers).json()
+        except (PyiCloudAPIResponseException, ValueError):
+            return None
+
+        challenge = data.get("fsaChallenge") if isinstance(data, dict) else None
+        if not isinstance(challenge, dict) or not all(
+            challenge.get(key) for key in ("challenge", "keyHandles", "rpId")
+        ):
+            return None
+        return {**challenge, "keyNames": data.get("keyNames") or []}
+
+    def confirm_security_key(self, challenge: Mapping[str, Any]) -> bool:
+        """Signs the challenge with the security key that is touched and trusts the session."""
+        # fido2 loads cryptography, so import it only for accounts that use security keys
+        from fido2.client import ClientError, DefaultClientDataCollector, Fido2Client
+        from fido2.hid import CtapHidDevice
+        from fido2.webauthn import (
+            AuthenticationResponse,
+            PublicKeyCredentialDescriptor,
+            PublicKeyCredentialRequestOptions,
+            PublicKeyCredentialType,
+            UserVerificationRequirement,
+        )
+
+        def b64url_decode(value: str) -> bytes:
+            return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
+
+        def b64_encode(value: bytes) -> str:
+            return base64.b64encode(value).decode()
+
+        devices = list(CtapHidDevice.list_devices())
+        if not devices:
+            LOGGER.error("No security key found")
+            return False
+
+        options = PublicKeyCredentialRequestOptions(
+            challenge=b64url_decode(challenge["challenge"]),
+            rp_id=challenge["rpId"],
+            allow_credentials=[
+                PublicKeyCredentialDescriptor(
+                    id=b64url_decode(key_handle), type=PublicKeyCredentialType.PUBLIC_KEY
+                )
+                for key_handle in challenge["keyHandles"]
+            ],
+            user_verification=UserVerificationRequirement.DISCOURAGED,
+        )
+        cancel = Event()
+
+        def sign(device: CtapHidDevice) -> AuthenticationResponse:
+            client = Fido2Client(
+                device, client_data_collector=DefaultClientDataCollector("https://apple.com")
+            )
+            return client.get_assertion(options, event=cancel).get_response(0)
+
+        # Like a browser: ask every key, use the first one touched
+        assertion = None
+        with ThreadPoolExecutor(len(devices)) as executor:
+            try:
+                for future in as_completed([executor.submit(sign, device) for device in devices]):
+                    try:
+                        assertion = future.result()
+                        break
+                    except ClientError as error:
+                        LOGGER.error("Security key confirmation failed: %s", error)
+            finally:
+                cancel.set()
+        if assertion is None:
+            return False
+
+        user_handle = assertion.response.user_handle
+        data = {
+            "challenge": challenge["challenge"],
+            "clientData": b64_encode(assertion.response.client_data),
+            "signatureData": b64_encode(assertion.response.signature),
+            "authenticatorData": b64_encode(assertion.response.authenticator_data),
+            "userHandle": b64_encode(user_handle) if user_handle else None,
+            "credentialID": b64_encode(assertion.raw_id),
+            "rpId": challenge["rpId"],
+        }
+        headers = self._get_auth_headers({"Accept": "application/json"})
+        try:
+            if self.response_observer:
+                rules = list(
+                    chain(
+                        self.cookie_obfuscate_rules,
+                        self.header_obfuscate_rules,
+                        self.header_pass_rules,
+                        self.header_drop_rules,
+                    )
+                )
+            else:
+                rules = []
+
+            with self.use_rules(rules):
+                self.session.post(
+                    f"{self.AUTH_ENDPOINT}/verify/security/key",
+                    data=json.dumps(data),
+                    headers=headers,
+                )
+        except PyiCloudAPIResponseException:
+            LOGGER.error("Security key verification failed.")
+            return False
+
+        LOGGER.debug("Security key verification successful.")
+        return self.trust_session()
 
     def request_pcs_consent(self, app_name: str = "photos", timeout_seconds: int = 120) -> None:
         """Replay the icloud.com sequence that unlocks PCS protected data (Advanced Data Protection).
