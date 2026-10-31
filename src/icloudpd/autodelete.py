@@ -80,7 +80,11 @@ def autodelete_photos(
         paths: Set[str] = set({})
         _size: VersionSize
         versions, filename_overrides = disambiguate_filenames(
-            media.versions_with_raw_policy(raw_policy), _sizes, media, lp_filename_generator
+            media.versions_with_raw_policy(raw_policy),
+            _sizes,
+            media,
+            lp_filename_generator,
+            media.filename,
         )
         for _size, _version in versions.items():
             if _size in [AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED]:

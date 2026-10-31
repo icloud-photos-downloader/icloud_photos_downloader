@@ -783,6 +783,51 @@ class DownloadPhotoNameIDTestCase(TestCase):
 
                     assert result.exit_code == 0
 
+    def test_adjusted_and_original_name_id7(self) -> None:
+        """Adjusted file gets the same id suffix as the original, so assets with the same name don't collide"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch("icloudpd.download.os.utime") as ut_patched:
+                ut_patched.return_value = None
+
+                with mock.patch.object(
+                    PhotoAsset, "versions", new_callable=mock.PropertyMock
+                ) as pa:
+                    pa.return_value = {
+                        AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.jpeg", "blah"),
+                        AssetVersionSize.ADJUSTED: AssetVersion(2, "ftp", "public.jpeg", "blah2"),
+                    }
+
+                    data_dir, result = run_icloudpd_test(
+                        self.assertEqual,
+                        self.root_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [],
+                        [],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "1",
+                            "--size",
+                            "original",
+                            "--size",
+                            "adjusted",
+                            "--no-progress-bar",
+                            "--file-match-policy",
+                            "name-id7",
+                        ],
+                    )
+                    self.assertIn("IMG_7409_QVk2Yyt.JPG", result.output)
+                    self.assertIn("IMG_7409_QVk2Yyt-adjusted.JPG", result.output)
+                    assert result.exit_code == 0
+
     def test_force_size_name_id7(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 

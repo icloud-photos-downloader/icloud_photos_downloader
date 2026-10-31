@@ -4,6 +4,7 @@ from unittest.mock import Mock
 
 from icloudpd.base import lp_filename_concatinator as mock_lp_filename_generator
 from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.utils import disambiguate_filenames
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
@@ -71,6 +72,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
         self.assertEqual(_result, _expect)
         self.assertEqual(_overrides, {})
@@ -105,6 +107,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE, AssetVersionSize.ADJUSTED],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
 
         # Check that alternative version gets renamed due to filename conflict
@@ -139,7 +142,7 @@ class PathsTestCase(TestCase):
             AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.heic", "blah"),
         }
         _result, _overrides = disambiguate_filenames(
-            _setup, [AssetVersionSize.ADJUSTED], mock_photo, mock_lp_filename_generator
+            _setup, [AssetVersionSize.ADJUSTED], mock_photo, mock_lp_filename_generator, "IMG_1.JPG"
         )
         self.assertEqual(_result, _expect)
         self.assertEqual(_overrides, {})
@@ -172,6 +175,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
         self.assertEqual(_result, _expect)
         self.assertEqual(_overrides, {})
@@ -204,6 +208,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
         self.assertEqual(_result, _expect)
         self.assertEqual(_overrides, {})
@@ -242,6 +247,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
 
         # Check that adjusted version gets renamed due to filename conflict with original
@@ -280,6 +286,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ORIGINAL, AssetVersionSize.ALTERNATIVE],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
         self.assertEqual(_result, _expect)
         self.assertEqual(_overrides, {})
@@ -303,7 +310,11 @@ class PathsTestCase(TestCase):
             ),
         }
         _result, _overrides = disambiguate_filenames(
-            _setup, [AssetVersionSize.ALTERNATIVE], mock_photo, mock_lp_filename_generator
+            _setup,
+            [AssetVersionSize.ALTERNATIVE],
+            mock_photo,
+            mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
 
         # Should get original as alternative since alternative is missing
@@ -334,6 +345,7 @@ class PathsTestCase(TestCase):
             [AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE],
             mock_photo,
             mock_lp_filename_generator,
+            "IMG_1.JPG",
         )
 
         # Should get original as both adjusted and alternative since both are missing
@@ -341,3 +353,27 @@ class PathsTestCase(TestCase):
         self.assertIn(AssetVersionSize.ADJUSTED, _result)
         self.assertIn(AssetVersionSize.ALTERNATIVE, _result)
         self.assertEqual(_overrides, {})
+
+    def test_disambiguate_filenames_overrides_keep_base_filename(self) -> None:
+        """overrides are built from the given base filename, e.g. with the name-id7 suffix (#1249)"""
+        mock_photo = create_mock_photo_asset()
+        mock_photo.item_type = AssetItemType.IMAGE
+        _setup: Dict[VersionSize, AssetVersion] = {
+            AssetVersionSize.ORIGINAL: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.ADJUSTED: AssetVersion(1, "http", "public.jpeg", "blah"),
+            AssetVersionSize.ALTERNATIVE: AssetVersion(1, "http", "public.jpeg", "blah"),
+        }
+        _result, _overrides = disambiguate_filenames(
+            _setup,
+            [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED, AssetVersionSize.ALTERNATIVE],
+            mock_photo,
+            mock_lp_filename_generator,
+            "IMG_1234_QVpTNGN.JPG",
+        )
+        self.assertEqual(
+            _overrides,
+            {
+                AssetVersionSize.ADJUSTED: "IMG_1234_QVpTNGN-adjusted.JPG",
+                AssetVersionSize.ALTERNATIVE: "IMG_1234_QVpTNGN-alternative.JPG",
+            },
+        )

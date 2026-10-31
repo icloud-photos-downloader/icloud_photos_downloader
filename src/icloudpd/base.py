@@ -656,7 +656,11 @@ def download_builder(
 
     try:
         versions, filename_overrides = disambiguate_filenames(
-            photo.versions_with_raw_policy(raw_policy), primary_sizes, photo, lp_filename_generator
+            photo.versions_with_raw_policy(raw_policy),
+            primary_sizes,
+            photo,
+            lp_filename_generator,
+            filename_builder(photo),
         )
     except KeyError as ex:
         print(f"KeyError: {ex} attribute was not found in the photo fields.")
