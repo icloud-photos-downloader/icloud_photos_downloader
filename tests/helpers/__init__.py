@@ -138,6 +138,7 @@ def clean_boolean_args(params: Sequence[str]) -> list[str]:
         "--xmp-sidecar",
         "--force-size",
         "--auto-delete",
+        "--prune-orphans",
         "--set-exif-datetime",
         "--smtp-no-tls",
         "--delete-after-download",
