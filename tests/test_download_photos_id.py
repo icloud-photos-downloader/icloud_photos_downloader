@@ -179,7 +179,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
         # 2018:07:31 07:22:24 utc
         expectedDatetime = (
             datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.UTC)
-            .astimezone()
+            .astimezone(get_localzone())
             .strftime("%Y-%m-%d %H:%M:%S%z")
         )
         self.assertIn(
@@ -1212,7 +1212,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
                 # 2018:07:31 07:22:24 utc
                 expectedDatetime = (
                     datetime.datetime(2018, 7, 31, 7, 22, 24, tzinfo=datetime.UTC)
-                    .astimezone()
+                    .astimezone(get_localzone())
                     .strftime("%Y-%m-%d %H:%M:%S%z")
                 )
                 self.assertIn(
