@@ -44,7 +44,6 @@ final class PanelLayout: ObservableObject {
 struct PanelView: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.openWindow) private var openWindow
-    @AppStorage(Prefs.autoImportToPhotos) private var autoImport = false
     @StateObject private var layout = PanelLayout()
 
     var body: some View {
@@ -106,11 +105,7 @@ struct PanelView: View {
             } else {
                 PanelButton(title: "Start syncing", icon: "play.circle") { model.startWatching() }
             }
-            PanelRow(icon: { Image(systemName: "photo.on.rectangle").font(.system(size: 14)) }) {
-                Text("Import into Photos")
-            } trailing: {
-                Toggle("", isOn: $autoImport).labelsHidden().toggleStyle(.switch).controlSize(.small)
-            }
+            PanelButton(title: "Open Photos", icon: "photo.on.rectangle") { model.openPhotosApp() }
             PanelButton(title: "Review iCloud deletions…", icon: "trash") { show("review") }
 
             Divider()

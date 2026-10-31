@@ -96,7 +96,7 @@ Permissions the app may ask for:
 
 - **Sync now** ends the waiting period and checks iCloud immediately. The header shows *Syncing now…* at once.
 - **Start / Stop syncing** starts or stops the background sync.
-- **Import into Photos** is a quick switch for [automatic import](#import-into-photos).
+- **Open Photos** opens the Photos app.
 - **Review iCloud deletions…** opens the [review window](#deleting-what-you-deleted-in-photos).
 - The row with the green check opens **Sync Activity**; the gear opens **Settings**; the three dots open the web UI,
   the log, and Quit.
@@ -139,7 +139,7 @@ Every option is passed to `icloudpd` only when it differs from its own default. 
 
 ## Import into Photos
 
-Turn on **Import into Photos** (panel or **Apple Photos** settings). Every file `icloudpd` downloads from then on is
+Turn on **Import new downloads into Photos automatically** in the **Apple Photos** settings. Every file `icloudpd` downloads from then on is
 imported with AppleScript into the library the Photos app has open, normally the System Photo Library. The app
 remembers what it imported and does not import a file twice; Photos skips photos it already has. Photos opens when
 something is imported.
@@ -167,7 +167,9 @@ Trash. Nothing is removed for good.
 - *Delete them from iCloud automatically*
 - *Delete them from the disk automatically (moves the files to the Trash)*
 
-They run after every sync. With both on, a file is only moved to the Trash after iCloud confirmed the deletion. Mind that
+They run after every sync and about half a minute after something changes in Photos, so a photo you delete there is
+handled soon and not at the next sync. With both on, a file is only moved to the Trash after iCloud confirmed the
+deletion. If iCloud cannot be reached, the app tries again after 5 minutes, up to three times. Mind that
 a photo deleted only from the disk can be downloaded again while it is among the newest photos in iCloud.
 
 **Safety limit**: when more than N photos (default 20, changeable) would be deleted at once, nothing happens until you

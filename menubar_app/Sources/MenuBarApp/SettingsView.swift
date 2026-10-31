@@ -275,7 +275,7 @@ private struct PhotosPane: View {
             Section("When you delete photos in Photos") {
                 Toggle("Delete them from iCloud automatically", isOn: $autoDeleteICloud)
                 Toggle("Delete them from the disk automatically (moves the files to the Trash)", isOn: $autoDeleteDisk)
-                Text("Both switches are off by default and work separately. They run after every sync, for photos that are in Photos “Recently Deleted” and match a downloaded file. A photo deleted only from the disk can be downloaded again while it is among the newest photos in iCloud.")
+                Text("Both switches are off by default and work separately. They run after every sync and shortly after something changes in Photos, for photos that are in Photos “Recently Deleted” and match a downloaded file. A photo deleted only from the disk can be downloaded again while it is among the newest photos in iCloud.")
                     .font(.caption).foregroundStyle(.secondary)
                 if !app.deletionStatus.isEmpty {
                     Text(app.deletionStatus).font(.callout).foregroundStyle(.secondary)

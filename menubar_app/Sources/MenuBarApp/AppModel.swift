@@ -101,6 +101,7 @@ final class AppModel: ObservableObject {
         }
         source.resume()
         termSource = source
+        startLibraryWatch()
         if UserDefaults.standard.bool(forKey: Prefs.startWatchingAtLaunch) {
             DispatchQueue.main.async { self.startWatching() }
         }
@@ -261,6 +262,11 @@ final class AppModel: ObservableObject {
     }
 
     func openWebUI() { NSWorkspace.shared.open(webUIURL) }
+
+    func openPhotosApp() {
+        guard let url = NSWorkspace.shared.urlForApplication(withBundleIdentifier: "com.apple.Photos") else { return }
+        NSWorkspace.shared.openApplication(at: url, configuration: NSWorkspace.OpenConfiguration())
+    }
     func openLog() { NSWorkspace.shared.open(AppLog.url) }
 
     // MARK: - Process end and polling
@@ -440,6 +446,46 @@ final class AppModel: ObservableObject {
     // MARK: - Automatic deletion
 
     private var lastDeletionTask: Task<Void, Never>?
+    private var deletionRetries = 0
+
+    // Deleting in Photos should reach iCloud soon, not at the next sync (up to an hour later): the app
+    // watches the Photos database and checks for deleted photos shortly after it changed.
+    private var libraryTimer: Timer?
+    private var libraryStamp = Date.distantPast
+    private var libraryChangedAt: Date?
+    private var lastLibraryPassAt = Date.distantPast
+
+    private func startLibraryWatch() {
+        libraryStamp = libraryModified()
+        libraryTimer = Timer.scheduledTimer(withTimeInterval: 15, repeats: true) { [weak self] _ in
+            Task { @MainActor in self?.checkLibrary() }
+        }
+    }
+
+    private func libraryModified() -> Date {
+        let database = URL(fileURLWithPath: UserDefaults.standard.string(forKey: Prefs.photosLibrary) ?? "")
+            .appendingPathComponent("database")
+        return ["Photos.sqlite", "Photos.sqlite-wal"].compactMap {
+            (try? FileManager.default.attributesOfItem(atPath: database.appendingPathComponent($0).path))?[.modificationDate] as? Date
+        }.max() ?? .distantPast
+    }
+
+    private func checkLibrary() {
+        let d = UserDefaults.standard
+        guard d.bool(forKey: Prefs.autoDeleteICloud) || d.bool(forKey: Prefs.autoDeleteDisk) else { return }
+        let modified = libraryModified()
+        if modified > libraryStamp {  // still changing: wait until it is quiet
+            libraryStamp = modified
+            libraryChangedAt = Date()
+            return
+        }
+        // 20 s without changes, and not more often than every two minutes (the check copies the database)
+        guard let changed = libraryChangedAt, Date().timeIntervalSince(changed) >= 20,
+              Date().timeIntervalSince(lastLibraryPassAt) >= 120 else { return }
+        libraryChangedAt = nil
+        lastLibraryPassAt = Date()
+        runSerialized { await self.autoDeletePass() }
+    }
 
     /// Deleting in both directions touches the same files, so the passes run one after another and never
     /// at the same time.
@@ -549,11 +595,22 @@ final class AppModel: ObservableObject {
                 if result.ok {
                     deletedFromICloud.formUnion(todo.map(\.id))
                     saveDeletedFromICloud()
+                    deletionRetries = 0
                     recordEvents(.deletedICloud, todo)
                     summary.append("\(todo.count) deleted from iCloud")
                 } else {
-                    deletionStatus = "Deleting from iCloud failed, see the log."
-                    if d.bool(forKey: Prefs.notifyOnError) {
+                    deletionRetries += 1
+                    let willRetry = deletionRetries <= 3
+                    deletionStatus = willRetry
+                        ? "Deleting from iCloud failed, trying again in 5 minutes."
+                        : "Deleting from iCloud failed, see the log."
+                    if willRetry {
+                        AppLog.write("deleting from iCloud failed, trying again in 5 minutes (\(deletionRetries)/3)")
+                        Task { [weak self] in
+                            try? await Task.sleep(nanoseconds: 300 * 1_000_000_000)
+                            self?.runSerialized { await self?.autoDeletePass() }
+                        }
+                    } else if d.bool(forKey: Prefs.notifyOnError) {
                         notify("Deleting from iCloud failed", String(result.output.suffix(200)))
                     }
                     return  // keep the files: they are the only copy left
