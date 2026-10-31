@@ -40,6 +40,7 @@ dependencies = [
     "keyring==25.7.0",
     "keyrings-alt==5.0.2",
     "srp==1.0.22",
+    "fido2==2.2.1",
 ]
 
 [dependency-groups]

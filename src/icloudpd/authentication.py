@@ -121,6 +121,22 @@ def authenticator(
     return icloud
 
 
+def request_security_key(
+    icloud: PyiCloudService, logger: logging.Logger, challenge: Mapping[str, Any]
+) -> None:
+    """Confirm the login with a security key (FIDO) registered to the account."""
+    key_names = ", ".join(challenge.get("keyNames") or [])
+    logger.info("This account uses security keys instead of codes")
+    names_hint = f" ({key_names})" if key_names else ""
+    echo(f"Plug in a security key{names_hint} and touch it")
+    if not icloud.confirm_security_key(challenge):
+        raise PyiCloudFailedMFAException("Failed to verify the security key")
+    logger.info(
+        "Great, you're all set up. The script can now be run without "
+        "user interaction until 2FA expires."
+    )
+
+
 def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     """Request two-step authentication. Prompts for SMS or device"""
     devices = icloud.trusted_devices
@@ -156,6 +172,13 @@ def request_2sa(icloud: PyiCloudService, logger: logging.Logger) -> None:
 def request_2fa(icloud: PyiCloudService, logger: logging.Logger) -> None:
     """Request two-factor authentication."""
     devices = icloud.get_trusted_phone_numbers()
+
+    # Accounts with security keys (FIDO) list no trusted phone numbers and get no code
+    if not devices:
+        security_key_challenge = icloud.get_security_key_challenge()
+        if security_key_challenge:
+            request_security_key(icloud, logger, security_key_challenge)
+            return
 
     # Trigger push notification to trusted devices before prompting for code.
     # Apple's auth flow (2026+) requires a PUT to /verify/trusteddevice/securitycode

@@ -14,3 +14,7 @@ Opt-in support for accounts with Advanced Data Protection (ADP). After signing i
 - The first run sends an approval request to your Apple devices; icloudpd waits up to 2 minutes for it
 - Tested by its author on a real ADP account; the test suite only covers simulated responses. Please report how it works for you in [#687](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/687)
 - It is not yet known how long Apple keeps the approval valid; when it expires, the next run asks for approval again
+
+## Security keys (FIDO)
+
+Sign in with a security key, see [FIDO](docs/authentication.md#fido). Only tested on Linux, see [#583](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/583).
