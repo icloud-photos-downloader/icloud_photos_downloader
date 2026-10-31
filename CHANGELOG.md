@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: sign in with a security key (FIDO, e.g. YubiKey) on accounts that use them instead of six-digit codes [#583](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/583)
+- fix: `--auto-delete` combined with `--keep-icloud-recent-days` deleted the local copies of the assets `--keep-icloud-recent-days` had just moved to Recently Deleted; the combination is now rejected, like `--delete-after-download` with `--keep-icloud-recent-days` [#1272](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1272)
 - fix: `--skip-created-before`/`--skip-created-after` dates are read in the same time zone icloudpd uses for folders and EXIF dates; they used the system clock's zone, which differs on Windows when `TZ` is set
 - fix: reject `--skip-created-before` later than `--skip-created-after` instead of silently skipping all assets [#1370](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1370)
 - fix: executables always exit with code 0, even after errors [#1372](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1372)

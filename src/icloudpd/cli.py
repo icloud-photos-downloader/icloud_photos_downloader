@@ -610,6 +610,17 @@ def cli() -> int:
         elif [
             user_ns
             for user_ns in user_nses
+            if user_ns.keep_icloud_recent_days is not None and user_ns.auto_delete
+        ]:
+            # assets --keep-icloud-recent-days moves to Recently Deleted would be deleted locally too
+            print(
+                "--keep-icloud-recent-days and --auto-delete should not be used together in one configuration"
+            )
+            return 2
+
+        elif [
+            user_ns
+            for user_ns in user_nses
             if user_ns.skip_created_before is not None
             and user_ns.skip_created_after is not None
             and offset_to_datetime(user_ns.skip_created_before)
