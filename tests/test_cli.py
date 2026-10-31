@@ -585,6 +585,32 @@ class CliTestCase(TestCase):
 
         self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
+    def test_conflict_options_auto_delete_and_keep_icloud_recent_days(self) -> None:
+        """Assets --keep-icloud-recent-days moves to Recently Deleted would also be deleted locally (#1272)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        for days in ["90", "0"]:
+            with self.subTest(days=days):
+                result = run_main(
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "-d",
+                        "/tmp",
+                        "--auto-delete",
+                        "--keep-icloud-recent-days",
+                        days,
+                    ],
+                )
+                self.assertEqual(result.exit_code, 2, "exit code")
+                self.assertIn(
+                    "--keep-icloud-recent-days and --auto-delete should not be used together",
+                    result.output,
+                )
+
+        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+
     def test_conflict_options_skip_created_before_later_than_after(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         result = run_main(
