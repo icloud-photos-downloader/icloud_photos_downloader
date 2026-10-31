@@ -13,6 +13,7 @@ delete from iCloud (and the disk) the photos you delete in Photos.
 - [The menu](#the-menu)
 - [Settings](#settings)
 - [Import into Photos](#import-into-photos)
+- [Saving photos you add to Photos](#saving-photos-you-add-to-photos)
 - [Deleting what you deleted in Photos](#deleting-what-you-deleted-in-photos)
 - [Deleting what you deleted in iCloud](#deleting-what-you-deleted-in-icloud)
 - [When something goes wrong](#when-something-goes-wrong)
@@ -29,7 +30,8 @@ delete from iCloud (and the disk) the photos you delete in Photos.
   next sync, two-factor code needed, problem.
 - **Keeps a history** (Sync Activity, like OneDrive's) of the files that were synced and of the deletions the app
   carried out (from iCloud, from Photos, moved to the Trash), where each file can be opened or revealed in Finder.
-- **Imports downloaded photos into Apple Photos** automatically (off by default).
+- **Imports downloaded photos into Apple Photos** automatically (off by default), and can save a copy of the photos
+  you add to Photos yourself to the download folder (off by default).
 - **Mirrors deletions in both directions**: photos you delete in Photos can be deleted from iCloud and from the disk
   (moved to the Trash), and photos you delete in iCloud can be removed from the disk and from Photos. By hand or
   automatically; everything automatic is off by default and has a safety limit with a confirmation.
@@ -114,7 +116,7 @@ Every option is passed to `icloudpd` only when it differs from its own default. 
 | **General** | Apple ID and link status; how often to check (5 seconds to 24 hours); how many of the newest photos each sync looks at (10 to 1,000, or all); start syncing when the app opens; open at login |
 | **Download** | photos, videos, Live Photos (Live Photos are **off** by default); photo size and Live Photo video size; albums; library; skip photos created before/after a date |
 | **Files & folders** | download folder; folder structure; how existing files are recognised (`name-size-dedup-with-suffix` or `name-id7`); Live Photo video name (by default the same as the photo, so that Photos pairs them); RAW and JPEG handling; Unicode in names; XMP sidecars; EXIF date |
-| **Apple Photos** | [import](#import-into-photos); [deleting what you delete in Photos](#deleting-what-you-deleted-in-photos) (from iCloud and from the disk) and [what you delete in iCloud](#deleting-what-you-deleted-in-icloud) (from the disk and from Photos); how long to wait after deleting; the confirmation limit; the path of the Photos library |
+| **Apple Photos** | [import](#import-into-photos); [saving what you add to Photos](#saving-photos-you-add-to-photos); [deleting what you delete in Photos](#deleting-what-you-deleted-in-photos) (from iCloud and from the disk) and [what you delete in iCloud](#deleting-what-you-deleted-in-icloud) (from the disk and from Photos); how long to wait after deleting; the confirmation limit; the path of the Photos library |
 | **Notifications** | notify when a code or password is needed, and when syncing fails |
 | **Advanced** | extra early stop after N known photos in a row; log level; another Python or `icloudpd` (normally nothing to change here) |
 
@@ -138,6 +140,22 @@ something is imported.
 
 **Files downloaded so far** in the same settings pane counts the files that are not imported yet and imports them
 after you confirm.
+
+## Saving photos you add to Photos
+
+The other direction of the import. Turn on **Save a copy to the download folder** in the **Apple Photos** settings,
+and every photo you add to Photos afterwards (by hand, from a camera, with AirDrop) is copied to the download folder,
+in the same folder structure as the downloaded photos, with the modification date set to the date it was taken.
+
+- Only photos added after you turn the switch on are saved. The app asks Photos what is new through PhotoKit's change
+  history, so nothing is guessed from dates.
+- Photos that came from the download folder in the first place are recognised by their file name and date and skipped,
+  and the saved files are never imported into Photos again.
+- A file name that is already taken gets `_Photos` added (`IMG_1_Photos.HEIC`).
+- Saved files show in Sync Activity with a blue arrow.
+- PhotoKit only sees the System Photo Library, and the app asks once for permission to access Photos.
+- **Uploading to iCloud is not part of this.** `icloudpd` only downloads, and there is no supported way to upload from
+  here. To get photos from Photos into iCloud, turn on iCloud Photos in the Photos app.
 
 ## Deleting what you deleted in Photos
 
@@ -218,7 +236,7 @@ minutes.
 |---|---|
 | `~/Library/Logs/icloudpd-menubar/icloudpd.log` | `icloudpd` output and the app's own messages |
 | `~/Library/Logs/icloudpd-menubar/deletions.log` | audit log of dry runs, deletions and moves to the Trash |
-| `~/Library/Application Support/icloudpd-menubar/` | `activity.json` (history), `imported.json`, `deleted-from-icloud.json`, `mirrored-from-icloud.json` |
+| `~/Library/Application Support/icloudpd-menubar/` | `activity.json` (history), `imported.json`, `deleted-from-icloud.json`, `mirrored-from-icloud.json`, `photos-change-token.data` |
 | `~/.pyicloud/` | the iCloud session, written by `icloudpd` |
 | macOS preferences, `com.marlo.icloudpd-menubar` | the settings |
 
@@ -234,7 +252,8 @@ Photos Sync (SwiftUI)
   ├─ runs     icloudpd --delete-list FILE               deletes the matches in iCloud
   ├─ runs     icloudpd --auto-delete --dry-run          lists the files of photos deleted in iCloud
   ├─ deletes  PhotoKit (macOS confirms)                 photos from Photos
-  └─ imports  osascript → Photos                        new downloads
+  ├─ imports  osascript → Photos                        new downloads
+  └─ saves    PhotoKit change history                   photos you add to Photos, to the download folder
 ```
 
 - `icloudpd` finds a photo in iCloud without a search: iCloud cannot query by name or size, but the library is ordered by

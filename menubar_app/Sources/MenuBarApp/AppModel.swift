@@ -32,6 +32,7 @@ final class AppModel: ObservableObject {
     /// photos deleted in iCloud whose files / Photos copies wait for the user's confirmation
     @Published private(set) var pendingMirror: [TrashCandidate] = []
     @Published private(set) var mirrorStatus = ""
+    @Published private(set) var exportStatus = ""
 
     private var process: Process?
     private var stoppedByUser = false
@@ -459,6 +460,8 @@ final class AppModel: ObservableObject {
 
     private var lastDeletionTask: Task<Void, Never>?
     private var deletionRetries = 0
+    private var exporting = false
+    private var exportDeniedNotified = false
 
     // Deleting in Photos should reach iCloud soon, not at the next sync (up to an hour later): the app
     // watches the Photos database and checks for deleted photos shortly after it changed.
@@ -484,19 +487,21 @@ final class AppModel: ObservableObject {
 
     private func checkLibrary() {
         let d = UserDefaults.standard
-        guard d.bool(forKey: Prefs.autoDeleteICloud) || d.bool(forKey: Prefs.autoDeleteDisk) else { return }
+        guard d.bool(forKey: Prefs.autoDeleteICloud) || d.bool(forKey: Prefs.autoDeleteDisk)
+                || d.bool(forKey: Prefs.exportNewToDisk) else { return }
         let modified = libraryModified()
         if modified > libraryStamp {  // still changing: wait until it is quiet
             libraryStamp = modified
             libraryChangedAt = Date()
             return
         }
-        // 20 s without changes, and not more often than every two minutes (the check copies the database)
+        // 20 s without changes, and not more often than once a minute (the deletion check copies the database)
         guard let changed = libraryChangedAt, Date().timeIntervalSince(changed) >= 20,
-              Date().timeIntervalSince(lastLibraryPassAt) >= 120 else { return }
+              Date().timeIntervalSince(lastLibraryPassAt) >= 60 else { return }
         libraryChangedAt = nil
         lastLibraryPassAt = Date()
         runSerialized { await self.autoDeletePass() }
+        runSerialized { await self.exportPass() }
     }
 
     /// Deleting in both directions touches the same files, so the passes run one after another and never
@@ -773,6 +778,53 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // MARK: - Photos you add to Photos yourself: save a copy to the download folder
+
+    private var exportTokenURL: URL { AppModel.supportFile("photos-change-token.data") }
+
+    /// Called when the switch is turned on: only photos added from now on are saved.
+    func resetExportBaseline() {
+        try? FileManager.default.removeItem(at: exportTokenURL)
+        exportStatus = "Watching for new photos in Photos from now on."
+        runSerialized { await self.exportPass() }
+    }
+
+    private func exportPass() async {
+        let d = UserDefaults.standard
+        guard d.bool(forKey: Prefs.exportNewToDisk), !exporting else { return }
+        exporting = true
+        defer { exporting = false }
+        let directory = d.string(forKey: Prefs.directory) ?? ""
+        let outcome = await PhotosExport.run(directory: directory,
+                                             folderStructure: d.string(forKey: Prefs.folderStructure) ?? "{:%Y/%m/%d}",
+                                             tokenURL: exportTokenURL)
+        switch outcome {
+        case .baselineSet:
+            exportStatus = "Watching for new photos in Photos from now on."
+        case .saved(let items, let skipped):
+            guard !items.isEmpty else { return }
+            recordEvents(.savedFromPhotos, items)
+            // they come from Photos: they must not be imported into Photos again
+            importedPaths.formUnion(items.map(\.path))
+            saveImported()
+            exportFailureReset()
+            AppLog.write("saved \(items.count) file(s) from Photos to the download folder (\(skipped) came from it)")
+            exportStatus = "Saved \(items.count) file(s) from Photos at " + Date().formatted(date: .omitted, time: .shortened)
+        case .denied:
+            AppLog.write("problem: Photos Sync is not allowed to read the Photos library")
+            exportStatus = "Not allowed to read Photos."
+            if !exportDeniedNotified, d.bool(forKey: Prefs.notifyOnError) {
+                exportDeniedNotified = true
+                notify("Photos Sync cannot read Photos", "Allow it in System Settings, Privacy & Security, Photos.")
+            }
+        case .failed(let message):
+            AppLog.write("problem: \(message)")
+            exportStatus = "Saving from Photos failed, see the log."
+        }
+    }
+
+    private func exportFailureReset() { exportDeniedNotified = false }
+
     // MARK: - Import into Apple Photos
 
     private static func supportFile(_ name: String) -> URL {
@@ -896,6 +948,7 @@ final class AppModel: ObservableObject {
             if case .waiting = old {} else {  // a sync pass just finished
                 runSerialized { await self.autoDeletePass() }
                 runSerialized { await self.mirrorPass() }
+                runSerialized { await self.exportPass() }
             }
         }
         switch new {

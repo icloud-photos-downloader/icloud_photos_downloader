@@ -23,6 +23,16 @@ if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--parse-would-
     exit(0)
 }
 
+// candidates-cli --export-path UNIX_DATE STRUCTURE NAME TAKEN...: where a photo from Photos would be saved
+if CommandLine.arguments.count >= 5, CommandLine.arguments[1] == "--export-path" {
+    let date = Date(timeIntervalSince1970: Double(CommandLine.arguments[2]) ?? 0)
+    let folder = exportSubfolder(structure: CommandLine.arguments[3], date: date, timeZone: TimeZone(identifier: "UTC")!)
+    let taken = Set(CommandLine.arguments.dropFirst(5))
+    let name = uniqueFileName(CommandLine.arguments[4], in: "", exists: { taken.contains(($0 as NSString).lastPathComponent) })
+    print("folder=\(folder.isEmpty ? "(root)" : folder) name=\(name)")
+    exit(0)
+}
+
 var args = CommandLine.arguments.dropFirst().makeIterator()
 while let arg = args.next() {
     switch arg {

@@ -55,7 +55,7 @@ cat > "$APP/Contents/Info.plist" <<'PLIST'
     <key>LSMinimumSystemVersion</key><string>13.0</string>
     <key>LSUIElement</key><true/>
     <key>NSHighResolutionCapable</key><true/>
-    <key>NSPhotoLibraryUsageDescription</key><string>Photos Sync removes from Photos the photos you deleted in iCloud, after you confirm.</string>
+    <key>NSPhotoLibraryUsageDescription</key><string>Photos Sync reads new photos to save a copy, and removes from Photos the photos you deleted in iCloud, after you confirm.</string>
     <key>NSAppleEventsUsageDescription</key><string>Photos Sync imports the photos it downloads into the Photos app.</string>
 </dict>
 </plist>

@@ -282,6 +282,7 @@ private struct PhotosPane: View {
     @AppStorage(Prefs.mirrorPhotos) private var mirrorPhotos = false
     @AppStorage(Prefs.photosLibrary) private var photosLibrary = ""
     @AppStorage(Prefs.minAgeDays) private var minAgeDays = 0.0
+    @AppStorage(Prefs.exportNewToDisk) private var exportNew = false
     @StateObject private var state = PhotosPaneState()
 
     var body: some View {
@@ -292,6 +293,15 @@ private struct PhotosPane: View {
                     Text(app.importStatus).font(.callout).foregroundStyle(.secondary)
                 }
                 Text("Off by default. Photos imports into the library it has open (normally the System Photo Library) and skips photos it already has. The Photos app opens when something is imported.")
+                    .font(.caption).foregroundStyle(.secondary)
+            }
+            Section("When you add photos to Photos yourself") {
+                Toggle("Save a copy to the download folder", isOn: $exportNew)
+                    .onChange(of: exportNew) { on in if on { app.resetExportBaseline() } }
+                if !app.exportStatus.isEmpty {
+                    Text(app.exportStatus).font(.callout).foregroundStyle(.secondary)
+                }
+                Text("Off by default. Only photos added after you turn this on are saved, in the same folder structure as downloaded photos; photos that came from the download folder are skipped. Photos Sync cannot upload anything to iCloud (icloudpd only downloads). For that, turn on iCloud Photos in the Photos app.")
                     .font(.caption).foregroundStyle(.secondary)
             }
             Section("When you delete photos in Photos") {

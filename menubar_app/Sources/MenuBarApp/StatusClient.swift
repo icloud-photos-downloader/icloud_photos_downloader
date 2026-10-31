@@ -32,6 +32,7 @@ struct ActivityFile: Codable, Identifiable, Hashable {
         case deletedICloud
         case deletedPhotos
         case trashedDisk
+        case savedFromPhotos
     }
 
     var event: Kind { Kind(rawValue: kind ?? "") ?? .downloaded }

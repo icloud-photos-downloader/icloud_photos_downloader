@@ -67,14 +67,17 @@ struct SyncBadge: View {
     }
 }
 
-/// Small red trash can on the icon of a file that was deleted.
-private struct DeletedBadge: View {
+/// Small round badge on the icon of a file: a red trash can for deletions, a blue arrow for a copy saved from Photos.
+private struct EventBadge: View {
+    let symbol: String
+    let color: Color
+
     var body: some View {
-        Image(systemName: "trash.fill")
+        Image(systemName: symbol)
             .font(.system(size: 7, weight: .bold))
             .foregroundStyle(.white)
             .frame(width: 14, height: 14)
-            .background(Circle().fill(Color.red))
+            .background(Circle().fill(color))
             .offset(x: 4, y: 4)
     }
 }
@@ -89,7 +92,13 @@ private struct ActivityRow: View {
             Image(nsImage: icon(exists: exists))
                 .resizable().frame(width: 32, height: 32)
                 .opacity(exists ? 1 : 0.4)
-                .overlay(alignment: .bottomTrailing) { if file.event != .downloaded { DeletedBadge() } }
+                .overlay(alignment: .bottomTrailing) {
+                    switch file.event {
+                    case .downloaded: EmptyView()
+                    case .savedFromPhotos: EventBadge(symbol: "arrow.down", color: .blue)
+                    default: EventBadge(symbol: "trash.fill", color: .red)
+                    }
+                }
             VStack(alignment: .leading, spacing: 2) {
                 Text(file.name).lineLimit(1).truncationMode(.middle)
                 Text(subtitle(exists: exists)).font(.caption).foregroundStyle(.secondary)
@@ -123,6 +132,7 @@ private struct ActivityRow: View {
         case .deletedICloud: return "Deleted from iCloud · \(time)"
         case .deletedPhotos: return "Deleted from Photos · \(time)"
         case .trashedDisk: return "Moved to Trash · \(time)"
+        case .savedFromPhotos: return "Saved from Photos · \(time)"
         case .downloaded: break
         }
         guard exists else { return "\(time) · file not found" }
