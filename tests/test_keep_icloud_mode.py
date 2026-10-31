@@ -158,6 +158,56 @@ class KeepICloudModeTestCases(TestCase):
             self.assertIn("All photos have been downloaded", result.output)
             assert result.exit_code == 0
 
+    def test_keep_icloud_recent_days_keeps_asset_without_date(self) -> None:
+        """An asset without a creation date would count as taken in 1970, and be deleted"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        # without a date the asset goes into the 1970/01/01 folder
+        files_to_download = [("1970/01/01", "IMG_7409.JPG")]
+
+        original_init = PhotoAsset.__init__
+
+        def init_without_asset_date(
+            self: PhotoAsset, master_record: Any, asset_record: Any
+        ) -> None:
+            original_init(self, master_record, asset_record)
+            self._asset_record["fields"].pop("assetDate", None)
+
+        with (
+            mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock,
+            mock.patch.object(PhotoAsset, "__init__", init_without_asset_date),
+        ):
+            dt_mock.now.return_value = datetime.datetime(2018, 8, 10, tzinfo=datetime.UTC)
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos_keep_icloud_recent_days.yml",
+                [],
+                files_to_download,
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "1",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--keep-icloud-recent-days",
+                    "30",
+                ],
+            )
+
+            self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
+            self.assertIn(
+                "Not deleting IMG_7409.JPG from iCloud: it has no creation date", result.output
+            )
+            assert result.exit_code == 0
+
     def test_keep_icloud_recent_days_1_keeps_today(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
@@ -574,3 +624,18 @@ class KeepICloudRecentDaysWarningsTestCase(TestCase):
             ],
             self.warnings(0, 10, 5),
         )
+
+
+class HasAssetDateTestCase(TestCase):
+    def test_has_asset_date(self) -> None:
+        for fields, expected in [
+            ({"assetDate": {"value": 1533021744816}}, True),
+            # a real date before 1970, e.g. a scanned photo
+            ({"assetDate": {"value": -315619200000}}, True),
+            ({}, False),
+            ({"assetDate": {}}, False),
+            ({"assetDate": {"value": None}}, False),
+        ]:
+            with self.subTest(fields=fields):
+                asset = PhotoAsset({"fields": {}}, {"fields": fields})
+                self.assertEqual(expected, asset.has_asset_date)

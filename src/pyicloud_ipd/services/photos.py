@@ -900,6 +900,15 @@ class PhotoAsset:
         return dt
 
     @property
+    def has_asset_date(self) -> bool:
+        """False when iCloud gave no usable creation date and asset_date fell back to 1970"""
+        try:
+            self._asset_record["fields"]["assetDate"]["value"] / 1000.0
+            return True
+        except (KeyError, TypeError, ValueError):
+            return False
+
+    @property
     def added_date(self) -> datetime:
         dt = datetime.fromtimestamp(
             self._asset_record["fields"]["addedDate"]["value"] / 1000.0, tz=pytz.utc
