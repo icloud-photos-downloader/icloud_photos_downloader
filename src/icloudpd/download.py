@@ -15,9 +15,33 @@ from tzlocal import get_localzone
 from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException, PyiCloudConnectionErrorException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
+
+
+def log_failed_download(download_path: str, error_message: str) -> None:
+    """Append failed download to a log file in the download directory's root."""
+    # Find the iCloud backup root (go up until we find a non-date directory)
+    path_parts = download_path.split(os.sep)
+    # Look for the pattern: .../iCloud_Backup/YYYY/MM/DD/file
+    # We want to write to .../iCloud_Backup/failed_downloads.txt
+    for i, part in enumerate(path_parts):
+        # Find a year-like directory (4 digits starting with 19 or 20)
+        if len(part) == 4 and part.isdigit() and (part.startswith('19') or part.startswith('20')):
+            root_dir = os.sep.join(path_parts[:i])
+            break
+    else:
+        # Fallback: use parent of parent of parent
+        root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(download_path))))
+    
+    failed_log_path = os.path.join(root_dir, "failed_downloads.txt")
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    try:
+        with open(failed_log_path, "a") as f:
+            f.write(f"{timestamp}\t{download_path}\t{error_message}\n")
+    except OSError:
+        pass  # Don't fail if we can't write the log
 
 
 def update_mtime(created: datetime.datetime, download_path: str) -> None:
@@ -157,6 +181,29 @@ def download_media(
                 )
                 break
 
+        except PyiCloudConnectionErrorException as ex:
+            # Connection error - retry with backoff, then skip if still failing
+            # Use at least 3 retries for connection errors regardless of MAX_RETRIES setting
+            connection_max_retries = max(3, constants.MAX_RETRIES)
+            if retries >= connection_max_retries:
+                error_filename = filename_builder(photo)
+                logger.warning(
+                    "Connection error downloading %s after %d retries, skipping: %s",
+                    error_filename,
+                    retries,
+                    str(ex),
+                )
+                log_failed_download(download_path, f"Connection error after {retries} retries: {ex}")
+                break
+            wait_time = (retries + 1) * constants.WAIT_SECONDS
+            error_filename = filename_builder(photo)
+            logger.warning(
+                "Connection error downloading %s, retrying after %s seconds...",
+                error_filename,
+                wait_time,
+            )
+            time.sleep(wait_time)
+
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
                 logger.error("Session error, re-authenticating...")
@@ -180,7 +227,7 @@ def download_media(
                 )
                 time.sleep(wait_time)
 
-        except OSError:
+        except OSError as ex:
             logger.error(
                 "IOError while writing file to %s. "
                 + "You might have run out of disk space, or the file "
@@ -188,6 +235,7 @@ def download_media(
                 + "Skipping this file...",
                 download_path,
             )
+            log_failed_download(download_path, f"OS error: {ex}")
             break
         retries = retries + 1
         if retries >= constants.MAX_RETRIES:
@@ -199,5 +247,6 @@ def download_media(
             "Could not download %s. Please try again later.",
             error_filename,
         )
+        log_failed_download(download_path, f"Max retries ({constants.MAX_RETRIES}) exceeded")
 
     return False
