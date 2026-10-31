@@ -139,6 +139,13 @@ def main(args: Sequence[str] | None = None) -> NoReturn:
                     utils.store_password_in_keyring(username, password)
 
             if api.requires_2fa:
+                # Apple only sends the code to trusted devices once this push is triggered (see icloudpd's request_2fa)
+                if not api.trigger_push_notification():
+                    print(
+                        "Failed to trigger 2FA push notification, continuing anyway",
+                        file=sys.stderr,
+                    )
+
                 # fmt: off
                 print(
                     "\nTwo-step authentication required.",
