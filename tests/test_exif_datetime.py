@@ -27,7 +27,7 @@ class ExifDatetimeTestCase(TestCase):
         handle, self.path = tempfile.mkstemp(suffix=".JPG")
         with os.fdopen(handle, "wb") as file:
             file.write(jpeg_with_truncated_exif())
-        self.logger = logging.getLogger("icloudpd-test")
+        self.logger = logging.getLogger("icloudpd-test-exif-datetime")
 
     def tearDown(self) -> None:
         os.remove(self.path)
