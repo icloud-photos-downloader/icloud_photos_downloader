@@ -20,3 +20,5 @@ Move
 :   Download assets from iCloud that are not in the local storage (same as Copy). Then delete assets in iCloud that are in local storage, optionally leaving recent ones in iCloud
 
     This mode is selected with [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) parameter
+
+Sync and Move can't be combined: Sync would delete the local copies of the assets Move moves to "Recently Deleted".
