@@ -69,7 +69,7 @@ test = [
     "ruff==0.17.2",
     "pytest-timeout==2.4.0",
     "pytest-xdist==3.8.0",
-    "mypy==2.4.0",
+    "mypy==2.4.1",
     "types-pytz==2026.5.0.20261006",
     "types-tzlocal==5.1.0.1",
     "types-requests==2.33.0.20261006",
