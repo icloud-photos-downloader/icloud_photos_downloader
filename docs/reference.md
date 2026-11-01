@@ -57,6 +57,78 @@ This is a list of all options available for the command line interface (CLI) of 
     Shared library support added for iOS 16 shared libraries
     ```
 
+(prune-orphans-parameter)=
+`--prune-orphans`
+
+:   Moves unchanged, tracked local downloads out of the active mirror when their photos disappear from
+    the selected shared library, including photos moved to a participant's
+    personal library without entering Recently Deleted. This is separate from
+    `--auto-delete`, whose behavior is unchanged.
+
+    Use `--library` to select a shared library and a dedicated `--directory` that
+    is not shared with other accounts, libraries, or downloader processes.
+    Overlapping destinations in the same command are rejected.
+
+    Files are tracked only when icloudpd writes them while this option
+    is enabled. The first successful run saves a baseline in `.icloudpd-prune.json`;
+    it does not move anything. Later runs compare the library's current photo IDs
+    with the recorded IDs and quarantine only recorded files whose content has not changed.
+    Actual download paths are recorded, including deduplicated filenames, Live
+    Photo videos and newly created XMP sidecars. Existing untracked files are kept
+    even if their names match a current photo. Old orphans predating tracking are
+    not cleaned by this option.
+
+    Each managed file is fingerprinted with its size and SHA-256. This reads new
+    downloads once more, which can be
+    noticeable for large videos. Candidates are hashed again before being moved;
+    locally changed files are kept.
+
+    A separate, full inventory is read even when downloads are limited by
+    `--recent`, `--until-found`, albums or date/type filters. Hidden photos count
+    as present, and files are retained while any asset referencing the same
+    original remains in the library. Empty, count-mismatched, duplicate or
+    changing-count listings, cancellation and failed downloads prevent pruning
+    and baseline updates. Count checks cannot detect an Apple index that is
+    consistently incomplete: a matching count is not proof that a photo was removed.
+    For that reason, pruning never permanently deletes files.
+    `--dry-run` reports candidates without changing files or tracking state.
+
+    Files are moved to `.icloudpd-pruned/<unique-batch>/` inside the destination,
+    preserving their relative paths and never overwriting an earlier batch.
+    **Exclude `.icloudpd-pruned/` and its contents from external photo-library or
+    gallery scans**; do not assume every scanner ignores hidden directories.
+    There is no automatic restoration or purge, and quarantine does not reclaim disk space.
+    Periodically check its disk usage (for example, `du -sh .icloudpd-pruned` on
+    POSIX systems) and review old batches before manually removing them.
+    To restore a file, stop the downloader and move it from its batch back to the
+    same relative path under the destination, without overwriting a newer file.
+    If a photo reappears in iCloud, normal downloading may create another active
+    copy; the quarantined copy is still retained. Review batches before removing them manually.
+
+    The snapshot is bound to the account, library, time zone and output settings,
+    not download limits or filters such as `--recent` and `--until-found`.
+    Context mismatches, busy or unsupported locks, inventory errors and tracking
+    failures warn and skip pruning without failing or stopping the download run.
+    They do not migrate or advance the baseline. Use a new dedicated directory
+    for a different output configuration. Removing the snapshot explicitly
+    resets tracking; previously downloaded files then become untracked and are kept.
+    Do not edit the snapshot or run other
+    downloaders against its destination.
+
+    The option cannot be combined with `--delete-after-download`,
+    `--keep-icloud-recent-days` or `--only-print-filenames`. An empty shared library
+    is deliberately not pruned; remove its local files manually if intended.
+
+    An OS lock on `.icloudpd-prune.lock` prevents overlapping pruning runs
+    (`flock` on POSIX, byte-range locking on Windows). The OS releases it when
+    the process exits, including after a crash; the lock file intentionally remains
+    and does not need removing. Never delete it while another run might hold it.
+    A filesystem that cannot provide the lock only disables pruning, not downloads.
+    The snapshot is atomically replaced after a successful pruning run.
+    Interrupted or failed runs can leave new files untracked or some files already
+    quarantined, but no bytes are permanently deleted. Those untracked files are
+    preserved rather than guessed to be safe to move.
+
 (list-libraries-parameter)=
 `--list-libraries`
     
