@@ -51,6 +51,7 @@ from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
+from icloudpd.prune import PruneSnapshot
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
@@ -603,6 +604,7 @@ class DownloadResult(NamedTuple):
     """a file was downloaded in this run (what --delete-after-download acts on)"""
     present: bool
     """every requested file is on disk now, downloaded earlier or in this run"""
+    created_paths: tuple[str, ...] = ()
 
 
 NOT_DOWNLOADED = DownloadResult(downloaded=False, present=False)
@@ -684,6 +686,7 @@ def download_builder(
 
     download_dir = os.path.normpath(os.path.join(directory, date_path))
     success = False
+    created_paths: list[str] = []
     # nothing is written in --only-print-filenames mode
     present = not only_print_filenames
 
@@ -782,9 +785,14 @@ def download_builder(
                     if not dry_run:
                         download.set_utime(download_path, created_date)
                     logger.info("Downloaded %s", truncated_path)
+                    if not dry_run:
+                        created_paths.append(download_path)
 
         if xmp_sidecar and not only_print_filenames:
+            sidecar_existed = os.path.lexists(download_path + ".xmp")
             generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+            if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
+                created_paths.append(download_path + ".xmp")
 
     # Also download the live photo if present
     if not skip_live_photos:
@@ -859,10 +867,12 @@ def download_builder(
                     present = present and download_result
                     if download_result:
                         logger.info("Downloaded %s", truncated_path)
+                        if not dry_run:
+                            created_paths.append(lp_download_path)
         elif any(isinstance(size, LivePhotoVersionSize) for size in photo_versions_with_policy):
             # a live photo without the requested video size: the video is not kept locally
             present = False
-    return DownloadResult(downloaded=success, present=present)
+    return DownloadResult(downloaded=success, present=present, created_paths=tuple(created_paths))
 
 
 def delete_photo(
@@ -953,6 +963,7 @@ def core_single_run(
         or not sys.stdout.isatty()
     )
     while True:  # retry loop (not watch - only for immediate retries)
+        prune_snapshot: PruneSnapshot | None = None
         captured_responses: List[Mapping[str, Any]] = []
 
         def append_response(captured: List[Mapping[str, Any]], response: Mapping[str, Any]) -> None:
@@ -1021,6 +1032,46 @@ def core_single_run(
                         pass
 
                     directory = os.path.normpath(user_config.directory)
+
+                    if user_config.prune_orphans:
+                        if library_object.library_type != "shared":
+                            logger.warning(
+                                "Skipping orphan pruning: only supported for shared libraries"
+                            )
+                        else:
+                            try:
+                                scope = json.dumps(
+                                    {
+                                        "account": user_config.username.casefold(),
+                                        "domain": global_config.domain,
+                                        "zone": library_object.zone_id,
+                                        "timezone": str(get_localzone()),
+                                        "settings": {
+                                            name: str(getattr(user_config, name))
+                                            for name in (
+                                                "sizes",
+                                                "force_size",
+                                                "folder_structure",
+                                                "xmp_sidecar",
+                                                "skip_live_photos",
+                                                "live_photo_size",
+                                                "live_photo_mov_filename_policy",
+                                                "align_raw",
+                                                "file_match_policy",
+                                                "keep_unicode_in_filenames",
+                                                "set_exif_datetime",
+                                            )
+                                        },
+                                    },
+                                    sort_keys=True,
+                                )
+                                prune_snapshot = PruneSnapshot(
+                                    directory, scope, user_config.dry_run
+                                )
+                            except Exception as error:
+                                logger.warning("Skipping orphan pruning: %s", error)
+                                logger.debug("Orphan-pruning setup failed", exc_info=True)
+                    prune_complete = True
 
                     if user_config.skip_photos or user_config.skip_videos:
                         photo_video_phrase = "photos" if user_config.skip_videos else "videos"
@@ -1147,6 +1198,17 @@ def core_single_run(
                                     if passer_result
                                     else NOT_DOWNLOADED
                                 )
+                                if prune_snapshot is not None and prune_complete:
+                                    if passer_result and not download_result.present:
+                                        prune_complete = False
+                                    try:
+                                        prune_snapshot.record(
+                                            item.id, download_result.created_paths
+                                        )
+                                    except Exception as error:
+                                        logger.warning("Skipping orphan pruning: %s", error)
+                                        logger.debug("Orphan tracking failed", exc_info=True)
+                                        prune_complete = False
                                 if download_result.downloaded and user_config.delete_after_download:
                                     should_delete = True
 
@@ -1231,6 +1293,7 @@ def core_single_run(
                             pass
 
                         if status_exchange.get_progress().cancel:
+                            prune_complete = False
                             logger.info("Iteration was cancelled")
                             status_exchange.get_progress().photos_last_message = (
                                 "Iteration was cancelled"
@@ -1246,6 +1309,21 @@ def core_single_run(
                             logger.info(message)
                             status_exchange.get_progress().photos_last_message = message
                         status_exchange.get_progress().reset()
+
+                    if prune_snapshot is not None:
+                        if prune_complete:
+                            try:
+                                prune_snapshot.finish(
+                                    logger,
+                                    library_object,
+                                    user_config.dry_run,
+                                    lambda: status_exchange.get_progress().cancel,
+                                )
+                            except Exception as error:
+                                logger.warning("Skipping orphan pruning: %s", error)
+                                logger.debug("Orphan-pruning finalization failed", exc_info=True)
+                        else:
+                            logger.warning("Skipping orphan pruning: download run did not complete")
 
                     if user_config.auto_delete:
                         autodelete_photos(
@@ -1315,6 +1393,12 @@ def core_single_run(
         except Exception:
             dump_responses(logger.debug, captured_responses)
             raise
+        finally:
+            if prune_snapshot is not None:
+                try:
+                    prune_snapshot.close()
+                except OSError as error:
+                    logger.warning("Cannot close orphan-pruning lock: %s", error)
 
         # In single run mode, we don't handle watch intervals - that's done at higher level
         break

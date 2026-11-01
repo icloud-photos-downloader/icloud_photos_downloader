@@ -63,6 +63,24 @@ icloudpd --directory /data --username my@email.address --watch-with-interval 360
 > [!TIP]
 > Synchronization logic can be adjusted with command-line parameters. Run `icloudpd --help` to get full list.
 
+To move tracked local copies out of the active mirror when photos leave a shared library (including moves
+back to a participant's personal library), use a dedicated download directory:
+
+```bash
+icloudpd --directory /data/shared --username my@email.address \
+  --library 'SharedSync-YOUR-LIBRARY-ID' --prune-orphans
+```
+
+Tracking starts with newly written files and the first successful run only
+establishes a baseline. Existing untracked files, including old orphans predating
+tracking, are preserved. Cleaning those existing mirrors is a separate feature.
+
+Pruned files are moved into `.icloudpd-pruned/`, never permanently deleted: even
+consistent counts cannot prove Apple's listing is complete. Exclude that folder
+from gallery scans. Pruning problems warn without failing downloads. See
+[the option reference](docs/reference.md#prune-orphans-parameter) for ownership
+requirements, hashing costs and recovery instructions.
+
 To independently create and authorize a session (and complete 2SA/2FA validation if needed) on your local system:
 
 ```
