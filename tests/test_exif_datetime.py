@@ -11,7 +11,7 @@ from icloudpd.exif_datetime import get_photo_exif, set_photo_exif
 
 def jpeg_with_truncated_exif() -> bytes:
     """A JPEG whose EXIF block is cut short by one byte; piexif.load raises struct.error on it"""
-    exif = piexif.dump(
+    exif: bytes = piexif.dump(
         {
             "0th": {piexif.ImageIFD.DateTime: b"2018:07:31 07:22:24"},
             "Exif": {piexif.ExifIFD.DateTimeOriginal: b"2018:07:31 07:22:24"},
