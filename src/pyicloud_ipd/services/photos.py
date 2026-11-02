@@ -370,17 +370,27 @@ class PhotoLibrary:
         if self.library_type == "shared":
             return []
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
-        json_data = json.dumps(
-            {
-                "query": {"recordType": "CPLAlbumByPositionLive"},
-                "zoneID": self.zone_id,
-            }
-        )
+        query: Dict[str, Any] = {
+            "query": {"recordType": "CPLAlbumByPositionLive"},
+            "zoneID": self.zone_id,
+        }
+        records: list[Dict[str, Any]] = []
+        markers: set[str] = set()
+        while True:
+            request = self.session.post(
+                url, data=json.dumps(query), headers={"Content-type": "text/plain"}
+            )
+            response = request.json()
+            records.extend(response["records"])
+            # iCloud returns the albums in pages; continuationMarker asks for the next one.
+            # A marker seen before would only repeat the same page, so stop there.
+            marker = response.get("continuationMarker")
+            if not marker or marker in markers:
+                break
+            markers.add(marker)
+            query["continuationMarker"] = marker
 
-        request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
-        response = request.json()
-
-        return typing.cast(Sequence[Dict[str, Any]], response["records"])
+        return records
 
     @property
     def all(self) -> "PhotoAlbum":
