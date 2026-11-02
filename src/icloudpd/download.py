@@ -150,6 +150,13 @@ def download_media(
                 logger.debug(f"Resuming downloading of {download_path} from {current_size}")
 
             photo_response = photo.download(icloud.photos.session, version.url, current_size)
+            logger.debug(
+                "Response for %s: status %s, Content-Range %s, Content-Length %s",
+                download_path,
+                photo_response.status_code,
+                photo_response.headers.get("Content-Range"),
+                photo_response.headers.get("Content-Length"),
+            )
             if photo_response.ok:
                 if download_local(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
