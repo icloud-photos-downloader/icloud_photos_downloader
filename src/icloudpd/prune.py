@@ -10,24 +10,41 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, mkdtemp
 from typing import BinaryIO, TypedDict
 
-from pyicloud_ipd.asset_version import ITEM_TYPE_EXTENSIONS
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 
-MEDIA_EXTENSIONS = {f".{extension.lower()}" for extension in ITEM_TYPE_EXTENSIONS.values()} | {
-    ".jpeg",
-    ".gif",
-    ".tif",
-    ".tiff",
-    ".bmp",
-    ".webp",
-    ".avif",
-    ".mp4",
-    ".m4v",
-    ".avi",
-    ".3gp",
+MEDIA_EXTENSIONS = {
     ".3g2",
+    ".3gp",
+    ".arw",
+    ".avi",
+    ".avif",
+    ".bmp",
+    ".cr2",
+    ".cr3",
+    ".crw",
+    ".dng",
+    ".gif",
+    ".heic",
+    ".heif",
+    ".jpeg",
+    ".jpg",
+    ".jxl",
+    ".m4v",
+    ".mov",
+    ".mp4",
     ".mpeg",
     ".mpg",
+    ".nef",
+    ".nrf",
+    ".nrw",
+    ".orf",
+    ".pef",
+    ".png",
+    ".raf",
+    ".rw2",
+    ".tif",
+    ".tiff",
+    ".webp",
 }
 
 

@@ -8,7 +8,7 @@ import pytest
 
 from icloudpd.base import DownloadResult
 from icloudpd.prune import PruneSnapshot
-from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.asset_version import ITEM_TYPE_EXTENSIONS, AssetVersion
 from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
@@ -93,10 +93,72 @@ def test_existing_baseline_logs_only_when_adoption_is_requested(
     assert not (tmp_path / "removed.JPG").exists()
 
 
+@pytest.mark.parametrize(
+    "extension",
+    sorted(
+        set(ITEM_TYPE_EXTENSIONS.values())
+        | {
+            "JPEG",
+            "GIF",
+            "TIF",
+            "TIFF",
+            "BMP",
+            "WEBP",
+            "AVIF",
+            "MP4",
+            "M4V",
+            "AVI",
+            "3GP",
+            "3G2",
+            "MPEG",
+            "MPG",
+            "NRW",
+        }
+    ),
+)
+@pytest.mark.parametrize("uppercase", [False, True])
+def test_bootstrap_recognizes_media_extensions_and_sidecars(
+    tmp_path: Path, extension: str, uppercase: bool
+) -> None:
+    extension = extension.upper() if uppercase else extension.lower()
+    for identifier in ("kept", "orphan"):
+        filename = f"{identifier}.{extension}"
+        (tmp_path / filename).write_bytes(identifier.encode())
+        (tmp_path / f"{filename}.xmp").write_bytes(b"metadata")
+    snapshot = PruneSnapshot(str(tmp_path), "test-scope")
+    try:
+        snapshot.finish(
+            LOGGER,
+            library(photo("kept")),
+            False,
+            adopt_existing=lambda item: (str(tmp_path / f"{item.id}.{extension}"),),
+        )
+    finally:
+        snapshot.close()
+    assert (tmp_path / f"kept.{extension}").read_bytes() == b"kept"
+    assert (tmp_path / f"kept.{extension}.xmp").read_bytes() == b"metadata"
+    assert not (tmp_path / f"orphan.{extension}").exists()
+    assert not (tmp_path / f"orphan.{extension}.xmp").exists()
+    assert {path.name for path in (tmp_path / PruneSnapshot.quarantine).glob("*/*")} == {
+        f"orphan.{extension}",
+        f"orphan.{extension}.xmp",
+    }
+
+
 def test_bootstrap_preserves_nonmedia_subdirectories_and_sibling_libraries(tmp_path: Path) -> None:
     destination = tmp_path / "shared"
     destination.mkdir()
-    for filename in ("kept.JPG", "orphan.MP4", "notes.txt", "image.part", "notes.xmp", ".DS_Store"):
+    preserved_names = (
+        "notes.txt",
+        "image.part",
+        "notes.xmp",
+        ".DS_Store",
+        "unknown.xyz",
+        "notes.pdf",
+        "photo.aae",
+        "orphan.JPG.part",
+    )
+    for filename in ("kept.JPG", "orphan.MP4", *preserved_names):
         (destination / filename).write_bytes(filename.encode())
     cache = destination / "@eaDir"
     cache.mkdir()
@@ -115,7 +177,7 @@ def test_bootstrap_preserves_nonmedia_subdirectories_and_sibling_libraries(tmp_p
     finally:
         snapshot.close()
     assert not (destination / "orphan.MP4").exists()
-    for filename in ("notes.txt", "image.part", "notes.xmp", ".DS_Store"):
+    for filename in preserved_names:
         assert (destination / filename).read_bytes() == filename.encode()
     assert (cache / "thumbnail.JPG").read_bytes() == b"NAS metadata"
     assert (personal / "personal.JPG").read_bytes() == b"personal"
