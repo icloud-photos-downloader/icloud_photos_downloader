@@ -139,8 +139,15 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     cloned.add_argument(
         "--prune-orphans",
         help="Move tracked downloads that disappeared from a shared library into .icloudpd-pruned/. "
-        + "Only newly written files are tracked; existing untracked files are preserved. "
+        + "Newly written files are tracked by default; existing files require explicit adoption. "
         + "Requires a dedicated directory and a complete, nonempty library listing.",
+        action="store_true",
+    )
+    cloned.add_argument(
+        "--prune-orphans-adopt-existing",
+        help="On the first successful pruning run, adopt an existing dedicated flat, original-size "
+        + "shared-library mirror and quarantine unmatched media. Declares existing media managed; "
+        + "preview with --dry-run first. Requires --prune-orphans and unchanged naming settings.",
         action="store_true",
     )
     cloned.add_argument(
@@ -465,6 +472,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
         prune_orphans=user_ns.prune_orphans,
+        prune_orphans_adopt_existing=user_ns.prune_orphans_adopt_existing,
         folder_structure=user_ns.folder_structure,
         set_exif_datetime=user_ns.set_exif_datetime,
         smtp_username=user_ns.smtp_username,
@@ -592,6 +600,28 @@ def cli() -> int:
         ]:
             print(
                 "--auth-only, --directory, --list-libraries, or --list-albums are required for each configuration"
+            )
+            return 2
+
+        elif any(
+            user_ns.prune_orphans_adopt_existing
+            and (
+                not user_ns.prune_orphans
+                or user_ns.folder_structure.lower() != "none"
+                or set(user_ns.sizes) != {AssetVersionSize.ORIGINAL}
+                or user_ns.live_photo_size != LivePhotoVersionSize.ORIGINAL
+                or user_ns.skip_live_photos
+                or user_ns.align_raw != RawTreatmentPolicy.AS_IS
+                or user_ns.file_match_policy != FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
+                or user_ns.live_photo_mov_filename_policy != LivePhotoMovFilenamePolicy.SUFFIX
+            )
+            for user_ns in user_nses
+        ):
+            print(
+                "--prune-orphans-adopt-existing requires --prune-orphans, --folder-structure none, "
+                "original photo/video sizes, live photos enabled, --align-raw as-is, "
+                "--file-match-policy name-size-dedup-with-suffix and "
+                "--live-photo-mov-filename-policy suffix"
             )
             return 2
 

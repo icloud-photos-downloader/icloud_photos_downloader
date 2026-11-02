@@ -10,7 +10,12 @@ from unittest import mock
 
 import pytest
 
-from icloudpd.base import DownloadResult, core_single_run, download_builder
+from icloudpd.base import (
+    DownloadResult,
+    core_single_run,
+    download_builder,
+    lp_filename_concatinator,
+)
 from icloudpd.cli import parse
 from icloudpd.counter import Counter
 from icloudpd.prune import PruneSnapshot, file_record, library_photo_ids, lock_file
@@ -495,7 +500,7 @@ def run_shared_download(
             lambda _photo: True,
             downloader,
             lambda: None,
-            lambda filename: filename,
+            lp_filename_concatinator,
         )
 
 
@@ -655,7 +660,19 @@ def test_cancellation_during_pruning_preserves_baseline(tmp_path: Path, checks: 
 
 
 @pytest.mark.parametrize(
-    "mode", ["normal", "dedup", "existing", "dry-run", "sidecar", "existing-sidecar", "failed"]
+    "mode",
+    [
+        "normal",
+        "dedup",
+        "existing",
+        "dry-run",
+        "sidecar",
+        "existing-sidecar",
+        "failed",
+        "inspect",
+        "inspect-existing",
+        "inspect-dedup",
+    ],
 )
 def test_download_result_records_only_newly_written_actual_paths(tmp_path: Path, mode: str) -> None:
     media = mock.MagicMock(spec=PhotoAsset)
@@ -671,9 +688,11 @@ def test_download_result_records_only_newly_written_actual_paths(tmp_path: Path,
             5, "https://example.invalid/video", "com.apple.quicktime-movie", ""
         ),
     }
-    if mode in ("dedup", "existing"):
+    if mode in ("dedup", "existing", "inspect-existing", "inspect-dedup"):
         for filename in ("IMG-2024.JPG", "IMG-2024.MOV"):
-            (tmp_path / filename).write_bytes(b"photo" if mode == "existing" else b"different size")
+            (tmp_path / filename).write_bytes(
+                b"photo" if mode in ("existing", "inspect-existing") else b"different size"
+            )
     if mode == "existing-sidecar":
         (tmp_path / "IMG-2024.JPG.xmp").write_bytes(b"user metadata")
 
@@ -703,8 +722,10 @@ def test_download_result_records_only_newly_written_actual_paths(tmp_path: Path,
             Path(target + ".xmp").write_bytes(b"metadata")
 
     with (
-        mock.patch("icloudpd.base.download.download_media", side_effect=write_media),
-        mock.patch("icloudpd.base.generate_xmp_file", side_effect=write_sidecar),
+        mock.patch(
+            "icloudpd.base.download.download_media", side_effect=write_media
+        ) as download_media,
+        mock.patch("icloudpd.base.generate_xmp_file", side_effect=write_sidecar) as sidecar,
     ):
         result = download_builder(
             LOGGER,
@@ -718,15 +739,28 @@ def test_download_result_records_only_newly_written_actual_paths(tmp_path: Path,
             LivePhotoVersionSize.ORIGINAL,
             mode == "dry-run",
             FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
-            mode in ("sidecar", "existing-sidecar"),
+            mode in ("sidecar", "existing-sidecar") or mode.startswith("inspect"),
             lambda filename: str(Path(filename).with_suffix(".MOV")),
             lambda item: item.filename,
             RawTreatmentPolicy.AS_IS,
             mock.MagicMock(),
             Counter(),
             media,
+            inspect_only=mode.startswith("inspect"),
         )
-    if mode in ("existing", "dry-run", "failed"):
+    if mode.startswith("inspect"):
+        download_media.assert_not_called()
+        sidecar.assert_not_called()
+        suffix = "-5" if mode == "inspect-dedup" else ""
+        assert set(result.expected_paths) == {
+            str(tmp_path / "IMG-2024.JPG"),
+            str(tmp_path / "IMG-2024-original.JPG"),
+            str(tmp_path / "IMG-2024-5.JPG"),
+            str(tmp_path / "IMG-2024.MOV"),
+            str(tmp_path / "IMG-2024-5.MOV"),
+            str(tmp_path / f"IMG-2024{suffix}.JPG.xmp"),
+        }
+    if mode in ("existing", "dry-run", "failed") or mode.startswith("inspect"):
         assert result.created_paths == ()
     else:
         suffix = "-5" if mode == "dedup" else ""

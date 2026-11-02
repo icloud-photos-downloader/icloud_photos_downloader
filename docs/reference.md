@@ -129,6 +129,61 @@ This is a list of all options available for the command line interface (CLI) of 
     quarantined, but no bytes are permanently deleted. Those untracked files are
     preserved rather than guessed to be safe to move.
 
+(prune-orphans-adopt-existing-parameter)=
+`--prune-orphans-adopt-existing`
+
+:   Explicitly adopts an existing dedicated shared-library mirror on the first
+    successful `--prune-orphans` run. Unlike normal tracking, this also handles
+    old orphans that disappeared from iCloud before tracking was enabled.
+
+    **This declares that all recognized photo/video files and associated
+    `.<media-extension>.xmp` sidecars directly in `--directory` belong exclusively
+    to the selected shared-library mirror.** Ownership cannot be inferred from
+    filenames. Do not use it on a directory containing personal files, multiple
+    libraries or files from other size/naming settings. Existing local edits are
+    taken as the adoption baseline; they cannot be identified retroactively.
+
+    Bootstrap is deliberately limited to `--folder-structure none`, original
+    photo and Live Photo video sizes, Live Photos enabled, `--align-raw as-is`,
+    `--file-match-policy name-size-dedup-with-suffix` and
+    `--live-photo-mov-filename-policy suffix`. Keep the same filename-cleaning and
+    output settings that produced the existing mirror. Other layouts are not migrated.
+
+    A validated full inventory, including Hidden, is matched using the downloader's
+    filename selection in an inspection-only mode, without fetching media or
+    writing metadata. Matching is **name-first, not size-first**: current canonical
+    names, known legacy `-original` names and current size-suffixed collision names
+    are retained even if EXIF rewriting or another tool changed their size.
+    Live Photo videos and associated sidecars use the same protection. Only media
+    whose name matches no current photo is quarantined in the bootstrap run.
+
+    Ambiguous matches are deliberately retained: if multiple current photos share
+    a filename, the base file is kept while any of them remains. This can preserve
+    an old orphan with a colliding name rather than risk moving a current file.
+    Adoption does not change the normal downloader's size-based deduplication or
+    fix its existing EXIF-related duplicate-download behavior.
+
+    Matching existing files are fingerprinted with their current size/SHA-256 and
+    enrolled for future tracked pruning. This reads each adopted file, including
+    large videos, once more. Non-media files, temporary files and subdirectories
+    (including NAS metadata and previous quarantine batches) are left alone.
+    Unsafe or symlinked candidates stop bootstrap with a warning rather than
+    following them. Quarantine and restoration work as described above.
+
+    Preview using your existing command and unchanged settings, for example:
+
+    ```sh
+    icloudpd --username user@icloud.com --library 'SharedSync-YOUR-LIBRARY-ID' \
+      --directory ./shared-library --folder-structure none --size original \
+      --prune-orphans --prune-orphans-adopt-existing --dry-run
+    ```
+
+    Back up the mirror and review every candidate before repeating without
+    `--dry-run`. Once a baseline exists, this option does not rescan or adopt
+    additional untracked media, even in watch mode. Remove it after successful
+    adoption and keep `--prune-orphans` for ordinary runs. If the snapshot is later
+    removed while the bootstrap flag remains enabled, adoption will run again.
+
 (list-libraries-parameter)=
 `--list-libraries`
     
