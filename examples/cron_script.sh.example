@@ -2,8 +2,11 @@
 # Make sure it's not already running
 pgrep -f icloudpd && echo "icloudpd is already running." && exit
 
-icloudpd /your/photos/directory \
+# The password comes from the system keyring, so it isn't visible in the process list.
+# Save it there once with `icloud --username testuser@example.com`, and run icloudpd
+# once by hand to complete two-factor authentication before running it from cron.
+icloudpd --directory /your/photos/directory \
   --username testuser@example.com \
-  --password pass1234 \
+  --password-provider keyring \
   --recent 500 \
   --auto-delete
