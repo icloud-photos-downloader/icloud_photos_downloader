@@ -4,11 +4,14 @@ import base64
 import datetime
 import logging
 import os
+import re
 import time
 from functools import partial
 from typing import Callable
 
 from requests import Response
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectionError as RequestsConnectionError
 from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
@@ -70,6 +73,12 @@ def mkdirs_for_path_dry_run(logger: logging.Logger, download_path: str) -> bool:
     return True
 
 
+def content_range_total(response: Response) -> int | None:
+    """Size of the whole file from the Content-Range of a partial response (bytes 0-99/250)"""
+    match = re.fullmatch(r"bytes \d+-\d+/(\d+)", str(response.headers.get("Content-Range", "")))
+    return int(match.group(1)) if match else None
+
+
 def download_response_to_path(
     response: Response,
     temp_download_path: str,
@@ -77,11 +86,17 @@ def download_response_to_path(
     download_path: str,
     created_date: datetime.datetime,
 ) -> bool:
-    """Saves response content into file with desired created date"""
+    """Saves response content into file with desired created date.
+
+    Returns False when the response held only part of the file: the partial file is kept,
+    so the rest can be requested from where it stopped."""
     with open(temp_download_path, ("ab" if append_mode else "wb")) as file_obj:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 file_obj.write(chunk)
+    total_size = content_range_total(response)
+    if total_size is not None and os.path.getsize(temp_download_path) < total_size:
+        return False
     os.rename(temp_download_path, download_path)
     update_mtime(created_date, download_path)
     return True
@@ -137,10 +152,38 @@ def download_media(
                 logger.debug(f"Resuming downloading of {download_path} from {current_size}")
 
             photo_response = photo.download(icloud.photos.session, version.url, current_size)
+            logger.debug(
+                "Response for %s: status %s, Content-Range %s, Content-Length %s",
+                download_path,
+                photo_response.status_code,
+                photo_response.headers.get("Content-Range"),
+                photo_response.headers.get("Content-Length"),
+            )
             if photo_response.ok:
-                return download_local(
+                if download_local(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
+                ):
+                    return True
+                # The response ended before the size in its Content-Range (iCloud sends one on
+                # every download); ask for the rest while that brings more data, otherwise keep
+                # the partial file for the next run
+                downloaded_size = os.path.getsize(temp_download_path)
+                total_size = content_range_total(photo_response)
+                if downloaded_size > current_size:
+                    logger.debug(
+                        "Got %d of %d bytes of %s, requesting the rest",
+                        downloaded_size,
+                        total_size,
+                        download_path,
+                    )
+                    continue
+                logger.error(
+                    "Could not download all of %s (%d of %d bytes); it will be resumed on the next run",
+                    download_path,
+                    downloaded_size,
+                    total_size,
                 )
+                break
             else:
                 # Use the standard original filename generator for error logging
                 from icloudpd.base import lp_filename_original as simple_lp_filename_generator
@@ -179,6 +222,24 @@ def download_media(
                     "Error downloading %s, retrying after %s seconds...", error_filename, wait_time
                 )
                 time.sleep(wait_time)
+
+        except (ChunkedEncodingError, RequestsConnectionError) as error:
+            # The connection dropped (#1311). Since urllib3 2 a body shorter than its
+            # Content-Length raises here instead of being saved cut off. Resume from the
+            # partial file while that brings more data
+            downloaded_size = (
+                os.path.getsize(temp_download_path) if os.path.exists(temp_download_path) else 0
+            )
+            if downloaded_size > current_size:
+                logger.debug(
+                    "Connection lost after %d bytes of %s, resuming: %s",
+                    downloaded_size,
+                    download_path,
+                    error,
+                )
+                continue
+            logger.error("Connection lost while downloading %s: %s", download_path, error)
+            break
 
         except OSError:
             logger.error(
