@@ -64,6 +64,35 @@ def test_bootstrap_cleans_existing_orphans_and_tracks_visible_and_hidden_downloa
     assert (tmp_path / "new-untracked.JPG").read_bytes() == b"not opted in"
 
 
+@pytest.mark.parametrize("adopt_existing", [False, True])
+def test_existing_baseline_logs_only_when_adoption_is_requested(
+    tmp_path: Path, caplog: pytest.LogCaptureFixture, adopt_existing: bool
+) -> None:
+    download = downloader_for(tmp_path)
+    arguments = ["--folder-structure", "none"]
+    assert (
+        run_shared_download(
+            tmp_path, library(media_photo("kept"), media_photo("removed")), download, arguments
+        )
+        == 0
+    )
+    (tmp_path / "untracked.JPG").write_bytes(b"untracked")
+    if adopt_existing:
+        arguments.append("--prune-orphans-adopt-existing")
+    with caplog.at_level(logging.INFO):
+        assert run_shared_download(tmp_path, library(media_photo("kept")), download, arguments) == 0
+    assert (
+        (
+            LOGGER.name,
+            logging.INFO,
+            "Pruning baseline already exists; not adopting existing files",
+        )
+        in caplog.record_tuples
+    ) == adopt_existing
+    assert (tmp_path / "untracked.JPG").read_bytes() == b"untracked"
+    assert not (tmp_path / "removed.JPG").exists()
+
+
 def test_bootstrap_preserves_nonmedia_subdirectories_and_sibling_libraries(tmp_path: Path) -> None:
     destination = tmp_path / "shared"
     destination.mkdir()

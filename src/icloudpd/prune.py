@@ -206,6 +206,8 @@ class PruneSnapshot:
                 planned.setdefault(photo.id, set()).update(paths)
 
         adopting = adopt_existing is not None and self.initial
+        if adopt_existing is not None and not self.initial:
+            logger.info("Pruning baseline already exists; not adopting existing files")
         inventory = library_photo_ids(library, inspect if adopting else None)
         if cancelled is not None and cancelled():
             raise ValueError("Orphan pruning was cancelled")
