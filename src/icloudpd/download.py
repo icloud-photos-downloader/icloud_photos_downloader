@@ -10,6 +10,8 @@ from functools import partial
 from typing import Callable
 
 from requests import Response
+from requests.exceptions import ChunkedEncodingError
+from requests.exceptions import ConnectionError as RequestsConnectionError
 from tzlocal import get_localzone
 
 # Import the constants object so that we can mock WAIT_SECONDS in tests
@@ -162,8 +164,9 @@ def download_media(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 ):
                     return True
-                # iCloud sent only part of the file (#1311); ask for the rest while that
-                # brings more data, otherwise keep the partial file for the next run
+                # The response ended before the size in its Content-Range (iCloud sends one on
+                # every download); ask for the rest while that brings more data, otherwise keep
+                # the partial file for the next run
                 downloaded_size = os.path.getsize(temp_download_path)
                 total_size = content_range_total(photo_response)
                 if downloaded_size > current_size:
@@ -219,6 +222,24 @@ def download_media(
                     "Error downloading %s, retrying after %s seconds...", error_filename, wait_time
                 )
                 time.sleep(wait_time)
+
+        except (ChunkedEncodingError, RequestsConnectionError) as error:
+            # The connection dropped (#1311). Since urllib3 2 a body shorter than its
+            # Content-Length raises here instead of being saved cut off. Resume from the
+            # partial file while that brings more data
+            downloaded_size = (
+                os.path.getsize(temp_download_path) if os.path.exists(temp_download_path) else 0
+            )
+            if downloaded_size > current_size:
+                logger.debug(
+                    "Connection lost after %d bytes of %s, resuming: %s",
+                    downloaded_size,
+                    download_path,
+                    error,
+                )
+                continue
+            logger.error("Connection lost while downloading %s: %s", download_path, error)
+            break
 
         except OSError:
             logger.error(
