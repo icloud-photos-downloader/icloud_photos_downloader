@@ -30,9 +30,11 @@ Each test kind (for example "binary on apk-based images") runs as **one job per 
 2. runs the test command and the tzlc command in the container,
 3. writes `compatibility/<kind>.<image>.<arch>.pass|fail` and `tzlc/...` result files.
 
-A failing test does not fail the job (many failures are expected, for example on end-of-life distributions), so `scripts/compat_test` makes them visible instead: the job summary gets a table with the test and tzlc result per image, and each job adds a warning annotation listing the images where a test failed.
+A failing test does not fail the job, so `scripts/compat_test` makes them visible instead: the job summary gets a table with the test and tzlc result per image, and each job adds a warning annotation listing the images where a test failed.
 
 The image lists are in the job's `Run tests on ... images` step. To add or drop a distribution, edit that list.
+
+Which releases are tested: those that still get free security updates from the distribution itself (Debian including LTS, Ubuntu's standard support without the paid ESM, Alpine's official support), plus releases whose free support ended less than a year ago, since many NAS and Docker setups move to a new release a while later. Check the lists when a new release comes out and once a year: add new releases, and drop releases more than a year past their end of support. https://endoflife.date has the dates. icloudpd may still work on older releases; it just isn't tested there. A release is only tested where the test can work at all: Debian 11 is only in the binary test. Since its LTS ended, `apt-get install` fails on it (packages in `bullseye-security` return 404), so the pip, npm and npx tests can't install their tools, and its Python (3.9) is older than icloudpd needs (3.11) anyway. The binary needs nothing from apt; only its time zone/locale check does, so that check fails there.
 
 You can run a kind locally with Docker, for example with binaries in `dist/`:
 
@@ -42,8 +44,6 @@ alpine_3_22 alpine:3.22
 alpine_3_21 alpine:3.21
 EOF
 ```
-
-Known flaky results: npm and npx on old Alpine images (3.13–3.15) sometimes get a corrupted package from the local test registry (`npm WARN tar zlib: invalid stored block lengths`), which shows up as a random failure on one of those images.
 
 ## Keeping runs fast and bounded
 
@@ -55,3 +55,4 @@ Known flaky results: npm and npx on old Alpine images (3.13–3.15) sometimes ge
 ## History
 
 - 2026-10: runners moved from `macos-14` (retired by GitHub on 2026-11-02) to `macos-15` and from `ubuntu-22.04` to `ubuntu-24.04`; actions moved to their Node 24 releases and CodeQL to v4; concurrency, timeouts and `locale-gen` were added; the 332 per-image Linux compatibility jobs were batched into 29 jobs (376 → 73 jobs per full build), with the same tests and results. Details are in the commit messages.
+- 2026-11: end-of-life distributions dropped from the compatibility tests (Debian 6–10, Ubuntu 12.04–20.04, Alpine 3.10–3.19), and the current releases added (Debian 13, Ubuntu 26.04, Alpine 3.23 and 3.24, `python:3.15-alpine3.24` instead of `python:3.13-alpine3.19`). Debian 11 (binary only) and Alpine 3.20/3.21 stay until a year after their end of support.

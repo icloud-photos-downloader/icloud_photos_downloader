@@ -1,6 +1,7 @@
 import inspect
 import os
 import shutil
+import tempfile
 from typing import NamedTuple, NoReturn
 from unittest import TestCase, mock
 
@@ -156,6 +157,17 @@ class AuthenticationTestCase(TestCase):
         icloud.data = {"success": False, "error": "Missing X-APPLE-WEBAUTH-TOKEN cookie"}
         self.assertFalse(icloud.requires_2fa)
         self.assertFalse(icloud.requires_2sa)
+
+    def test_cookie_directory_with_missing_parents_is_created(self) -> None:
+        """--cookie-directory may point into a folder that doesn't exist yet"""
+        with tempfile.TemporaryDirectory() as parent:
+            cookie_dir = os.path.join(parent, "icloudpd", "cookies")
+            with mock.patch.object(pyicloud_ipd.base.PyiCloudService, "authenticate"):
+                pyicloud_ipd.base.PyiCloudService(
+                    "com", "jdoe@gmail.com", lambda: None, None, cookie_directory=cookie_dir
+                )
+            self.assertTrue(os.path.isdir(cookie_dir))
+
     def test_locked_keyring_falls_back_to_next_provider(self) -> None:
         """A locked keyring (e.g. headless Linux) is skipped instead of crashing login (#1032)"""
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
