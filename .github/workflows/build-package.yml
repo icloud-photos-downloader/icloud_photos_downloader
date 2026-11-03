@@ -796,11 +796,10 @@ jobs:
         name: icloudpd-dummywhl-linux
         path: |
           dist
-    - name: Run tests on 7 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test pip-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
         python3_15 python:3.15
-        debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
         debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
@@ -1583,10 +1582,9 @@ jobs:
         npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
       env:
         NODE_AUTH_TOKEN: fake
-    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 5 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test npm-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
         debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
@@ -1682,10 +1680,9 @@ jobs:
         npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
       env:
         NODE_AUTH_TOKEN: fake
-    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 5 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test npx-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
         debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
