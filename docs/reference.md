@@ -37,10 +37,17 @@ This is a list of all options available for the command line interface (CLI) of 
     Option may be specified multiple times to download from different albums
     ```    
 
+    An album in a folder is named by its path, as shown by
+    [`--list-albums`](list-albums-parameter), e.g. `--album "Trips/2024/Italy"`.
+
 (list-albums-parameter)=
 `--list-albums`
     
 :   Lists all available albums.
+
+    Albums in folders are listed with the folder names in front, e.g. `Trips/2024/Italy`
+    for the album "Italy" in the folder "2024" in the folder "Trips". Folders themselves
+    are not listed, since they hold no photos of their own.
 
 (library-parameter)=
 `--library X`
