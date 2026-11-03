@@ -9,8 +9,6 @@
 
 See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details. Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues)
 
-We aim to release new versions once a week (Friday), if there is something worth delivering.
-
 ## iCloud Prerequisites
 
 To make iCloud Photo Downloader work, ensure the iCloud account is configured with the following settings, otherwise Apple Servers will return an ACCESS_DENIED error:
@@ -85,7 +83,7 @@ requirements, hashing costs and recovery instructions.
 To independently create and authorize a session (and complete 2SA/2FA validation if needed) on your local system:
 
 ```
-icloudpd --username my@email.address --password my_password --auth-only
+icloudpd --username my@email.address --auth-only
 ```
 > [!TIP]
 > This feature can also be used to check and verify that the session is still authenticated. 
