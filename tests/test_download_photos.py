@@ -1362,6 +1362,52 @@ class DownloadPhotoTestCase(TestCase):
                 self.assertIn("All photos and videos have been downloaded", result.output)
                 assert result.exit_code == 0
 
+    def test_download_one_recent_live_photo_thumb(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_download = [
+            ("2018/07/31", "IMG_7409.JPG"),
+            ("2018/07/31", "IMG_7409-thumb.MOV"),
+        ]
+
+        # Download the first photo, but mock the video download
+        orig_download = PhotoAsset.download
+
+        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
+            if not hasattr(PhotoAsset, "already_downloaded"):
+                response = orig_download(pa, session, _url, start)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
+                return response
+            return mock.MagicMock()
+
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+                get_exif_patched.return_value = False
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    files_to_download,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--live-photo-size",
+                        "thumb",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
+
+                self.assertIn("All photos and videos have been downloaded", result.output)
+                assert result.exit_code == 0
+
     def test_download_one_recent_live_photo_chinese(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
