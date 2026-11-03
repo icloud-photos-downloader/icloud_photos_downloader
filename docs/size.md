@@ -25,7 +25,7 @@ Size can be selected with the `--size` parameter and multiple specifications are
 
 If the size parameter is specified, but it is not available for the asset in iCloud, then `original` is downloaded, unless `--force-size` is specified.
 
-Assets for sizes other than original will have a suffix added to their name, e.g., `IMG-1234-medium.JPG`.
+Assets downloaded as `medium` or `thumb` get the size as a suffix in their name, e.g., `IMG_1234-medium.JPG`. `adjusted` and `alternative` only get a suffix (`-adjusted`, `-alternative`) when their name would be the same as another file downloaded for the same asset.
 
 ## Special Sizes
 
