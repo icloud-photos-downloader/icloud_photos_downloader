@@ -346,8 +346,50 @@ This is a list of all options available for the command line interface (CLI) of 
 
 (auto-delete-parameter)=
 `--auto-delete`
-    
-:   If specified, assets deleted in iCloud (actually moved to the Recently Deleted album) will also be deleted locally.
+
+:   If specified, unchanged tracked files for assets deleted in iCloud (actually moved
+    to the Recently Deleted album) can also be deleted locally. Auto-delete requires complete, unfiltered
+    active-library scans. A local file becomes eligible only after its stable iCloud
+    asset ID is absent from two consecutive complete scans and is present in Recently
+    Deleted. The first run only initializes the safety manifest.
+
+    With `--recent`, `--until-found`, `--album`, `--skip-created-before`,
+    `--skip-created-after`, `--skip-photos` or `--skip-videos`, downloads continue
+    with a warning and auto-delete is skipped. These runs do not advance the
+    manifest's complete-scan history. Print-only runs also leave the manifest unchanged.
+    Failed downloads, cancellation and empty or incomplete inventories prevent
+    deletion and manifest updates. A fresh inventory includes hidden photos and
+    retains originals still referenced by another asset.
+
+    Tracking is stored in `.icloudpd-autodelete.json` in the download directory,
+    alongside the independent `.icloudpd-prune.json` snapshot. Both use the same
+    `scope` (account, domain, library, time zone and output settings) and `files`
+    format: asset ID → relative path → size and SHA-256. The auto-delete manifest
+    also stores `generation` and `previous_active_ids` for the two-scan rule.
+    The manifests remain separate because auto-delete requires Recently Deleted,
+    whereas orphan pruning handles assets disappearing from a shared library.
+
+    Use a dedicated destination for each account, library and output configuration.
+    A mismatched or unreadable manifest warns and disables auto-delete while
+    downloads continue. The manifest is replaced atomically, with private file
+    permissions. `--dry-run` leaves it and the tracked files unchanged.
+
+    SHA-256 is calculated when a file is first tracked, including already present
+    files matched to current assets, and again before deletion. This adds a full-file
+    read at those points, especially noticeable for large videos or the initial scan.
+    Subsequent scans do not refresh existing fingerprints from local edits.
+    If any tracked member of an asset changed, is missing or has an unsafe path,
+    its media, Live Photo video and sidecars are preserved together. Shared paths
+    are never deleted while ownership is ambiguous.
+    Ownership checks also compare filesystem identities, so case variants,
+    equivalent Unicode names and hard links to a file owned by another asset
+    preserve the whole asset. These identities are read from current filesystem
+    metadata before cleanup; they are not persisted in the manifest.
+
+    Manifests from earlier development versions in the cookie directory are not
+    imported, modified or removed. The new manifest starts with a baseline-only run.
+    Files belonging to already deleted assets that are known only to an old manifest
+    remain untracked and are preserved; paths are never guessed from filenames.
 
 :   Can't be combined with [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter): the assets it moves to Recently Deleted would then be deleted locally as well.
 

@@ -15,6 +15,7 @@ import urllib
 from functools import partial, singledispatch
 from logging import Logger
 from multiprocessing import freeze_support
+from pathlib import Path
 from threading import Thread
 from typing import (
     Any,
@@ -43,6 +44,7 @@ from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
+from icloudpd.autodelete_manifest import AutoDeleteManifest
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
 from icloudpd.email_notifications import send_2sa_notification
@@ -51,7 +53,7 @@ from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
 from icloudpd.paths import local_download_path, remove_unicode_chars
-from icloudpd.prune import PruneSnapshot
+from icloudpd.prune import PruneSnapshot, library_photo_ids
 from icloudpd.server import serve_app
 from icloudpd.status import Status, StatusExchange
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, truncate_middle
@@ -478,6 +480,70 @@ def _process_all_users_once(
                     )
 
     return 0
+
+
+def download_scope(
+    global_config: GlobalConfig, user_config: UserConfig, library_object: PhotoLibrary
+) -> str:
+    """Shared account/library/output identity for pruning and auto-delete snapshots."""
+    return json.dumps(
+        {
+            "account": user_config.username.casefold(),
+            "domain": global_config.domain,
+            "zone": library_object.zone_id,
+            "timezone": str(get_localzone()),
+            "settings": {
+                name: str(getattr(user_config, name))
+                for name in (
+                    "sizes",
+                    "force_size",
+                    "folder_structure",
+                    "xmp_sidecar",
+                    "skip_live_photos",
+                    "live_photo_size",
+                    "live_photo_mov_filename_policy",
+                    "align_raw",
+                    "file_match_policy",
+                    "keep_unicode_in_filenames",
+                    "set_exif_datetime",
+                )
+            },
+        },
+        sort_keys=True,
+    )
+
+
+def load_auto_delete_manifest(
+    logger: logging.Logger,
+    global_config: GlobalConfig,
+    user_config: UserConfig,
+    library_object: PhotoLibrary,
+) -> AutoDeleteManifest | None:
+    """Filtered runs keep downloading without reading or advancing deletion state."""
+    if not user_config.auto_delete:
+        return None
+    if (
+        global_config.only_print_filenames
+        or user_config.recent is not None
+        or user_config.until_found is not None
+        or user_config.albums
+        or user_config.skip_created_before is not None
+        or user_config.skip_created_after is not None
+        or user_config.skip_photos
+        or user_config.skip_videos
+    ):
+        logger.warning(
+            "Skipping auto-delete: a complete unfiltered active-library scan is required"
+        )
+        return None
+    try:
+        return AutoDeleteManifest.load(
+            Path(user_config.directory), download_scope(global_config, user_config, library_object)
+        )
+    except (OSError, ValueError) as error:
+        logger.warning("Skipping auto-delete: %s", error)
+        logger.debug("Auto-delete setup failed", exc_info=True)
+        return None
 
 
 def keep_icloud_recent_days_warnings(user_config: UserConfig) -> List[str]:
@@ -1065,6 +1131,11 @@ def core_single_run(
                         pass
 
                     directory = os.path.normpath(user_config.directory)
+                    auto_delete_manifest = load_auto_delete_manifest(
+                        logger, global_config, user_config, library_object
+                    )
+                    auto_delete_complete = True
+                    auto_delete_seen: set[str] = set()
 
                     if user_config.prune_orphans:
                         if library_object.library_type != "shared":
@@ -1073,31 +1144,7 @@ def core_single_run(
                             )
                         else:
                             try:
-                                scope = json.dumps(
-                                    {
-                                        "account": user_config.username.casefold(),
-                                        "domain": global_config.domain,
-                                        "zone": library_object.zone_id,
-                                        "timezone": str(get_localzone()),
-                                        "settings": {
-                                            name: str(getattr(user_config, name))
-                                            for name in (
-                                                "sizes",
-                                                "force_size",
-                                                "folder_structure",
-                                                "xmp_sidecar",
-                                                "skip_live_photos",
-                                                "live_photo_size",
-                                                "live_photo_mov_filename_policy",
-                                                "align_raw",
-                                                "file_match_policy",
-                                                "keep_unicode_in_filenames",
-                                                "set_exif_datetime",
-                                            )
-                                        },
-                                    },
-                                    sort_keys=True,
-                                )
+                                scope = download_scope(global_config, user_config, library_object)
                                 prune_snapshot = PruneSnapshot(
                                     directory, scope, user_config.dry_run
                                 )
@@ -1231,6 +1278,28 @@ def core_single_run(
                                     if passer_result
                                     else NOT_DOWNLOADED
                                 )
+                                if auto_delete_manifest is not None and auto_delete_complete:
+                                    try:
+                                        record_id = str(item._asset_record["recordName"])
+                                        if (
+                                            not passer_result
+                                            or not download_result.present
+                                            or record_id in auto_delete_seen
+                                        ):
+                                            auto_delete_complete = False
+                                        auto_delete_seen.add(record_id)
+                                        auto_delete_manifest.record_active(
+                                            str(item.id),
+                                            [
+                                                path
+                                                for path in download_result.expected_paths
+                                                if os.path.isfile(path)
+                                            ],
+                                        )
+                                    except (OSError, ValueError, KeyError) as error:
+                                        logger.warning("Skipping auto-delete: %s", error)
+                                        logger.debug("Auto-delete tracking failed", exc_info=True)
+                                        auto_delete_complete = False
                                 if prune_snapshot is not None and prune_complete:
                                     if passer_result and not download_result.present:
                                         prune_complete = False
@@ -1342,6 +1411,7 @@ def core_single_run(
                             pass
 
                         if status_exchange.get_progress().cancel:
+                            auto_delete_complete = False
                             prune_complete = False
                             logger.info("Iteration was cancelled")
                             status_exchange.get_progress().photos_last_message = (
@@ -1411,23 +1481,35 @@ def core_single_run(
                         else:
                             logger.warning("Skipping orphan pruning: download run did not complete")
 
-                    if user_config.auto_delete:
-                        autodelete_photos(
-                            logger,
-                            user_config.dry_run,
-                            library_object,
-                            user_config.folder_structure,
-                            directory,
-                            user_config.sizes,
-                            lp_filename_generator,
-                            user_config.align_raw,
-                            create_filename_builder(
-                                user_config.file_match_policy,
-                                build_filename_cleaner(user_config.keep_unicode_in_filenames),
-                            ),
-                        )
-                    else:
-                        pass
+                    if auto_delete_manifest is not None:
+                        if not auto_delete_complete or len(auto_delete_seen) != photos_count:
+                            logger.warning("Skipping auto-delete: download scan did not complete")
+                        else:
+                            try:
+                                # Verify a fresh full listing, including hidden/shared originals,
+                                # before treating any ID as absent or touching local files.
+                                active_ids = library_photo_ids(library_object)
+                                if status_exchange.get_progress().cancel:
+                                    raise ValueError("auto-delete was cancelled")
+                                if not auto_delete_manifest.active_ids.issubset(active_ids):
+                                    raise ValueError(
+                                        "active library changed during the download scan"
+                                    )
+                                auto_delete_manifest.active_ids = active_ids
+                                auto_delete_manifest.validate_generation()
+                                autodelete_photos(
+                                    logger,
+                                    user_config.dry_run,
+                                    library_object,
+                                    auto_delete_manifest,
+                                    cancelled=lambda: status_exchange.get_progress().cancel,
+                                )
+                                if not user_config.dry_run:
+                                    auto_delete_manifest.commit_generation()
+                                    auto_delete_manifest.save()
+                            except Exception as error:
+                                logger.warning("Skipping auto-delete: %s", error)
+                                logger.debug("Auto-delete finalization failed", exc_info=True)
         except PyiCloudFailedLoginException as error:
             logger.info(error)
             dump_responses(logger.debug, captured_responses)

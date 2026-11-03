@@ -132,8 +132,8 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--auto-delete",
-        help='Scan the "Recently Deleted" folder and delete any files found there. '
-        + "(If you restore the photo in iCloud, it will be downloaded again.)",
+        help="Delete unchanged tracked files only after two complete scans without their iCloud ID "
+        + "and confirmation in Recently Deleted. Filtered runs keep downloading without deletion.",
         action="store_true",
     )
     cloned.add_argument(

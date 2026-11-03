@@ -26,6 +26,12 @@ vcr = VCR(decode_compressed_response=True, record_mode="none")
 
 
 class AutodeletePhotosTestCase(TestCase):
+    """Original VCR cases now preserve files on filtered runs.
+
+    Complete-scan deletion and filename-policy coverage lives in
+    test_autodelete_integration.py, including the two absence observations.
+    """
+
     @pytest.fixture(autouse=True)
     def inject_fixtures(self) -> None:
         self.root_path = path_from_project_root(__file__)
@@ -127,18 +133,18 @@ class AutodeletePhotosTestCase(TestCase):
             )
             self.assertIn("All photos and videos have been downloaded", result.output)
             self.assertIn(
-                "Deleting any files found in 'Recently Deleted'...",
+                "Skipping auto-delete: a complete unfiltered active-library scan is required",
                 result.output,
             )
 
-            self.assertIn(
+            self.assertNotIn(
                 f"Deleted {os.path.join(data_dir, os.path.normpath('2018/01/01/IMG_3589.JPG'))}",
                 result.output,
             )
 
             for file_name in files:
-                assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                    f"{file_name} not expected, but present"
+                assert os.path.exists(os.path.join(data_dir, file_name)), (
+                    f"{file_name} must survive a filtered scan"
                 )
 
     def test_download_autodelete_photos(self) -> None:
@@ -225,18 +231,18 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos and videos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files[0]))}",
             result.output,
         )
 
         for file_name in files:
-            assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} not expected, but present"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} must survive a filtered scan"
             )
 
     def test_autodelete_photos(self) -> None:
@@ -306,23 +312,23 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
             result.output,
         )
@@ -334,7 +340,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_delete)
 
         # check files
         for file_name in files_to_create:
@@ -343,8 +349,8 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} not expected, but present"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} must survive a filtered scan"
             )
 
     def test_autodelete_photos_name_id7(self) -> None:
@@ -417,23 +423,23 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
             result.output,
         )
@@ -445,7 +451,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_delete)
 
         # check files
         for file_name in files_to_create:
@@ -454,8 +460,8 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} not expected, but present"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} must survive a filtered scan"
             )
 
     @pytest.mark.skipif(constants.MAX_RETRIES == 0, reason="Disabled when MAX_RETRIES set to 0")
@@ -875,23 +881,23 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"[DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"[DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"[DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"[DRY RUN] Would delete {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
             result.output,
         )
@@ -970,23 +976,23 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
             result.output,
         )
@@ -998,7 +1004,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_delete)
 
         # check files
         for file_name in files_to_create:
@@ -1007,8 +1013,8 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} not expected, but present"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} must survive a filtered scan"
             )
 
     def test_autodelete_photos_lp(self) -> None:
@@ -1062,23 +1068,23 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
             result.output,
         )
@@ -1090,7 +1096,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_delete)
 
         # check files
         for file_name in files_to_create:
@@ -1099,8 +1105,8 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} not expected, but present"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} must survive a filtered scan"
             )
 
     def test_autodelete_photos_lp_heic(self) -> None:
@@ -1154,23 +1160,23 @@ class AutodeletePhotosTestCase(TestCase):
         )
         self.assertIn("All photos have been downloaded", result.output)
         self.assertIn(
-            "Deleting any files found in 'Recently Deleted'...",
+            "Skipping auto-delete: a complete unfiltered active-library scan is required",
             result.output,
         )
 
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[0]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[1]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[2]))}",
             result.output,
         )
-        self.assertIn(
+        self.assertNotIn(
             f"Deleted {os.path.join(data_dir, os.path.normpath(files_to_delete[3]))}",
             result.output,
         )
@@ -1182,7 +1188,7 @@ class AutodeletePhotosTestCase(TestCase):
 
         files_in_result = glob.glob(os.path.join(data_dir, "**/*.*"), recursive=True)
 
-        assert sum(1 for _ in files_in_result) == len(files_to_create)
+        assert sum(1 for _ in files_in_result) == len(files_to_create) + len(files_to_delete)
 
         # check files
         for file_name in files_to_create:
@@ -1191,6 +1197,6 @@ class AutodeletePhotosTestCase(TestCase):
             )
 
         for file_name in files_to_delete:
-            assert not os.path.exists(os.path.join(data_dir, file_name)), (
-                f"{file_name} not expected, but present"
+            assert os.path.exists(os.path.join(data_dir, file_name)), (
+                f"{file_name} must survive a filtered scan"
             )
