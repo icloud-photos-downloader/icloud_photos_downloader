@@ -1,418 +1,397 @@
 import json
 import logging
+import os
+import unicodedata
 from pathlib import Path
 from types import SimpleNamespace
+from unittest import mock
 
 import pytest
 
-from icloudpd.autodelete import autodelete_photos, move_file
+from icloudpd.autodelete import autodelete_photos
 from icloudpd.autodelete_manifest import AutoDeleteManifest
+from icloudpd.prune import PruneSnapshot, file_record
+
+SCOPE = "test-scope"
 
 
-def _library(*asset_ids: str) -> SimpleNamespace:
-    return SimpleNamespace(
-        recently_deleted=[SimpleNamespace(id=asset_id) for asset_id in asset_ids]
-    )
+def _autodelete(manifest: AutoDeleteManifest, *asset_ids: str, dry_run: bool = False) -> None:
+    library = SimpleNamespace(recently_deleted=[SimpleNamespace(id=key) for key in asset_ids])
+    autodelete_photos(logging.getLogger(__name__), dry_run, library, manifest)
 
 
-def _autodelete(
-    manifest: AutoDeleteManifest,
-    root: Path,
-    *asset_ids: str,
-    dry_run: bool = False,
-    quarantine: Path | None = None,
-) -> None:
-    autodelete_photos(
-        logging.getLogger(__name__),
-        dry_run,
-        _library(*asset_ids),
-        str(root),
-        manifest,
-        [],
-        lambda value: value,
-        None,  # type: ignore[arg-type]
-        str(quarantine) if quarantine else None,
-    )
+def _baseline(root: Path) -> AutoDeleteManifest:
+    root.mkdir(parents=True, exist_ok=True)
+    for name in ("removed.jpg", "kept.jpg"):
+        (root / name).write_bytes(name.encode())
+    manifest = AutoDeleteManifest(root, SCOPE)
+    manifest.record_active("removed", [str(root / "removed.jpg")])
+    manifest.record_active("kept", [str(root / "kept.jpg")])
+    manifest.commit_generation()
+    manifest.save()
+    return manifest
+
+
+def _eligible(root: Path) -> AutoDeleteManifest:
+    _baseline(root)
+    second = AutoDeleteManifest.load(root, SCOPE)
+    second.record_active("kept", [str(root / "kept.jpg")])
+    second.commit_generation()
+    second.save()
+    third = AutoDeleteManifest.load(root, SCOPE)
+    third.record_active("kept", [str(root / "kept.jpg")])
+    return third
 
 
 def test_requires_two_consecutive_absences_and_roundtrips(tmp_path: Path) -> None:
-    path = tmp_path / "manifest.json"
-    root = tmp_path / "library"
-    root.mkdir()
-    deleted = root / "deleted.jpg"
-    active = root / "active.jpg"
-    deleted.touch()
-    active.touch()
-
-    first = AutoDeleteManifest(path, root)
-    first.record_active("deleted-id", [str(deleted)])
-    first.record_active("active-id", [str(active)])
-    assert first.paths_for_deleted("deleted-id") == set()
-    first.commit_generation()
-    first.save()
-
-    second = AutoDeleteManifest.load(path, root)
-    second.record_active("active-id", [str(active)])
-    assert second.paths_for_deleted("deleted-id") == set()
+    first = _baseline(tmp_path)
+    assert first.paths_for_deleted("removed") == set()
+    second = AutoDeleteManifest.load(tmp_path, SCOPE)
+    second.record_active("kept", [str(tmp_path / "kept.jpg")])
+    assert second.paths_for_deleted("removed") == set()
     second.commit_generation()
     second.save()
+    third = AutoDeleteManifest.load(tmp_path, SCOPE)
+    third.record_active("kept", [str(tmp_path / "kept.jpg")])
+    assert third.paths_for_deleted("removed") == {str(tmp_path / "removed.jpg")}
+    assert third.paths_for_deleted("kept") == set()
+    assert third.paths_for_deleted("unknown") == set()
 
-    third = AutoDeleteManifest.load(path, root)
-    third.record_active("active-id", [str(active)])
-    assert third.paths_for_deleted("deleted-id") == {str(deleted)}
-    assert third.paths_for_deleted("active-id") == set()
-    assert third.paths_for_deleted("unknown-id") == set()
 
-
-def test_record_active_preserves_history_and_persists_ids_without_paths(
-    tmp_path: Path,
-) -> None:
-    path = tmp_path / "manifest.json"
-    root = tmp_path / "library"
-    root.mkdir()
-    new = root / "new.jpg"
-
-    manifest = AutoDeleteManifest(path, root, {"asset": {"old.jpg"}})
-    manifest.record_active("asset", [str(new)])
+def test_history_and_ids_without_local_files_survive_roundtrip(tmp_path: Path) -> None:
+    manifest = _baseline(tmp_path)
+    old_record = manifest.files["removed"]["removed.jpg"].copy()
+    (tmp_path / "new.jpg").write_bytes(b"new")
+    manifest.record_active("removed", [str(tmp_path / "new.jpg")])
     manifest.record_active("no-local-file", [])
     manifest.commit_generation()
     manifest.save()
+    restored = AutoDeleteManifest.load(tmp_path, SCOPE)
+    assert set(restored.files["removed"]) == {"removed.jpg", "new.jpg"}
+    assert restored.files["removed"]["removed.jpg"] == old_record
+    assert restored.previous_active_ids == {"removed", "kept", "no-local-file"}
 
-    restored = AutoDeleteManifest.load(path, root)
-    assert restored.assets["asset"] == {"old.jpg", "new.jpg"}
-    assert restored.previous_active_ids == {"asset", "no-local-file"}
 
-
-def test_legacy_manifest_is_rejected(tmp_path: Path) -> None:
-    path = tmp_path / "manifest.json"
-    path.write_text(json.dumps({"version": 1, "assets": {"old": ["photo.jpg"]}}))
+@pytest.mark.parametrize("version", [1, 2])
+def test_old_manifest_formats_are_rejected_without_migration(tmp_path: Path, version: int) -> None:
+    path = tmp_path / AutoDeleteManifest.filename
+    path.write_text(json.dumps({"version": version, "assets": {"old": ["photo.jpg"]}}))
     before = path.read_bytes()
     with pytest.raises(ValueError, match="cannot safely read"):
-        AutoDeleteManifest.load(path, tmp_path)
+        AutoDeleteManifest.load(tmp_path, SCOPE)
     assert path.read_bytes() == before
 
 
-@pytest.mark.parametrize("unsafe_path", ["/tmp/outside.jpg", "../outside.jpg", "."])
-def test_load_rejects_unsafe_persisted_paths(tmp_path: Path, unsafe_path: str) -> None:
-    path = tmp_path / "manifest.json"
+@pytest.mark.parametrize(
+    "relative",
+    [
+        "/tmp/outside.jpg",
+        "../outside.jpg",
+        "./removed.jpg",
+        "nested//photo.jpg",
+        ".",
+        "",
+        ".icloudpd-autodelete.json",
+        ".icloudpd-prune.json",
+        ".icloudpd-prune.lock",
+        ".icloudpd-pruned/batch/photo.JPG",
+        "photo.part",
+    ],
+)
+def test_load_rejects_unsafe_persisted_paths(tmp_path: Path, relative: str) -> None:
+    manifest = _baseline(tmp_path)
+    data = json.loads(manifest.path.read_text())
+    data["files"]["removed"] = {relative: file_record(tmp_path / "removed.jpg")}
+    manifest.path.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="unsafe auto-delete path"):
+        AutoDeleteManifest.load(tmp_path, SCOPE)
+
+
+@pytest.mark.parametrize(
+    "record",
+    [
+        {},
+        {"size": True, "sha256": "a" * 64},
+        {"size": -1, "sha256": "a" * 64},
+        {"size": 1, "sha256": "invalid"},
+        {"size": 1, "sha256": "g" * 64},
+    ],
+)
+def test_load_rejects_invalid_fingerprints(tmp_path: Path, record: object) -> None:
+    manifest = _baseline(tmp_path)
+    data = json.loads(manifest.path.read_text())
+    data["files"]["removed"]["removed.jpg"] = record
+    manifest.path.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="invalid file fingerprint"):
+        AutoDeleteManifest.load(tmp_path, SCOPE)
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("generation", 0),
+        ("generation", True),
+        ("previous_active_ids", []),
+        ("previous_active_ids", ["a", "a"]),
+        ("previous_active_ids", [None]),
+    ],
+)
+def test_load_rejects_invalid_generations(tmp_path: Path, field: str, value: object) -> None:
+    manifest = _baseline(tmp_path)
+    data = json.loads(manifest.path.read_text())
+    data[field] = value
+    manifest.path.write_text(json.dumps(data))
+    with pytest.raises(ValueError, match="invalid complete generation"):
+        AutoDeleteManifest.load(tmp_path, SCOPE)
+
+
+def test_scope_mismatch_preserves_state(tmp_path: Path) -> None:
+    manifest = _baseline(tmp_path)
+    before = manifest.path.read_bytes()
+    with pytest.raises(ValueError, match="another account, library or configuration"):
+        AutoDeleteManifest.load(tmp_path, "different-scope")
+    assert manifest.path.read_bytes() == before
+
+
+@pytest.mark.parametrize("kind", ["invalid-json", "symlink", "dangling-symlink"])
+def test_load_rejects_invalid_json_and_manifest_symlinks(tmp_path: Path, kind: str) -> None:
     root = tmp_path / "library"
     root.mkdir()
-    path.write_text(
-        json.dumps(
-            {
-                "version": 2,
-                "root": str(root),
-                "generation": 1,
-                "previous_active_ids": ["asset"],
-                "assets": {"asset": [unsafe_path]},
-            }
-        ),
-        encoding="utf-8",
-    )
-
+    path = root / AutoDeleteManifest.filename
+    if kind == "invalid-json":
+        path.write_text("not json")
+    else:
+        target = tmp_path / "other.json"
+        if kind == "symlink":
+            target.write_text("{}")
+        path.symlink_to(target)
     with pytest.raises(ValueError, match="cannot safely read"):
-        AutoDeleteManifest.load(path, root)
+        AutoDeleteManifest.load(root, SCOPE)
 
 
-def test_load_fails_closed_for_invalid_json_root_and_symlink(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    root.mkdir()
-    path = tmp_path / "manifest.json"
-    path.write_text("not json", encoding="utf-8")
-    with pytest.raises(ValueError, match="cannot safely read"):
-        AutoDeleteManifest.load(path, root)
-
-    path.write_text(
-        json.dumps(
-            {
-                "version": 2,
-                "root": str(tmp_path / "other"),
-                "generation": 1,
-                "previous_active_ids": [],
-                "assets": {},
-            }
-        ),
-        encoding="utf-8",
-    )
-    with pytest.raises(ValueError, match="cannot safely read"):
-        AutoDeleteManifest.load(path, root)
-
-    target = tmp_path / "target.json"
-    target.write_text("{}", encoding="utf-8")
-    path.unlink()
-    path.symlink_to(target)
-    with pytest.raises(ValueError, match="cannot safely read"):
-        AutoDeleteManifest.load(path, root)
-
-
-def test_record_active_rejects_paths_outside_root_and_symlink_escape(tmp_path: Path) -> None:
+def test_paths_outside_root_and_symlinked_media_are_refused(tmp_path: Path) -> None:
     root = tmp_path / "library"
     root.mkdir()
     outside = tmp_path / "outside.jpg"
     outside.touch()
-    manifest = AutoDeleteManifest(tmp_path / "manifest.json", root)
-
+    manifest = AutoDeleteManifest(root, SCOPE)
     with pytest.raises(ValueError, match="outside auto-delete directory"):
         manifest.record_active("asset", [str(outside)])
-
     escape = root / "escape.jpg"
     escape.symlink_to(outside)
-    with pytest.raises(ValueError, match="outside auto-delete directory"):
+    with pytest.raises(ValueError, match="unsafe auto-delete path"):
         manifest.record_active("asset", [str(escape)])
 
 
-def test_ambiguous_path_is_never_returned(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    root.mkdir()
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        root,
-        {
-            "deleted-a": {"shared.jpg", "unique-to-a.jpg"},
-            "deleted-b": {"shared.jpg"},
-        },
-        previous_active_ids=set(),
-        generation=1,
-    )
-
-    assert manifest.paths_for_deleted("deleted-a") == set()
-    assert manifest.paths_for_deleted("deleted-b") == set()
+def test_ambiguous_paths_protect_entire_asset(tmp_path: Path) -> None:
+    shared, unique = tmp_path / "shared.jpg", tmp_path / "unique.jpg"
+    shared.write_bytes(b"shared")
+    unique.write_bytes(b"unique")
+    manifest = AutoDeleteManifest(tmp_path, SCOPE, previous_active_ids={"kept"}, generation=2)
+    manifest.record_active("a", [str(shared), str(unique)])
+    manifest.record_active("b", [str(shared)])
+    manifest.active_ids = {"kept"}
+    assert manifest.paths_for_deleted("a") == set()
+    assert manifest.paths_for_deleted("b") == set()
+    _autodelete(manifest, "a", "b")
+    assert shared.exists() and unique.exists()
 
 
-def test_refuses_suspicious_empty_generation(tmp_path: Path) -> None:
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        tmp_path,
-        {"known": {"known.jpg"}},
-        previous_active_ids={"known"},
-        generation=1,
-    )
-    with pytest.raises(ValueError, match="empty active-library generation"):
-        manifest.commit_generation()
-
-
-def test_manifest_is_atomic_private_and_namespaced(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    root.mkdir()
-    path = AutoDeleteManifest.path_for(tmp_path, "person@example.com", root)
-    other_path = AutoDeleteManifest.path_for(tmp_path, "other@example.com", root)
-    assert path != other_path
-    assert "person" not in path.name
-
-    manifest = AutoDeleteManifest(path, root)
-    manifest.record_active("asset", [])
+@pytest.mark.parametrize("alias_kind", ["case", "unicode", "hardlink"])
+@pytest.mark.parametrize("other_active", [True, False])
+def test_filesystem_aliases_protect_entire_asset(
+    tmp_path: Path, alias_kind: str, other_active: bool
+) -> None:
+    source = tmp_path / ("café.JPG" if alias_kind == "unicode" else "Photo.JPG")
+    source.write_bytes(b"shared photo")
+    if alias_kind == "case":
+        alias = tmp_path / "photo.jpg"
+    elif alias_kind == "unicode":
+        alias = tmp_path / unicodedata.normalize("NFD", source.name)
+    else:
+        alias = tmp_path / "other.JPG"
+        alias.hardlink_to(source)
+    if not alias.exists() or not source.samefile(alias):
+        pytest.skip(f"Filesystem does not alias {alias_kind} variants")
+    sidecar = tmp_path / "Photo.JPG.xmp"
+    sidecar.write_bytes(b"metadata")
+    manifest = AutoDeleteManifest(tmp_path, SCOPE)
+    manifest.record_active("removed", [str(source), str(sidecar)])
+    manifest.record_active("other", [str(alias)])
+    manifest.record_active("unrelated", [])
     manifest.commit_generation()
     manifest.save()
 
-    assert path.stat().st_mode & 0o777 == 0o600
-    assert not list(tmp_path.glob(f".{path.name}.*"))
-    assert AutoDeleteManifest.load(path, root).previous_active_ids == {"asset"}
+    # Persist one complete absence, then observe another, with either owner state.
+    for _ in range(2):
+        manifest = AutoDeleteManifest.load(tmp_path, SCOPE)
+        manifest.record_active("unrelated", [])
+        if other_active:
+            manifest.record_active("other", [str(alias)])
+        assert manifest.paths_for_deleted("removed") == set()
+        _autodelete(manifest, "removed", "other")
+        manifest.commit_generation()
+        manifest.save()
+    assert source.read_bytes() == b"shared photo"
+    assert alias.read_bytes() == b"shared photo"
+    assert sidecar.read_bytes() == b"metadata"
+    assert "removed" in manifest.files and "other" in manifest.files
 
 
-def test_quarantines_only_eligible_asset_and_forgets_it(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    quarantine = tmp_path / "quarantine"
-    root.mkdir()
-    active = root / "active.jpg"
-    deleted = root / "deleted.jpg"
-    active.touch()
-    deleted.write_bytes(b"deleted")
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        root,
-        {"active-id": {"active.jpg"}, "deleted-id": {"deleted.jpg"}},
-        previous_active_ids={"active-id"},
-        generation=2,
-    )
-    manifest.record_active("active-id", [str(active)])
-
-    _autodelete(manifest, root, "active-id", "deleted-id", quarantine=quarantine)
-
-    assert active.exists()
-    assert not deleted.exists()
-    assert (quarantine / "deleted.jpg").read_bytes() == b"deleted"
-    assert "deleted-id" not in manifest.assets
-
-
-def test_direct_delete_remains_supported_without_quarantine(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    root.mkdir()
-    deleted = root / "deleted.jpg"
-    deleted.write_bytes(b"deleted")
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        root,
-        {"deleted-id": {"deleted.jpg"}},
-        previous_active_ids=set(),
-        generation=2,
-    )
-
-    manifest.record_active("kept-id", [])
-    _autodelete(manifest, root, "deleted-id")
-
-    assert not deleted.exists()
-    assert "deleted-id" not in manifest.assets
-
-
-def test_quarantines_media_xmp_and_live_photo_as_one_asset(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    quarantine = tmp_path / "quarantine"
-    root.mkdir()
-    relative_paths = {
-        "2026/01/02/photo.heic",
-        "2026/01/02/photo.heic.xmp",
-        "2026/01/02/photo_HEVC.mov",
-    }
-    for relative in relative_paths:
-        path = root / relative
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(relative, encoding="utf-8")
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        root,
-        {"deleted-id": set(relative_paths)},
-        previous_active_ids=set(),
-        generation=2,
-    )
-
-    manifest.record_active("kept-id", [])
-    _autodelete(manifest, root, "deleted-id", quarantine=quarantine)
-
-    for relative in relative_paths:
-        assert not (root / relative).exists()
-        assert (quarantine / relative).read_text(encoding="utf-8") == relative
-    assert "deleted-id" not in manifest.assets
-
-
-def test_dry_run_and_missing_path_do_not_forget_mapping(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    quarantine = tmp_path / "quarantine"
-    root.mkdir()
-    media = root / "deleted.jpg"
-    media.touch()
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        root,
-        {"deleted-id": {"deleted.jpg"}},
-        previous_active_ids=set(),
-        generation=2,
-    )
-
-    manifest.record_active("kept-id", [])
-    _autodelete(
-        manifest,
-        root,
-        "deleted-id",
-        dry_run=True,
-        quarantine=quarantine,
-    )
-    assert media.exists()
-    assert "deleted-id" in manifest.assets
-
-    media.unlink()
-    _autodelete(manifest, root, "deleted-id", quarantine=quarantine)
-    assert "deleted-id" in manifest.assets
-
-
-def test_quarantine_collision_preserves_both_files(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    quarantine = tmp_path / "quarantine"
-    root.mkdir()
-    quarantine.mkdir()
-    source = root / "photo.jpg"
-    destination = quarantine / "photo.jpg"
-    source.write_bytes(b"new")
-    destination.write_bytes(b"old")
-
-    assert move_file(
-        logging.getLogger(__name__),
-        str(source),
-        str(root),
-        str(quarantine),
-        "deleted-asset-id",
-        False,
-    )
-    assert destination.read_bytes() == b"old"
-    collision_files = list(quarantine.glob("photo-icloudpd-*.jpg"))
-    assert len(collision_files) == 1
-    assert collision_files[0].read_bytes() == b"new"
-
-
-def test_identical_quarantine_file_is_kept_without_duplicate(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    quarantine = tmp_path / "quarantine"
-    root.mkdir()
-    quarantine.mkdir()
-    source = root / "photo.jpg"
-    destination = quarantine / "photo.jpg"
-    source.write_bytes(b"same")
-    destination.write_bytes(b"same")
-
-    assert move_file(
-        logging.getLogger(__name__),
-        str(source),
-        str(root),
-        str(quarantine),
-        "deleted-asset-id",
-        False,
-    )
+def test_identical_content_in_distinct_files_does_not_imply_shared_ownership(
+    tmp_path: Path,
+) -> None:
+    manifest = _eligible(tmp_path)
+    source, kept = tmp_path / "removed.jpg", tmp_path / "kept.jpg"
+    kept.write_bytes(source.read_bytes())
+    assert not source.samefile(kept)
+    _autodelete(manifest, "removed")
     assert not source.exists()
-    assert destination.read_bytes() == b"same"
-    assert list(quarantine.iterdir()) == [destination]
+    assert kept.read_bytes() == b"removed.jpg"
 
 
-def test_quarantine_rejects_same_or_nested_root(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    root.mkdir()
-    source = root / "photo.jpg"
-    source.touch()
-
-    for invalid in (root, root / "nested", root.parent):
-        with pytest.raises(ValueError, match="Auto-delete directory"):
-            move_file(
-                logging.getLogger(__name__),
-                str(source),
-                str(root),
-                str(invalid),
-                "asset-id",
-                False,
-            )
+def test_deletion_refreshes_ownership_after_a_file_becomes_an_alias(tmp_path: Path) -> None:
+    manifest = _eligible(tmp_path)
+    source, kept = tmp_path / "removed.jpg", tmp_path / "kept.jpg"
+    assert manifest.paths_for_deleted("removed") == {str(source)}
+    kept.unlink()
+    kept.hardlink_to(source)
+    _autodelete(manifest, "removed")
+    assert source.read_bytes() == b"removed.jpg"
+    assert kept.read_bytes() == b"removed.jpg"
 
 
-def test_quarantine_rejects_symlink_escape(tmp_path: Path) -> None:
-    root = tmp_path / "library"
-    quarantine = tmp_path / "quarantine"
-    outside = tmp_path / "outside"
-    (root / "nested").mkdir(parents=True)
-    quarantine.mkdir()
-    outside.mkdir()
-    source = root / "nested/photo.jpg"
-    source.touch()
-    (quarantine / "nested").symlink_to(outside, target_is_directory=True)
+@pytest.mark.parametrize("failure", ["unreadable", "unknown-inode"])
+def test_unverifiable_ownership_never_uses_a_partial_index(tmp_path: Path, failure: str) -> None:
+    manifest = _eligible(tmp_path)
+    source, kept = tmp_path / "removed.jpg", tmp_path / "kept.jpg"
+    original_stat = Path.stat
 
-    with pytest.raises(ValueError, match="destination outside"):
-        move_file(
-            logging.getLogger(__name__),
-            str(source),
-            str(root),
-            str(quarantine),
-            "asset-id",
-            False,
-        )
+    def stat_with_failure(path: Path, *, follow_symlinks: bool = True) -> os.stat_result:
+        result = original_stat(path, follow_symlinks=follow_symlinks)
+        if path == kept:
+            if failure == "unreadable":
+                raise PermissionError("cannot inspect other owner's file")
+            values = list(result)
+            values[1] = 0  # Filesystem did not supply a usable file identifier.
+            return os.stat_result(values)
+        return result
+
+    with (
+        mock.patch.object(Path, "stat", stat_with_failure),
+        pytest.raises((OSError, ValueError)),
+    ):
+        _autodelete(manifest, "removed")
+    assert source.read_bytes() == b"removed.jpg"
+    assert kept.read_bytes() == b"kept.jpg"
+
+    # The failed lookup must not leave a partial index that misses this owner.
+    kept.unlink()
+    kept.hardlink_to(source)
+    assert manifest.paths_for_deleted("removed") == set()
+    _autodelete(manifest, "removed")
+    assert source.exists() and kept.exists()
 
 
 def test_empty_scan_cannot_delete_before_generation_validation(tmp_path: Path) -> None:
-    target = tmp_path / "deleted.jpg"
-    target.write_bytes(b"keep")
-    manifest = AutoDeleteManifest(
-        tmp_path / "manifest.json",
-        tmp_path,
-        {"deleted-id": {"deleted.jpg"}},
-        previous_active_ids={"kept-id"},
-        generation=2,
-    )
+    manifest = _eligible(tmp_path)
+    manifest.active_ids.clear()
     with pytest.raises(ValueError, match="empty active-library generation"):
-        _autodelete(manifest, tmp_path, "deleted-id")
-    assert target.read_bytes() == b"keep"
+        _autodelete(manifest, "removed")
+    with pytest.raises(ValueError, match="empty active-library generation"):
+        manifest.commit_generation()
+    assert (tmp_path / "removed.jpg").exists()
     assert manifest.generation == 2
-    assert "deleted-id" in manifest.assets
+
+
+def test_manifest_is_private_atomic_and_beside_prune(tmp_path: Path) -> None:
+    manifest = _baseline(tmp_path)
+    assert manifest.path == tmp_path / ".icloudpd-autodelete.json"
+    assert manifest.path.stat().st_mode & 0o777 == 0o600
+    assert not list(tmp_path.glob(".icloudpd-autodelete.*.part"))
+    before = manifest.path.read_bytes()
+    with (
+        mock.patch("icloudpd.autodelete_manifest.os.replace", side_effect=OSError("disk failure")),
+        pytest.raises(OSError, match="disk failure"),
+    ):
+        manifest.save()
+    assert manifest.path.read_bytes() == before
+    assert not list(tmp_path.glob(".icloudpd-autodelete.*.part"))
+
+
+def test_file_records_and_scope_are_compatible_with_prune(tmp_path: Path) -> None:
+    manifest = _baseline(tmp_path)
+    data = json.loads(manifest.path.read_text())
+    # Both readers use the same scope and per-ID, relative-path fingerprint format.
+    snapshot_data = {"version": 1, "scope": data["scope"], "files": data["files"]}
+    prune_path = tmp_path / PruneSnapshot.filename
+    prune_path.write_text(json.dumps(snapshot_data))
+    before = prune_path.read_bytes()
+    snapshot = PruneSnapshot(str(tmp_path), SCOPE)
+    try:
+        assert snapshot.files == manifest.files
+        assert snapshot.scope == manifest.scope
+    finally:
+        snapshot.close()
+    assert prune_path.read_bytes() == before
+
+
+def test_deletes_only_unchanged_eligible_asset(tmp_path: Path) -> None:
+    manifest = _eligible(tmp_path)
+    _autodelete(manifest, "removed", "kept")
+    assert not (tmp_path / "removed.jpg").exists()
+    assert (tmp_path / "kept.jpg").exists()
+    assert "removed" not in manifest.files
+
+
+@pytest.mark.parametrize("change", ["same-size", "different-size", "missing", "symlink"])
+def test_changed_asset_preserves_all_members_and_fingerprints(tmp_path: Path, change: str) -> None:
+    manifest = _eligible(tmp_path)
+    target = tmp_path / "removed.jpg"
+    sidecar = tmp_path / "removed.jpg.xmp"
+    sidecar.write_bytes(b"sidecar")
+    manifest.record_active("removed", [str(sidecar)])
+    manifest.active_ids = {"kept"}
+    before = manifest.files["removed"].copy()
+    if change == "same-size":
+        target.write_bytes(b"x" * target.stat().st_size)
+    elif change == "different-size":
+        target.write_bytes(b"edited")
+    elif change == "missing":
+        target.unlink()
+    else:
+        target.unlink()
+        target.symlink_to(tmp_path / "kept.jpg")
+    if change == "symlink":
+        with pytest.raises(ValueError, match="unsafe auto-delete path"):
+            _autodelete(manifest, "removed")
+    else:
+        _autodelete(manifest, "removed")
+    assert sidecar.read_bytes() == b"sidecar"
+    assert manifest.files["removed"] == before
+    assert (tmp_path / "kept.jpg").exists()
+
+
+def test_active_local_edit_never_refreshes_fingerprint(tmp_path: Path) -> None:
+    manifest = _baseline(tmp_path)
+    expected = manifest.files["removed"]["removed.jpg"].copy()
+    (tmp_path / "removed.jpg").write_bytes(b"local modification")
+    with mock.patch("icloudpd.autodelete_manifest.file_record") as fingerprint:
+        manifest.record_active("removed", [str(tmp_path / "removed.jpg")])
+        fingerprint.assert_not_called()
+    assert manifest.files["removed"]["removed.jpg"] == expected
+
+
+def test_media_sidecar_and_live_photo_delete_as_one_asset(tmp_path: Path) -> None:
+    manifest = AutoDeleteManifest(tmp_path, SCOPE, previous_active_ids={"kept"}, generation=2)
+    targets = [tmp_path / name for name in ("photo.HEIC", "photo_HEVC.MOV", "photo.HEIC.xmp")]
+    for target in targets:
+        target.write_bytes(target.name.encode())
+    manifest.record_active("removed", map(str, targets))
+    manifest.active_ids = {"kept"}
+    _autodelete(manifest, "removed", dry_run=True)
+    assert all(target.exists() for target in targets)
+    assert "removed" in manifest.files
+    _autodelete(manifest, "removed")
+    assert all(not target.exists() for target in targets)
+    assert "removed" not in manifest.files

@@ -1,9 +1,11 @@
 """Exercise download naming, complete scans and deletion together, without iCloud access."""
 
 import datetime
+import hashlib
 import json
 import logging
 from collections.abc import Iterator
+from contextlib import nullcontext
 from pathlib import Path
 from unittest import mock
 
@@ -11,8 +13,9 @@ import pytest
 from requests.exceptions import ChunkedEncodingError
 
 from icloudpd.autodelete_manifest import AutoDeleteManifest
-from icloudpd.base import _process_all_users_once
+from icloudpd.base import _process_all_users_once, download_scope
 from icloudpd.cli import parse
+from icloudpd.prune import PruneSnapshot
 from icloudpd.status import StatusExchange
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.item_type import AssetItemType
@@ -55,6 +58,8 @@ def library(*items: PhotoAsset, deleted: tuple[PhotoAsset, ...] = ()) -> mock.Ma
     result.hidden = album()
     result.recently_deleted = deleted
     result.albums = {"Favorites": result.all}
+    result.zone_id = {"zoneName": "PrimarySync"}
+    result.library_type = "private"
     return result
 
 
@@ -101,17 +106,21 @@ def run(
     current: mock.MagicMock,
     extra: tuple[str, ...] = (),
     exchange: StatusExchange | None = None,
+    username: str = "test@example.com",
 ) -> int:
-    global_config, configs = parse(arguments(tmp_path, extra))
+    params = arguments(tmp_path, extra)
+    params[1] = username
+    global_config, configs = parse(params)
     icloud = mock.MagicMock()
-    icloud.photos.private_libraries = {"PrimarySync": current}
-    icloud.photos.shared_libraries = {}
+    libraries = {configs[0].library: current}
+    icloud.photos.private_libraries = {} if current.library_type == "shared" else libraries
+    icloud.photos.shared_libraries = libraries if current.library_type == "shared" else {}
     with mock.patch("icloudpd.base.authenticator", return_value=icloud):
         return _process_all_users_once(global_config, configs, LOGGER, exchange or StatusExchange())
 
 
 def manifest_path(tmp_path: Path) -> Path:
-    return AutoDeleteManifest.path_for(tmp_path / "cookies", "test@example.com", tmp_path / "data")
+    return tmp_path / "data" / AutoDeleteManifest.filename
 
 
 @pytest.mark.parametrize(
@@ -166,7 +175,7 @@ def test_download_paths_survive_first_absence_then_delete(
     assert run(tmp_path, library(removed, kept), extra) == 0
     root = tmp_path / "data"
     state = json.loads(manifest_path(tmp_path).read_text())
-    tracked = {root / relative for relative in state["assets"]["removed"]}
+    tracked = {root / relative for relative in state["files"]["removed"]}
     assert {path.name for path in tracked} == expected
     assert all(path.exists() for path in tracked)
     assert all(path.parent == (root if mode == "flat" else root / "2018/07/12") for path in tracked)
@@ -182,7 +191,7 @@ def test_download_paths_survive_first_absence_then_delete(
     assert all(path.exists() for path in tracked)
     assert run(tmp_path, current, extra) == 0
     assert all(not path.exists() for path in tracked)
-    assert "removed" not in json.loads(manifest_path(tmp_path).read_text())["assets"]
+    assert "removed" not in json.loads(manifest_path(tmp_path).read_text())["files"]
     assert (
         (root / "2018/07/12/kept.JPG").exists()
         if mode != "flat" and "--file-match-policy" not in extra
@@ -324,7 +333,7 @@ def test_hidden_original_and_shared_paths_are_preserved(
     assert (tmp_path / "data/2018/07/12/photo.JPG").exists()
 
 
-def test_quarantine_requires_auto_delete() -> None:
+def test_quarantine_option_is_reserved_for_followup() -> None:
     result = run_main(
         [
             "--username",
@@ -336,4 +345,170 @@ def test_quarantine_requires_auto_delete() -> None:
         ]
     )
     assert result.exit_code == 2
-    assert "--auto-delete-directory requires --auto-delete" in result.output
+    assert "unrecognized arguments: --auto-delete-directory" in result.output
+
+
+@pytest.mark.parametrize("change", ["account", "domain", "library", "timezone", "naming"])
+def test_scope_changes_keep_downloading_without_touching_state(
+    tmp_path: Path,
+    media_writer: mock.MagicMock,
+    change: str,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    removed, kept = photo("removed"), photo("kept", "kept.JPG")
+    assert run(tmp_path, library(removed, kept)) == 0
+    assert run(tmp_path, library(kept, deleted=(removed,))) == 0
+    before = manifest_path(tmp_path).read_bytes()
+    current = library(photo("new", "new.JPG"), kept, deleted=(removed,))
+    extra: tuple[str, ...] = ()
+    if change == "domain":
+        extra = ("--domain", "cn")
+    elif change == "library":
+        current.zone_id = {"zoneName": "another-library"}
+    elif change == "naming":
+        extra = ("--file-match-policy", "name-id7")
+    with (
+        mock.patch(
+            "icloudpd.base.get_localzone",
+            return_value=datetime.timezone(datetime.timedelta(hours=1)),
+        )
+        if change == "timezone"
+        else nullcontext()
+    ):
+        assert (
+            run(
+                tmp_path,
+                current,
+                extra,
+                username="other@example.com" if change == "account" else "test@example.com",
+            )
+            == 0
+        )
+    assert "another account, library or configuration" in caplog.text
+    assert manifest_path(tmp_path).read_bytes() == before
+    assert (tmp_path / "data/2018/07/12/photo.JPG").exists()
+    assert list((tmp_path / "data").rglob("new*"))
+
+
+@pytest.mark.parametrize("version", [1, 2])
+def test_cookie_manifests_are_untouched_and_never_imported(
+    tmp_path: Path,
+    media_writer: mock.MagicMock,
+    version: int,
+) -> None:
+    root, cookies = tmp_path / "data", tmp_path / "cookies"
+    root.mkdir()
+    cookies.mkdir()
+    orphan = root / "old.JPG"
+    orphan.write_bytes(b"old untracked copy")
+    digest = hashlib.sha256(f"test@example.com\0{root.resolve()}".encode()).hexdigest()[:20]
+    old_path = cookies / (
+        "auto-delete-manifest.json" if version == 1 else f"auto-delete-manifest-{digest}.json"
+    )
+    old_path.write_text(
+        json.dumps(
+            {
+                "version": version,
+                "root": str(root),
+                "assets": {"removed": ["old.JPG"]},
+                "generation": 9,
+                "previous_active_ids": ["kept"],
+            }
+        )
+    )
+    before = old_path.read_bytes()
+    current = library(photo("kept", "kept.JPG"), deleted=(photo("removed"),))
+    assert run(tmp_path, current) == 0
+    state = json.loads(manifest_path(tmp_path).read_text())
+    assert state["generation"] == 1
+    assert "removed" not in state["files"]
+    assert run(tmp_path, current) == 0
+    assert old_path.read_bytes() == before
+    assert orphan.read_bytes() == b"old untracked copy"
+
+
+@pytest.mark.parametrize("edit_when", ["active", "absent"])
+def test_local_edits_of_same_size_are_preserved_across_runs(
+    tmp_path: Path,
+    media_writer: mock.MagicMock,
+    edit_when: str,
+) -> None:
+    removed, kept = photo("removed"), photo("kept", "kept.JPG")
+    assert run(tmp_path, library(removed, kept)) == 0
+    target = tmp_path / "data/2018/07/12/photo.JPG"
+    target.write_bytes(b"local")  # same length as the original, so size alone is insufficient
+    fingerprint = json.loads(manifest_path(tmp_path).read_text())["files"]["removed"][
+        "2018/07/12/photo.JPG"
+    ]
+    if edit_when == "active":
+        assert run(tmp_path, library(removed, kept)) == 0
+    current = library(kept, deleted=(removed,))
+    assert run(tmp_path, current) == 0
+    assert run(tmp_path, current) == 0
+    state = json.loads(manifest_path(tmp_path).read_text())
+    assert state["files"]["removed"]["2018/07/12/photo.JPG"] == fingerprint
+    assert target.read_bytes() == b"local"
+    assert (target.parent / "photo.MOV").exists()
+
+
+def test_dry_run_does_not_create_manifest_or_download_root(
+    tmp_path: Path,
+    media_writer: mock.MagicMock,
+) -> None:
+    assert run(tmp_path, library(photo("new")), ("--dry-run",)) == 0
+    assert not manifest_path(tmp_path).exists()
+    assert not (tmp_path / "data").exists()
+
+
+@pytest.mark.parametrize("error", ["corrupt", "fingerprint"])
+def test_unreadable_state_or_file_disables_cleanup_without_stopping_downloads(
+    tmp_path: Path,
+    media_writer: mock.MagicMock,
+    error: str,
+) -> None:
+    removed, kept = photo("removed"), photo("kept", "kept.JPG")
+    assert run(tmp_path, library(removed, kept)) == 0
+    assert run(tmp_path, library(kept, deleted=(removed,))) == 0
+    if error == "corrupt":
+        manifest_path(tmp_path).write_text("not json")
+    before = manifest_path(tmp_path).read_bytes()
+    current = library(photo("new", "new.JPG"), kept, deleted=(removed,))
+    with mock.patch(
+        "icloudpd.autodelete_manifest.file_record", side_effect=OSError("cannot read file")
+    ):
+        assert run(tmp_path, current) == 0
+    assert manifest_path(tmp_path).read_bytes() == before
+    assert (tmp_path / "data/2018/07/12/new.JPG").exists()
+    assert (tmp_path / "data/2018/07/12/photo.JPG").exists()
+
+
+def test_pruning_and_autodelete_keep_independent_states_and_existing_prune_behavior(
+    tmp_path: Path,
+    media_writer: mock.MagicMock,
+) -> None:
+    removed, kept = photo("removed"), photo("kept", "kept.JPG")
+    current = library(removed, kept)
+    current.library_type = "shared"
+    current.zone_id = {"zoneName": "SharedSync-test"}
+    extra = ("--library", "SharedSync-test", "--prune-orphans")
+    assert run(tmp_path, current, extra) == 0
+    root = tmp_path / "data"
+    prune_path = root / PruneSnapshot.filename
+    prune_state = json.loads(prune_path.read_text())
+    auto_state = json.loads(manifest_path(tmp_path).read_text())
+    assert prune_state["scope"] == auto_state["scope"]
+    assert prune_state["files"] == auto_state["files"]
+    global_config, configs = parse(arguments(tmp_path, extra))
+    assert prune_state["scope"] == download_scope(global_config, configs[0], current)
+    before = prune_path.read_bytes()
+    assert run(tmp_path, current, ("--library", "SharedSync-test")) == 0
+    assert prune_path.read_bytes() == before
+    current.all = album(kept)
+    current.recently_deleted = (removed,)
+    assert run(tmp_path, current, extra) == 0
+    assert run(tmp_path, current, extra) == 0
+    # Prune still quarantines on the first absence; auto-delete does not touch its archive.
+    copies = list((root / ".icloudpd-pruned").rglob("photo.JPG"))
+    assert len(copies) == 1 and copies[0].read_bytes() == b"photo"
+    assert "removed" not in json.loads(prune_path.read_text())["files"]
+    assert (root / "2018/07/12/kept.JPG").exists()

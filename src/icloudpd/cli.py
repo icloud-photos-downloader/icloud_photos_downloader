@@ -132,16 +132,9 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--auto-delete",
-        help='Scan the "Recently Deleted" folder and delete any files found there. '
-        + "(If you restore the photo in iCloud, it will be downloaded again.)",
+        help="Delete unchanged tracked files only after two complete scans without their iCloud ID "
+        + "and confirmation in Recently Deleted. Filtered runs keep downloading without deletion.",
         action="store_true",
-    )
-    cloned.add_argument(
-        "--auto-delete-directory",
-        metavar="DIRECTORY",
-        help="Move safely eligible files to this directory instead of deleting them. "
-        + "Requires --auto-delete.",
-        default=None,
     )
     cloned.add_argument(
         "--prune-orphans",
@@ -478,7 +471,6 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
-        auto_delete_directory=user_ns.auto_delete_directory,
         prune_orphans=user_ns.prune_orphans,
         prune_orphans_adopt_existing=user_ns.prune_orphans_adopt_existing,
         folder_structure=user_ns.folder_structure,
@@ -676,10 +668,6 @@ def cli() -> int:
             print(
                 "--auto-delete and --delete-after-download are mutually exclusive per configuration"
             )
-            return 2
-
-        elif any(ns.auto_delete_directory and not ns.auto_delete for ns in user_nses):
-            print("--auto-delete-directory requires --auto-delete")
             return 2
 
         elif [

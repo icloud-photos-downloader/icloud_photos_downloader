@@ -43,7 +43,7 @@ from tzlocal import get_localzone
 from foundation.core import compose, identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
-from icloudpd.autodelete import autodelete_photos, validate_quarantine_root
+from icloudpd.autodelete import autodelete_photos
 from icloudpd.autodelete_manifest import AutoDeleteManifest
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.counter import Counter
@@ -482,8 +482,42 @@ def _process_all_users_once(
     return 0
 
 
+def download_scope(
+    global_config: GlobalConfig, user_config: UserConfig, library_object: PhotoLibrary
+) -> str:
+    """Shared account/library/output identity for pruning and auto-delete snapshots."""
+    return json.dumps(
+        {
+            "account": user_config.username.casefold(),
+            "domain": global_config.domain,
+            "zone": library_object.zone_id,
+            "timezone": str(get_localzone()),
+            "settings": {
+                name: str(getattr(user_config, name))
+                for name in (
+                    "sizes",
+                    "force_size",
+                    "folder_structure",
+                    "xmp_sidecar",
+                    "skip_live_photos",
+                    "live_photo_size",
+                    "live_photo_mov_filename_policy",
+                    "align_raw",
+                    "file_match_policy",
+                    "keep_unicode_in_filenames",
+                    "set_exif_datetime",
+                )
+            },
+        },
+        sort_keys=True,
+    )
+
+
 def load_auto_delete_manifest(
-    logger: logging.Logger, global_config: GlobalConfig, user_config: UserConfig
+    logger: logging.Logger,
+    global_config: GlobalConfig,
+    user_config: UserConfig,
+    library_object: PhotoLibrary,
 ) -> AutoDeleteManifest | None:
     """Filtered runs keep downloading without reading or advancing deletion state."""
     if not user_config.auto_delete:
@@ -503,13 +537,9 @@ def load_auto_delete_manifest(
         )
         return None
     try:
-        root = Path(user_config.directory)
-        if user_config.auto_delete_directory:
-            validate_quarantine_root(user_config.directory, user_config.auto_delete_directory)
-        path = AutoDeleteManifest.path_for(
-            Path(user_config.cookie_directory), user_config.username, root
+        return AutoDeleteManifest.load(
+            Path(user_config.directory), download_scope(global_config, user_config, library_object)
         )
-        return AutoDeleteManifest.load(path, root)
     except (OSError, ValueError) as error:
         logger.warning("Skipping auto-delete: %s", error)
         logger.debug("Auto-delete setup failed", exc_info=True)
@@ -1102,7 +1132,7 @@ def core_single_run(
 
                     directory = os.path.normpath(user_config.directory)
                     auto_delete_manifest = load_auto_delete_manifest(
-                        logger, global_config, user_config
+                        logger, global_config, user_config, library_object
                     )
                     auto_delete_complete = True
                     auto_delete_seen: set[str] = set()
@@ -1114,31 +1144,7 @@ def core_single_run(
                             )
                         else:
                             try:
-                                scope = json.dumps(
-                                    {
-                                        "account": user_config.username.casefold(),
-                                        "domain": global_config.domain,
-                                        "zone": library_object.zone_id,
-                                        "timezone": str(get_localzone()),
-                                        "settings": {
-                                            name: str(getattr(user_config, name))
-                                            for name in (
-                                                "sizes",
-                                                "force_size",
-                                                "folder_structure",
-                                                "xmp_sidecar",
-                                                "skip_live_photos",
-                                                "live_photo_size",
-                                                "live_photo_mov_filename_policy",
-                                                "align_raw",
-                                                "file_match_policy",
-                                                "keep_unicode_in_filenames",
-                                                "set_exif_datetime",
-                                            )
-                                        },
-                                    },
-                                    sort_keys=True,
-                                )
+                                scope = download_scope(global_config, user_config, library_object)
                                 prune_snapshot = PruneSnapshot(
                                     directory, scope, user_config.dry_run
                                 )
@@ -1495,12 +1501,7 @@ def core_single_run(
                                     logger,
                                     user_config.dry_run,
                                     library_object,
-                                    directory,
                                     auto_delete_manifest,
-                                    user_config.sizes,
-                                    lp_filename_generator,
-                                    user_config.align_raw,
-                                    user_config.auto_delete_directory,
                                     cancelled=lambda: status_exchange.get_progress().cancel,
                                 )
                                 if not user_config.dry_run:
