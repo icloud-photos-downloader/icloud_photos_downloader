@@ -399,6 +399,15 @@ class CliTestCase(TestCase):
                 ]
             )
 
+    def test_live_photo_size_choices(self) -> None:
+        for choice, expected in [
+            ("original", LivePhotoVersionSize.ORIGINAL),
+            ("medium", LivePhotoVersionSize.MEDIUM),
+            ("thumb", LivePhotoVersionSize.THUMB),
+        ]:
+            _, user_configs = parse(["-d", "abc", "--username", "u1", "--live-photo-size", choice])
+            self.assertEqual(user_configs[0].live_photo_size, expected, choice)
+
     def test_cli(self) -> None:
         result = run_main(["--help"])
         self.assertEqual(result.exit_code, 0, "exit code")
