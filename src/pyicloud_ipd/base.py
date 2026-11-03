@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from contextlib import contextmanager
 from functools import partial
 from itertools import chain
-from os import mkdir, path
+from os import makedirs, mkdir, path
 from re import Pattern, match
 from tempfile import gettempdir
 from threading import Event
@@ -120,8 +120,8 @@ class PyiCloudService:
 
         if cookie_directory:
             self._cookie_directory = path.expanduser(path.normpath(cookie_directory))
-            if not path.exists(self._cookie_directory):
-                mkdir(self._cookie_directory, 0o700)
+            # also create missing parent folders, e.g. --cookie-directory ~/icloudpd/cookies
+            makedirs(self._cookie_directory, 0o700, exist_ok=True)
         else:
             topdir = path.join(gettempdir(), "pyicloud")
             self._cookie_directory = path.join(topdir, getpass.getuser())
