@@ -796,18 +796,16 @@ jobs:
         name: icloudpd-dummywhl-linux
         path: |
           dist
-    - name: Run tests on 9 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 7 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test pip-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
         python3_15 python:3.15
-        debian_10_buster debian:buster
         debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
-        ubuntu_16_xenial ubuntu:xenial
-        ubuntu_18_bionic ubuntu:bionic
-        ubuntu_20_focal ubuntu:focal
+        debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
         ubuntu_24_noble ubuntu:noble
+        ubuntu_26_resolute ubuntu:resolute
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -862,20 +860,15 @@ jobs:
         name: icloudpd-dummywhl-linux
         path: |
           dist
-    - name: Run tests on 11 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test pip-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        python3_13_alpine3_19 python:3.13-alpine3.19
+        python3_15_alpine3_24 python:3.15-alpine3.24
+        alpine_3_24 alpine:3.24
+        alpine_3_23 alpine:3.23
         alpine_3_22 alpine:3.22
         alpine_3_21 alpine:3.21
         alpine_3_20 alpine:3.20
-        alpine_3_19 alpine:3.19
-        alpine_3_18 alpine:3.18
-        alpine_3_17 alpine:3.17
-        alpine_3_16 alpine:3.16
-        alpine_3_15 alpine:3.15
-        alpine_3_14 alpine:3.14
-        alpine_3_13 alpine:3.13
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1085,23 +1078,15 @@ jobs:
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
         path: "dist \n"
-    - name: Run tests on 14 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test bin-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        debian_6_squeeze debian:squeeze
-        debian_7_wheezy debian:wheezy
-        debian_8_jessie debian:jessie
-        debian_9_stretch debian:stretch
-        debian_10_buster debian:buster
         debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
-        ubuntu_12_precise ubuntu:precise
-        ubuntu_14_trusty ubuntu:trusty
-        ubuntu_16_xenial ubuntu:xenial
-        ubuntu_18_bionic ubuntu:bionic
-        ubuntu_20_focal ubuntu:focal
+        debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
         ubuntu_24_noble ubuntu:noble
+        ubuntu_26_resolute ubuntu:resolute
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1149,22 +1134,14 @@ jobs:
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
         path: "dist \n"
-    - name: Run tests on 13 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 5 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test bin-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_24 alpine:3.24
+        alpine_3_23 alpine:3.23
         alpine_3_22 alpine:3.22
         alpine_3_21 alpine:3.21
         alpine_3_20 alpine:3.20
-        alpine_3_19 alpine:3.19
-        alpine_3_18 alpine:3.18
-        alpine_3_17 alpine:3.17
-        alpine_3_16 alpine:3.16
-        alpine_3_15 alpine:3.15
-        alpine_3_14 alpine:3.14
-        alpine_3_13 alpine:3.13
-        alpine_3_12 alpine:3.12
-        alpine_3_11 alpine:3.11
-        alpine_3_10 alpine:3.10
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1212,22 +1189,14 @@ jobs:
         pattern: icloudpd-bin-linux-*
         merge-multiple: true
         path: "dist \n"
-    - name: Run tests on 13 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 5 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test bin_musl-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_24 alpine:3.24
+        alpine_3_23 alpine:3.23
         alpine_3_22 alpine:3.22
         alpine_3_21 alpine:3.21
         alpine_3_20 alpine:3.20
-        alpine_3_19 alpine:3.19
-        alpine_3_18 alpine:3.18
-        alpine_3_17 alpine:3.17
-        alpine_3_16 alpine:3.16
-        alpine_3_15 alpine:3.15
-        alpine_3_14 alpine:3.14
-        alpine_3_13 alpine:3.13
-        alpine_3_12 alpine:3.12
-        alpine_3_11 alpine:3.11
-        alpine_3_10 alpine:3.10
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1614,19 +1583,15 @@ jobs:
         npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
       env:
         NODE_AUTH_TOKEN: fake
-    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test npm-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        debian_10_buster debian:buster
         debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
-        ubuntu_12_precise ubuntu:precise
-        ubuntu_14_trusty ubuntu:trusty
-        ubuntu_16_xenial ubuntu:xenial
-        ubuntu_18_bionic ubuntu:bionic
-        ubuntu_20_focal ubuntu:focal
+        debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
         ubuntu_24_noble ubuntu:noble
+        ubuntu_26_resolute ubuntu:resolute
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1717,19 +1682,15 @@ jobs:
         npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
       env:
         NODE_AUTH_TOKEN: fake
-    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 6 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test npx-apt ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
-        debian_10_buster debian:buster
         debian_11_bullseye debian:bullseye
         debian_12_bookworm debian:bookworm
-        ubuntu_12_precise ubuntu:precise
-        ubuntu_14_trusty ubuntu:trusty
-        ubuntu_16_xenial ubuntu:xenial
-        ubuntu_18_bionic ubuntu:bionic
-        ubuntu_20_focal ubuntu:focal
+        debian_13_trixie debian:trixie
         ubuntu_22_jammy ubuntu:jammy
         ubuntu_24_noble ubuntu:noble
+        ubuntu_26_resolute ubuntu:resolute
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1817,19 +1778,14 @@ jobs:
         npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
       env:
         NODE_AUTH_TOKEN: fake
-    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 5 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test npm-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_24 alpine:3.24
+        alpine_3_23 alpine:3.23
         alpine_3_22 alpine:3.22
         alpine_3_21 alpine:3.21
         alpine_3_20 alpine:3.20
-        alpine_3_19 alpine:3.19
-        alpine_3_18 alpine:3.18
-        alpine_3_17 alpine:3.17
-        alpine_3_16 alpine:3.16
-        alpine_3_15 alpine:3.15
-        alpine_3_14 alpine:3.14
-        alpine_3_13 alpine:3.13
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
@@ -1917,19 +1873,14 @@ jobs:
         npm publish dist/npm/icloudpd --access public --registry http://localhost:4873
       env:
         NODE_AUTH_TOKEN: fake
-    - name: Run tests on 10 images for ${{ matrix.prop[1] }}
+    - name: Run tests on 5 images for ${{ matrix.prop[1] }}
       run: |
         scripts/compat_test npx-apk ${{ matrix.prop[0] }} ${{ matrix.prop[1] }} "${{ matrix.prop[2] }}" ${{ inputs.icloudpd_version }} <<'EOF'
+        alpine_3_24 alpine:3.24
+        alpine_3_23 alpine:3.23
         alpine_3_22 alpine:3.22
         alpine_3_21 alpine:3.21
         alpine_3_20 alpine:3.20
-        alpine_3_19 alpine:3.19
-        alpine_3_18 alpine:3.18
-        alpine_3_17 alpine:3.17
-        alpine_3_16 alpine:3.16
-        alpine_3_15 alpine:3.15
-        alpine_3_14 alpine:3.14
-        alpine_3_13 alpine:3.13
         EOF
     - name: Upload compatibility results
       uses: actions/upload-artifact@v7
