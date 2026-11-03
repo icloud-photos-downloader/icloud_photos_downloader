@@ -39,7 +39,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
-from foundation.core import compose, identity, map_, partial_1_1
+from foundation.core import identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
@@ -995,6 +995,7 @@ def core_single_run(
         or global_config.no_progress_bar
         or not sys.stdout.isatty()
     )
+    listing_incomplete = False
     while True:  # retry loop (not watch - only for immediate retries)
         prune_snapshot: PruneSnapshot | None = None
         captured_responses: List[Mapping[str, Any]] = []
@@ -1131,8 +1132,9 @@ def core_single_run(
                     def sum_(inp: Iterable[int]) -> int:
                         return sum(inp)
 
-                    photos_count: int | None = compose(sum_, album_lengths)(albums)
-                    for photo_album in albums:
+                    album_sizes = list(album_lengths(albums))
+                    photos_count: int | None = sum_(album_sizes)
+                    for photo_album, album_size in zip(albums, album_sizes, strict=True):
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
                         # Optional: Only download the x most recent photos.
@@ -1341,12 +1343,29 @@ def core_single_run(
                         else:
                             pass
 
+                        # iCloud said beforehand how many assets the album holds. The listing
+                        # stops at the first empty page, so an empty page halfway would otherwise
+                        # end the run as if everything was downloaded (#1390)
+                        listed_everything = (
+                            user_config.recent is None and user_config.until_found is None
+                        )
                         if status_exchange.get_progress().cancel:
                             prune_complete = False
                             logger.info("Iteration was cancelled")
                             status_exchange.get_progress().photos_last_message = (
                                 "Iteration was cancelled"
                             )
+                        elif listed_everything and photos_counter < album_size:
+                            prune_complete = False
+                            listing_incomplete = True
+                            where = f"album {photo_album}" if str(photo_album) else "the library"
+                            message = (
+                                f"iCloud listed only {photos_counter} of {album_size} items in "
+                                f"{where}; the listing ended early, so not everything was "
+                                "downloaded. Run icloudpd again to download the rest"
+                            )
+                            logger.error(message)
+                            status_exchange.get_progress().photos_last_message = message
                         else:
                             if user_config.skip_photos or user_config.skip_videos:
                                 photo_video_phrase = (
@@ -1489,4 +1508,4 @@ def core_single_run(
         # In single run mode, we don't handle watch intervals - that's done at higher level
         break
 
-    return 0
+    return 1 if listing_incomplete else 0

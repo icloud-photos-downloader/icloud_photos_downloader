@@ -354,50 +354,6 @@ interactions:
       via: ['xrail:nk11p00ic-ztdj17111701.me.com:8301:18H44:grp31', 'icloudedge:si03p00ic-zteu070515:7401:18RC341:Singapore']
     status: {code: 200, message: OK}
 - request:
-    body: '{"query":{"recordType":"CheckIndexingState"},"zoneID":{"zoneName":"SharedSync-00000000-1111-2222-3333-444444444444"}}'
-    headers:
-      Accept: ['*/*']
-      Accept-Encoding: ['gzip, deflate']
-      Connection: [keep-alive]
-      Content-Length: ['81']
-      Content-type: [text/plain]
-      Origin: ['https://www.icloud.com']
-      Referer: ['https://www.icloud.com/']
-      User-Agent: [Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36]
-    method: POST
-    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/shared/records/query?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
-  response:
-    body: {string: "{\n  \"records\" : [ {\n    \"recordName\" : \"_e53446cf-3885-4cd3-8f12-648289d79769\",\n
-        \   \"recordType\" : \"CheckIndexingState\",\n    \"fields\" : {\n      \"progress\"
-        : {\n        \"value\" : 100,\n        \"type\" : \"INT64\"\n      },\n      \"state\"
-        : {\n        \"value\" : \"FINISHED\",\n        \"type\" : \"STRING\"\n      }\n
-        \   },\n    \"pluginFields\" : { },\n    \"recordChangeTag\" : \"0\",\n    \"created\"
-        : {\n      \"timestamp\" : 1533038368535,\n      \"userRecordName\" : \"_10\",\n
-        \     \"deviceID\" : \"1\"\n    },\n    \"modified\" : {\n      \"timestamp\"
-        : 1533038368535,\n      \"userRecordName\" : \"_10\",\n      \"deviceID\"
-        : \"1\"\n    },\n    \"deleted\" : false,\n    \"zoneID\" : {\n      \"zoneName\"
-        : \"SharedSync-00000000-1111-2222-3333-444444444444\",\n      \"ownerRecordName\" : \"_bfc6dbbcc77b03e6cebefd28a28f7e2f\"\n
-        \   }\n  } ],\n  \"syncToken\" : \"AQAAAAAAAwmVf//////////Kd+LphRdKGbpJMSeRX5Td\"\n}"}
-    headers:
-      Access-Control-Allow-Credentials: ['true']
-      Access-Control-Allow-Origin: ['https://www.icloud.com']
-      Apple-Originating-System: [UnknownOriginatingSystem]
-      Connection: [keep-alive]
-      Content-Type: [application/json; charset=UTF-8]
-      Date: ['Tue, 31 Jul 2018 11:59:28 GMT']
-      Server: [AppleHttpServer/2f080fc0]
-      Strict-Transport-Security: [max-age=31536000; includeSubDomains;]
-      X-Apple-CloudKit-Version: ['1.0']
-      X-Apple-Request-UUID: [9ca52f84-cef3-4818-8beb-9ad71d062730]
-      X-Responding-Instance: ['ckdatabasews:21002602:nk11p10me-ztbu40074301:8202:1813B216:nocommit']
-      access-control-expose-headers: ['X-Apple-Request-UUID, X-Responding-Instance',
-        Via]
-      apple-seq: ['0']
-      apple-tk: ['false']
-      content-length: ['804']
-      via: ['xrail:nk11p00ic-ztdj17111701.me.com:8301:18H44:grp31', 'icloudedge:si03p00ic-zteu070515:7401:18RC341:Singapore']
-    status: {code: 200, message: OK}
-- request:
     body: '{"batch": [{"resultsLimit": 1, "query": {"filterBy": {"fieldName": "indexCountID",
       "fieldValue": {"type": "STRING_LIST", "value": ["CPLAssetByAddedDate"]}, "comparator":
       "IN"}, "recordType": "HyperionIndexCountLookup"}, "zoneWide": true, "zoneID":
@@ -11622,6 +11578,17 @@ interactions:
       apple-tk: ['false']
       content-length: ['1011931']
       via: ['xrail:nk11p00ic-ztdj17111301.me.com:8301:18H44:grp31', 'icloudedge:si03p01ic-ztde010302:7401:18RC341:Singapore']
+    status: {code: 200, message: OK}
+- request:
+    body: '{"query": {"filterBy": [{"fieldName": "startRank", "fieldValue": {"type": "INT64", "value": 1}, "comparator": "EQUALS"}]}}'
+    headers:
+      Content-type: [text/plain]
+    method: POST
+    uri: https://p61-ckdatabasews.icloud.com/database/1/com.apple.photos.cloud/production/shared/records/query?clientBuildNumber=2522Project44&clientMasteringNumber=2522B2&clientId=DE309E26-942E-11E8-92F5-14109FE0B321&dsid=12345678901&remapEnums=True&getCurrentSyncToken=True
+  response:
+    body: {string: '{"records" : [ ]}'}
+    headers:
+      Content-Type: [application/json; charset=UTF-8]
     status: {code: 200, message: OK}
 - request:
     body: null
