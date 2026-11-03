@@ -36,6 +36,7 @@
 - chore: CI cancels superseded runs, has a timeout on every job, and generates only the test locales it needs instead of installing `locales-all`
 - fix: `--keep-icloud-recent-days` deleted photos from iCloud even when they failed to download, with `--only-print-filenames` when nothing was downloaded, or with `--force-size` when the size did not exist; photos are now only deleted when every requested file (including the live photo video) is present locally [#1312](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1312)
 - fix: warn at startup when `--keep-icloud-recent-days` is combined with `--recent` or `--until-found`, since assets the run doesn't reach are not deleted from iCloud
+- fix: the Web UI reopened the first user configuration and closed the others every time the status refreshed (every 5 seconds), so the other configurations couldn't be read; opened and closed panels now stay that way [#1282](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1282)
 - fix: `--keep-icloud-recent-days` deleted assets that have no creation date in iCloud, because their date fell back to 1970; they are now kept, with a warning
 - fix: bump certifi to 2026.10.23; earlier versions bundle emSign root CAs with compromised intermediate keys ([GHSA-6q48-6c7w-9gw2](https://github.com/advisories/GHSA-6q48-6c7w-9gw2))
 - feature: support Python 3.14 and 3.15; drop Python 3.10, which reached end of life. Binaries and Docker images are built with Python 3.15
