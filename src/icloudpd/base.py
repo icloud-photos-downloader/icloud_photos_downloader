@@ -913,8 +913,8 @@ def delete_photo(
     library_object: PhotoLibrary,
     photo: PhotoAsset,
     filename_builder: Callable[[PhotoAsset], str],
-) -> None:
-    """Delete a photo from the iCloud account."""
+) -> bool:
+    """Delete a photo from the iCloud account. Returns False if iCloud asked to try again later."""
     clean_filename_local = filename_builder(photo)
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
@@ -939,8 +939,19 @@ def delete_photo(
             "zoneID": library_object.zone_id,
         }
     )
-    library_object.session.post(url, data=post_data, headers={"Content-type": "application/json"})
+    try:
+        library_object.session.post(
+            url, data=post_data, headers={"Content-type": "application/json"}
+        )
+    except PyiCloudAPIResponseException as error:
+        # e.g. "Sync zone CAS Op-Lock failed" when another change to the library happened at
+        # the same time (#1283); the photo stays in iCloud and the run goes on
+        if error.code != "TRY_AGAIN_LATER":
+            raise
+        logger.error("Could not delete %s in iCloud: %s", clean_filename_local, error)
+        return False
     logger.info("Deleted %s in iCloud", clean_filename_local)
+    return True
 
 
 def delete_photo_dry_run(
@@ -948,7 +959,7 @@ def delete_photo_dry_run(
     library_object: PhotoLibrary,
     photo: PhotoAsset,
     filename_builder: Callable[[PhotoAsset], str],
-) -> None:
+) -> bool:
     """Dry run for deleting a photo from the iCloud"""
     filename = filename_builder(photo)
     logger.info(
@@ -956,6 +967,7 @@ def delete_photo_dry_run(
         filename,
         library_object.zone_id["zoneName"],
     )
+    return True
 
 
 def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, Any]]) -> None:
@@ -1310,14 +1322,14 @@ def core_single_run(
                                         user_config.file_match_policy, filename_cleaner_for_delete
                                     )
                                     if user_config.dry_run:
-                                        delete_photo_dry_run(
+                                        deleted = delete_photo_dry_run(
                                             logger,
                                             library_object,
                                             item,
                                             filename_builder_for_delete,
                                         )
                                     else:
-                                        delete_photo(
+                                        deleted = delete_photo(
                                             logger,
                                             library_object,
                                             item,
@@ -1325,7 +1337,8 @@ def core_single_run(
                                         )
 
                                     # retrier(delete_local, error_handler)
-                                    photo_album.increment_offset(-1)
+                                    if deleted:
+                                        photo_album.increment_offset(-1)
 
                                 photos_counter += 1
                                 status_exchange.get_progress().photos_counter = photos_counter
