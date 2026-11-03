@@ -7,6 +7,26 @@ import typing
 import piexif
 from piexif._exceptions import InvalidImageDataError
 
+# Writing the three date tags adds about 70-200 bytes to a JPEG; anything larger is not ours
+MAX_DATE_TAGS_SIZE = 1024
+
+
+def has_own_exif_date(
+    logger: logging.Logger, path: str, date: str, local_size: int, icloud_size: int
+) -> bool:
+    """True when path looks like the iCloud file after --set-exif-datetime wrote date into it.
+
+    Writing the date makes the local JPEG a little larger than the one in iCloud, so the
+    name-size check would take it for a different photo and download it again (#380)."""
+    if not path.lower().endswith((".jpg", ".jpeg")):
+        return False
+    if not 0 < local_size - icloud_size <= MAX_DATE_TAGS_SIZE:
+        return False
+    found: str | bytes | None = get_photo_exif(logger, path)
+    if isinstance(found, bytes):
+        found = found.decode("ascii", errors="replace")
+    return found == date
+
 
 def get_photo_exif(logger: logging.Logger, path: str) -> str | None:
     """Get EXIF date for a photo, return nothing if there is an error"""
