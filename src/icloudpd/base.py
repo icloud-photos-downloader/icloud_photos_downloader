@@ -746,7 +746,16 @@ def download_builder(
                 # for later: this crashes if download-size medium is specified
                 file_size = os.stat(original_download_path or download_path).st_size
                 photo_size = version.size
-                if file_size != photo_size:
+                if file_size != photo_size and not (
+                    set_exif_datetime
+                    and exif_datetime.has_own_exif_date(
+                        logger,
+                        original_download_path or download_path,
+                        created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                        file_size,
+                        photo_size,
+                    )
+                ):
                     download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
                     original_download_path = None
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
