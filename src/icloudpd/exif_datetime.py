@@ -23,7 +23,9 @@ def set_photo_exif(logger: logging.Logger, path: str, date: str) -> None:
     """Set EXIF date on a photo, do nothing if there is an error"""
     try:
         exif_dict = piexif.load(path)
-        exif_dict.get("1st")[306] = date
+        # DateTime belongs in the main IFD ("0th"); piexif drops "1st" (the thumbnail IFD)
+        # when there is no thumbnail, so the date never reached the file there
+        exif_dict.get("0th")[306] = date
         exif_dict.get("Exif")[36867] = date
         exif_dict.get("Exif")[36868] = date
         exif_bytes = piexif.dump(exif_dict)
