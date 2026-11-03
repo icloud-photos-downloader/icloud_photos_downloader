@@ -115,6 +115,9 @@ logger = logging.getLogger(__name__)
 INDEXING_STATE_ATTEMPTS = 15
 INDEXING_STATE_RETRY_DELAY_SECONDS = 4
 
+# albumType of a folder in the album list; albums are 0
+FOLDER_ALBUM_TYPE = 3
+
 
 def download_asset(session: Session, url: str, start: int = 0) -> Response:
     """
@@ -332,23 +335,14 @@ class PhotoLibrary:
             for (name, props) in self.SMART_FOLDERS.items()
         }
 
-        for folder in self._fetch_folders():
-            # FIXME: Handle subfolders
-            if folder["recordName"] in ("----Root-Folder----", "----Project-Root-Folder----") or (
-                folder["fields"].get("isDeleted") and folder["fields"]["isDeleted"]["value"]
-            ):
-                continue
-
-            folder_id = folder["recordName"]
-            folder_obj_type = f"CPLContainerRelationNotDeletedByAssetDate:{folder_id}"
-            folder_name = base64.b64decode(folder["fields"]["albumNameEnc"]["value"]).decode(
-                "utf-8"
-            )
+        for album_path, record in self._fetch_folders():
+            album_id = record["recordName"]
+            album_obj_type = f"CPLContainerRelationNotDeletedByAssetDate:{album_id}"
             query_filter = [
                 {
                     "fieldName": "parentId",
                     "comparator": "EQUALS",
-                    "fieldValue": {"type": "STRING", "value": folder_id},
+                    "fieldValue": {"type": "STRING", "value": album_id},
                 }
             ]
 
@@ -356,24 +350,31 @@ class PhotoLibrary:
                 self.params,
                 self.session,
                 self.service_endpoint,
-                folder_name,
+                album_path,
                 "CPLContainerRelationLiveByAssetDate",
-                folder_obj_type,
+                album_obj_type,
                 query_filter,
                 zone_id=self.zone_id,
             )
-            albums[folder_name] = album
+            albums[album_path] = album
 
         return albums
 
-    def _fetch_folders(self) -> Sequence[Dict[str, Any]]:
-        if self.library_type == "shared":
-            return []
+    def _query_folders(self, parent_id: str | None) -> list[Dict[str, Any]]:
+        """Album and folder records directly in the folder parent_id, or at the top level"""
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
         query: Dict[str, Any] = {
             "query": {"recordType": "CPLAlbumByPositionLive"},
             "zoneID": self.zone_id,
         }
+        if parent_id is not None:
+            query["query"]["filterBy"] = [
+                {
+                    "fieldName": "parentId",
+                    "comparator": "EQUALS",
+                    "fieldValue": {"type": "STRING", "value": parent_id},
+                }
+            ]
         records: list[Dict[str, Any]] = []
         markers: set[str] = set()
         while True:
@@ -391,6 +392,37 @@ class PhotoLibrary:
             query["continuationMarker"] = marker
 
         return records
+
+    def _fetch_folders(self) -> Sequence[Tuple[str, Dict[str, Any]]]:
+        """Album records with their path, including albums in folders (#482, #1071).
+
+        The album list only holds the top level. The content of a folder (albumType 3)
+        comes from the same query filtered on the folder's id, so folders are walked one
+        level at a time. An album in a folder gets the path "Folder/Subfolder/Album";
+        folders themselves hold no photos and are not returned."""
+        if self.library_type == "shared":
+            return []
+        albums: list[Tuple[str, Dict[str, Any]]] = []
+        visited: set[str] = set()
+        pending: list[Tuple[str | None, str]] = [(None, "")]
+        while pending:
+            parent_id, prefix = pending.pop(0)
+            for record in self._query_folders(parent_id):
+                record_id = record["recordName"]
+                fields = record["fields"]
+                if record_id in ("----Root-Folder----", "----Project-Root-Folder----") or (
+                    fields.get("isDeleted") and fields["isDeleted"]["value"]
+                ):
+                    continue
+                name = base64.b64decode(fields["albumNameEnc"]["value"]).decode("utf-8")
+                if fields.get("albumType", {}).get("value") == FOLDER_ALBUM_TYPE:
+                    # a folder listed twice would otherwise be walked forever
+                    if record_id not in visited:
+                        visited.add(record_id)
+                        pending.append((record_id, f"{prefix}{name}/"))
+                else:
+                    albums.append((f"{prefix}{name}", record))
+        return albums
 
     @property
     def all(self) -> "PhotoAlbum":
