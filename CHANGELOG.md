@@ -42,6 +42,7 @@
 - fix: `--keep-icloud-recent-days` deleted photos from iCloud even when they failed to download, with `--only-print-filenames` when nothing was downloaded, or with `--force-size` when the size did not exist; photos are now only deleted when every requested file (including the live photo video) is present locally [#1312](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1312)
 - fix: warn at startup when `--keep-icloud-recent-days` is combined with `--recent` or `--until-found`, since assets the run doesn't reach are not deleted from iCloud
 - fix: `--keep-icloud-recent-days` deleted assets that have no creation date in iCloud, because their date fell back to 1970; they are now kept, with a warning
+- fix: when iCloud refused to delete a photo with `TRY_AGAIN_LATER` ("Sync zone CAS Op-Lock failed"), `--keep-icloud-recent-days` and `--delete-after-download` ended the whole run; that photo is now left in iCloud and the run continues [#1283](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1283)
 - fix: bump certifi to 2026.10.23; earlier versions bundle emSign root CAs with compromised intermediate keys ([GHSA-6q48-6c7w-9gw2](https://github.com/advisories/GHSA-6q48-6c7w-9gw2))
 - feature: support Python 3.14 and 3.15; drop Python 3.10, which reached end of life. Binaries and Docker images are built with Python 3.15
 - note: on Linux, photos dated before year 1000 now go into zero-padded year folders (e.g. `0005/01/01`), the same as on macOS and Windows
