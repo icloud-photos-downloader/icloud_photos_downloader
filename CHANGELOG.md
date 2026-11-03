@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.33.0 (2026-11-03)
+
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
 - feat: add opt-in `--prune-orphans` for shared libraries, moving only unchanged tracked downloads to a recoverable quarantine when their photos disappear; existing untracked files are preserved and pruning problems warn without failing downloads [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
 - feat: sign in with a security key (FIDO, e.g. YubiKey) on accounts that use them instead of six-digit codes [#583](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/583)
