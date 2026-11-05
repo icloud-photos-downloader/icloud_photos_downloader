@@ -285,6 +285,9 @@ This is a list of all options available for the command line interface (CLI) of 
     Can't be combined with [`--skip-live-photos`](skip-live-photos-parameter) or
     [`--prune-orphans`](prune-orphans-parameter).
 
+    ```{versionadded} 1.34.0
+    ```
+
 (file-match-policy-parameter)=
 `--file-match-policy X`
     
