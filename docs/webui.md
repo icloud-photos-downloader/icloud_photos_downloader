@@ -28,7 +28,7 @@ docker run --rm -p 8080:8080 -v $(pwd)/Photos:/data icloudpd/icloudpd:latest icl
 ## Security
 
 ```{warning}
-The web server always uses port 8080, listens on all network interfaces, and has no login or password protection. Anyone who can reach the port can enter a password or code, and see the status page, which lists your settings (the iCloud password is hidden, the SMTP password is not). Do not expose port 8080 to the internet; only make it reachable on your own network.
+The web server always uses port 8080, listens on all network interfaces, and has no login or password protection. Anyone who can reach the port can enter a password or code, and see the status page, which lists your settings (without passwords). Do not expose port 8080 to the internet; only make it reachable on your own network.
 ```
 
 ## Limitations
