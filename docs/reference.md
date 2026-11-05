@@ -1,6 +1,26 @@
 # Reference
 
-This is a list of all options available for the command line interface (CLI) of `icloudpd`
+This page describes the command line options of `icloudpd`.
+
+Options are of three kinds:
+
+- **Global options** apply to the whole run and may appear anywhere on the command line:
+  [`--help`](help-parameter), [`--version`](version-parameter),
+  [`--use-os-locale`](use-os-locale-parameter),
+  [`--only-print-filenames`](only-print-filenames-parameter),
+  [`--log-level`](log-level-parameter), [`--no-progress-bar`](no-progress-bar-parameter),
+  [`--threads-num`](threads-num-parameter), [`--domain`](domain-parameter),
+  [`--watch-with-interval`](watch-with-interval-parameter),
+  [`--password-provider`](password-provider-parameter) and
+  [`--mfa-provider`](mfa-provider-parameter). Their entries below say "Global option."
+- **User options** are [`--username`](username-parameter) and [`--password`](password-parameter).
+  Each `--username` starts a new configuration.
+- **All other options** belong to a configuration. Given after a `--username`, they apply to that
+  configuration only. Given before the first `--username`, they are defaults for all
+  configurations. See [Using Multiple Accounts and Config](multiple-accounts-and-configs).
+
+When options are combined in a way that can't work, `icloudpd` prints a message and exits with
+code 2 without doing anything. The rejected combinations are listed with each option.
 
 (until-found-parameter)=
 `--until-found X`
@@ -9,6 +29,8 @@ This is a list of all options available for the command line interface (CLI) of 
     Downloads if not present locally. The whole process stops once X number of subsequent checks result in a local file matching the remote.
 
     This option is a useful optimization for incremental updates: only a small portion (X) of the existing local storage will be rechecked for existence, saving on local I/O. However, the process will not "fill the gaps" in local storage if any exist (and will not identify them).
+
+    With several [`--album`](album-parameter) options, the count applies to each album separately.
 
     ```{note}
     Assets are checked by the date they were added to iCloud, not by the date they were taken/created.
@@ -22,12 +44,14 @@ This is a list of all options available for the command line interface (CLI) of 
 
     This option is mostly useful while testing and experimenting with parameters to limit the volume of downloads.
 
+    With several [`--album`](album-parameter) options, X assets are checked in each album.
+
     ```{note}
     Assets are checked by the date they were added to iCloud, not by the date they were taken/created.
     ```
 
 (album-parameter)=
-`--album X`
+`--album X`, `-a X`
     
 :   Specifies which album(s) to download.
 
@@ -41,7 +65,7 @@ This is a list of all options available for the command line interface (CLI) of 
     [`--list-albums`](list-albums-parameter), e.g. `--album "Trips/2024/Italy"`.
 
 (list-albums-parameter)=
-`--list-albums`
+`--list-albums`, `-l`
     
 :   Lists all available albums.
 
@@ -125,9 +149,11 @@ This is a list of all options available for the command line interface (CLI) of 
     Do not edit the snapshot or run other
     downloaders against its destination.
 
-    The option cannot be combined with `--delete-after-download`,
-    `--keep-icloud-recent-days` or `--only-print-filenames`. An empty shared library
-    is deliberately not pruned; remove its local files manually if intended.
+    The option is rejected (exit code 2) without a shared library selected with `--library`
+    (the default `PrimarySync` is not accepted), when combined with `--delete-after-download`,
+    `--keep-icloud-recent-days` or `--only-print-filenames`, and when its `--directory`
+    is inside, or contains, the `--directory` of another configuration in the same command.
+    An empty shared library is deliberately not pruned; remove its local files manually if intended.
 
     An OS lock on `.icloudpd-prune.lock` prevents overlapping pruning runs
     (`flock` on POSIX, byte-range locking on Windows). The OS releases it when
@@ -161,6 +187,11 @@ This is a list of all options available for the command line interface (CLI) of 
     `--file-match-policy name-size-dedup-with-suffix` and
     `--live-photo-mov-filename-policy suffix`. Keep the same filename-cleaning and
     output settings that produced the existing mirror. Other layouts are not migrated.
+
+    The option is rejected (exit code 2) without `--prune-orphans`, and when any of these
+    settings differ: `--folder-structure` other than `none`, a `--size` other than `original`,
+    `--live-photo-size` other than `original`, `--skip-live-photos`, or another
+    `--align-raw`, `--file-match-policy` or `--live-photo-mov-filename-policy`.
 
     A validated full inventory, including Hidden, is matched using the downloader's
     filename selection in an inspection-only mode, without fetching media or
@@ -211,7 +242,14 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Runs `icloudpd` forever, periodically re-checking iCloud for changes ("watch"). The interval is specified in seconds, e.g. 3600 will be a 1-hour interval.
 
+    Global option.
+
     Too short an interval may trigger throttling on Apple's side, although no evidence has been reported.
+
+    Can't be combined with [`--list-albums`](list-albums-parameter),
+    [`--list-libraries`](list-libraries-parameter),
+    [`--only-print-filenames`](only-print-filenames-parameter) or
+    [`--auth-only`](auth-only-parameter) (exit code 2).
 
     ```{versionadded} 1.10.0
     ```
@@ -219,7 +257,9 @@ This is a list of all options available for the command line interface (CLI) of 
 (version-parameter)=
 `--version`
     
-:   Reports the current version and commit hash & date that the version was built from.
+:   Reports the current version and commit hash & date that the version was built from, and exits.
+
+    Global option. Can't be combined with [`--help`](help-parameter).
 
     ```{note}
     If `--use-os-locale` is also specified, then the date is formatted according to the OS locale.
@@ -229,6 +269,8 @@ This is a list of all options available for the command line interface (CLI) of 
 `--use-os-locale`
     
 :   Instructs `icloudpd` to use the OS locale. If not specified (and by default), US English is used.
+
+    Global option.
 
     ```{versionadded} 1.22.0
     ```
@@ -254,29 +296,35 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Access to Apple servers is blocked from mainland China. As an alternative, the iCloud service is available on an internal `.cn` domain, which can be specified for `icloudpd` to work from mainland China.
 
-    Default is `com`. `cn` is the only other option available (`--domain cn`).
+    Global option. Default is `com`. `cn` is the only other option available (`--domain cn`).
 
     ```{versionadded} 1.9.0
     ```
 
 (password-parameter)=
-`--password X`
+`--password X`, `-p X`
     
-:   Specifies the iCloud password to use for authentication.
+:   Specifies the iCloud password to use for authentication. User option: it applies to the
+    configuration started by the `--username` before it. It is used only when
+    [`--password-provider`](password-provider-parameter) includes `parameter` (the default does).
 
     ```{note}
     Supplying credentials through command line parameters is not considered a good practice since they can be logged and/or otherwise exposed. Consider using other [password providers](password-providers).
     ``` 
 
 (directory-parameter)=
-`--directory X`
+`--directory X`, `-d X`
     
 :   Specifies the root folder where the [folder structure](folder-structure-parameter) will start and files will be downloaded.
+
+    Required for each configuration, unless [`--auth-only`](auth-only-parameter),
+    [`--list-albums`](list-albums-parameter) or [`--list-libraries`](list-libraries-parameter)
+    is given. Without it, `icloudpd` exits with code 2.
 
 (file-match-policy-parameter)=
 `--file-match-policy X`
     
-:   Specifies an algorithm (policy) to match remote files to local files.
+:   Specifies an algorithm (policy) to match remote files to local files: `name-size-dedup-with-suffix` (default) or `name-id7`.
 
     ```{versionadded} 1.20.0
     ```
@@ -286,9 +334,20 @@ This is a list of all options available for the command line interface (CLI) of 
     ``` 
 
 (username-parameter)=
-`--username X`
+`--username X`, `-u X`
     
-:   Specifies the AppleID (email address) used for authenticating to iCloud. May be used multiple times to introduce different configurations and/or accounts. See [Using Multiple Accounts and Config](multiple-accounts-and-configs).
+:   Specifies the Apple ID (email address) used for authenticating to iCloud. The value is
+    converted to lower case.
+
+    Required: without a `--username`, `icloudpd` downloads nothing.
+
+    Each `--username` starts a new configuration. Options after it, up to the next `--username`,
+    apply to that configuration only. May be used multiple times to introduce different
+    configurations and/or accounts. See [Using Multiple Accounts and Config](multiple-accounts-and-configs).
+
+    ```{versionchanged} 1.32.0
+    Option may be specified multiple times
+    ```
 
 (adp-web-access-parameter)=
 `--adp-web-access`
@@ -314,7 +373,12 @@ This is a list of all options available for the command line interface (CLI) of 
 (size-parameter)=
 `--size X`
     
-:   Customizes the size of the asset to download.
+:   Customizes the size of the asset to download: `original` (default), `medium`, `thumb`,
+    `adjusted` or `alternative`. May be specified multiple times to download several sizes.
+
+    ```{versionchanged} 1.19.0
+    Option may be specified multiple times. `adjusted` and `alternative` added
+    ```
 
     ```{seealso}
     Details on [Asset sizes](size)
@@ -332,17 +396,26 @@ This is a list of all options available for the command line interface (CLI) of 
 (live-photo-size-parameter)=
 `--live-photo-size X`
     
-:   Customizes the size of the live photo assets to download.
+:   Customizes the size of the video part of Live Photos to download: `original` (default),
+    `medium` or `thumb`.
+
+    ```{versionchanged} 1.33.0
+    `thumb` works; before, it stopped `icloudpd` at startup
+    ```
 
 (skip-videos-parameter)=
 `--skip-videos`
     
 :   If specified, video assets will not be processed.
 
+    Can't be combined with [`--skip-photos`](skip-photos-parameter) in the same configuration (exit code 2).
+
 (skip-photos-parameter)=
 `--skip-photos`
     
 :   If specified, photo assets will not be processed.
+
+    Can't be combined with [`--skip-videos`](skip-videos-parameter) in the same configuration (exit code 2).
 
     ```{versionadded} 1.30.0
     ```
@@ -357,7 +430,9 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   If specified, assets deleted in iCloud (actually moved to the Recently Deleted album) will also be deleted locally.
 
-:   Can't be combined with [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter): the assets it moves to Recently Deleted would then be deleted locally as well.
+    Can't be combined with [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) or
+    [`--delete-after-download`](delete-after-download-parameter) (exit code 2): the assets they
+    move to Recently Deleted would then be deleted locally as well.
 
     ```{seealso}
     [Modes of operation](mode)
@@ -367,6 +442,10 @@ This is a list of all options available for the command line interface (CLI) of 
 `--delete-after-download`
     
 :   If specified, assets downloaded locally will be deleted in iCloud (actually moved to the Recently Deleted album). Deprecated, use [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) instead.
+
+    Can't be combined with [`--auto-delete`](auto-delete-parameter),
+    [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) or
+    [`--prune-orphans`](prune-orphans-parameter) (exit code 2).
 
     ```{note}
     If remote assets were not downloaded, e.g., because they were already in local storage, they will NOT be deleted in iCloud.
@@ -383,17 +462,17 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Deletes assets in iCloud after they were downloaded or confirmed to be present locally, except for the ones taken within the specified number of days. If set to 0, all photos will be deleted from iCloud.
 
-:   If any filters are used, e.g., [`--skip-videos`](skip-videos-parameter), then assets excluded from processing by filters are not subject to deletion from iCloud. For example, running icloudpd with [`--skip-videos`](skip-videos-parameter) on a huge iCloud collection of videos will download and delete nothing.
+    If any filters are used, e.g., [`--skip-videos`](skip-videos-parameter), then assets excluded from processing by filters are not subject to deletion from iCloud. For example, running icloudpd with [`--skip-videos`](skip-videos-parameter) on a huge iCloud collection of videos will download and delete nothing.
 
-:   The timestamp when the asset was taken (aka "created date") as reported by iCloud is used for calculating the age of the asset. For example, an asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. The same timestamp is used for the folder structure in the current system.
+    The timestamp when the asset was taken (aka "created date") as reported by iCloud is used for calculating the age of the asset. For example, an asset taken in 2000, but added to iCloud in 2024, will be 25 years old in 2025. The same timestamp is used for the folder structure in the current system.
 
-:   Assets for which iCloud reports no creation date are not deleted, because their age is unknown. icloudpd logs a warning for each of them.
+    Assets for which iCloud reports no creation date are not deleted, because their age is unknown. icloudpd logs a warning for each of them.
 
-:   If the parameter is not specified, then nothing is deleted from iCloud.
+    If the parameter is not specified, then nothing is deleted from iCloud.
 
-:   Can't be combined with [`--auto-delete`](auto-delete-parameter), which would delete the local copies of the assets this moves to Recently Deleted.
+    Can't be combined with [`--auto-delete`](auto-delete-parameter), which would delete the local copies of the assets this moves to Recently Deleted, or with [`--delete-after-download`](delete-after-download-parameter) or [`--prune-orphans`](prune-orphans-parameter) (exit code 2).
 
-:   Only assets that the run looks at are considered for deletion. With [`--recent`](recent-parameter), assets beyond the first X are not checked, and with [`--until-found`](until-found-parameter), assets after the point where the run stops are not checked, so they stay in iCloud. icloudpd logs a warning at startup when these are combined.
+    Only assets that the run looks at are considered for deletion. With [`--recent`](recent-parameter), assets beyond the first X are not checked, and with [`--until-found`](until-found-parameter), assets after the point where the run stops are not checked, so they stay in iCloud. icloudpd logs a warning at startup when these are combined.
 
     ```{versionadded} 1.26.0
     ```
@@ -407,15 +486,22 @@ This is a list of all options available for the command line interface (CLI) of 
 (only-print-filenames-parameter)=
 `--only-print-filenames`
     
-:   If specified, no downloading will occur, but only file paths will be printed in the output (no other info goes into the output either).
+:   If specified, no downloading will occur, but only file paths will be printed in the output (no other info goes into the output either). Nothing is deleted, locally or in iCloud.
+
+    Global option. Can't be combined with [`--watch-with-interval`](watch-with-interval-parameter)
+    or [`--prune-orphans`](prune-orphans-parameter) (exit code 2).
 
     ```{seealso}
     [`--dry-run` parameter](dry-run-parameter)
     ```
+
 (folder-structure-parameter)=
 `--folder-structure X`
     
-:   Specifies the subfolder naming scheme.
+:   Specifies the subfolder naming scheme, applied to the creation date of each asset.
+    Default: `{:%Y/%m/%d}`. Use `none` to put all files directly into
+    [`--directory`](directory-parameter). A format that can't be applied to a date is rejected
+    at startup.
 
     ```{seealso}
     Details in the [Folder structure](folder-structure) section.
@@ -424,12 +510,25 @@ This is a list of all options available for the command line interface (CLI) of 
 (set-exif-datetime-parameter)=
 `--set-exif-datetime`
     
-:   If specified, EXIF data for the image will be updated with the date/time the asset was taken/created. Only if EXIF does not already exist in the asset.
+:   If specified, the date/time the asset was taken/created is written into the EXIF tags
+    `DateTime`, `DateTimeOriginal` and `DateTimeDigitized` of newly downloaded JPEG files that have
+    no `DateTimeOriginal` tag yet. Other files are not changed.
 
 (no-progress-bar-parameter)=
 `--no-progress-bar`
     
 :   If specified, the progress bar is suppressed. This is valuable when streaming output to a file.
+    The progress bar is also suppressed when no terminal is attached.
+
+    Global option.
+
+(log-level-parameter)=
+`--log-level X`
+
+:   Sets the level of log messages: `debug` (default), `info` or `error`.
+
+    Global option. Ignored with [`--only-print-filenames`](only-print-filenames-parameter),
+    which turns off all log messages.
 
 (keep-unicode-in-filenames-parameter)=
 `--keep-unicode-in-filenames`
@@ -442,7 +541,8 @@ This is a list of all options available for the command line interface (CLI) of 
 (live-photo-mov-filename-policy-parameter)=
 `--live-photo-mov-filename-policy X`
     
-:   Customizes the naming of the video portion of live photos.
+:   Customizes the naming of the video portion of live photos: `suffix` (default) adds `_HEVC`
+    to the name, `original` keeps the name as is.
 
     ```{versionadded} 1.18.0
     ```
@@ -454,7 +554,7 @@ This is a list of all options available for the command line interface (CLI) of 
 (align-raw-parameter)=
 `--align-raw X`
     
-:   Customizes the treatment of RAW+JPEG assets.
+:   Customizes the treatment of RAW+JPEG assets: `as-is` (default), `original` or `alternative`.
 
     ```{versionadded} 1.19.0
     ```
@@ -466,18 +566,33 @@ This is a list of all options available for the command line interface (CLI) of 
 (password-provider-parameter)=
 `--password-provider X`
     
-:   Customizes the intake of the password for iCloud authentication.
+:   Customizes the intake of the password for iCloud authentication: `parameter`, `keyring`,
+    `console` or `webui`. May be specified multiple times; providers are tried in the given order.
+    Default: `parameter`, `keyring`, `console`.
+
+    Global option.
 
     ```{versionadded} 1.20.0
+    ```
+
+    ```{versionchanged} 1.21.0
+    `webui` added
     ```
 
     ```{seealso}
     Details in the [Password providers](password-providers) section.
     ```
+
 (mfa-provider-parameter)=
 `--mfa-provider X`
     
-:   Customizes the intake of the multi-factor authentication (MFA) code for iCloud authentication.
+:   Customizes the intake of the multi-factor authentication (MFA) code for iCloud authentication:
+    `console` (default) or `webui`.
+
+    Global option.
+
+    ```{versionadded} 1.21.0
+    ```
 
     ```{seealso}
     Details in the [MFA providers](authentication) section.
@@ -494,22 +609,35 @@ This is a list of all options available for the command line interface (CLI) of 
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
     
-:   Settings for SMTP notifications for expired/needed authentication.
+:   Settings for email notifications when two-factor authentication is required.
+    An email is sent whenever iCloud asks for a code, if `--smtp-username` or
+    [`--notification-email`](notification-email-parameter) is set.
+
+    - `--smtp-username`, `--smtp-password`: account for the SMTP server. `icloudpd` logs in
+      only when both are set.
+    - `--smtp-host`: default `smtp.gmail.com`.
+    - `--smtp-port`: default `587`.
+    - `--smtp-no-tls`: turns off STARTTLS, which is used by default.
 
 (notification-email-parameter)=
 `--notification-email X`, `--notification-email-from X`
     
 :   Settings for email notification addressing.
 
+    - `--notification-email`: recipient. Default: the SMTP username.
+    - `--notification-email-from`: sender. Default: `iCloud Photos Downloader <SMTP username>`,
+      or the recipient if there is no SMTP username.
+
 (notification-script-parameter)=
 `--notification-script X`
     
-:   Script to be executed for notifications on expired MFA.
+:   Path to a script that is run, without arguments, whenever iCloud asks for a
+    two-factor authentication code, before `icloudpd` waits for the code.
 
 (skip-created-before-parameter)=
-`--skip-created-before`
+`--skip-created-before X`
 
-:   Does not process assets created before the specified timestamp. The timestamp is in ISO format, e.g., 2025-06-01, or as an interval backwards from the current date, e.g., 5d (5 days ago). If the timezone is not specified for ISO format, then the local timezone is used.
+:   Does not process assets created before the specified timestamp. The timestamp is an ISO date or date-time, e.g., `2025-06-01` or `2025-06-01T12:00:00+02:00`, or an interval in days backwards from the current date, e.g., `5d` (5 days ago). Only days are supported as interval unit. If an ISO timestamp has no time zone, the local time zone is used.
 
     ```{versionadded} 1.28.0
     ```
@@ -519,17 +647,34 @@ This is a list of all options available for the command line interface (CLI) of 
     ```
 
 (skip-created-after-parameter)=
-`--skip-created-after`
+`--skip-created-after X`
 
-:   Does not process assets created after the specified timestamp. The timestamp is in ISO format, e.g., 2025-06-01, or as an interval backwards from the current date, e.g., 5d (5 days ago). If the timezone is not specified for ISO format, then the local timezone is used.
+:   Does not process assets created after the specified timestamp. The timestamp is an ISO date or date-time, e.g., `2025-06-01` or `2025-06-01T12:00:00+02:00`, or an interval in days backwards from the current date, e.g., `5d` (5 days ago). Only days are supported as interval unit. If an ISO timestamp has no time zone, the local time zone is used.
 
     ```{versionadded} 1.29.0
     ```
 
     ```{note}
-    To process a date range, combine it with `--skip-created-before`, which sets the start of the range: `--skip-created-before 2025-04-01 --skip-created-after 2025-10-01` processes assets created between April 1 and October 1, 2025. `--skip-created-before` must be earlier than `--skip-created-after`.
+    To process a date range, combine it with `--skip-created-before`, which sets the start of the range: `--skip-created-before 2025-04-01 --skip-created-after 2025-10-01` processes assets created between April 1 and October 1, 2025. `--skip-created-before` must be earlier than `--skip-created-after`, otherwise `icloudpd` exits with code 2.
     ```
 
     ```{note}
     The date is when the asset was created, not when it was added to iCloud.
+    ```
+
+(help-parameter)=
+`--help`, `-h`
+
+:   Shows a summary of all options and exits. Also shown when `icloudpd` is run without any options.
+
+    Global option. Can't be combined with [`--version`](version-parameter).
+
+(threads-num-parameter)=
+`--threads-num X`
+
+:   Has no effect: downloads always use one thread. Kept for compatibility and will be removed in a future version.
+
+    Global option.
+
+    ```{deprecated} 1.7.0
     ```
