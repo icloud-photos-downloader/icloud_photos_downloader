@@ -207,4 +207,4 @@ We have GitHub actions taking care for building, testing, and releasing software
 - Update CHANGELOG.md with release changes if they were not added with commits
 - Update CHANGELOG.md with date of the release
 - Commit & push changes (either directly or through pull requests)
-- Add version tag to head (`git tag v1.32.2`) and push it to master (`git push origin v1.32.2`) -- there seems to be no way to do that in UI
+- Add version tag to head (`git tag v1.32.2`) and push it to master (`git push origin v1.32.2`); the release workflow then builds everything and creates the GitHub release with all files and the notes from CHANGELOG.md, so there is no need to create the release in the GitHub UI

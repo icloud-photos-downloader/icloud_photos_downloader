@@ -178,4 +178,7 @@ jobs:
         with:
           artifacts: "dist/*"
           bodyFile: dist/notes-${{inputs.icloudpd_version}}.md
+          # a release created in the GitHub UI (which also creates the tag) is updated with the
+          # files and notes instead of failing with already_exists
+          allowUpdates: true
 
