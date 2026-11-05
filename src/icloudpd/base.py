@@ -1183,7 +1183,11 @@ def core_single_run(
                     elif user_config.library in icloud.photos.shared_libraries:
                         library_object = icloud.photos.shared_libraries[user_config.library]
                     else:
-                        logger.error("Unknown library: %s", user_config.library)
+                        if not icloud.photos.private_libraries and not icloud.photos.shared_libraries:
+                            # the list is empty when iCloud could not be reached, not when the library is missing
+                            logger.error("Cannot load the list of libraries from iCloud (no connection?)")
+                        else:
+                            logger.error("Unknown library: %s", user_config.library)
                         return 1
                 else:
                     library_object = icloud.photos
