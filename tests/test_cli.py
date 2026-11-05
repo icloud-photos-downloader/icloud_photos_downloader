@@ -577,22 +577,28 @@ class CliTestCase(TestCase):
 
     def test_conflict_options_delete_after_download_and_keep_icloud_recent_days(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "-d",
-                "/tmp",
-                "--delete-after-download",
-                "--keep-icloud-recent-days",
-                "1",
-            ],
-        )
-        self.assertEqual(result.exit_code, 2, "exit code")
+        for days in ["1", "0"]:
+            with self.subTest(days=days):
+                result = run_main(
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "-d",
+                        "/tmp",
+                        "--delete-after-download",
+                        "--keep-icloud-recent-days",
+                        days,
+                    ],
+                )
+                self.assertIn(
+                    "--keep-icloud-recent-days and --delete-after-download should not be used together",
+                    result.output,
+                )
+                self.assertEqual(result.exit_code, 2, "exit code")
 
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+                self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
     def test_conflict_options_auto_delete_and_keep_icloud_recent_days(self) -> None:
         """Assets --keep-icloud-recent-days moves to Recently Deleted would also be deleted locally (#1272)"""

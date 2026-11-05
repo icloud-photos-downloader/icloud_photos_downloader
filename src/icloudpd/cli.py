@@ -673,7 +673,7 @@ def cli() -> int:
         elif [
             user_ns
             for user_ns in user_nses
-            if user_ns.keep_icloud_recent_days and user_ns.delete_after_download
+            if user_ns.keep_icloud_recent_days is not None and user_ns.delete_after_download
         ]:
             print(
                 "--keep-icloud-recent-days and --delete-after-download should not be used together in one configuration"
