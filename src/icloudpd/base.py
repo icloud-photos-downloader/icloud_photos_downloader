@@ -434,6 +434,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    live_photo_directory=user_config.live_photo_directory,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: NOT_DOWNLOADED)
@@ -632,6 +633,7 @@ def download_builder(
     photo: PhotoAsset,
     *,
     inspect_only: bool = False,
+    live_photo_directory: str | None = None,
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
 
@@ -845,7 +847,13 @@ def download_builder(
                 )
             else:
                 pass
-            lp_download_path = os.path.join(download_dir, lp_filename)
+            # --live-photo-directory keeps the videos apart, with the same folder structure (#94)
+            lp_download_dir = (
+                os.path.normpath(os.path.join(live_photo_directory, date_path))
+                if live_photo_directory
+                else download_dir
+            )
+            lp_download_path = os.path.join(lp_download_dir, lp_filename)
 
             if inspect_only:
                 expected_paths.append(lp_download_path)
@@ -1466,6 +1474,7 @@ def core_single_run(
                                 user_config.file_match_policy,
                                 build_filename_cleaner(user_config.keep_unicode_in_filenames),
                             ),
+                            live_photo_directory=user_config.live_photo_directory,
                         )
                     else:
                         pass

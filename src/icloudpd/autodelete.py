@@ -14,7 +14,7 @@ from pyicloud_ipd.asset_version import calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames
-from pyicloud_ipd.version_size import AssetVersionSize, VersionSize
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 
 def delete_file(logger: logging.Logger, path: str) -> bool:
@@ -40,6 +40,7 @@ def autodelete_photos(
     lp_filename_generator: Callable[[str], str],
     raw_policy: RawTreatmentPolicy,
     filename_builder: Callable[[PhotoAsset], str],
+    live_photo_directory: str | None = None,
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -77,6 +78,10 @@ def autodelete_photos(
                 date_path = folder_structure.format(created_date)
 
         download_dir = os.path.join(directory, date_path)
+        # Live Photo videos are in --live-photo-directory when that was given
+        live_photo_dir = (
+            os.path.join(live_photo_directory, date_path) if live_photo_directory else download_dir
+        )
 
         # the name the file was downloaded with (file match policy and filename cleaner applied)
         base_filename = filename_builder(media)
@@ -113,9 +118,12 @@ def autodelete_photos(
                     lp_filename_generator,
                     media.item_type,
                 )
-                paths.add(os.path.normpath(local_download_path(version_filename, download_dir)))
+                version_dir = (
+                    live_photo_dir if isinstance(_size, LivePhotoVersionSize) else download_dir
+                )
+                paths.add(os.path.normpath(local_download_path(version_filename, version_dir)))
                 paths.add(
-                    os.path.normpath(local_download_path(version_filename, download_dir)) + ".xmp"
+                    os.path.normpath(local_download_path(version_filename, version_dir)) + ".xmp"
                 )
         for path in paths:
             if os.path.exists(path):

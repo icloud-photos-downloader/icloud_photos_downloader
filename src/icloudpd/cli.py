@@ -121,6 +121,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--live-photo-directory",
+        help="Download the video part of Live Photos to this directory instead of next to the "
+        + "photo. The folder structure is applied inside it, like in --directory "
+        + "(default: next to the photo)",
+        default=None,
+    )
+    cloned.add_argument(
         "--xmp-sidecar",
         help="Export additional data as XMP sidecar files (default: don't export)",
         action="store_true",
@@ -468,6 +475,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         list_libraries=user_ns.list_libraries,
         skip_videos=user_ns.skip_videos,
         skip_live_photos=user_ns.skip_live_photos,
+        live_photo_directory=user_ns.live_photo_directory,
         xmp_sidecar=user_ns.xmp_sidecar,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
@@ -600,6 +608,16 @@ def cli() -> int:
         ]:
             print(
                 "--auth-only, --directory, --list-libraries, or --list-albums are required for each configuration"
+            )
+            return 2
+
+        elif any(
+            user_ns.live_photo_directory and (user_ns.skip_live_photos or user_ns.prune_orphans)
+            for user_ns in user_nses
+        ):
+            print(
+                "--live-photo-directory can't be combined with --skip-live-photos or "
+                "--prune-orphans"
             )
             return 2
 

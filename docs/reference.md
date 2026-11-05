@@ -273,6 +273,21 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Specifies the root folder where the [folder structure](folder-structure-parameter) will start and files will be downloaded.
 
+(live-photo-directory-parameter)=
+`--live-photo-directory X`
+
+:   Downloads the video part of Live Photos to directory X instead of next to the photo.
+    The [folder structure](folder-structure-parameter) is applied inside it in the same way
+    as in [`--directory`](directory-parameter), so with the default structure the video of
+    a Live Photo taken on 4 November 2020 goes to `X/2020/11/04/`.
+    [`--auto-delete`](auto-delete-parameter) also looks for those videos there.
+
+    Can't be combined with [`--skip-live-photos`](skip-live-photos-parameter) or
+    [`--prune-orphans`](prune-orphans-parameter).
+
+    ```{versionadded} 1.34.0
+    ```
+
 (file-match-policy-parameter)=
 `--file-match-policy X`
     

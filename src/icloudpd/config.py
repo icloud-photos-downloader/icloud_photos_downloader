@@ -32,6 +32,7 @@ class _DefaultConfig:
     force_size: bool
     auto_delete: bool
     prune_orphans: bool = False
+    live_photo_directory: str | None = None
     prune_orphans_adopt_existing: bool = False
     folder_structure: str
     set_exif_datetime: bool
