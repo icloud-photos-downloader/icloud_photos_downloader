@@ -466,7 +466,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         sizes=list(
             map_(AssetVersionSize, foundation.unique_sequence(user_ns.sizes or ["original"]))
         ),
-        live_photo_size=LivePhotoVersionSize(user_ns.live_photo_size),
+        live_photo_size=LivePhotoVersionSize[user_ns.live_photo_size.upper()],
         recent=user_ns.recent,
         until_found=user_ns.until_found,
         albums=user_ns.albums,

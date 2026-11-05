@@ -32,7 +32,7 @@ Some formatting codes, e.g. `%B` for printing full month, are specific to the la
 Example of running `icloudpd` with  specific locale under Linux or MacOS:
 
 ```shell
-LC_ALL=ru_RU.UTF.8 icloudpd --use-os-locale --version
+LC_ALL=ru_RU.UTF-8 icloudpd --use-os-locale --version
 ```
 
 ## Duplicates
@@ -42,7 +42,7 @@ LC_ALL=ru_RU.UTF.8 icloudpd --use-os-locale --version
 ```
 
 In large iCloud collections, it is possible to have name collisions. To avoid collisions if files need to be downloaded into the same folder, use the [`--file-match-policy`](file-match-policy-parameter) parameter:
-- add a unique invariant asset identification suffix to the name (e.g., **"IMG_1234_QAZXSW.JPG"**) with `--file-match-policy name-id7`
+- add a unique invariant asset identification suffix to the name (e.g., **"IMG_1234_QVpTNGN.JPG"**) with `--file-match-policy name-id7`
 - de-duplicate by adding file size as a suffix (e.g., **"IMG_1234-67890.JPG"** for the second asset); `--file-match-policy name-size-dedup-with-suffix` - this is the default
 
 ## Live Photos

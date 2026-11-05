@@ -1,5 +1,6 @@
 import datetime
 import inspect
+import io
 import logging
 import os
 import shutil
@@ -18,7 +19,7 @@ from tzlocal import get_localzone
 from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException, PyiCloudConnectionErrorException
 from pyicloud_ipd.services.photos import PhotoAlbum, PhotoAsset, PhotoLibrary
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import (
@@ -432,6 +433,52 @@ class DownloadPhotoTestCase(TestCase):
                 result.output,
             )
             assert result.exit_code == 0
+
+    def test_connection_error_skips_only_that_photo(self) -> None:
+        """A download that can't connect to iCloud skips that photo, not the whole run (#1347)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        calls: List[str] = []
+
+        def mocked_download(self: PhotoAsset, _session: Any, _url: str, _start: int) -> Response:
+            calls.append(self.filename)
+            if len(calls) == 1:
+                raise PyiCloudConnectionErrorException("Cannot connect to Apple iCloud service")
+            response = Response()
+            response.status_code = 200
+            response.raw = io.BytesIO(b"photo")
+            return response
+
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                [("2018/07/30", "IMG_7408.JPG")],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "2",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
+
+        self.assertEqual(["IMG_7409.JPG", "IMG_7408.JPG"], calls)
+        self.assertIn(
+            "Could not connect to iCloud to download "
+            f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: "
+            "Cannot connect to Apple iCloud service",
+            result.output,
+        )
+        self.assertEqual(0, result.exit_code)
 
     def test_handle_session_error_during_download(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
@@ -1359,6 +1406,52 @@ class DownloadPhotoTestCase(TestCase):
                     f"Downloading the first original photo or video to {data_dir} ...",
                     result.output,
                 )
+                self.assertIn("All photos and videos have been downloaded", result.output)
+                assert result.exit_code == 0
+
+    def test_download_one_recent_live_photo_thumb(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_download = [
+            ("2018/07/31", "IMG_7409.JPG"),
+            ("2018/07/31", "IMG_7409-thumb.MOV"),
+        ]
+
+        # Download the first photo, but mock the video download
+        orig_download = PhotoAsset.download
+
+        def mocked_download(pa: PhotoAsset, session: Any, _url: str, start: int) -> Response:
+            if not hasattr(PhotoAsset, "already_downloaded"):
+                response = orig_download(pa, session, _url, start)
+                setattr(PhotoAsset, "already_downloaded", True)  # noqa: B010
+                return response
+            return mock.MagicMock()
+
+        with mock.patch.object(PhotoAsset, "download", new=mocked_download):  # noqa: SIM117
+            with mock.patch("icloudpd.exif_datetime.get_photo_exif") as get_exif_patched:
+                get_exif_patched.return_value = False
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    files_to_download,
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--live-photo-size",
+                        "thumb",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
+
                 self.assertIn("All photos and videos have been downloaded", result.output)
                 assert result.exit_code == 0
 

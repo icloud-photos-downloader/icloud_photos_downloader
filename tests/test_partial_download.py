@@ -20,6 +20,7 @@ from urllib3.exceptions import ProtocolError
 
 from icloudpd.download import download_media
 from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.exceptions import PyiCloudConnectionErrorException
 from pyicloud_ipd.version_size import AssetVersionSize
 
 CONTENT = bytes(range(100))
@@ -59,7 +60,7 @@ class PartialDownloadTestCase(TestCase):
         self.photo = mock.MagicMock()
         self.photo.created = datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
 
-    def download(self, responses: List[Response]) -> bool:
+    def download(self, responses: List[Response | Exception]) -> bool:
         self.photo.download.side_effect = responses
         return download_media(
             self.logger,
@@ -126,6 +127,36 @@ class PartialDownloadTestCase(TestCase):
             self.assertFalse(self.download([dropped_response(0, 40), dropped_response(40, 40)]))
         self.assertFalse(os.path.exists(self.download_path))
         self.assertIn(f"Connection lost while downloading {self.download_path}", logs.output[0])
+        [part_file] = self.part_files()
+        with open(os.path.join(self.directory, part_file), "rb") as file:
+            self.assertEqual(CONTENT[:40], file.read())
+
+    def test_connection_error_before_the_download_skips_the_file(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(
+                self.download(
+                    [PyiCloudConnectionErrorException("Cannot connect to Apple iCloud service")]
+                )
+            )
+        self.assertFalse(os.path.exists(self.download_path))
+        self.assertIn(
+            f"Could not connect to iCloud to download {self.download_path}: "
+            "Cannot connect to Apple iCloud service",
+            logs.output[0],
+        )
+
+    def test_connection_error_when_resuming_keeps_the_partial_file(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.assertFalse(
+                self.download(
+                    [
+                        dropped_response(0, 40),
+                        PyiCloudConnectionErrorException("Cannot connect to Apple iCloud service"),
+                    ]
+                )
+            )
+        self.assertFalse(os.path.exists(self.download_path))
+        self.assertEqual([0, 40], self.starts())
         [part_file] = self.part_files()
         with open(os.path.join(self.directory, part_file), "rb") as file:
             self.assertEqual(CONTENT[:40], file.read())

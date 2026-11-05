@@ -2,8 +2,8 @@
 
 ## Apple ProRAW/ProRes
 
-Apple supports shooting stills and videos in [DNG](https://en.wikipedia.org/wiki/Digital_Negative) format and 
-they can be downloaded by `icloudpd` like any other supported format.
+Apple supports shooting ProRAW stills in [DNG](https://en.wikipedia.org/wiki/Digital_Negative) format and ProRes videos in QuickTime (`.MOV`) format,
+and they can be downloaded by `icloudpd` like any other supported format.
 
 ## Imported RAW images
 

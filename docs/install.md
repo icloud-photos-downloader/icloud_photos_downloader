@@ -1,7 +1,7 @@
 # Install and Run
 
 There are three ways to run `icloudpd`:
-1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.32.3) and run it, e.g.:
+1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.33.0) and run it, e.g.:
 
     ```sh
     icloudpd --username your@email.address --directory photos --watch-with-interval 3600
@@ -120,13 +120,13 @@ In 1.32.3, `icloudpd-1.32.3-macos-amd64` was built for Apple Silicon by mistake 
 
 Here are the steps to make it work (the examples use the Apple Silicon binary):
 - Download the binary from GitHub [Releases](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases) into the desired local folder
-- Add the executable flag by running `chmod +x icloudpd-1.32.3-macos-arm64`
-- Start it from the terminal: `icloudpd-1.32.3-macos-arm64`
+- Add the executable flag by running `chmod +x icloudpd-1.33.0-macos-arm64`
+- Start it from the terminal: `icloudpd-1.33.0-macos-arm64`
 - Apple will tell you that it cannot check for malicious software and refuse to run the app; click "OK"
-- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.32.3-macos-arm64` as a blocked app; click "Allow"
-- Start `icloudpd-1.32.3-macos-arm64` from the terminal again
+- Open "System Settings"/"Privacy & Security" and find `icloudpd-1.33.0-macos-arm64` as a blocked app; click "Allow"
+- Start `icloudpd-1.33.0-macos-arm64` from the terminal again
 - Apple will show another warning; click "Open"
-- After that, you can run `icloudpd-1.32.3-macos-arm64 --help` or any other supported command/option
+- After that, you can run `icloudpd-1.33.0-macos-arm64 --help` or any other supported command/option
 
 ## Error on the First Run
 

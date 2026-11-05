@@ -39,7 +39,7 @@ from tqdm import tqdm
 from tqdm.contrib.logging import logging_redirect_tqdm
 from tzlocal import get_localzone
 
-from foundation.core import compose, identity, map_, partial_1_1
+from foundation.core import identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
@@ -748,7 +748,16 @@ def download_builder(
                 # for later: this crashes if download-size medium is specified
                 file_size = os.stat(original_download_path or download_path).st_size
                 photo_size = version.size
-                if file_size != photo_size:
+                if file_size != photo_size and not (
+                    set_exif_datetime
+                    and exif_datetime.has_own_exif_date(
+                        logger,
+                        original_download_path or download_path,
+                        created_date.strftime("%Y:%m:%d %H:%M:%S"),
+                        file_size,
+                        photo_size,
+                    )
+                ):
                     download_path = (f"-{photo_size}.").join(download_path.rsplit(".", 1))
                     original_download_path = None
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
@@ -921,8 +930,8 @@ def delete_photo(
     library_object: PhotoLibrary,
     photo: PhotoAsset,
     filename_builder: Callable[[PhotoAsset], str],
-) -> None:
-    """Delete a photo from the iCloud account."""
+) -> bool:
+    """Delete a photo from the iCloud account. Returns False if iCloud asked to try again later."""
     clean_filename_local = filename_builder(photo)
     logger.debug("Deleting %s in iCloud...", clean_filename_local)
     url = (
@@ -947,8 +956,19 @@ def delete_photo(
             "zoneID": library_object.zone_id,
         }
     )
-    library_object.session.post(url, data=post_data, headers={"Content-type": "application/json"})
+    try:
+        library_object.session.post(
+            url, data=post_data, headers={"Content-type": "application/json"}
+        )
+    except PyiCloudAPIResponseException as error:
+        # e.g. "Sync zone CAS Op-Lock failed" when another change to the library happened at
+        # the same time (#1283); the photo stays in iCloud and the run goes on
+        if error.code != "TRY_AGAIN_LATER":
+            raise
+        logger.error("Could not delete %s in iCloud: %s", clean_filename_local, error)
+        return False
     logger.info("Deleted %s in iCloud", clean_filename_local)
+    return True
 
 
 def delete_photo_dry_run(
@@ -956,7 +976,7 @@ def delete_photo_dry_run(
     library_object: PhotoLibrary,
     photo: PhotoAsset,
     filename_builder: Callable[[PhotoAsset], str],
-) -> None:
+) -> bool:
     """Dry run for deleting a photo from the iCloud"""
     filename = filename_builder(photo)
     logger.info(
@@ -964,6 +984,7 @@ def delete_photo_dry_run(
         filename,
         library_object.zone_id["zoneName"],
     )
+    return True
 
 
 def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, Any]]) -> None:
@@ -1003,6 +1024,7 @@ def core_single_run(
         or global_config.no_progress_bar
         or not sys.stdout.isatty()
     )
+    listing_incomplete = False
     while True:  # retry loop (not watch - only for immediate retries)
         prune_snapshot: PruneSnapshot | None = None
         captured_responses: List[Mapping[str, Any]] = []
@@ -1139,8 +1161,9 @@ def core_single_run(
                     def sum_(inp: Iterable[int]) -> int:
                         return sum(inp)
 
-                    photos_count: int | None = compose(sum_, album_lengths)(albums)
-                    for photo_album in albums:
+                    album_sizes = list(album_lengths(albums))
+                    photos_count: int | None = sum_(album_sizes)
+                    for photo_album, album_size in zip(albums, album_sizes, strict=True):
                         photos_enumerator: Iterable[PhotoAsset] = photo_album
 
                         # Optional: Only download the x most recent photos.
@@ -1318,14 +1341,14 @@ def core_single_run(
                                         user_config.file_match_policy, filename_cleaner_for_delete
                                     )
                                     if user_config.dry_run:
-                                        delete_photo_dry_run(
+                                        deleted = delete_photo_dry_run(
                                             logger,
                                             library_object,
                                             item,
                                             filename_builder_for_delete,
                                         )
                                     else:
-                                        delete_photo(
+                                        deleted = delete_photo(
                                             logger,
                                             library_object,
                                             item,
@@ -1333,7 +1356,8 @@ def core_single_run(
                                         )
 
                                     # retrier(delete_local, error_handler)
-                                    photo_album.increment_offset(-1)
+                                    if deleted:
+                                        photo_album.increment_offset(-1)
 
                                 photos_counter += 1
                                 status_exchange.get_progress().photos_counter = photos_counter
@@ -1349,12 +1373,29 @@ def core_single_run(
                         else:
                             pass
 
+                        # iCloud said beforehand how many assets the album holds. The listing
+                        # stops at the first empty page, so an empty page halfway would otherwise
+                        # end the run as if everything was downloaded (#1390)
+                        listed_everything = (
+                            user_config.recent is None and user_config.until_found is None
+                        )
                         if status_exchange.get_progress().cancel:
                             prune_complete = False
                             logger.info("Iteration was cancelled")
                             status_exchange.get_progress().photos_last_message = (
                                 "Iteration was cancelled"
                             )
+                        elif listed_everything and photos_counter < album_size:
+                            prune_complete = False
+                            listing_incomplete = True
+                            where = f"album {photo_album}" if str(photo_album) else "the library"
+                            message = (
+                                f"iCloud listed only {photos_counter} of {album_size} items in "
+                                f"{where}; the listing ended early, so not everything was "
+                                "downloaded. Run icloudpd again to download the rest"
+                            )
+                            logger.error(message)
+                            status_exchange.get_progress().photos_last_message = message
                         else:
                             if user_config.skip_photos or user_config.skip_videos:
                                 photo_video_phrase = (
@@ -1498,4 +1539,4 @@ def core_single_run(
         # In single run mode, we don't handle watch intervals - that's done at higher level
         break
 
-    return 0
+    return 1 if listing_incomplete else 0

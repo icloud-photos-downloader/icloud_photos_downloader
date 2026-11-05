@@ -54,10 +54,10 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Specifies which library to use.
 
-    Default: "Personal Library".
+    Default: `PrimarySync` (the personal library). Use the name exactly as printed by [`--list-libraries`](list-libraries-parameter), e.g. `SharedSync-…` for a shared library.
 
     ```{note}
-    Only one library can be used by `icloudpd`.
+    Each configuration downloads from one library. To download from several, repeat `--username` with a different `--library` for each, see [Using Multiple Accounts and Config](multiple-accounts-and-configs).
     ```    
 
     ```{versionadded} 1.16.0
@@ -71,6 +71,9 @@ This is a list of all options available for the command line interface (CLI) of 
     the selected shared library, including photos moved to a participant's
     personal library without entering Recently Deleted. This is separate from
     `--auto-delete`, whose behavior is unchanged.
+
+    ```{versionadded} 1.33.0
+    ```
 
     Use `--library` to select a shared library and a dedicated `--directory` that
     is not shared with other accounts, libraries, or downloader processes.
@@ -142,6 +145,9 @@ This is a list of all options available for the command line interface (CLI) of 
 :   Explicitly adopts an existing dedicated shared-library mirror on the first
     successful `--prune-orphans` run. Unlike normal tracking, this also handles
     old orphans that disappeared from iCloud before tracking was enabled.
+
+    ```{versionadded} 1.33.0
+    ```
 
     **This declares that all recognized photo/video files and associated
     `.<media-extension>.xmp` sidecars directly in `--directory` belong exclusively
@@ -216,7 +222,7 @@ This is a list of all options available for the command line interface (CLI) of 
 :   Reports the current version and commit hash & date that the version was built from.
 
     ```{note}
-    If `--use-os-locale` was specified before `--version`, then the date is formatted according to the OS locale.
+    If `--use-os-locale` is also specified, then the date is formatted according to the OS locale.
     ```    
 
 (use-os-locale-parameter)=
@@ -246,9 +252,9 @@ This is a list of all options available for the command line interface (CLI) of 
 (domain-parameter)=
 `--domain X`
     
-:   Access to Apple servers is blocked from mainland China. As an alternative, the iCloud service is available on an internal .cn domain, which can be specified for `icloudpd` to work from mainland China.
+:   Access to Apple servers is blocked from mainland China. As an alternative, the iCloud service is available on an internal `.cn` domain, which can be specified for `icloudpd` to work from mainland China.
 
-    Default is ".com". ".cn" is the only other option available.
+    Default is `com`. `cn` is the only other option available (`--domain cn`).
 
     ```{versionadded} 1.9.0
     ```
@@ -301,6 +307,9 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   Requests iCloud web access consent after authentication, which is required for accounts with Advanced Data Protection (ADP). Needs `Access iCloud Data on the Web` enabled on the account. The first run asks you to approve a notification on an Apple device. See [ADP](authentication.md).
 
+    ```{versionadded} 1.33.0
+    ```
+
 (auth-only-parameter)=
 `--auth-only`
     
@@ -344,17 +353,16 @@ This is a list of all options available for the command line interface (CLI) of 
 
 (skip-photos-parameter)=
 `--skip-photos`
+    
+:   If specified, photo assets will not be processed.
 
     ```{versionadded} 1.30.0
     ```
 
-    
-:   If specified, photo assets will not be processed.
-
 (skip-live-photos-parameter)=
 `--skip-live-photos`
     
-:   If specified, live photo assets will not be processed.
+:   If specified, the video part of Live Photos is not downloaded. The still image is still downloaded.
 
 (auto-delete-parameter)=
 `--auto-delete`
