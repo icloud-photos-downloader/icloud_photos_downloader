@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: `--only-print-filenames` with more than one `--album` only printed the files of the first album
+- fix: `--keep-icloud-recent-days 0` together with `--delete-after-download` was not rejected like other values of `--keep-icloud-recent-days`
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
