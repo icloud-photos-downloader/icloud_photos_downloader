@@ -66,8 +66,8 @@ If iCloud refuses a deletion with `TRY_AGAIN_LATER` (for example because the lib
 
 With [`--dry-run`](dry-run-parameter), the assets that would be deleted are only logged.
 
-```{warning}
-With [`--skip-live-photos`](skip-live-photos-parameter), the video part of a Live Photo is never downloaded, but the asset is still deleted from iCloud, video included. Don't combine it with `--keep-icloud-recent-days` if you want to keep the videos.
+```{note}
+With [`--skip-live-photos`](skip-live-photos-parameter), the video part of a Live Photo is not downloaded, so Live Photos are not deleted from iCloud; a warning at startup says so. Before 1.33.1, they were deleted, video included.
 ```
 
 ```sh
