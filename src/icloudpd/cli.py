@@ -378,6 +378,11 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         default="console",
         type=lower,
     )
+    cloned.add_argument(
+        "--webui-host",
+        help="Address the WebUI server listens on. Use 127.0.0.1 to allow access from this computer only. Default: %(default)s",
+        default="0.0.0.0",
+    )
     return cloned
 
 
@@ -551,6 +556,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
+            webui_host=global_ns.webui_host,
         ),
         user_nses,
     )

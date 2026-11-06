@@ -8,7 +8,7 @@ from flask import Flask, Response, make_response, render_template, request
 from icloudpd.status import Status, StatusExchange
 
 
-def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
+def serve_app(logger: Logger, _status_exchange: StatusExchange, host: str = "0.0.0.0") -> None:
     app = Flask(__name__)
     app.logger = logger
     # for running in pyinstaller
@@ -89,4 +89,4 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         return make_response("Ok", 200)
 
     logger.debug("Starting web server...")
-    return waitress.serve(app)
+    return waitress.serve(app, host=host)

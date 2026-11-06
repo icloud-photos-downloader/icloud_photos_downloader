@@ -266,7 +266,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
     # Start web server ONCE if needed, outside all loops
     if needs_web_server:
         logger.info("Starting web server for WebUI authentication...")
-        server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange])
+        server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange, global_config.webui_host])
         server_thread.start()
 
     for user_config in user_configs:
