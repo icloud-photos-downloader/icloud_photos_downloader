@@ -347,6 +347,20 @@ This is a list of all options available for the command line interface (CLI) of 
     ```{versionadded} 1.30.0
     ```
 
+(delete-list-parameter)=
+`--delete-list FILE`
+
+:   Delete from iCloud the assets listed in `FILE`, and download nothing. Every line is `FILENAME<TAB>SIZE` or `FILENAME<TAB>SIZE<TAB>DATE`, with `SIZE` in bytes and `DATE` a unix timestamp or an ISO 8601 date (the creation date of the asset). An asset matches when its original file name and size are equal and, if the line has a `DATE`, its own date is within two minutes of it; with `--file-match-policy name-id7` the name may also carry the id suffix. Every line is kept, so two photos that share name and size can be told apart by their dates. A line that asks for a photo another line already asked for is reported and the photo is deleted once. Lines starting with `#` are ignored.
+
+    With a `DATE`, `icloudpd` also knows where to look: it reads the newest 100 assets first and then searches by date, so even a large library is checked within seconds. The search assumes that iCloud lists the library newest first by capture date, which is not guaranteed; an entry that is not found there is therefore looked for in the whole library (once for all such entries, with a warning in the log) before it is reported as not found, which can take minutes for a large library. Without a `DATE`, the whole library is read and only name and size decide, which can match a different photo that has the same name and size.
+
+    Deleted assets go to *Recently Deleted* in iCloud and can be restored there for about 30 days. Assets that are not found or are ambiguous are reported and skipped. Combine with [`--dry-run`](dry-run-parameter) to see what would be deleted.
+
+(delete-list-max-parameter)=
+`--delete-list-max N`
+
+:   Refuse to run if the file given with `--delete-list` has more than `N` entries. Default: 50.
+
 (skip-live-photos-parameter)=
 `--skip-live-photos`
     

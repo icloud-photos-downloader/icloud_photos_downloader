@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feature: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file, matched by original file name (also with the `name-id7` suffix) and size, and by date (within two minutes) when the line has one; recent assets are found with one request and older ones with a search by date, and an entry that is not found that way is looked for in the whole library before it is reported as missing
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)

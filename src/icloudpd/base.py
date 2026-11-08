@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """Main script that uses Click to parse command-line arguments"""
 
+import copy
 import datetime
 import getpass
 import itertools
@@ -74,6 +75,7 @@ from pyicloud_ipd.services.photos import (
     PhotoAlbum,
     PhotoAsset,
     PhotoLibrary,
+    apply_file_match_policy,
 )
 from pyicloud_ipd.utils import (
     disambiguate_filenames,
@@ -979,6 +981,249 @@ def delete_photo_dry_run(
     return True
 
 
+DELETE_LIST_DATE_TOLERANCE_SECONDS = 120
+
+
+class DeleteEntry(NamedTuple):
+    """One line of a `--delete-list` file."""
+
+    name: str
+    size: int
+    timestamp: float | None
+    line: int
+
+    @property
+    def key(self) -> str:
+        return self.name.upper()
+
+
+def read_delete_list(path: str) -> List[DeleteEntry]:
+    """Parse `FILENAME<TAB>SIZE[<TAB>DATE]` lines.
+
+    DATE is a unix timestamp or an ISO 8601 date/time. When it is given, an asset only matches if its own
+    date is within DELETE_LIST_DATE_TOLERANCE_SECONDS of it, and the asset is found without reading the whole
+    library. Without it, the whole library is read and name and size alone decide.
+    Every line is kept: two lines with the same name and size may be two different photos.
+    """
+    entries: List[DeleteEntry] = []
+    with open(path, encoding="utf-8") as f:
+        for number, line in enumerate(f, start=1):
+            line = line.rstrip("\r\n")
+            if not line.strip() or line.lstrip().startswith("#"):
+                continue
+            parts = line.split("\t")
+            if len(parts) not in (2, 3) or not parts[0].strip() or not parts[1].strip().isdigit():
+                raise ValueError(
+                    f"{path}:{number}: expected FILENAME<TAB>SIZE[<TAB>DATE], got {line!r}"
+                )
+            timestamp: float | None = None
+            if len(parts) == 3 and parts[2].strip():
+                raw_date = parts[2].strip()
+                try:
+                    timestamp = float(raw_date)
+                except ValueError:
+                    try:
+                        timestamp = datetime.datetime.fromisoformat(raw_date).timestamp()
+                    except ValueError:
+                        raise ValueError(f"{path}:{number}: invalid DATE {raw_date!r}") from None
+            entries.append(DeleteEntry(parts[0].strip(), int(parts[1]), timestamp, number))
+    return entries
+
+
+def _asset_names(asset: PhotoAsset) -> set[str]:
+    """The names an asset can have on disk: plain, or with the id suffix of `--file-match-policy name-id7`
+    (files downloaded that way carry the iCloud ID in their name, and so do the photos imported from them)."""
+    plain = asset.filename
+    return {
+        plain.upper(),
+        apply_file_match_policy(FileMatchPolicy.NAME_ID7, asset.id)(plain).upper(),
+    }
+
+
+def _entry_matches(entry: DeleteEntry, asset: PhotoAsset) -> bool:
+    """Name and size must be equal, and so must the date (within the tolerance) when the line has one."""
+    if asset.size != entry.size or entry.key not in _asset_names(asset):
+        return False
+    if entry.timestamp is None:
+        return True
+    return abs(asset.asset_date.timestamp() - entry.timestamp) <= DELETE_LIST_DATE_TOLERANCE_SECONDS
+
+
+def _rank_date(
+    album: PhotoAlbum, rank: int, cache: Dict[int, float | None] | None = None
+) -> float | None:
+    """Asset date (unix seconds) of the asset at the given position, None past the end.
+    Every lookup is a network request, so results can be remembered in `cache`."""
+    if cache is not None and rank in cache:
+        return cache[rank]
+    page = copy.copy(album)
+    page.offset = rank
+    page.page_size = 1
+    asset = next(page.photos, None)
+    date = None if asset is None else asset.asset_date.timestamp()
+    if cache is not None:
+        cache[rank] = date
+    return date
+
+
+def _first_rank_at_or_before(
+    album: PhotoAlbum,
+    total: int,
+    timestamp: float,
+    cache: Dict[int, float | None] | None = None,
+    low: int = 0,
+) -> int:
+    """Binary search. The library is ordered newest first; returns the first position whose
+    asset date is <= timestamp. Positions below `low` are known to be newer."""
+    high = total
+    while low < high:
+        middle = (low + high) // 2
+        date = _rank_date(album, middle, cache)
+        if date is None or date <= timestamp:
+            high = middle
+        else:
+            low = middle + 1
+    return low
+
+
+def _assets_around(
+    album: PhotoAlbum,
+    total: int,
+    timestamp: float,
+    cache: Dict[int, float | None] | None = None,
+    low: int = 0,
+) -> Iterable[PhotoAsset]:
+    """Assets whose date is within the tolerance of timestamp, found without scanning everything."""
+    tolerance = DELETE_LIST_DATE_TOLERANCE_SECONDS
+    start = max(0, _first_rank_at_or_before(album, total, timestamp + tolerance, cache, low) - 5)
+    page = copy.copy(album)
+    page.offset = start
+    for asset in page.photos:
+        if asset.asset_date.timestamp() < timestamp - tolerance:
+            break
+        yield asset
+
+
+def delete_from_list(
+    logger: logging.Logger,
+    library_object: PhotoLibrary,
+    list_path: str,
+    max_entries: int,
+    dry_run: bool,
+    filename_builder: Callable[[PhotoAsset], str],
+) -> int:
+    """Delete from iCloud the assets listed in a file (matched by original filename, size and, when given, date)."""
+    entries = read_delete_list(list_path)
+    if len(entries) == 0:
+        logger.info("Delete list %s is empty", list_path)
+        return 0
+    if len(entries) > max_entries:
+        logger.error(
+            "Delete list has %d entries, more than --delete-list-max %d. Refusing to run",
+            len(entries),
+            max_entries,
+        )
+        return 1
+
+    album = library_object.all
+    wanted = {(entry.key, entry.size) for entry in entries}
+    seen: Dict[str, PhotoAsset] = {}  # assets with the name and size of some line, by id
+
+    def consider(asset: PhotoAsset) -> None:
+        if any((name, asset.size) in wanted for name in _asset_names(asset)):
+            seen[asset.id] = asset
+
+    dated = [entry for entry in entries if entry.timestamp is not None]
+    missing: List[DeleteEntry] = []  # dated entries the search by date did not find
+    if dated:
+        # Deleted photos are usually among the newest, so one request for the first page (the newest
+        # ~100 assets) answers most lists. Only entries older than that page need the binary search.
+        head_page = copy.copy(album)
+        head_page.offset = 0
+        head_page.page_size = 100
+        head = list(itertools.islice(head_page.photos, 100))
+        for asset in head:
+            consider(asset)
+        oldest_in_head = head[-1].asset_date.timestamp() if head else None
+
+        tolerance = DELETE_LIST_DATE_TOLERANCE_SECONDS
+        rank_dates: Dict[int, float | None] = {}
+        total: int | None = None
+        for entry in dated:
+            assert entry.timestamp is not None
+            if oldest_in_head is not None and entry.timestamp - tolerance >= oldest_in_head:
+                continue  # everything near this date is in the first page already
+            if total is None:
+                total = len(album)
+            for asset in _assets_around(album, total, entry.timestamp, rank_dates, low=len(head)):
+                consider(asset)
+        missing = [
+            entry
+            for entry in dated
+            if not any(_entry_matches(entry, asset) for asset in seen.values())
+        ]
+
+    read_everything = False
+    if len(dated) < len(entries):
+        logger.info("Some entries have no date, scanning the whole iCloud library...")
+        read_everything = True
+    elif missing:
+        # The search by date assumes that iCloud lists the library newest first by capture date, and nothing
+        # guarantees that (a photo imported later with an old capture date may sit elsewhere). So an entry
+        # that is not found is looked for in the whole library before it is reported as missing.
+        logger.warning(
+            "%d of %d entries not found near their date (first: line %d, %s %d), "
+            "reading the whole iCloud library; it is not necessarily ordered by capture date",
+            len(missing),
+            len(dated),
+            missing[0].line,
+            missing[0].name,
+            missing[0].size,
+        )
+        read_everything = True
+    if read_everything:
+        for scanned, asset in enumerate(album, start=1):
+            consider(asset)
+            if scanned % 2000 == 0:
+                logger.info("Scanned %d assets...", scanned)
+
+    status = 0
+    requested: Dict[str, int] = {}  # asset id -> the line that asked for it
+    for entry in entries:
+        found = [asset for asset in seen.values() if _entry_matches(entry, asset)]
+        described = f"{entry.name} {entry.size}" + (
+            f" taken {datetime.datetime.fromtimestamp(entry.timestamp).isoformat(timespec='seconds')}"
+            if entry.timestamp is not None
+            else ""
+        )
+        if len(found) == 1:
+            asset = found[0]
+            if asset.id in requested:
+                logger.warning(
+                    "Line %d is the same photo as line %d, nothing more to do: %s",
+                    entry.line,
+                    requested[asset.id],
+                    described,
+                )
+                continue
+            requested[asset.id] = entry.line
+            if dry_run:
+                delete_photo_dry_run(logger, library_object, asset, filename_builder)
+            else:
+                delete_photo(logger, library_object, asset, filename_builder)
+        elif len(found) == 0:
+            logger.warning("Not found in iCloud (line %d): %s", entry.line, described)
+        else:
+            logger.warning(
+                "Ambiguous, %d assets in iCloud match (line %d): %s. Skipping",
+                len(found),
+                entry.line,
+                described,
+            )
+            status = 1
+    return status
+
+
 def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, Any]]) -> None:
     # dump captured responses
     for entry in responses:
@@ -1073,6 +1318,19 @@ def core_single_run(
                         return 1
                 else:
                     library_object = icloud.photos
+
+                if user_config.delete_list is not None:
+                    return delete_from_list(
+                        logger,
+                        library_object,
+                        str(user_config.delete_list),
+                        user_config.delete_list_max,
+                        user_config.dry_run,
+                        create_filename_builder(
+                            user_config.file_match_policy,
+                            build_filename_cleaner(user_config.keep_unicode_in_filenames),
+                        ),
+                    )
 
                 if user_config.list_albums:
                     print("Albums:")
