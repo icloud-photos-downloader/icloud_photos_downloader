@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: add opt-in `--webui-api`, a read-only JSON status API (`/api/status`, `/api/activity`) on the WebUI server for other programs to follow what icloudpd does; off by default
+
 ## 1.34.0 (2026-11-21)
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)

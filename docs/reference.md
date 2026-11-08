@@ -680,6 +680,15 @@ code 2 without doing anything. The rejected combinations are listed with each op
     ```{versionadded} 1.34.0
     ```
 
+(webui-api-parameter)=
+`--webui-api`
+
+:   Serves a read-only status API from the [web UI](webui) server, so that other programs can follow what `icloudpd` does. Off by default. The API is only available while the web UI server runs, which needs `webui` as [MFA provider and/or Password Provider](authentication).
+
+    ```{seealso}
+    The endpoints are described in the [Status API](webui) section of the web UI page.
+    ```
+
 (xmp-sidecar-parameter)=
 `--xmp-sidecar`
 

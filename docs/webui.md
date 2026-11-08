@@ -35,6 +35,23 @@ Use [`--webui-host`](webui-host-parameter) `127.0.0.1` to accept connections fro
 
 In Docker, keep the default `0.0.0.0` (the container's loopback is not reachable from the host, unless you use host networking with `--network host`) and limit access with the port mapping instead, for example `-p 127.0.0.1:8080:8080`.
 
+## Status API
+
+With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404 and nothing is recorded. Like the rest of the web server, the API only runs when `webui` is selected as MFA or password provider (see [Enabling](#enabling)). It has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer (in Docker, limit access with the port mapping instead, as described in [Security](#security)).
+
+| Request | Answer |
+|---|---|
+| `GET /api/status` | `state`, `status`, `error`, `downloaded_total`, and `progress` with `photos_count`, `photos_counter`, `photos_percent`, `last_message` and `waiting_seconds` (time until the next run in watch mode) |
+| `GET /api/activity` | `total` (files downloaded by this process) and `files`, the newest ones with `name`, `path`, `size` and `time` (unix timestamp). `?limit=N` returns up to `N` files (default 50, at most 200) |
+
+`state` is one of `need_password`, `supplied_password`, `checking_password`, `need_mfa`, `supplied_mfa` or `checking_mfa` while a password or code is needed, entered or being checked. Otherwise it is `syncing` while a run is in progress, which includes signing in, listing albums and the time between albums (so it does not depend on `photos_count`, which is empty with `--until-found`), `waiting` between the runs of watch mode, and `idle` when nothing runs.
+
+```{warning}
+`/api/activity` shows the full local paths of the downloaded files to anyone who can reach the port.
+```
+
+The Apple ID is not part of the answers. The history lives in memory (the last 200 files) and starts empty with every `icloudpd` process. The existing `POST /resume` and `POST /cancel` stay available with or without the option.
+
 ## Limitations
 
 - The port can't be changed. With Docker, map it to another port on the host instead, e.g. `-p 9090:8080`.
