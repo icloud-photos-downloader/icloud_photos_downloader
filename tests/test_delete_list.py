@@ -1,5 +1,6 @@
 import datetime
 import os
+import pathlib
 import tempfile
 from typing import Any, Generator, List
 from unittest import TestCase, mock
@@ -14,7 +15,7 @@ from icloudpd.cli import parse
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.services.photos import apply_file_match_policy
 
-UTC = datetime.timezone.utc
+UTC = datetime.UTC
 BASE = datetime.datetime(2026, 1, 1, tzinfo=UTC)
 
 
@@ -49,8 +50,7 @@ class FakeAlbum:
     @property
     def photos(self) -> Generator[FakeAsset, Any, None]:
         self._requests[0] += 1
-        for asset in self.assets[self.offset :]:
-            yield asset
+        yield from self.assets[self.offset :]
 
 
 class FakeLibrary:
@@ -329,5 +329,5 @@ class DeleteListCliTestCase(TestCase):
         _, users = parse(
             ["-d", "/x", "-u", "a@b.c", "--delete-list", "/tmp/l.txt", "--delete-list-max", "5"]
         )
-        self.assertEqual(str(users[0].delete_list), "/tmp/l.txt")
+        self.assertEqual(users[0].delete_list, pathlib.Path("/tmp/l.txt"))
         self.assertEqual(users[0].delete_list_max, 5)
