@@ -488,6 +488,15 @@ This is a list of all options available for the command line interface (CLI) of 
 
 :   Address the [web UI](webui) server listens on. Default: `0.0.0.0` (all network interfaces). Use `127.0.0.1` to allow access from this computer only; the web UI is not password protected.
 
+(webui-api-parameter)=
+`--webui-api`
+
+:   Serves a read-only status API from the [web UI](webui) server, so that other programs can follow what `icloudpd` does. Off by default. The API is only available while the web UI server runs, which needs `webui` as [MFA provider and/or Password Provider](authentication).
+
+    ```{seealso}
+    The endpoints are described in the [Status API](webui) section of the web UI page.
+    ```
+
 (xmp-sidecar-parameter)=
 `--xmp-sidecar`
 

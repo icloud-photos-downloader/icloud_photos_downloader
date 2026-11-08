@@ -41,6 +41,7 @@ from tzlocal import get_localzone
 
 from foundation.core import identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
+from icloudpd.activity import activity_log
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
@@ -814,6 +815,7 @@ def download_builder(
                     logger.info("Downloaded %s", truncated_path)
                     if not dry_run:
                         created_paths.append(download_path)
+                        activity_log.record_download(download_path)
 
         if xmp_sidecar and not only_print_filenames:
             expected_paths.append(download_path + ".xmp")
@@ -905,6 +907,7 @@ def download_builder(
                         logger.info("Downloaded %s", truncated_path)
                         if not dry_run:
                             created_paths.append(lp_download_path)
+                            activity_log.record_download(lp_download_path)
                 expected_paths.append(lp_download_path)
         elif any(isinstance(size, LivePhotoVersionSize) for size in photo_versions_with_policy):
             # a live photo without the requested video size: the video is not kept locally

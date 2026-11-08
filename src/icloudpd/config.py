@@ -72,6 +72,7 @@ class GlobalConfig:
     threads_num: int
     domain: str
     watch_with_interval: int | None
+    webui_api: bool = False
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
     webui_host: str = "0.0.0.0"
