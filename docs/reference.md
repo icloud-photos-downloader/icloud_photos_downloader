@@ -347,6 +347,11 @@ This is a list of all options available for the command line interface (CLI) of 
     ```{versionadded} 1.30.0
     ```
 
+(skip-screenshots-parameter)=
+`--skip-screenshots`
+    
+:   If specified, screenshots will not be processed. iCloud marks the photos taken as screenshots, the ones in the Screenshots album of Photos.
+
 (skip-live-photos-parameter)=
 `--skip-live-photos`
     
