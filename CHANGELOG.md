@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: `--auto-delete` didn't delete the local Live Photo video of a photo deleted in iCloud when it was downloaded with `--live-photo-size medium` or `thumb`; it looked for `IMG_1234.MOV` instead of `IMG_1234-medium.MOV` or `IMG_1234-thumb.MOV`
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
