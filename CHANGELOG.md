@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: "IOError while writing file" always guessed "You might have run out of disk space" and hid the actual error; it now shows the error from the system, e.g. `[Errno 28] No space left on device` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
@@ -36,7 +38,6 @@
 - fix: `--auto-delete` combined with `--keep-icloud-recent-days` deleted the local copies of the assets `--keep-icloud-recent-days` had just moved to Recently Deleted; the combination is now rejected, like `--delete-after-download` with `--keep-icloud-recent-days` [#1272](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1272)
 - chore: update dependencies, including urllib3 1.26 → 2.8 and requests 2.34
 - fix: `--use-os-locale` crashed with `locale.Error: unsupported locale setting` when `LANG`/`LC_ALL` names a locale that isn't installed; icloudpd now warns and continues with the default locale [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
-- fix: "IOError while writing file" always guessed "You might have run out of disk space" and hid the actual error; it now shows the error from the system, e.g. `[Errno 28] No space left on device` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
 - chore: run the npx (apt) and npm/npx (apk) compatibility tests for arm64 and arm/v7 on Arm runners; on x64 runners their Arm containers couldn't start, so the compatibility table reported them as failing without testing them [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
 - chore: run the Linux compatibility tests as one job per test kind and architecture (376 → 73 jobs per full build) and move CI to ubuntu-24.04; see [.github/workflows/README.md](.github/workflows/README.md)
 - chore: compatibility report: skip images that only exist for another platform instead of reporting them as failing, stop testing the musl binary on glibc distributions (it can't run there), and include the time zone and locale table in the release notes [#1400](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1400)
