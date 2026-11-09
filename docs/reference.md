@@ -494,7 +494,9 @@ This is a list of all options available for the command line interface (CLI) of 
 (xmp-sidecar-only-parameter)=
 `--xmp-sidecar-only`
 
-:   Only writes the XMP sidecar files, next to where the photos and videos would be downloaded, without downloading them. Useful to add sidecars to a copy of the library made another way. Implies [`--xmp-sidecar`](xmp-sidecar-parameter). Since no media file is downloaded, nothing is deleted from iCloud with `--delete-after-download` or `--keep-icloud-recent-days`.
+:   Only writes the XMP sidecar files, next to where the photos and videos would be downloaded, without downloading them. Useful to add sidecars to a copy of the library that uses the same folder layout and file names as icloudpd. The sidecars follow icloudpd's own layout, so they won't land next to a copy with a different structure (e.g. a camera `DCIM` folder). Implies [`--xmp-sidecar`](xmp-sidecar-parameter).
+
+    Cannot be combined with `--delete-after-download`, `--keep-icloud-recent-days`, `--prune-orphans`, `--until-found` or `--only-print-filenames`. Without the media files, two assets with the same name in one folder share a sidecar, so prefer a `--folder-structure` that keeps them apart.
 
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
