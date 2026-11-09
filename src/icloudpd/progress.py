@@ -10,6 +10,7 @@ class Progress:
         self.waiting_readable = ""
         self.resume = False
         self.cancel = False
+        self.running = False  # a pass over the users is in progress (not reset by reset())
         self._waiting = 0
 
     @property

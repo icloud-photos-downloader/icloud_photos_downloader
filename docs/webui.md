@@ -13,12 +13,17 @@ In Docker, keep the default `0.0.0.0` (the container's loopback is not reachable
 
 ## Status API
 
-With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404. The API has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer.
+With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404 and nothing is recorded. The API has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer (in Docker, limit access with the port mapping instead, for example `-p 127.0.0.1:8080:8080`, as described in [Listening address](#listening-address)).
 
 | Request | Answer |
 |---|---|
-| `GET /api/status` | `state` (`idle`, `syncing`, `waiting`, `need_password`, `need_mfa` and the intermediate states), `error`, `downloaded_total`, and `progress` with `photos_count`, `photos_counter`, `photos_percent`, `last_message` and `waiting_seconds` (time until the next run in watch mode) |
-| `GET /api/activity` | `total` (files downloaded by this process) and `files`, the newest 50 with `name`, `path`, `size` and `time` (unix timestamp) |
+| `GET /api/status` | `state`, `status`, `error`, `downloaded_total`, and `progress` with `photos_count`, `photos_counter`, `photos_percent`, `last_message` and `waiting_seconds` (time until the next run in watch mode) |
+| `GET /api/activity` | `total` (files downloaded by this process) and `files`, the newest ones with `name`, `path`, `size` and `time` (unix timestamp). `?limit=N` returns up to `N` files (default 50, at most 200) |
 
-The Apple ID is not part of the answers. The file paths in `/api/activity` are the full paths of the downloaded files. The history lives in memory and starts empty with every `icloudpd` process. The existing `POST /resume` and `POST /cancel` stay available with or without the option.
+`state` is `need_password` or `need_mfa` while input is needed. Otherwise it is `syncing` while a run is in progress, which includes signing in, listing albums and the time between albums (so it does not depend on `photos_count`, which is empty with `--until-found`), `waiting` between the runs of watch mode, and `idle` when nothing runs.
 
+```{warning}
+`/api/activity` shows the full local paths of the downloaded files to anyone who can reach the port.
+```
+
+The Apple ID is not part of the answers. The history lives in memory (the last 200 files) and starts empty with every `icloudpd` process. The existing `POST /resume` and `POST /cancel` stay available with or without the option.
