@@ -1194,3 +1194,61 @@ class AutodeletePhotosTestCase(TestCase):
             assert not os.path.exists(os.path.join(data_dir, file_name)), (
                 f"{file_name} not expected, but present"
             )
+
+    def test_autodelete_photos_lp_medium_and_thumb(self) -> None:
+        """Live Photo videos downloaded with --live-photo-size medium or thumb get a -medium or
+        -thumb suffix, and --auto-delete has to look for that name too"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        cookie_dir = os.path.join(base_dir, "cookie")
+        data_dir = os.path.join(base_dir, "data")
+        cookie_master_path = os.path.join(self.root_path, "cookie")
+
+        for dir in [base_dir, data_dir]:
+            recreate_path(dir)
+
+        shutil.copytree(cookie_master_path, cookie_dir)
+
+        files_to_create = ["2018/07/30/IMG_7407.JPG"]
+
+        files_to_delete = [
+            "2018/07/12/IMG_7190.JPG",
+            "2018/07/12/IMG_7190-medium.MOV",  # --live-photo-size medium
+            "2018/07/12/IMG_7190-thumb.MOV",  # --live-photo-size thumb
+        ]
+
+        for file_name in files_to_create + files_to_delete:
+            path_name, _ = os.path.split(file_name)
+            os.makedirs(os.path.join(data_dir, path_name), exist_ok=True)
+            open(os.path.join(data_dir, file_name), "a").close()
+
+        result = run_cassette(
+            os.path.join(self.vcr_path, "autodelete_photos.yml"),
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "0",
+                "--skip-videos",
+                "--live-photo-size",
+                "medium",
+                "--auto-delete",
+                "-d",
+                data_dir,
+                "--cookie-directory",
+                cookie_dir,
+            ],
+        )
+        self.assertEqual(result.exit_code, 0, "exit code")
+        for file_name in files_to_delete:
+            self.assertIn(
+                f"Deleted {os.path.join(data_dir, os.path.normpath(file_name))}", result.output
+            )
+            self.assertFalse(
+                os.path.exists(os.path.join(data_dir, file_name)), f"{file_name} still present"
+            )
+        for file_name in files_to_create:
+            self.assertTrue(
+                os.path.exists(os.path.join(data_dir, file_name)), f"{file_name} missing"
+            )
