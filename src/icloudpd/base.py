@@ -434,6 +434,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    temp_suffix=user_config.temp_suffix,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: NOT_DOWNLOADED)
@@ -632,6 +633,7 @@ def download_builder(
     photo: PhotoAsset,
     *,
     inspect_only: bool = False,
+    temp_suffix: str = ".part",
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
 
@@ -785,6 +787,7 @@ def download_builder(
                     version,
                     download_size,
                     filename_builder,
+                    temp_suffix,
                 )
                 success = download_result
                 present = present and download_result
@@ -898,6 +901,7 @@ def download_builder(
                         version,
                         lp_size,
                         filename_builder,
+                        temp_suffix,
                     )
                     success = download_result and success
                     present = present and download_result
