@@ -491,6 +491,11 @@ This is a list of all options available for the command line interface (CLI) of 
     ```{versionadded} 1.25.0
     ```
 
+(xmp-sidecar-only-parameter)=
+`--xmp-sidecar-only`
+
+:   Only writes the XMP sidecar files, next to where the photos and videos would be downloaded, without downloading them. Useful to add sidecars to a copy of the library made another way. Implies [`--xmp-sidecar`](xmp-sidecar-parameter). Since no media file is downloaded, nothing is deleted from iCloud with `--delete-after-download` or `--keep-icloud-recent-days`.
+
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
     
