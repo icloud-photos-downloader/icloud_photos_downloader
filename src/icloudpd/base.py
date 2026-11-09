@@ -695,6 +695,10 @@ def download_builder(
     expected_paths: list[str] = []
     # nothing is written in --only-print-filenames mode
     present = not only_print_filenames and not inspect_only
+    # --until-found counts photos, not files: with several sizes, a photo counts once when
+    # all its files are already there
+    found_existing = False
+    found_missing = False
 
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
@@ -761,7 +765,7 @@ def download_builder(
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
                     file_exists = os.path.isfile(download_path)
             if file_exists:
-                counter.increment()
+                found_existing = True
                 logger.debug("%s already exists", truncate_middle(download_path, 96))
 
         expected_paths.append(
@@ -769,6 +773,7 @@ def download_builder(
         )
 
         if not file_exists and not inspect_only:
+            found_missing = True
             counter.reset()
             if only_print_filenames:
                 print(download_path)
@@ -822,6 +827,9 @@ def download_builder(
                 generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
                 if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
                     created_paths.append(download_path + ".xmp")
+
+    if found_existing and not found_missing:
+        counter.increment()
 
     # Also download the live photo if present
     if not skip_live_photos:

@@ -391,6 +391,57 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
+    def test_until_found_counts_photos_not_files(self) -> None:
+        """With several --size values, a photo whose files all exist counts once for --until-found"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [
+            ("2018/07/31", "IMG_7409.JPG", 1884695),
+            ("2018/07/31", "IMG_7409-medium.JPG", 664594),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7408-medium.JPG", 652108),
+        ]
+
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--size",
+                    "original",
+                    "--size",
+                    "medium",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--until-found",
+                    "2",
+                    "--recent",
+                    "10",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
+            dp_patched.assert_not_called()
+
+        # two photos, so the second one is checked before stopping
+        for dir_name, file_name, _ in files_to_create:
+            self.assertIn(
+                f"{os.path.join(data_dir, os.path.normpath(dir_name), file_name)} already exists",
+                result.output,
+            )
+        self.assertIn("Found 2 consecutive previously downloaded photos. Exiting", result.output)
+        self.assertNotIn("IMG_7407", result.output)
+        assert result.exit_code == 0
+
     def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
