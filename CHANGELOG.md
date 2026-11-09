@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: "IOError while writing file" always guessed "You might have run out of disk space" and hid the actual error; it now shows the error from the system, e.g. `[Errno 28] No space left on device` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
