@@ -977,6 +977,15 @@ class PhotoAsset:
         )
 
     @property
+    def is_screenshot(self) -> bool:
+        """Whether iCloud marks the asset as a screenshot"""
+        subtype = self._asset_record.get("fields", {}).get("assetSubtypeV2", {}).get("value")
+        try:
+            return subtype is not None and int(subtype) == 3
+        except (TypeError, ValueError):
+            return False
+
+    @property
     def item_type(self) -> AssetItemType | None:
         fields = self._master_record["fields"]
         if "itemType" not in fields:

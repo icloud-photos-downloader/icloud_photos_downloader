@@ -116,6 +116,11 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--skip-screenshots",
+        help="Don't download screenshots (default: download screenshots)",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--skip-live-photos",
         help="Don't download any live photos (default: download live photos)",
         action="store_true",
@@ -495,6 +500,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
+        skip_screenshots=user_ns.skip_screenshots,
     )
 
 
