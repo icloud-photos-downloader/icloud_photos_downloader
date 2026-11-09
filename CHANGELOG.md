@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: `--until-found` counted files instead of photos, so with more than one `--size` (e.g. `--size original --size medium`) each photo counted once per size and the run stopped before it had found X already downloaded photos
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
