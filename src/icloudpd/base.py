@@ -2,6 +2,7 @@
 """Main script that uses Click to parse command-line arguments"""
 
 import datetime
+import fnmatch
 import getpass
 import itertools
 import json
@@ -414,6 +415,7 @@ def _process_all_users_once(
                 user_config.skip_created_after,
                 user_config.skip_photos,
                 filename_builder,
+                exclude_filenames=user_config.exclude_filenames,
             )
 
             downloader = (
@@ -558,6 +560,8 @@ def where_builder(
     skip_photos: bool,
     filename_builder: Callable[[PhotoAsset], str],
     photo: PhotoAsset,
+    *,
+    exclude_filenames: Sequence[str] = (),
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
         logger.debug(asset_type_skip_message(AssetItemType.IMAGE, filename_builder, photo))
@@ -576,6 +580,14 @@ def where_builder(
         temp_created_after = offset_to_datetime(skip_created_after)
         if photo.created > temp_created_after:
             logger.debug(skip_created_after_message(temp_created_after, photo, filename_builder))
+            return False
+
+    if exclude_filenames:
+        filename = filename_builder(photo)
+        if any(
+            fnmatch.fnmatchcase(filename.lower(), pattern.lower()) for pattern in exclude_filenames
+        ):
+            logger.debug(f"Skipping {filename}, as it matches --exclude-filename.")
             return False
 
     return True

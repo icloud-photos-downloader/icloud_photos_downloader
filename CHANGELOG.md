@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)

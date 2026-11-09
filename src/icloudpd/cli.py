@@ -276,6 +276,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="Don't download any photos (default: download all photos and videos)",
         action="store_true",
     )
+    cloned.add_argument(
+        "--exclude-filename",
+        help="Don't download assets whose filename matches the pattern, e.g. `IMG_12*.JPG`. "
+        "Matching ignores case. Can be used several times",
+        action="append",
+        dest="exclude_filenames",
+    )
     return cloned
 
 
@@ -495,6 +502,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
+        exclude_filenames=tuple(user_ns.exclude_filenames or ()),
     )
 
 
