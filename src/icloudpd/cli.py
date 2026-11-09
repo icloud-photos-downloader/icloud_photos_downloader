@@ -648,6 +648,24 @@ def cli() -> int:
             return 2
 
         elif any(
+            user_ns.xmp_sidecar_only
+            and (
+                user_ns.prune_orphans
+                or user_ns.delete_after_download
+                or user_ns.keep_icloud_recent_days is not None
+                or user_ns.until_found is not None
+                or global_ns.only_print_filenames
+            )
+            for user_ns in user_nses
+        ):
+            # without the media files nothing is kept locally, so nothing may be deleted from iCloud
+            print(
+                "--xmp-sidecar-only cannot be combined with --prune-orphans, --delete-after-download, "
+                "--keep-icloud-recent-days, --until-found or --only-print-filenames"
+            )
+            return 2
+
+        elif any(
             first.prune_orphans
             and first.directory
             and second.directory

@@ -66,8 +66,8 @@ def parse_trusted_phone_numbers_payload(content: str) -> Sequence[TrustedDevice]
     parser.feed(content)
     parser.close()
     twoSV = parser.sms_data.get("direct", {}).get("twoSV", {})
-    numbers: Sequence[Mapping[str, Any]] = (
-        twoSV.get("phoneNumberVerification", {}).get("trustedPhoneNumbers", [])
+    numbers: Sequence[Mapping[str, Any]] = twoSV.get("phoneNumberVerification", {}).get(
+        "trustedPhoneNumbers", []
     )
     if not numbers:
         # Apple moved trustedPhoneNumbers into bridgeInitiateData.phoneNumberVerification (2026+)
