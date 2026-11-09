@@ -3,12 +3,21 @@ import logging
 import os
 import tempfile
 import zlib
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any, Dict
 from unittest import TestCase, mock
+from xml.etree import ElementTree
 
 from foundation import version_info
+from icloudpd.base import download_builder, lp_filename_concatinator
+from icloudpd.counter import Counter
 from icloudpd.xmp_sidecar import XMPMetadata, build_metadata, generate_xmp_file
+from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.file_match import FileMatchPolicy
+from pyicloud_ipd.item_type import AssetItemType
+from pyicloud_ipd.raw_policy import RawTreatmentPolicy
+from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 
 
 class BuildXMPMetadata(TestCase):
@@ -183,7 +192,81 @@ class UndecodableXMPFields(TestCase):
             self.assertLogs(logger, level="WARNING") as logs,
         ):
             download_path = os.path.join(directory, "IMG_0001.JPG")
-            generate_xmp_file(logger, download_path, self.asset_record(), False)
+            generate_xmp_file(
+                logger, download_path, self.asset_record(), False, AssetVersionSize.ORIGINAL
+            )
             self.assertFalse(os.path.exists(download_path + ".xmp"))
         self.assertIn("Could not write XMP sidecar", logs.output[0])
         self.assertIn("unexpected", logs.output[0])
+
+
+class AdjustedOrientation(TestCase):
+    """The adjusted file is already rotated, so its sidecar must not rotate it again (#1080)"""
+
+    def test_orientation_only_in_the_original_sidecar(self) -> None:
+        # same adjustments as in test_build_metadata: orientation 8
+        asset_record: Dict[str, Dict[str, Any]] = {
+            "fields": {
+                "adjustmentSimpleDataEnc": {
+                    "type": "ENCRYPTED_BYTES",
+                    "value": "PU67DoIwFP2XMzemBRKxo5Mummiig3G4QJEaCqS9sBD+XRDjdnLeI5xhKogJeoSjwMYfjH1VDB3LKBE/7m4LrqATGUcCrbemYWLbNtDpJFC23hHfjA9fSgkMKz42ZbsUZ72ti1PvMuOhESX7nYIAdd0/g61SG7lRqZyFkFfG0cUMdhWlQFcTLzOz01F+vmKepeLdB3bzlwD9eE4f",
+                },
+                "assetDate": {"value": 1532951050176, "type": "TIMESTAMP"},
+            },
+        }
+        media = mock.MagicMock(spec=PhotoAsset)
+        media.created = datetime(2018, 7, 30, 11, 44, 10, tzinfo=UTC)
+        media.filename = "IMG_0001.HEIC"
+        media.item_type = AssetItemType.IMAGE
+        media._asset_record = asset_record
+        media.versions_with_raw_policy.return_value = {
+            AssetVersionSize.ORIGINAL: AssetVersion(
+                5, "https://example.invalid/original", "public.heic", ""
+            ),
+            AssetVersionSize.ADJUSTED: AssetVersion(
+                5, "https://example.invalid/adjusted", "public.jpeg", ""
+            ),
+        }
+
+        def write_media(*args: Any) -> bool:
+            with open(args[4], "wb") as f:
+                f.write(b"photo")
+            return True
+
+        with (
+            tempfile.TemporaryDirectory() as directory,
+            mock.patch("icloudpd.base.download.download_media", side_effect=write_media),
+        ):
+            download_builder(
+                logging.getLogger("test_xmp_sidecar"),
+                "none",
+                directory,
+                [AssetVersionSize.ORIGINAL, AssetVersionSize.ADJUSTED],
+                False,
+                False,
+                False,
+                True,
+                LivePhotoVersionSize.ORIGINAL,
+                False,
+                FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX,
+                True,
+                lp_filename_concatinator,
+                lambda item: item.filename,
+                RawTreatmentPolicy.AS_IS,
+                mock.MagicMock(),
+                Counter(),
+                media,
+            )
+            self.assertEqual(
+                ["IMG_0001.HEIC", "IMG_0001.HEIC.xmp", "IMG_0001.JPG", "IMG_0001.JPG.xmp"],
+                sorted(os.listdir(directory)),
+            )
+            original = ElementTree.parse(os.path.join(directory, "IMG_0001.HEIC.xmp"))
+            adjusted = ElementTree.parse(os.path.join(directory, "IMG_0001.JPG.xmp"))
+
+        orientation = ".//{http://ns.adobe.com/tiff/1.0/}Orientation"
+        self.assertEqual("8", original.findtext(orientation))
+        self.assertIsNone(adjusted.find(orientation))
+        # the rest of the metadata is still there
+        create_date = ".//{http://ns.adobe.com/xap/1.0/}CreateDate"
+        self.assertEqual(original.findtext(create_date), adjusted.findtext(create_date))
