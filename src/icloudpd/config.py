@@ -55,6 +55,7 @@ class _DefaultConfig:
     skip_photos: bool
     delete_list: pathlib.Path | None = None
     delete_list_max: int = 50
+    delete_list_allow_undated: bool = False
 
 
 @dataclass(kw_only=True)

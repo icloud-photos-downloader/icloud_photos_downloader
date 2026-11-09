@@ -12,7 +12,12 @@ from tzlocal import get_localzone
 import foundation
 from foundation.core import chain_from_iterable, compose, map_, partial_1_1, skip
 from foundation.string_utils import lower
-from icloudpd.base import ensure_tzinfo, offset_to_datetime, run_with_configs
+from icloudpd.base import (
+    ensure_tzinfo,
+    offset_to_datetime,
+    read_delete_list,
+    run_with_configs,
+)
 from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
@@ -285,6 +290,12 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         type=pathlib.Path,
     )
     cloned.add_argument(
+        "--delete-list-allow-undated",
+        help="Accept lines without a DATE in --delete-list. They match by name and size alone, "
+        "which can be another photo once the intended one is gone",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--delete-list-max",
         help="Refuse to run if --delete-list has more entries than this. Default: %(default)i",
         default=50,
@@ -511,6 +522,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_photos=user_ns.skip_photos,
         delete_list=user_ns.delete_list,
         delete_list_max=user_ns.delete_list_max,
+        delete_list_allow_undated=user_ns.delete_list_allow_undated,
     )
 
 
@@ -572,6 +584,49 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
     )
 
 
+def delete_list_error(global_ns: GlobalConfig, user_nses: Sequence[UserConfig]) -> str | None:
+    """Everything that can be checked about --delete-list without signing in to iCloud."""
+    for user_ns in user_nses:
+        if user_ns.delete_list is None:
+            continue
+        if global_ns.watch_with_interval:
+            return "--delete-list cannot be used with --watch-with-interval (the list would run again every interval)"
+        ignored = [
+            flag
+            for flag, used in (
+                ("--album", bool(user_ns.albums)),
+                ("--recent", user_ns.recent is not None),
+                ("--until-found", user_ns.until_found is not None),
+                ("--skip-videos", user_ns.skip_videos),
+                ("--skip-photos", user_ns.skip_photos),
+                ("--skip-live-photos", user_ns.skip_live_photos),
+                ("--auto-delete", user_ns.auto_delete),
+                ("--delete-after-download", user_ns.delete_after_download),
+                ("--keep-icloud-recent-days", user_ns.keep_icloud_recent_days is not None),
+                ("--only-print-filenames", global_ns.only_print_filenames),
+                ("--list-albums", user_ns.list_albums),
+                ("--list-libraries", user_ns.list_libraries),
+                ("--auth-only", user_ns.auth_only),
+            )
+            if used
+        ]
+        if ignored:
+            return (
+                f"--delete-list deletes from the whole library and downloads nothing, "
+                f"so it cannot be combined with {', '.join(ignored)}"
+            )
+        try:
+            entries = read_delete_list(str(user_ns.delete_list), user_ns.delete_list_allow_undated)
+        except (OSError, ValueError) as error:
+            return f"Cannot use --delete-list: {error}"
+        if len(entries) > user_ns.delete_list_max:
+            return (
+                f"Delete list has {len(entries)} entries, more than --delete-list-max "
+                f"{user_ns.delete_list_max}"
+            )
+    return None
+
+
 def cli() -> int:
     try:
         global_ns, user_nses = parse(sys.argv[1:])
@@ -605,6 +660,10 @@ def cli() -> int:
             )
             return 2
 
+        elif (delete_list_message := delete_list_error(global_ns, user_nses)) is not None:
+            print(delete_list_message)
+            return 2
+
         # check required directory param only if not list albums
         elif [
             user_ns
@@ -613,6 +672,7 @@ def cli() -> int:
             and not user_ns.list_libraries
             and not user_ns.directory
             and not user_ns.auth_only
+            and user_ns.delete_list is None
         ]:
             print(
                 "--auth-only, --directory, --list-libraries, or --list-albums are required for each configuration"

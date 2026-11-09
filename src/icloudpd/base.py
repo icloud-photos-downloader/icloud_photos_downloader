@@ -7,6 +7,7 @@ import getpass
 import itertools
 import json
 import logging
+import math
 import os
 import subprocess
 import sys
@@ -997,16 +998,44 @@ class DeleteEntry(NamedTuple):
         return self.name.upper()
 
 
-def read_delete_list(path: str) -> List[DeleteEntry]:
-    """Parse `FILENAME<TAB>SIZE[<TAB>DATE]` lines.
+MIN_UNIX_TIMESTAMP = 1_000_000_000  # 2001-09-09; anything smaller is not a plausible photo date
 
-    DATE is a unix timestamp or an ISO 8601 date/time. When it is given, an asset only matches if its own
+
+def parse_delete_list_date(raw_date: str) -> float:
+    """A unix timestamp (seconds) or an ISO 8601 date and time with a UTC offset or `Z`."""
+    try:
+        timestamp = float(raw_date)
+    except ValueError:
+        pass
+    else:
+        if not math.isfinite(timestamp) or timestamp < MIN_UNIX_TIMESTAMP:
+            raise ValueError(
+                f"DATE {raw_date!r} is not a unix timestamp in seconds "
+                "(a date such as 20240101 must be written as 2024-01-01T00:00:00Z)"
+            )
+        return timestamp
+    try:
+        parsed = datetime.datetime.fromisoformat(raw_date)
+    except ValueError:
+        raise ValueError(f"invalid DATE {raw_date!r}") from None
+    if parsed.tzinfo is None:
+        raise ValueError(
+            f"DATE {raw_date!r} has no UTC offset; write it like 2024-01-31T14:05:09+01:00 or ...Z"
+        )
+    return parsed.timestamp()
+
+
+def read_delete_list(path: str, allow_undated: bool = False) -> List[DeleteEntry]:
+    """Parse `FILENAME<TAB>SIZE<TAB>DATE` lines.
+
+    DATE is a unix timestamp or an ISO 8601 date and time with a UTC offset. An asset only matches if its own
     date is within DELETE_LIST_DATE_TOLERANCE_SECONDS of it, and the asset is found without reading the whole
-    library. Without it, the whole library is read and name and size alone decide.
+    library. A line without DATE is an error unless `allow_undated` is set: it would match by name and size
+    alone, which can be a different photo once the intended one is gone, and needs the whole library read.
     Every line is kept: two lines with the same name and size may be two different photos.
     """
     entries: List[DeleteEntry] = []
-    with open(path, encoding="utf-8") as f:
+    with open(path, encoding="utf-8-sig") as f:
         for number, line in enumerate(f, start=1):
             line = line.rstrip("\r\n")
             if not line.strip() or line.lstrip().startswith("#"):
@@ -1014,18 +1043,19 @@ def read_delete_list(path: str) -> List[DeleteEntry]:
             parts = line.split("\t")
             if len(parts) not in (2, 3) or not parts[0].strip() or not parts[1].strip().isdigit():
                 raise ValueError(
-                    f"{path}:{number}: expected FILENAME<TAB>SIZE[<TAB>DATE], got {line!r}"
+                    f"{path}:{number}: expected FILENAME<TAB>SIZE<TAB>DATE, got {line!r}"
                 )
             timestamp: float | None = None
             if len(parts) == 3 and parts[2].strip():
-                raw_date = parts[2].strip()
                 try:
-                    timestamp = float(raw_date)
-                except ValueError:
-                    try:
-                        timestamp = datetime.datetime.fromisoformat(raw_date).timestamp()
-                    except ValueError:
-                        raise ValueError(f"{path}:{number}: invalid DATE {raw_date!r}") from None
+                    timestamp = parse_delete_list_date(parts[2].strip())
+                except ValueError as error:
+                    raise ValueError(f"{path}:{number}: {error}") from None
+            elif not allow_undated:
+                raise ValueError(
+                    f"{path}:{number}: no DATE (a line without it can match another photo with the same "
+                    "name and size; add the date or use --delete-list-allow-undated)"
+                )
             entries.append(DeleteEntry(parts[0].strip(), int(parts[1]), timestamp, number))
     return entries
 
@@ -1111,9 +1141,13 @@ def delete_from_list(
     max_entries: int,
     dry_run: bool,
     filename_builder: Callable[[PhotoAsset], str],
+    allow_undated: bool = False,
 ) -> int:
-    """Delete from iCloud the assets listed in a file (matched by original filename, size and, when given, date)."""
-    entries = read_delete_list(list_path)
+    """Delete from iCloud the assets listed in a file (matched by original filename, size and date).
+
+    Returns 0 only when every line was dealt with; entries that are not found, ambiguous or refused by iCloud
+    give 1. The last log line is a summary with the counts."""
+    entries = read_delete_list(list_path, allow_undated)
     if len(entries) == 0:
         logger.info("Delete list %s is empty", list_path)
         return 0
@@ -1187,12 +1221,15 @@ def delete_from_list(
             if scanned % 2000 == 0:
                 logger.info("Scanned %d assets...", scanned)
 
-    status = 0
+    deleted = not_found = failed = ambiguous = 0
     requested: Dict[str, int] = {}  # asset id -> the line that asked for it
     for entry in entries:
         found = [asset for asset in seen.values() if _entry_matches(entry, asset)]
         described = f"{entry.name} {entry.size}" + (
-            f" taken {datetime.datetime.fromtimestamp(entry.timestamp).isoformat(timespec='seconds')}"
+            " taken "
+            + datetime.datetime.fromtimestamp(entry.timestamp, datetime.UTC).isoformat(
+                timespec="seconds"
+            )
             if entry.timestamp is not None
             else ""
         )
@@ -1209,10 +1246,14 @@ def delete_from_list(
             requested[asset.id] = entry.line
             if dry_run:
                 delete_photo_dry_run(logger, library_object, asset, filename_builder)
+                deleted += 1
+            elif delete_photo(logger, library_object, asset, filename_builder):
+                deleted += 1
             else:
-                delete_photo(logger, library_object, asset, filename_builder)
+                failed += 1
         elif len(found) == 0:
             logger.warning("Not found in iCloud (line %d): %s", entry.line, described)
+            not_found += 1
         else:
             logger.warning(
                 "Ambiguous, %d assets in iCloud match (line %d): %s. Skipping",
@@ -1220,8 +1261,16 @@ def delete_from_list(
                 entry.line,
                 described,
             )
-            status = 1
-    return status
+            ambiguous += 1
+    logger.info(
+        "Delete list summary: %s=%d not_found=%d failed=%d ambiguous=%d",
+        "would_delete" if dry_run else "deleted",
+        deleted,
+        not_found,
+        failed,
+        ambiguous,
+    )
+    return 0 if not_found == failed == ambiguous == 0 else 1
 
 
 def dump_responses(dumper: Callable[[Any], None], responses: List[Mapping[str, Any]]) -> None:
@@ -1330,6 +1379,7 @@ def core_single_run(
                             user_config.file_match_policy,
                             build_filename_cleaner(user_config.keep_unicode_in_filenames),
                         ),
+                        user_config.delete_list_allow_undated,
                     )
 
                 if user_config.list_albums:

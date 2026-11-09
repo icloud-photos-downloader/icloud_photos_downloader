@@ -1,4 +1,6 @@
+import contextlib
 import datetime
+import io
 import os
 import pathlib
 import tempfile
@@ -11,7 +13,7 @@ from icloudpd.base import (
     delete_from_list,
     read_delete_list,
 )
-from icloudpd.cli import parse
+from icloudpd.cli import cli, parse
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.services.photos import apply_file_match_policy
 
@@ -83,12 +85,17 @@ class ReadDeleteListTestCase(TestCase):
         path = write_list(
             "# comment\n\nimg_1.heic\t100\t1700000000\nIMG_2.HEIC\t200\t2026-01-02T03:04:05+00:00\nIMG_3.HEIC\t300\n"
         )
-        entries = read_delete_list(path)
+        entries = read_delete_list(path, allow_undated=True)
         self.assertEqual(
             [(e.name, e.size, e.timestamp, e.line) for e in entries],
             [
                 ("img_1.heic", 100, 1700000000.0, 3),
-                ("IMG_2.HEIC", 200, datetime.datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC).timestamp(), 4),
+                (
+                    "IMG_2.HEIC",
+                    200,
+                    datetime.datetime(2026, 1, 2, 3, 4, 5, tzinfo=UTC).timestamp(),
+                    4,
+                ),
                 ("IMG_3.HEIC", 300, None, 5),
             ],
         )
@@ -96,8 +103,12 @@ class ReadDeleteListTestCase(TestCase):
 
     def test_keeps_lines_with_the_same_name_and_size(self) -> None:
         # two photos can share name and size; none of the lines may overwrite another
-        entries = read_delete_list(write_list("IMG_1.HEIC\t100\t10\nIMG_1.HEIC\t100\t3000\n"))
-        self.assertEqual([(e.line, e.timestamp) for e in entries], [(1, 10.0), (2, 3000.0)])
+        entries = read_delete_list(
+            write_list("IMG_1.HEIC\t100\t1700000010\nIMG_1.HEIC\t100\t1700003000\n")
+        )
+        self.assertEqual(
+            [(e.line, e.timestamp) for e in entries], [(1, 1700000010.0), (2, 1700003000.0)]
+        )
 
     def test_rejects_line_without_tab(self) -> None:
         with self.assertRaises(ValueError):
@@ -110,6 +121,37 @@ class ReadDeleteListTestCase(TestCase):
     def test_rejects_invalid_date(self) -> None:
         with self.assertRaises(ValueError):
             read_delete_list(write_list("IMG_1.HEIC\t100\tyesterday\n"))
+
+    def test_rejects_dates_that_are_easy_to_misread(self) -> None:
+        for raw in (
+            "20240101",  # a date, not a unix timestamp (1970)
+            "nan",
+            "inf",
+            "-5",
+            "2024-01-31T14:05:09",  # no UTC offset: local time or UTC, depending on the machine
+            "2024-01-31",
+        ):
+            with self.subTest(raw=raw), self.assertRaises(ValueError):
+                read_delete_list(write_list(f"IMG_1.HEIC\t100\t{raw}\n"))
+
+    def test_accepts_dates_with_an_offset_or_z(self) -> None:
+        entries = read_delete_list(
+            write_list("A.HEIC\t1\t2024-01-31T14:05:09Z\nB.HEIC\t2\t2024-01-31T15:05:09+01:00\n")
+        )
+        self.assertEqual(entries[0].timestamp, entries[1].timestamp)
+
+    def test_a_line_without_a_date_needs_the_explicit_option(self) -> None:
+        path = write_list("IMG_1.HEIC\t100\n")
+        with self.assertRaises(ValueError) as caught:
+            read_delete_list(path)
+        self.assertIn("--delete-list-allow-undated", str(caught.exception))
+        self.assertIsNone(read_delete_list(path, allow_undated=True)[0].timestamp)
+
+    def test_a_byte_order_mark_is_ignored(self) -> None:
+        handle, path = tempfile.mkstemp(suffix=".txt")
+        with os.fdopen(handle, "wb") as f:
+            f.write(b"\xef\xbb\xbfIMG_1.HEIC\t100\t1700000000\n")
+        self.assertEqual(read_delete_list(path)[0].name, "IMG_1.HEIC")
 
 
 class DateSearchTestCase(TestCase):
@@ -135,7 +177,12 @@ class DateSearchTestCase(TestCase):
 
 class DeleteFromListTestCase(TestCase):
     def run_delete(
-        self, library: FakeLibrary, content: str, dry_run: bool = False, max_entries: int = 50
+        self,
+        library: FakeLibrary,
+        content: str,
+        dry_run: bool = False,
+        max_entries: int = 50,
+        allow_undated: bool = False,
     ) -> tuple[int, mock.Mock, mock.Mock]:
         with (
             mock.patch("icloudpd.base.delete_photo") as real,
@@ -148,6 +195,7 @@ class DeleteFromListTestCase(TestCase):
                 max_entries,
                 dry_run,
                 lambda asset: asset.filename,
+                allow_undated,
             )
         return status, real, dry
 
@@ -187,7 +235,7 @@ class DeleteFromListTestCase(TestCase):
         status, real, dry = self.run_delete(
             FakeLibrary(FakeAlbum([other])), f"IMG_0001.HEIC\t1001\t{unix(1)}\n"
         )
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 1)  # not found
         real.assert_not_called()
         dry.assert_not_called()
 
@@ -202,13 +250,17 @@ class DeleteFromListTestCase(TestCase):
         self.assertEqual(sorted(c.args[2].id for c in real.call_args_list), ["first", "second"])
 
     def test_date_has_a_tolerance(self) -> None:
-        near = FakeAsset("near", "IMG_0001.HEIC", 1001, BASE + datetime.timedelta(hours=5, seconds=100))
-        far = FakeAsset("far", "IMG_0002.HEIC", 1002, BASE + datetime.timedelta(hours=6, seconds=300))
+        near = FakeAsset(
+            "near", "IMG_0001.HEIC", 1001, BASE + datetime.timedelta(hours=5, seconds=100)
+        )
+        far = FakeAsset(
+            "far", "IMG_0002.HEIC", 1002, BASE + datetime.timedelta(hours=6, seconds=300)
+        )
         status, real, _ = self.run_delete(
             FakeLibrary(FakeAlbum([near, far])),
             f"IMG_0001.HEIC\t1001\t{unix(5)}\nIMG_0002.HEIC\t1002\t{unix(6)}\n",
         )
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 1)  # the second line is too far off: not found
         self.assertEqual([c.args[2].id for c in real.call_args_list], ["near"])
 
     def test_a_repeated_line_deletes_the_photo_once(self) -> None:
@@ -218,14 +270,21 @@ class DeleteFromListTestCase(TestCase):
         self.assertEqual(status, 0)
         self.assertEqual(real.call_count, 1)
 
-    def run_with_logger(self, library: FakeLibrary, content: str) -> tuple[int, mock.Mock, mock.Mock]:
+    def run_with_logger(
+        self, library: FakeLibrary, content: str
+    ) -> tuple[int, mock.Mock, mock.Mock]:
         logger = mock.Mock()
         with (
             mock.patch("icloudpd.base.delete_photo") as real,
             mock.patch("icloudpd.base.delete_photo_dry_run"),
         ):
             status = delete_from_list(
-                logger, library, write_list(content), 50, False, lambda asset: asset.filename  # type: ignore[arg-type]
+                logger,
+                library,  # type: ignore[arg-type]
+                write_list(content),
+                50,
+                False,
+                lambda asset: asset.filename,
             )
         return status, real, logger
 
@@ -248,19 +307,63 @@ class DeleteFromListTestCase(TestCase):
         status, real, logger = self.run_with_logger(library, f"IMG_0250.HEIC\t1250\t{unix(250)}\n")
         self.assertEqual(status, 0)
         self.assertEqual(real.call_count, 1)
-        self.assertFalse([c for c in logger.warning.call_args_list if "reading the whole" in c.args[0]])
+        self.assertFalse(
+            [c for c in logger.warning.call_args_list if "reading the whole" in c.args[0]]
+        )
         self.assertLess(library.all.requests, 30)
 
     def test_the_whole_library_is_read_once_for_several_missing_entries(self) -> None:
         library = make_library(300)
         content = f"NOPE_1.HEIC\t1\t{unix(10)}\nNOPE_2.HEIC\t2\t{unix(20)}\nIMG_0250.HEIC\t1250\t{unix(250)}\n"
         status, real, logger = self.run_with_logger(library, content)
-        self.assertEqual(status, 0)
+        self.assertEqual(status, 1)  # two entries are not found
         self.assertEqual([c.args[2].id for c in real.call_args_list], ["id250"])
         fallbacks = [c for c in logger.warning.call_args_list if "reading the whole" in c.args[0]]
         self.assertEqual(len(fallbacks), 1)  # one warning and one scan, for both missing entries
-        not_found = [c for c in logger.warning.call_args_list if c.args[0].startswith("Not found in iCloud")]
+        not_found = [
+            c for c in logger.warning.call_args_list if c.args[0].startswith("Not found in iCloud")
+        ]
         self.assertEqual(len(not_found), 2)
+
+    def test_summary_and_exit_code(self) -> None:
+        library = make_library(50)
+        content = (
+            f"IMG_0010.HEIC\t1010\t{unix(10)}\n"  # deleted
+            f"IMG_0011.HEIC\t1011\t{unix(11)}\n"  # refused by iCloud
+            f"IMG_9999.HEIC\t1\t{unix(12)}\n"  # not found
+        )
+        logger = mock.Mock()
+        with (
+            mock.patch("icloudpd.base.delete_photo", side_effect=[True, False]),
+            mock.patch("icloudpd.base.delete_photo_dry_run"),
+        ):
+            status = delete_from_list(
+                logger,
+                library,  # type: ignore[arg-type]
+                write_list(content),
+                50,
+                False,
+                lambda asset: asset.filename,
+            )
+        self.assertEqual(status, 1)
+        summary = logger.info.call_args_list[-1]
+        self.assertEqual(summary.args[1:], ("deleted", 1, 1, 1, 0))
+        self.assertIn("not_found=%d", summary.args[0])
+
+    def test_a_refused_delete_is_a_failure(self) -> None:
+        with (
+            mock.patch("icloudpd.base.delete_photo", return_value=False),
+            mock.patch("icloudpd.base.delete_photo_dry_run"),
+        ):
+            status = delete_from_list(
+                mock.Mock(),
+                make_library(50),  # type: ignore[arg-type]
+                write_list(f"IMG_0010.HEIC\t1010\t{unix(10)}\n"),
+                50,
+                False,
+                lambda asset: asset.filename,
+            )
+        self.assertEqual(status, 1)
 
     def test_dry_run_does_not_delete(self) -> None:
         status, real, dry = self.run_delete(
@@ -277,12 +380,14 @@ class DeleteFromListTestCase(TestCase):
             f"IMG_9999.HEIC\t1010\t{unix(10)}\n",
         ):
             status, real, dry = self.run_delete(make_library(50), content)
-            self.assertEqual(status, 0)
+            self.assertEqual(status, 1)  # not found
             real.assert_not_called()
             dry.assert_not_called()
 
     def test_entry_without_date_scans_whole_library(self) -> None:
-        status, real, _ = self.run_delete(make_library(300), "img_0007.heic\t1007\n")
+        status, real, _ = self.run_delete(
+            make_library(300), "img_0007.heic\t1007\n", allow_undated=True
+        )
         self.assertEqual(status, 0)
         real.assert_called_once()
         self.assertEqual(real.call_args.args[2].id, "id7")
@@ -291,14 +396,18 @@ class DeleteFromListTestCase(TestCase):
         library = make_library(50)
         asset = library.all.assets[0]
         id7_name = apply_file_match_policy(FileMatchPolicy.NAME_ID7, asset.id)(asset.filename)
-        status, real, _ = self.run_delete(library, f"{id7_name}\t{asset.size}\t{int(asset.asset_date.timestamp())}\n")
+        status, real, _ = self.run_delete(
+            library, f"{id7_name}\t{asset.size}\t{int(asset.asset_date.timestamp())}\n"
+        )
         self.assertEqual(status, 0)
         real.assert_called_once()
         self.assertEqual(real.call_args.args[2].id, asset.id)
 
     def test_ambiguous_match_is_skipped_and_reported(self) -> None:
         library = make_library(20)
-        twin = FakeAsset("twin", "IMG_0005.HEIC", 1005, BASE + datetime.timedelta(hours=5, seconds=30))
+        twin = FakeAsset(
+            "twin", "IMG_0005.HEIC", 1005, BASE + datetime.timedelta(hours=5, seconds=30)
+        )
         library.all.assets.append(twin)
         library.all.assets.sort(key=lambda a: a.asset_date, reverse=True)
         status, real, _ = self.run_delete(library, f"IMG_0005.HEIC\t1005\t{unix(5)}\n")
@@ -331,3 +440,74 @@ class DeleteListCliTestCase(TestCase):
         )
         self.assertEqual(users[0].delete_list, pathlib.Path("/tmp/l.txt"))
         self.assertEqual(users[0].delete_list_max, 5)
+
+
+class DeleteListValidationTestCase(TestCase):
+    """The checks that run before anything is sent to iCloud (exit code 2)."""
+
+    def run_cli(
+        self, *args: str, content: str | None = "IMG_1.HEIC\t100\t1700000000\n"
+    ) -> tuple[int, str]:
+        path = write_list(content) if content is not None else "/nonexistent/list.txt"
+        output = io.StringIO()
+        with (
+            mock.patch("sys.argv", ["icloudpd", "-u", "a@b.c", "--delete-list", path, *args]),
+            mock.patch("icloudpd.cli.run_with_configs", return_value=0) as run,
+            contextlib.redirect_stdout(output),
+        ):
+            code = cli()
+        if code == 0:
+            run.assert_called_once()
+        else:
+            run.assert_not_called()
+        return code, output.getvalue()
+
+    def test_a_valid_list_needs_no_directory(self) -> None:
+        self.assertEqual(self.run_cli()[0], 0)
+
+    def test_not_with_watch_mode(self) -> None:
+        code, message = self.run_cli("--watch-with-interval", "60")
+        self.assertEqual(code, 2)
+        self.assertIn("--watch-with-interval", message)
+
+    def test_options_that_would_be_ignored_are_rejected(self) -> None:
+        for args in (
+            ["--album", "Favorites"],
+            ["--recent", "5"],
+            ["--until-found", "3"],
+            ["--skip-videos"],
+            ["--skip-photos"],
+            ["--skip-live-photos"],
+            ["--auto-delete"],
+            ["--delete-after-download"],
+            ["--keep-icloud-recent-days", "30"],
+            ["--only-print-filenames"],
+            ["--auth-only"],
+        ):
+            with self.subTest(args=args):
+                code, message = self.run_cli(*args)
+                self.assertEqual(code, 2)
+                self.assertIn(args[0], message)
+
+    def test_a_missing_file_is_reported_without_a_traceback(self) -> None:
+        code, message = self.run_cli(content=None)
+        self.assertEqual(code, 2)
+        self.assertIn("Cannot use --delete-list", message)
+
+    def test_a_bad_line_is_reported_before_sign_in(self) -> None:
+        code, message = self.run_cli(content="IMG_1.HEIC\t100\t20240101\n")
+        self.assertEqual(code, 2)
+        self.assertIn(":1:", message)
+
+    def test_a_line_without_a_date_needs_the_option(self) -> None:
+        self.assertEqual(self.run_cli(content="IMG_1.HEIC\t100\n")[0], 2)
+        self.assertEqual(
+            self.run_cli("--delete-list-allow-undated", content="IMG_1.HEIC\t100\n")[0], 0
+        )
+
+    def test_too_many_entries(self) -> None:
+        code, message = self.run_cli(
+            "--delete-list-max", "1", content="A.HEIC\t1\t1700000000\nB.HEIC\t2\t1700000001\n"
+        )
+        self.assertEqual(code, 2)
+        self.assertIn("--delete-list-max", message)

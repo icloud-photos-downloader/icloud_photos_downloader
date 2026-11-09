@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- feature: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file, matched by original file name (also with the `name-id7` suffix) and size, and by date (within two minutes) when the line has one; recent assets are found with one request and older ones with a search by date, and an entry that is not found that way is looked for in the whole library before it is reported as missing
+- feat: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file (name, size and date), checks everything before signing in, rejects watch mode and options it would ignore, and exits with 1 when an entry is not found, ambiguous or refused; lines without a date need `--delete-list-allow-undated`
 
 ## 1.33.0 (2026-11-03)
 
