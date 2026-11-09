@@ -559,6 +559,7 @@ def where_builder(
     skip_photos: bool,
     filename_builder: Callable[[PhotoAsset], str],
     photo: PhotoAsset,
+    *,
     skip_screenshots: bool = False,
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
