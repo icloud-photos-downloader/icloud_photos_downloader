@@ -339,6 +339,11 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   If specified, video assets will not be processed.
 
+(exclude-filename-parameter)=
+`--exclude-filename`
+    
+:   Assets whose filename matches the pattern are not processed. The pattern can use `*` and `?` and is matched without regard to case, against the name that icloudpd gives the file, for example `--exclude-filename "IMG_12*.JPG"`. The option can be repeated. Like other filters, it leaves the excluded assets alone when deleting from iCloud.
+
 (skip-photos-parameter)=
 `--skip-photos`
     
