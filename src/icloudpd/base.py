@@ -434,6 +434,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    xmp_sidecar_only=user_config.xmp_sidecar_only,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: NOT_DOWNLOADED)
@@ -632,6 +633,7 @@ def download_builder(
     photo: PhotoAsset,
     *,
     inspect_only: bool = False,
+    xmp_sidecar_only: bool = False,
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
 
@@ -770,7 +772,10 @@ def download_builder(
 
         if not file_exists and not inspect_only:
             counter.reset()
-            if only_print_filenames:
+            if xmp_sidecar_only:
+                # only the sidecar is written; without the media file the asset is not kept locally
+                present = False
+            elif only_print_filenames:
                 print(download_path)
             else:
                 truncated_path = truncate_middle(download_path, 96)
@@ -818,13 +823,15 @@ def download_builder(
         if xmp_sidecar and not only_print_filenames:
             expected_paths.append(download_path + ".xmp")
             if not inspect_only:
+                if xmp_sidecar_only and not dry_run:
+                    os.makedirs(download_dir, exist_ok=True)
                 sidecar_existed = os.path.lexists(download_path + ".xmp")
                 generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
                 if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
                     created_paths.append(download_path + ".xmp")
 
     # Also download the live photo if present
-    if not skip_live_photos:
+    if not skip_live_photos and not xmp_sidecar_only:
         lp_size = live_photo_size
         photo_versions_with_policy = photo.versions_with_raw_policy(raw_policy)
         if lp_size in photo_versions_with_policy:

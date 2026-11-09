@@ -126,6 +126,11 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--xmp-sidecar-only",
+        help="Only write the XMP sidecar files, without downloading the photos and videos (default: download them)",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--force-size",
         help="Only download the requested size (`adjusted` and `alternative` will not be forced). Default: download original if size is not available",
         action="store_true",
@@ -468,7 +473,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         list_libraries=user_ns.list_libraries,
         skip_videos=user_ns.skip_videos,
         skip_live_photos=user_ns.skip_live_photos,
-        xmp_sidecar=user_ns.xmp_sidecar,
+        xmp_sidecar=user_ns.xmp_sidecar or user_ns.xmp_sidecar_only,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
         prune_orphans=user_ns.prune_orphans,
@@ -495,6 +500,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
+        xmp_sidecar_only=user_ns.xmp_sidecar_only,
     )
 
 
@@ -638,6 +644,24 @@ def cli() -> int:
             print(
                 "--prune-orphans requires --library and cannot be combined with "
                 "--delete-after-download, --keep-icloud-recent-days or --only-print-filenames"
+            )
+            return 2
+
+        elif any(
+            user_ns.xmp_sidecar_only
+            and (
+                user_ns.prune_orphans
+                or user_ns.delete_after_download
+                or user_ns.keep_icloud_recent_days is not None
+                or user_ns.until_found is not None
+                or global_ns.only_print_filenames
+            )
+            for user_ns in user_nses
+        ):
+            # without the media files nothing is kept locally, so nothing may be deleted from iCloud
+            print(
+                "--xmp-sidecar-only cannot be combined with --prune-orphans, --delete-after-download, "
+                "--keep-icloud-recent-days, --until-found or --only-print-filenames"
             )
             return 2
 

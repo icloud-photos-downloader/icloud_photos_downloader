@@ -136,6 +136,7 @@ def clean_boolean_args(params: Sequence[str]) -> list[str]:
         "--skip-videos",
         "--skip-live-photos",
         "--xmp-sidecar",
+        "--xmp-sidecar-only",
         "--force-size",
         "--auto-delete",
         "--prune-orphans",
