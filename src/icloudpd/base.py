@@ -819,7 +819,9 @@ def download_builder(
             expected_paths.append(download_path + ".xmp")
             if not inspect_only:
                 sidecar_existed = os.path.lexists(download_path + ".xmp")
-                generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+                generate_xmp_file(
+                    logger, download_path, photo._asset_record, dry_run, download_size
+                )
                 if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
                     created_paths.append(download_path + ".xmp")
 
