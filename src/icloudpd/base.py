@@ -41,6 +41,7 @@ from tzlocal import get_localzone
 
 from foundation.core import identity, map_, partial_1_1
 from icloudpd import download, exif_datetime
+from icloudpd.activity import activity_log
 from icloudpd.authentication import authenticator
 from icloudpd.autodelete import autodelete_photos
 from icloudpd.config import GlobalConfig, UserConfig
@@ -266,7 +267,11 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
     # Start web server ONCE if needed, outside all loops
     if needs_web_server:
         logger.info("Starting web server for WebUI authentication...")
-        server_thread = Thread(target=serve_app, daemon=True, args=[logger, shared_status_exchange])
+        server_thread = Thread(
+            target=serve_app,
+            daemon=True,
+            args=[logger, shared_status_exchange, global_config.webui_host],
+        )
         server_thread.start()
 
     for user_config in user_configs:
@@ -274,11 +279,12 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
             logger.warning(warning)
 
     # Check if we're in watch mode
+    activity_log.enabled = global_config.webui_api
     watch_interval = global_config.watch_with_interval
 
     if not watch_interval:
         # No watch mode - process each user once and exit
-        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+        return _run_pass(global_config, user_configs, logger, shared_status_exchange)
     else:
         # Watch mode - infinite loop processing all users, then wait
         skip_bar = not os.environ.get("FORCE_TQDM") and (
@@ -289,9 +295,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
 
         while True:
             # Process all user configs in this iteration
-            result = _process_all_users_once(
-                global_config, user_configs, logger, shared_status_exchange
-            )
+            result = _run_pass(global_config, user_configs, logger, shared_status_exchange)
 
             # If any critical operation (auth-only, list commands) succeeded, exit
             if result == 0:
@@ -327,6 +331,22 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
                     shared_status_exchange.get_progress().reset()
                     break
                 time.sleep(1)
+
+
+def _run_pass(
+    global_config: GlobalConfig,
+    user_configs: Sequence[UserConfig],
+    logger: logging.Logger,
+    shared_status_exchange: StatusExchange,
+) -> int:
+    """One pass over all users, flagged as running for the status API (also during sign-in and listing)."""
+    progress = shared_status_exchange.get_progress()
+    progress.waiting = 0  # the wait of the previous interval is over
+    progress.running = True
+    try:
+        return _process_all_users_once(global_config, user_configs, logger, shared_status_exchange)
+    finally:
+        progress.running = False
 
 
 def _process_all_users_once(
@@ -814,6 +834,7 @@ def download_builder(
                     logger.info("Downloaded %s", truncated_path)
                     if not dry_run:
                         created_paths.append(download_path)
+                        activity_log.record_download(download_path)
 
         if xmp_sidecar and not only_print_filenames:
             expected_paths.append(download_path + ".xmp")
@@ -905,6 +926,7 @@ def download_builder(
                         logger.info("Downloaded %s", truncated_path)
                         if not dry_run:
                             created_paths.append(lp_download_path)
+                            activity_log.record_download(lp_download_path)
                 expected_paths.append(lp_download_path)
         elif any(isinstance(size, LivePhotoVersionSize) for size in photo_versions_with_policy):
             # a live photo without the requested video size: the video is not kept locally

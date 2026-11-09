@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- feat: add `--webui-host` to choose the address the web UI listens on, for example `127.0.0.1` to allow access from this computer only; the default `0.0.0.0` keeps the current behavior
+- feat: add opt-in `--webui-api`, a read-only JSON status API (`/api/status`, `/api/activity`) on the WebUI server for other programs to follow what icloudpd does; off by default
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)

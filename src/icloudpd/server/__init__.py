@@ -3,12 +3,13 @@ import sys
 from logging import Logger
 
 import waitress
-from flask import Flask, Response, make_response, render_template, request
+from flask import Flask, Response, jsonify, make_response, render_template, request
 
+from icloudpd.activity import DEFAULT_LIMIT, MAX_ENTRIES, activity_log
 from icloudpd.status import Status, StatusExchange
 
 
-def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
+def serve_app(logger: Logger, _status_exchange: StatusExchange, host: str = "0.0.0.0") -> None:
     app = Flask(__name__)
     app.logger = logger
     # for running in pyinstaller
@@ -45,6 +46,50 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         if _status == Status.NEED_PASSWORD:
             return render_template("password.html", error=_error, current_user=_current_user)
         return render_template("status.html", status=_status)
+
+    def api_enabled() -> bool:
+        config = _status_exchange.get_global_config()
+        return config is not None and config.webui_api
+
+    @app.route("/api/status", methods=["GET"])
+    def get_api_status() -> Response:
+        if not api_enabled():
+            return make_response("Not found", 404)
+        _status = _status_exchange.get_status()
+        _progress = _status_exchange.get_progress()
+
+        if _status != Status.NO_INPUT_NEEDED:
+            state = _status.value
+        elif _progress.running:
+            state = "syncing"
+        elif _progress.waiting != 0:
+            state = "waiting"
+        else:
+            state = "idle"
+
+        return jsonify(
+            {
+                "state": state,
+                "status": _status.value,
+                "error": _status_exchange.get_error(),
+                "downloaded_total": activity_log.total,
+                "progress": {
+                    "photos_count": _progress.photos_count,
+                    "photos_counter": _progress.photos_counter,
+                    "photos_percent": _progress.photos_percent,
+                    "last_message": _progress.photos_last_message,
+                    "waiting_seconds": _progress.waiting,
+                },
+            }
+        )
+
+    @app.route("/api/activity", methods=["GET"])
+    def get_api_activity() -> Response:
+        if not api_enabled():
+            return make_response("Not found", 404)
+        limit = request.args.get("limit", default=DEFAULT_LIMIT, type=int)
+        limit = DEFAULT_LIMIT if limit is None else max(0, min(limit, MAX_ENTRIES))
+        return jsonify({"total": activity_log.total, "files": activity_log.snapshot(limit)})
 
     @app.route("/code", methods=["POST"])
     def set_code() -> Response | str:
@@ -89,4 +134,4 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         return make_response("Ok", 200)
 
     logger.debug("Starting web server...")
-    return waitress.serve(app)
+    return waitress.serve(app, host=host)

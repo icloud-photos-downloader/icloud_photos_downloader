@@ -363,6 +363,13 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         default=None,
     )
     cloned.add_argument(
+        "--webui-api",
+        help="Serve the read-only status API (/api/status and /api/activity) from the WebUI server, for other "
+        "programs to follow what icloudpd does. Off by default. Only available while the WebUI server runs, "
+        "for example with --mfa-provider webui",
+        action="store_true",
+    )
+    cloned.add_argument(
         "--password-provider",
         dest="password_providers",
         help="Specify password providers to check in the given order. Default: [`parameter`, `keyring`, `console`]",
@@ -377,6 +384,11 @@ def add_global_options(parser: argparse.ArgumentParser) -> argparse.ArgumentPars
         choices=["console", "webui"],
         default="console",
         type=lower,
+    )
+    cloned.add_argument(
+        "--webui-host",
+        help="Address the WebUI server listens on. Use 127.0.0.1 to allow access from this computer only. Default: %(default)s",
+        default="0.0.0.0",
     )
     return cloned
 
@@ -542,6 +554,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
             threads_num=global_ns.threads_num,
             domain=global_ns.domain,
             watch_with_interval=global_ns.watch_with_interval,
+            webui_api=global_ns.webui_api,
             password_providers=list(
                 map_(
                     PasswordProvider,
@@ -551,6 +564,7 @@ def parse(args: Sequence[str]) -> Tuple[GlobalConfig, Sequence[UserConfig]]:
                 )
             ),
             mfa_provider=MFAProvider(global_ns.mfa_provider),
+            webui_host=global_ns.webui_host,
         ),
         user_nses,
     )
