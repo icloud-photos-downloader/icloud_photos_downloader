@@ -9,8 +9,6 @@
 
 See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details. Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues)
 
-We aim to release new versions once a week (Friday), if there is something worth delivering.
-
 ## iCloud Prerequisites
 
 To make iCloud Photo Downloader work, ensure the iCloud account is configured with the following settings, otherwise Apple Servers will return an ACCESS_DENIED error:
@@ -22,7 +20,7 @@ To make iCloud Photo Downloader work, ensure the iCloud account is configured wi
 ## Install and Run
 
 There are three ways to run `icloudpd`:
-1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.32.3) and run it
+1. Download executable for your platform from the GitHub [Release](https://github.com/icloud-photos-downloader/icloud_photos_downloader/releases/tag/v1.33.0) and run it
 1. Use package manager to install, update, and, in some cases, run ([Docker](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#docker), [PyPI](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#pypi), [AUR](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#aur), [npm](https://icloud-photos-downloader.github.io/icloud_photos_downloader/install.html#npm))
 1. Build and run from the source
 
@@ -85,7 +83,7 @@ requirements, hashing costs and recovery instructions.
 To independently create and authorize a session (and complete 2SA/2FA validation if needed) on your local system:
 
 ```
-icloudpd --username my@email.address --password my_password --auth-only
+icloudpd --username my@email.address --auth-only
 ```
 > [!TIP]
 > This feature can also be used to check and verify that the session is still authenticated. 

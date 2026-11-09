@@ -9,7 +9,9 @@ import pytest
 
 from icloudpd.base import keep_icloud_recent_days_warnings
 from pyicloud_ipd.asset_version import AssetVersion
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
+from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import path_from_project_root, run_icloudpd_test
 
@@ -532,6 +534,72 @@ class KeepICloudModeTestCases(TestCase):
             "Not deleting IMG_7408.JPG from iCloud: it is not present locally", result.output
         )
         self.assertEqual(result.exit_code, 0)
+
+    @staticmethod
+    def _fail_first_delete(error: Exception, modify_calls: List[str]) -> Any:
+        """A session request that raises error for the first delete (records/modify) only"""
+        original_request = PyiCloudSession.request
+
+        def request(self_: PyiCloudSession, method: str, url: str, **kwargs: Any) -> Any:
+            if "/records/modify" in url:
+                modify_calls.append(url)
+                if len(modify_calls) == 1:
+                    raise error
+            return original_request(self_, method, url, **kwargs)
+
+        return mock.patch.object(PyiCloudSession, "request", request)
+
+    def test_keep_icloud_recent_days_try_again_later_skips_only_that_photo(self) -> None:
+        """iCloud can refuse a delete with TRY_AGAIN_LATER (#1283); the run goes on"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        files = [
+            ("2018/07/31", "IMG_7409.JPG", 1884695),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
+        ]
+        # what the session raises for the response in #1283
+        error = PyiCloudAPIResponseException(
+            "Sync zone CAS Op-Lock failed. There was a concurrent write and this "
+            "operation was rejected. Retry request...",
+            "TRY_AGAIN_LATER",
+        )
+        modify_calls: List[str] = []
+
+        with self._fail_first_delete(error, modify_calls):
+            _, result = self._run_keep_recent_days_0(base_dir, files, [])
+
+        self.assertIn(
+            "Could not delete IMG_7409.JPG in iCloud: Sync zone CAS Op-Lock failed. There was a "
+            "concurrent write and this operation was rejected. Retry request... (TRY_AGAIN_LATER)",
+            result.output,
+        )
+        self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
+        self.assertIn("Deleted IMG_7408.JPG in iCloud", result.output)
+        self.assertIn("Deleted IMG_7407.JPG in iCloud", result.output)
+        self.assertEqual(len(modify_calls), 3)
+        self.assertIn("All photos have been downloaded", result.output)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_other_delete_errors_end_the_run(self) -> None:
+        """Only TRY_AGAIN_LATER is skipped; other delete errors still end the run"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        files = [
+            ("2018/07/31", "IMG_7409.JPG", 1884695),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7407.JPG", 656257),
+        ]
+        error = PyiCloudAPIResponseException("Internal error", "INTERNAL_ERROR")
+        modify_calls: List[str] = []
+
+        with self._fail_first_delete(error, modify_calls):
+            _, result = self._run_keep_recent_days_0(base_dir, files, [])
+
+        self.assertIn("Internal error (INTERNAL_ERROR)", result.output)
+        self.assertNotIn("Could not delete", result.output)
+        self.assertNotIn("Deleted IMG_", result.output)
+        self.assertEqual(len(modify_calls), 1)
+        self.assertNotIn("All photos have been downloaded", result.output)
+        self.assertEqual(result.exit_code, 1)
 
     def test_keep_icloud_recent_days_does_not_delete_when_only_printing_filenames(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])

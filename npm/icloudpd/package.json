@@ -13,7 +13,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/icloud_photos_downloader/icloud_photos_downloader.git"
+    "url": "git+https://github.com/icloud-photos-downloader/icloud_photos_downloader.git"
   },
   "keywords": [
     "icloud",
@@ -22,9 +22,9 @@
   "author": "The iCloud Photo Downloader Authors",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/icloud_photos_downloader/icloud_photos_downloader/issues"
+    "url": "https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues"
   },
-  "homepage": "https://github.com/icloud_photos_downloader/icloud_photos_downloader#readme",
+  "homepage": "https://github.com/icloud-photos-downloader/icloud_photos_downloader#readme",
   "optionalDependencies": {
     "@icloudpd/linux-arm": "0.0.1",
     "@icloudpd/linux-arm64": "0.0.1",

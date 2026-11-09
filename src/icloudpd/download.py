@@ -18,7 +18,10 @@ from tzlocal import get_localzone
 from icloudpd import constants
 from pyicloud_ipd.asset_version import AssetVersion, calculate_version_filename
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
+from pyicloud_ipd.exceptions import (
+    PyiCloudAPIResponseException,
+    PyiCloudConnectionErrorException,
+)
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.version_size import VersionSize
 
@@ -222,6 +225,12 @@ def download_media(
                     "Error downloading %s, retrying after %s seconds...", error_filename, wait_time
                 )
                 time.sleep(wait_time)
+
+        except PyiCloudConnectionErrorException as error:
+            # The request itself couldn't reach iCloud (#1347). Skip this file instead of
+            # ending the whole run; a partial file stays and is resumed on the next run
+            logger.error("Could not connect to iCloud to download %s: %s", download_path, error)
+            break
 
         except (ChunkedEncodingError, RequestsConnectionError) as error:
             # The connection dropped (#1311). Since urllib3 2 a body shorter than its

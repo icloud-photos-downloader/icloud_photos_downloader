@@ -24,6 +24,27 @@
                 }
             });
         });
+
+        // The status panel is replaced every few seconds, which reopened the first user
+        // configuration and closed the others (#1282). Remember what was opened or closed
+        // and apply it to the new panel. This runs after settling, because htmx restores
+        // the attributes of elements with an id when it settles
+        const collapseShown = {};
+        document.addEventListener('show.bs.collapse', evt => { collapseShown[evt.target.id] = true; });
+        document.addEventListener('hide.bs.collapse', evt => { collapseShown[evt.target.id] = false; });
+        document.body.addEventListener('htmx:afterSettle', function() {
+            for (const [id, shown] of Object.entries(collapseShown)) {
+                const panel = document.getElementById(id);
+                if (!panel) {
+                    continue;
+                }
+                panel.classList.toggle('show', shown);
+                document.querySelectorAll(`[data-bs-target="#${id}"]`).forEach(button => {
+                    button.classList.toggle('collapsed', !shown);
+                    button.setAttribute('aria-expanded', shown);
+                });
+            }
+        });
     </script>
     <nav class="navbar bg-body-tertiary">
         <div class="container-fluid">
