@@ -6,7 +6,7 @@ from typing import Any, Dict, Mapping
 import waitress
 from flask import Flask, Response, jsonify, make_response, render_template, request
 
-from icloudpd.activity import activity_log
+from icloudpd.activity import DEFAULT_LIMIT, MAX_ENTRIES, activity_log
 from icloudpd.status import Status, StatusExchange
 
 
@@ -68,7 +68,7 @@ def create_app(logger: Logger, _status_exchange: StatusExchange) -> Flask:
 
         if _status != Status.NO_INPUT_NEEDED:
             state = _status.value
-        elif _progress.photos_count != 0:
+        elif _progress.running:
             state = "syncing"
         elif _progress.waiting != 0:
             state = "waiting"
@@ -95,7 +95,9 @@ def create_app(logger: Logger, _status_exchange: StatusExchange) -> Flask:
     def get_api_activity() -> Response:
         if not api_enabled():
             return make_response("Not found", 404)
-        return jsonify({"total": activity_log.total, "files": activity_log.snapshot()})
+        limit = request.args.get("limit", default=DEFAULT_LIMIT, type=int)
+        limit = DEFAULT_LIMIT if limit is None else max(0, min(limit, MAX_ENTRIES))
+        return jsonify({"total": activity_log.total, "files": activity_log.snapshot(limit)})
 
     @app.route("/code", methods=["POST"])
     def set_code() -> Response | str:
