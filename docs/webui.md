@@ -9,4 +9,4 @@
 
 The server listens on all network interfaces by default and has no password protection. Use [`--webui-host`](webui-host-parameter) `127.0.0.1` to accept connections from this computer only.
 
-In Docker, keep the default `0.0.0.0` (the container's loopback is not reachable from the host) and limit access with the port mapping instead, for example `-p 127.0.0.1:8080:8080`.
+In Docker, keep the default `0.0.0.0` (the container's loopback is not reachable from the host, unless you use host networking with `--network host`) and limit access with the port mapping instead, for example `-p 127.0.0.1:8080:8080`.
