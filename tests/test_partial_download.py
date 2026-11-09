@@ -60,7 +60,7 @@ class PartialDownloadTestCase(TestCase):
         self.photo = mock.MagicMock()
         self.photo.created = datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
 
-    def download(self, responses: List[Response | Exception]) -> bool:
+    def download(self, responses: List[Response | Exception], temp_suffix: str = ".part") -> bool:
         self.photo.download.side_effect = responses
         return download_media(
             self.logger,
@@ -71,6 +71,7 @@ class PartialDownloadTestCase(TestCase):
             AssetVersion(len(CONTENT), "https://example.com/file", "public.mpeg-4", CHECKSUM),
             AssetVersionSize.ORIGINAL,
             lambda _photo: "IMG_0001.MOV",
+            temp_suffix,
         )
 
     def starts(self) -> List[int]:
@@ -100,6 +101,13 @@ class PartialDownloadTestCase(TestCase):
         [part_file] = self.part_files()
         with open(os.path.join(self.directory, part_file), "rb") as file:
             self.assertEqual(CONTENT[:40], file.read())
+
+    def test_temp_suffix(self) -> None:
+        """The file of an interrupted download gets the suffix that was asked for (#1288)"""
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)], ".icloudpd")
+        self.assertEqual([], self.part_files())
+        self.assertEqual(1, len([n for n in os.listdir(self.directory) if n.endswith(".icloudpd")]))
 
     def test_next_run_resumes_the_partial_file(self) -> None:
         with self.assertLogs(self.logger, level="ERROR"):

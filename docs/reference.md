@@ -339,6 +339,11 @@ This is a list of all options available for the command line interface (CLI) of 
     
 :   If specified, video assets will not be processed.
 
+(temp-suffix-parameter)=
+`--temp-suffix`
+    
+:   Suffix of the temporary files that are used while a download is in progress. Default is `.part`. Change it if the destination refuses files with this suffix, for example a WebDAV mount of Nextcloud. Files left by an interrupted download are only resumed when the same suffix is used again.
+
 (skip-photos-parameter)=
 `--skip-photos`
     

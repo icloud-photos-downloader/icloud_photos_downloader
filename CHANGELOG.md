@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+
 ## 1.33.1 (2026-11-17)
 
 - fix: an asset that iCloud lists without an original version stopped the whole run with `KeyError: <AssetVersionSize.ORIGINAL: 'original'>` when downloading originals (the default), so nothing past it was ever downloaded; it is now logged and skipped like a missing `--force-size` size [#926](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/926) [#1261](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1261)
