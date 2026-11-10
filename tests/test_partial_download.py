@@ -109,6 +109,16 @@ class PartialDownloadTestCase(TestCase):
         self.assertEqual([], self.part_files())
         self.assertEqual(1, len([n for n in os.listdir(self.directory) if n.endswith(".icloudpd")]))
 
+    def test_next_run_resumes_with_the_same_temp_suffix(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)], ".icloudpd")
+        self.photo.download.reset_mock()
+        self.assertTrue(self.download([partial_response(40, 100)], ".icloudpd"))
+        with open(self.download_path, "rb") as file:
+            self.assertEqual(CONTENT, file.read())
+        self.assertEqual([40], self.starts())
+        self.assertEqual(["IMG_0001.MOV"], os.listdir(self.directory))
+
     def test_next_run_resumes_the_partial_file(self) -> None:
         with self.assertLogs(self.logger, level="ERROR"):
             self.download([partial_response(0, 40), partial_response(40, 40)])

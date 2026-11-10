@@ -1125,7 +1125,10 @@ def core_single_run(
                                     sort_keys=True,
                                 )
                                 prune_snapshot = PruneSnapshot(
-                                    directory, scope, user_config.dry_run
+                                    directory,
+                                    scope,
+                                    user_config.dry_run,
+                                    temp_suffix=user_config.temp_suffix,
                                 )
                             except Exception as error:
                                 logger.warning("Skipping orphan pruning: %s", error)

@@ -104,8 +104,11 @@ class PruneSnapshot:
     filename = ".icloudpd-prune.json"
     quarantine = ".icloudpd-pruned"
 
-    def __init__(self, directory: str, scope: str, dry_run: bool = False) -> None:
+    def __init__(
+        self, directory: str, scope: str, dry_run: bool = False, temp_suffix: str = ".part"
+    ) -> None:
         self.directory = Path(directory).resolve()
+        self.temp_suffix = temp_suffix
         self.path = self.directory / self.filename
         self.lock = self.directory / ".icloudpd-prune.lock"
         self.scope = scope
@@ -146,6 +149,7 @@ class PruneSnapshot:
             or Path(relative).parts[0] == self.quarantine
             or path.name.startswith(".icloudpd-prune.")
             or path.name.endswith(".part")
+            or path.name.endswith(self.temp_suffix)
         ):
             raise ValueError("Unsafe path in pruning snapshot")
         return path
@@ -280,7 +284,7 @@ class PruneSnapshot:
                 encoding="utf-8",
                 dir=self.directory,
                 prefix=".icloudpd-prune.",
-                suffix=".part",
+                suffix=self.temp_suffix,
                 delete=False,
             ) as temporary:
                 json.dump({"version": 1, "scope": self.scope, "files": self.files}, temporary)

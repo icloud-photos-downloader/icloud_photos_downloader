@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+  - `.part` files left by interrupted downloads before the suffix was changed are not resumed or removed; delete them by hand
 
 ## 1.33.0 (2026-11-03)
 
