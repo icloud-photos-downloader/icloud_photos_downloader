@@ -8,6 +8,7 @@ import itertools
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -552,6 +553,13 @@ def _(offset: datetime.timedelta) -> datetime.datetime:
     return datetime.datetime.now(get_localzone()) - offset
 
 
+def matches_exclude_filename(filename: str, patterns: Sequence[str]) -> bool:
+    """Whether the filename matches one of the --exclude-filename patterns, ignoring case"""
+    return any(
+        re.match(fnmatch.translate(pattern), filename, flags=re.IGNORECASE) for pattern in patterns
+    )
+
+
 def where_builder(
     logger: logging.Logger,
     skip_videos: bool,
@@ -584,9 +592,7 @@ def where_builder(
 
     if exclude_filenames:
         filename = filename_builder(photo)
-        if any(
-            fnmatch.fnmatchcase(filename.lower(), pattern.lower()) for pattern in exclude_filenames
-        ):
+        if matches_exclude_filename(filename, exclude_filenames):
             logger.debug(f"Skipping {filename}, as it matches --exclude-filename.")
             return False
 
