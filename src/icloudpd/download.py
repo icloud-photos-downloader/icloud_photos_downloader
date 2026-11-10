@@ -130,6 +130,7 @@ def download_media(
     version: AssetVersion,
     size: VersionSize,
     filename_builder: Callable[[PhotoAsset], str],
+    temp_suffix: str = ".part",
 ) -> bool:
     """Download the photo to path, with retries and error handling"""
 
@@ -140,7 +141,7 @@ def download_media(
     checksum = base64.b64decode(version.checksum)
     checksum32 = base64.b32encode(checksum).decode()
     download_dir = os.path.dirname(download_path)
-    temp_download_path = os.path.join(download_dir, checksum32) + ".part"
+    temp_download_path = os.path.join(download_dir, checksum32) + temp_suffix
 
     download_local = (
         partial(download_response_to_path_dry_run, logger) if dry_run else download_response_to_path

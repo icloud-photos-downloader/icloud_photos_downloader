@@ -17,6 +17,7 @@ from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
+from icloudpd.prune import MEDIA_EXTENSIONS
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, splitlines
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
@@ -276,6 +277,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         help="Don't download any photos (default: download all photos and videos)",
         action="store_true",
     )
+    cloned.add_argument(
+        "--temp-suffix",
+        help="Suffix of the temporary files used while a download is in progress "
+        "(default: %(default)s)",
+        type=validate_temp_suffix,
+        default=".part",
+    )
     return cloned
 
 
@@ -495,6 +503,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_before=user_ns.skip_created_before,
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
+        temp_suffix=user_ns.temp_suffix,
     )
 
 
@@ -718,6 +727,21 @@ def cli() -> int:
             return 2
         else:
             return run_with_configs(global_ns, user_nses)
+
+
+def validate_temp_suffix(suffix: str) -> str:
+    if not suffix or "/" in suffix or "\\" in suffix:
+        raise argparse.ArgumentTypeError(
+            f"Suffix {suffix!r} specified in --temp-suffix must not be empty or contain a path separator"
+        )
+    # A leftover temporary file must not look like media or a sidecar, or indexers and
+    # --prune-orphans-adopt-existing would treat it as one
+    extension = pathlib.PurePath("x" + suffix).suffix.lower()
+    if extension in MEDIA_EXTENSIONS or extension == ".xmp":
+        raise argparse.ArgumentTypeError(
+            f"Suffix {suffix!r} specified in --temp-suffix must not end with a media or sidecar extension"
+        )
+    return suffix
 
 
 def validate_folder_structure(folder_structure: str) -> str:
