@@ -879,6 +879,48 @@ class DownloadPhotoTestCase(TestCase):
 
                 assert result.exit_code == 0
 
+    def test_skip_asset_without_original(self) -> None:
+        """An asset that iCloud lists without an original is skipped, not a KeyError"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
+                pa.return_value = {
+                    AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"},
+                }
+
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
+
+                self.assertIn(
+                    "original size does not exist for IMG_7409.JPG. Skipping...",
+                    result.output,
+                )
+                self.assertNotIn("KeyError", result.output)
+                self.assertIn("All photos and videos have been downloaded", result.output)
+                dp_patched.assert_not_called()
+
+                assert result.exit_code == 0
+
     def test_download_two_sizes_with_force_size(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
         with mock.patch("icloudpd.download.download_media") as dp_patched:

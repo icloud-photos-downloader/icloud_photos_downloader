@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: an asset that iCloud lists without an original version stopped the whole run with `KeyError: <AssetVersionSize.ORIGINAL: 'original'>` when downloading originals (the default), so nothing past it was ever downloaded; it is now logged and skipped like a missing `--force-size` size [#926](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/926) [#1261](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1261)
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)

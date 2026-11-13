@@ -712,6 +712,17 @@ def download_builder(
                 continue  # that should avoid double download for original
             download_size = AssetVersionSize.ORIGINAL
 
+        if download_size not in versions:
+            # iCloud lists some assets without an original (e.g. damaged or never fully
+            # uploaded); skip them instead of stopping the whole run with a KeyError
+            logger.error(
+                "%s size does not exist for %s. Skipping...",
+                download_size.value,
+                filename_builder(photo),
+            )
+            present = False
+            continue
+
         version = versions[download_size]
         photo_filename = filename_builder(photo)
         filename = calculate_version_filename(
