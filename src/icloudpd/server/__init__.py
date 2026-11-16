@@ -1,6 +1,7 @@
 import os
 import sys
 from logging import Logger
+from typing import Any, Dict, Mapping
 
 import waitress
 from flask import Flask, Response, make_response, render_template, request
@@ -8,7 +9,12 @@ from flask import Flask, Response, make_response, render_template, request
 from icloudpd.status import Status, StatusExchange
 
 
-def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
+def without_secrets(config: Mapping[str, Any]) -> Dict[str, Any]:
+    """Config fields to show on the status page, without passwords (e.g. password, smtp_password)"""
+    return {key: value for key, value in config.items() if not key.endswith("password")}
+
+
+def create_app(logger: Logger, _status_exchange: StatusExchange) -> Flask:
     app = Flask(__name__)
     app.logger = logger
     # for running in pyinstaller
@@ -36,8 +42,10 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
                 status=_status,
                 error=_error,
                 progress=_progress,
-                global_config=vars(_global_config) if _global_config else None,
-                user_configs=[vars(uc) for uc in _user_configs] if _user_configs else [],
+                global_config=without_secrets(vars(_global_config)) if _global_config else None,
+                user_configs=[without_secrets(vars(uc)) for uc in _user_configs]
+                if _user_configs
+                else [],
                 current_user=_current_user,
             )
         if _status == Status.NEED_MFA:
@@ -88,5 +96,10 @@ def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
         _status_exchange.get_progress().cancel = True
         return make_response("Ok", 200)
 
+    return app
+
+
+def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
+    app = create_app(logger, _status_exchange)
     logger.debug("Starting web server...")
     return waitress.serve(app)

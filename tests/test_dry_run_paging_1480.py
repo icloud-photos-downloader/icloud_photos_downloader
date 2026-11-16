@@ -25,6 +25,20 @@ FILES_THREE_PHOTOS: List[Tuple[str, str, int]] = [
     ("2018/07/30", "IMG_7407.JPG", 656257),
 ]
 
+IMG_7409: List[Tuple[str, str, int]] = [
+    ("2018/07/31", "IMG_7409.JPG", 1884695),
+    ("2018/07/31", "IMG_7409.MOV", 3294075),
+]
+IMG_7408: List[Tuple[str, str, int]] = [
+    ("2018/07/30", "IMG_7408.JPG", 1151066),
+    ("2018/07/30", "IMG_7408.MOV", 1606512),
+]
+IMG_7407: List[Tuple[str, str, int]] = [
+    ("2018/07/30", "IMG_7407.JPG", 656257),
+    ("2018/07/30", "IMG_7407.MOV", 2910572),
+]
+LIVE_PHOTOS_ON_DISK: List[Tuple[str, str, int]] = IMG_7409 + IMG_7408 + IMG_7407
+
 
 def make_paged_photos_request(
     page_size: int,
@@ -93,7 +107,7 @@ class DryRunPaging1480TestCase(TestCase):
                 self.root_path,
                 base_dir,
                 "listing_photos_keep_icloud_recent_days.yml",
-                FILES_THREE_PHOTOS,
+                LIVE_PHOTOS_ON_DISK,
                 [],
                 [
                     "--username",
@@ -103,7 +117,6 @@ class DryRunPaging1480TestCase(TestCase):
                     "--recent",
                     "5",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -198,7 +211,7 @@ class DryRunPaging1480TestCase(TestCase):
                 self.root_path,
                 base_dir,
                 "listing_photos_keep_icloud_recent_days.yml",
-                FILES_THREE_PHOTOS,
+                LIVE_PHOTOS_ON_DISK,
                 [],
                 [
                     "--username",
@@ -208,7 +221,6 @@ class DryRunPaging1480TestCase(TestCase):
                     "--recent",
                     "5",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
