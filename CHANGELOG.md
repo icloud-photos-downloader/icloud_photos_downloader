@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: `--until-found` counted files instead of photos, so with more than one `--size` (e.g. `--size original --size medium`) each photo counted once per size and the run stopped before it had found X already downloaded photos
 - fix: `--auto-delete` didn't delete the local Live Photo video of a photo deleted in iCloud when it was downloaded with `--live-photo-size medium` or `thumb`; it looked for `IMG_1234.MOV` instead of `IMG_1234-medium.MOV` or `IMG_1234-thumb.MOV`
 - fix: with `--xmp-sidecar`, the sidecar of an adjusted photo (`--size adjusted`) had the orientation of the original, so apps that read it rotated the already upright photo a second time; the adjusted sidecar no longer has the orientation [#1080](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1080)
 - fix: `--keep-icloud-recent-days` with `--skip-live-photos` deleted Live Photos from iCloud, including their video that was never downloaded; they are now kept in iCloud, with a warning at startup
