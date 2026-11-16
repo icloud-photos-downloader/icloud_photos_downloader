@@ -3,6 +3,12 @@
 ## Unreleased
 
 - fix: `--auto-delete` didn't delete the local Live Photo video of a photo deleted in iCloud when it was downloaded with `--live-photo-size medium` or `thumb`; it looked for `IMG_1234.MOV` instead of `IMG_1234-medium.MOV` or `IMG_1234-thumb.MOV`
+- fix: with `--xmp-sidecar`, the sidecar of an adjusted photo (`--size adjusted`) had the orientation of the original, so apps that read it rotated the already upright photo a second time; the adjusted sidecar no longer has the orientation [#1080](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1080)
+- fix: `--keep-icloud-recent-days` with `--skip-live-photos` deleted Live Photos from iCloud, including their video that was never downloaded; they are now kept in iCloud, with a warning at startup
+- fix: `--only-print-filenames` with more than one `--album` only printed the files of the first album
+- fix: `--keep-icloud-recent-days 0` together with `--delete-after-download` was not rejected like other values of `--keep-icloud-recent-days`
+- fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
+- fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
 
 ## 1.33.0 (2026-11-03)
 
