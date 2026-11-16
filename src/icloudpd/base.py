@@ -481,7 +481,7 @@ def _process_all_users_once(
 
 
 def keep_icloud_recent_days_warnings(user_config: UserConfig) -> List[str]:
-    """Options that stop the run early leave the remaining assets unchecked for deletion"""
+    """Options that leave assets in iCloud that --keep-icloud-recent-days would otherwise delete"""
     if user_config.keep_icloud_recent_days is None:
         return []
     warnings = []
@@ -494,6 +494,11 @@ def keep_icloud_recent_days_warnings(user_config: UserConfig) -> List[str]:
         warnings.append(
             f"--keep-icloud-recent-days is used with --until-found {user_config.until_found}: "
             "assets after the point where the run stops are not deleted from iCloud"
+        )
+    if user_config.skip_live_photos:
+        warnings.append(
+            "--keep-icloud-recent-days is used with --skip-live-photos: Live Photos are not "
+            "deleted from iCloud, since their video is not downloaded"
         )
     return warnings
 
@@ -1312,6 +1317,22 @@ def core_single_run(
                                             debug_filename,
                                             age_days,
                                         )
+                                    elif user_config.skip_live_photos and any(
+                                        isinstance(size, LivePhotoVersionSize)
+                                        for size in item.versions
+                                    ):
+                                        # its video was not downloaded, so deleting the asset
+                                        # would lose the video
+                                        logger.debug(
+                                            "Not deleting %s from iCloud: it is a Live Photo and --skip-live-photos did not download its video",
+                                            build_filename_with_policies(
+                                                user_config.file_match_policy,
+                                                build_filename_cleaner(
+                                                    user_config.keep_unicode_in_filenames
+                                                ),
+                                                item,
+                                            ),
+                                        )
                                     elif download_result.present:
                                         should_delete = True
                                     elif not global_config.only_print_filenames:
@@ -1363,7 +1384,9 @@ def core_single_run(
                                 break
 
                         if global_config.only_print_filenames:
-                            return 0
+                            # go on with the next album; nothing is deleted below
+                            status_exchange.get_progress().reset()
+                            continue
                         else:
                             pass
 
@@ -1454,7 +1477,7 @@ def core_single_run(
                         else:
                             logger.warning("Skipping orphan pruning: download run did not complete")
 
-                    if user_config.auto_delete:
+                    if user_config.auto_delete and not global_config.only_print_filenames:
                         autodelete_photos(
                             logger,
                             user_config.dry_run,
