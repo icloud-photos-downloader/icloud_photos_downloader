@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
 - fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
 
 ## 1.33.0 (2026-11-03)

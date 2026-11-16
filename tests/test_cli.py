@@ -75,6 +75,16 @@ class CliTestCase(TestCase):
         )
         self.assertIn("Local directory to use for downloads", result)
 
+    def test_cli_help_in_a_color_terminal(self) -> None:
+        """From Python 3.14 argparse colors help in a terminal; the options must still be listed (#1474)"""
+        with mock.patch.dict(os.environ, {"FORCE_COLOR": "1"}, clear=False):
+            os.environ.pop("NO_COLOR", None)
+            result = format_help()
+        self.assertIn("--help, -h", result)
+        self.assertIn("--directory", result)
+        self.assertIn("--username", result)
+        self.assertNotIn("\x1b[", result)
+
     def test_cli_parser(self) -> None:
         self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
         self.assertEqual(

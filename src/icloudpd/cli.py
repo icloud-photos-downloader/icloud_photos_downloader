@@ -5,7 +5,7 @@ import pathlib
 import sys
 from itertools import dropwhile
 from operator import eq, not_
-from typing import Any, Callable, Iterable, Sequence, Tuple
+from typing import Any, Callable, Dict, Iterable, Sequence, Tuple
 
 from tzlocal import get_localzone
 
@@ -422,7 +422,12 @@ def format_help() -> str:
 
     extract_option_lines = compose(skip_to_options, help_in_lines)
 
-    dummy_parser = argparse.ArgumentParser(exit_on_error=False, add_help=False, allow_abbrev=False)
+    # without colors: from Python 3.14 argparse colors the help in a terminal, and the
+    # "options:" header the lines are cut at would not match (#1474)
+    no_color: Dict[str, Any] = {"color": False} if sys.version_info >= (3, 14) else {}
+    dummy_parser = argparse.ArgumentParser(
+        exit_on_error=False, add_help=False, allow_abbrev=False, **no_color
+    )
 
     global_help = compose(extract_option_lines, add_global_options)(dummy_parser)
 
