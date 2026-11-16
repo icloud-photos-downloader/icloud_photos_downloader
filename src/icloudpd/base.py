@@ -1361,7 +1361,9 @@ def core_single_run(
                                 break
 
                         if global_config.only_print_filenames:
-                            return 0
+                            # go on with the next album; nothing is deleted below
+                            status_exchange.get_progress().reset()
+                            continue
                         else:
                             pass
 
@@ -1452,7 +1454,7 @@ def core_single_run(
                         else:
                             logger.warning("Skipping orphan pruning: download run did not complete")
 
-                    if user_config.auto_delete:
+                    if user_config.auto_delete and not global_config.only_print_filenames:
                         autodelete_photos(
                             logger,
                             user_config.dry_run,
