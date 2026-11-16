@@ -4,6 +4,9 @@
 
 - fix: `--only-print-filenames` with more than one `--album` only printed the files of the first album
 - fix: `--keep-icloud-recent-days 0` together with `--delete-after-download` was not rejected like other values of `--keep-icloud-recent-days`
+- fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
+- fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)
