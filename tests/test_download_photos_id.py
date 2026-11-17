@@ -1,4 +1,5 @@
 import datetime
+import errno
 import inspect
 import logging
 import os
@@ -386,8 +387,9 @@ class DownloadPhotoNameIDTestCase(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         with mock.patch("icloudpd.download.open", create=True) as m:
-            # Raise IOError when we try to write to the destination file
-            m.side_effect = IOError
+            # Raise an OSError when we try to write to the destination file
+            error = OSError(errno.EINVAL, "Invalid argument")
+            m.side_effect = error
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -418,9 +420,8 @@ class DownloadPhotoNameIDTestCase(TestCase):
             )
             self.assertIn(
                 "IOError while writing file to "
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}. "
-                "You might have run out of disk space, or the file might "
-                "be too large for your OS. Skipping this file...",
+                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409_QVk2Yyt.JPG'))}: "
+                f"{error}. Skipping this file...",
                 result.output,
             )
             assert result.exit_code == 0

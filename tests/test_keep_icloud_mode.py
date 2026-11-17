@@ -15,6 +15,13 @@ from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
 from tests.helpers import path_from_project_root, run_icloudpd_test
 
+# the first three assets in the cassette are Live Photos; with their videos (.MOV, sizes from
+# resOriginalVidComplRes) on disk they count as present locally
+IMG_7409 = [("2018/07/31", "IMG_7409.JPG", 1884695), ("2018/07/31", "IMG_7409.MOV", 3294075)]
+IMG_7408 = [("2018/07/30", "IMG_7408.JPG", 1151066), ("2018/07/30", "IMG_7408.MOV", 1606512)]
+IMG_7407 = [("2018/07/30", "IMG_7407.JPG", 656257), ("2018/07/30", "IMG_7407.MOV", 2910572)]
+LIVE_PHOTOS_ON_DISK = IMG_7409 + IMG_7408 + IMG_7407
+
 
 class KeepICloudModeTestCases(TestCase):
     @pytest.fixture(autouse=True)
@@ -118,6 +125,7 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_delete_all(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
+        files_to_create = [("2018/07/31", "IMG_7409.MOV", 3294075)]
         files_to_download = [("2018/07/31", "IMG_7409.JPG")]
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
@@ -129,7 +137,7 @@ class KeepICloudModeTestCases(TestCase):
                 self.root_path,
                 base_dir,
                 "listing_photos_keep_icloud_recent_days.yml",
-                [],
+                files_to_create,
                 files_to_download,
                 [
                     "--username",
@@ -139,7 +147,6 @@ class KeepICloudModeTestCases(TestCase):
                     "--recent",
                     "1",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -257,11 +264,7 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_delete_existing(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [
-            ("2018/07/31", "IMG_7409.JPG", 1884695),
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257),
-        ]
+        files_to_create = LIVE_PHOTOS_ON_DISK
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 10
             mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
@@ -281,7 +284,6 @@ class KeepICloudModeTestCases(TestCase):
                     "--recent",
                     "3",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -313,11 +315,11 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_keeps_some(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [
-            ("2018/07/31", "IMG_7409.JPG", 1884695),  # 0 days old, should be kept
-            ("2018/07/30", "IMG_7408.JPG", 1151066),  # 1 days old, should be deleted
-            ("2018/07/30", "IMG_7407.JPG", 656257),  # 1 days old, should be deleted
-        ]
+        files_to_create = (
+            IMG_7409  # 0 days old, should be kept
+            + IMG_7408  # 1 days old, should be deleted
+            + IMG_7407  # 1 days old, should be deleted
+        )
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 1
             mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
@@ -337,7 +339,6 @@ class KeepICloudModeTestCases(TestCase):
                     "--recent",
                     "3",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -369,7 +370,7 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_delete_existing_dry_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [("2018/07/31", "IMG_7409.JPG", 1884695)]
+        files_to_create = IMG_7409
 
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             days_old = 10
@@ -390,7 +391,6 @@ class KeepICloudModeTestCases(TestCase):
                     "--recent",
                     "1",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -415,11 +415,11 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_with_skip_videos(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
-        files_to_create = [
-            ("2018/07/31", "IMG_7409.JPG", 1884695),  # 0 days old, should be kept
-            ("2018/07/30", "IMG_7408.JPG", 1151066),  # 1 days old, should be deleted
-            ("2018/07/30", "IMG_7407.JPG", 656257),  # 1 days old, should be deleted
-        ]
+        files_to_create = (
+            IMG_7409  # 0 days old, should be kept
+            + IMG_7408  # 1 days old, should be deleted
+            + IMG_7407  # 1 days old, should be deleted
+        )
         with mock.patch("datetime.datetime", side_effect=datetime.datetime) as dt_mock:
             days_old = 1
             mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
@@ -439,7 +439,6 @@ class KeepICloudModeTestCases(TestCase):
                     "--recent",
                     "4",
                     "--skip-videos",
-                    "--skip-live-photos",
                     "--no-progress-bar",
                     "--threads-num",
                     "1",
@@ -478,7 +477,7 @@ class KeepICloudModeTestCases(TestCase):
         files_to_create: List[Tuple[str, str, int]],
         extra_params: List[str],
         files_to_download: List[Tuple[str, str]] | None = None,
-        skip_live_photos: bool = True,
+        skip_live_photos: bool = False,
     ) -> Tuple[str, Any]:
         with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
             mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
@@ -523,9 +522,7 @@ class KeepICloudModeTestCases(TestCase):
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         with mock.patch("icloudpd.download.download_media", return_value=False):
-            _, result = self._run_keep_recent_days_0(
-                base_dir, [("2018/07/31", "IMG_7409.JPG", 1884695)], []
-            )
+            _, result = self._run_keep_recent_days_0(base_dir, IMG_7409, [])
 
         self.assertIn("Deleted IMG_7409.JPG in iCloud", result.output)
         self.assertNotIn("Deleted IMG_7408.JPG in iCloud", result.output)
@@ -552,11 +549,7 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_try_again_later_skips_only_that_photo(self) -> None:
         """iCloud can refuse a delete with TRY_AGAIN_LATER (#1283); the run goes on"""
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        files = [
-            ("2018/07/31", "IMG_7409.JPG", 1884695),
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257),
-        ]
+        files = LIVE_PHOTOS_ON_DISK
         # what the session raises for the response in #1283
         error = PyiCloudAPIResponseException(
             "Sync zone CAS Op-Lock failed. There was a concurrent write and this "
@@ -583,11 +576,7 @@ class KeepICloudModeTestCases(TestCase):
     def test_keep_icloud_recent_days_other_delete_errors_end_the_run(self) -> None:
         """Only TRY_AGAIN_LATER is skipped; other delete errors still end the run"""
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        files = [
-            ("2018/07/31", "IMG_7409.JPG", 1884695),
-            ("2018/07/30", "IMG_7408.JPG", 1151066),
-            ("2018/07/30", "IMG_7407.JPG", 656257),
-        ]
+        files = LIVE_PHOTOS_ON_DISK
         error = PyiCloudAPIResponseException("Internal error", "INTERNAL_ERROR")
         modify_calls: List[str] = []
 
@@ -664,22 +653,81 @@ class KeepICloudModeTestCases(TestCase):
                     ("2018/07/30", "IMG_7408.JPG"),
                     ("2018/07/30", "IMG_7407.JPG"),
                 ],
-                skip_live_photos=False,
             )
 
         delete_photo.assert_not_called()
         self.assertEqual(result.exit_code, 0)
 
+    def test_keep_icloud_recent_days_keeps_live_photos_with_skip_live_photos(self) -> None:
+        """--skip-live-photos does not download the video, so deleting a Live Photo loses it"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        # only the stills are on disk; the videos were never downloaded
+        files = [IMG_7409[0], IMG_7408[0], IMG_7407[0]]
+        versions_property: property = PhotoAsset.__dict__["versions"]
+        original_versions = versions_property.fget
+        assert original_versions is not None
+
+        def versions(self_: PhotoAsset) -> Any:
+            """IMG_7408 without its video, so the run also has a photo that is not a Live Photo"""
+            result = original_versions(self_)
+            if self_.filename == "IMG_7408.JPG":
+                return {
+                    size: version
+                    for size, version in result.items()
+                    if not isinstance(size, LivePhotoVersionSize)
+                }
+            return result
+
+        modify_calls: List[str] = []
+        original_request = PyiCloudSession.request
+
+        def request(self_: PyiCloudSession, method: str, url: str, **kwargs: Any) -> Any:
+            if "/records/modify" in url:
+                modify_calls.append(url)
+            return original_request(self_, method, url, **kwargs)
+
+        with (
+            mock.patch.object(PhotoAsset, "versions", property(versions)),
+            mock.patch.object(PyiCloudSession, "request", request),
+        ):
+            _, result = self._run_keep_recent_days_0(base_dir, files, [], skip_live_photos=True)
+
+        self.assertIn(
+            "--keep-icloud-recent-days is used with --skip-live-photos: Live Photos are not "
+            "deleted from iCloud, since their video is not downloaded",
+            result.output,
+        )
+        for name in ["IMG_7409.JPG", "IMG_7407.JPG"]:
+            self.assertNotIn(f"Deleted {name} in iCloud", result.output)
+            self.assertIn(
+                f"Not deleting {name} from iCloud: it is a Live Photo and --skip-live-photos "
+                "did not download its video",
+                result.output,
+            )
+        self.assertIn("Deleted IMG_7408.JPG in iCloud", result.output)
+        self.assertEqual(len(modify_calls), 1)
+        self.assertIn("All photos have been downloaded", result.output)
+        self.assertEqual(result.exit_code, 0)
+
 
 class KeepICloudRecentDaysWarningsTestCase(TestCase):
-    def warnings(self, keep: int | None, recent: int | None, until_found: int | None) -> List[str]:
+    def warnings(
+        self,
+        keep: int | None,
+        recent: int | None,
+        until_found: int | None,
+        skip_live_photos: bool = False,
+    ) -> List[str]:
         config = SimpleNamespace(
-            keep_icloud_recent_days=keep, recent=recent, until_found=until_found
+            keep_icloud_recent_days=keep,
+            recent=recent,
+            until_found=until_found,
+            skip_live_photos=skip_live_photos,
         )
         return keep_icloud_recent_days_warnings(config)  # type: ignore[arg-type]
 
     def test_no_warning_without_keep_icloud_recent_days(self) -> None:
-        self.assertEqual([], self.warnings(None, 10, 5))
+        self.assertEqual([], self.warnings(None, 10, 5, skip_live_photos=True))
 
     def test_no_warning_without_recent_or_until_found(self) -> None:
         self.assertEqual([], self.warnings(0, None, None))
@@ -691,6 +739,14 @@ class KeepICloudRecentDaysWarningsTestCase(TestCase):
                 "--keep-icloud-recent-days is used with --until-found 5: assets after the point where the run stops are not deleted from iCloud",
             ],
             self.warnings(0, 10, 5),
+        )
+
+    def test_warns_for_skip_live_photos(self) -> None:
+        self.assertEqual(
+            [
+                "--keep-icloud-recent-days is used with --skip-live-photos: Live Photos are not deleted from iCloud, since their video is not downloaded",
+            ],
+            self.warnings(0, None, None, skip_live_photos=True),
         )
 
 

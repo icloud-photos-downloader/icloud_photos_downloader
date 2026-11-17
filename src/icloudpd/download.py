@@ -250,13 +250,11 @@ def download_media(
             logger.error("Connection lost while downloading %s: %s", download_path, error)
             break
 
-        except OSError:
+        except OSError as error:
             logger.error(
-                "IOError while writing file to %s. "
-                + "You might have run out of disk space, or the file "
-                + "might be too large for your OS. "
-                + "Skipping this file...",
+                "IOError while writing file to %s: %s. Skipping this file...",
                 download_path,
+                error,
             )
             break
         retries = retries + 1
