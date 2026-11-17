@@ -1,4 +1,5 @@
 import datetime
+import errno
 import inspect
 import io
 import logging
@@ -391,12 +392,64 @@ class DownloadPhotoTestCase(TestCase):
                 )
                 assert result.exit_code == 0
 
+    def test_until_found_counts_photos_not_files(self) -> None:
+        """With several --size values, a photo whose files all exist counts once for --until-found"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        files_to_create = [
+            ("2018/07/31", "IMG_7409.JPG", 1884695),
+            ("2018/07/31", "IMG_7409-medium.JPG", 664594),
+            ("2018/07/30", "IMG_7408.JPG", 1151066),
+            ("2018/07/30", "IMG_7408-medium.JPG", 652108),
+        ]
+
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                files_to_create,
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--size",
+                    "original",
+                    "--size",
+                    "medium",
+                    "--skip-videos",
+                    "--skip-live-photos",
+                    "--until-found",
+                    "2",
+                    "--recent",
+                    "10",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                ],
+            )
+            dp_patched.assert_not_called()
+
+        # two photos, so the second one is checked before stopping
+        for dir_name, file_name, _ in files_to_create:
+            self.assertIn(
+                f"{os.path.join(data_dir, os.path.normpath(dir_name), file_name)} already exists",
+                result.output,
+            )
+        self.assertIn("Found 2 consecutive previously downloaded photos. Exiting", result.output)
+        self.assertNotIn("IMG_7407", result.output)
+        assert result.exit_code == 0
+
     def test_handle_io_error(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
 
         with mock.patch("icloudpd.download.open", create=True) as m:
-            # Raise IOError when we try to write to the destination file
-            m.side_effect = IOError
+            # Raise an OSError when we try to write to the destination file
+            error = OSError(errno.ENOSPC, "No space left on device")
+            m.side_effect = error
 
             data_dir, result = run_icloudpd_test(
                 self.assertEqual,
@@ -427,9 +480,8 @@ class DownloadPhotoTestCase(TestCase):
             )
             self.assertIn(
                 "IOError while writing file to "
-                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}. "
-                "You might have run out of disk space, or the file might "
-                "be too large for your OS. Skipping this file...",
+                f"{os.path.join(data_dir, os.path.normpath('2018/07/31/IMG_7409.JPG'))}: "
+                f"{error}. Skipping this file...",
                 result.output,
             )
             assert result.exit_code == 0
@@ -874,6 +926,48 @@ class DownloadPhotoTestCase(TestCase):
                     "thumb size does not exist for IMG_7409.JPG. Skipping...",
                     result.output,
                 )
+                self.assertIn("All photos and videos have been downloaded", result.output)
+                dp_patched.assert_not_called()
+
+                assert result.exit_code == 0
+
+    def test_skip_asset_without_original(self) -> None:
+        """An asset that iCloud lists without an original is skipped, not a KeyError"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        with mock.patch("icloudpd.download.download_media") as dp_patched:
+            dp_patched.return_value = True
+
+            with mock.patch.object(PhotoAsset, "versions", new_callable=PropertyMock) as pa:
+                pa.return_value = {
+                    AssetVersionSize.MEDIUM: {"filename": "IMG_1.JPG"},
+                }
+
+                data_dir, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos.yml",
+                    [],
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "1",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                    ],
+                )
+
+                self.assertIn(
+                    "original size does not exist for IMG_7409.JPG. Skipping...",
+                    result.output,
+                )
+                self.assertNotIn("KeyError", result.output)
                 self.assertIn("All photos and videos have been downloaded", result.output)
                 dp_patched.assert_not_called()
 
