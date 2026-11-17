@@ -717,6 +717,7 @@ def test_download_result_records_only_newly_written_actual_paths(tmp_path: Path,
         target: str,
         _record: dict[str, object],
         dry_run: bool,
+        _size: AssetVersionSize,
     ) -> None:
         if not dry_run:
             Path(target + ".xmp").write_bytes(b"metadata")

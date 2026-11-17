@@ -75,6 +75,16 @@ class CliTestCase(TestCase):
         )
         self.assertIn("Local directory to use for downloads", result)
 
+    def test_cli_help_in_a_color_terminal(self) -> None:
+        """From Python 3.14 argparse colors help in a terminal; the options must still be listed (#1474)"""
+        with mock.patch.dict(os.environ, {"FORCE_COLOR": "1"}, clear=False):
+            os.environ.pop("NO_COLOR", None)
+            result = format_help()
+        self.assertIn("--help, -h", result)
+        self.assertIn("--directory", result)
+        self.assertIn("--username", result)
+        self.assertNotIn("\x1b[", result)
+
     def test_cli_parser(self) -> None:
         self.assertEqual.__self__.maxDiff = None  # type: ignore[attr-defined]
         self.assertEqual(
@@ -577,22 +587,28 @@ class CliTestCase(TestCase):
 
     def test_conflict_options_delete_after_download_and_keep_icloud_recent_days(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = run_main(
-            [
-                "--username",
-                "jdoe@gmail.com",
-                "--password",
-                "password1",
-                "-d",
-                "/tmp",
-                "--delete-after-download",
-                "--keep-icloud-recent-days",
-                "1",
-            ],
-        )
-        self.assertEqual(result.exit_code, 2, "exit code")
+        for days in ["1", "0"]:
+            with self.subTest(days=days):
+                result = run_main(
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "-d",
+                        "/tmp",
+                        "--delete-after-download",
+                        "--keep-icloud-recent-days",
+                        days,
+                    ],
+                )
+                self.assertIn(
+                    "--keep-icloud-recent-days and --delete-after-download should not be used together",
+                    result.output,
+                )
+                self.assertEqual(result.exit_code, 2, "exit code")
 
-        self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
+                self.assertFalse(os.path.exists(base_dir), f"{base_dir} exists")
 
     def test_conflict_options_auto_delete_and_keep_icloud_recent_days(self) -> None:
         """Assets --keep-icloud-recent-days moves to Recently Deleted would also be deleted locally (#1272)"""

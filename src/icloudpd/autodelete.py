@@ -10,10 +10,10 @@ from typing import Callable, Sequence, Set
 from tzlocal import get_localzone
 
 from icloudpd.paths import local_download_path
-from pyicloud_ipd.asset_version import calculate_version_filename
+from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
-from pyicloud_ipd.utils import disambiguate_filenames
+from pyicloud_ipd.utils import disambiguate_filenames, size_to_suffix
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
 
@@ -118,6 +118,11 @@ def autodelete_photos(
                     lp_filename_generator,
                     media.item_type,
                 )
+                if _size in [LivePhotoVersionSize.MEDIUM, LivePhotoVersionSize.THUMB]:
+                    # named like the download with --live-photo-size medium or thumb
+                    version_filename = add_suffix_to_filename(
+                        size_to_suffix(_size), version_filename
+                    )
                 version_dir = (
                     live_photo_dir if isinstance(_size, LivePhotoVersionSize) else download_dir
                 )
