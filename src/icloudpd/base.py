@@ -1390,7 +1390,8 @@ def core_single_run(
                                         )
 
                                     # retrier(delete_local, error_handler)
-                                    if deleted:
+                                    # a dry run deletes nothing, so the next page still starts after this asset
+                                    if deleted and not user_config.dry_run:
                                         photo_album.increment_offset(-1)
 
                                 photos_counter += 1
