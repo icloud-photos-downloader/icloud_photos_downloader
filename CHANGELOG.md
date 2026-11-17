@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.33.1 (2026-11-17)
+
 - fix: an asset that iCloud lists without an original version stopped the whole run with `KeyError: <AssetVersionSize.ORIGINAL: 'original'>` when downloading originals (the default), so nothing past it was ever downloaded; it is now logged and skipped like a missing `--force-size` size [#926](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/926) [#1261](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1261)
 - fix: "IOError while writing file" always guessed "You might have run out of disk space" and hid the actual error; it now shows the error from the system, e.g. `[Errno 28] No space left on device` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
 - fix: `--until-found` counted files instead of photos, so with more than one `--size` (e.g. `--size original --size medium`) each photo counted once per size and the run stopped before it had found X already downloaded photos
