@@ -24,7 +24,7 @@ class TempSuffixOptionTestCase(TestCase):
         self.assertEqual(".icloudpd", user_configs[0].temp_suffix)
 
     def test_suffix_with_a_path_separator_is_rejected(self) -> None:
-        for suffix in ("", "a/b", "a\b"):
+        for suffix in ("", "a/b", "a\\b"):
             with self.assertRaises(ArgumentError):
                 parse(["--username", "u", "--directory", "d", "--temp-suffix", suffix])
 
