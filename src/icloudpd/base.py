@@ -1106,6 +1106,7 @@ def core_single_run(
                 user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
                 user_config.adp_web_access,
+                user_config.ignore_indexing_state,
             )
 
             # dump captured responses for debugging
