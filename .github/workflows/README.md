@@ -54,7 +54,7 @@ EOF
 
 ## Publishing to npm
 
-The npm job in `publish.yml` publishes `icloudpd` and the six `@icloudpd/*` platform packages. npm first tries [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC, no token needed) and falls back to the `NPM_TOKEN` secret for a package that has no trusted publisher. A trusted publisher is set up per package on npmjs.com (package settings, Trusted Publisher, GitHub Actions) with organization `icloud-photos-downloader`, repository `icloud_photos_downloader`, workflow `create-release.yml` (the workflow that calls `publish.yml`, not `publish.yml` itself), no environment, and `npm publish` allowed. A new trusted publisher expires if it isn't used for a publish within 2 days, so set it up shortly before a release.
+The npm job in `publish.yml` publishes `icloudpd` and the six `@icloudpd/*` platform packages. npm first tries [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC, no token needed) and falls back to the `NPM_TOKEN` secret for a package that has no trusted publisher. The job runs in the `release` environment, which only `v*` tags can deploy to. A trusted publisher is set up per package on npmjs.com (package settings, Trusted Publisher, GitHub Actions) with organization `icloud-photos-downloader`, repository `icloud_photos_downloader`, workflow `create-release.yml` (the workflow that calls `publish.yml`, not `publish.yml` itself), environment `release`, and `npm publish` allowed. A new trusted publisher expires if it isn't used for a publish within 2 days, so set it up shortly before a release.
 
 ## History
 

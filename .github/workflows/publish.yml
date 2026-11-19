@@ -59,6 +59,8 @@ jobs:
   npm:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # only v* tags can use the "release" environment; the npm trusted publishers can be limited to it
+    environment: release
     # id-token lets npm publish with trusted publishing (OIDC) where it is set up on
     # npmjs.com; packages without it fall back to NODE_AUTH_TOKEN (NPM_TOKEN)
     permissions:
