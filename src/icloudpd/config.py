@@ -55,6 +55,7 @@ class _DefaultConfig:
     skip_created_after: datetime.datetime | datetime.timedelta | None
     skip_photos: bool
     skip_screenshots: bool = False
+    exclude_filenames: Sequence[str] = ()
 
 
 @dataclass(kw_only=True)
