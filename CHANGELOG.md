@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
+- feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
 - feat: add `--xmp-sidecar-only` to write the XMP sidecars without downloading the photos and videos [#1265](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1265)
 
 ## 1.33.1 (2026-11-17)
