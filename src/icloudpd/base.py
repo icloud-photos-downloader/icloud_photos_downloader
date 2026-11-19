@@ -2,11 +2,13 @@
 """Main script that uses Click to parse command-line arguments"""
 
 import datetime
+import fnmatch
 import getpass
 import itertools
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -415,6 +417,7 @@ def _process_all_users_once(
                 user_config.skip_photos,
                 filename_builder,
                 skip_screenshots=user_config.skip_screenshots,
+                exclude_filenames=user_config.exclude_filenames,
             )
 
             downloader = (
@@ -556,6 +559,13 @@ def _(offset: datetime.timedelta) -> datetime.datetime:
     return datetime.datetime.now(get_localzone()) - offset
 
 
+def matches_exclude_filename(filename: str, patterns: Sequence[str]) -> bool:
+    """Whether the filename matches one of the --exclude-filename patterns, ignoring case"""
+    return any(
+        re.match(fnmatch.translate(pattern), filename, flags=re.IGNORECASE) for pattern in patterns
+    )
+
+
 def where_builder(
     logger: logging.Logger,
     skip_videos: bool,
@@ -566,6 +576,7 @@ def where_builder(
     photo: PhotoAsset,
     *,
     skip_screenshots: bool = False,
+    exclude_filenames: Sequence[str] = (),
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
         logger.debug(asset_type_skip_message(AssetItemType.IMAGE, filename_builder, photo))
@@ -588,6 +599,12 @@ def where_builder(
         temp_created_after = offset_to_datetime(skip_created_after)
         if photo.created > temp_created_after:
             logger.debug(skip_created_after_message(temp_created_after, photo, filename_builder))
+            return False
+
+    if exclude_filenames:
+        filename = filename_builder(photo)
+        if matches_exclude_filename(filename, exclude_filenames):
+            logger.debug(f"Skipping {filename}, as it matches --exclude-filename.")
             return False
 
     return True
