@@ -11,10 +11,12 @@ A command-line tool to download your iCloud photos to local storage
 :hidden:
 install
 authentication
+selecting
 naming
 mode
 size
 raw
+metadata
 webui
 nas
 reference

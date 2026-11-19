@@ -27,15 +27,26 @@ These types of assets can also be downloaded by `icloudpd`. The following format
 ```{versionadded} 1.19.0
 ```
 
-iCloud supports images with two representations. `icloudpd` can download one or both representations.
+iCloud supports images with two representations, a RAW file and a JPEG file. `icloudpd` can download one or both representations.
 
-One representation will be the `original` [size](size) and the other `alternative`.
+One representation will be the `original` [size](size) and the other `alternative`. Which one is which depends on the asset in iCloud, so `icloudpd` lets you fix it with the [`--align-raw`](align-raw-parameter) parameter:
 
-As of June 2024, icloud.com always shows assets with two representations as RAW+JPEG. The Photos app on Mac
-allows choosing which representation to treat as original, but it is not clear what that setting changes. 
+- `as-is` (default) keeps the order as it is in iCloud data
+- `original` always treats RAW as the `original` size
+- `alternative` always treats RAW as the `alternative` size
 
-`icloudpd` disambiguates the behavior with the [`--align-raw`](align-raw-parameter) parameter:
+`--align-raw` only matters for assets that have both representations; photos with a single file are not affected.
 
-- *original* always treats RAW as the original [size](size)
-- *alternative* always treats RAW as the alternative [size](size)
-- *as-is* treats RAW as it is in iCloud data
+### Recipes
+
+For a RAW+JPEG asset named `IMG_1234` in iCloud:
+
+| Goal | Parameters | Files |
+|---|---|---|
+| RAW only | `--align-raw original` | `IMG_1234.CR2` |
+| JPEG only | `--align-raw alternative` | `IMG_1234.JPG` |
+| Both | `--size original --size alternative` | `IMG_1234.CR2`, `IMG_1234.JPG` |
+
+The extension of each file follows its file type (here a Canon CR2), so the two files of a pair normally get different names. An `-alternative` suffix is only added when both would get the same name.
+
+Assets without an `alternative` representation are downloaded as `original` in all three recipes, see [Fallback Logic](size).
