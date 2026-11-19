@@ -48,6 +48,10 @@ jobs:
 
   publish:
     needs: [get_version, build_package, compile_notes]
+    # contents for the GitHub release, id-token for npm trusted publishing
+    permissions:
+      contents: write
+      id-token: write
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
