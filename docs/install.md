@@ -227,3 +227,13 @@ Bad Request (400)
 This error often happens because your account hasn't used the iCloud API before, so Apple's servers need to prepare some information about your photos. This process can take around 5-10 minutes, so please wait a few minutes and try again.
 
 If you are still seeing this message after 30 minutes, then please [open an issue on GitHub](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/new) and post the script output.
+
+## Using a Proxy
+
+`icloudpd` has no proxy parameter of its own, but it follows the standard proxy environment variables. Set `HTTPS_PROXY` (all traffic to Apple, including sign-in and downloads, uses HTTPS) before starting it:
+
+```shell
+HTTPS_PROXY=http://proxy.example.com:3128 icloudpd --username your@email.address --directory /data
+```
+
+Use `NO_PROXY` for hosts that should be reached directly. For Docker, pass the variable with `-e HTTPS_PROXY=...`.
