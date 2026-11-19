@@ -283,6 +283,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="store_true",
     )
     cloned.add_argument(
+        "--exclude-filename",
+        help="Don't download assets whose filename matches the pattern, e.g. `IMG_12*.JPG`. "
+        "Matching ignores case. Can be used several times",
+        action="append",
+        dest="exclude_filenames",
+    )
+    cloned.add_argument(
         "--temp-suffix",
         help="Suffix of the temporary files used while a download is in progress "
         "(default: %(default)s)",
@@ -514,6 +521,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_created_after=user_ns.skip_created_after,
         skip_photos=user_ns.skip_photos,
         skip_screenshots=user_ns.skip_screenshots,
+        exclude_filenames=tuple(user_ns.exclude_filenames or ()),
         temp_suffix=user_ns.temp_suffix,
     )
 
