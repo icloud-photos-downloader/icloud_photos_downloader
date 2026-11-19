@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
 - feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
   - `.part` files left by interrupted downloads before the suffix was changed are not resumed or removed; delete them by hand
 
@@ -18,6 +19,7 @@
 - fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
 - fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
 - fix: `--dry-run` with `--keep-icloud-recent-days` re-reads the same page forever [#1480](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1480)
+- chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
 
 ## 1.33.0 (2026-11-03)
 
