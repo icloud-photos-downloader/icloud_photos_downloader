@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
 - fix: a refused sign-in was logged as `INFO` with a Python tuple holding Apple's raw JSON; it is now one `ERROR` line with Apple's message and code, with hints on a password stored in the keyring and on the saved session, and the request dump that follows is labelled as details for a bug report [#1348](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1348) [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
 
 ## 1.33.1 (2026-11-17)
@@ -17,6 +18,7 @@
 - fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
 - fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
 - fix: `--dry-run` with `--keep-icloud-recent-days` re-reads the same page forever [#1480](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1480)
+- chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
 
 ## 1.33.0 (2026-11-03)
 

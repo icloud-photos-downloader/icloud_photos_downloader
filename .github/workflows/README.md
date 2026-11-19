@@ -52,6 +52,10 @@ EOF
 - **No apt on the runner where avoidable:** tests only need one locale each (`de_DE.UTF-8` for the unit tests, `ru_RU.UTF-8` for the tzlc check), so jobs run `sudo locale-gen <locale>` instead of `apt-get install locales-all`, which sometimes took minutes depending on the package mirror.
 - **Skipping:** `skip_check` (fkirc/skip-duplicate-actions) skips a run whose content already passed, and runs whose only changes are Markdown, `docs/` or `examples/`.
 
+## Publishing to npm
+
+The npm job in `publish.yml` publishes `icloudpd` and the six `@icloudpd/*` platform packages. npm first tries [trusted publishing](https://docs.npmjs.com/trusted-publishers) (OIDC, no token needed) and falls back to the `NPM_TOKEN` secret for a package that has no trusted publisher. A trusted publisher is set up per package on npmjs.com (package settings, Trusted Publisher, GitHub Actions) with organization `icloud-photos-downloader`, repository `icloud_photos_downloader`, workflow `create-release.yml` (the workflow that calls `publish.yml`, not `publish.yml` itself), no environment, and `npm publish` allowed. A new trusted publisher expires if it isn't used for a publish within 2 days, so set it up shortly before a release.
+
 ## History
 
 - 2026-10: runners moved from `macos-14` (retired by GitHub on 2026-11-02) to `macos-15` and from `ubuntu-22.04` to `ubuntu-24.04`; actions moved to their Node 24 releases and CodeQL to v4; concurrency, timeouts and `locale-gen` were added; the 332 per-image Linux compatibility jobs were batched into 29 jobs (376 → 73 jobs per full build), with the same tests and results. Details are in the commit messages.
