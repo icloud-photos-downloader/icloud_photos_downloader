@@ -416,6 +416,7 @@ def _process_all_users_once(
                 user_config.skip_created_after,
                 user_config.skip_photos,
                 filename_builder,
+                skip_screenshots=user_config.skip_screenshots,
                 exclude_filenames=user_config.exclude_filenames,
             )
 
@@ -574,6 +575,7 @@ def where_builder(
     filename_builder: Callable[[PhotoAsset], str],
     photo: PhotoAsset,
     *,
+    skip_screenshots: bool = False,
     exclude_filenames: Sequence[str] = (),
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
@@ -581,6 +583,10 @@ def where_builder(
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
         logger.debug(asset_type_skip_message(AssetItemType.MOVIE, filename_builder, photo))
+        return False
+
+    if skip_screenshots and photo.is_screenshot:
+        logger.debug(f"Skipping {filename_builder(photo)}, as it is a screenshot.")
         return False
 
     if skip_created_before is not None:

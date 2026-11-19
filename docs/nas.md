@@ -11,7 +11,7 @@ Application Name | `icloudpd` |
 Version | N/A | Leave default
 Image Configuration/Repository | `icloudpd/icloudpd` |
 Image Configuration/Tag | `latest` |
-Container Configuration/Command | `icloudpd`<br>`-u`<br>`your@email.address`<br>`-d`<br>`/data`<br>`--password-provider`<br>`webui`<br>`--mfa-provider`<br>`webui`<br>`--watch-with-interval`<br>`3600` | each param is a separate 'command'
+Container Configuration/Command | `icloudpd`<br>`-u`<br>`your@email.address`<br>`-d`<br>`/data`<br>`--cookie-directory`<br>`/config`<br>`--password-provider`<br>`webui`<br>`--mfa-provider`<br>`webui`<br>`--watch-with-interval`<br>`3600` | each param is a separate 'command'
 Network Configuration/Host Port | `9090` | or other available port on your host
 Network Configuration/Container Port | `8080` | 
 Portal Configuration/Enable Portal Configuration | checked | 
@@ -22,6 +22,9 @@ Portal Configuration/Port | `9090` | Same as "Network Configuration/Host Port" a
 Storage Configuration/Type | Host Path
 Storage Configuration/Mount Path | /data 
 Storage Configuration/Host Path | /mnt/my_pool/photos | or another location on your host
+Storage Configuration/Type | Host Path | add a second storage entry for the session
+Storage Configuration/Mount Path | /config |
+Storage Configuration/Host Path | /mnt/my_pool/icloudpd-config | or another location on your host; keeps the session so 2FA is not needed again after the app is updated or recreated
 Resources Configuration/Enable Resource Limits | checked
 Resources Configuration/CPUs | 2 | or whatever makes sense for your system
 Resources Configuration/Memory (in MB) | 4096 | or whatever makes sense for your system
