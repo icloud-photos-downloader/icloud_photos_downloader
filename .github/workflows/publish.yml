@@ -21,6 +21,10 @@ on:
 
 name: Publish Release
 
+# gh_release needs to write the release; only the npm job gets id-token (see below)
+permissions:
+  contents: write
+
 jobs:
 
   docker:
@@ -60,11 +64,17 @@ jobs:
   npm:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # id-token lets npm publish with trusted publishing (OIDC) where it is set up on
+    # npmjs.com; packages without it fall back to NODE_AUTH_TOKEN (NPM_TOKEN)
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: '20.x'
+          # trusted publishing needs npm 11.5.1 or later (bundled with Node 24.5 and later)
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download artifacts
