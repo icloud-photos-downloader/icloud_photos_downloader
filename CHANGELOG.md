@@ -3,6 +3,7 @@
 ## Unreleased
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
+- feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
 - fix: a refused sign-in was logged as `INFO` with a Python tuple holding Apple's raw JSON; it is now one `ERROR` line with Apple's message and code, with hints on a password stored in the keyring and on the saved session, and the request dump that follows is labelled as details for a bug report [#1348](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1348) [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
 
 ## 1.33.1 (2026-11-17)
