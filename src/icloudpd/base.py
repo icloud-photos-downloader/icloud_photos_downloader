@@ -163,6 +163,45 @@ def update_password_status_in_webui(status_exchange: StatusExchange, _u: str, _p
     status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
 
 
+def apple_sign_in_error(error: PyiCloudFailedLoginException) -> str:
+    """One readable line for a failed sign-in, with Apple's own message when it gave one (#1348)"""
+    message = str(error.args[0]) if error.args else "Sign-in failed"
+    cause = next(
+        (arg for arg in error.args[1:] if isinstance(arg, PyiCloudAPIResponseException)), None
+    )
+    if cause is None:
+        return message
+    try:
+        service_error = json.loads(cause.reason)["serviceErrors"][0]
+        apple_message = str(service_error["message"])
+        apple_code = str(service_error.get("code", cause.code))
+    except (ValueError, KeyError, IndexError, TypeError):
+        return f"{message} Apple's answer: {cause}"
+    return f'{message} Apple says: "{apple_message}" ({apple_code})'
+
+
+def log_sign_in_hints(
+    logger: logging.Logger, user_config: UserConfig, global_config: GlobalConfig
+) -> None:
+    """What to try after Apple refused the password"""
+    if PasswordProvider.KEYRING in global_config.password_providers:
+        try:
+            stored = get_password_from_keyring(user_config.username)
+        except KeyringError:
+            stored = None
+        if stored:
+            logger.info(
+                "A password for %s is stored in the keyring and may be out of date; remove it with "
+                "`icloud --username %s --delete-from-keyring` and run icloudpd again to enter it",
+                user_config.username,
+                user_config.username,
+            )
+    logger.info(
+        "If the password is right, deleting the saved session in %s and signing in again can help",
+        user_config.cookie_directory,
+    )
+
+
 def update_auth_error_in_webui(status_exchange: StatusExchange, error: str) -> bool:
     return status_exchange.set_error(error)
 
@@ -1515,10 +1554,16 @@ def core_single_run(
                     else:
                         pass
         except PyiCloudFailedLoginException as error:
-            logger.info(error)
+            sign_in_error = apple_sign_in_error(error)
+            logger.error(sign_in_error)
+            if len(error.args) > 1:
+                # Apple refused the sign-in (not a missing password or ADP consent)
+                log_sign_in_hints(logger, user_config, global_config)
+            if captured_responses:
+                logger.debug("Sign-in requests and responses (for a bug report):")
             dump_responses(logger.debug, captured_responses)
             if PasswordProvider.WEBUI in global_config.password_providers:
-                update_auth_error_in_webui(status_exchange, str(error))
+                update_auth_error_in_webui(status_exchange, sign_in_error)
                 continue
             else:
                 return 1
