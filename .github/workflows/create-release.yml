@@ -51,10 +51,44 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
-      PYPI_REPOSITORY: ${{ vars.PYPI_REPOSITORY }}
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
-      PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+
+  # PyPI trusted publishing (no token): PyPI can't publish from a reusable workflow
+  # (pypi/warehouse#11096), so this job lives here and not in publish.yml. The publisher on
+  # pypi.org is registered for this workflow file and the "release" environment.
+  pypi:
+    needs: [get_version, build_package, compile_notes]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    environment: release
+    permissions:
+      id-token: write
+    steps:
+    - name: Download artifacts (src)
+      uses: actions/download-artifact@v8
+      with:
+        name: icloudpd-src
+        path: |
+          artifacts
+
+    - name: Download artifacts (bin)
+      uses: actions/download-artifact@v8
+      with:
+        pattern: icloudpd-bin-*
+        merge-multiple: true
+        path: |
+          artifacts
+
+    - name: Collect wheels
+      run: |
+        mkdir -p dist
+        cp artifacts/*.whl dist/
+        ls -l dist
+
+    - name: Publish PyPI
+      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      with:
+        packages-dir: dist

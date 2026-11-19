@@ -4,19 +4,12 @@ on:
       icloudpd_version:
         required: true
         type: string
-      PYPI_REPOSITORY:
-        required: false
-        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: false
       DOCKERHUB_PASSWORD:
         required: false
       NPM_TOKEN:
-        required: false
-      PYPI_USERNAME:
-        required: false
-      PYPI_PASSWORD:
         required: false
 
 name: Publish Release
@@ -26,6 +19,8 @@ jobs:
   docker:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # the Docker Hub secrets move into the "release" environment, which only v* tags can use
+    environment: release
 
     steps:
       - name: Checkout code
@@ -85,45 +80,6 @@ jobs:
           npm publish dist/npm/icloudpd --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  pypi:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Python 3.15
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.15'
-      
-      - name: Install Dev dependencies
-        run: |
-          pip3 install --group dev
-
-      - name: Download artifacts (src)
-        uses: actions/download-artifact@v8
-        with:
-          name: icloudpd-src
-          path: |
-            dist
-
-      - name: Download artifacts (bin)
-        uses: actions/download-artifact@v8
-        with:
-          pattern: icloudpd-bin-*
-          merge-multiple: true
-          path: |
-            dist
-
-      - name: Publish PyPI
-        env:
-          TWINE_REPOSITORY: ${{ inputs.PYPI_REPOSITORY }}
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
 
   gh_release:
     runs-on: ubuntu-24.04

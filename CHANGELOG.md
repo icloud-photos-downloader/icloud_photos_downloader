@@ -15,6 +15,7 @@
 - fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
 - fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
 - fix: `--dry-run` with `--keep-icloud-recent-days` re-reads the same page forever [#1480](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1480)
+- chore: publish to PyPI with trusted publishing from a job in `create-release.yml` that uses the "release" environment, instead of a password in the repository secrets; the Docker Hub job uses that environment too
 
 ## 1.33.0 (2026-11-03)
 
