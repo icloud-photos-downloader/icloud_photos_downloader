@@ -17,7 +17,7 @@ With [`--xmp-sidecar`](xmp-sidecar-parameter), `icloudpd` writes an [XMP](https:
 - keywords
 - location: latitude, longitude, altitude, speed and GPS time
 - creation date, with the time zone offset iCloud stored for the asset
-- orientation
+- orientation, from the edits in Photos; left out of the sidecar of the `adjusted` file, which iCloud already delivers upright
 - rating: `5` for favorites, `-1` (rejected) for hidden or deleted assets
 - `Screenshot` as camera make, for screenshots
 
