@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
 - chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
 - chore: publish to PyPI with trusted publishing from a job in `create-release.yml` that uses the "release" environment, instead of a password in the repository secrets; the Docker Hub and npm jobs use that environment too
 
