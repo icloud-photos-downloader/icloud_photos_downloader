@@ -435,6 +435,14 @@ code 2 without doing anything. The rejected combinations are listed with each op
     ```{versionadded} 1.30.0
     ```
 
+(skip-screenshots-parameter)=
+`--skip-screenshots`
+    
+:   Leaves out photos that iCloud marks as screenshots, the ones in the Screenshots album of Photos. Screen recordings are videos and are not left out.
+
+    ```{versionadded} 1.34.0
+    ```
+
 (skip-live-photos-parameter)=
 `--skip-live-photos`
     

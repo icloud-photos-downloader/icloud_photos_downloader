@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
 - feat: `--live-photo-directory` downloads the video part of Live Photos to a separate directory, with the same folder structure as `--directory` [#94](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/94)
 
 ## 1.33.1 (2026-11-17)
