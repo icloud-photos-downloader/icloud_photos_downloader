@@ -8,9 +8,13 @@ when every answer was a well-formed RUNNING record, and warns that the listing m
 incomplete. Any other answer stops the run as without the option.
 """
 
+import inspect
 import logging
+import os
 from typing import Any, Dict, List
 from unittest import TestCase, mock
+
+import pytest
 
 from icloudpd.authentication import authenticator
 from icloudpd.base import core_single_run, lp_filename_concatinator
@@ -21,7 +25,7 @@ from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudServiceNotActivatedException
 from pyicloud_ipd.services import photos
 from pyicloud_ipd.services.photos import PhotoLibrary, PhotosService
-from tests.helpers import run_main
+from tests.helpers import path_from_project_root, run_icloudpd_test, run_main
 from tests.test_issue_1387_indexing_state_retry import indexing_state_response
 
 ZONE_ID = {"zoneName": "PrimarySync", "zoneType": "REGULAR_CUSTOM_ZONE"}
@@ -69,6 +73,30 @@ class Issue1387IgnoreIndexingStateTest(TestCase):
         self.assertIn("PrimarySync is still reported as indexing", logs.output[0])
         self.assertIn(f"RUNNING on all {ATTEMPTS} checks", logs.output[0])
         self.assertIn("the listing may be incomplete", logs.output[0])
+
+    def test_marks_the_library_when_the_state_was_ignored(self, sleep: mock.MagicMock) -> None:
+        session = session_returning_responses([running()] * ATTEMPTS)
+        library = PhotoLibrary(
+            "https://example.com/endpoint",
+            {},
+            session,
+            zone_id=ZONE_ID,
+            library_type="private",
+            ignore_indexing_state=True,
+        )
+        self.assertTrue(library.indexing_state_ignored)
+
+    def test_does_not_mark_the_library_when_finished(self, sleep: mock.MagicMock) -> None:
+        session = session_returning_responses([running(), indexing_state_response("FINISHED")])
+        library = PhotoLibrary(
+            "https://example.com/endpoint",
+            {},
+            session,
+            zone_id=ZONE_ID,
+            library_type="private",
+            ignore_indexing_state=True,
+        )
+        self.assertFalse(library.indexing_state_ignored)
 
     def test_raises_when_always_running_without_option(self, sleep: mock.MagicMock) -> None:
         with self.assertRaises(PyiCloudServiceNotActivatedException) as context:
@@ -249,3 +277,61 @@ class IgnoreIndexingStateCliTest(TestCase):
                 lp_filename_concatinator,
             )
         self.assertTrue(mocked_authenticator.call_args.args[-1])
+
+
+class IgnoreIndexingStateEndOfRunTest(TestCase):
+    """The last line of a run must not claim a complete download when the state was ignored"""
+
+    @pytest.fixture(autouse=True)
+    def inject_fixtures(self) -> None:
+        self.root_path = path_from_project_root(__file__)
+        self.fixtures_path = os.path.join(self.root_path, "fixtures")
+
+    def run_with_ignored_state(self, base_dir: str, extra: List[str]) -> Any:
+        original_init = PhotoLibrary.__init__
+
+        # the recorded responses say FINISHED; mark the library as if every check had
+        # answered RUNNING and the option let the run continue
+        def init_with_ignored_state(self: PhotoLibrary, *args: Any, **kwargs: Any) -> None:
+            original_init(self, *args, **kwargs)
+            self.indexing_state_ignored = self.ignore_indexing_state
+
+        with mock.patch.object(PhotoLibrary, "__init__", init_with_ignored_state):
+            _, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_photos.yml",
+                [],
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "0",
+                    "--no-progress-bar",
+                    *extra,
+                ],
+            )
+        return result
+
+    def test_end_of_run_says_the_listing_may_be_incomplete(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        result = self.run_with_ignored_state(base_dir, ["--ignore-indexing-state"])
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn(
+            "All photos and videos that iCloud listed have been downloaded, but the listing "
+            "may be incomplete",
+            result.output,
+        )
+        self.assertIn("A later run without the option picks up what is missing", result.output)
+        self.assertNotIn("All photos and videos have been downloaded", result.output)
+
+    def test_end_of_run_unchanged_without_option(self) -> None:
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        result = self.run_with_ignored_state(base_dir, [])
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("All photos and videos have been downloaded", result.output)
+        self.assertNotIn("the listing may be incomplete", result.output)

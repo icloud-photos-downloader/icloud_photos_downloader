@@ -292,6 +292,9 @@ class PhotoLibrary:
         self.zone_id = zone_id
         self.library_type = library_type
         self.ignore_indexing_state = ignore_indexing_state
+        # set when the run continued past a RUNNING state because of the option, so the
+        # end of the run can say that the listing may be incomplete
+        self.indexing_state_ignored = False
 
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
         json_data = json.dumps(
@@ -334,6 +337,7 @@ class PhotoLibrary:
                     self.zone_id.get("zoneName"),
                     INDEXING_STATE_ATTEMPTS,
                 )
+                self.indexing_state_ignored = True
             else:
                 raise PyiCloudServiceNotActivatedException(
                     ("Apple iCloud Photo Library has not finished indexing yet"), None
