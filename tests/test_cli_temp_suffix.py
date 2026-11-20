@@ -28,6 +28,12 @@ class TempSuffixOptionTestCase(TestCase):
             with self.assertRaises(ArgumentError):
                 parse(["--username", "u", "--directory", "d", "--temp-suffix", suffix])
 
+    def test_suffix_without_a_leading_dot_is_rejected(self) -> None:
+        """Without the dot, a suffix like "jpg" would match every *.jpg in the library"""
+        for suffix in ("jpg", "part", "icloudpd.tmp"):
+            with self.assertRaises(ArgumentError):
+                parse(["--username", "u", "--directory", "d", "--temp-suffix", suffix])
+
     def test_suffix_that_looks_like_media_is_rejected(self) -> None:
         """A leftover temporary file must not be mistaken for a photo or sidecar"""
         for suffix in (".jpg", ".HEIC", ".mov", ".xmp", ".tmp.jpg"):

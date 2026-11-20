@@ -291,8 +291,8 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--temp-suffix",
-        help="Suffix of the temporary files used while a download is in progress "
-        "(default: %(default)s)",
+        help="Suffix of the temporary files used while a download is in progress, "
+        "must start with a dot (default: %(default)s)",
         type=validate_temp_suffix,
         default=".part",
     )
@@ -752,6 +752,12 @@ def validate_temp_suffix(suffix: str) -> str:
     if not suffix or "/" in suffix or "\\" in suffix:
         raise argparse.ArgumentTypeError(
             f"Suffix {suffix!r} specified in --temp-suffix must not be empty or contain a path separator"
+        )
+    # Without a leading dot the suffix glues onto the extension ("jpg" makes "x.jpg"
+    # end in "jpg"), so --prune-orphans would take every photo for a temporary file
+    if not suffix.startswith("."):
+        raise argparse.ArgumentTypeError(
+            f"Suffix {suffix!r} specified in --temp-suffix must start with a dot, e.g. .{suffix}"
         )
     # A leftover temporary file must not look like media or a sidecar, or indexers and
     # --prune-orphans-adopt-existing would treat it as one
