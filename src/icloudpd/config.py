@@ -55,6 +55,7 @@ class _DefaultConfig:
     skip_photos: bool
     skip_screenshots: bool = False
     exclude_filenames: Sequence[str] = ()
+    temp_suffix: str = ".part"
     xmp_sidecar_only: bool = False
 
 

@@ -17,6 +17,7 @@ from icloudpd.config import GlobalConfig, UserConfig
 from icloudpd.log_level import LogLevel
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.password_provider import PasswordProvider
+from icloudpd.prune import MEDIA_EXTENSIONS
 from icloudpd.string_helpers import parse_timestamp_or_timedelta, splitlines
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.live_photo_mov_filename_policy import LivePhotoMovFilenamePolicy
@@ -293,6 +294,13 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         action="append",
         dest="exclude_filenames",
     )
+    cloned.add_argument(
+        "--temp-suffix",
+        help="Suffix of the temporary files used while a download is in progress, "
+        "must start with a dot (default: %(default)s)",
+        type=validate_temp_suffix,
+        default=".part",
+    )
     return cloned
 
 
@@ -519,6 +527,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_photos=user_ns.skip_photos,
         skip_screenshots=user_ns.skip_screenshots,
         exclude_filenames=tuple(user_ns.exclude_filenames or ()),
+        temp_suffix=user_ns.temp_suffix,
         xmp_sidecar_only=user_ns.xmp_sidecar_only,
     )
 
@@ -761,6 +770,27 @@ def cli() -> int:
             return 2
         else:
             return run_with_configs(global_ns, user_nses)
+
+
+def validate_temp_suffix(suffix: str) -> str:
+    if not suffix or "/" in suffix or "\\" in suffix:
+        raise argparse.ArgumentTypeError(
+            f"Suffix {suffix!r} specified in --temp-suffix must not be empty or contain a path separator"
+        )
+    # Without a leading dot the suffix glues onto the extension ("jpg" makes "x.jpg"
+    # end in "jpg"), so --prune-orphans would take every photo for a temporary file
+    if not suffix.startswith("."):
+        raise argparse.ArgumentTypeError(
+            f"Suffix {suffix!r} specified in --temp-suffix must start with a dot, e.g. .{suffix}"
+        )
+    # A leftover temporary file must not look like media or a sidecar, or indexers and
+    # --prune-orphans-adopt-existing would treat it as one
+    extension = pathlib.PurePath("x" + suffix).suffix.lower()
+    if extension in MEDIA_EXTENSIONS or extension == ".xmp":
+        raise argparse.ArgumentTypeError(
+            f"Suffix {suffix!r} specified in --temp-suffix must not end with a media or sidecar extension"
+        )
+    return suffix
 
 
 def validate_folder_structure(folder_structure: str) -> str:

@@ -333,6 +333,14 @@ code 2 without doing anything. The rejected combinations are listed with each op
     Discussion of [File Naming and Deduplication](naming)
     ``` 
 
+(temp-suffix-parameter)=
+`--temp-suffix`
+    
+:   Suffix of the temporary files that are used while a download is in progress, and while [`--prune-orphans`](prune-orphans-parameter) saves its snapshot. Default is `.part`. Change it if the destination refuses files with this suffix, for example a WebDAV mount of Nextcloud. The suffix must start with a dot, and suffixes that end with a media or `.xmp` extension are rejected, so a leftover temporary file is never mistaken for a photo. Files left by an interrupted download are only resumed when the same suffix is used again.
+
+    ```{versionadded} 1.34.0
+    ```
+
 (username-parameter)=
 `--username X`, `-u X`
     

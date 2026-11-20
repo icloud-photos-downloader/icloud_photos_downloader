@@ -4,6 +4,8 @@
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
 - feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
+- feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+  - `.part` files left by interrupted downloads before the suffix was changed are not resumed or removed; delete them by hand
 - feat: add `--xmp-sidecar-only` to write the XMP sidecars without downloading the photos and videos [#1265](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1265)
 
 ## 1.33.1 (2026-11-17)
