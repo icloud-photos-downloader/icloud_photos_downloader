@@ -439,6 +439,7 @@ def _process_all_users_once(
                     filename_builder,
                     user_config.align_raw,
                     temp_suffix=user_config.temp_suffix,
+                    xmp_sidecar_only=user_config.xmp_sidecar_only,
                     live_photo_directory=user_config.live_photo_directory,
                 )
                 if user_config.directory is not None
@@ -664,6 +665,7 @@ def download_builder(
     *,
     inspect_only: bool = False,
     temp_suffix: str = ".part",
+    xmp_sidecar_only: bool = False,
     live_photo_directory: str | None = None,
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
@@ -790,7 +792,12 @@ def download_builder(
             file_exists = os.path.isfile(original_download_path)
 
         if file_exists:
-            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+            # With --xmp-sidecar-only nothing is downloaded, so a local copy of a different
+            # size (an export, say) must keep the plain name and get the sidecar
+            if (
+                file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
+                and not xmp_sidecar_only
+            ):
                 # for later: this crashes if download-size medium is specified
                 file_size = os.stat(original_download_path or download_path).st_size
                 photo_size = version.size
@@ -819,7 +826,10 @@ def download_builder(
         if not file_exists and not inspect_only:
             found_missing = True
             counter.reset()
-            if only_print_filenames:
+            if xmp_sidecar_only:
+                # only the sidecar is written; without the media file the asset is not kept locally
+                present = False
+            elif only_print_filenames:
                 print(download_path)
             else:
                 truncated_path = truncate_middle(download_path, 96)
@@ -868,6 +878,8 @@ def download_builder(
         if xmp_sidecar and not only_print_filenames:
             expected_paths.append(download_path + ".xmp")
             if not inspect_only:
+                if xmp_sidecar_only and not dry_run:
+                    os.makedirs(download_dir, exist_ok=True)
                 sidecar_existed = os.path.lexists(download_path + ".xmp")
                 generate_xmp_file(
                     logger, download_path, photo._asset_record, dry_run, download_size
@@ -879,7 +891,7 @@ def download_builder(
         counter.increment()
 
     # Also download the live photo if present
-    if not skip_live_photos:
+    if not skip_live_photos and not xmp_sidecar_only:
         lp_size = live_photo_size
         photo_versions_with_policy = photo.versions_with_raw_policy(raw_policy)
         if lp_size in photo_versions_with_policy:
