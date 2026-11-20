@@ -509,15 +509,37 @@ class PhotosService(PhotoLibrary):
 
         # Initialize as primary library
         service_endpoint = self.get_service_endpoint("private")
-        zone_id = {"zoneName": "PrimarySync"}
-        super().__init__(
-            service_endpoint,
-            self.params,
-            self.session,
-            zone_id,
-            "private",
-            ignore_indexing_state=ignore_indexing_state,
-        )
+        zone_id: Dict[str, Any] = {"zoneName": "PrimarySync"}
+        try:
+            super().__init__(
+                service_endpoint,
+                self.params,
+                self.session,
+                zone_id,
+                "private",
+                ignore_indexing_state=ignore_indexing_state,
+            )
+        except PyiCloudServiceNotActivatedException as error:
+            # On some accounts Apple moved the library to another zone, such as PrimarySync1,
+            # and PrimarySync no longer exists (#1361)
+            if error.code != "ZONE_NOT_FOUND":
+                raise
+            moved = self._moved_primary_zone_id()
+            if moved is None:
+                raise
+            logger.info(
+                "This account has no PrimarySync zone (the ZONE_NOT_FOUND above); using photo "
+                "library zone %s",
+                moved["zoneName"],
+            )
+            super().__init__(
+                service_endpoint,
+                self.params,
+                self.session,
+                moved,
+                "private",
+                ignore_indexing_state=ignore_indexing_state,
+            )
 
         # TODO: Does syncToken ever change?
         # self.params.update({
@@ -541,29 +563,57 @@ class PhotosService(PhotoLibrary):
 
         return self._shared_libraries
 
+    def _moved_primary_zone_id(self) -> Dict[str, Any] | None:
+        """The zone the primary library moved to, when PrimarySync doesn't exist: the first
+        listed zone whose name starts with PrimarySync"""
+        try:
+            zone_ids = self._fetch_zone_ids("private")
+        except Exception as error:
+            logger.debug("Could not list the photo library zones: %s", error)
+            return None
+        logger.debug("Photo library zones: %s", ", ".join(str(z.get("zoneName")) for z in zone_ids))
+        return next(
+            (
+                z
+                for z in zone_ids
+                if str(z.get("zoneName", "")).startswith("PrimarySync")
+                and z.get("zoneName") != "PrimarySync"
+            ),
+            None,
+        )
+
+    def _fetch_zone_ids(self, library_type: str) -> Sequence[Dict[str, Any]]:
+        """IDs of the zones that exist: without deleted zones, and without entries that only
+        carry an error (zones/list can return those next to the healthy ones)"""
+        url = f"{self.get_service_endpoint(library_type)}/zones/list"
+        request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
+        response = request.json()
+        return [
+            zone["zoneID"]
+            for zone in response["zones"]
+            if not zone.get("deleted")
+            and "serverErrorCode" not in zone
+            and "zoneID" in zone
+            and zone["zoneID"].get("zoneName")
+        ]
+
     def _fetch_libraries(self, library_type: str) -> Dict[str, PhotoLibrary]:
         try:
-            libraries = {}
+            libraries: Dict[str, PhotoLibrary] = {}
             service_endpoint = self.get_service_endpoint(library_type)
-            url = f"{service_endpoint}/zones/list"
-            request = self.session.post(url, data="{}", headers={"Content-type": "text/plain"})
-            response = request.json()
-            for zone in response["zones"]:
-                if not zone.get("deleted"):
-                    zone_name = zone["zoneID"]["zoneName"]
-                    service_endpoint = self.get_service_endpoint(library_type)
-                    libraries[zone_name] = PhotoLibrary(
-                        service_endpoint,
-                        self.params,
-                        self.session,
-                        zone_id=zone["zoneID"],
-                        library_type=library_type,
-                        ignore_indexing_state=self.ignore_indexing_state,
-                    )
-                    # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
-                    # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",
-                    # direction="ASCENDING", query_filter=None,
-                    # zone_id=zone['zoneID'])
+            for zone_id in self._fetch_zone_ids(library_type):
+                if library_type == "private" and zone_id == self.zone_id:
+                    # the primary library is this object; don't check its indexing state again
+                    libraries[zone_id["zoneName"]] = self
+                    continue
+                libraries[zone_id["zoneName"]] = PhotoLibrary(
+                    service_endpoint,
+                    self.params,
+                    self.session,
+                    zone_id=zone_id,
+                    library_type=library_type,
+                    ignore_indexing_state=self.ignore_indexing_state,
+                )
         except Exception as e:
             logger.error(f"library exception: {str(e)}")
         return libraries
