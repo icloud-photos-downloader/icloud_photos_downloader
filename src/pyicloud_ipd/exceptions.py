@@ -40,7 +40,8 @@ class PyiCloudConnectionErrorException(PyiCloudException):
 class PyiCloudFailedLoginException(PyiCloudException):
     """iCloud failed login exception."""
 
-    pass
+    # set by icloudpd's authenticator: the password provider that gave the refused password
+    password_provider: str | None = None
 
 
 class PyiCloudFailedMFAException(PyiCloudException):
