@@ -348,6 +348,23 @@ code 2 without doing anything. The rejected combinations are listed with each op
     [`--list-albums`](list-albums-parameter) or [`--list-libraries`](list-libraries-parameter)
     is given. Without it, `icloudpd` exits with code 2.
 
+(live-photo-directory-parameter)=
+`--live-photo-directory X`
+
+:   Downloads the video part of Live Photos to directory X instead of next to the photo.
+    The [folder structure](folder-structure-parameter) is applied inside it in the same way
+    as in [`--directory`](directory-parameter), so with the default structure the video of
+    a Live Photo taken on 4 November 2020 goes to `X/2020/11/04/`.
+    [`--auto-delete`](auto-delete-parameter) also looks for those videos there.
+    Videos downloaded before the option was set stay next to the photos: they are not moved,
+    and `--auto-delete` doesn't remove them.
+
+    Can't be combined with [`--skip-live-photos`](skip-live-photos-parameter) or
+    [`--prune-orphans`](prune-orphans-parameter).
+
+    ```{versionadded} 1.34.0
+    ```
+
 (file-match-policy-parameter)=
 `--file-match-policy X`
     
