@@ -151,7 +151,8 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     The option is rejected (exit code 2) without a shared library selected with `--library`
     (the default `PrimarySync` is not accepted), when combined with `--delete-after-download`,
-    `--keep-icloud-recent-days` or `--only-print-filenames`, and when its `--directory`
+    `--keep-icloud-recent-days`, `--only-print-filenames` or
+    [`--ignore-indexing-state`](ignore-indexing-state-parameter), and when its `--directory`
     is inside, or contains, the `--directory` of another configuration in the same command.
     An empty shared library is deliberately not pruned; remove its local files manually if intended.
 
@@ -236,6 +237,32 @@ code 2 without doing anything. The rejected combinations are listed with each op
     ```{versionadded} 1.16.0
     Shared library support added for iOS 16 shared libraries
     ``` 
+
+(ignore-indexing-state-parameter)=
+`--ignore-indexing-state`
+    
+:   Continues when iCloud keeps reporting the library as still indexing. Without it, icloudpd
+    checks the indexing state up to 15 times, about 4 seconds apart, and stops with "Apple iCloud
+    Photo Library has not finished indexing yet" if iCloud never answers that indexing has
+    finished. iCloud can keep giving that answer for hours for a library that lists normally.
+
+    With this option, icloudpd continues after the last check if every answer said the library is
+    still indexing, and logs a warning that the listing may be incomplete. The message at the end
+    of the run says so too, instead of "All photos and videos have been downloaded". Any other
+    answer, such as an error or another state, still stops the run.
+
+    While iCloud reports this state, the listing may really be incomplete, so some assets may not
+    be downloaded. A later run without the option, once iCloud reports that indexing has finished,
+    picks up what is missing.
+
+    Can't be combined with [`--auto-delete`](auto-delete-parameter),
+    [`--delete-after-download`](delete-after-download-parameter),
+    [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) or
+    [`--prune-orphans`](prune-orphans-parameter) (exit code 2), so that an incomplete listing can
+    never lead to deletions.
+
+    ```{versionadded} 1.34.0
+    ```
 
 (watch-with-interval-parameter)=
 `--watch-with-interval X`
@@ -460,7 +487,8 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     Can't be combined with [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) or
     [`--delete-after-download`](delete-after-download-parameter) (exit code 2): the assets they
-    move to Recently Deleted would then be deleted locally as well.
+    move to Recently Deleted would then be deleted locally as well. Can't be combined with
+    [`--ignore-indexing-state`](ignore-indexing-state-parameter) either (exit code 2).
 
     ```{seealso}
     [Modes of operation](mode)
@@ -472,8 +500,9 @@ code 2 without doing anything. The rejected combinations are listed with each op
 :   If specified, assets downloaded locally will be deleted in iCloud (actually moved to the Recently Deleted album). Deprecated, use [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) instead.
 
     Can't be combined with [`--auto-delete`](auto-delete-parameter),
-    [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter) or
-    [`--prune-orphans`](prune-orphans-parameter) (exit code 2).
+    [`--keep-icloud-recent-days`](keep-icloud-recent-days-parameter),
+    [`--prune-orphans`](prune-orphans-parameter) or
+    [`--ignore-indexing-state`](ignore-indexing-state-parameter) (exit code 2).
 
     ```{note}
     If remote assets were not downloaded, e.g., because they were already in local storage, they will NOT be deleted in iCloud.
@@ -498,7 +527,7 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     If the parameter is not specified, then nothing is deleted from iCloud.
 
-    Can't be combined with [`--auto-delete`](auto-delete-parameter), which would delete the local copies of the assets this moves to Recently Deleted, or with [`--delete-after-download`](delete-after-download-parameter) or [`--prune-orphans`](prune-orphans-parameter) (exit code 2).
+    Can't be combined with [`--auto-delete`](auto-delete-parameter), which would delete the local copies of the assets this moves to Recently Deleted, or with [`--delete-after-download`](delete-after-download-parameter), [`--prune-orphans`](prune-orphans-parameter) or [`--ignore-indexing-state`](ignore-indexing-state-parameter) (exit code 2).
 
     Only assets that the run looks at are considered for deletion. With [`--recent`](recent-parameter), assets beyond the first X are not checked, and with [`--until-found`](until-found-parameter), assets after the point where the run stops are not checked, so they stay in iCloud. icloudpd logs a warning at startup when these are combined.
 

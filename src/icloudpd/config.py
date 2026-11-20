@@ -57,6 +57,7 @@ class _DefaultConfig:
     exclude_filenames: Sequence[str] = ()
     temp_suffix: str = ".part"
     xmp_sidecar_only: bool = False
+    ignore_indexing_state: bool = False
 
 
 @dataclass(kw_only=True)

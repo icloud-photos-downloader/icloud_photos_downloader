@@ -91,6 +91,7 @@ icloudpd refuses to start and exits with code 2 when one configuration combines:
 - `--auto-delete` and `--delete-after-download`
 - `--keep-icloud-recent-days` and `--delete-after-download`
 - `--prune-orphans` and `--delete-after-download`, `--keep-icloud-recent-days` or `--only-print-filenames`, or `--prune-orphans` without `--library`
+- `--ignore-indexing-state` and `--auto-delete`, `--delete-after-download`, `--keep-icloud-recent-days` or `--prune-orphans`
 - `--watch-with-interval` and `--only-print-filenames`, `--list-albums`, `--list-libraries` or `--auth-only`
 
 ## Previewing and watching
