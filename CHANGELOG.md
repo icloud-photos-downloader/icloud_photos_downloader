@@ -13,6 +13,8 @@
 - fix: `--log-level` now also applies to the bundled iCloud library, so `debug` shows its debug lines (e.g. the indexing state retries) and `error` quiets its warnings; the per-request lines with response headers and session tokens stay out of the output [#1488](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1488)
 - fix: a refused sign-in is now one readable `ERROR` line with Apple's message and code instead of a Python tuple with raw JSON, with hints when Apple refused the password [#1348](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1348) [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
 - fix: accounts whose photo library Apple moved from the `PrimarySync` zone to another zone, such as `PrimarySync1`, failed with `ZONE_NOT_FOUND`; icloudpd now looks up that zone when `PrimarySync` doesn't exist (based on #1367 by @tural-ali) [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
+- chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
+- chore: publish to PyPI with trusted publishing from a job in `create-release.yml` that uses the "release" environment, instead of a password in the repository secrets; the Docker Hub and npm jobs use that environment too
 
 ## 1.33.1 (2026-11-17)
 
@@ -27,7 +29,6 @@
 - fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
 - fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
 - fix: `--dry-run` with `--keep-icloud-recent-days` re-reads the same page forever [#1480](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1480)
-- chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
 
 ## 1.33.0 (2026-11-03)
 
