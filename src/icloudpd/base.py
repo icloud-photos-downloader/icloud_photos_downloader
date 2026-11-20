@@ -165,6 +165,59 @@ def update_password_status_in_webui(status_exchange: StatusExchange, _u: str, _p
     status_exchange.replace_status(Status.CHECKING_PASSWORD, Status.NO_INPUT_NEEDED)
 
 
+# Apple's code when it refuses the password (#1348, #1240)
+WRONG_PASSWORD_CODE = "-20101"
+
+
+def apple_service_error(error: PyiCloudFailedLoginException) -> Tuple[str, str] | None:
+    """Apple's own message and code for a refused sign-in, when its answer has them"""
+    cause = next(
+        (arg for arg in error.args[1:] if isinstance(arg, PyiCloudAPIResponseException)), None
+    )
+    if cause is None:
+        return None
+    try:
+        service_error = json.loads(cause.reason)["serviceErrors"][0]
+        message = service_error.get("message")
+        code = service_error.get("code") or cause.code
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError):
+        return None
+    if not message:
+        return None
+    return str(message), str(code)
+
+
+def apple_sign_in_error(error: PyiCloudFailedLoginException) -> str:
+    """One readable line for a failed sign-in, with Apple's own message when it gave one (#1348)"""
+    message = str(error.args[0]) if error.args else "Sign-in failed"
+    service_error = apple_service_error(error)
+    if service_error is not None:
+        apple_message, apple_code = service_error
+        return f'{message} Apple says: "{apple_message}" ({apple_code})'
+    cause = next(
+        (arg for arg in error.args[1:] if isinstance(arg, PyiCloudAPIResponseException)), None
+    )
+    if cause is None:
+        return message
+    return f"{message} Apple's answer: {cause}"
+
+
+def log_sign_in_hints(
+    logger: logging.Logger, user_config: UserConfig, error: PyiCloudFailedLoginException
+) -> None:
+    """What to try after Apple refused the password"""
+    if error.password_provider == PasswordProvider.KEYRING.value:
+        logger.info(
+            "The password came from the keyring and may be out of date; remove it with "
+            "`icloud --username %s --delete-from-keyring` and run icloudpd again to enter it",
+            user_config.username,
+        )
+    logger.info(
+        "If the password is right, deleting the saved session in %s and signing in again can help",
+        os.path.expanduser(user_config.cookie_directory),
+    )
+
+
 def update_auth_error_in_webui(status_exchange: StatusExchange, error: str) -> bool:
     return status_exchange.set_error(error)
 
@@ -1158,6 +1211,10 @@ def core_single_run(
                         library_object: PhotoLibrary = icloud.photos.private_libraries[
                             user_config.library
                         ]
+                    elif user_config.library == "PrimarySync":
+                        # the default: on accounts whose library moved to another zone, such as
+                        # PrimarySync1 (#1361), the primary library is that zone
+                        library_object = icloud.photos
                     elif user_config.library in icloud.photos.shared_libraries:
                         library_object = icloud.photos.shared_libraries[user_config.library]
                     else:
@@ -1600,10 +1657,16 @@ def core_single_run(
                     else:
                         pass
         except PyiCloudFailedLoginException as error:
-            logger.info(error)
+            sign_in_error = apple_sign_in_error(error)
+            logger.error(sign_in_error)
+            service_error = apple_service_error(error)
+            if service_error is not None and service_error[1] == WRONG_PASSWORD_CODE:
+                log_sign_in_hints(logger, user_config, error)
+            if captured_responses:
+                logger.debug("Sign-in requests and responses (for a bug report):")
             dump_responses(logger.debug, captured_responses)
             if PasswordProvider.WEBUI in global_config.password_providers:
-                update_auth_error_in_webui(status_exchange, str(error))
+                update_auth_error_in_webui(status_exchange, sign_in_error)
                 continue
             else:
                 return 1
