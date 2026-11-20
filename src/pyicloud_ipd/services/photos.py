@@ -284,12 +284,17 @@ class PhotoLibrary:
         session: Session,
         zone_id: Dict[str, Any],
         library_type: str,
+        ignore_indexing_state: bool = False,
     ):
         self.service_endpoint = service_endpoint
         self.params = params
         self.session = session
         self.zone_id = zone_id
         self.library_type = library_type
+        self.ignore_indexing_state = ignore_indexing_state
+        # set when the run continued past a RUNNING state because of the option, so the
+        # end of the run can say that the listing may be incomplete
+        self.indexing_state_ignored = False
 
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
         json_data = json.dumps(
@@ -301,12 +306,18 @@ class PhotoLibrary:
 
         # Apple may report RUNNING for a library that is ready, flipping to
         # FINISHED only on some calls, so re-check before giving up (#1387)
+        all_running = True
         for attempt in range(1, INDEXING_STATE_ATTEMPTS + 1):
             request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
             response = request.json()
             indexing_state = response["records"][0]["fields"]["state"]["value"]
             if indexing_state == "FINISHED":
                 break
+            if not (
+                indexing_state == "RUNNING"
+                and response["records"][0].get("recordType") == "CheckIndexingState"
+            ):
+                all_running = False
             if attempt < INDEXING_STATE_ATTEMPTS:
                 logger.debug(
                     "Library indexing state is %s (attempt %d/%d), retrying in %ds",
@@ -317,9 +328,20 @@ class PhotoLibrary:
                 )
                 time.sleep(INDEXING_STATE_RETRY_DELAY_SECONDS)
         else:
-            raise PyiCloudServiceNotActivatedException(
-                ("Apple iCloud Photo Library has not finished indexing yet"), None
-            )
+            # iCloud may keep answering RUNNING for a library that lists normally (#1387);
+            # continue only on request, and only when every answer was a RUNNING record
+            if self.ignore_indexing_state and all_running:
+                logger.warning(
+                    "Library %s is still reported as indexing (RUNNING on all %d checks), "
+                    "continuing because of --ignore-indexing-state; the listing may be incomplete",
+                    self.zone_id.get("zoneName"),
+                    INDEXING_STATE_ATTEMPTS,
+                )
+                self.indexing_state_ignored = True
+            else:
+                raise PyiCloudServiceNotActivatedException(
+                    ("Apple iCloud Photo Library has not finished indexing yet"), None
+                )
 
     @property
     def albums(self) -> Dict[str, "PhotoAlbum"]:
@@ -469,7 +491,13 @@ class PhotosService(PhotoLibrary):
     This also acts as a way to access the user's primary library.
     """
 
-    def __init__(self, service_root: str, session: PyiCloudSession, params: Dict[str, Any]):
+    def __init__(
+        self,
+        service_root: str,
+        session: PyiCloudSession,
+        params: Dict[str, Any],
+        ignore_indexing_state: bool = False,
+    ):
         self.session = session
         self.params = dict(params)
         self._service_root = service_root
@@ -482,7 +510,14 @@ class PhotosService(PhotoLibrary):
         # Initialize as primary library
         service_endpoint = self.get_service_endpoint("private")
         zone_id = {"zoneName": "PrimarySync"}
-        super().__init__(service_endpoint, self.params, self.session, zone_id, "private")
+        super().__init__(
+            service_endpoint,
+            self.params,
+            self.session,
+            zone_id,
+            "private",
+            ignore_indexing_state=ignore_indexing_state,
+        )
 
         # TODO: Does syncToken ever change?
         # self.params.update({
@@ -523,6 +558,7 @@ class PhotosService(PhotoLibrary):
                         self.session,
                         zone_id=zone["zoneID"],
                         library_type=library_type,
+                        ignore_indexing_state=self.ignore_indexing_state,
                     )
                     # obj_type='CPLAssetByAssetDateWithoutHiddenOrDeleted',
                     # list_type="CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted",

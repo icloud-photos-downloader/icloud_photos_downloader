@@ -308,6 +308,12 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         type=validate_temp_suffix,
         default=".part",
     )
+    cloned.add_argument(
+        "--ignore-indexing-state",
+        help="Continue when iCloud keeps reporting the library as still indexing; the listing "
+        "may then be incomplete. Can't be combined with options that delete",
+        action="store_true",
+    )
     return cloned
 
 
@@ -542,6 +548,7 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         exclude_filenames=tuple(user_ns.exclude_filenames or ()),
         temp_suffix=user_ns.temp_suffix,
         xmp_sidecar_only=user_ns.xmp_sidecar_only,
+        ignore_indexing_state=user_ns.ignore_indexing_state,
     )
 
 
@@ -648,6 +655,23 @@ def cli() -> int:
         ]:
             print(
                 "--auth-only, --directory, --list-libraries, or --list-albums are required for each configuration"
+            )
+            return 2
+
+        elif any(
+            user_ns.ignore_indexing_state
+            and (
+                user_ns.auto_delete
+                or user_ns.delete_after_download
+                or user_ns.keep_icloud_recent_days is not None
+                or user_ns.prune_orphans
+            )
+            for user_ns in user_nses
+        ):
+            # a listing that is really incomplete must never lead to deletions (#1387)
+            print(
+                "--ignore-indexing-state cannot be combined with --auto-delete, "
+                "--delete-after-download, --keep-icloud-recent-days or --prune-orphans"
             )
             return 2
 
