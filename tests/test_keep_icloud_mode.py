@@ -13,7 +13,7 @@ from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.services.photos import PhotoAsset
 from pyicloud_ipd.session import PyiCloudSession
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize
-from tests.helpers import path_from_project_root, run_icloudpd_test
+from tests.helpers import create_files, path_from_project_root, recreate_path, run_icloudpd_test
 
 # the first three assets in the cassette are Live Photos; with their videos (.MOV, sizes from
 # resOriginalVidComplRes) on disk they count as present locally
@@ -529,6 +529,40 @@ class KeepICloudModeTestCases(TestCase):
         self.assertNotIn("Deleted IMG_7407.JPG in iCloud", result.output)
         self.assertIn(
             "Not deleting IMG_7408.JPG from iCloud: it is not present locally", result.output
+        )
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_finds_video_in_live_photo_directory(self) -> None:
+        """With --live-photo-directory the video counts as present in that directory (#94)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        live_dir = base_dir + "-live"
+        recreate_path(live_dir)
+        create_files(live_dir, [IMG_7409[1]])
+
+        with mock.patch("icloudpd.download.download_media", return_value=False):
+            _, result = self._run_keep_recent_days_0(
+                base_dir, [IMG_7409[0]], ["--live-photo-directory", live_dir]
+            )
+
+        self.assertIn("Deleted IMG_7409.JPG in iCloud", result.output)
+        self.assertEqual(result.exit_code, 0)
+
+    def test_keep_icloud_recent_days_ignores_video_next_to_photo_with_live_photo_directory(
+        self,
+    ) -> None:
+        """A video left next to the photo doesn't count once the videos go elsewhere (#94)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        live_dir = base_dir + "-live"
+        recreate_path(live_dir)
+
+        with mock.patch("icloudpd.download.download_media", return_value=False):
+            _, result = self._run_keep_recent_days_0(
+                base_dir, IMG_7409, ["--live-photo-directory", live_dir]
+            )
+
+        self.assertNotIn("Deleted IMG_7409.JPG in iCloud", result.output)
+        self.assertIn(
+            "Not deleting IMG_7409.JPG from iCloud: it is not present locally", result.output
         )
         self.assertEqual(result.exit_code, 0)
 

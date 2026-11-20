@@ -356,6 +356,8 @@ code 2 without doing anything. The rejected combinations are listed with each op
     as in [`--directory`](directory-parameter), so with the default structure the video of
     a Live Photo taken on 4 November 2020 goes to `X/2020/11/04/`.
     [`--auto-delete`](auto-delete-parameter) also looks for those videos there.
+    Videos downloaded before the option was set stay next to the photos: they are not moved,
+    and `--auto-delete` doesn't remove them.
 
     Can't be combined with [`--skip-live-photos`](skip-live-photos-parameter) or
     [`--prune-orphans`](prune-orphans-parameter).
