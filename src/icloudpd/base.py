@@ -2,11 +2,13 @@
 """Main script that uses Click to parse command-line arguments"""
 
 import datetime
+import fnmatch
 import getpass
 import itertools
 import json
 import logging
 import os
+import re
 import subprocess
 import sys
 import time
@@ -414,6 +416,8 @@ def _process_all_users_once(
                 user_config.skip_created_after,
                 user_config.skip_photos,
                 filename_builder,
+                skip_screenshots=user_config.skip_screenshots,
+                exclude_filenames=user_config.exclude_filenames,
             )
 
             downloader = (
@@ -434,6 +438,8 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    temp_suffix=user_config.temp_suffix,
+                    xmp_sidecar_only=user_config.xmp_sidecar_only,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: NOT_DOWNLOADED)
@@ -481,7 +487,7 @@ def _process_all_users_once(
 
 
 def keep_icloud_recent_days_warnings(user_config: UserConfig) -> List[str]:
-    """Options that stop the run early leave the remaining assets unchecked for deletion"""
+    """Options that leave assets in iCloud that --keep-icloud-recent-days would otherwise delete"""
     if user_config.keep_icloud_recent_days is None:
         return []
     warnings = []
@@ -494,6 +500,11 @@ def keep_icloud_recent_days_warnings(user_config: UserConfig) -> List[str]:
         warnings.append(
             f"--keep-icloud-recent-days is used with --until-found {user_config.until_found}: "
             "assets after the point where the run stops are not deleted from iCloud"
+        )
+    if user_config.skip_live_photos:
+        warnings.append(
+            "--keep-icloud-recent-days is used with --skip-live-photos: Live Photos are not "
+            "deleted from iCloud, since their video is not downloaded"
         )
     return warnings
 
@@ -550,6 +561,13 @@ def _(offset: datetime.timedelta) -> datetime.datetime:
     return datetime.datetime.now(get_localzone()) - offset
 
 
+def matches_exclude_filename(filename: str, patterns: Sequence[str]) -> bool:
+    """Whether the filename matches one of the --exclude-filename patterns, ignoring case"""
+    return any(
+        re.match(fnmatch.translate(pattern), filename, flags=re.IGNORECASE) for pattern in patterns
+    )
+
+
 def where_builder(
     logger: logging.Logger,
     skip_videos: bool,
@@ -558,12 +576,19 @@ def where_builder(
     skip_photos: bool,
     filename_builder: Callable[[PhotoAsset], str],
     photo: PhotoAsset,
+    *,
+    skip_screenshots: bool = False,
+    exclude_filenames: Sequence[str] = (),
 ) -> bool:
     if skip_videos and photo.item_type == AssetItemType.MOVIE:
         logger.debug(asset_type_skip_message(AssetItemType.IMAGE, filename_builder, photo))
         return False
     if skip_photos and photo.item_type == AssetItemType.IMAGE:
         logger.debug(asset_type_skip_message(AssetItemType.MOVIE, filename_builder, photo))
+        return False
+
+    if skip_screenshots and photo.is_screenshot:
+        logger.debug(f"Skipping {filename_builder(photo)}, as it is a screenshot.")
         return False
 
     if skip_created_before is not None:
@@ -576,6 +601,12 @@ def where_builder(
         temp_created_after = offset_to_datetime(skip_created_after)
         if photo.created > temp_created_after:
             logger.debug(skip_created_after_message(temp_created_after, photo, filename_builder))
+            return False
+
+    if exclude_filenames:
+        filename = filename_builder(photo)
+        if matches_exclude_filename(filename, exclude_filenames):
+            logger.debug(f"Skipping {filename}, as it matches --exclude-filename.")
             return False
 
     return True
@@ -632,6 +663,8 @@ def download_builder(
     photo: PhotoAsset,
     *,
     inspect_only: bool = False,
+    temp_suffix: str = ".part",
+    xmp_sidecar_only: bool = False,
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
 
@@ -695,6 +728,10 @@ def download_builder(
     expected_paths: list[str] = []
     # nothing is written in --only-print-filenames mode
     present = not only_print_filenames and not inspect_only
+    # --until-found counts photos, not files: with several sizes, a photo counts once when
+    # all its files are already there
+    found_existing = False
+    found_missing = False
 
     for download_size in primary_sizes:
         if download_size not in versions and download_size != AssetVersionSize.ORIGINAL:
@@ -711,6 +748,17 @@ def download_builder(
             if AssetVersionSize.ORIGINAL in primary_sizes:
                 continue  # that should avoid double download for original
             download_size = AssetVersionSize.ORIGINAL
+
+        if download_size not in versions:
+            # iCloud lists some assets without an original (e.g. damaged or never fully
+            # uploaded); skip them instead of stopping the whole run with a KeyError
+            logger.error(
+                "%s size does not exist for %s. Skipping...",
+                download_size.value,
+                filename_builder(photo),
+            )
+            present = False
+            continue
 
         version = versions[download_size]
         photo_filename = filename_builder(photo)
@@ -742,7 +790,12 @@ def download_builder(
             file_exists = os.path.isfile(original_download_path)
 
         if file_exists:
-            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+            # With --xmp-sidecar-only nothing is downloaded, so a local copy of a different
+            # size (an export, say) must keep the plain name and get the sidecar
+            if (
+                file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
+                and not xmp_sidecar_only
+            ):
                 # for later: this crashes if download-size medium is specified
                 file_size = os.stat(original_download_path or download_path).st_size
                 photo_size = version.size
@@ -761,7 +814,7 @@ def download_builder(
                     logger.debug("%s deduplicated", truncate_middle(download_path, 96))
                     file_exists = os.path.isfile(download_path)
             if file_exists:
-                counter.increment()
+                found_existing = True
                 logger.debug("%s already exists", truncate_middle(download_path, 96))
 
         expected_paths.append(
@@ -769,8 +822,12 @@ def download_builder(
         )
 
         if not file_exists and not inspect_only:
+            found_missing = True
             counter.reset()
-            if only_print_filenames:
+            if xmp_sidecar_only:
+                # only the sidecar is written; without the media file the asset is not kept locally
+                present = False
+            elif only_print_filenames:
                 print(download_path)
             else:
                 truncated_path = truncate_middle(download_path, 96)
@@ -785,6 +842,7 @@ def download_builder(
                     version,
                     download_size,
                     filename_builder,
+                    temp_suffix,
                 )
                 success = download_result
                 present = present and download_result
@@ -818,13 +876,20 @@ def download_builder(
         if xmp_sidecar and not only_print_filenames:
             expected_paths.append(download_path + ".xmp")
             if not inspect_only:
+                if xmp_sidecar_only and not dry_run:
+                    os.makedirs(download_dir, exist_ok=True)
                 sidecar_existed = os.path.lexists(download_path + ".xmp")
-                generate_xmp_file(logger, download_path, photo._asset_record, dry_run)
+                generate_xmp_file(
+                    logger, download_path, photo._asset_record, dry_run, download_size
+                )
                 if not dry_run and not sidecar_existed and os.path.isfile(download_path + ".xmp"):
                     created_paths.append(download_path + ".xmp")
 
+    if found_existing and not found_missing:
+        counter.increment()
+
     # Also download the live photo if present
-    if not skip_live_photos:
+    if not skip_live_photos and not xmp_sidecar_only:
         lp_size = live_photo_size
         photo_versions_with_policy = photo.versions_with_raw_policy(raw_policy)
         if lp_size in photo_versions_with_policy:
@@ -898,6 +963,7 @@ def download_builder(
                         version,
                         lp_size,
                         filename_builder,
+                        temp_suffix,
                     )
                     success = download_result and success
                     present = present and download_result
@@ -1121,7 +1187,10 @@ def core_single_run(
                                     sort_keys=True,
                                 )
                                 prune_snapshot = PruneSnapshot(
-                                    directory, scope, user_config.dry_run
+                                    directory,
+                                    scope,
+                                    user_config.dry_run,
+                                    temp_suffix=user_config.temp_suffix,
                                 )
                             except Exception as error:
                                 logger.warning("Skipping orphan pruning: %s", error)
@@ -1310,6 +1379,22 @@ def core_single_run(
                                             debug_filename,
                                             age_days,
                                         )
+                                    elif user_config.skip_live_photos and any(
+                                        isinstance(size, LivePhotoVersionSize)
+                                        for size in item.versions
+                                    ):
+                                        # its video was not downloaded, so deleting the asset
+                                        # would lose the video
+                                        logger.debug(
+                                            "Not deleting %s from iCloud: it is a Live Photo and --skip-live-photos did not download its video",
+                                            build_filename_with_policies(
+                                                user_config.file_match_policy,
+                                                build_filename_cleaner(
+                                                    user_config.keep_unicode_in_filenames
+                                                ),
+                                                item,
+                                            ),
+                                        )
                                     elif download_result.present:
                                         should_delete = True
                                     elif not global_config.only_print_filenames:
@@ -1348,7 +1433,8 @@ def core_single_run(
                                         )
 
                                     # retrier(delete_local, error_handler)
-                                    if deleted:
+                                    # a dry run deletes nothing, so the next page still starts after this asset
+                                    if deleted and not user_config.dry_run:
                                         photo_album.increment_offset(-1)
 
                                 photos_counter += 1
@@ -1361,7 +1447,9 @@ def core_single_run(
                                 break
 
                         if global_config.only_print_filenames:
-                            return 0
+                            # go on with the next album; nothing is deleted below
+                            status_exchange.get_progress().reset()
+                            continue
                         else:
                             pass
 
@@ -1452,7 +1540,7 @@ def core_single_run(
                         else:
                             logger.warning("Skipping orphan pruning: download run did not complete")
 
-                    if user_config.auto_delete:
+                    if user_config.auto_delete and not global_config.only_print_filenames:
                         autodelete_photos(
                             logger,
                             user_config.dry_run,

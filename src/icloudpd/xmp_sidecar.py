@@ -13,6 +13,7 @@ from typing import Any, Callable, NamedTuple, TypeVar
 from xml.etree import ElementTree
 
 from foundation import version_info
+from pyicloud_ipd.version_size import AssetVersionSize
 
 exif_tool = None
 
@@ -35,7 +36,11 @@ class XMPMetadata(NamedTuple):
 
 
 def generate_xmp_file(
-    logger: logging.Logger, download_path: str, asset_record: dict[str, Any], dry_run: bool
+    logger: logging.Logger,
+    download_path: str,
+    asset_record: dict[str, Any],
+    dry_run: bool,
+    version_size: AssetVersionSize,
 ) -> None:
     sidecar_path: str = download_path + ".xmp"
     can_write_file: bool = True
@@ -71,6 +76,10 @@ def generate_xmp_file(
         # a sidecar is extra metadata: failing to write one must not stop the download run
         try:
             xmp_metadata: XMPMetadata = build_metadata(asset_record)
+            if version_size == AssetVersionSize.ADJUSTED:
+                # the orientation is read from the edit data, and the adjusted file is already
+                # rendered upright: repeating it makes viewers rotate the photo a second time
+                xmp_metadata = xmp_metadata._replace(Orientation=None)
             xml_doc: ElementTree.Element = generate_xml(xmp_metadata)
             if not dry_run:
                 # Write the XML to the file
