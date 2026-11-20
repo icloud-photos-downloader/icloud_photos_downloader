@@ -55,6 +55,8 @@ jobs:
     uses: ./.github/workflows/publish.yml
     with:
       icloudpd_version: ${{needs.get_version.outputs.icloudpd_version}}
+    # passed by name: in the jobs with environment "release" GitHub uses the environment's
+    # secrets, also once they no longer exist as repository secrets, so keep these lines
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_PASSWORD: ${{ secrets.DOCKERHUB_PASSWORD }}
@@ -93,6 +95,8 @@ jobs:
         ls -l dist
 
     - name: Publish PyPI
-      uses: pypa/gh-action-pypi-publish@dc37677b2e1c63e2034f94d8a5b11f265b73ba33 # v1.14.2
+      uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
       with:
         packages-dir: dist
+        # a re-run after a partly finished upload skips the wheels that are already on PyPI
+        skip-existing: true

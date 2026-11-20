@@ -8,7 +8,7 @@ How CI is set up for icloudpd: what runs when, and why it is set up this way.
 |---|---|---|
 | `quality-checks.yml` | every push, pull request, manual | lint, type check and tests on all supported Python versions (Linux), plus tests on Windows and macOS |
 | `produce-artifacts.yml` | pull request, manual | full build: calls `build-package.yml` to build every package and run the compatibility tests, then compiles release notes |
-| `create-release.yml` | `v*` tag push | full build like above, then `publish.yml` (PyPI, Docker Hub, npm, GitHub release) |
+| `create-release.yml` | `v*` tag push | full build like above, then publishes to PyPI (its own job: PyPI trusted publishing doesn't work from a reusable workflow) and calls `publish.yml` (Docker Hub, npm, GitHub release) |
 | `refresh-docs.yml` | `v*` tag push, manual | builds the documentation (`build-docs.yml`) and publishes it to GitHub Pages (`publish-docs.yml`) |
 | `codeql-analysis.yml` | push and pull request to `master`, weekly | CodeQL security scan |
 
