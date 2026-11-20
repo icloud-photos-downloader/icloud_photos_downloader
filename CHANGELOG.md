@@ -9,6 +9,7 @@
 - feat: add `--xmp-sidecar-only` to write the XMP sidecars without downloading the photos and videos [#1265](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1265)
 - feat: add `--webui-host` to choose the address the web UI listens on, for example `127.0.0.1` to allow access from this computer only; the default `0.0.0.0` keeps the current behavior
 - feat: add opt-in `--ignore-indexing-state` to continue, with a warning, when iCloud keeps reporting the library as still indexing; the end of the run then says that the listing may be incomplete instead of "All photos and videos have been downloaded"; it can't be combined with options that delete [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
+- feat: `--live-photo-directory` downloads the video part of Live Photos to a separate directory, with the same folder structure as `--directory` [#94](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/94)
 
 ## 1.33.1 (2026-11-17)
 
