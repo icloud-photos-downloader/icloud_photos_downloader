@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.34.0 (2026-11-21)
+
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
 - feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
 - feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
