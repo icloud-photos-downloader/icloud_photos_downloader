@@ -521,15 +521,22 @@ class PhotosService(PhotoLibrary):
             )
         except PyiCloudServiceNotActivatedException as error:
             # On some accounts Apple moved the library to another zone, such as PrimarySync1,
-            # and PrimarySync no longer exists (#1361)
-            if error.code != "ZONE_NOT_FOUND":
+            # and PrimarySync no longer exists (#1361). Also list the zones (debug) when
+            # PrimarySync exists but its indexing state check fails, to see whether the same
+            # move is behind it
+            if error.code not in ("ZONE_NOT_FOUND", None):
                 raise
-            moved = self._moved_primary_zone_id()
+            zone_ids = self._listed_zone_ids()
+            moved = (
+                self._moved_primary_zone_id(zone_ids)
+                if error.code == "ZONE_NOT_FOUND" and zone_ids is not None
+                else None
+            )
             if moved is None:
                 raise
-            logger.info(
-                "This account has no PrimarySync zone (the ZONE_NOT_FOUND above); using photo "
-                "library zone %s",
+            logger.warning(
+                "The ZONE_NOT_FOUND error above can be ignored: this account's photo library is "
+                "in zone %s, not PrimarySync",
                 moved["zoneName"],
             )
             super().__init__(
@@ -563,24 +570,33 @@ class PhotosService(PhotoLibrary):
 
         return self._shared_libraries
 
-    def _moved_primary_zone_id(self) -> Dict[str, Any] | None:
-        """The zone the primary library moved to, when PrimarySync doesn't exist: the first
-        listed zone whose name starts with PrimarySync"""
+    def _listed_zone_ids(self) -> Sequence[Dict[str, Any]] | None:
+        """The private zones, logged at debug level; None when the list can't be read"""
         try:
             zone_ids = self._fetch_zone_ids("private")
         except Exception as error:
             logger.debug("Could not list the photo library zones: %s", error)
             return None
         logger.debug("Photo library zones: %s", ", ".join(str(z.get("zoneName")) for z in zone_ids))
-        return next(
-            (
-                z
-                for z in zone_ids
-                if str(z.get("zoneName", "")).startswith("PrimarySync")
-                and z.get("zoneName") != "PrimarySync"
-            ),
-            None,
-        )
+        return zone_ids
+
+    @staticmethod
+    def _moved_primary_zone_id(zone_ids: Sequence[Dict[str, Any]]) -> Dict[str, Any] | None:
+        """The zone the primary library moved to, when PrimarySync doesn't exist: the first
+        listed zone whose name starts with PrimarySync"""
+        candidates = [
+            z
+            for z in zone_ids
+            if str(z.get("zoneName", "")).startswith("PrimarySync")
+            and z.get("zoneName") != "PrimarySync"
+        ]
+        if len(candidates) > 1:
+            logger.warning(
+                "Several photo library zones could be the library (%s); using %s",
+                ", ".join(str(z["zoneName"]) for z in candidates),
+                candidates[0]["zoneName"],
+            )
+        return candidates[0] if candidates else None
 
     def _fetch_zone_ids(self, library_type: str) -> Sequence[Dict[str, Any]]:
         """IDs of the zones that exist: without deleted zones, and without entries that only

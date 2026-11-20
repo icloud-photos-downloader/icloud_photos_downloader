@@ -23,12 +23,12 @@ def zone(name: str) -> Dict[str, Any]:
     return {"zoneName": name, "ownerRecordName": "_owner", "zoneType": "REGULAR_CUSTOM_ZONE"}
 
 
-def finished() -> Dict[str, Any]:
+def indexing_state(state: str) -> Dict[str, Any]:
     return {
         "records": [
             {
                 "recordType": "CheckIndexingState",
-                "fields": {"state": {"value": "FINISHED", "type": "STRING"}},
+                "fields": {"state": {"value": state, "type": "STRING"}},
             }
         ]
     }
@@ -42,8 +42,10 @@ class FakeICloud:
         existing_zones: List[str],
         zones_list: List[Dict[str, Any]] | Exception,
         error_code: str = "ZONE_NOT_FOUND",
+        indexing_zones: List[str] | None = None,
     ):
         self.existing_zones = existing_zones
+        self.indexing_zones = indexing_zones or []
         self.zones_list = zones_list
         self.error_code = error_code
         self.urls: List[str] = []
@@ -61,7 +63,8 @@ class FakeICloud:
             raise PyiCloudServiceNotActivatedException(
                 "Apple iCloud setup is not complete", self.error_code
             )
-        return mock.MagicMock(**{"json.return_value": finished()})
+        state = "RUNNING" if zone_name in self.indexing_zones else "FINISHED"
+        return mock.MagicMock(**{"json.return_value": indexing_state(state)})
 
     def photos(self) -> PhotosService:
         return PhotosService(ROOT, self.session, {})
@@ -85,11 +88,15 @@ class Issue1361MovedPrimaryZoneTest(TestCase):
             [{"zoneID": zone("CMM-shared-zone")}, {"zoneID": zone("PrimarySync1")}],
         )
 
-        with self.assertLogs("pyicloud_ipd.services.photos", level="INFO") as logs:
+        with self.assertLogs("pyicloud_ipd.services.photos", level="WARNING") as logs:
             photos = icloud.photos()
 
         self.assertEqual(photos.zone_id, zone("PrimarySync1"))
-        self.assertIn("using photo library zone PrimarySync1", "\n".join(logs.output))
+        self.assertIn(
+            "The ZONE_NOT_FOUND error above can be ignored: this account's photo library is in "
+            "zone PrimarySync1",
+            "\n".join(logs.output),
+        )
 
     def test_deleted_and_failed_zones_are_skipped(self) -> None:
         icloud = FakeICloud(
@@ -108,6 +115,50 @@ class Issue1361MovedPrimaryZoneTest(TestCase):
         photos = icloud.photos()
 
         self.assertEqual(photos.zone_id, zone("PrimarySync2"))
+
+    def test_several_moved_zones_are_reported(self) -> None:
+        icloud = FakeICloud(
+            ["PrimarySync1", "PrimarySync2"],
+            [{"zoneID": zone("PrimarySync1")}, {"zoneID": zone("PrimarySync2")}],
+        )
+
+        with self.assertLogs("pyicloud_ipd.services.photos", level="WARNING") as logs:
+            photos = icloud.photos()
+
+        self.assertEqual(photos.zone_id, zone("PrimarySync1"))
+        self.assertIn(
+            "Several photo library zones could be the library (PrimarySync1, PrimarySync2)",
+            "\n".join(logs.output),
+        )
+
+    @mock.patch("pyicloud_ipd.services.photos.time.sleep")
+    def test_indexing_error_lists_the_zones(self, _sleep: mock.MagicMock) -> None:
+        """PrimarySync exists but keeps indexing: the zones show at debug level (#1361)"""
+        icloud = FakeICloud(
+            ["PrimarySync", "PrimarySync1"],
+            [{"zoneID": zone("PrimarySync")}, {"zoneID": zone("PrimarySync1")}],
+            indexing_zones=["PrimarySync"],
+        )
+
+        with (
+            self.assertLogs("pyicloud_ipd.services.photos", level="DEBUG") as logs,
+            self.assertRaises(PyiCloudServiceNotActivatedException) as raised,
+        ):
+            icloud.photos()
+
+        self.assertIn("has not finished indexing yet", str(raised.exception))
+        self.assertIn("Photo library zones: PrimarySync, PrimarySync1", "\n".join(logs.output))
+
+    @mock.patch("pyicloud_ipd.services.photos.time.sleep")
+    def test_moved_zone_that_keeps_indexing_still_fails(self, _sleep: mock.MagicMock) -> None:
+        icloud = FakeICloud(
+            ["PrimarySync1"], [{"zoneID": zone("PrimarySync1")}], indexing_zones=["PrimarySync1"]
+        )
+
+        with self.assertRaises(PyiCloudServiceNotActivatedException) as raised:
+            icloud.photos()
+
+        self.assertIn("has not finished indexing yet", str(raised.exception))
 
     def test_zone_not_found_stays_when_no_other_primary_zone_exists(self) -> None:
         icloud = FakeICloud([], [{"zoneID": zone("CMM-shared-zone")}])
