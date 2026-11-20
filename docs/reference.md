@@ -626,6 +626,11 @@ code 2 without doing anything. The rejected combinations are listed with each op
     Details in the [MFA providers](authentication) section.
     ```
 
+(webui-host-parameter)=
+`--webui-host X`
+
+:   Address the [web UI](webui) server listens on. Default: `0.0.0.0` (all network interfaces). Use `127.0.0.1` to allow access from this computer only; the web UI is not password protected.
+
 (xmp-sidecar-parameter)=
 `--xmp-sidecar`
 
