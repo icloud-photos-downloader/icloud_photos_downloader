@@ -73,6 +73,43 @@ class XmpSidecarOnlyTestCase(TestCase):
             os.path.getsize(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))),
         )
 
+    def test_sidecar_goes_next_to_existing_photo_of_another_size(self) -> None:
+        """A local copy whose size differs from the original (an export) still gets the
+        sidecar under its own name, not under the size-deduplicated name"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+
+        data_dir, result = run_icloudpd_test(
+            self.assertEqual,
+            self.root_path,
+            base_dir,
+            "listing_photos.yml",
+            [("2018/07/31", "IMG_7409.JPG", 1234)],
+            [("2018/07/31", "IMG_7409.JPG.xmp")],
+            [
+                "--username",
+                "jdoe@gmail.com",
+                "--password",
+                "password1",
+                "--recent",
+                "1",
+                "--xmp-sidecar-only",
+                "--no-progress-bar",
+                "--threads-num",
+                "1",
+            ],
+        )
+
+        self.assertEqual(0, result.exit_code, result.output)
+        self.assertFalse(
+            os.path.exists(
+                os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409-1884695.JPG.xmp"))
+            )
+        )
+        self.assertEqual(
+            1234,
+            os.path.getsize(os.path.join(data_dir, os.path.normpath("2018/07/31/IMG_7409.JPG"))),
+        )
+
     def test_rejects_options_that_delete_or_need_media(self) -> None:
         for extra in [
             ["--delete-after-download"],

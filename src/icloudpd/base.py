@@ -788,7 +788,12 @@ def download_builder(
             file_exists = os.path.isfile(original_download_path)
 
         if file_exists:
-            if file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX:
+            # With --xmp-sidecar-only nothing is downloaded, so a local copy of a different
+            # size (an export, say) must keep the plain name and get the sidecar
+            if (
+                file_match_policy == FileMatchPolicy.NAME_SIZE_DEDUP_WITH_SUFFIX
+                and not xmp_sidecar_only
+            ):
                 # for later: this crashes if download-size medium is specified
                 file_size = os.stat(original_download_path or download_path).st_size
                 photo_size = version.size

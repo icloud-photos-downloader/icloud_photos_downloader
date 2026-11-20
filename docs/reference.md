@@ -633,6 +633,9 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     Cannot be combined with `--delete-after-download`, `--keep-icloud-recent-days`, `--prune-orphans`, `--until-found` or `--only-print-filenames`. Without the media files, two assets with the same name in one folder share a sidecar, so prefer a `--folder-structure` that keeps them apart.
 
+    ```{versionadded} 1.34.0
+    ```
+
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
     
