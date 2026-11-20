@@ -240,14 +240,23 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
         # because the logger instance is shared between tests.
         logger.disabled = False
         if config.log_level == LogLevel.DEBUG:
-            logger.setLevel(logging.DEBUG)
+            level = logging.DEBUG
         elif config.log_level == LogLevel.INFO:
-            logger.setLevel(logging.INFO)
+            level = logging.INFO
         elif config.log_level == LogLevel.ERROR:
-            logger.setLevel(logging.ERROR)
+            level = logging.ERROR
         else:
             # Developer's error - not an exhaustive match
             raise ValueError(f"Unsupported logging level {config.log_level}")
+        logger.setLevel(level)
+        # The iCloud library logs under its own name; without a level it stays at WARNING and
+        # its debug lines (e.g. the indexing state retries) never show (#1488)
+        logging.getLogger("pyicloud_ipd").setLevel(level)
+        # Per request it logs the request, the response headers and body (session tokens) and
+        # that it saved the session: keep that out of the output, also at the default debug level
+        quiet = max(level, logging.INFO)
+        logging.getLogger("pyicloud_ipd.http").setLevel(quiet)
+        logging.getLogger("pyicloud_ipd.session").setLevel(quiet)
     return logger
 
 
