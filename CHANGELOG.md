@@ -6,6 +6,7 @@
 - feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
 - feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
   - `.part` files left by interrupted downloads before the suffix was changed are not resumed or removed; delete them by hand
+- feat: add `--xmp-sidecar-only` to write the XMP sidecars without downloading the photos and videos [#1265](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1265)
 - chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
 - chore: publish to PyPI with trusted publishing from a job in `create-release.yml` that uses the "release" environment, instead of a password in the repository secrets; the Docker Hub and npm jobs use that environment too
 

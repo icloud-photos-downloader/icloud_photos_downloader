@@ -634,6 +634,16 @@ code 2 without doing anything. The rejected combinations are listed with each op
     ```{versionadded} 1.25.0
     ```
 
+(xmp-sidecar-only-parameter)=
+`--xmp-sidecar-only`
+
+:   Only writes the XMP sidecar files, next to where the photos and videos would be downloaded, without downloading them. Useful to add sidecars to a copy of the library that uses the same folder layout and file names as icloudpd. The sidecars follow icloudpd's own layout, so they won't land next to a copy with a different structure (e.g. a camera `DCIM` folder). Implies [`--xmp-sidecar`](xmp-sidecar-parameter).
+
+    Cannot be combined with `--delete-after-download`, `--keep-icloud-recent-days`, `--prune-orphans`, `--until-found` or `--only-print-filenames`. Without the media files, two assets with the same name in one folder share a sidecar, so prefer a `--folder-structure` that keeps them apart.
+
+    ```{versionadded} 1.34.0
+    ```
+
 (smtp-parameter)=
 `--smtp-username X`, `--smtp-password X`, `--smtp-host X`, `--smtp-port X`, `--smtp-no-tls`
     
