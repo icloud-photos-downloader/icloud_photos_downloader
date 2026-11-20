@@ -23,8 +23,12 @@ class LibraryLogLevelTestCase(TestCase):
 
     def setUp(self) -> None:
         # Tests that call setup_logger() switch the logger class to IPDLogger, which gives each
-        # new logger its own INFO level; the request loggers are created on the first request,
-        # so reset them to inherit as they do in a fresh process
+        # new logger its own INFO level. Use the standard class while these tests run, so the
+        # request loggers created on the first request inherit as they do in a fresh process,
+        # and reset the ones earlier tests created
+        logger_class = logging.getLoggerClass()
+        logging.setLoggerClass(logging.Logger)
+        self.addCleanup(logging.setLoggerClass, logger_class)
         for name, existing in logging.Logger.manager.loggerDict.items():
             if name.startswith("pyicloud_ipd.") and isinstance(existing, logging.Logger):
                 existing.setLevel(logging.NOTSET)
@@ -103,5 +107,5 @@ class LibraryLogLevelTestCase(TestCase):
         with mock.patch("icloudpd.base.create_logger", create_logger_with_requests):
             records = self.run_auth("debug")
         requests = [r for r in records if r.name.startswith("pyicloud_ipd.http")]
-        self.assertTrue(requests)
+        self.assertTrue([r for r in requests if r.levelno == logging.DEBUG])
         self.assertTrue(all(r.name.startswith("pyicloud_ipd.http.") for r in requests))

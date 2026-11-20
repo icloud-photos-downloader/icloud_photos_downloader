@@ -233,8 +233,14 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
         stream=sys.stdout,
     )
     logger = logging.getLogger("icloudpd")
+    library_logger = logging.getLogger("pyicloud_ipd")
     if config.only_print_filenames:
         logger.disabled = True
+        # stdout is the list of filenames: only the library's warnings and errors, as before
+        # (set explicitly, because the logger instances are shared between tests)
+        library_logger.setLevel(logging.WARNING)
+        logging.getLogger("pyicloud_ipd.http").setLevel(logging.NOTSET)
+        logging.getLogger("pyicloud_ipd.session").setLevel(logging.NOTSET)
     else:
         # Need to make sure disabled is reset to the correct value,
         # because the logger instance is shared between tests.
@@ -251,9 +257,11 @@ def create_logger(config: GlobalConfig) -> logging.Logger:
         logger.setLevel(level)
         # The iCloud library logs under its own name; without a level it stays at WARNING and
         # its debug lines (e.g. the indexing state retries) never show (#1488)
-        logging.getLogger("pyicloud_ipd").setLevel(level)
+        library_logger.setLevel(level)
         # Per request it logs the request, the response headers and body (session tokens) and
-        # that it saved the session: keep that out of the output, also at the default debug level
+        # that it saved the session: keep that out of the output, also at the default debug level.
+        # This holds the whole pyicloud_ipd.session logger at INFO on purpose: its only debug
+        # lines are the two per-request "saved" lines
         quiet = max(level, logging.INFO)
         logging.getLogger("pyicloud_ipd.http").setLevel(quiet)
         logging.getLogger("pyicloud_ipd.session").setLevel(quiet)
