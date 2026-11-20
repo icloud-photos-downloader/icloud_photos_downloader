@@ -4,6 +4,7 @@ import logging
 import os
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable, Iterator
 from pathlib import Path
 from unittest import mock
@@ -705,6 +706,7 @@ def test_download_result_records_only_newly_written_actual_paths(tmp_path: Path,
         _version: AssetVersion,
         _size: VersionSize,
         _filename_builder: Callable[[PhotoAsset], str],
+        _temp_suffix: str = ".part",
     ) -> bool:
         if mode == "failed":
             return False
@@ -783,3 +785,28 @@ def test_hidden_property_uses_selected_zone() -> None:
     hidden = selected.hidden
     assert hidden._zone_id == selected.zone_id
     assert hidden.list_type == "CPLAssetAndMasterHiddenByAssetDate"
+
+
+def test_snapshot_is_saved_through_the_temp_suffix(tmp_path: Path) -> None:
+    """A destination that refuses .part files can still keep a pruning snapshot (#1288)"""
+    snapshot = PruneSnapshot(str(tmp_path), "test-scope", temp_suffix=".icloudpd")
+    try:
+        with mock.patch(
+            "icloudpd.prune.NamedTemporaryFile", wraps=tempfile.NamedTemporaryFile
+        ) as temporary:
+            snapshot.finish(LOGGER, library(photo("kept")), False)
+    finally:
+        snapshot.close()
+    assert temporary.call_args.kwargs["suffix"] == ".icloudpd"
+    assert (tmp_path / PruneSnapshot.filename).exists()
+    assert not list(tmp_path.glob("*.icloudpd"))
+
+
+@pytest.mark.parametrize("name", ["leftover.part", "leftover.icloudpd"])
+def test_snapshot_never_owns_temporary_files(tmp_path: Path, name: str) -> None:
+    snapshot = PruneSnapshot(str(tmp_path), "test-scope", temp_suffix=".icloudpd")
+    try:
+        with pytest.raises(ValueError):
+            snapshot._local_path(name)
+    finally:
+        snapshot.close()
