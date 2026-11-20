@@ -340,8 +340,9 @@ class PyiCloudService:
 
         self._webservices = self.data["webservices"]
 
-        LOGGER.info("Authentication completed successfully")
-        LOGGER.debug(self.params)
+        # icloudpd reports the result itself; the params hold the account's dsid, which
+        # shouldn't end up in logs pasted into issues
+        LOGGER.debug("Signed in to iCloud")
 
     def _authenticate_with_token(self) -> None:
         """Authenticate using session token."""
