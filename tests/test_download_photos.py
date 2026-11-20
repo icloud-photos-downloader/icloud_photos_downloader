@@ -359,6 +359,7 @@ class DownloadPhotoTestCase(TestCase):
                             if (f[2] == "photo" and f[1].endswith(".MOV"))
                             else AssetVersionSize.ORIGINAL,
                             ANY,  # filename_builder
+                            ".part",  # temp_suffix
                         ),
                         files_to_download_ext,
                     )
@@ -1034,6 +1035,7 @@ class DownloadPhotoTestCase(TestCase):
                         ANY,
                         AssetVersionSize.THUMB,
                         ANY,  # filename_builder
+                        ".part",  # temp_suffix
                     )
 
                     assert result.exit_code == 0

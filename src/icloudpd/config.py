@@ -56,6 +56,7 @@ class _DefaultConfig:
     skip_photos: bool
     skip_screenshots: bool = False
     exclude_filenames: Sequence[str] = ()
+    temp_suffix: str = ".part"
 
 
 @dataclass(kw_only=True)

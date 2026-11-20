@@ -438,6 +438,7 @@ def _process_all_users_once(
                     lp_filename_generator,
                     filename_builder,
                     user_config.align_raw,
+                    temp_suffix=user_config.temp_suffix,
                     live_photo_directory=user_config.live_photo_directory,
                 )
                 if user_config.directory is not None
@@ -662,6 +663,7 @@ def download_builder(
     photo: PhotoAsset,
     *,
     inspect_only: bool = False,
+    temp_suffix: str = ".part",
     live_photo_directory: str | None = None,
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
@@ -832,6 +834,7 @@ def download_builder(
                     version,
                     download_size,
                     filename_builder,
+                    temp_suffix,
                 )
                 success = download_result
                 present = present and download_result
@@ -956,6 +959,7 @@ def download_builder(
                         version,
                         lp_size,
                         filename_builder,
+                        temp_suffix,
                     )
                     success = download_result and success
                     present = present and download_result
@@ -1179,7 +1183,10 @@ def core_single_run(
                                     sort_keys=True,
                                 )
                                 prune_snapshot = PruneSnapshot(
-                                    directory, scope, user_config.dry_run
+                                    directory,
+                                    scope,
+                                    user_config.dry_run,
+                                    temp_suffix=user_config.temp_suffix,
                                 )
                             except Exception as error:
                                 logger.warning("Skipping orphan pruning: %s", error)
