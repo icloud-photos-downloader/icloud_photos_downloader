@@ -70,6 +70,7 @@ def authenticator(
     cookie_directory: str | None = None,
     client_id: str | None = None,
     adp_web_access: bool = False,
+    ignore_indexing_state: bool = False,
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
@@ -91,6 +92,7 @@ def authenticator(
         response_observer,
         cookie_directory=cookie_directory,
         client_id=client_id,
+        ignore_indexing_state=ignore_indexing_state,
     )
 
     if not icloud:

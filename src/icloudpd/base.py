@@ -1145,6 +1145,7 @@ def core_single_run(
                 user_config.cookie_directory,
                 os.environ.get("CLIENT_ID"),
                 user_config.adp_web_access,
+                user_config.ignore_indexing_state,
             )
 
             # dump captured responses for debugging
@@ -1522,8 +1523,23 @@ def core_single_run(
                                 )
                             else:
                                 photo_video_phrase = "photos and videos"
-                            message = f"All {photo_video_phrase} have been downloaded"
-                            logger.info(message)
+                            if (
+                                user_config.ignore_indexing_state
+                                and library_object.indexing_state_ignored
+                            ):
+                                # the warning at the start is easy to miss in an unattended
+                                # run; the last line must not claim a complete download (#1387)
+                                message = (
+                                    f"All {photo_video_phrase} that iCloud listed have been "
+                                    "downloaded, but the listing may be incomplete: iCloud still "
+                                    "reported the library as indexing and --ignore-indexing-state "
+                                    "was used. A later run without the option picks up what is "
+                                    "missing"
+                                )
+                                logger.warning(message)
+                            else:
+                                message = f"All {photo_video_phrase} have been downloaded"
+                                logger.info(message)
                             status_exchange.get_progress().photos_last_message = message
                         status_exchange.get_progress().reset()
 

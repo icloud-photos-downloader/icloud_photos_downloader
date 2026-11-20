@@ -8,6 +8,7 @@
   - `.part` files left by interrupted downloads before the suffix was changed are not resumed or removed; delete them by hand
 - feat: add `--xmp-sidecar-only` to write the XMP sidecars without downloading the photos and videos [#1265](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1265)
 - feat: add `--webui-host` to choose the address the web UI listens on, for example `127.0.0.1` to allow access from this computer only; the default `0.0.0.0` keeps the current behavior
+- feat: add opt-in `--ignore-indexing-state` to continue, with a warning, when iCloud keeps reporting the library as still indexing; the end of the run then says that the listing may be incomplete instead of "All photos and videos have been downloaded"; it can't be combined with options that delete [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
 - fix: a refused sign-in was logged as `INFO` with a Python tuple holding Apple's raw JSON; it is now one `ERROR` line with Apple's message and code, with hints on a password stored in the keyring and on the saved session, and the request dump that follows is labelled as details for a bug report [#1348](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1348) [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
 
 ## 1.33.1 (2026-11-17)
