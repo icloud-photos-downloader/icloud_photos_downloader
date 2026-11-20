@@ -99,7 +99,7 @@ def create_app(logger: Logger, _status_exchange: StatusExchange) -> Flask:
     return app
 
 
-def serve_app(logger: Logger, _status_exchange: StatusExchange) -> None:
+def serve_app(logger: Logger, _status_exchange: StatusExchange, host: str = "0.0.0.0") -> None:
     app = create_app(logger, _status_exchange)
     logger.debug("Starting web server...")
-    return waitress.serve(app)
+    return waitress.serve(app, host=host)
