@@ -677,6 +677,9 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
 :   Address the [web UI](webui) server listens on. Default: `0.0.0.0` (all network interfaces). Use `127.0.0.1` to allow access from this computer only; the web UI is not password protected.
 
+    ```{versionadded} 1.34.0
+    ```
+
 (xmp-sidecar-parameter)=
 `--xmp-sidecar`
 
