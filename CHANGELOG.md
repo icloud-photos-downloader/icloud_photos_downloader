@@ -12,6 +12,7 @@
 - feat: `--live-photo-directory` downloads the video part of Live Photos to a separate directory, with the same folder structure as `--directory` [#94](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/94)
 - fix: `--log-level` now also applies to the bundled iCloud library, so `debug` shows its debug lines (e.g. the indexing state retries) and `error` quiets its warnings; the per-request lines with response headers and session tokens stay out of the output [#1488](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1488)
 - fix: a refused sign-in is now one readable `ERROR` line with Apple's message and code instead of a Python tuple with raw JSON, with hints when Apple refused the password [#1348](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1348) [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
+- fix: accounts whose photo library Apple moved from the `PrimarySync` zone to another zone, such as `PrimarySync1`, failed with `ZONE_NOT_FOUND`; icloudpd now looks up that zone when `PrimarySync` doesn't exist (based on #1367 by @tural-ali) [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
 
 ## 1.33.1 (2026-11-17)
 
