@@ -178,3 +178,58 @@ class PartialDownloadTestCase(TestCase):
         [part_file] = self.part_files()
         with open(os.path.join(self.directory, part_file), "rb") as file:
             self.assertEqual(CONTENT[:40], file.read())
+
+    def whole_file_response(self, with_content_range: bool) -> Response:
+        response = partial_response(0, 100) if with_content_range else Response()
+        if not with_content_range:
+            response.status_code = 200
+            response.raw = io.BytesIO(CONTENT)
+        return response
+
+    def test_resume_starts_over_when_the_whole_file_is_sent(self) -> None:
+        """iCloud's CDN can ignore the range of a resume and send the file from byte 0"""
+        for with_content_range in (True, False):
+            with self.subTest(with_content_range=with_content_range):
+                self.setUp()
+                with self.assertLogs(self.logger, level="ERROR"):
+                    self.download([partial_response(0, 40), partial_response(40, 40)])
+                self.photo.download.reset_mock()
+                self.assertTrue(self.download([self.whole_file_response(with_content_range)]))
+                with open(self.download_path, "rb") as file:
+                    self.assertEqual(CONTENT, file.read())
+                self.assertEqual([40], self.starts())
+                self.assertEqual([], self.part_files())
+
+    def test_resume_with_unexpected_start_keeps_the_partial_file(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)])
+        self.photo.download.reset_mock()
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([partial_response(20, 100)]))
+        self.assertIn(f"Got {self.download_path} from byte 20 instead of 40", logs.output[0])
+        self.assertFalse(os.path.exists(self.download_path))
+        [part_file] = self.part_files()
+        with open(os.path.join(self.directory, part_file), "rb") as file:
+            self.assertEqual(CONTENT[:40], file.read())
+
+    def test_unreadable_content_range_on_resume_keeps_the_partial_file(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)])
+        self.photo.download.reset_mock()
+        response = partial_response(40, 100)
+        response.headers["Content-Range"] = "bytes 40-99/*"
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([response]))
+        self.assertIn(f"Got {self.download_path} from byte None instead of 40", logs.output[0])
+        self.assertFalse(os.path.exists(self.download_path))
+
+    def test_starts_over_only_once_when_the_range_keeps_being_ignored(self) -> None:
+        """A CDN that ignores the range on a dropping connection must not loop forever"""
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)])
+        self.photo.download.reset_mock()
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([dropped_response(0, 60), dropped_response(0, 80)]))
+        self.assertEqual([40, 60], self.starts())
+        self.assertIn(f"Got {self.download_path} from byte 0 instead of 60", logs.output[0])
+        self.assertFalse(os.path.exists(self.download_path))
