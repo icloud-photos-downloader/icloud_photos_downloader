@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- chore: the docs workflow asks for the Pages permissions it needs, now that the default workflow token is read-only
+
 ## 1.34.0 (2026-11-21)
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
