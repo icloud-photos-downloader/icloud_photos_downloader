@@ -9,6 +9,8 @@
 
 See [Documentation](https://icloud-photos-downloader.github.io/icloud_photos_downloader/) for more details. Also, check [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues)
 
+Questions or need help? Ask in the [Discord](https://discord.gg/7NcW5UCjsU) or in [Discussions](https://github.com/icloud-photos-downloader/icloud_photos_downloader/discussions). Bugs and feature requests go to [Issues](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues).
+
 ## iCloud Prerequisites
 
 To make iCloud Photo Downloader work, ensure the iCloud account is configured with the following settings, otherwise Apple Servers will return an ACCESS_DENIED error:
