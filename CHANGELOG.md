@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: resumed downloads that return full file don't corrupt image anymore
+
 ## 1.34.0 (2026-11-21)
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)

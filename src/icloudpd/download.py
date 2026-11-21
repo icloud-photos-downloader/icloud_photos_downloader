@@ -82,6 +82,16 @@ def content_range_total(response: Response) -> int | None:
     return int(match.group(1)) if match else None
 
 
+def content_range_start(response: Response) -> int | None:
+    """Offset of the first byte in the response body: the Content-Range start, 0 without one,
+    None when the Content-Range can't be read"""
+    content_range = response.headers.get("Content-Range")
+    if content_range is None:
+        return 0
+    match = re.fullmatch(r"bytes (\d+)-\d+/\d+", str(content_range))
+    return int(match.group(1)) if match else None
+
+
 def download_response_to_path(
     response: Response,
     temp_download_path: str,
@@ -148,6 +158,7 @@ def download_media(
     )
 
     retries = 0
+    started_over = False
     while True:
         try:
             append_mode = os.path.exists(temp_download_path)
@@ -164,6 +175,24 @@ def download_media(
                 photo_response.headers.get("Content-Length"),
             )
             if photo_response.ok:
+                # A resume asks for bytes=N-, but iCloud's CDN sometimes ignores that and sends the
+                # whole file; appending it to the partial file would corrupt it, so start over
+                body_start = content_range_start(photo_response)
+                if append_mode and body_start != current_size:
+                    # Start over only once per call: a CDN that keeps ignoring the range on a
+                    # connection that keeps dropping would otherwise download forever
+                    if body_start != 0 or started_over:
+                        logger.error(
+                            "Got %s from byte %s instead of %d; it will be retried on the next run",
+                            download_path,
+                            body_start,
+                            current_size,
+                        )
+                        break
+                    logger.debug("Server ignored the range for %s; starting over", download_path)
+                    append_mode = False
+                    current_size = 0
+                    started_over = True
                 if download_local(
                     photo_response, temp_download_path, append_mode, download_path, photo.created
                 ):
