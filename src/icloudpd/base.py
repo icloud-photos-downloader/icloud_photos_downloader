@@ -1568,6 +1568,20 @@ def core_single_run(
                                 photo_video_phrase = "photos and videos"
                             if (
                                 user_config.ignore_indexing_state
+                                and library_object.indexing_check_failed_on_missing_index
+                            ):
+                                # a run without the option never gets past this check, so
+                                # don't suggest one (#1361)
+                                message = (
+                                    f"All {photo_video_phrase} that iCloud listed have been "
+                                    "downloaded. iCloud's indexing check keeps failing on a "
+                                    "missing index that the listing doesn't use, so "
+                                    "--ignore-indexing-state is needed on every run for this "
+                                    "library"
+                                )
+                                logger.warning(message)
+                            elif (
+                                user_config.ignore_indexing_state
                                 and library_object.indexing_state_ignored
                             ):
                                 # the warning at the start is easy to miss in an unattended
