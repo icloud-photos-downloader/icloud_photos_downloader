@@ -20,7 +20,9 @@ jobs:
 
   publish_docs:
     needs: [build_docs]
+    # everything a permissions block doesn't list is none, and publish-docs.yml asks for contents: read
     permissions:
+      contents: read
       pages: write
       id-token: write
     uses: ./.github/workflows/publish-docs.yml
