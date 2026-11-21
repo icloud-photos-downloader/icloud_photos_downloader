@@ -248,8 +248,11 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     With this option, icloudpd continues after the last check if every answer said the library is
     still indexing, and logs a warning that the listing may be incomplete. The message at the end
-    of the run says so too, instead of "All photos and videos have been downloaded". Any other
-    answer, such as an error or another state, still stops the run.
+    of the run says so too, instead of "All photos and videos have been downloaded". An answer of
+    FAILED with the error "No index with requested name" counts as still indexing too: on some
+    accounts iCloud's indexing job asks for an index the library doesn't have, so the check never
+    finishes although the library lists completely. Any other answer, such as another error or
+    another state, still stops the run.
 
     While iCloud reports this state, the listing may really be incomplete, so some assets may not
     be downloaded. A later run without the option, once iCloud reports that indexing has finished,

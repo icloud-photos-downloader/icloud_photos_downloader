@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- fix: `--ignore-indexing-state` also continues when iCloud answers FAILED with "No index with requested name", e.g. for `CPLContainerRelationNotHiddenOrDeletedByAddedDate`, alone or mixed with RUNNING; on such accounts the indexing check never finishes although the library lists completely; any other FAILED answer still stops the run, and the debug lines of the indexing check now show iCloud's error [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
+
 ## 1.34.0 (2026-11-21)
 
 - feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
