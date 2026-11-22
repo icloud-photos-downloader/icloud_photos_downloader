@@ -7,6 +7,8 @@ import tempfile
 from typing import Any, Generator, List
 from unittest import TestCase, mock
 
+from requests.exceptions import ConnectionError as RequestsConnectionError
+
 from icloudpd.base import (
     _assets_around,
     _first_rank_at_or_before,
@@ -14,6 +16,7 @@ from icloudpd.base import (
     read_delete_list,
 )
 from icloudpd.cli import cli, parse
+from pyicloud_ipd.exceptions import PyiCloudAPIResponseException
 from pyicloud_ipd.file_match import FileMatchPolicy
 from pyicloud_ipd.services.photos import apply_file_match_policy
 
@@ -128,6 +131,10 @@ class ReadDeleteListTestCase(TestCase):
             "nan",
             "inf",
             "-5",
+            "1e300",  # finite, but no photo date and it overflows fromtimestamp
+            "99999999999",  # year 5138
+            "0001-01-01T00:00:00Z",  # before 2001, and very old ISO dates overflow in some places
+            "9999-12-31T23:59:59Z",
             "2024-01-31T14:05:09",  # no UTC offset: local time or UTC, depending on the machine
             "2024-01-31",
         ):
@@ -365,6 +372,31 @@ class DeleteFromListTestCase(TestCase):
             )
         self.assertEqual(status, 1)
 
+    def test_another_error_is_counted_as_failed_and_the_run_goes_on(self) -> None:
+        library = make_library(50)
+        content = f"IMG_0010.HEIC\t1010\t{unix(10)}\nIMG_0011.HEIC\t1011\t{unix(11)}\nIMG_0012.HEIC\t1012\t{unix(12)}\n"
+        logger = mock.Mock()
+        errors = [
+            PyiCloudAPIResponseException("boom", "SERVER_ERROR"),
+            True,
+            RequestsConnectionError("down"),
+        ]
+        with (
+            mock.patch("icloudpd.base.delete_photo", side_effect=errors) as real,
+            mock.patch("icloudpd.base.delete_photo_dry_run"),
+        ):
+            status = delete_from_list(
+                logger,
+                library,  # type: ignore[arg-type]
+                write_list(content),
+                50,
+                False,
+                lambda asset: asset.filename,
+            )
+        self.assertEqual(status, 1)
+        self.assertEqual(real.call_count, 3)  # no entry was skipped because of an earlier error
+        self.assertEqual(logger.info.call_args_list[-1].args[1:], ("deleted", 1, 0, 2, 0))
+
     def test_dry_run_does_not_delete(self) -> None:
         status, real, dry = self.run_delete(
             make_library(50), f"IMG_0010.HEIC\t1010\t{unix(10)}\n", dry_run=True
@@ -481,6 +513,14 @@ class DeleteListValidationTestCase(TestCase):
             ["--auto-delete"],
             ["--delete-after-download"],
             ["--keep-icloud-recent-days", "30"],
+            ["--skip-created-before", "2024-01-01"],
+            ["--skip-created-after", "2024-01-01"],
+            ["--skip-screenshots"],
+            ["--exclude-filename", "IMG_1*"],
+            ["--live-photo-directory", "/tmp/lp"],
+            ["--xmp-sidecar-only"],
+            ["--ignore-indexing-state"],
+            ["--prune-orphans"],
             ["--only-print-filenames"],
             ["--auth-only"],
         ):

@@ -4,9 +4,6 @@ on:
       icloudpd_version:
         required: true
         type: string
-      PYPI_REPOSITORY:
-        required: false
-        type: string
     secrets:
       DOCKERHUB_USERNAME:
         required: false
@@ -14,18 +11,20 @@ on:
         required: false
       NPM_TOKEN:
         required: false
-      PYPI_USERNAME:
-        required: false
-      PYPI_PASSWORD:
-        required: false
 
 name: Publish Release
+
+# gh_release needs to write the release; only the npm job gets id-token (see below)
+permissions:
+  contents: write
 
 jobs:
 
   docker:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # the Docker Hub secrets move into the "release" environment, which only v* tags can use
+    environment: release
 
     steps:
       - name: Checkout code
@@ -60,11 +59,19 @@ jobs:
   npm:
     runs-on: ubuntu-24.04
     timeout-minutes: 30
+    # only v* tags can use the "release" environment; the npm trusted publishers can be limited to it
+    environment: release
+    # id-token lets npm publish with trusted publishing (OIDC) where it is set up on
+    # npmjs.com; packages without it fall back to NODE_AUTH_TOKEN (NPM_TOKEN)
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Setup Node
         uses: actions/setup-node@v7
         with:
-          node-version: '20.x'
+          # trusted publishing needs npm 11.5.1 or later (bundled with Node 24.5 and later)
+          node-version: '24.x'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Download artifacts
@@ -85,45 +92,6 @@ jobs:
           npm publish dist/npm/icloudpd --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-  pypi:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 30
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v7
-
-      - name: Set up Python 3.15
-        uses: actions/setup-python@v7
-        with:
-          python-version: '3.15'
-      
-      - name: Install Dev dependencies
-        run: |
-          pip3 install --group dev
-
-      - name: Download artifacts (src)
-        uses: actions/download-artifact@v8
-        with:
-          name: icloudpd-src
-          path: |
-            dist
-
-      - name: Download artifacts (bin)
-        uses: actions/download-artifact@v8
-        with:
-          pattern: icloudpd-bin-*
-          merge-multiple: true
-          path: |
-            dist
-
-      - name: Publish PyPI
-        env:
-          TWINE_REPOSITORY: ${{ inputs.PYPI_REPOSITORY }}
-          TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
-          TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
-        run: |
-          python3 -m twine upload --non-interactive --disable-progress-bar dist/*.whl
 
   gh_release:
     runs-on: ubuntu-24.04
@@ -178,4 +146,7 @@ jobs:
         with:
           artifacts: "dist/*"
           bodyFile: dist/notes-${{inputs.icloudpd_version}}.md
+          # a release created in the GitHub UI (which also creates the tag) is updated with the
+          # files and notes instead of failing with already_exists
+          allowUpdates: true
 

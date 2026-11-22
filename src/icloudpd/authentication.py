@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, List, Mapping, Tuple
 from icloudpd.mfa_provider import MFAProvider
 from icloudpd.status import Status, StatusExchange
 from pyicloud_ipd.base import PyiCloudService
-from pyicloud_ipd.exceptions import PyiCloudFailedMFAException
+from pyicloud_ipd.exceptions import PyiCloudFailedLoginException, PyiCloudFailedMFAException
 
 
 def prompt_int_range(message: str, default: str, min_val: int, max_val: int) -> int:
@@ -70,28 +70,37 @@ def authenticator(
     cookie_directory: str | None = None,
     client_id: str | None = None,
     adp_web_access: bool = False,
+    ignore_indexing_state: bool = False,
 ) -> PyiCloudService:
     """Authenticate with iCloud username and password"""
     logger.debug("Authenticating...")
     valid_password: List[str] = []
+    password_sources: List[str] = []
 
     def password_provider(username: str, valid_password: List[str]) -> str | None:
-        for _, _pair in password_providers.items():
+        for name, _pair in password_providers.items():
             reader, _ = _pair
             password = reader(username)
             if password:
                 valid_password.append(password)
+                password_sources.append(name)
                 return password
         return None
 
-    icloud = PyiCloudService(
-        domain,
-        username,
-        partial(password_provider, username, valid_password),
-        response_observer,
-        cookie_directory=cookie_directory,
-        client_id=client_id,
-    )
+    try:
+        icloud = PyiCloudService(
+            domain,
+            username,
+            partial(password_provider, username, valid_password),
+            response_observer,
+            cookie_directory=cookie_directory,
+            client_id=client_id,
+            ignore_indexing_state=ignore_indexing_state,
+        )
+    except PyiCloudFailedLoginException as error:
+        # which provider gave the password Apple refused, for the hints after the error (#1348)
+        error.password_provider = password_sources[-1] if password_sources else None
+        raise
 
     if not icloud:
         raise NotImplementedError("None of providers gave password")

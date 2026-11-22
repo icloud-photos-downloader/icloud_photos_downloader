@@ -4,6 +4,36 @@
 
 - feat: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file (name, size and date), checks everything before signing in, rejects watch mode and options it would ignore, and exits with 1 when an entry is not found, ambiguous or refused; lines without a date need `--delete-list-allow-undated`
 
+## 1.34.0 (2026-11-21)
+
+- feat: add `--skip-screenshots` to leave out screenshots [#1386](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1386)
+- feat: add `--exclude-filename` to skip assets by filename pattern [#1259](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1259)
+- feat: add `--temp-suffix` to change the suffix of temporary download files, e.g. for WebDAV mounts that refuse `.part` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+  - `.part` files left by interrupted downloads before the suffix was changed are not resumed or removed; delete them by hand
+- feat: add `--xmp-sidecar-only` to write the XMP sidecars without downloading the photos and videos [#1265](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1265)
+- feat: add `--webui-host` to choose the address the web UI listens on, for example `127.0.0.1` to allow access from this computer only; the default `0.0.0.0` keeps the current behavior
+- feat: add opt-in `--ignore-indexing-state` to continue, with a warning, when iCloud keeps reporting the library as still indexing; the end of the run then says that the listing may be incomplete instead of "All photos and videos have been downloaded"; it can't be combined with options that delete [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
+- feat: `--live-photo-directory` downloads the video part of Live Photos to a separate directory, with the same folder structure as `--directory` [#94](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/94)
+- fix: `--log-level` now also applies to the bundled iCloud library, so `debug` shows its debug lines (e.g. the indexing state retries) and `error` quiets its warnings; the per-request lines with response headers and session tokens stay out of the output [#1488](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1488)
+- fix: a refused sign-in is now one readable `ERROR` line with Apple's message and code instead of a Python tuple with raw JSON, with hints when Apple refused the password [#1348](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1348) [#1240](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1240)
+- fix: accounts whose photo library Apple moved from the `PrimarySync` zone to another zone, such as `PrimarySync1`, failed with `ZONE_NOT_FOUND`; icloudpd now looks up that zone when `PrimarySync` doesn't exist (based on #1367 by @tural-ali) [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
+- chore: the release workflow can publish to npm with trusted publishing (OIDC) once it is set up on npmjs.com, so no npm token is needed; until then it publishes with the `NPM_TOKEN` secret as before [#1446](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1446)
+- chore: publish to PyPI with trusted publishing from a job in `create-release.yml` that uses the "release" environment, instead of a password in the repository secrets; the Docker Hub and npm jobs use that environment too
+
+## 1.33.1 (2026-11-17)
+
+- fix: an asset that iCloud lists without an original version stopped the whole run with `KeyError: <AssetVersionSize.ORIGINAL: 'original'>` when downloading originals (the default), so nothing past it was ever downloaded; it is now logged and skipped like a missing `--force-size` size [#926](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/926) [#1261](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1261)
+- fix: "IOError while writing file" always guessed "You might have run out of disk space" and hid the actual error; it now shows the error from the system, e.g. `[Errno 28] No space left on device` [#1288](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1288)
+- fix: `--until-found` counted files instead of photos, so with more than one `--size` (e.g. `--size original --size medium`) each photo counted once per size and the run stopped before it had found X already downloaded photos
+- fix: `--auto-delete` didn't delete the local Live Photo video of a photo deleted in iCloud when it was downloaded with `--live-photo-size medium` or `thumb`; it looked for `IMG_1234.MOV` instead of `IMG_1234-medium.MOV` or `IMG_1234-thumb.MOV`
+- fix: with `--xmp-sidecar`, the sidecar of an adjusted photo (`--size adjusted`) had the orientation of the original, so apps that read it rotated the already upright photo a second time; the adjusted sidecar no longer has the orientation [#1080](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1080)
+- fix: `--keep-icloud-recent-days` with `--skip-live-photos` deleted Live Photos from iCloud, including their video that was never downloaded; they are now kept in iCloud, with a warning at startup
+- fix: `--only-print-filenames` with more than one `--album` only printed the files of the first album
+- fix: `--keep-icloud-recent-days 0` together with `--delete-after-download` was not rejected like other values of `--keep-icloud-recent-days`
+- fix: `icloudpd --help` in a terminal only showed the section headers and no options (1.33.0, built with Python 3.15, whose argparse colors the help) [#1474](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1474)
+- fix: the Web UI status page showed the `--smtp-password` in plain text to anyone who could open the Web UI; passwords are no longer shown there
+- fix: `--dry-run` with `--keep-icloud-recent-days` re-reads the same page forever [#1480](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1480)
+
 ## 1.33.0 (2026-11-03)
 
 - feat: add explicit one-time `--prune-orphans-adopt-existing` to bootstrap dedicated flat, original-size shared-library mirrors; current filenames are retained regardless of size changes, and unmatched media is quarantined [#1350](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1350)

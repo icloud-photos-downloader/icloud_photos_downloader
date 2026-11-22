@@ -89,6 +89,7 @@ class PyiCloudService:
         client_id: str | None = None,
         with_family: bool = True,
         http_timeout: float = 30.0,
+        ignore_indexing_state: bool = False,
     ):
         self.apple_id = apple_id
         self.password_provider: Callable[[], str | None] = password_provider
@@ -97,6 +98,7 @@ class PyiCloudService:
         self.client_id: str = client_id or (f"auth-{str(uuid1()).lower()}")
         self.with_family = with_family
         self.http_timeout = http_timeout
+        self.ignore_indexing_state = ignore_indexing_state
         self.response_observer = response_observer
         self.observer_rules: Sequence[Rule] = []
 
@@ -338,8 +340,9 @@ class PyiCloudService:
 
         self._webservices = self.data["webservices"]
 
-        LOGGER.info("Authentication completed successfully")
-        LOGGER.debug(self.params)
+        # icloudpd reports the result itself; the params hold the account's dsid, which
+        # shouldn't end up in logs pasted into issues
+        LOGGER.debug("Signed in to iCloud")
 
     def _authenticate_with_token(self) -> None:
         """Authenticate using session token."""
@@ -1086,7 +1089,12 @@ class PyiCloudService:
         """Gets the 'Photo' service."""
         if not self._photos:
             service_root = self._get_webservice_url("ckdatabasews")
-            self._photos = PhotosService(service_root, self.session, self.params)
+            self._photos = PhotosService(
+                service_root,
+                self.session,
+                self.params,
+                ignore_indexing_state=self.ignore_indexing_state,
+            )
         return self._photos
 
     def __unicode__(self) -> str:

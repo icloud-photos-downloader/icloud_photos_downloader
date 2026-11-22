@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Ask a question or get help
+    url: https://discord.gg/7NcW5UCjsU
+    about: For setup and usage questions, ask in the #support forum on Discord.
+  - name: GitHub Discussions
+    url: https://github.com/icloud-photos-downloader/icloud_photos_downloader/discussions
+    about: Questions and ideas, if you prefer GitHub.
+  - name: Report a security problem
+    url: https://github.com/icloud-photos-downloader/icloud_photos_downloader/security/advisories/new
+    about: Please report security problems privately, not in a public issue.
