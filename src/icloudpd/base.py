@@ -336,6 +336,12 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
         provider == PasswordProvider.WEBUI for provider in global_config.password_providers
     )
 
+    if global_config.webui_api and not needs_web_server:
+        logger.warning(
+            "--webui-api has no effect: the web server only starts when 'webui' is the MFA provider "
+            "or a password provider"
+        )
+
     # Start web server ONCE if needed, outside all loops
     if needs_web_server:
         logger.info("Starting web server for WebUI authentication...")
@@ -351,7 +357,7 @@ def run_with_configs(global_config: GlobalConfig, user_configs: Sequence[UserCon
             logger.warning(warning)
 
     # Check if we're in watch mode
-    activity_log.enabled = global_config.webui_api
+    activity_log.enabled = global_config.webui_api and needs_web_server
     watch_interval = global_config.watch_with_interval
 
     if not watch_interval:

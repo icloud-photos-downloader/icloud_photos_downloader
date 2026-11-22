@@ -4,12 +4,10 @@ import tempfile
 from typing import Any, Tuple
 from unittest import TestCase, mock
 
-import waitress
-
 from icloudpd.activity import ActivityLog, activity_log
-from icloudpd.base import _run_pass
+from icloudpd.base import _run_pass, run_with_configs
 from icloudpd.cli import parse
-from icloudpd.server import serve_app
+from icloudpd.server import create_app
 from icloudpd.status import Status, StatusExchange
 from tests.helpers import path_from_project_root, run_icloudpd_test
 
@@ -19,12 +17,7 @@ def make_client(api: bool, with_config: bool = True) -> Tuple[StatusExchange, An
     if with_config:
         global_config, _ = parse((["--webui-api"] if api else []) + ["-d", "/x", "-u", "a@b.c"])
         exchange.set_global_config(global_config)
-    captured: dict[str, Any] = {}
-    with mock.patch.object(
-        waitress, "serve", lambda app, **kwargs: captured.setdefault("app", app)
-    ):
-        serve_app(logging.getLogger("test"), exchange)
-    return exchange, captured["app"].test_client()
+    return exchange, create_app(logging.getLogger("test"), exchange).test_client()
 
 
 class WebuiApiOptionTestCase(TestCase):
@@ -190,36 +183,44 @@ class ActivityLogTestCase(TestCase):
 
 class DownloadIsRecordedTestCase(TestCase):
     def test_a_real_download_ends_up_in_the_activity_log_only_with_the_option(self) -> None:
-        for option, expected in (("--webui-api", True), (None, False)):
-            with self.subTest(option=option):
+        cases = (
+            (["--webui-api", "--mfa-provider", "webui"], True),
+            (["--mfa-provider", "webui"], False),  # server runs, API is off
+            (["--webui-api"], False),  # no server, so the API cannot be used
+        )
+        for extra, expected in cases:
+            with self.subTest(extra=extra):
                 root_path = path_from_project_root(__file__)
-                base_dir = os.path.join(root_path, "fixtures", f"status_api_download_{expected}")
-                before = activity_log.total
-                _, result = run_icloudpd_test(
-                    self.assertEqual,
-                    root_path,
-                    base_dir,
-                    "listing_photos.yml",
-                    [
-                        ("2018/07/30", "IMG_7408.JPG", 1151066),
-                        ("2018/07/30", "IMG_7407.JPG", 656257),
-                    ],
-                    [("2018/07/31", "IMG_7409.JPG")],
-                    [
-                        "--username",
-                        "jdoe@gmail.com",
-                        "--password",
-                        "password1",
-                        "--recent",
-                        "5",
-                        "--skip-videos",
-                        "--skip-live-photos",
-                        "--no-progress-bar",
-                        "--threads-num",
-                        "1",
-                    ]
-                    + ([option] if option else []),
+                base_dir = os.path.join(
+                    root_path, "fixtures", f"status_api_download_{expected}_{len(extra)}"
                 )
+                before = activity_log.total
+                with mock.patch("icloudpd.base.serve_app"):  # do not open port 8080 in a test
+                    _, result = run_icloudpd_test(
+                        self.assertEqual,
+                        root_path,
+                        base_dir,
+                        "listing_photos.yml",
+                        [
+                            ("2018/07/30", "IMG_7408.JPG", 1151066),
+                            ("2018/07/30", "IMG_7407.JPG", 656257),
+                        ],
+                        [("2018/07/31", "IMG_7409.JPG")],
+                        [
+                            "--username",
+                            "jdoe@gmail.com",
+                            "--password",
+                            "password1",
+                            "--recent",
+                            "5",
+                            "--skip-videos",
+                            "--skip-live-photos",
+                            "--no-progress-bar",
+                            "--threads-num",
+                            "1",
+                        ]
+                        + extra,
+                    )
                 self.assertEqual(result.exit_code, 0)
                 names = [f["name"] for f in activity_log.snapshot()]
                 if expected:
@@ -227,3 +228,24 @@ class DownloadIsRecordedTestCase(TestCase):
                     self.assertEqual(names[0], "IMG_7409.JPG")
                 else:
                     self.assertEqual(activity_log.total, before)
+
+
+class WebuiApiWithoutServerTestCase(TestCase):
+    def test_a_warning_says_that_the_option_has_no_effect(self) -> None:
+        for extra, warned in (
+            ([], False),
+            (["--webui-api"], True),
+            (["--webui-api", "--mfa-provider", "webui"], False),
+            (["--webui-api", "--password-provider", "webui"], False),
+        ):
+            with self.subTest(extra=extra):
+                global_config, user_configs = parse(["-d", "/x", "-u", "a@b.c", *extra])
+                logger = mock.Mock()
+                with (
+                    mock.patch("icloudpd.base.create_logger", return_value=logger),
+                    mock.patch("icloudpd.base.serve_app"),
+                    mock.patch("icloudpd.base._process_all_users_once", return_value=0),
+                ):
+                    run_with_configs(global_config, user_configs)
+                messages = [c.args[0] for c in logger.warning.call_args_list]
+                self.assertEqual(any("--webui-api has no effect" in m for m in messages), warned)
