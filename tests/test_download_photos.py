@@ -706,6 +706,7 @@ class DownloadPhotoTestCase(TestCase):
             pa_response.__get__ = mock.Mock(return_value=False)
             with mock.patch.object(PhotoAsset, "download") as pa_download:
                 pa_download.return_value = Response()
+                pa_download.return_value.raw = mock.MagicMock()
 
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
@@ -2763,7 +2764,9 @@ class DownloadPhotoTestCase(TestCase):
             "photo timestamp",
         )
 
-        # check size
+        # The recorded response ignored the range (status 200, no Content-Range, full
+        # Content-Length), so the download starts over instead of appending to the partial file
+        self.assertIn(f"Server ignored the range for {out_path}; starting over", result.output)
         photo_size = os.path.getsize(out_path)
 
-        self.assertEqual(617 + 1234, photo_size, "photo size")
+        self.assertEqual(617, photo_size, "photo size")
