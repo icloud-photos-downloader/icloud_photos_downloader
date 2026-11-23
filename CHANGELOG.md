@@ -3,6 +3,7 @@
 ## Unreleased
 
 - chore: the docs workflow asks for the Pages permissions it needs, now that the default workflow token is read-only
+- feat: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file (name, size and date), checks everything before signing in, rejects watch mode and options it would ignore, and exits with 1 when an entry is not found, ambiguous or refused; lines without a date need `--delete-list-allow-undated`
 
 ## 1.34.0 (2026-11-21)
 
