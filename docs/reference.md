@@ -249,11 +249,22 @@ code 2 without doing anything. The rejected combinations are listed with each op
     With this option, icloudpd continues after the last check if every answer said the library is
     still indexing, and logs a warning that the listing may be incomplete. The message at the end
     of the run says so too, instead of "All photos and videos have been downloaded". Any other
-    answer, such as an error or another state, still stops the run.
+    answer, such as an error or another state, still stops the run, with one exception below.
 
     While iCloud reports this state, the listing may really be incomplete, so some assets may not
     be downloaded. A later run without the option, once iCloud reports that indexing has finished,
     picks up what is missing.
+
+    On some accounts iCloud's indexing check answers FAILED, alone or between RUNNING answers,
+    with an error that consists only of `CKCloudDBException:No index with requested name:
+    CPLContainerRelation…` (one or more, joined with `, `). The check then never finishes, but
+    the listing doesn't use that index, so the library lists completely. With this option such
+    answers are accepted too. Because a run without the option never gets past this check, the
+    message at the end of the run says that the option is needed on every run for that library,
+    instead of suggesting a run without it. That message is logged at INFO level, because it's
+    the expected state for such accounts (the warning at the start already says the check is
+    bypassed). A FAILED answer with any other error still stops the
+    run.
 
     Can't be combined with [`--auto-delete`](auto-delete-parameter),
     [`--delete-after-download`](delete-after-download-parameter),
