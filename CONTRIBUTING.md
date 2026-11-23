@@ -30,7 +30,7 @@ Chore:
 
 ## How can I contribute?
 
-There are several ways to help this project. Let us know about missing features, or report errors. You could even help others by responding to questions about using the project in the [issue tracker on GitHub][issues-section].
+There are several ways to help this project. Let us know about missing features, or report errors. You could even help others by answering questions about using the project in the [issue tracker on GitHub][issues-section], in [Discussions](https://github.com/icloud-photos-downloader/icloud_photos_downloader/discussions), or in the `#support` forum on [Discord](https://discord.gg/7NcW5UCjsU).
 
 ### Feature requests
 
@@ -45,7 +45,8 @@ Before submitting a bug report, check if the problem has already been reported. 
 ### Discuss with the team
 
 When contributing to this repository, please first discuss the change you wish to make via issue,
-email, or any other method with the owners of this repository before making a change.
+the `#development` channel on [Discord](https://discord.gg/7NcW5UCjsU), email, or any other method with the owners of this
+repository before making a change.
 
 ### Your first code contribution
 
@@ -208,3 +209,5 @@ We have GitHub actions taking care for building, testing, and releasing software
 - Update CHANGELOG.md with date of the release
 - Commit & push changes (either directly or through pull requests)
 - Add version tag to head (`git tag v1.32.2`) and push it to master (`git push origin v1.32.2`); the release workflow then builds everything and creates the GitHub release with all files and the release notes compiled from CHANGELOG.md and the compatibility reports, so there is no need to create the release in the GitHub UI. If a release for the tag was created in the UI anyway, the workflow updates it: its title becomes the tag, its text is replaced by the compiled notes, and it is no longer marked as a pre-release
+
+[issues-section]: https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues
