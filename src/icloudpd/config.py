@@ -54,6 +54,9 @@ class _DefaultConfig:
     skip_created_before: datetime.datetime | datetime.timedelta | None
     skip_created_after: datetime.datetime | datetime.timedelta | None
     skip_photos: bool
+    delete_list: pathlib.Path | None = None
+    delete_list_max: int = 50
+    delete_list_allow_undated: bool = False
     skip_screenshots: bool = False
     exclude_filenames: Sequence[str] = ()
     temp_suffix: str = ".part"
@@ -78,7 +81,7 @@ class GlobalConfig:
     threads_num: int
     domain: str
     watch_with_interval: int | None
-    webui_api: bool = False
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
     webui_host: str = "0.0.0.0"
+    webui_api: bool = False

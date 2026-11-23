@@ -4,7 +4,7 @@ import tempfile
 from typing import Any, Tuple
 from unittest import TestCase, mock
 
-from icloudpd.activity import ActivityLog, activity_log
+from icloudpd.activity import ActivityLog
 from icloudpd.base import _run_pass, run_with_configs
 from icloudpd.cli import parse
 from icloudpd.server import create_app
@@ -20,6 +20,17 @@ def make_client(api: bool, with_config: bool = True) -> Tuple[StatusExchange, An
     return exchange, create_app(logging.getLogger("test"), exchange).test_client()
 
 
+class FreshActivityLogTestCase(TestCase):
+    """Every test gets its own activity log (the module level one is shared, so tests would depend on order)."""
+
+    def setUp(self) -> None:
+        self.activity_log = ActivityLog(enabled=False)
+        for target in ("icloudpd.server.activity_log", "icloudpd.base.activity_log"):
+            patcher = mock.patch(target, self.activity_log)
+            patcher.start()
+            self.addCleanup(patcher.stop)
+
+
 class WebuiApiOptionTestCase(TestCase):
     def test_off_by_default(self) -> None:
         global_config, _ = parse(["-d", "/x", "-u", "a@b.c"])
@@ -30,7 +41,7 @@ class WebuiApiOptionTestCase(TestCase):
         self.assertTrue(global_config.webui_api)
 
 
-class StatusApiTestCase(TestCase):
+class StatusApiTestCase(FreshActivityLogTestCase):
     def test_endpoints_do_not_exist_without_the_option(self) -> None:
         _, client = make_client(api=False)
         self.assertEqual(client.get("/api/status").status_code, 404)
@@ -107,36 +118,31 @@ class StatusApiTestCase(TestCase):
 
     def test_activity_lists_the_downloaded_files_newest_first(self) -> None:
         _, client = make_client(api=True)
-        activity_log.enabled = True
-        self.addCleanup(setattr, activity_log, "enabled", False)
-        before = activity_log.total
+        self.activity_log.enabled = True
         with tempfile.TemporaryDirectory() as directory:
             first = os.path.join(directory, "first.heic")
             second = os.path.join(directory, "second.heic")
             for path, size in ((first, 5), (second, 10)):
                 with open(path, "wb") as f:
                     f.write(b"x" * size)
-            activity_log.record_download(first)
-            activity_log.record_download(second)
+            self.activity_log.record_download(first)
+            self.activity_log.record_download(second)
         answer = client.get("/api/activity").get_json()
-        self.assertEqual(answer["total"], before + 2)
+        self.assertEqual(answer["total"], 2)
         self.assertEqual([f["name"] for f in answer["files"][:2]], ["second.heic", "first.heic"])
         self.assertEqual([f["size"] for f in answer["files"][:2]], [10, 5])
-        self.assertEqual(client.get("/api/status").get_json()["downloaded_total"], before + 2)
+        self.assertEqual(client.get("/api/status").get_json()["downloaded_total"], 2)
 
     def test_activity_limit(self) -> None:
         _, client = make_client(api=True)
-        activity_log.enabled = True
-        try:
-            for i in range(60):
-                activity_log.record_download(f"/nonexistent/{i}.jpg")
-            self.assertEqual(len(client.get("/api/activity").get_json()["files"]), 50)
-            self.assertEqual(len(client.get("/api/activity?limit=7").get_json()["files"]), 7)
-            self.assertEqual(len(client.get("/api/activity?limit=500").get_json()["files"]), 60)
-            self.assertEqual(len(client.get("/api/activity?limit=x").get_json()["files"]), 50)
-            self.assertEqual(client.get("/api/activity?limit=0").get_json()["files"], [])
-        finally:
-            activity_log.enabled = False
+        self.activity_log.enabled = True
+        for i in range(60):
+            self.activity_log.record_download(f"/nonexistent/{i}.jpg")
+        self.assertEqual(len(client.get("/api/activity").get_json()["files"]), 50)
+        self.assertEqual(len(client.get("/api/activity?limit=7").get_json()["files"]), 7)
+        self.assertEqual(len(client.get("/api/activity?limit=500").get_json()["files"]), 60)
+        self.assertEqual(len(client.get("/api/activity?limit=x").get_json()["files"]), 50)
+        self.assertEqual(client.get("/api/activity?limit=0").get_json()["files"], [])
 
 
 class ActivityLogTestCase(TestCase):
@@ -181,7 +187,7 @@ class ActivityLogTestCase(TestCase):
         self.assertEqual(len(log.snapshot(limit=4)), 4)
 
 
-class DownloadIsRecordedTestCase(TestCase):
+class DownloadIsRecordedTestCase(FreshActivityLogTestCase):
     def test_a_real_download_ends_up_in_the_activity_log_only_with_the_option(self) -> None:
         cases = (
             (["--webui-api", "--mfa-provider", "webui"], True),
@@ -190,11 +196,11 @@ class DownloadIsRecordedTestCase(TestCase):
         )
         for extra, expected in cases:
             with self.subTest(extra=extra):
+                before = self.activity_log.total  # the log is shared by the cases of this test
                 root_path = path_from_project_root(__file__)
                 base_dir = os.path.join(
                     root_path, "fixtures", f"status_api_download_{expected}_{len(extra)}"
                 )
-                before = activity_log.total
                 with mock.patch("icloudpd.base.serve_app"):  # do not open port 8080 in a test
                     _, result = run_icloudpd_test(
                         self.assertEqual,
@@ -222,15 +228,15 @@ class DownloadIsRecordedTestCase(TestCase):
                         + extra,
                     )
                 self.assertEqual(result.exit_code, 0)
-                names = [f["name"] for f in activity_log.snapshot()]
+                names = [f["name"] for f in self.activity_log.snapshot()]
                 if expected:
-                    self.assertEqual(activity_log.total, before + 1)
+                    self.assertEqual(self.activity_log.total, before + 1)
                     self.assertEqual(names[0], "IMG_7409.JPG")
                 else:
-                    self.assertEqual(activity_log.total, before)
+                    self.assertEqual(self.activity_log.total, before)
 
 
-class WebuiApiWithoutServerTestCase(TestCase):
+class WebuiApiWithoutServerTestCase(FreshActivityLogTestCase):
     def test_a_warning_says_that_the_option_has_no_effect(self) -> None:
         for extra, warned in (
             ([], False),

@@ -25,6 +25,7 @@ With Docker, publish the port:
 docker run --rm -p 8080:8080 -v $(pwd)/Photos:/data icloudpd/icloudpd:latest icloudpd --username jappleseed@apple.com --directory /data --mfa-provider webui --password-provider webui
 ```
 
+(webui-security)=
 ## Security
 
 ```{warning}
@@ -35,9 +36,10 @@ Use [`--webui-host`](webui-host-parameter) `127.0.0.1` to accept connections fro
 
 In Docker, keep the default `0.0.0.0` (the container's loopback is not reachable from the host, unless you use host networking with `--network host`) and limit access with the port mapping instead, for example `-p 127.0.0.1:8080:8080`.
 
+(webui-status-api)=
 ## Status API
 
-With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404 and nothing is recorded. Like the rest of the web server, the API only runs when `webui` is selected as MFA or password provider (see [Enabling](#enabling)). It has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer (in Docker, limit access with the port mapping instead, as described in [Security](#security)).
+With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404 and nothing is recorded. Like the rest of the web server, the API only runs when `webui` is selected as MFA or password provider (see [Enabling](#enabling)). It has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer (in Docker, limit access with the port mapping instead, as described in [Security](webui-security)).
 
 | Request | Answer |
 |---|---|

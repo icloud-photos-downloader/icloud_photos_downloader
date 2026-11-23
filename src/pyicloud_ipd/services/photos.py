@@ -115,6 +115,40 @@ logger = logging.getLogger(__name__)
 INDEXING_STATE_ATTEMPTS = 15
 INDEXING_STATE_RETRY_DELAY_SECONDS = 4
 
+# iCloud can answer FAILED with errors like "CKCloudDBException:No index with requested name:
+# CPLContainerRelationNotHiddenOrDeletedByAddedDate" (several joined with ", ") when its indexing
+# job asks for a CPLContainerRelation* index the library doesn't have. The asset listing uses
+# other indexes (CPLAssetAndMasterByAssetDateWithoutHiddenOrDeleted and its count), so the
+# library still lists completely (#1361). Every part of the error must be exactly this
+MISSING_CONTAINER_RELATION_INDEX = re.compile(
+    r"CKCloudDBException:No index with requested name: CPLContainerRelation\w+"
+)
+
+
+def indexing_state_error(record: Dict[str, Any]) -> Any:
+    """The raw error value of a CheckIndexingState record, or None"""
+    fields = record.get("fields")
+    error = fields.get("error") if isinstance(fields, dict) else None
+    return error.get("value") if isinstance(error, dict) else None
+
+
+def is_running_indexing_state(record: Dict[str, Any]) -> bool:
+    return (
+        record.get("recordType") == "CheckIndexingState"
+        and record["fields"]["state"]["value"] == "RUNNING"
+    )
+
+
+def is_failed_on_missing_index(record: Dict[str, Any]) -> bool:
+    error = indexing_state_error(record)
+    return (
+        record.get("recordType") == "CheckIndexingState"
+        and record["fields"]["state"]["value"] == "FAILED"
+        and isinstance(error, str)
+        and all(MISSING_CONTAINER_RELATION_INDEX.fullmatch(part) for part in error.split(", "))
+    )
+
+
 # albumType of a folder in the album list; albums are 0
 FOLDER_ALBUM_TYPE = 3
 
@@ -295,6 +329,10 @@ class PhotoLibrary:
         # set when the run continued past a RUNNING state because of the option, so the
         # end of the run can say that the listing may be incomplete
         self.indexing_state_ignored = False
+        # set when the option let the run continue past FAILED answers about a missing
+        # CPLContainerRelation* index (#1361); the end of the run then says that the check keeps
+        # failing and the option is needed on every run, rather than "may be incomplete"
+        self.indexing_check_failed_on_missing_index = False
 
         url = f"{self.service_endpoint}/records/query?{urlencode(self.params)}"
         json_data = json.dumps(
@@ -307,36 +345,54 @@ class PhotoLibrary:
         # Apple may report RUNNING for a library that is ready, flipping to
         # FINISHED only on some calls, so re-check before giving up (#1387)
         all_running = True
+        all_ignorable = True
         for attempt in range(1, INDEXING_STATE_ATTEMPTS + 1):
             request = self.session.post(url, data=json_data, headers={"Content-type": "text/plain"})
             response = request.json()
-            indexing_state = response["records"][0]["fields"]["state"]["value"]
+            record = response["records"][0]
+            indexing_state = record["fields"]["state"]["value"]
             if indexing_state == "FINISHED":
                 break
-            if not (
-                indexing_state == "RUNNING"
-                and response["records"][0].get("recordType") == "CheckIndexingState"
-            ):
+            running = is_running_indexing_state(record)
+            if not running:
                 all_running = False
-            if attempt < INDEXING_STATE_ATTEMPTS:
-                logger.debug(
-                    "Library indexing state is %s (attempt %d/%d), retrying in %ds",
-                    indexing_state,
-                    attempt,
-                    INDEXING_STATE_ATTEMPTS,
-                    INDEXING_STATE_RETRY_DELAY_SECONDS,
-                )
+            if not (running or is_failed_on_missing_index(record)):
+                all_ignorable = False
+            error = indexing_state_error(record)
+            last = attempt == INDEXING_STATE_ATTEMPTS
+            logger.debug(
+                "Library indexing state is %s%s (attempt %d/%d)%s",
+                indexing_state,
+                f" ({error})" if error not in (None, "") else "",
+                attempt,
+                INDEXING_STATE_ATTEMPTS,
+                "" if last else f", retrying in {INDEXING_STATE_RETRY_DELAY_SECONDS}s",
+            )
+            if not last:
                 time.sleep(INDEXING_STATE_RETRY_DELAY_SECONDS)
         else:
-            # iCloud may keep answering RUNNING for a library that lists normally (#1387);
-            # continue only on request, and only when every answer was a RUNNING record
-            if self.ignore_indexing_state and all_running:
-                logger.warning(
-                    "Library %s is still reported as indexing (RUNNING on all %d checks), "
-                    "continuing because of --ignore-indexing-state; the listing may be incomplete",
-                    self.zone_id.get("zoneName"),
-                    INDEXING_STATE_ATTEMPTS,
-                )
+            # iCloud may keep answering RUNNING for a library that lists normally (#1387), or
+            # FAILED because its indexing job asks for a CPLContainerRelation* index the library
+            # doesn't have (#1361); continue only on request, and only when every answer was
+            # one of those records
+            if self.ignore_indexing_state and all_ignorable:
+                if all_running:
+                    logger.warning(
+                        "Library %s is still reported as indexing (RUNNING on all %d checks), "
+                        "continuing because of --ignore-indexing-state; "
+                        "the listing may be incomplete",
+                        self.zone_id.get("zoneName"),
+                        INDEXING_STATE_ATTEMPTS,
+                    )
+                else:
+                    logger.warning(
+                        "Library %s: iCloud's indexing check keeps failing on a missing "
+                        "CPLContainerRelation index, which the listing doesn't use (FAILED or "
+                        "RUNNING on all %d checks); continuing because of --ignore-indexing-state",
+                        self.zone_id.get("zoneName"),
+                        INDEXING_STATE_ATTEMPTS,
+                    )
+                    self.indexing_check_failed_on_missing_index = True
                 self.indexing_state_ignored = True
             else:
                 raise PyiCloudServiceNotActivatedException(
