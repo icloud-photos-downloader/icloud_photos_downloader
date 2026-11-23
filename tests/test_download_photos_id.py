@@ -600,6 +600,7 @@ class DownloadPhotoNameIDTestCase(TestCase):
             pa_response.__get__ = mock.Mock(return_value=False)
             with mock.patch.object(PhotoAsset, "download") as pa_download:
                 pa_download.return_value = Response()
+                pa_download.return_value.raw = mock.MagicMock()
 
                 data_dir, result = run_icloudpd_test(
                     self.assertEqual,
