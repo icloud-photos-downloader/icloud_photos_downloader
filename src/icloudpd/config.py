@@ -84,3 +84,4 @@ class GlobalConfig:
     password_providers: Sequence[PasswordProvider]
     mfa_provider: MFAProvider
     webui_host: str = "0.0.0.0"
+    webui_api: bool = False
