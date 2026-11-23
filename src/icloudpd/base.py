@@ -1579,7 +1579,9 @@ def core_single_run(
                                     "--ignore-indexing-state is needed on every run for this "
                                     "library"
                                 )
-                                logger.warning(message)
+                                # expected on every run for these accounts, and the startup
+                                # warning already says the check is bypassed (#1361)
+                                logger.info(message)
                             elif (
                                 user_config.ignore_indexing_state
                                 and library_object.indexing_state_ignored

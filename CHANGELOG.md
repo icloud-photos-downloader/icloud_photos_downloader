@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-- fix: `--ignore-indexing-state` also continues when iCloud's indexing check answers FAILED with an error that consists only of `CKCloudDBException:No index with requested name: CPLContainerRelation…` (alone or between RUNNING answers); on such accounts the check never finishes, but the listing doesn't use that index, so the library lists completely; the end of the run then says that the option is needed on every run instead of suggesting a run without it; a FAILED answer with any other error still stops the run, and the debug lines of the indexing check, including the last one, now show iCloud's error [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
+- fix: `--ignore-indexing-state` also continues when iCloud's indexing check answers FAILED with an error that consists only of `CKCloudDBException:No index with requested name: CPLContainerRelation…` (alone or between RUNNING answers); on such accounts the check never finishes, but the listing doesn't use that index, so the library lists completely; the end of the run then says, at INFO level, that the option is needed on every run instead of suggesting a run without it; a FAILED answer with any other error still stops the run, and the debug lines of the indexing check, including the last one, now show iCloud's error [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
 
 ## 1.34.0 (2026-11-21)
 

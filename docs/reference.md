@@ -261,7 +261,9 @@ code 2 without doing anything. The rejected combinations are listed with each op
     the listing doesn't use that index, so the library lists completely. With this option such
     answers are accepted too. Because a run without the option never gets past this check, the
     message at the end of the run says that the option is needed on every run for that library,
-    instead of suggesting a run without it. A FAILED answer with any other error still stops the
+    instead of suggesting a run without it. That message is logged at INFO level, because it's
+    the expected state for such accounts (the warning at the start already says the check is
+    bypassed). A FAILED answer with any other error still stops the
     run.
 
     Can't be combined with [`--auto-delete`](auto-delete-parameter),

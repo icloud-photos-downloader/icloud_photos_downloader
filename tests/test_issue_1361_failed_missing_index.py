@@ -299,8 +299,14 @@ class Issue1361EndOfRunTest(TestCase):
 
     def test_end_of_run_says_the_option_is_needed_every_run(self) -> None:
         base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
-        result = self.run_with_failed_check(base_dir, ["--ignore-indexing-state"])
+        with self.assertLogs("icloudpd", level="INFO") as logs:
+            result = self.run_with_failed_check(base_dir, ["--ignore-indexing-state"])
         self.assertEqual(result.exit_code, 0)
+        # INFO, not WARNING: this is the expected state on every run for such accounts
+        end_of_run = [
+            r for r in logs.records if r.getMessage().startswith("All photos and videos that")
+        ]
+        self.assertEqual([r.levelname for r in end_of_run], ["INFO"])
         self.assertIn(
             "All photos and videos that iCloud listed have been downloaded. iCloud's indexing "
             "check keeps failing on a missing index that the listing doesn't use, so "
