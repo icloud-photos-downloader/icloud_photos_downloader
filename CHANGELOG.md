@@ -3,6 +3,7 @@
 ## Unreleased
 
 - chore: the docs workflow asks for the Pages permissions it needs, now that the default workflow token is read-only
+- fix: when Apple refuses the start of the sign-in, icloudpd reports Apple's message instead of crashing with `KeyError: 'salt'` [#1499](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1499)
 
 ## 1.34.0 (2026-11-21)
 
