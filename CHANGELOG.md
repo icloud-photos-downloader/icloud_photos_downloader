@@ -4,6 +4,7 @@
 
 - chore: the docs workflow asks for the Pages permissions it needs, now that the default workflow token is read-only
 - feat: `--delete-list FILE` (with `--delete-list-max`) deletes from iCloud the assets listed in a file (name, size and date), checks everything before signing in, rejects watch mode and options it would ignore, and exits with 1 when an entry is not found, ambiguous or refused; lines without a date need `--delete-list-allow-undated`
+- fix: `--ignore-indexing-state` also continues when iCloud's indexing check answers FAILED with an error that consists only of `CKCloudDBException:No index with requested name: CPLContainerRelation…` (alone or between RUNNING answers); on such accounts the check never finishes, but the listing doesn't use that index, so the library lists completely; the end of the run then says, at INFO level, that the option is needed on every run instead of suggesting a run without it; a FAILED answer with any other error still stops the run, and the debug lines of the indexing check, including the last one, now show iCloud's error [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
 - fix: when Apple refuses the start of the sign-in, icloudpd reports Apple's message instead of crashing with `KeyError: 'salt'` [#1499](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1499)
 
 ## 1.34.0 (2026-11-21)
