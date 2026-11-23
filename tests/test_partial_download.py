@@ -315,3 +315,18 @@ class PartialDownloadTestCase(TestCase):
         self.assertTrue(self.download([self.whole_file_response(False)], icloud_size=0))
         with open(self.download_path, "rb") as file:
             self.assertEqual(CONTENT, file.read())
+
+    def test_wrong_size_file_that_cannot_be_removed(self) -> None:
+        with (
+            mock.patch("icloudpd.download.os.remove", side_effect=PermissionError("locked")),
+            self.assertLogs(self.logger, level="ERROR") as logs,
+        ):
+            self.assertFalse(self.download([partial_response(0, 100)], icloud_size=120))
+        self.assertIn("has 100 bytes, but iCloud says it has 120", logs.output[0])
+        [part_file] = self.part_files()
+        self.assertIn(
+            f"Could not remove {os.path.join(self.directory, part_file)}, please remove it by "
+            "hand: locked",
+            logs.output[1],
+        )
+        self.assertFalse(os.path.exists(self.download_path))

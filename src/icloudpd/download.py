@@ -95,10 +95,11 @@ def content_range_start(response: Response) -> int | None:
 class DownloadSizeMismatchError(Exception):
     """The downloaded file doesn't have the size iCloud reports for it (#116, #1493)"""
 
-    def __init__(self, size: int, expected_size: int) -> None:
+    def __init__(self, size: int, expected_size: int, remove_error: OSError | None) -> None:
         super().__init__(f"{size} bytes instead of {expected_size}")
         self.size = size
         self.expected_size = expected_size
+        self.remove_error = remove_error
 
 
 def download_response_to_path(
@@ -125,8 +126,12 @@ def download_response_to_path(
     if total_size is not None and downloaded_size < total_size:
         return False
     if expected_size and downloaded_size != expected_size:
-        os.remove(temp_download_path)
-        raise DownloadSizeMismatchError(downloaded_size, expected_size)
+        try:
+            os.remove(temp_download_path)
+            remove_error = None
+        except OSError as error:
+            remove_error = error
+        raise DownloadSizeMismatchError(downloaded_size, expected_size, remove_error)
     os.rename(temp_download_path, download_path)
     update_mtime(created_date, download_path)
     return True
@@ -318,6 +323,13 @@ def download_media(
                 error.size,
                 error.expected_size,
             )
+            if error.remove_error is not None:
+                # left in place it would be resumed past its end on every run
+                logger.error(
+                    "Could not remove %s, please remove it by hand: %s",
+                    temp_download_path,
+                    error.remove_error,
+                )
             break
 
         except OSError as error:
