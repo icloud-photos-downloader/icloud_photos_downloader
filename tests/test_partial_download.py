@@ -45,6 +45,9 @@ class DroppedStream:
         yield self.data
         raise ProtocolError("Connection broken: IncompleteRead")
 
+    def close(self) -> None:
+        pass
+
 
 def dropped_response(start: int, end: int, total: int = len(CONTENT)) -> Response:
     response = partial_response(start, total, total)
@@ -220,7 +223,7 @@ class PartialDownloadTestCase(TestCase):
         response.headers["Content-Range"] = "bytes 40-99/*"
         with self.assertLogs(self.logger, level="ERROR") as logs:
             self.assertFalse(self.download([response]))
-        self.assertIn(f"Got {self.download_path} from byte None instead of 40", logs.output[0])
+        self.assertIn(f"Got {self.download_path} from byte unknown instead of 40", logs.output[0])
         self.assertFalse(os.path.exists(self.download_path))
 
     def test_starts_over_only_once_when_the_range_keeps_being_ignored(self) -> None:
@@ -233,3 +236,38 @@ class PartialDownloadTestCase(TestCase):
         self.assertEqual([40, 60], self.starts())
         self.assertIn(f"Got {self.download_path} from byte 0 instead of 60", logs.output[0])
         self.assertFalse(os.path.exists(self.download_path))
+
+    def test_resume_answered_206_without_content_range_keeps_the_partial_file(self) -> None:
+        """A 206 must say where its body starts; without that it can't be appended or restarted"""
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)])
+        self.photo.download.reset_mock()
+        response = Response()
+        response.status_code = 206
+        response.raw = io.BytesIO(CONTENT[40:])
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([response]))
+        self.assertIn(f"Got {self.download_path} from byte unknown instead of 40", logs.output[0])
+        self.assertFalse(os.path.exists(self.download_path))
+        [part_file] = self.part_files()
+        with open(os.path.join(self.directory, part_file), "rb") as file:
+            self.assertEqual(CONTENT[:40], file.read())
+
+    def test_restart_that_drops_is_then_resumed(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)])
+        self.photo.download.reset_mock()
+        self.assertTrue(self.download([dropped_response(0, 20), partial_response(20, 100)]))
+        with open(self.download_path, "rb") as file:
+            self.assertEqual(CONTENT, file.read())
+        self.assertEqual([40, 20], self.starts())
+        self.assertEqual([], self.part_files())
+
+    def test_response_is_closed_when_its_body_is_left_unread(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)])
+        self.photo.download.reset_mock()
+        response = partial_response(20, 100)
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.assertFalse(self.download([response]))
+        self.assertTrue(response.raw.closed)

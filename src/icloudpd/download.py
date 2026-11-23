@@ -83,11 +83,11 @@ def content_range_total(response: Response) -> int | None:
 
 
 def content_range_start(response: Response) -> int | None:
-    """Offset of the first byte in the response body: the Content-Range start, 0 without one,
-    None when the Content-Range can't be read"""
+    """Offset of the first byte in the response body: the Content-Range start, 0 for a 200 without
+    one, None when it can't be told (an unreadable Content-Range, or another status without one)"""
     content_range = response.headers.get("Content-Range")
     if content_range is None:
-        return 0
+        return 0 if response.status_code == 200 else None
     match = re.fullmatch(r"bytes (\d+)-\d+/\d+", str(content_range))
     return int(match.group(1)) if match else None
 
@@ -167,71 +167,81 @@ def download_media(
                 logger.debug(f"Resuming downloading of {download_path} from {current_size}")
 
             photo_response = photo.download(icloud.photos.session, version.url, current_size)
-            logger.debug(
-                "Response for %s: status %s, Content-Range %s, Content-Length %s",
-                download_path,
-                photo_response.status_code,
-                photo_response.headers.get("Content-Range"),
-                photo_response.headers.get("Content-Length"),
-            )
-            if photo_response.ok:
-                # A resume asks for bytes=N-, but iCloud's CDN sometimes ignores that and sends the
-                # whole file; appending it to the partial file would corrupt it, so start over
-                body_start = content_range_start(photo_response)
-                if append_mode and body_start != current_size:
-                    # Start over only once per call: a CDN that keeps ignoring the range on a
-                    # connection that keeps dropping would otherwise download forever
-                    if body_start != 0 or started_over:
-                        logger.error(
-                            "Got %s from byte %s instead of %d; it will be retried on the next run",
-                            download_path,
-                            body_start,
-                            current_size,
+            try:
+                logger.debug(
+                    "Response for %s: status %s, Content-Range %s, Content-Length %s",
+                    download_path,
+                    photo_response.status_code,
+                    photo_response.headers.get("Content-Range"),
+                    photo_response.headers.get("Content-Length"),
+                )
+                if photo_response.ok:
+                    # A resume asks for bytes=N-, but iCloud's CDN sometimes ignores that and sends the
+                    # whole file; appending it to the partial file would corrupt it, so start over
+                    body_start = content_range_start(photo_response)
+                    if append_mode and body_start != current_size:
+                        # Start over only once per call: a CDN that keeps ignoring the range on a
+                        # connection that keeps dropping would otherwise download forever
+                        if body_start != 0 or started_over:
+                            logger.error(
+                                "Got %s from byte %s instead of %d; it will be retried on the next run",
+                                download_path,
+                                "unknown" if body_start is None else body_start,
+                                current_size,
+                            )
+                            break
+                        logger.debug(
+                            "Server ignored the range for %s; starting over", download_path
                         )
-                        break
-                    logger.debug("Server ignored the range for %s; starting over", download_path)
-                    append_mode = False
-                    current_size = 0
-                    started_over = True
-                if download_local(
-                    photo_response, temp_download_path, append_mode, download_path, photo.created
-                ):
-                    return True
-                # The response ended before the size in its Content-Range (iCloud sends one on
-                # every download); ask for the rest while that brings more data, otherwise keep
-                # the partial file for the next run
-                downloaded_size = os.path.getsize(temp_download_path)
-                total_size = content_range_total(photo_response)
-                if downloaded_size > current_size:
-                    logger.debug(
-                        "Got %d of %d bytes of %s, requesting the rest",
+                        append_mode = False
+                        current_size = 0
+                        started_over = True
+                    if download_local(
+                        photo_response,
+                        temp_download_path,
+                        append_mode,
+                        download_path,
+                        photo.created,
+                    ):
+                        return True
+                    # The response ended before the size in its Content-Range (iCloud sends one on
+                    # every download); ask for the rest while that brings more data, otherwise keep
+                    # the partial file for the next run
+                    downloaded_size = os.path.getsize(temp_download_path)
+                    total_size = content_range_total(photo_response)
+                    if downloaded_size > current_size:
+                        logger.debug(
+                            "Got %d of %d bytes of %s, requesting the rest",
+                            downloaded_size,
+                            total_size,
+                            download_path,
+                        )
+                        continue
+                    logger.error(
+                        "Could not download all of %s (%d of %d bytes); it will be resumed on the next run",
+                        download_path,
                         downloaded_size,
                         total_size,
-                        download_path,
                     )
-                    continue
-                logger.error(
-                    "Could not download all of %s (%d of %d bytes); it will be resumed on the next run",
-                    download_path,
-                    downloaded_size,
-                    total_size,
-                )
-                break
-            else:
-                # Use the standard original filename generator for error logging
-                from icloudpd.base import lp_filename_original as simple_lp_filename_generator
+                    break
+                else:
+                    # Use the standard original filename generator for error logging
+                    from icloudpd.base import lp_filename_original as simple_lp_filename_generator
 
-                # Get the proper filename using filename_builder
-                base_filename = filename_builder(photo)
-                version_filename = calculate_version_filename(
-                    base_filename, version, size, simple_lp_filename_generator, photo.item_type
-                )
-                logger.error(
-                    "Could not find URL to download %s for size %s",
-                    version_filename,
-                    size.value,
-                )
-                break
+                    # Get the proper filename using filename_builder
+                    base_filename = filename_builder(photo)
+                    version_filename = calculate_version_filename(
+                        base_filename, version, size, simple_lp_filename_generator, photo.item_type
+                    )
+                    logger.error(
+                        "Could not find URL to download %s for size %s",
+                        version_filename,
+                        size.value,
+                    )
+                    break
+            finally:
+                # Release the connection on every way out, also when the body was left unread
+                photo_response.close()
 
         except PyiCloudAPIResponseException as ex:
             if "Invalid global session" in str(ex):
