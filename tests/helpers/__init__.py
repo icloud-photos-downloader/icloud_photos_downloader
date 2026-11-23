@@ -4,13 +4,15 @@ import os
 import shutil
 import sys
 import traceback
-from contextlib import redirect_stderr, redirect_stdout
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from functools import partial
-from typing import IO, Any, Callable, List, Mapping, Protocol, Sequence, Tuple, TypeVar
+from typing import IO, Any, Callable, Iterator, List, Mapping, Protocol, Sequence, Tuple, TypeVar
+from unittest import mock
 
 from vcr import VCR
 
 from foundation.core import compose, flip, partial_1_1, partial_2_1
+from icloudpd import download
 from icloudpd.cli import cli
 
 vcr = VCR(decode_compressed_response=True, record_mode="none")
@@ -306,15 +308,28 @@ run_main: Callable[[Sequence[str]], TestResult] = compose(
 )
 
 
+@contextmanager
+def recorded_sizes_ignored() -> Iterator[None]:
+    """The cassettes keep the sizes iCloud reported, but their file bodies are short placeholders,
+    so the size check after a download (tested in test_partial_download) is left out here"""
+    save = download.download_response_to_path
+
+    def without_size(*args: Any, expected_size: int | None = None) -> bool:
+        return save(*args[:5])
+
+    with mock.patch.object(download, "download_response_to_path", without_size):
+        yield
+
+
 def run_with_cassette(cassette_path: str, f: Callable[[_T_contra], _T_co], inp: _T_contra) -> _T_co:
-    with vcr.use_cassette(cassette_path):
+    with vcr.use_cassette(cassette_path), recorded_sizes_ignored():
         return f(inp)
 
 
 def run_cassette(
     cassette_path: str, params: Sequence[str], input: str | bytes | IO[Any] | None = None
 ) -> TestResult:
-    with vcr.use_cassette(cassette_path):
+    with vcr.use_cassette(cassette_path), recorded_sizes_ignored():
         return print_result_exception(run_main_env(DEFAULT_ENV, params, input))
 
 

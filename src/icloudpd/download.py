@@ -92,24 +92,41 @@ def content_range_start(response: Response) -> int | None:
     return int(match.group(1)) if match else None
 
 
+class DownloadSizeMismatchError(Exception):
+    """The downloaded file doesn't have the size iCloud reports for it (#116, #1493)"""
+
+    def __init__(self, size: int, expected_size: int) -> None:
+        super().__init__(f"{size} bytes instead of {expected_size}")
+        self.size = size
+        self.expected_size = expected_size
+
+
 def download_response_to_path(
     response: Response,
     temp_download_path: str,
     append_mode: bool,
     download_path: str,
     created_date: datetime.datetime,
+    expected_size: int | None = None,
 ) -> bool:
     """Saves response content into file with desired created date.
 
     Returns False when the response held only part of the file: the partial file is kept,
-    so the rest can be requested from where it stopped."""
+    so the rest can be requested from where it stopped.
+
+    Raises DownloadSizeMismatchError when the finished file doesn't have the expected size:
+    the file is removed instead of saved, so later runs don't skip a broken file."""
     with open(temp_download_path, ("ab" if append_mode else "wb")) as file_obj:
         for chunk in response.iter_content(chunk_size=1024):
             if chunk:
                 file_obj.write(chunk)
     total_size = content_range_total(response)
-    if total_size is not None and os.path.getsize(temp_download_path) < total_size:
+    downloaded_size = os.path.getsize(temp_download_path)
+    if total_size is not None and downloaded_size < total_size:
         return False
+    if expected_size and downloaded_size != expected_size:
+        os.remove(temp_download_path)
+        raise DownloadSizeMismatchError(downloaded_size, expected_size)
     os.rename(temp_download_path, download_path)
     update_mtime(created_date, download_path)
     return True
@@ -122,6 +139,7 @@ def download_response_to_path_dry_run(
     _append_mode: bool,
     download_path: str,
     _created_date: datetime.datetime,
+    _expected_size: int | None = None,
 ) -> bool:
     """Pretends to save response content into a file with desired created date"""
     logger.info(
@@ -202,6 +220,7 @@ def download_media(
                         append_mode,
                         download_path,
                         photo.created,
+                        version.size,
                     ):
                         return True
                     # The response ended before the size in its Content-Range (iCloud sends one on
@@ -288,6 +307,17 @@ def download_media(
                 )
                 continue
             logger.error("Connection lost while downloading %s: %s", download_path, error)
+            break
+
+        except DownloadSizeMismatchError as error:
+            # Saving it would make later runs skip a broken file as already downloaded
+            logger.error(
+                "%s has %d bytes, but iCloud says it has %d; it wasn't saved and will be "
+                "downloaded again on the next run",
+                download_path,
+                error.size,
+                error.expected_size,
+            )
             break
 
         except OSError as error:
