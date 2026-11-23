@@ -249,11 +249,22 @@ code 2 without doing anything. The rejected combinations are listed with each op
     With this option, icloudpd continues after the last check if every answer said the library is
     still indexing, and logs a warning that the listing may be incomplete. The message at the end
     of the run says so too, instead of "All photos and videos have been downloaded". Any other
-    answer, such as an error or another state, still stops the run.
+    answer, such as an error or another state, still stops the run, with one exception below.
 
     While iCloud reports this state, the listing may really be incomplete, so some assets may not
     be downloaded. A later run without the option, once iCloud reports that indexing has finished,
     picks up what is missing.
+
+    On some accounts iCloud's indexing check answers FAILED, alone or between RUNNING answers,
+    with an error that consists only of `CKCloudDBException:No index with requested name:
+    CPLContainerRelation…` (one or more, joined with `, `). The check then never finishes, but
+    the listing doesn't use that index, so the library lists completely. With this option such
+    answers are accepted too. Because a run without the option never gets past this check, the
+    message at the end of the run says that the option is needed on every run for that library,
+    instead of suggesting a run without it. That message is logged at INFO level, because it's
+    the expected state for such accounts (the warning at the start already says the check is
+    bypassed). A FAILED answer with any other error still stops the
+    run.
 
     Can't be combined with [`--auto-delete`](auto-delete-parameter),
     [`--delete-after-download`](delete-after-download-parameter),
@@ -483,6 +494,37 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     ```{versionadded} 1.30.0
     ```
+
+(delete-list-parameter)=
+`--delete-list FILE`
+
+:   Delete from iCloud the assets listed in `FILE`, and download nothing. Every line is `FILENAME<TAB>SIZE<TAB>DATE`, with `SIZE` in bytes and `DATE` the creation date of the asset, either a unix timestamp in seconds or an ISO 8601 date and time **with a UTC offset or `Z`** (for example `2024-01-31T14:05:09+01:00`). A date without an offset, a value such as `20240101`, and dates before 2001 or after 2100 are rejected, because they would be read in a time zone that depends on the machine or are no photo dates. Lines starting with `#` are ignored.
+
+    An asset matches when its original file name and size are equal and its own date is within two minutes of the `DATE`. The name may also carry the id suffix of [`--file-match-policy name-id7`](file-match-policy-parameter) (accepted whether or not that option is used). Every line is kept, so two photos that share name and size can be told apart by their dates. A line that asks for a photo another line already asked for is reported and the photo is deleted once.
+
+    `icloudpd` knows where to look: it reads the newest 100 assets first and then searches by date, so even a large library is checked within seconds. The search assumes that iCloud lists the library newest first by capture date, which is not guaranteed; an entry that is not found there is therefore looked for in the whole library (once for all such entries, with a warning in the log) before it is reported as not found, which can take minutes for a large library.
+
+    Everything is checked before `icloudpd` signs in: a missing or malformed file, a list longer than [`--delete-list-max`](delete-list-max-parameter), and options that would be ignored (`--album`, `--recent`, `--until-found`, `--skip-videos`, `--skip-photos`, `--skip-live-photos`, `--skip-created-before`, `--skip-created-after`, `--skip-screenshots`, `--exclude-filename`, `--live-photo-directory`, `--xmp-sidecar-only`, `--ignore-indexing-state`, `--prune-orphans`, `--auto-delete`, `--delete-after-download`, `--keep-icloud-recent-days`, `--only-print-filenames`, `--auth-only`) end with exit code 2. `--delete-list` cannot be combined with `--watch-with-interval`, because the list would run again every interval. `--directory` is not needed.
+
+    The exit code is 0 only when every line was dealt with. Entries that are not found, are ambiguous (several assets match) or that iCloud refuses to delete (it asks to try again later, or the request fails) end with exit code 1; a failing entry does not stop the others. The last log line is a summary, for example `Delete list summary: deleted=3 not_found=1 failed=0 ambiguous=0` (`would_delete=` with `--dry-run`).
+
+    Be aware of what one line deletes:
+
+    - It deletes the whole asset. The video of a Live Photo goes with it, and the JPG line of a RAW+JPEG pair deletes both.
+    - Lines for the `.MOV` of a Live Photo, for the RAW file of a pair or for an edited version never match, because the size is that of the original.
+    - In a shared library the deletion applies to every participant.
+
+    Deleted assets go to *Recently Deleted* in iCloud and can be restored there for about 30 days. Combine with [`--dry-run`](dry-run-parameter) to see what would be deleted.
+
+(delete-list-allow-undated-parameter)=
+`--delete-list-allow-undated`
+
+:   Accept lines without a `DATE` in the file given with [`--delete-list`](delete-list-parameter). Such a line matches by file name and size alone and needs the whole library to be read. Once the photo it means is gone (deleted earlier, on a device or by a previous run), another photo with the same name and size would match and be deleted, so use this only for a list you have just made and have checked with `--dry-run`.
+
+(delete-list-max-parameter)=
+`--delete-list-max N`
+
+:   Refuse to run if the file given with `--delete-list` has more than `N` entries. Default: 50.
 
 (skip-screenshots-parameter)=
 `--skip-screenshots`
