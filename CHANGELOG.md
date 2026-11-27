@@ -7,6 +7,7 @@
 - fix: `--ignore-indexing-state` also continues when iCloud's indexing check answers FAILED with an error that consists only of `CKCloudDBException:No index with requested name: CPLContainerRelation…` (alone or between RUNNING answers); on such accounts the check never finishes, but the listing doesn't use that index, so the library lists completely; the end of the run then says, at INFO level, that the option is needed on every run instead of suggesting a run without it; a FAILED answer with any other error still stops the run, and the debug lines of the indexing check, including the last one, now show iCloud's error [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361)
 - fix: resumed downloads that return full file don't corrupt image anymore
 - feat: add opt-in `--webui-api`, a read-only JSON status API (`/api/status`, `/api/activity`) on the WebUI server for other programs to follow what icloudpd does; off by default [#1428](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/1428)
+- fix: the indexing check of the primary library runs once per run instead of twice, which halves the wait when iCloud keeps answering RUNNING or FAILED [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361) [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
 
 ## 1.34.0 (2026-11-21)
 
