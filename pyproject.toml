@@ -102,6 +102,10 @@ addopts = "--doctest-modules"
 where = ["src"]  # list of folders that contain the packages (["."] by default)
 exclude = ["starters"]
 
+[tool.setuptools.package-data]
+# the web UI's pages and assets, for installs from source (the release binaries add them themselves)
+"icloudpd.server" = ["templates/*.html", "static/**/*"]
+
 [[tool.mypy.overrides]]
 module = ['piexif.*', 'vcr.*', 'srp.*']
 ignore_missing_imports = true

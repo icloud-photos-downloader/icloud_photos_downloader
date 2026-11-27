@@ -1,10 +1,13 @@
 import inspect
 import json
 import os
+from contextlib import nullcontext
+from types import SimpleNamespace
 from typing import Any, List
 from unittest import TestCase, mock
 
 from icloudpd.base import apple_sign_in_error
+from pyicloud_ipd.base import PyiCloudService
 from pyicloud_ipd.exceptions import PyiCloudAPIResponseException, PyiCloudFailedLoginException
 from tests.helpers import path_from_project_root, recreate_path, run_cassette, run_main
 
@@ -72,6 +75,59 @@ class AppleSignInErrorTestCase(TestCase):
             apple_sign_in_error(error),
             'Invalid email/password combination. Apple says: "Try again later." (503)',
         )
+
+
+class SrpInitRefusedTestCase(TestCase):
+    """Apple refusing signin/init is a failed sign-in with its message, not KeyError 'salt' (#1499)"""
+
+    def init(self, status_code: int, text: str) -> PyiCloudFailedLoginException:
+        response = mock.Mock(status_code=status_code, ok=status_code < 400, text=text)
+        response.json.side_effect = lambda: json.loads(text)
+        service = SimpleNamespace(
+            apple_id="jdoe@gmail.com",
+            AUTH_ENDPOINT="https://idmsa.apple.com/appleauth/auth",
+            AUTH_ROOT_ENDPOINT="https://idmsa.apple.com",
+            response_observer=None,
+            use_rules=lambda rules: nullcontext(rules),
+            _get_auth_headers=lambda overrides=None: dict(overrides or {}),
+            session=mock.Mock(**{"post.return_value": response}),
+        )
+        with self.assertRaises(PyiCloudFailedLoginException) as context:
+            PyiCloudService._authenticate_srp(service, "password1")  # type: ignore[arg-type]
+        service.session.post.assert_called_once()
+        return context.exception
+
+    def test_refused_with_400(self) -> None:
+        body = json.dumps(
+            {
+                "serviceErrors": [
+                    {"code": "-900007", "message": "Your request could not be completed."}
+                ]
+            }
+        )
+        error = self.init(400, body)
+
+        self.assertEqual(
+            apple_sign_in_error(error),
+            'Failed to initiate srp authentication. Apple says: "Your request could not be '
+            'completed." (-900007)',
+        )
+
+    def test_refused_with_401(self) -> None:
+        error = self.init(401, WRONG_PASSWORD_BODY)
+
+        self.assertIn("Apple says:", apple_sign_in_error(error))
+        self.assertIn("(-20101)", apple_sign_in_error(error))
+
+    def test_answer_without_salt(self) -> None:
+        for text in ['{"protocol": "s2k"}', "<html>maintenance</html>", "[]"]:
+            with self.subTest(text=text):
+                error = self.init(200, text)
+
+                self.assertEqual(
+                    apple_sign_in_error(error),
+                    f"Failed to initiate srp authentication. Apple's answer: {text} (200)",
+                )
 
 
 class SignInErrorOutputTestCase(TestCase):
