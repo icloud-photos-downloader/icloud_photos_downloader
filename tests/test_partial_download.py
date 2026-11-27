@@ -63,7 +63,12 @@ class PartialDownloadTestCase(TestCase):
         self.photo = mock.MagicMock()
         self.photo.created = datetime.datetime(2026, 1, 1, tzinfo=datetime.UTC)
 
-    def download(self, responses: List[Response | Exception], temp_suffix: str = ".part") -> bool:
+    def download(
+        self,
+        responses: List[Response | Exception],
+        temp_suffix: str = ".part",
+        icloud_size: int = len(CONTENT),
+    ) -> bool:
         self.photo.download.side_effect = responses
         return download_media(
             self.logger,
@@ -71,7 +76,7 @@ class PartialDownloadTestCase(TestCase):
             mock.MagicMock(),
             self.photo,
             self.download_path,
-            AssetVersion(len(CONTENT), "https://example.com/file", "public.mpeg-4", CHECKSUM),
+            AssetVersion(icloud_size, "https://example.com/file", "public.mpeg-4", CHECKSUM),
             AssetVersionSize.ORIGINAL,
             lambda _photo: "IMG_0001.MOV",
             temp_suffix,
@@ -271,3 +276,57 @@ class PartialDownloadTestCase(TestCase):
         with self.assertLogs(self.logger, level="ERROR"):
             self.assertFalse(self.download([response]))
         self.assertTrue(response.raw.closed)
+
+    def test_file_smaller_than_icloud_says_is_not_saved(self) -> None:
+        """Also when the response itself looks complete: the size iCloud lists decides (#1493)"""
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([partial_response(0, 100)], icloud_size=120))
+        self.assertIn(
+            f"{self.download_path} has 100 bytes, but iCloud says it has 120; it wasn't saved "
+            "and will be downloaded again on the next run",
+            logs.output[0],
+        )
+        self.assertEqual([], os.listdir(self.directory))
+
+    def test_file_larger_than_icloud_says_is_not_saved(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([self.whole_file_response(False)], icloud_size=80))
+        self.assertIn("has 100 bytes, but iCloud says it has 80", logs.output[0])
+        self.assertEqual([], os.listdir(self.directory))
+
+    def test_resumed_file_with_the_wrong_size_is_not_saved(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 40), partial_response(40, 40)], icloud_size=120)
+        self.photo.download.reset_mock()
+        with self.assertLogs(self.logger, level="ERROR") as logs:
+            self.assertFalse(self.download([partial_response(40, 100)], icloud_size=120))
+        self.assertIn("has 100 bytes, but iCloud says it has 120", logs.output[0])
+        self.assertEqual([], os.listdir(self.directory))
+
+    def test_next_run_downloads_again_from_the_start(self) -> None:
+        with self.assertLogs(self.logger, level="ERROR"):
+            self.download([partial_response(0, 100)], icloud_size=120)
+        self.photo.download.reset_mock()
+        self.assertTrue(self.download([partial_response(0, 100)]))
+        self.assertEqual([0], self.starts())
+        self.assertEqual(["IMG_0001.MOV"], os.listdir(self.directory))
+
+    def test_file_without_a_size_from_icloud_is_saved(self) -> None:
+        self.assertTrue(self.download([self.whole_file_response(False)], icloud_size=0))
+        with open(self.download_path, "rb") as file:
+            self.assertEqual(CONTENT, file.read())
+
+    def test_wrong_size_file_that_cannot_be_removed(self) -> None:
+        with (
+            mock.patch("icloudpd.download.os.remove", side_effect=PermissionError("locked")),
+            self.assertLogs(self.logger, level="ERROR") as logs,
+        ):
+            self.assertFalse(self.download([partial_response(0, 100)], icloud_size=120))
+        self.assertIn("has 100 bytes, but iCloud says it has 120", logs.output[0])
+        [part_file] = self.part_files()
+        self.assertIn(
+            f"Could not remove {os.path.join(self.directory, part_file)}, please remove it by "
+            "hand: locked",
+            logs.output[1],
+        )
+        self.assertFalse(os.path.exists(self.download_path))
