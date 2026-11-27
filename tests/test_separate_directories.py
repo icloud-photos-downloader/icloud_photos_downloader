@@ -1,5 +1,6 @@
 import base64
 import contextlib
+import datetime
 import inspect
 import io
 import logging
@@ -363,6 +364,8 @@ class SeparateDirectoriesTestCase(TestCase):
         )
         self.assertEqual(result2.exit_code, 0)
         self.assertIn("already exists", result2.output)
+        self.assertNotIn("Downloaded ", result2.output)
+        self.assertEqual(["2018/07/30/IMG_7405.MOV"], files_in(video_dir))
 
     def test_cassette_live_photo_video_does_not_go_to_video_directory(self) -> None:
         """Live Photo videos do not go to --video-directory (#1494)"""
@@ -507,3 +510,162 @@ class SeparateDirectoriesTestCase(TestCase):
         # Non-deleted photo and live-photo video remain
         self.assertEqual(["2018/07/30/IMG_7407.JPG"], files_in(data_dir))
         self.assertEqual(["2018/07/30/IMG_7407.MOV"], files_in(live_dir))
+
+    def test_cassette_screenshot_directory_downloads_screenshot(self) -> None:
+        """Screenshots download into --screenshot-directory and not into --directory (#1494)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        screen_dir = base_dir + "_screenshots"
+        recreate_path(screen_dir)
+
+        def fake_download(
+            _l: Any,
+            _d: bool,
+            _i: Any,
+            photo: Any,
+            download_path: str,
+            *args: Any,
+            **kwargs: Any,
+        ) -> bool:
+            if photo.is_screenshot:
+                os.makedirs(os.path.dirname(download_path), exist_ok=True)
+                open(download_path, "wb").close()
+                return True
+            return False
+
+        with mock.patch("icloudpd.download.download_media", side_effect=fake_download):
+            data_dir, result = run_icloudpd_test(
+                self.assertEqual,
+                self.root_path,
+                base_dir,
+                "listing_videos.yml",
+                [],
+                [],
+                [
+                    "--username",
+                    "jdoe@gmail.com",
+                    "--password",
+                    "password1",
+                    "--recent",
+                    "25",
+                    "--skip-videos",
+                    "--no-progress-bar",
+                    "--threads-num",
+                    "1",
+                    "--screenshot-directory",
+                    screen_dir,
+                ],
+            )
+
+        self.assertEqual(result.exit_code, 0)
+        # Screenshots land in screen_dir (including IMG_7388.PNG), data_dir has none
+        self.assertIn("2018/07/26/IMG_7388.PNG", files_in(screen_dir))
+        self.assertEqual([], files_in(data_dir))
+
+    def test_cassette_keep_icloud_recent_days_with_separate_directories(self) -> None:
+        """--keep-icloud-recent-days finds assets in separate directories (#1494)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        screen_dir = base_dir + "_screenshots"
+        video_dir = base_dir + "_videos"
+        recreate_path(screen_dir)
+        recreate_path(video_dir)
+
+        # Create screenshot in screen_dir and video in video_dir
+        screen_file = os.path.join(screen_dir, "2018", "07", "26", "IMG_7388.PNG")
+        os.makedirs(os.path.dirname(screen_file), exist_ok=True)
+        with open(screen_file, "wb") as f:
+            f.truncate(182500)
+
+        video_file = os.path.join(video_dir, "2018", "07", "30", "IMG_7405.MOV")
+        os.makedirs(os.path.dirname(video_file), exist_ok=True)
+        with open(video_file, "wb") as f:
+            f.truncate(36491351)
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
+            dt_mock.now.return_value = mock_now + datetime.timedelta(days=10)
+            with mock.patch("icloudpd.download.download_media", return_value=False):
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos_keep_icloud_recent_days.yml",
+                    [],
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "25",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                        "--keep-icloud-recent-days",
+                        "0",
+                        "--screenshot-directory",
+                        screen_dir,
+                        "--video-directory",
+                        video_dir,
+                    ],
+                )
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertIn("Deleted IMG_7388.PNG in iCloud", result.output)
+        self.assertIn("Deleted IMG_7405.MOV in iCloud", result.output)
+
+    def test_cassette_keep_icloud_recent_days_ignores_separate_directory_assets_in_data_dir(
+        self,
+    ) -> None:
+        """Assets in --directory don't count once separate directories are specified (#1494)"""
+        base_dir = os.path.join(self.fixtures_path, inspect.stack()[0][3])
+        screen_dir = base_dir + "_screenshots"
+        video_dir = base_dir + "_videos"
+        recreate_path(screen_dir)
+        recreate_path(video_dir)
+
+        # Put files into data_dir instead of screen_dir/video_dir
+        files_to_create = [
+            ("2018/07/26", "IMG_7388.PNG", 182500),
+            ("2018/07/30", "IMG_7405.MOV", 36491351),
+        ]
+
+        with mock.patch("datetime.datetime", wraps=datetime.datetime) as dt_mock:
+            mock_now = datetime.datetime(2018, 7, 31, tzinfo=datetime.UTC)
+            dt_mock.now.return_value = mock_now + datetime.timedelta(days=10)
+            with mock.patch("icloudpd.download.download_media", return_value=False):
+                _, result = run_icloudpd_test(
+                    self.assertEqual,
+                    self.root_path,
+                    base_dir,
+                    "listing_photos_keep_icloud_recent_days.yml",
+                    files_to_create,
+                    [],
+                    [
+                        "--username",
+                        "jdoe@gmail.com",
+                        "--password",
+                        "password1",
+                        "--recent",
+                        "25",
+                        "--no-progress-bar",
+                        "--threads-num",
+                        "1",
+                        "--keep-icloud-recent-days",
+                        "0",
+                        "--screenshot-directory",
+                        screen_dir,
+                        "--video-directory",
+                        video_dir,
+                    ],
+                )
+
+        self.assertEqual(result.exit_code, 0)
+        self.assertNotIn("Deleted IMG_7388.PNG in iCloud", result.output)
+        self.assertNotIn("Deleted IMG_7405.MOV in iCloud", result.output)
+        self.assertIn(
+            "Not deleting IMG_7388.PNG from iCloud: it is not present locally", result.output
+        )
+        self.assertIn(
+            "Not deleting IMG_7405.MOV from iCloud: it is not present locally", result.output
+        )

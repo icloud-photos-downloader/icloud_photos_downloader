@@ -147,8 +147,8 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
     )
     cloned.add_argument(
         "--video-directory",
-        help="Download videos to this directory instead of --directory. "
-        + "The folder structure is applied inside it, like in --directory "
+        help="Download videos (not the video part of Live Photos) to this directory instead of "
+        + "--directory. The folder structure is applied inside it, like in --directory "
         + "(default: into --directory)",
         default=None,
     )
