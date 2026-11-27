@@ -439,19 +439,24 @@ class PyiCloudService:
                 response = self.session.post(
                     f"{self.AUTH_ENDPOINT}/signin/init", data=json.dumps(data), headers=headers
                 )
-            if response.status_code == 401:
+            # Apple also refuses with other codes (400 and -900007, #1499), with a body without salt
+            if not response.ok:
                 raise PyiCloudAPIResponseException(response.text, str(response.status_code))
+            # Step 2: server sends public key B, salt, and c to client
+            try:
+                body = response.json()
+                salt = base64.b64decode(body["salt"])
+                b = base64.b64decode(body["b"])
+                c = body["c"]
+                iterations = body["iteration"]
+                protocol = body["protocol"]
+            except (ValueError, KeyError, TypeError) as error:
+                raise PyiCloudAPIResponseException(
+                    response.text, str(response.status_code)
+                ) from error
         except PyiCloudAPIResponseException as error:
             msg = "Failed to initiate srp authentication."
             raise PyiCloudFailedLoginException(msg, error) from error
-
-        # Step 2: server sends public key B, salt, and c to client
-        body = response.json()
-        salt = base64.b64decode(body["salt"])
-        b = base64.b64decode(body["b"])
-        c = body["c"]
-        iterations = body["iteration"]
-        protocol = body["protocol"]
 
         # Step 3: client generates session key M1 and M2 with salt and b, sends to server
         srp_password.set_encrypt_info(protocol, salt, iterations)
