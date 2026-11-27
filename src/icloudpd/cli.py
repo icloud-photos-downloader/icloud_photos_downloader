@@ -139,6 +139,20 @@ def add_options_for_user(parser: argparse.ArgumentParser) -> argparse.ArgumentPa
         default=None,
     )
     cloned.add_argument(
+        "--screenshot-directory",
+        help="Download screenshots to this directory instead of --directory. "
+        + "The folder structure is applied inside it, like in --directory "
+        + "(default: into --directory)",
+        default=None,
+    )
+    cloned.add_argument(
+        "--video-directory",
+        help="Download videos (not the video part of Live Photos) to this directory instead of "
+        + "--directory. The folder structure is applied inside it, like in --directory "
+        + "(default: into --directory)",
+        default=None,
+    )
+    cloned.add_argument(
         "--xmp-sidecar",
         help="Export additional data as XMP sidecar files (default: don't export)",
         action="store_true",
@@ -549,6 +563,8 @@ def map_to_config(user_ns: argparse.Namespace) -> UserConfig:
         skip_videos=user_ns.skip_videos,
         skip_live_photos=user_ns.skip_live_photos,
         live_photo_directory=user_ns.live_photo_directory,
+        screenshot_directory=user_ns.screenshot_directory,
+        video_directory=user_ns.video_directory,
         xmp_sidecar=user_ns.xmp_sidecar or user_ns.xmp_sidecar_only,
         force_size=user_ns.force_size,
         auto_delete=user_ns.auto_delete,
@@ -671,6 +687,8 @@ def delete_list_error(global_ns: GlobalConfig, user_nses: Sequence[UserConfig]) 
                 ("--skip-screenshots", user_ns.skip_screenshots),
                 ("--exclude-filename", bool(user_ns.exclude_filenames)),
                 ("--live-photo-directory", bool(user_ns.live_photo_directory)),
+                ("--screenshot-directory", bool(user_ns.screenshot_directory)),
+                ("--video-directory", bool(user_ns.video_directory)),
                 ("--xmp-sidecar-only", user_ns.xmp_sidecar_only),
                 ("--ignore-indexing-state", user_ns.ignore_indexing_state),
                 ("--prune-orphans", user_ns.prune_orphans),
@@ -775,6 +793,23 @@ def cli() -> int:
                 "--live-photo-directory can't be combined with --skip-live-photos or "
                 "--prune-orphans"
             )
+            return 2
+
+        elif any(
+            user_ns.screenshot_directory and (user_ns.skip_screenshots or user_ns.prune_orphans)
+            for user_ns in user_nses
+        ):
+            print(
+                "--screenshot-directory can't be combined with --skip-screenshots or "
+                "--prune-orphans"
+            )
+            return 2
+
+        elif any(
+            user_ns.video_directory and (user_ns.skip_videos or user_ns.prune_orphans)
+            for user_ns in user_nses
+        ):
+            print("--video-directory can't be combined with --skip-videos or --prune-orphans")
             return 2
 
         elif any(

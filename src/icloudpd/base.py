@@ -542,6 +542,8 @@ def _process_all_users_once(
                     temp_suffix=user_config.temp_suffix,
                     xmp_sidecar_only=user_config.xmp_sidecar_only,
                     live_photo_directory=user_config.live_photo_directory,
+                    screenshot_directory=user_config.screenshot_directory,
+                    video_directory=user_config.video_directory,
                 )
                 if user_config.directory is not None
                 else (lambda _s, _c, _p: NOT_DOWNLOADED)
@@ -768,6 +770,8 @@ def download_builder(
     temp_suffix: str = ".part",
     xmp_sidecar_only: bool = False,
     live_photo_directory: str | None = None,
+    screenshot_directory: str | None = None,
+    video_directory: str | None = None,
 ) -> DownloadResult:
     """Download files, or inspect their selected paths without writing or fetching media."""
 
@@ -825,7 +829,13 @@ def download_builder(
         print("Include a link to the Gist in your issue, so that we can see what went wrong.\n")
         return NOT_DOWNLOADED
 
-    download_dir = os.path.normpath(os.path.join(directory, date_path))
+    if photo.is_screenshot and screenshot_directory:
+        base_target_dir = screenshot_directory
+    elif photo.item_type == AssetItemType.MOVIE and video_directory:
+        base_target_dir = video_directory
+    else:
+        base_target_dir = directory
+    download_dir = os.path.normpath(os.path.join(base_target_dir, date_path))
     success = False
     created_paths: list[str] = []
     expected_paths: list[str] = []
@@ -2024,6 +2034,8 @@ def core_single_run(
                                 build_filename_cleaner(user_config.keep_unicode_in_filenames),
                             ),
                             live_photo_directory=user_config.live_photo_directory,
+                            screenshot_directory=user_config.screenshot_directory,
+                            video_directory=user_config.video_directory,
                         )
                     else:
                         pass

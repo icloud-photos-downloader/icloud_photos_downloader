@@ -11,6 +11,7 @@ from tzlocal import get_localzone
 
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
+from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
 from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames, size_to_suffix
@@ -41,6 +42,8 @@ def autodelete_photos(
     raw_policy: RawTreatmentPolicy,
     filename_builder: Callable[[PhotoAsset], str],
     live_photo_directory: str | None = None,
+    screenshot_directory: str | None = None,
+    video_directory: str | None = None,
 ) -> None:
     """
     Scans the "Recently Deleted" folder and deletes any matching files
@@ -77,7 +80,12 @@ def autodelete_photos(
                 created_date = datetime.datetime.fromtimestamp(0)
                 date_path = folder_structure.format(created_date)
 
-        download_dir = os.path.join(directory, date_path)
+        if media.is_screenshot and screenshot_directory:
+            download_dir = os.path.join(screenshot_directory, date_path)
+        elif media.item_type == AssetItemType.MOVIE and video_directory:
+            download_dir = os.path.join(video_directory, date_path)
+        else:
+            download_dir = os.path.join(directory, date_path)
         # Live Photo videos are in --live-photo-directory when that was given
         live_photo_dir = (
             os.path.join(live_photo_directory, date_path) if live_photo_directory else download_dir
