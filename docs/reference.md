@@ -394,7 +394,7 @@ code 2 without doing anything. The rejected combinations are listed with each op
     Can't be combined with [`--skip-screenshots`](skip-screenshots-parameter) or
     [`--prune-orphans`](prune-orphans-parameter).
 
-    ```{versionadded} 1.34.1
+    ```{versionadded} 1.35.0
     ```
 
 (video-directory-parameter)=
@@ -416,7 +416,7 @@ code 2 without doing anything. The rejected combinations are listed with each op
     Can't be combined with [`--skip-videos`](skip-videos-parameter) or
     [`--prune-orphans`](prune-orphans-parameter).
 
-    ```{versionadded} 1.34.1
+    ```{versionadded} 1.35.0
     ```
 
 (file-match-policy-parameter)=
