@@ -674,7 +674,9 @@ class PhotosService(PhotoLibrary):
             libraries: Dict[str, PhotoLibrary] = {}
             service_endpoint = self.get_service_endpoint(library_type)
             for zone_id in self._fetch_zone_ids(library_type):
-                if library_type == "private" and zone_id == self.zone_id:
+                # by name: zones/list adds fields such as ownerRecordName that the default
+                # {"zoneName": "PrimarySync"} doesn't have
+                if library_type == "private" and zone_id["zoneName"] == self.zone_id["zoneName"]:
                     # the primary library is this object; don't check its indexing state again
                     libraries[zone_id["zoneName"]] = self
                     continue

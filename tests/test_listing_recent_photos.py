@@ -184,9 +184,10 @@ Include a link to the Gist in your issue, so that we can see what went wrong.
                 file="icloudpd-photo-error.json", mode="w", encoding="utf8"
             )
             mock_json.assert_called()
-            self.assertEqual(len(mock_json.call_args_list), 7)
+            # the session is saved after every request, then the photo record once
+            self.assertEqual(len(mock_json.call_args_list), 6)
             # Check a few keys in the dict
-            first_arg = mock_json.call_args_list[6][0][0]
+            first_arg = mock_json.call_args_list[5][0][0]
             self.assertEqual(
                 first_arg["master_record"]["recordName"], "AY6c+BsE0jjaXx9tmVGJM1D2VcEO"
             )

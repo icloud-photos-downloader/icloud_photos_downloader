@@ -12,6 +12,7 @@
 - fix: when Apple refuses the start of the sign-in, icloudpd reports Apple's message instead of crashing with `KeyError: 'salt'` [#1499](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1499)
 - fix: installing from source (`pip install` from git or the sdist) includes the web UI's pages and assets, so the web UI no longer answers with an error 500
 - fix: a downloaded file is only saved when it has the size iCloud reports for it; otherwise it is removed and downloaded again on the next run, so a broken file is never skipped as already downloaded [#116](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/116) [#1493](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1493)
+- fix: the indexing check of the primary library runs once per run instead of twice, which halves the wait when iCloud keeps answering RUNNING or FAILED [#1361](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1361) [#1387](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1387)
 
 ## 1.34.0 (2026-11-21)
 
