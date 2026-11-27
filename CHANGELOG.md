@@ -8,6 +8,7 @@
 - fix: resumed downloads that return full file don't corrupt image anymore
 - feat: add opt-in `--webui-api`, a read-only JSON status API (`/api/status`, `/api/activity`) on the WebUI server for other programs to follow what icloudpd does; off by default [#1428](https://github.com/icloud-photos-downloader/icloud_photos_downloader/pull/1428)
 - fix: when Apple refuses the start of the sign-in, icloudpd reports Apple's message instead of crashing with `KeyError: 'salt'` [#1499](https://github.com/icloud-photos-downloader/icloud_photos_downloader/issues/1499)
+- fix: installing from source (`pip install` from git or the sdist) includes the web UI's pages and assets, so the web UI no longer answers with an error 500
 
 ## 1.34.0 (2026-11-21)
 
