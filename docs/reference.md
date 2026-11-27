@@ -376,6 +376,34 @@ code 2 without doing anything. The rejected combinations are listed with each op
     ```{versionadded} 1.34.0
     ```
 
+(screenshot-directory-parameter)=
+`--screenshot-directory X`
+
+:   Downloads screenshots to directory X instead of [`--directory`](directory-parameter).
+    The [folder structure](folder-structure-parameter) is applied inside it in the same way
+    as in [`--directory`](directory-parameter).
+    [`--auto-delete`](auto-delete-parameter) also looks for screenshots there.
+
+    Can't be combined with [`--skip-screenshots`](skip-screenshots-parameter) or
+    [`--prune-orphans`](prune-orphans-parameter).
+
+    ```{versionadded} 1.34.1
+    ```
+
+(video-directory-parameter)=
+`--video-directory X`
+
+:   Downloads videos to directory X instead of [`--directory`](directory-parameter).
+    The [folder structure](folder-structure-parameter) is applied inside it in the same way
+    as in [`--directory`](directory-parameter).
+    [`--auto-delete`](auto-delete-parameter) also looks for videos there.
+
+    Can't be combined with [`--skip-videos`](skip-videos-parameter) or
+    [`--prune-orphans`](prune-orphans-parameter).
+
+    ```{versionadded} 1.34.1
+    ```
+
 (file-match-policy-parameter)=
 `--file-match-policy X`
     
@@ -504,7 +532,7 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     `icloudpd` knows where to look: it reads the newest 100 assets first and then searches by date, so even a large library is checked within seconds. The search assumes that iCloud lists the library newest first by capture date, which is not guaranteed; an entry that is not found there is therefore looked for in the whole library (once for all such entries, with a warning in the log) before it is reported as not found, which can take minutes for a large library.
 
-    Everything is checked before `icloudpd` signs in: a missing or malformed file, a list longer than [`--delete-list-max`](delete-list-max-parameter), and options that would be ignored (`--album`, `--recent`, `--until-found`, `--skip-videos`, `--skip-photos`, `--skip-live-photos`, `--skip-created-before`, `--skip-created-after`, `--skip-screenshots`, `--exclude-filename`, `--live-photo-directory`, `--xmp-sidecar-only`, `--ignore-indexing-state`, `--prune-orphans`, `--auto-delete`, `--delete-after-download`, `--keep-icloud-recent-days`, `--only-print-filenames`, `--auth-only`) end with exit code 2. `--delete-list` cannot be combined with `--watch-with-interval`, because the list would run again every interval. `--directory` is not needed.
+    Everything is checked before `icloudpd` signs in: a missing or malformed file, a list longer than [`--delete-list-max`](delete-list-max-parameter), and options that would be ignored (`--album`, `--recent`, `--until-found`, `--skip-videos`, `--skip-photos`, `--skip-live-photos`, `--skip-created-before`, `--skip-created-after`, `--skip-screenshots`, `--exclude-filename`, `--live-photo-directory`, `--screenshot-directory`, `--video-directory`, `--xmp-sidecar-only`, `--ignore-indexing-state`, `--prune-orphans`, `--auto-delete`, `--delete-after-download`, `--keep-icloud-recent-days`, `--only-print-filenames`, `--auth-only`) end with exit code 2. `--delete-list` cannot be combined with `--watch-with-interval`, because the list would run again every interval. `--directory` is not needed.
 
     The exit code is 0 only when every line was dealt with. Entries that are not found, are ambiguous (several assets match) or that iCloud refuses to delete (it asks to try again later, or the request fails) end with exit code 1; a failing entry does not stop the others. The last log line is a summary, for example `Delete list summary: deleted=3 not_found=1 failed=0 ambiguous=0` (`would_delete=` with `--dry-run`).
 

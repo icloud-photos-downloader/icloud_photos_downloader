@@ -33,6 +33,8 @@ class _DefaultConfig:
     auto_delete: bool
     prune_orphans: bool = False
     live_photo_directory: str | None = None
+    screenshot_directory: str | None = None
+    video_directory: str | None = None
     prune_orphans_adopt_existing: bool = False
     folder_structure: str
     set_exif_datetime: bool
