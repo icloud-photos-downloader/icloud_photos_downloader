@@ -196,6 +196,18 @@ class Issue1361MovedPrimaryZoneTest(TestCase):
         # only the zone list, no second indexing state check of the same zone
         self.assertEqual(len(icloud.urls), queries_before + 1)
 
+    def test_primary_sync_is_listed_as_the_primary_library(self) -> None:
+        """zones/list gives PrimarySync with more fields than the default zone ID: the indexing
+        check must not run a second time for it (twice the retries on a slow check)"""
+        icloud = FakeICloud(["PrimarySync"], [{"zoneID": zone("PrimarySync")}])
+        photos = icloud.photos()
+        queries_before = len(icloud.urls)
+
+        libraries = photos.private_libraries
+
+        self.assertIs(libraries["PrimarySync"], photos)
+        self.assertEqual(len(icloud.urls), queries_before + 1)
+
     def test_default_library_is_the_moved_zone(self) -> None:
         """The default --library PrimarySync selects the primary library (#1361)"""
         photos = mock.MagicMock()
