@@ -516,15 +516,24 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     Deleted assets go to *Recently Deleted* in iCloud and can be restored there for about 30 days. Combine with [`--dry-run`](dry-run-parameter) to see what would be deleted.
 
+    ```{versionadded} 1.35.0
+    ```
+
 (delete-list-allow-undated-parameter)=
 `--delete-list-allow-undated`
 
 :   Accept lines without a `DATE` in the file given with [`--delete-list`](delete-list-parameter). Such a line matches by file name and size alone and needs the whole library to be read. Once the photo it means is gone (deleted earlier, on a device or by a previous run), another photo with the same name and size would match and be deleted, so use this only for a list you have just made and have checked with `--dry-run`.
 
+    ```{versionadded} 1.35.0
+    ```
+
 (delete-list-max-parameter)=
 `--delete-list-max N`
 
 :   Refuse to run if the file given with `--delete-list` has more than `N` entries. Default: 50.
+
+    ```{versionadded} 1.35.0
+    ```
 
 (skip-screenshots-parameter)=
 `--skip-screenshots`
@@ -729,6 +738,9 @@ code 2 without doing anything. The rejected combinations are listed with each op
 
     ```{seealso}
     The endpoints are described in the [Status API](webui-status-api) section of the web UI page, and the exposure in [Security](webui-security).
+    ```
+
+    ```{versionadded} 1.35.0
     ```
 
 (xmp-sidecar-parameter)=

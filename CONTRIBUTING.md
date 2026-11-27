@@ -144,7 +144,7 @@ Note: that the step expects executables to be already prepared by previous steps
 Building NPM packages (with single executables; platform-specific):
 
 ``` sh
-scripts/build_npm 1.34.0
+scripts/build_npm 1.35.0
 ```
 Note: that the step expects executables to be already prepared by previous steps
 
