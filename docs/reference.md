@@ -383,6 +383,13 @@ code 2 without doing anything. The rejected combinations are listed with each op
     The [folder structure](folder-structure-parameter) is applied inside it in the same way
     as in [`--directory`](directory-parameter).
     [`--auto-delete`](auto-delete-parameter) also looks for screenshots there.
+    Screenshots downloaded before the option was set stay in [`--directory`](directory-parameter):
+    they are not moved, and `--auto-delete` doesn't remove them. Setting this on an existing library
+    causes all screenshots to be re-downloaded into X.
+
+    Screen recordings are videos, not screenshots, so they go to [`--directory`](directory-parameter)
+    (or [`--video-directory`](video-directory-parameter)). If an asset is ever marked as both a
+    screenshot and a video, `--screenshot-directory` takes precedence.
 
     Can't be combined with [`--skip-screenshots`](skip-screenshots-parameter) or
     [`--prune-orphans`](prune-orphans-parameter).
@@ -393,10 +400,18 @@ code 2 without doing anything. The rejected combinations are listed with each op
 (video-directory-parameter)=
 `--video-directory X`
 
-:   Downloads videos to directory X instead of [`--directory`](directory-parameter).
+:   Downloads standalone videos to directory X instead of [`--directory`](directory-parameter).
     The [folder structure](folder-structure-parameter) is applied inside it in the same way
     as in [`--directory`](directory-parameter).
     [`--auto-delete`](auto-delete-parameter) also looks for videos there.
+    Videos downloaded before the option was set stay in [`--directory`](directory-parameter):
+    they are not moved, and `--auto-delete` doesn't remove them. Setting this on an existing library
+    causes all videos to be re-downloaded into X.
+
+    The video part of a Live Photo does not go to `--video-directory`: it stays next to the
+    photo in [`--directory`](directory-parameter) or goes to [`--live-photo-directory`](live-photo-directory-parameter).
+    Screen recordings are videos, so they go here. If an asset is ever marked as both a
+    screenshot and a video, `--screenshot-directory` takes precedence.
 
     Can't be combined with [`--skip-videos`](skip-videos-parameter) or
     [`--prune-orphans`](prune-orphans-parameter).

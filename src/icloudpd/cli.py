@@ -809,10 +809,7 @@ def cli() -> int:
             user_ns.video_directory and (user_ns.skip_videos or user_ns.prune_orphans)
             for user_ns in user_nses
         ):
-            print(
-                "--video-directory can't be combined with --skip-videos or "
-                "--prune-orphans"
-            )
+            print("--video-directory can't be combined with --skip-videos or --prune-orphans")
             return 2
 
         elif any(

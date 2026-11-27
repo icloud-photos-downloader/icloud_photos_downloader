@@ -11,8 +11,9 @@ from tzlocal import get_localzone
 
 from icloudpd.paths import local_download_path
 from pyicloud_ipd.asset_version import add_suffix_to_filename, calculate_version_filename
+from pyicloud_ipd.item_type import AssetItemType
 from pyicloud_ipd.raw_policy import RawTreatmentPolicy
-from pyicloud_ipd.services.photos import AssetItemType, PhotoAsset, PhotoLibrary
+from pyicloud_ipd.services.photos import PhotoAsset, PhotoLibrary
 from pyicloud_ipd.utils import disambiguate_filenames, size_to_suffix
 from pyicloud_ipd.version_size import AssetVersionSize, LivePhotoVersionSize, VersionSize
 
