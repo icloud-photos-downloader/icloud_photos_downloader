@@ -9,6 +9,7 @@
 - see the status and download progress, and the settings in use;
 - cancel the current download run, or, with [`--watch-with-interval`](watch-with-interval-parameter), skip the wait and start the next run now (Resume).
 
+(webui-enabling)=
 ## Enabling
 
 The web server starts only if `webui` is selected as [MFA provider](mfa-providers) and/or [password provider](password-providers):
@@ -39,7 +40,7 @@ In Docker, keep the default `0.0.0.0` (the container's loopback is not reachable
 (webui-status-api)=
 ## Status API
 
-With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404 and nothing is recorded. Like the rest of the web server, the API only runs when `webui` is selected as MFA or password provider (see [Enabling](#enabling)). It has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer (in Docker, limit access with the port mapping instead, as described in [Security](webui-security)).
+With [`--webui-api`](webui-api-parameter) the server also answers a few requests with JSON, so other programs (such as a menu bar app) can follow what `icloudpd` does. Without the option these paths return 404 and nothing is recorded. Like the rest of the web server, the API only runs when `webui` is selected as MFA or password provider (see [Enabling](webui-enabling)). It has no password protection; combine it with [`--webui-host`](webui-host-parameter) `127.0.0.1` to keep it on this computer (in Docker, limit access with the port mapping instead, as described in [Security](webui-security)).
 
 | Request | Answer |
 |---|---|
