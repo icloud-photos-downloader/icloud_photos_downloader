@@ -113,11 +113,9 @@ def _oauth_headers(auth_session: AuthenticatedSession) -> Mapping[str, str]:
 
 
 def _auth_url(domain: str) -> str:
-    return (
-        "https://idmsa.apple.com.cn/appleauth/auth"
-        if domain == "cn"
-        else "https://idmsa.apple.com/appleauth/auth"
-    )
+    # Authentication uses Apple's global identity endpoint for all regions;
+    # China-region data and redirect endpoints remain on .com.cn.
+    return "https://idmsa.apple.com/appleauth/auth"
 
 
 class _DomainProvider(Protocol):
